@@ -1,4 +1,4 @@
-import kotlinx.coroutines.asyncUi
+import kotlinx.coroutines.asyncUI
 import java.awt.Insets
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -25,7 +25,7 @@ private fun createAndShowGUI() {
     frame.pack()
     frame.isVisible = true
 
-    asyncUi {
+    asyncUI {
         for (i in 1..10) {
             // 'append' method and consequent 'jProgressBar.setValue' are called
             // within Swing event dispatch thread

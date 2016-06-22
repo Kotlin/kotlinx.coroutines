@@ -44,7 +44,7 @@ fun <T> async(
  * @return CompletableFuture object representing result of computations
  * @See async
  */
-fun asyncUi(
+fun asyncUI(
         coroutine c: FutureController<Unit>.() -> Continuation<Unit>
 ) {
     if (SwingUtilities.isEventDispatchThread()) {
