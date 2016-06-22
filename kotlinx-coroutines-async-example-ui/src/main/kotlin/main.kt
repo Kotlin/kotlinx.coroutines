@@ -37,11 +37,11 @@ private fun createAndShowGUI() {
     }
 }
 
-    private fun startLongAsyncOperation(v: Int) =
-            CompletableFuture.supplyAsync {
-                Thread.sleep(1000)
-                "Message: $v\n"
-            }
+private fun startLongAsyncOperation(v: Int) =
+        CompletableFuture.supplyAsync {
+            Thread.sleep(1000)
+            "Message: $v\n"
+        }
 
 fun main(args: Array<String>) {
     SwingUtilities.invokeLater(::createAndShowGUI)
