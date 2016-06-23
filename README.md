@@ -30,7 +30,7 @@ fun main(args: Array<String>) {
 ```
 
 ### Generate
-```
+```kotlin
 import kotlinx.coroutines.generate
 
 fun main(args: Array<String>) {
@@ -56,9 +56,9 @@ Add jcenter repository (if you don't have it yet)
     <snapshots>
         <enabled>false</enabled>
     </snapshots>
-    <id>central</id>
+    <id>dl</id>
     <name>bintray</name>
-    <url>http://jcenter.bintray.com</url>
+    <url>http://dl.bintray.com/kotlin/kotlinx.coroutines</url>
 </repository>
 ```
 
@@ -84,6 +84,8 @@ jcenter repository should be configured by default in gradle, but if it's not yo
 
 ```groovy
 repositories {
-    jcenter()
+    maven {
+        url "http://dl.bintray.com/kotlin/kotlinx.coroutines"
+    }
 }
 ```
