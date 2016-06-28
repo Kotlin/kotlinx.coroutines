@@ -80,7 +80,7 @@ Just add a dependency:
 compile 'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.1-alpha-1'
 ```
 
-jcenter repository should be configured by default in gradle, but if it's not you may need to include it:
+Also you should include our bintray repository:
 
 ```groovy
 repositories {
