@@ -27,7 +27,7 @@ import javax.swing.SwingUtilities
  * @return CompletableFuture object representing result of computations
  */
 fun <T> async(
-        continuationWrapper: ((() -> Unit) -> Unit)? = null,
+        continuationWrapper: ContinuationWrapper? = null,
         coroutine c: FutureController<T>.() -> Continuation<Unit>
 ): CompletableFuture<T> {
     val controller = FutureController<T>(continuationWrapper)
@@ -57,11 +57,10 @@ fun asyncUI(
     }
 }
 
-// TODO: Uncomment this when KT-12832 is fixed
-// typealias ContinuationWrapper = (() -> Unit) -> Unit
+typealias ContinuationWrapper = (() -> Unit) -> Unit
 
 open class FutureController<T>(
-        private val continuationWrapper: ((() -> Unit) -> Unit)?
+        private val continuationWrapper: ContinuationWrapper?
 ) {
     val future = CompletableFuture<T>()
 
