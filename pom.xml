@@ -86,6 +86,8 @@
         <module>kotlinx-coroutines-async</module>
         <module>kotlinx-coroutines-async-example-ui</module>
         <module>kotlinx-coroutines-generate</module>
+        <module>kotlinx-coroutines-rx</module>
+        <module>kotlinx-coroutines-rx-example</module>
     </modules>
 
     <dependencies>
