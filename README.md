@@ -29,6 +29,9 @@ fun main(args: Array<String>) {
 }
 ```
 
+Bear in mind that `async` library actively uses `CompletableFuture` from JDK 8, so
+it will not work with earlier versions.
+
 ### Generate
 ```kotlin
 import kotlinx.coroutines.generate
@@ -49,7 +52,7 @@ project or in tests directories.
 
 ## Maven
 
-Add jcenter repository (if you don't have it yet)
+Add the bintray repository
 
 ```xml
 <repository>
@@ -62,7 +65,7 @@ Add jcenter repository (if you don't have it yet)
 </repository>
 ```
 
-Add a dependency:
+Add dependencies:
 
 ```xml
 <dependency>
@@ -70,15 +73,23 @@ Add a dependency:
     <artifactId>kotlinx-coroutines-generate</artifactId>
     <version>0.1-alpha-1</version>
 </dependency>
+<dependency>
+    <groupId>org.jetbrains.kotlinx</groupId>
+    <artifactId>kotlinx-coroutines-async</artifactId>
+    <version>0.1-alpha-1</version>
+</dependency>
 ```
 
 ## Gradle
 
-Just add a dependency:
+Just add dependencies:
 
 ```groovy
 compile 'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.1-alpha-1'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.1-alpha-1'
 ```
+
+*NB:* As `async` library is built upon `CompletableFuture` it requires JDK 8 (24 Android API level)
 
 Also you should include our bintray repository:
 
