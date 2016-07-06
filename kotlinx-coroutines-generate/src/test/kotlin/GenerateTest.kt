@@ -134,4 +134,17 @@ class GenerateTest {
         sharedVar = -2
         assertTrue(assertFails { iterator.hasNext() } is IllegalStateException)
     }
+
+    @Test
+    fun testParallelIteration() {
+        var inc = 0
+        val result = generate<Int> {
+            for (i in 1..3) {
+                inc++
+                yield(inc * i)
+            }
+        }
+
+        assertEquals(listOf(Pair(1, 2), Pair(6, 8), Pair(15, 18)), result.zip(result).toList())
+    }
 }
