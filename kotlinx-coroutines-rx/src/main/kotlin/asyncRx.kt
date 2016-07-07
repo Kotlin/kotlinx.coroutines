@@ -24,6 +24,7 @@ fun <T> asyncRx(
     return controller.result
 }
 
+@AllowSuspendExtensions
 class RxController<T> internal constructor() {
     internal val result: AsyncSubject<T> = AsyncSubject.create<T>()
 

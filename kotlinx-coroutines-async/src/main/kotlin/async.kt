@@ -59,7 +59,8 @@ fun asyncUI(
 
 typealias ContinuationWrapper = (() -> Unit) -> Unit
 
-open class FutureController<T>(
+@AllowSuspendExtensions
+class FutureController<T>(
         private val continuationWrapper: ContinuationWrapper?
 ) {
     val future = CompletableFuture<T>()
