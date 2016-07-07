@@ -16,15 +16,15 @@ import rx.subjects.AsyncSubject
  * @return Observable with single value containing expression returned from coroutine
  */
 fun <T> asyncRx(
-        coroutine c: Controller<T>.() -> Continuation<Unit>
+        coroutine c: RxController<T>.() -> Continuation<Unit>
 ): Observable<T> {
-    val controller = Controller<T>()
+    val controller = RxController<T>()
     c(controller).resume(Unit)
 
     return controller.result
 }
 
-class Controller<T> internal constructor() {
+class RxController<T> internal constructor() {
     internal val result: AsyncSubject<T> = AsyncSubject.create<T>()
 
     suspend fun <V> Observable<V>.awaitFirst(x: Continuation<V>) {
