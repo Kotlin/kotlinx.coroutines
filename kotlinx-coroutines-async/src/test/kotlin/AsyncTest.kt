@@ -1,6 +1,5 @@
-package kotlinx.coroutines.async
+package kotlinx.coroutines
 
-import kotlinx.coroutines.async
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
