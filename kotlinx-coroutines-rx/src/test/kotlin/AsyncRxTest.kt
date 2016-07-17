@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import org.junit.Test
 import rx.Observable
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
@@ -16,6 +17,18 @@ class AsyncRxTest {
             assertEquals("OK", it)
         }
     }
+
+    @Test
+    fun testSingleWithDelay() {
+        val observable = asyncRx<String> {
+            Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
+        }
+
+        checkObservableWithSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
 
     @Test
     fun testSingleException() {
@@ -117,26 +130,15 @@ class AsyncRxTest {
             observable: Observable<*>,
             checker: (Throwable) -> Unit
     ) {
-        var onErrorCalled = false
-        observable.subscribe({ fail("Next item on erroneous observable") }) {
-            checker(it)
-            onErrorCalled = true
-        }
-
-        assert(onErrorCalled)
+        val singleNotification = observable.materialize().toBlocking().single()
+        checker(singleNotification.throwable)
     }
 
     private fun <T> checkObservableWithSingleValue(
             observable: Observable<T>,
             checker: (T) -> Unit
     ) {
-        var subscribeCalled = false
-
-        observable.single().subscribe {
-            checker(it)
-            subscribeCalled = true
-        }
-
-        assert(subscribeCalled)
+        val singleValue = observable.toBlocking().single()
+        checker(singleValue)
     }
 }
