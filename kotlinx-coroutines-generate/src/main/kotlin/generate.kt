@@ -33,6 +33,29 @@ class GeneratorController<T> internal constructor() : AbstractIterator<T>() {
         setNextStep(c)
     }
 
+    suspend fun yieldAll(values: Iterable<T>, c: Continuation<Unit>) =
+            yieldAll(values.iterator(), c)
+
+    suspend fun yieldAll(values: Sequence<T>, c: Continuation<Unit>) =
+            yieldAll(values.iterator(), c)
+
+    suspend fun yieldAll(vararg values: T, c: Continuation<Unit>) =
+            yieldAll(values.iterator(), c)
+
+    private fun yieldAll(iterator: Iterator<T>, c: Continuation<Unit>) {
+        val iteratorContinuation = object : Continuation<Unit> {
+            override fun resume(data: Unit) =
+                    if (iterator.hasNext())
+                        yield(iterator.next(), this)
+                    else
+                        c.resume(Unit)
+
+            override fun resumeWithException(exception: Throwable) =
+                    c.resumeWithException(exception)
+        }
+        iteratorContinuation.resume(Unit)
+    }
+
     operator fun handleResult(result: Unit, c: Continuation<Nothing>) {
         done()
     }
