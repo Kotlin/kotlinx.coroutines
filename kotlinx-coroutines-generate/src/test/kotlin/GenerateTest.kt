@@ -180,7 +180,7 @@ class GenerateTest {
     }
 
     @Test
-    fun testYieldsAllEmpty() {
+    fun testYieldAllEmpty() {
         var continuationCalled = false
         val sequence = generate<Int> {
             yieldAll(emptyList())
@@ -202,5 +202,24 @@ class GenerateTest {
         assertEquals(2, iterator.next())
         assertEquals(3, iterator.next())
         assertFalse(iterator.hasNext())
+    }
+
+    @Test
+    fun testFromToAndBack() {
+        fun fromToAndBack(from: Int, to: Int): Sequence<Int> = generate {
+            if (from > to)
+                return@generate
+            yield(from)
+            yieldAll(fromToAndBack(from + 1, to))
+            yield(from)
+        }
+
+        val sequence = fromToAndBack(1, 10000)
+        val list1 = sequence.toList()
+        val list2 = sequence.toList() //test repeated call
+
+        val expected = (1..10000).toList() + (1..10000).reversed().toList()
+        assertEquals(expected, list1)
+        assertEquals(expected, list2)
     }
 }
