@@ -78,7 +78,7 @@ class AsyncTest {
             it()
             depth.andDecrement
         }) {
-            assertEquals(0, depth.get(), "Part before first suspension should not be wrapped")
+            assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
 
             val result =
                     await(CompletableFuture.supplyAsync {

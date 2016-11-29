@@ -61,23 +61,27 @@ typealias ContinuationWrapper = (() -> Unit) -> Unit
 
 @AllowSuspendExtensions
 class FutureController<T>(
-        private val continuationWrapper: ContinuationWrapper?
+        val continuationWrapper: ContinuationWrapper?
 ) {
     val future = CompletableFuture<T>()
 
-    suspend fun <V> await(f: CompletableFuture<V>, machine: Continuation<V>) {
-        f.whenComplete { value, throwable ->
-            wrapContinuationIfNeeded {
+    suspend fun <V> await(f: CompletableFuture<V>): V =
+        runWithCurrentContinuation {
+            f.whenComplete { value, throwable ->
                 if (throwable == null)
-                    machine.resume(value)
+                    it.resume(value)
                 else
-                    machine.resumeWithException(throwable)
+                    it.resumeWithException(throwable)
             }
         }
-    }
 
-    private fun wrapContinuationIfNeeded(block: () -> Unit) {
-        continuationWrapper?.invoke(block) ?: block()
+    inline operator fun interceptResume(crossinline x: () -> Unit) {
+        if (continuationWrapper != null) {
+            continuationWrapper.invoke { x() }
+        }
+        else {
+            x()
+        }
     }
 
     operator fun handleResult(value: T, c: Continuation<Nothing>) {
@@ -87,74 +91,68 @@ class FutureController<T>(
     operator fun handleException(t: Throwable, c: Continuation<Nothing>) {
         future.completeExceptionally(t)
     }
+}
 
-    //
-    // IO parts
-    //
-    suspend fun AsynchronousFileChannel.aRead(
-            buf: ByteBuffer,
-            position: Long,
-            c: Continuation<Int>
-    ) {
-        this.read(buf, position, null, AsyncIOHandler(c))
-    }
+//
+// IO parts
+//
+suspend fun AsynchronousFileChannel.aRead(
+        buf: ByteBuffer,
+        position: Long
+) = runWithCurrentContinuation<Int> { c ->
+    this.read(buf, position, null, AsyncIOHandler(c))
+}
 
-    suspend fun AsynchronousFileChannel.aWrite(
-            buf: ByteBuffer,
-            position: Long,
-            c: Continuation<Int>
-    ) {
-        this.write(buf, position, null, AsyncIOHandler(c))
-    }
+suspend fun AsynchronousFileChannel.aWrite(
+        buf: ByteBuffer,
+        position: Long
+) = runWithCurrentContinuation<Int> { c ->
+    this.write(buf, position, null, AsyncIOHandler(c))
+}
 
-    suspend fun AsynchronousServerSocketChannel.aAccept(
-            c: Continuation<AsynchronousSocketChannel>
-    ) {
-        this.accept(null, AsyncIOHandler(c))
-    }
-
-    suspend fun AsynchronousSocketChannel.aConnect(
-            socketAddress: SocketAddress,
-            c: Continuation<Unit>
-    ) {
-        this.connect(socketAddress, null, AsyncVoidIOHandler(c))
-    }
-
-    suspend fun AsynchronousSocketChannel.aRead(
-            buf: ByteBuffer,
-            timeout: Long = 0L,
-            timeUnit: TimeUnit = TimeUnit.MILLISECONDS,
-            c: Continuation<Int>
-    ) {
-        this.read(buf, timeout, timeUnit, null, AsyncIOHandler(c))
-    }
-
-    suspend fun AsynchronousSocketChannel.aWrite(
-            buf: ByteBuffer,
-            timeout: Long = 0L,
-            timeUnit: TimeUnit = TimeUnit.MILLISECONDS,
-            c: Continuation<Int>
-    ) {
-        this.write(buf, timeout, timeUnit, null, AsyncIOHandler(c))
-    }
-
-    private class AsyncIOHandler<E>(val c: Continuation<E>) : CompletionHandler<E, Nothing?> {
-        override fun completed(result: E, attachment: Nothing?) {
-            c.resume(result)
+suspend fun AsynchronousServerSocketChannel.aAccept() =
+        runWithCurrentContinuation<AsynchronousSocketChannel> { c ->
+            this.accept(null, AsyncIOHandler(c))
         }
 
-        override fun failed(exc: Throwable, attachment: Nothing?) {
-            c.resumeWithException(exc)
-        }
+suspend fun AsynchronousSocketChannel.aConnect(
+        socketAddress: SocketAddress
+) = runWithCurrentContinuation<Unit> { c ->
+    this.connect(socketAddress, null, AsyncVoidIOHandler(c))
+}
+
+suspend fun AsynchronousSocketChannel.aRead(
+        buf: ByteBuffer,
+        timeout: Long = 0L,
+        timeUnit: TimeUnit = TimeUnit.MILLISECONDS
+) = runWithCurrentContinuation<Int> { c ->
+    this.read(buf, timeout, timeUnit, null, AsyncIOHandler(c))
+}
+
+suspend fun AsynchronousSocketChannel.aWrite(
+        buf: ByteBuffer,
+        timeout: Long = 0L,
+        timeUnit: TimeUnit = TimeUnit.MILLISECONDS
+) = runWithCurrentContinuation<Int> { c ->
+    this.write(buf, timeout, timeUnit, null, AsyncIOHandler(c))
+}
+
+private class AsyncIOHandler<E>(val c: Continuation<E>) : CompletionHandler<E, Nothing?> {
+    override fun completed(result: E, attachment: Nothing?) {
+        c.resume(result)
     }
 
-    private class AsyncVoidIOHandler(val c: Continuation<Unit>) : CompletionHandler<Void?, Nothing?> {
-        override fun completed(result: Void?, attachment: Nothing?) {
-            c.resume(Unit)
-        }
+    override fun failed(exc: Throwable, attachment: Nothing?) {
+        c.resumeWithException(exc)
+    }
+}
 
-        override fun failed(exc: Throwable, attachment: Nothing?) {
-            c.resumeWithException(exc)
-        }
+private class AsyncVoidIOHandler(val c: Continuation<Unit>) : CompletionHandler<Void?, Nothing?> {
+    override fun completed(result: Void?, attachment: Nothing?) {
+        c.resume(Unit)
+    }
+
+    override fun failed(exc: Throwable, attachment: Nothing?) {
+        c.resumeWithException(exc)
     }
 }

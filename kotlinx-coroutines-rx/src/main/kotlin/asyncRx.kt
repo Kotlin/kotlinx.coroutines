@@ -28,26 +28,19 @@ fun <T> asyncRx(
 class RxController<T> internal constructor() {
     internal val result: AsyncSubject<T> = AsyncSubject.create<T>()
 
-    suspend fun <V> Observable<V>.awaitFirst(x: Continuation<V>) {
-        this.first().subscribeWithContinuation(x)
-    }
+    suspend fun <V> Observable<V>.awaitFirst() = first().awaitOne()
 
-    suspend fun <V> Observable<V>.awaitLast(x: Continuation<V>) {
-        this.last().subscribeWithContinuation(x)
-    }
+    suspend fun <V> Observable<V>.awaitLast() = last().awaitOne()
 
-    suspend fun <V> Observable<V>.awaitSingle(x: Continuation<V>) {
-        this.single().subscribeWithContinuation(x)
-    }
+    suspend fun <V> Observable<V>.awaitSingle() = single().awaitOne()
 
-    private fun <V> Observable<V>.subscribeWithContinuation(x: Continuation<V>) {
+    private suspend fun <V> Observable<V>.awaitOne() = runWithCurrentContinuation<V> { x ->
         subscribe(x::resume, x::resumeWithException)
     }
 
     suspend fun <V> Observable<V>.applyForEachAndAwait(
-            block: (V) -> Unit,
-            x: Continuation<Unit>
-    ) {
+            block: (V) -> Unit
+    ) = runWithCurrentContinuation<Unit> { x->
         this.subscribe(block, x::resumeWithException, { x.resume(Unit) })
     }
 

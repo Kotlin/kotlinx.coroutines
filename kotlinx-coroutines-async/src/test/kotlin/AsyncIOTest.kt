@@ -1,5 +1,6 @@
 package kotlinx.coroutines.asyncIO
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.async
 import org.apache.commons.io.FileUtils
 import org.junit.Rule
@@ -27,7 +28,7 @@ class AsyncIOTest {
 
         FileUtils.writeStringToFile(
                 inputFile,
-                (1..100000).map { it.toString() }.joinToString(""))
+                (1..100000).map(Int::toString).joinToString(""))
 
         val input = AsynchronousFileChannel.open(inputFile.toPath())
         val output =
