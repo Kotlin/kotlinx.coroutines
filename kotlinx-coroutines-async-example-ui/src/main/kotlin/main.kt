@@ -1,4 +1,5 @@
 import kotlinx.coroutines.asyncUI
+import kotlinx.coroutines.await
 import java.awt.Insets
 import java.util.concurrent.CompletableFuture
 import javax.swing.*

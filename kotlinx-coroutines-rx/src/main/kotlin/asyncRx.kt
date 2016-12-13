@@ -2,6 +2,8 @@ package kotlinx.coroutines
 
 import rx.Observable
 import rx.subjects.AsyncSubject
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.startCoroutine
 
 /**
  * Run asynchronous computations based on [c] coroutine parameter
@@ -16,40 +18,39 @@ import rx.subjects.AsyncSubject
  * @return Observable with single value containing expression returned from coroutine
  */
 fun <T> asyncRx(
-        coroutine c: RxController<T>.() -> Continuation<Unit>
+        c: suspend () -> T
 ): Observable<T> {
-    val controller = RxController<T>()
-    c(controller).resume(Unit)
+    val result: AsyncSubject<T> = AsyncSubject.create<T>()
 
-    return controller.result
+    c.startCoroutine(
+            object: Continuation<T> {
+                override fun resumeWithException(exception: Throwable) {
+                    result.onError(exception)
+                }
+
+                override fun resume(data: T) {
+                    result.onNext(data)
+                    result.onCompleted()
+                }
+            }
+    )
+
+    return result
 }
 
-@AllowSuspendExtensions
-class RxController<T> internal constructor() {
-    internal val result: AsyncSubject<T> = AsyncSubject.create<T>()
 
-    suspend fun <V> Observable<V>.awaitFirst() = first().awaitOne()
+suspend fun <V> Observable<V>.awaitFirst(): V = first().awaitOne()
 
-    suspend fun <V> Observable<V>.awaitLast() = last().awaitOne()
+suspend fun <V> Observable<V>.awaitLast(): V = last().awaitOne()
 
-    suspend fun <V> Observable<V>.awaitSingle() = single().awaitOne()
+suspend fun <V> Observable<V>.awaitSingle(): V = single().awaitOne()
 
-    private suspend fun <V> Observable<V>.awaitOne() = runWithCurrentContinuation<V> { x ->
-        subscribe(x::resume, x::resumeWithException)
-    }
+private suspend fun <V> Observable<V>.awaitOne(): V = runWithCurrentContinuation<V> { x ->
+    subscribe(x::resume, x::resumeWithException)
+}
 
-    suspend fun <V> Observable<V>.applyForEachAndAwait(
-            block: (V) -> Unit
-    ) = runWithCurrentContinuation<Unit> { x->
-        this.subscribe(block, x::resumeWithException, { x.resume(Unit) })
-    }
-
-    operator fun handleResult(v: T, x: Continuation<Nothing>) {
-        result.onNext(v)
-        result.onCompleted()
-    }
-
-    operator fun handleException(t: Throwable, x: Continuation<Nothing>) {
-        result.onError(t)
-    }
+suspend fun <V> Observable<V>.applyForEachAndAwait(
+        block: (V) -> Unit
+) = runWithCurrentContinuation<Unit> { x->
+    this.subscribe(block, x::resumeWithException, { x.resume(Unit) })
 }

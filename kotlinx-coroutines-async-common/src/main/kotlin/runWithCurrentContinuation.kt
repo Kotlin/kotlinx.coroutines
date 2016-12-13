@@ -1,6 +1,9 @@
 package kotlinx.coroutines
 
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.*
+import kotlin.coroutines.SUSPENDED
+import kotlin.coroutines.suspendWithCurrentContinuation
 
 suspend fun <T> runWithCurrentContinuation(
         block: (Continuation<T>) -> Unit
@@ -25,7 +28,7 @@ private class SafeContinuation<in T>(val delegate: Continuation<T>) : Continuati
     }
 
     fun returnResult(): Any? {
-        if (result.get() == Undecided) result.compareAndSet(Undecided, Suspend)
+        if (result.get() == Undecided) result.compareAndSet(Undecided, SUSPENDED)
         val result = result.get()
         if (result is Fail) throw result.e else return result
     }

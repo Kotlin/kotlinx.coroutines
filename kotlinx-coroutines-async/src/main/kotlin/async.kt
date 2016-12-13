@@ -9,6 +9,9 @@ import java.nio.channels.CompletionHandler
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.ResumeInterceptor
+import kotlin.coroutines.startCoroutine
 
 /**
  * Run asynchronous computations based on [c] coroutine parameter
@@ -26,13 +29,50 @@ import javax.swing.SwingUtilities
  *
  * @return CompletableFuture object representing result of computations
  */
+
+
 fun <T> async(
         continuationWrapper: ContinuationWrapper? = null,
-        coroutine c: FutureController<T>.() -> Continuation<Unit>
+        c: suspend () -> T
 ): CompletableFuture<T> {
-    val controller = FutureController<T>(continuationWrapper)
-    c(controller).resume(Unit)
-    return controller.future
+    val future = CompletableFuture<T>()
+
+    c.startCoroutine(
+            object : Continuation<T> {
+                override fun resumeWithException(exception: Throwable) {
+                    future.completeExceptionally(exception)
+                }
+
+                override fun resume(data: T) {
+                    future.complete(data)
+                }
+            },
+
+            if (continuationWrapper != null) {
+                object: ResumeInterceptor {
+                    override fun <P> interceptResume(data: P, continuation: Continuation<P>): Boolean {
+                        continuationWrapper {
+                            continuation.resume(data)
+                        }
+
+                        return true
+                    }
+
+                    override fun interceptResumeWithException(exception: Throwable, continuation: Continuation<*>): Boolean {
+                        continuationWrapper {
+                            continuation.resumeWithException(exception)
+                        }
+
+                        return true
+                    }
+                }
+            }
+            else {
+                null
+            }
+    )
+
+    return future
 }
 
 /**
@@ -45,27 +85,14 @@ fun <T> async(
  * @See async
  */
 fun asyncUI(
-        coroutine c: FutureController<Unit>.() -> Continuation<Unit>
+        c: suspend () -> Unit
 ) {
-    if (SwingUtilities.isEventDispatchThread()) {
-        async({ SwingUtilities.invokeLater(it) }, c)
-    }
-    else {
-        SwingUtilities.invokeLater {
-            async({ SwingUtilities.invokeLater(it) }, c)
-        }
-    }
+    async({ SwingUtilities.invokeLater(it) }, c)
 }
 
 typealias ContinuationWrapper = (() -> Unit) -> Unit
 
-@AllowSuspendExtensions
-class FutureController<T>(
-        val continuationWrapper: ContinuationWrapper?
-) {
-    val future = CompletableFuture<T>()
-
-    suspend fun <V> await(f: CompletableFuture<V>): V =
+suspend fun <V> await(f: CompletableFuture<V>): V =
         runWithCurrentContinuation {
             f.whenComplete { value, throwable ->
                 if (throwable == null)
@@ -74,25 +101,6 @@ class FutureController<T>(
                     it.resumeWithException(throwable)
             }
         }
-
-    inline operator fun interceptResume(crossinline x: () -> Unit) {
-        if (continuationWrapper != null) {
-            continuationWrapper.invoke { x() }
-        }
-        else {
-            x()
-        }
-    }
-
-    operator fun handleResult(value: T, c: Continuation<Nothing>) {
-        future.complete(value)
-    }
-
-    operator fun handleException(t: Throwable, c: Continuation<Nothing>) {
-        future.completeExceptionally(t)
-    }
-}
-
 //
 // IO parts
 //
