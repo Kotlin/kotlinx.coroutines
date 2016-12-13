@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicReference
 suspend fun <T> runWithCurrentContinuation(
         block: (Continuation<T>) -> Unit
 ): T = suspendWithCurrentContinuation { continuation ->
-    val safe = SafeContinuation<T>(continuation)
+    val safe = SafeContinuation(continuation)
     block(safe)
-    return@suspendWithCurrentContinuation safe.returnResult()
+    safe.returnResult()
 }
 
 private class SafeContinuation<in T>(val delegate: Continuation<T>) : Continuation<T> {
