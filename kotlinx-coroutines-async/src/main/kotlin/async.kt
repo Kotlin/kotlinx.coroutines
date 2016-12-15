@@ -10,8 +10,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.ResumeInterceptor
+import kotlin.coroutines.ContinuationDispatcher
 import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Run asynchronous computations based on [c] coroutine parameter
@@ -49,8 +50,8 @@ fun <T> async(
             },
 
             if (continuationWrapper != null) {
-                object: ResumeInterceptor {
-                    override fun <P> interceptResume(data: P, continuation: Continuation<P>): Boolean {
+                object: ContinuationDispatcher {
+                    override fun <P> dispatchResume(data: P, continuation: Continuation<P>): Boolean {
                         continuationWrapper {
                             continuation.resume(data)
                         }
@@ -58,7 +59,7 @@ fun <T> async(
                         return true
                     }
 
-                    override fun interceptResumeWithException(exception: Throwable, continuation: Continuation<*>): Boolean {
+                    override fun dispatchResumeWithException(exception: Throwable, continuation: Continuation<*>): Boolean {
                         continuationWrapper {
                             continuation.resumeWithException(exception)
                         }
@@ -93,7 +94,7 @@ fun asyncUI(
 typealias ContinuationWrapper = (() -> Unit) -> Unit
 
 suspend fun <V> CompletableFuture<V>.await(): V =
-        runWithCurrentContinuation {
+        suspendCoroutine {
             whenComplete { value, throwable ->
                 if (throwable == null)
                     it.resume(value)
@@ -107,25 +108,25 @@ suspend fun <V> CompletableFuture<V>.await(): V =
 suspend fun AsynchronousFileChannel.aRead(
         buf: ByteBuffer,
         position: Long
-) = runWithCurrentContinuation<Int> { c ->
+) = suspendCoroutine<Int> { c ->
     this.read(buf, position, null, AsyncIOHandler(c))
 }
 
 suspend fun AsynchronousFileChannel.aWrite(
         buf: ByteBuffer,
         position: Long
-) = runWithCurrentContinuation<Int> { c ->
+) = suspendCoroutine<Int> { c ->
     this.write(buf, position, null, AsyncIOHandler(c))
 }
 
 suspend fun AsynchronousServerSocketChannel.aAccept() =
-        runWithCurrentContinuation<AsynchronousSocketChannel> { c ->
+        suspendCoroutine<AsynchronousSocketChannel> { c ->
             this.accept(null, AsyncIOHandler(c))
         }
 
 suspend fun AsynchronousSocketChannel.aConnect(
         socketAddress: SocketAddress
-) = runWithCurrentContinuation<Unit> { c ->
+) = suspendCoroutine<Unit> { c ->
     this.connect(socketAddress, null, AsyncVoidIOHandler(c))
 }
 
@@ -133,7 +134,7 @@ suspend fun AsynchronousSocketChannel.aRead(
         buf: ByteBuffer,
         timeout: Long = 0L,
         timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-) = runWithCurrentContinuation<Int> { c ->
+) = suspendCoroutine<Int> { c ->
     this.read(buf, timeout, timeUnit, null, AsyncIOHandler(c))
 }
 
@@ -141,7 +142,7 @@ suspend fun AsynchronousSocketChannel.aWrite(
         buf: ByteBuffer,
         timeout: Long = 0L,
         timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-) = runWithCurrentContinuation<Int> { c ->
+) = suspendCoroutine<Int> { c ->
     this.write(buf, timeout, timeUnit, null, AsyncIOHandler(c))
 }
 

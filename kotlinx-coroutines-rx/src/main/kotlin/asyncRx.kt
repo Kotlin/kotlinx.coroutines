@@ -4,6 +4,7 @@ import rx.Observable
 import rx.subjects.AsyncSubject
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Run asynchronous computations based on [c] coroutine parameter
@@ -45,12 +46,12 @@ suspend fun <V> Observable<V>.awaitLast(): V = last().awaitOne()
 
 suspend fun <V> Observable<V>.awaitSingle(): V = single().awaitOne()
 
-private suspend fun <V> Observable<V>.awaitOne(): V = runWithCurrentContinuation<V> { x ->
+private suspend fun <V> Observable<V>.awaitOne(): V = suspendCoroutine<V> { x ->
     subscribe(x::resume, x::resumeWithException)
 }
 
 suspend fun <V> Observable<V>.applyForEachAndAwait(
         block: (V) -> Unit
-) = runWithCurrentContinuation<Unit> { x->
+) = suspendCoroutine<Unit> { x->
     this.subscribe(block, x::resumeWithException, { x.resume(Unit) })
 }

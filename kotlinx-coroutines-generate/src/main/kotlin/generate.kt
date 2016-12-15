@@ -1,9 +1,7 @@
 package kotlinx.coroutines
 
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.SUSPENDED
-import kotlin.coroutines.createCoroutine
-import kotlin.coroutines.suspendWithCurrentContinuation
+import kotlin.coroutines.*
+import kotlin.coroutines.CoroutineIntrinsics.SUSPENDED
 
 /**
  * Creates a Sequence object based on received coroutine [c].
@@ -35,7 +33,7 @@ private class GeneratedIterator<T>(block: suspend Generator<T>.() -> Unit) : Abs
     override fun computeNext() {
         nextStep.resume(Unit)
     }
-    suspend override fun yield(value: T) = suspendWithCurrentContinuation<Unit> { c ->
+    suspend override fun yield(value: T) = CoroutineIntrinsics.suspendCoroutineOrReturn <Unit> { c ->
         setNext(value)
         nextStep = c
 
