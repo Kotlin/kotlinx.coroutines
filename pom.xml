@@ -84,7 +84,6 @@
 
     <modules>
         <module>kotlinx-coroutines-async</module>
-        <module>kotlinx-coroutines-async-common</module>
         <module>kotlinx-coroutines-async-example-ui</module>
         <module>kotlinx-coroutines-generate</module>
         <module>kotlinx-coroutines-rx</module>
@@ -137,16 +136,8 @@
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <configuration>
+                    <skipSource>true</skipSource>
                 </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
