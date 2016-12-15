@@ -13,9 +13,9 @@ class AsyncTest {
     @Test
     fun testSimple() {
         val future = async<String> {
-            await(CompletableFuture.supplyAsync {
+            CompletableFuture.supplyAsync {
                 "O"
-            }) + "K"
+            }.await() + "K"
         }
 
         assertEquals("OK", future.get())
@@ -25,7 +25,7 @@ class AsyncTest {
     fun testWaitForCompletion() {
         val toAwait = CompletableFuture<String>()
         val future = async<String> {
-            await(toAwait) + "K"
+            toAwait.await() + "K"
         }
 
         assertFalse(future.isDone)
@@ -39,7 +39,7 @@ class AsyncTest {
         val toAwait = CompletableFuture<String>()
         val future = async<String> {
             try {
-                await(toAwait)
+                toAwait.await()
             } catch (e: RuntimeException) {
                 e.message!!
             } + "K"
@@ -54,10 +54,10 @@ class AsyncTest {
     @Test
     fun testExceptionInsideCoroutine() {
         val future = async<String> {
-            if (await(CompletableFuture.supplyAsync { true })) {
+            if (CompletableFuture.supplyAsync { true }.await()) {
                 throw IllegalStateException("OK")
             }
-            await(CompletableFuture.supplyAsync { "fail" })
+            CompletableFuture.supplyAsync { "fail" }.await()
         }
 
         try {
@@ -81,21 +81,21 @@ class AsyncTest {
             assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
 
             val result =
-                    await(CompletableFuture.supplyAsync {
+                    CompletableFuture.supplyAsync {
                         while (depth.get() > 0);
 
                         assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
                         "OK"
-                    })
+                    }.await()
 
             assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
 
-            await(CompletableFuture.supplyAsync {
+            CompletableFuture.supplyAsync {
                 while (depth.get() > 0);
 
                 assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
                 "ignored"
-            })
+            }.await()
 
             result
         }

@@ -31,7 +31,7 @@ private fun createAndShowGUI() {
             // 'append' method and consequent 'jProgressBar.setValue' are called
             // within Swing event dispatch thread
             jTextArea.append(
-                    await(startLongAsyncOperation(i))
+                    startLongAsyncOperation(i).await()
             )
             jProgressBar.value = i * 10
         }

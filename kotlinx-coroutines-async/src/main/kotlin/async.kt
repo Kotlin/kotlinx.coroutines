@@ -92,9 +92,9 @@ fun asyncUI(
 
 typealias ContinuationWrapper = (() -> Unit) -> Unit
 
-suspend fun <V> await(f: CompletableFuture<V>): V =
+suspend fun <V> CompletableFuture<V>.await(): V =
         runWithCurrentContinuation {
-            f.whenComplete { value, throwable ->
+            whenComplete { value, throwable ->
                 if (throwable == null)
                     it.resume(value)
                 else
