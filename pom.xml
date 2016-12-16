@@ -136,8 +136,16 @@
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <configuration>
-                    <skipSource>true</skipSource>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
