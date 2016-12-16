@@ -42,7 +42,7 @@ fun main(args: Array<String>) {
 
             val otherRepos =
                     github.listRepos(name).awaitSingle()
-                          .map { it.name }.joinToString(", ")
+                          .map(Repo::name).joinToString(", ")
 
             println(otherRepos)
         }

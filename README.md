@@ -21,7 +21,7 @@ private fun startLongAsyncOperation(v: Int) =
         }
 
 fun main(args: Array<String>) {
-    val future = async<String> {
+    val future = async {
         (1..5).map {
             await(startLongAsyncOperation(it))
         }.joinToString("\n")
@@ -39,7 +39,7 @@ it will not work with earlier versions.
 import kotlinx.coroutines.generate
 
 fun main(args: Array<String>) {
-    val sequence = generate<Int> {
+    val sequence = generate {
         for (i in 1..5) {
             yield(i)
         }
@@ -75,7 +75,7 @@ fun main(args: Array<String>) {
 
     val github = retrofit.create(GitHub::class.java)
 
-    asyncRx<Unit> {
+    asyncRx {
         for (org in listOf("Kotlin", "ReactiveX")) {
             // `awaitSingle()` call here is a suspension point,
             // i.e. coroutine's code stops on it until request is not completed
