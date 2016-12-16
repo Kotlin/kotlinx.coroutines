@@ -12,7 +12,7 @@ import kotlin.test.fail
 class AsyncTest {
     @Test
     fun testSimple() {
-        val future = async<String> {
+        val future = async {
             CompletableFuture.supplyAsync {
                 "O"
             }.await() + "K"
@@ -24,7 +24,7 @@ class AsyncTest {
     @Test
     fun testWaitForCompletion() {
         val toAwait = CompletableFuture<String>()
-        val future = async<String> {
+        val future = async {
             toAwait.await() + "K"
         }
 
@@ -53,7 +53,7 @@ class AsyncTest {
 
     @Test
     fun testExceptionInsideCoroutine() {
-        val future = async<String> {
+        val future = async {
             if (CompletableFuture.supplyAsync { true }.await()) {
                 throw IllegalStateException("OK")
             }
@@ -73,7 +73,7 @@ class AsyncTest {
     fun testContinuationWrapped() {
         val depth = AtomicInteger()
 
-        val future = async<String>(continuationWrapper = {
+        val future = async(continuationWrapper = {
             depth.andIncrement
             it()
             depth.andDecrement

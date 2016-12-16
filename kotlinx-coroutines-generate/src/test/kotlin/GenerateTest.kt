@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 class GenerateTest {
     @Test
     fun testSimple() {
-        val result = generate<Int> {
+        val result = generate {
             for (i in 1..3) {
                 yield(2 * i)
             }
@@ -23,7 +23,7 @@ class GenerateTest {
 
     @Test
     fun testCallHasNextSeveralTimes() {
-        val result = generate<Int> {
+        val result = generate {
             yield(1)
         }
 
@@ -44,7 +44,7 @@ class GenerateTest {
 
     @Test
     fun testManualIteration() {
-        val result = generate<Int> {
+        val result = generate {
             yield(1)
             yield(2)
             yield(3)
@@ -84,7 +84,7 @@ class GenerateTest {
     @Test
     fun testLaziness() {
         var sharedVar = -2
-        val result = generate<Int> {
+        val result = generate {
             while (true) {
                 when (sharedVar) {
                     -1 -> return@generate
@@ -116,7 +116,7 @@ class GenerateTest {
     @Test
     fun testExceptionInCoroutine() {
         var sharedVar = -2
-        val result = generate<Int> {
+        val result = generate {
             while (true) {
                 when (sharedVar) {
                     -1 -> return@generate
@@ -138,7 +138,7 @@ class GenerateTest {
     @Test
     fun testParallelIteration() {
         var inc = 0
-        val result = generate<Int> {
+        val result = generate {
             for (i in 1..3) {
                 inc++
                 yield(inc * i)

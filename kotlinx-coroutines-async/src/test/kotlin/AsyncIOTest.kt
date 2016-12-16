@@ -1,7 +1,6 @@
 package kotlinx.coroutines.asyncIO
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.async
 import org.apache.commons.io.FileUtils
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +35,7 @@ class AsyncIOTest {
                         outputFile.toPath(),
                         StandardOpenOption.CREATE, StandardOpenOption.WRITE)
         val buf = ByteBuffer.allocate(1024)
-        val future = async<Unit> {
+        val future = async {
             var totalBytesRead = 0L
             var totalBytesWritten = 0L
             while (totalBytesRead < input.size()) {
@@ -69,7 +68,7 @@ class AsyncIOTest {
                         .bind(InetSocketAddress(8080))
 
         threadPool.submit {
-            async<Unit> {
+            async {
                 val client = serverChannel.aAccept()
                 val buffer = ByteBuffer.allocate(2)
                 client.aRead(buffer)
@@ -81,7 +80,7 @@ class AsyncIOTest {
             }
         }
 
-        async<Unit> {
+        async {
             val connection =
                     AsynchronousSocketChannel.open()
             // async calls

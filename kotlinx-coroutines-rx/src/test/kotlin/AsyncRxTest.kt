@@ -9,7 +9,7 @@ import kotlin.test.fail
 class AsyncRxTest {
     @Test
     fun testSingle() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             Observable.just("O").awaitSingle() + "K"
         }
 
@@ -20,7 +20,7 @@ class AsyncRxTest {
 
     @Test
     fun testSingleWithDelay() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -32,7 +32,7 @@ class AsyncRxTest {
 
     @Test
     fun testSingleException() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -43,7 +43,7 @@ class AsyncRxTest {
 
     @Test
     fun testAwaitFirst() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -54,7 +54,7 @@ class AsyncRxTest {
 
     @Test
     fun testAwaitLast() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -65,7 +65,7 @@ class AsyncRxTest {
 
     @Test
     fun testExceptionFromObservable() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -80,7 +80,7 @@ class AsyncRxTest {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             error(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -92,7 +92,7 @@ class AsyncRxTest {
 
     @Test
     fun testApplyForEachAndWait() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             var result = ""
 
             Observable.just("O", "K").applyForEachAndAwait {
@@ -109,7 +109,7 @@ class AsyncRxTest {
 
     @Test
     fun testApplyForEachAndWaitException() {
-        val observable = asyncRx<String> {
+        val observable = asyncRx {
             try {
                 Observable.error<String>(RuntimeException("OK")).applyForEachAndAwait {
                     fail("Should not be here")

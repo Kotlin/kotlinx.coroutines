@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
 
     val github = retrofit.create(GitHub::class.java)
 
-    asyncRx<Unit> {
+    asyncRx {
         val contributors =
                 github.contributors("JetBrains", "Kotlin")
                       .awaitSingle().take(10)
