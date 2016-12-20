@@ -147,4 +147,128 @@ class GenerateTest {
 
         assertEquals(listOf(Pair(1, 2), Pair(6, 8), Pair(15, 18)), result.zip(result).toList())
     }
+
+    @Test
+    fun testYieldAllIterator() {
+        val result = generate {
+            yieldAll(listOf(1, 2, 3).iterator())
+        }
+        assertEquals(listOf(1, 2, 3), result.toList())
+    }
+
+    @Test
+    fun testYieldAllSequence() {
+        val result = generate {
+            yieldAll(sequenceOf(1, 2, 3))
+        }
+        assertEquals(listOf(1, 2, 3), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollection() {
+        val result = generate {
+            yieldAll(listOf(1, 2, 3))
+        }
+        assertEquals(listOf(1, 2, 3), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionMixedFirst() {
+        val result = generate {
+            yield(0)
+            yieldAll(listOf(1, 2, 3))
+        }
+        assertEquals(listOf(0, 1, 2, 3), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionMixedLast() {
+        val result = generate {
+            yieldAll(listOf(1, 2, 3))
+            yield(4)
+        }
+        assertEquals(listOf(1, 2, 3, 4), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionMixedBoth() {
+        val result = generate {
+            yield(0)
+            yieldAll(listOf(1, 2, 3))
+            yield(4)
+        }
+        assertEquals(listOf(0, 1, 2, 3, 4), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionMixedLong() {
+        val result = generate {
+            yield(0)
+            yieldAll(listOf(1, 2, 3))
+            yield(4)
+            yield(5)
+            yieldAll(listOf(6))
+            yield(7)
+            yieldAll(listOf())
+            yield(8)
+        }
+        assertEquals(listOf(0, 1, 2, 3, 4, 5, 6, 7, 8), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionOneEmpty() {
+        val result = generate<Int> {
+            yieldAll(listOf())
+        }
+        assertEquals(listOf(), result.toList())
+    }
+
+    @Test
+    fun testYieldAllCollectionManyEmpty() {
+        val result = generate<Int> {
+            yieldAll(listOf())
+            yieldAll(listOf())
+            yieldAll(listOf())
+        }
+        assertEquals(listOf(), result.toList())
+    }
+
+    @Test
+    fun testYieldAllSideEffects() {
+        val effects = arrayListOf<Any>()
+        val result = generate {
+            effects.add("a")
+            yieldAll(listOf(1, 2))
+            effects.add("b")
+            yieldAll(listOf())
+            effects.add("c")
+            yieldAll(listOf(3))
+            effects.add("d")
+            yield(4)
+            effects.add("e")
+            yieldAll(listOf())
+            effects.add("f")
+            yield(5)
+        }
+
+        for (res in result) {
+            effects.add("(") // marks step start
+            effects.add(res)
+            effects.add(")") // marks step end
+        }
+        assertEquals(
+                listOf(
+                        "a",
+                        "(", 1, ")",
+                        "(", 2, ")",
+                        "b", "c",
+                        "(", 3, ")",
+                        "d",
+                        "(", 4, ")",
+                        "e", "f",
+                        "(", 5, ")"
+                ),
+                effects.toList()
+        )
+    }
 }
