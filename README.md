@@ -111,17 +111,17 @@ Add dependencies:
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-generate</artifactId>
-    <version>0.2-alpha-1</version>
+    <version>0.2-beta</version>
 </dependency>
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-async</artifactId>
-    <version>0.2-alpha-1</version>
+    <version>0.2-beta</version>
 </dependency>
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-rx</artifactId>
-    <version>0.2-alpha-1</version>
+    <version>0.2-beta</version>
 </dependency>
 ```
 
@@ -130,9 +130,9 @@ Add dependencies:
 Just add dependencies:
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.2-alpha-1'
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.2-alpha-1'
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-rx:0.2-alpha-1'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.2-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.2-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-rx:0.2-beta'
 ```
 
 *NB:* As `async` library is built upon `CompletableFuture` it requires JDK 8 (24 Android API level)
