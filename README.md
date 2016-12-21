@@ -101,7 +101,7 @@ Add the bintray repository
     </snapshots>
     <id>dl</id>
     <name>bintray</name>
-    <url>http://dl.bintray.com/kotlin/kotlinx.coroutines</url>
+    <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
 </repository>
 ```
 
@@ -142,7 +142,7 @@ Also you should include our bintray repository:
 ```groovy
 repositories {
     maven {
-        url "http://dl.bintray.com/kotlin/kotlinx.coroutines"
+        url "http://dl.bintray.com/kotlin/kotlin-eap-1.1"
     }
 }
 ```
