@@ -39,7 +39,6 @@ fun <T> asyncRx(
     return result
 }
 
-
 suspend fun <V> Observable<V>.awaitFirst(): V = first().awaitOne()
 
 suspend fun <V> Observable<V>.awaitLast(): V = last().awaitOne()
