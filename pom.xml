@@ -38,6 +38,10 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>bintray-kotlin-dev</id>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev/</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -52,6 +56,10 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
+        <pluginRepository>
+            <id>bintray-kotlin-dev</id>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev/</url>
+        </pluginRepository>
     </pluginRepositories>
 
     <developers>
@@ -65,7 +73,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.1-SNAPSHOT</kotlin.version>
+        <kotlin.version>1.1-M04</kotlin.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -167,6 +175,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <args>-Xcoroutines=enable</args>
+                </configuration>
             </plugin>
 
         </plugins>
