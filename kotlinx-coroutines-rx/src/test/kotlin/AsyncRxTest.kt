@@ -126,6 +126,21 @@ class AsyncRxTest {
         }
     }
 
+
+    @Test
+    fun testAsyncIterator() {
+        val observable = asyncRx {
+            val sb = StringBuilder()
+            for (s in Observable.just("O", "K"))
+                sb.append(s)
+            sb.toString()
+        }
+
+        checkObservableWithSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
     private fun checkErroneousObservable(
             observable: Observable<*>,
             checker: (Throwable) -> Unit
