@@ -14,10 +14,6 @@
 
     <name>Example of asyncRx usage</name>
 
-    <properties>
-        <kotlin.version>1.1-SNAPSHOT</kotlin.version>
-    </properties>
-
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <plugins>
