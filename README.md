@@ -24,7 +24,7 @@ private fun startLongAsyncOperation(v: Int) =
 fun main(args: Array<String>) {
     val future = async {
         (1..5).map {
-            await(startLongAsyncOperation(it))
+            startLongAsyncOperation(it).await()
         }.joinToString("\n")
     }
 
