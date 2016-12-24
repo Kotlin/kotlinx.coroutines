@@ -35,6 +35,10 @@
             <name>bintray</name>
             <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
         </repository>
+        <repository>
+            <id>bintray-kotlin-dev</id>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev/</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -42,6 +46,10 @@
             <id>bintray</id>
             <name>bintray</name>
             <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>bintray-kotlin-dev</id>
+            <url>https://dl.bintray.com/kotlin/kotlin-dev/</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -163,6 +171,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <args>-Xcoroutines=enable</args>
+                </configuration>
             </plugin>
 
         </plugins>

@@ -126,6 +126,38 @@ class AsyncRxTest {
         }
     }
 
+
+    @Test
+    fun testAsyncIterator() {
+        val observable = asyncRx {
+            var result = ""
+            for (s in Observable.just("O", "K")) {
+                result += s
+            }
+            result
+        }
+
+        checkObservableWithSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAsyncIteratorException() {
+        val observable = asyncRx {
+            var result = ""
+            for (s in Observable.error<String>(RuntimeException("OK"))) {
+                result += s
+            }
+            result
+        }
+
+        checkErroneousObservable(observable) {
+            assert(it is RuntimeException)
+            assertEquals("OK", it.message)
+        }
+    }
+
     private fun checkErroneousObservable(
             observable: Observable<*>,
             checker: (Throwable) -> Unit
