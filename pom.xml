@@ -7,7 +7,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.3-beta-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Kotlin coroutines libraries</name>
@@ -31,17 +31,26 @@
 
     <repositories>
         <repository>
-            <id>bintray</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
+            <id>sonatype-oss</id>
+            <name>Sonatype OSS</name>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>bintray</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
+            <id>sonatype.oss.snapshots</id>
+            <name>Sonatype OSS Snapshot Repository</name>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </pluginRepository>
     </pluginRepositories>
 
@@ -56,7 +65,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.1-M04</kotlin.version>
+        <kotlin.version>1.1-SNAPSHOT</kotlin.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -74,9 +83,11 @@
     </distributionManagement>
 
     <modules>
-        <module>kotlinx-coroutines-async</module>
-        <module>kotlinx-coroutines-async-example-ui</module>
-        <module>kotlinx-coroutines-generate</module>
+        <module>kotlinx-coroutines-core</module>
+        <module>kotlinx-coroutines-swing</module>
+        <module>kotlinx-coroutines-javafx</module>
+        <module>kotlinx-coroutines-jdk8</module>
+        <module>kotlinx-coroutines-nio</module>
         <module>kotlinx-coroutines-rx</module>
         <module>kotlinx-coroutines-rx-example</module>
     </modules>

@@ -1,5 +1,4 @@
-package kotlinx.coroutines
-
+import kotlinx.coroutines.experimental.rx.*
 import org.junit.Test
 import rx.Observable
 import java.util.concurrent.TimeUnit
@@ -9,7 +8,7 @@ import kotlin.test.fail
 class AsyncRxTest {
     @Test
     fun testSingle() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             Observable.just("O").awaitSingle() + "K"
         }
 
@@ -20,7 +19,7 @@ class AsyncRxTest {
 
     @Test
     fun testSingleWithDelay() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -32,7 +31,7 @@ class AsyncRxTest {
 
     @Test
     fun testSingleException() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -43,7 +42,7 @@ class AsyncRxTest {
 
     @Test
     fun testAwaitFirst() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -54,7 +53,7 @@ class AsyncRxTest {
 
     @Test
     fun testAwaitLast() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -65,7 +64,7 @@ class AsyncRxTest {
 
     @Test
     fun testExceptionFromObservable() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -80,7 +79,7 @@ class AsyncRxTest {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             error(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -92,7 +91,7 @@ class AsyncRxTest {
 
     @Test
     fun testApplyForEachAndWait() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             var result = ""
 
             Observable.just("O", "K").applyForEachAndAwait {
@@ -109,7 +108,7 @@ class AsyncRxTest {
 
     @Test
     fun testApplyForEachAndWaitException() {
-        val observable = asyncRx {
+        val observable = rxSingle {
             try {
                 Observable.error<String>(RuntimeException("OK")).applyForEachAndAwait {
                     fail("Should not be here")

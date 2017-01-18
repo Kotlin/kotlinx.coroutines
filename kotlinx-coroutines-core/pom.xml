@@ -9,22 +9,13 @@
         <version>0.3-beta-SNAPSHOT</version>
     </parent>
 
-    <artifactId>kotlinx-coroutines-rx</artifactId>
+    <artifactId>kotlinx-coroutines-core</artifactId>
     <packaging>jar</packaging>
 
-    <name>Kotlin coroutines support for Rx library</name>
+    <name>Kotlin coroutines core library</name>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>1.1.5</version>
-        </dependency>
-    </dependencies>
-
 </project>
