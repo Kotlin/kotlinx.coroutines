@@ -35,4 +35,8 @@ internal open class JobContinuation<in T>(
             }
         }
     }
+
+    override fun afterCompletion(state: Any?, closeException: Throwable?) {
+        if (closeException != null) handleCoroutineException(context, closeException)
+    }
 }

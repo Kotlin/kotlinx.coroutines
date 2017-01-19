@@ -35,9 +35,8 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     future.whenComplete { _, exception -> cancel(exception) }
     onCompletion {
-        // todo: write better (more efficient) implementation, because we know that await will not suspend
         try {
-            future.complete(runBlocking(Job() + Here) { await() })
+            future.complete(getCompleted())
         } catch (exception: Exception) {
             future.completeExceptionally(exception)
         }

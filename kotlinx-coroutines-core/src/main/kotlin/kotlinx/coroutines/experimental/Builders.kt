@@ -59,7 +59,7 @@ private class StandaloneCoroutine(
     val parentContext: CoroutineContext
 ) : JobContinuation<Unit>(parentContext) {
     override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) handleCoroutineException(context, closeException)
+        super.afterCompletion(state, closeException) // handle closeException
         // note the use of the parent context below!
         if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.exception)
     }
@@ -69,7 +69,7 @@ private class BlockingCoroutine<T>(parentContext: CoroutineContext) : JobContinu
     val blockedThread: Thread = Thread.currentThread()
 
     override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) handleCoroutineException(context, closeException)
+        super.afterCompletion(state, closeException) // handle closeException
         LockSupport.unpark(blockedThread)
     }
 

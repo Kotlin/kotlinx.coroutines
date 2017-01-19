@@ -47,7 +47,7 @@ internal class SafeCancellableContinuation<in T>(
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) handleCoroutineException(context, closeException)
+        super.afterCompletion(state, closeException) // handle closeException
         if (suspendedThread === Thread.currentThread()) {
             // cancelled during suspendCancellableCoroutine in its thread
             suspendedThread = null

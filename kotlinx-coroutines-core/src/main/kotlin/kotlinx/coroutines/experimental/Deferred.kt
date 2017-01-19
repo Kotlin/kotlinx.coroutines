@@ -12,9 +12,17 @@ public interface Deferred<out T> : Job {
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete.
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
-     * immediately resumes with [CancellationException] .
+     * immediately resumes with [CancellationException].
      */
     public suspend fun await(): T
+
+    /**
+     * Returns *completed* result or throws [IllegalStateException] if this deferred value is still [isActive].
+     * It throws the corresponding exception if this deferred has completed exceptionally.
+     * This function is designed to be used from [onCompletion] handlers, when there is an absolute certainty that
+     * the value is already complete.
+     */
+    public fun getCompleted(): T
 }
 
 /**
@@ -54,7 +62,11 @@ private class DeferredCoroutine<T>(
         })
     }
 
-    override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) handleCoroutineException(context, closeException)
+    @Suppress("UNCHECKED_CAST")
+    override fun getCompleted(): T {
+        val state = getState()
+        check(state !is Active) { "This deferred value is still active" }
+        if (state is CompletedExceptionally) throw state.exception
+        return state as T
     }
 }
