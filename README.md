@@ -1,6 +1,6 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1-Beta release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-17 release. 
 It contains worked-out implementation of coroutine builders, suspending functions, and contexts that are
 used as examples in 
 [Kotlin coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
@@ -70,6 +70,14 @@ Add dependencies (you can also add other modules that you need):
 </dependency>
 ```
 
+And make sure that you use the right Kotlin version:
+
+```xml
+<properties>
+    <kotlin.version>1.1.0-beta-17</kotlin.version>
+</properties>
+```
+
 ### Gradle
 
 Add the bintray repository (and also add it to `buildScript` section, if you're willing to get `kotlin-gradle-plugin` from there):
@@ -86,4 +94,12 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.3-beta'
+```
+
+And make sure that you use the right Kotlin version:
+
+```groovy
+buildscript {
+    ext.kotlin_version = '1.1.0-beta-17'
+}
 ```
