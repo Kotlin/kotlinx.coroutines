@@ -165,9 +165,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <args>-Xcoroutines=enable</args>
-                </configuration>
             </plugin>
 
         </plugins>
