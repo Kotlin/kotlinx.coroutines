@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.ContinuationInterceptor.Key
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -24,6 +25,26 @@ public object Here : CoroutineDispatcher() {
 }
 
 /**
+ * Returns the context of the coroutine that this function is invoked in or throws
+ * [IllegalStateException] if not invoked inside a coroutine.
+ * This function can be used to inherit execution context of the parent coroutine if needed,
+ * like in `launch(currentCoroutineContext()) { ... }`.
+ * This function properly works only for coroutines that are created using [newCoroutineContext] function,
+ * as all coroutine builders in `kotlinx.coroutines` do.
+ */
+public val currentCoroutineContext: CoroutineContext
+    get() = CURRENT_CONTEXT.get() ?: throw IllegalStateException("Not inside a coroutine")
+
+
+/**
+ * Returns the context of the coroutine that this function is invoked in or a specified [default]
+ * if not invoked inside a coroutine. A [default] must be a singleton [CoroutineDispatcher] element.
+ * See [CoroutineDispatcher] for the standard implementations that are provided by `kotlinx.coroutines`.
+ */
+public fun currentCoroutineContextOrDefault(default: CoroutineDispatcher): CoroutineContext =
+    CURRENT_CONTEXT.get() ?: default
+
+/**
  * Creates context for the new coroutine with user-specified overrides from [context] parameter.
  * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
  * This function shall be used to start new coroutines.
@@ -40,8 +61,13 @@ public object Here : CoroutineDispatcher() {
  * The string "coroutine" is used as a default name.
  */
 public fun newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    validateContext(context)
-    return ((CURRENT_CONTEXT.get() ?: EmptyCoroutineContext) + context).let {
+    val current = CURRENT_CONTEXT.get()
+    if (context !== current) {
+        check(context[ContinuationInterceptor] is CoroutineDispatcher) {
+            "Context of new coroutine must include CoroutineDispatcher"
+        }
+    }
+    return ((current ?: EmptyCoroutineContext) + context).let {
         if (DEBUG) it + CoroutineId(COROUTINE_ID.incrementAndGet()) else it
     }
 }
@@ -49,7 +75,6 @@ public fun newCoroutineContext(context: CoroutineContext): CoroutineContext {
 /**
  * Executes a block using a given default coroutine context.
  * This context affects all new coroutines that are started withing the block.
- * The specified [context] is merged onto the current coroutine context (if any).
  */
 internal inline fun <T> withDefaultCoroutineContext(context: CoroutineContext, block: () -> T): T {
     val oldContext = CURRENT_CONTEXT.get()
@@ -58,12 +83,6 @@ internal inline fun <T> withDefaultCoroutineContext(context: CoroutineContext, b
         return block()
     } finally {
         restoreContext(oldContext, oldName)
-    }
-}
-
-private fun validateContext(context: CoroutineContext) {
-    check(context[ContinuationInterceptor] is CoroutineDispatcher) {
-        "Context of new coroutine must include CoroutineDispatcher"
     }
 }
 

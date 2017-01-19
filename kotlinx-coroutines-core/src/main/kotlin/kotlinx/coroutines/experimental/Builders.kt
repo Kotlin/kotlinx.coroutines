@@ -11,6 +11,7 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
  * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
+ * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *
@@ -41,6 +42,7 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
  * This function should not be used from coroutine. It is designed to bridge regular code blocking code
  * to libraries that are written in suspending style.
  * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
+ * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *

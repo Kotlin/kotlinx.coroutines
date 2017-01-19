@@ -29,6 +29,7 @@ public interface Deferred<out T> : Job {
  * Starts new coroutine and returns its result as an implementation of [Deferred].
  * The running coroutine is cancelled when the resulting job is cancelled.
  * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
+ * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  */

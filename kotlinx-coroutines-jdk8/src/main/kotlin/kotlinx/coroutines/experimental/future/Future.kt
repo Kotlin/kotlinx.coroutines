@@ -12,6 +12,7 @@ import kotlin.coroutines.startCoroutine
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed
  * The [context] for the new coroutine must include [CoroutineDispatcher] element.
+ * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *
