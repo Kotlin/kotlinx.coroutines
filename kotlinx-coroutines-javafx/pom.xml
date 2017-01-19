@@ -9,10 +9,10 @@
         <version>0.3-beta-SNAPSHOT</version>
     </parent>
 
-    <artifactId>kotlinx-coroutines-rx</artifactId>
+    <artifactId>kotlinx-coroutines-javafx</artifactId>
     <packaging>jar</packaging>
 
-    <name>Kotlin coroutines support for Rx library</name>
+    <name>Kotlin coroutines JavaFx library</name>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
@@ -21,9 +21,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.reactivex</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>1.1.5</version>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

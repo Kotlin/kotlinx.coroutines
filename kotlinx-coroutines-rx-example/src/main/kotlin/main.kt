@@ -1,7 +1,6 @@
-package kotlinx.coroutines.example
 
-import kotlinx.coroutines.asyncRx
-import kotlinx.coroutines.awaitSingle
+import kotlinx.coroutines.experimental.rx.awaitSingle
+import kotlinx.coroutines.experimental.rx.rxSingle
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,7 +31,7 @@ fun main(args: Array<String>) {
 
     val github = retrofit.create(GitHub::class.java)
 
-    asyncRx {
+    rxSingle {
         val contributors =
                 github.contributors("JetBrains", "Kotlin")
                       .awaitSingle().take(10)
