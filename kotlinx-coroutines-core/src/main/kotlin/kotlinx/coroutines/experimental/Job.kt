@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.util.LockFreeLinkedListHead
-import kotlinx.coroutines.experimental.util.LockFreeLinkedListNode
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -120,7 +120,7 @@ public open class JobSupport(
 ) : AbstractCoroutineContextElement(Job), Job {
     // keeps a stack of cancel listeners or a special CANCELLED, other values denote completed scope
     @Volatile
-    private var state: Any? = Active() // will drop the list on cancel
+    private var state: Any? = ActiveList() // will drop the list on cancel
 
     // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
     private val registration: Job.Registration? = parent?.onCompletion(CancelOnCompletion(parent, this))
@@ -134,7 +134,7 @@ public open class JobSupport(
     protected fun getState(): Any? = state
 
     protected fun updateState(expect: Any, update: Any?): Boolean {
-        expect as Active // assert type
+        expect as ActiveList // assert type
         require(update !is Active) // only active -> inactive transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // #1. Unregister from parent job
@@ -169,6 +169,7 @@ public open class JobSupport(
                 return EmptyRegistration
             }
             val node = nodeCache ?: makeNode(handler).apply { nodeCache = this }
+            state as ActiveList // assert type
             if (state.addLastIf(node) { this.state == state }) return node
         }
     }
@@ -188,7 +189,9 @@ public open class JobSupport(
             (handler as? JobNode)?.also { require(it.job === this) }
                     ?: InvokeOnCompletion(this, handler)
 
-    protected class Active : LockFreeLinkedListHead()
+    protected interface Active
+
+    private class ActiveList : LockFreeLinkedListHead(), Active
 
     protected abstract class CompletedExceptionally {
         abstract val cancelReason: Throwable?

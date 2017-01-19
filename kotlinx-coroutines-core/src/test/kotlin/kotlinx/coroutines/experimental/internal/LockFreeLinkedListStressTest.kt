@@ -1,4 +1,4 @@
-package kotlinx.coroutines.experimental.util
+package kotlinx.coroutines.experimental.internal
 
 import org.junit.Test
 import java.util.*
@@ -6,9 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 class LockFreeLinkedListStressTest {
-    data class IntNode(val i: Int) : LockFreeLinkedListNode()
-
-    val list = LockFreeLinkedListHead()
+    private data class IntNode(val i: Int) : LockFreeLinkedListNode()
+    private val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
     val nAdded = 10_000_000

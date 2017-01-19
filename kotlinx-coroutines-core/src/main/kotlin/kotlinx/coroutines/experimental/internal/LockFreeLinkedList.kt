@@ -1,4 +1,4 @@
-package kotlinx.coroutines.experimental.util
+package kotlinx.coroutines.experimental.internal
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -14,7 +14,7 @@ private typealias Node = LockFreeLinkedListNode
  * Sentinel node should be never removed.
  */
 @Suppress("LeakingThis")
-public open class LockFreeLinkedListNode {
+internal open class LockFreeLinkedListNode {
     @Volatile
     private var _next: Any = this // DoubleLinkedNode | Removed | CondAdd
     @Volatile
@@ -241,7 +241,7 @@ public open class LockFreeLinkedListNode {
     }
 }
 
-public open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
+internal open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     /**
      * Iterates over all elements in this list of a specified type.
      */

@@ -1,4 +1,4 @@
-package kotlinx.coroutines.experimental.util
+package kotlinx.coroutines.experimental.internal
 
 import org.junit.Assert.*
 import org.junit.Test
