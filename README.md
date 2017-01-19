@@ -9,7 +9,7 @@ It consists of the following modules:
 
 * `kotlinx-coroutines-core` module with core primitives to work with coroutines. It is designed to work on any JDK6+ and Android
 and contains the following main pieces:
-  * `lanunch(context) { ... }` to start a coroutine in the given context.
+  * `launch(context) { ... }` to start a coroutine in the given context.
   * `run(context) { ... }` to switch to a different context inside a coroutine.
   * `runBlocking(context) { ... }` to use asynchronous Kotlin APIs from a thread-blocking code.  
   * `defer(context) { ... }` to get a deferred result of coroutine execution in a non-blocking way.
