@@ -59,19 +59,17 @@ public fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T
 
 private class StandaloneCoroutine(
     val parentContext: CoroutineContext
-) : JobContinuation<Unit>(parentContext) {
-    override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        super.afterCompletion(state, closeException) // handle closeException
+) : AbstractCoroutine<Unit>(parentContext) {
+    override fun afterCompletion(state: Any?) {
         // note the use of the parent context below!
         if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.exception)
     }
 }
 
-private class BlockingCoroutine<T>(parentContext: CoroutineContext) : JobContinuation<T>(parentContext) {
+private class BlockingCoroutine<T>(parentContext: CoroutineContext) : AbstractCoroutine<T>(parentContext) {
     val blockedThread: Thread = Thread.currentThread()
 
-    override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        super.afterCompletion(state, closeException) // handle closeException
+    override fun afterCompletion(state: Any?) {
         LockSupport.unpark(blockedThread)
     }
 

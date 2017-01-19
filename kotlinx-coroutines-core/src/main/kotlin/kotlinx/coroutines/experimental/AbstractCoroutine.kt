@@ -3,14 +3,18 @@ package kotlinx.coroutines.experimental
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
-// internal helper class for various primitives that combines Job and Continuation implementations
+/**
+ * Abstract class to simplify writing of coroutine completion objects that
+ * implements [Continuation] and [Job] interfaces.
+ * It stores the result of continuation in the state of the job.
+ */
 @Suppress("LeakingThis")
-internal open class JobContinuation<in T>(
+public abstract class AbstractCoroutine<in T>(
     parentContext: CoroutineContext
 ) : JobSupport(parentContext[Job]), Continuation<T> {
     override val context: CoroutineContext = parentContext + this // mixes this job into this context
 
-    override fun resume(value: T) {
+    final override fun resume(value: T) {
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
@@ -21,7 +25,7 @@ internal open class JobContinuation<in T>(
         }
     }
 
-    override fun resumeWithException(exception: Throwable) {
+    final override fun resumeWithException(exception: Throwable) {
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
@@ -36,7 +40,7 @@ internal open class JobContinuation<in T>(
         }
     }
 
-    override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) handleCoroutineException(context, closeException)
+    final override fun handleCompletionException(closeException: Throwable) {
+        handleCoroutineException(context, closeException)
     }
 }

@@ -31,7 +31,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(crossinline block: (Ca
 @PublishedApi
 internal class SafeCancellableContinuation<in T>(
     private val delegate: Continuation<T>
-) : JobContinuation<T>(delegate.context), CancellableContinuation<T> {
+) : AbstractCoroutine<T>(delegate.context), CancellableContinuation<T> {
     // only updated from the thread that invoked suspendCancellableCoroutine
     private var suspendedThread: Thread? = Thread.currentThread()
 
@@ -46,8 +46,7 @@ internal class SafeCancellableContinuation<in T>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, closeException: Throwable?) {
-        super.afterCompletion(state, closeException) // handle closeException
+    override fun afterCompletion(state: Any?) {
         if (suspendedThread === Thread.currentThread()) {
             // cancelled during suspendCancellableCoroutine in its thread
             suspendedThread = null

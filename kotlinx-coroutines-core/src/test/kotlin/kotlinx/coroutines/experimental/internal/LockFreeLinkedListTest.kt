@@ -18,13 +18,14 @@ class LockFreeLinkedListTest {
         assertContents(list, 3, 2, 1)
         val n4 = IntNode(4).apply { list.addFirst(this) }
         assertContents(list, 4, 3, 2, 1)
-        n1.remove()
+        assertTrue(n1.remove())
         assertContents(list, 4, 3, 2)
-        n3.remove()
+        assertTrue(n3.remove())
+        assertFalse(n3.remove())
         assertContents(list, 4, 2)
-        n4.remove()
+        assertTrue(n4.remove())
         assertContents(list, 2)
-        n2.remove()
+        assertTrue(n2.remove())
         assertContents(list)
     }
 
@@ -40,13 +41,14 @@ class LockFreeLinkedListTest {
         assertContents(list, 1, 2, 3)
         val n4 = IntNode(4).apply { list.addLast(this) }
         assertContents(list, 1, 2, 3, 4)
-        n1.remove()
+        assertTrue(n1.remove())
         assertContents(list, 2, 3, 4)
-        n3.remove()
+        assertTrue(n3.remove())
         assertContents(list, 2, 4)
-        n4.remove()
+        assertTrue(n4.remove())
         assertContents(list, 2)
-        n2.remove()
+        assertTrue(n2.remove())
+        assertFalse(n2.remove())
         assertContents(list)
     }
 
@@ -72,5 +74,6 @@ class LockFreeLinkedListTest {
         list.forEach<IntNode> { actual[index++] = it.i }
         assertEquals(n, index)
         for (i in 0 until n) assertEquals("item i", expected[i], actual[i])
+        assertEquals(expected.isEmpty(), list.isEmpty)
     }
 }

@@ -91,6 +91,9 @@ public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Regis
 public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
     onCompletion(CancelFutureOnCompletion(this, future))
 
+internal fun Job.removeOnCompletion(node: LockFreeLinkedListNode): Job.Registration =
+    onCompletion(RemoveOnCompletion(this, node))
+
 /**
  * Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
  * when the job is complete for any reason.
@@ -140,21 +143,18 @@ public open class JobSupport(
         // #1. Unregister from parent job
         registration?.unregister()
         // #2 Invoke completion handlers
-        var closeException: Throwable? = null
-        val reason = when (update) {
-            is Cancelled -> update.cancelReason
-            is CompletedExceptionally -> update.exception
-            else -> null
-        }
+        val reason = (update as? CompletedExceptionally)?.cancelReason
+        var completionException: Throwable? = null
         expect.forEach<JobNode> { node ->
             try {
                 node.invoke(reason)
             } catch (ex: Throwable) {
-                if (closeException == null) closeException = ex else closeException!!.addSuppressed(ex)
+                completionException?.apply { addSuppressed(ex) } ?: run { completionException = ex }
             }
         }
         // #3 Do other (overridable) processing
-        afterCompletion(update, closeException)
+        completionException?.let { handleCompletionException(it) }
+        afterCompletion(update)
         return true
     }
 
@@ -181,9 +181,17 @@ public open class JobSupport(
         }
     }
 
-    protected open fun afterCompletion(state: Any?, closeException: Throwable?) {
-        if (closeException != null) throw closeException
+    /**
+     * Override to process any exceptions that were encountered while invoking [onCompletion] handlers.
+     */
+    protected open fun handleCompletionException(closeException: Throwable) {
+        throw closeException
     }
+
+    /**
+     * Override for post-completion actions that need to do something with the state.
+     */
+    protected open fun afterCompletion(state: Any?) {}
 
     private fun makeNode(handler: CompletionHandler): JobNode =
             (handler as? JobNode)?.also { require(it.job === this) }
@@ -271,4 +279,12 @@ private class CancelFutureOnCompletion(
 ) : JobNode(job)  {
     override fun invoke(reason: Throwable?) { future.cancel(true) }
     override fun toString() = "CancelFutureOnCompletion[$future]"
+}
+
+private class RemoveOnCompletion(
+    job: Job,
+    val node: LockFreeLinkedListNode
+) : JobNode(job)  {
+    override fun invoke(reason: Throwable?) { node.remove() }
+    override fun toString() = "RemoveOnCompletion[$node]"
 }

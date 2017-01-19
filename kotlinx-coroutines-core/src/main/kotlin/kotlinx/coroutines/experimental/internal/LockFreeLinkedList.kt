@@ -139,18 +139,26 @@ internal open class LockFreeLinkedListNode {
     }
 
     /**
-     * Removes this node from the list.
+     * Removes this node from the list. Returns `true` when removed successfully.
      */
-    public open fun remove() {
+    public open fun remove(): Boolean {
         while (true) { // lock-free loop on next
             val next = this.next
-            if (next is Removed) return // was already removed -- don't try to help (original thread will take care)
+            if (next is Removed) return false // was already removed -- don't try to help (original thread will take care)
             if (NEXT.compareAndSet(this, next, Removed(next as Node))) {
                 // was removed successfully (linearized remove) -- fixup the list
                 helpDelete()
                 next.helpInsert(prev.unwrap())
-                return
+                return true
             }
+        }
+    }
+
+    internal fun removeFirstOrNull(): Node? {
+        while (true) { // try to linearize
+            val first = next()
+            if (first == this) return null
+            if (first.remove()) return first
         }
     }
 
@@ -242,6 +250,8 @@ internal open class LockFreeLinkedListNode {
 }
 
 internal open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
+    public val isEmpty: Boolean get() = next() == this
+
     /**
      * Iterates over all elements in this list of a specified type.
      */
