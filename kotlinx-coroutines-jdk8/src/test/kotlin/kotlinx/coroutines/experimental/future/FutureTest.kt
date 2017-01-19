@@ -38,6 +38,22 @@ class FutureTest {
     }
 
     @Test
+    fun testDoneFutureCompletedExceptionally() {
+        val toAwait = CompletableFuture<String>()
+        toAwait.completeExceptionally(RuntimeException("O"))
+        val future = future<String> {
+            try {
+                toAwait.await()
+            } catch (e: RuntimeException) {
+                e.message!!
+            } + "K"
+        }
+
+        assertFalse(future.isDone)
+        assertEquals("OK", future.get())
+    }
+
+    @Test
     fun testAwaitedFutureCompletedExceptionally() {
         val toAwait = CompletableFuture<String>()
         val future = future<String> {

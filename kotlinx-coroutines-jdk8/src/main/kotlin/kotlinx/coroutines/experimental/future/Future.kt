@@ -50,9 +50,19 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> {
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException] .
  */
-public suspend fun <T> CompletableFuture<T>.await(): T =
-    // quick check if already complete (avoid extra object creation)
-    if (isDone) get() else suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+public suspend fun <T> CompletableFuture<T>.await(): T {
+    if (isDone) {
+        // then only way to get unwrapped exception from the CompletableFuture...
+        var result: T? = null
+        var exception: Throwable? = null
+        whenComplete { r, e ->
+            result = r
+            exception = e
+        }
+        if (exception != null) throw exception!!
+        return result as T
+    }
+    return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val completionFuture = whenComplete { result, exception ->
             if (exception == null) // the future has been completed normally
                 cont.resume(result)
@@ -62,6 +72,7 @@ public suspend fun <T> CompletableFuture<T>.await(): T =
         cont.cancelFutureOnCompletion(completionFuture)
         Unit
     }
+}
 
 private class CompletableFutureCoroutine<T>(
     override val context: CoroutineContext
