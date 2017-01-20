@@ -7,9 +7,9 @@ class JobTest {
     @Test
     fun testState() {
         val job = JobSupport()
-        assertTrue(job.isActive)
+        check(job.isActive)
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
     }
 
     @Test
@@ -17,15 +17,15 @@ class JobTest {
         val job = JobSupport()
         var fireCount = 0
         job.onCompletion { fireCount++ }
-        assertTrue(job.isActive)
+        check(job.isActive)
         assertEquals(0, fireCount)
         // cancel once
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         assertEquals(1, fireCount)
         // cancel again
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         assertEquals(1, fireCount)
     }
 
@@ -35,15 +35,15 @@ class JobTest {
         val n = 100
         val fireCount = IntArray(n)
         for (i in 0 until n) job.onCompletion { fireCount[i]++ }
-        assertTrue(job.isActive)
+        check(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         // cancel once
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
         // cancel again
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
     }
 
@@ -59,15 +59,15 @@ class JobTest {
                 registration!!.unregister()
             }
         }
-        assertTrue(job.isActive)
+        check(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         // cancel once
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
         // cancel again
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
     }
 
@@ -77,12 +77,12 @@ class JobTest {
         val n = 100
         val fireCount = IntArray(n)
         val registrations = Array<Job.Registration>(n) { i -> job.onCompletion { fireCount[i]++ } }
-        assertTrue(job.isActive)
+        check(job.isActive)
         fun unreg(i: Int) = i % 4 <= 1
         for (i in 0 until n) if (unreg(i)) registrations[i].unregister()
         for (i in 0 until n) assertEquals(0, fireCount[i])
         job.cancel()
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(if (unreg(i)) 0 else 1, fireCount[i])
     }
 
@@ -96,12 +96,12 @@ class JobTest {
             fireCount[i]++
             throw TestException()
         }
-        assertTrue(job.isActive)
+        check(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         val tryCancel = Try<Unit> { job.cancel() }
-        assertFalse(job.isActive)
+        check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
-        assertTrue(tryCancel.exception is TestException)
+        check(tryCancel.exception is TestException)
     }
 
     @Test
@@ -110,5 +110,14 @@ class JobTest {
         val n = 10_000_000
         var fireCount = 0
         for (i in 0 until n) job.onCompletion { fireCount++ }.unregister()
+    }
+    
+    @Test
+    fun testCancelledParent() {
+        val parent = Job()
+        parent.cancel()
+        check(!parent.isActive)
+        val child = Job(parent)
+        check(!child.isActive)
     }
 }

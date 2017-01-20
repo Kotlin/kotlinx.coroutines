@@ -9,10 +9,8 @@ import kotlin.coroutines.CoroutineContext
  * It stores the result of continuation in the state of the job.
  */
 @Suppress("LeakingThis")
-public abstract class AbstractCoroutine<in T>(
-    parentContext: CoroutineContext
-) : JobSupport(parentContext[Job]), Continuation<T> {
-    override val context: CoroutineContext = parentContext + this // mixes this job into this context
+public abstract class AbstractCoroutine<in T>(parentContext: CoroutineContext) : JobSupport(), Continuation<T> {
+    override val context: CoroutineContext = parentContext + this // merges this job into this context
 
     final override fun resume(value: T) {
         while (true) { // lock-free loop on state

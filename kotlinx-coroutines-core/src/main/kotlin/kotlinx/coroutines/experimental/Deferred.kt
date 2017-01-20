@@ -39,6 +39,8 @@ public fun <T> defer(context: CoroutineContext, block: suspend () -> T) : Deferr
 private class DeferredCoroutine<T>(
         parentContext: CoroutineContext
 ) : AbstractCoroutine<T>(parentContext), Deferred<T> {
+    init { initParentJob(parentContext[Job]) }
+
     @Suppress("UNCHECKED_CAST")
     suspend override fun await(): T {
         // quick check if already complete (avoid extra object creation)

@@ -2,7 +2,6 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import java.util.concurrent.CancellationException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -28,7 +27,7 @@ public interface Job : CoroutineContext.Element {
         /**
          * Creates new job object. It is optionally a child of a [parent] job.
          */
-        public operator fun invoke(parent: Job? = null): Job = JobSupport(parent)
+        public operator fun invoke(parent: Job? = null): Job = JobImpl(parent)
     }
 
     /**
@@ -67,9 +66,12 @@ public interface Job : CoroutineContext.Element {
     }
 }
 
-typealias CompletionHandler = (Throwable?) -> Unit
+public typealias CompletionHandler = (Throwable?) -> Unit
 
-typealias CancellationException = CancellationException
+/**
+ * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
+ */
+public typealias CancellationException = java.util.concurrent.CancellationException
 
 /**
  * Unregisters a specified [registration] when this job is complete.
@@ -118,20 +120,29 @@ public suspend fun Job.join() {
  * state and mare store addition state information for completed jobs, like their result values.
  */
 @Suppress("LeakingThis")
-public open class JobSupport(
-    parent: Job? = null
-) : AbstractCoroutineContextElement(Job), Job {
+public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     // keeps a stack of cancel listeners or a special CANCELLED, other values denote completed scope
     @Volatile
     private var state: Any? = ActiveList() // will drop the list on cancel
 
-    // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
-    private val registration: Job.Registration? = parent?.onCompletion(CancelOnCompletion(parent, this))
+    @Volatile
+    private var registration: Job.Registration? = null
 
     protected companion object {
         @JvmStatic
         private val STATE: AtomicReferenceFieldUpdater<JobSupport, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(JobSupport::class.java, Any::class.java, "state")
+    }
+
+    // invoke at most once after construction after all other initialization
+    protected fun initParentJob(parent: Job?) {
+        if (parent == null) return
+        check(registration == null)
+        // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
+        val newRegistration = parent.onCompletion(CancelOnCompletion(parent, this))
+        registration = newRegistration
+        // now check our state _after_ registering (see updateState order of actions)
+        if (state !is Active) newRegistration.unregister()
     }
 
     protected fun getState(): Any? = state
@@ -141,7 +152,7 @@ public open class JobSupport(
         require(update !is Active) // only active -> inactive transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // #1. Unregister from parent job
-        registration?.unregister()
+        registration?.unregister() // volatile read registration _after_ state was updated
         // #2 Invoke completion handlers
         val reason = (update as? CompletedExceptionally)?.cancelReason
         var completionException: Throwable? = null
@@ -202,21 +213,26 @@ public open class JobSupport(
     private class ActiveList : LockFreeLinkedListHead(), Active
 
     protected abstract class CompletedExceptionally {
-        abstract val cancelReason: Throwable?
-        abstract val exception: Throwable
+        abstract val cancelReason: Throwable // original reason or fresh CancellationException
+        abstract val exception: Throwable // the exception to be thrown in continuation
     }
 
-    protected class Cancelled(override val cancelReason: Throwable?) : CompletedExceptionally() {
+    protected class Cancelled(specifiedReason: Throwable?) : CompletedExceptionally() {
+        @Volatile
+        private var _cancelReason = specifiedReason // materialize CancellationException on first need
+
+        override val cancelReason: Throwable get() =
+            _cancelReason ?: // atomic read volatile var or else create new
+                CancellationException().also { _cancelReason = it }
+
         @Volatile
         private var _exception: Throwable? = null // convert reason to CancellationException on first need
+
         override val exception: Throwable get() =
-            _exception ?: // atomic read volatile var or else
-                run {
-                    val result = cancelReason as? CancellationException ?:
-                        CancellationException().apply { if (cancelReason != null) initCause(cancelReason) }
-                    _exception = result
-                    result
-                }
+            _exception ?: // atomic read volatile var or else build new
+                (cancelReason as? CancellationException ?:
+                        CancellationException(cancelReason.message).apply { initCause(cancelReason) })
+                            .also { _exception = it }
     }
 
     protected class Failed(override val exception: Throwable) : CompletedExceptionally() {
@@ -287,4 +303,8 @@ private class RemoveOnCompletion(
 ) : JobNode(job)  {
     override fun invoke(reason: Throwable?) { node.remove() }
     override fun toString() = "RemoveOnCompletion[$node]"
+}
+
+private class JobImpl(parent: Job? = null) : JobSupport() {
+    init { initParentJob(parent) }
 }

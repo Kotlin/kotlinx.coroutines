@@ -17,11 +17,11 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job
 
 /**
  * Suspend coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
- * the [block].
+ * the [block]. This function throws [CancellationException] if the coroutine is cancelled while suspended.
  */
 public inline suspend fun <T> suspendCancellableCoroutine(crossinline block: (CancellableContinuation<T>) -> Unit): T =
-    suspendCoroutineOrReturn { c ->
-        val safe = SafeCancellableContinuation(c)
+    suspendCoroutineOrReturn { cont ->
+        val safe = SafeCancellableContinuation(cont, getParentJobOrAbort(cont))
         block(safe)
         safe.getResult()
     }
@@ -29,11 +29,22 @@ public inline suspend fun <T> suspendCancellableCoroutine(crossinline block: (Ca
 // --------------- implementation details ---------------
 
 @PublishedApi
+internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
+    val job = cont.context[Job]
+    // fast path when parent job is already complete (we don't even construct SafeCancellableContinuation object)
+    job?.isActive?.let { if (!it) throw CancellationException() }
+    return job
+}
+
+@PublishedApi
 internal class SafeCancellableContinuation<in T>(
-    private val delegate: Continuation<T>
+        private val delegate: Continuation<T>,
+        parentJob: Job?
 ) : AbstractCoroutine<T>(delegate.context), CancellableContinuation<T> {
     // only updated from the thread that invoked suspendCancellableCoroutine
     private var suspendedThread: Thread? = Thread.currentThread()
+
+    init { initParentJob(parentJob) }
 
     fun getResult(): Any? {
         if (suspendedThread != null) {
