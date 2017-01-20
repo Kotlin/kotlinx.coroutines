@@ -16,8 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AsyncIOTest {
-    val PORT = Random().nextInt(10000) + 10000 // randomize port for this test
-
     @Rule
     @JvmField
     val tmpDir = TemporaryFolder()
@@ -66,7 +64,9 @@ class AsyncIOTest {
         val serverChannel =
                 AsynchronousServerSocketChannel
                         .open()
-                        .bind(InetSocketAddress(PORT))
+                        .bind(InetSocketAddress(0))
+
+        val serverPort = (serverChannel.localAddress as InetSocketAddress).port
 
         val c1 = launch(CommonPool) {
             val client = serverChannel.aAccept()
@@ -83,7 +83,7 @@ class AsyncIOTest {
             val connection =
                     AsynchronousSocketChannel.open()
             // async calls
-            connection.aConnect(InetSocketAddress("127.0.0.1", PORT))
+            connection.aConnect(InetSocketAddress("127.0.0.1", serverPort))
             connection.aWrite(Charsets.UTF_8.encode("OK"))
 
             val buffer = ByteBuffer.allocate(3)
