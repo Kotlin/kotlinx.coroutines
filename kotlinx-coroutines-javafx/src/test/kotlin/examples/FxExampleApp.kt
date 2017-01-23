@@ -1,3 +1,5 @@
+package examples
+
 import javafx.application.Application
 import javafx.scene.Node
 import javafx.scene.Scene
@@ -8,6 +10,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Rectangle
 import javafx.stage.Stage
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
@@ -50,7 +53,7 @@ class FxTestApp : Application() {
     val animations = arrayListOf<Job>()
     var animationIndex = 0
 
-    private fun animation(node: Node, block: suspend () -> Unit) {
+    private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
         val job = launch(JavaFx, block)
         animations += job

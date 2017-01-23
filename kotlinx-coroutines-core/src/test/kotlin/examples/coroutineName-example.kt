@@ -2,7 +2,7 @@ package examples
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking(Here + CoroutineName("main")) {
+fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
     log("Started main coroutine")
     // run two background value computations
     val v1 = defer(CommonPool + CoroutineName("v1")) {

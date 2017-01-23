@@ -1,3 +1,5 @@
+package examples
+
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.swing.Swing

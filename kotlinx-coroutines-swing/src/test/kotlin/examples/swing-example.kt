@@ -1,3 +1,5 @@
+package examples
+
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.swing.Swing
 import java.time.Instant
@@ -23,7 +25,7 @@ fun main(args: Array<String>) = runBlocking(Swing) {
     try {
         // suspend while asynchronously making request
         val result = makeRequest()
-        // display result in UI, here Swing dispatcher ensures that we always stay in event dispatch thread
+        // example.display result in UI, here Swing dispatcher ensures that we always stay in event dispatch thread
         display(result)
     } catch (exception: Throwable) {
         // process exception

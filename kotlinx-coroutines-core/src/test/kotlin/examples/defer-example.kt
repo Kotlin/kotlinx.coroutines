@@ -4,7 +4,7 @@ import kotlinx.coroutines.experimental.*
 
 val receiverThread = newSingleThreadContext("ReceiverThread")
 
-fun main(args: Array<String>) = runBlocking(Here) {
+fun main(args: Array<String>) = runBlocking {
     val va = Array<Deferred<String>>(10) { i ->
         defer(CommonPool) {
             val sleepTime = i * 200L
