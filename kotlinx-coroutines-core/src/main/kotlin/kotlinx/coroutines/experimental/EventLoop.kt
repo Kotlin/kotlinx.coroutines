@@ -4,65 +4,91 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.startCoroutine
 
+/**
+ * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
+ * be asked to process next event from their event queue. It is used by [runBlocking] to
+ * continue processing events when invoked from the event dispatch thread.
+ */
 public interface EventLoop {
-    public val thisEventLoop: CoroutineDispatcher
-    public suspend fun yield()
+    /**
+     * Processes next event in this event loop and returns `true` or returns `false` if there are
+     * no events to process or when invoked from the wrong thread.
+     */
+    public fun processNextEvent(): Boolean
+
+    public companion object Factory {
+        /**
+         * Creates a new event loop that is bound the specified [thread] (current thread by default) and
+         * stops accepting new events when [parentJob] completes. Every continuation that is scheduled
+         * onto this event loop unparks the specified thread via [LockSupport.unpark].
+         *
+         * The main event-processing loop using the resulting `eventLoop` object should look like this:
+         * ```
+         * while (needsToBeRunning) {
+         *     if (Thread.interrupted()) break // or handle somehow
+         *     if (!eventLoop.processNextEvent()) LockSupport.park() // event loop will unpark
+         * }
+         * ```
+         */
+        public operator fun invoke(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
+            EventLoopImpl(thread).apply {
+                if (parentJob != null) initParentJob(parentJob)
+            }
+    }
 }
 
-@Throws(InterruptedException::class)
-public fun <T> runEventLoop(block: suspend EventLoop.() -> T): T =
-    EventLoopImpl<T>().also { block.startCoroutine(it, it.coroutine) }.coroutine.joinBlocking()
-
-private class EventLoopImpl<T> : CoroutineDispatcher(), EventLoop {
-    val thread: Thread = Thread.currentThread()
+internal class EventLoopImpl(
+    val thread: Thread
+) : CoroutineDispatcher(), EventLoop, Yield {
     val queue = LockFreeLinkedListHead()
-    val coroutine = Coroutine()
+    var parentJob: Job? = null
 
-    public override val thisEventLoop: CoroutineDispatcher = this
-
-    public override suspend fun yield(): Unit = suspendCancellableCoroutine { cont ->
-        val node = Resume(cont)
-        schedule(node)
-        cont.removeOnCompletion(node)
+    fun initParentJob(coroutine: Job) {
+        require(this.parentJob == null)
+        this.parentJob = coroutine
     }
 
     override fun isDispatchNeeded(): Boolean = Thread.currentThread() != thread
 
     override fun dispatch(block: Runnable) {
         schedule(Dispatch(block))
-        queue.addLast(Dispatch(block))
     }
 
-    fun schedule(node: LockFreeLinkedListNode) {
-        check(queue.addLastIf(node) { coroutine.isActive }) {
-            "EventLoop is already complete... cannot schedule any tasks"
-        }
-        LockSupport.unpark(thread)
+    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
+        val node = Resume(continuation)
+        if (schedule(node))
+            continuation.removeOnCompletion(node)
     }
 
-    inner class Coroutine : AbstractCoroutine<T>(this@EventLoopImpl) {
-        override fun afterCompletion(state: Any?) {
+    fun schedule(node: Node): Boolean {
+        val added = if (parentJob == null) {
+            queue.addLast(node)
+            true
+        } else
+            queue.addLastIf(node) { parentJob!!.isActive }
+        if (added) {
             LockSupport.unpark(thread)
+        } else {
+            node.run()
         }
-
-        @Suppress("UNCHECKED_CAST")
-        fun joinBlocking(): T {
-            while (isActive) {
-                if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
-                (queue.removeFirstOrNull() as? Runnable)?.run() ?: LockSupport.park(this)
-            }
-            check(queue.isEmpty) { "There are still tasks in event loop queue... Stray coroutines?"}
-            val state = getState()
-            (state as? CompletedExceptionally)?.let { throw it.exception }
-            return state as T
-        }
+        return added
     }
 
-    class Dispatch(block: Runnable) : LockFreeLinkedListNode(), Runnable by block
+    override fun processNextEvent(): Boolean {
+        if (Thread.currentThread() != thread) return false
+        (queue.removeFirstOrNull() as? Runnable)?.apply {
+            run()
+            return true
+        }
+        return false
+    }
 
-    class Resume(val cont: Continuation<Unit>) : LockFreeLinkedListNode(), Runnable {
+    abstract class Node : LockFreeLinkedListNode(), Runnable
+
+    class Dispatch(block: Runnable) : Node(), Runnable by block
+
+    class Resume(val cont: Continuation<Unit>) : Node() {
         override fun run() = cont.resume(Unit)
     }
 }

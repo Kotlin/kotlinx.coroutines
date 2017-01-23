@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
  * When available, it wraps [ForkJoinPool.commonPool] and provides a similar shared pool where not.
  */
-object CommonPool : CoroutineDispatcher() {
+object CommonPool : CoroutineDispatcher(), Yield {
     private val pool: Executor = findPool()
 
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
@@ -37,4 +37,8 @@ object CommonPool : CoroutineDispatcher() {
 
     override fun isDispatchNeeded(): Boolean = true
     override fun dispatch(block: Runnable) = pool.execute(block)
+
+    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
+        pool.execute { continuation.resume(Unit) }
+    }
 }

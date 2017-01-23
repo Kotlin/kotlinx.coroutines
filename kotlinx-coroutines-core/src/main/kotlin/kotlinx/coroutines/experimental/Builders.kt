@@ -1,10 +1,7 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.*
 
 // --------------- basic coroutine builders ---------------
 
@@ -21,8 +18,8 @@ import kotlin.coroutines.suspendCoroutine
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  */
-fun launch(context: CoroutineContext, block: suspend () -> Unit): Job =
-    StandaloneCoroutine(newCoroutineContext(context)).also { block.startCoroutine(it) }
+fun launch(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
+    StandaloneCoroutine(newCoroutineContext(context)).also { block.startCoroutine(it, it) }
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
@@ -30,20 +27,21 @@ fun launch(context: CoroutineContext, block: suspend () -> Unit): Job =
  * different thread inside the block, and back when it completes.
  * The specified [context] is merged onto the current coroutine context.
  */
-public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
+public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T =
     suspendCoroutine { cont ->
-        block.startCoroutine(object : Continuation<T> by cont {
-            override val context: CoroutineContext = cont.context + context
-        })
+        // new don't invoke `newCoroutineContext`, but consider this being the same coroutine in the new context
+        InnerCoroutine(cont.context + context, cont).also { block.startCoroutine(it, it) }
     }
 
 /**
  * Runs new coroutine and *blocks* current thread *interruptibly* until its completion.
- * This function should not be used from coroutine. It is designed to bridge regular code blocking code
- * to libraries that are written in suspending style.
- * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
- * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
- * The specified context is added to the context of the parent running coroutine (if any) inside which this function
+ * This function should not be used from coroutine. It is designed to bridge regular blocking code
+ * to libraries that are written in suspending style, to be used in `main` functions and in tests.
+ *
+ * The default [CoroutineDispatcher] for this builder in an implementation of [EventLoop] that processes continuations
+ * in this blocked thread until the completion of this coroutine.
+ * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
+ * The specified [context] is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
@@ -52,26 +50,45 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  */
 @Throws(InterruptedException::class)
-public fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T =
-    BlockingCoroutine<T>(newCoroutineContext(context)).also { block.startCoroutine(it) }.joinBlocking()
+public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    val currentThread = Thread.currentThread()
+    val privateEventLoop = if (context[ContinuationInterceptor] as? CoroutineDispatcher == null)
+        EventLoopImpl(currentThread) else null
+    val newContext = newCoroutineContext(context + (privateEventLoop ?: EmptyCoroutineContext))
+    val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop != null)
+    privateEventLoop?.initParentJob(coroutine)
+    block.startCoroutine(coroutine, coroutine)
+    return coroutine.joinBlocking()
+}
 
 // --------------- implementation ---------------
 
 private class StandaloneCoroutine(
-    val parentContext: CoroutineContext
-) : AbstractCoroutine<Unit>(parentContext) {
-    init { initParentJob(parentContext[Job]) }
+    val newContext: CoroutineContext
+) : AbstractCoroutine<Unit>(newContext) {
+    init { initParentJob(newContext[Job]) }
 
     override fun afterCompletion(state: Any?) {
-        // note the use of the parent context below!
-        if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.cancelReason)
+        // note the use of the parent's job context below!
+        if (state is CompletedExceptionally) handleCoroutineException(newContext, state.cancelReason)
     }
 }
 
-private class BlockingCoroutine<T>(parentContext: CoroutineContext) : AbstractCoroutine<T>(parentContext) {
-    val blockedThread: Thread = Thread.currentThread()
+private class InnerCoroutine<T>(
+    override val context: CoroutineContext,
+    continuation: Continuation<T>
+) : Continuation<T> by continuation, CoroutineScope {
+    override val isActive: Boolean = context[Job]?.isActive ?: true
+}
 
-    init { initParentJob(parentContext[Job])  }
+private class BlockingCoroutine<T>(
+    newContext: CoroutineContext,
+    val blockedThread: Thread,
+    val hasPrivateEventLoop: Boolean
+) : AbstractCoroutine<T>(newContext) {
+    val eventLoop: EventLoop? = newContext[ContinuationInterceptor] as? EventLoop
+
+    init { initParentJob(newContext[Job]) }
 
     override fun afterCompletion(state: Any?) {
         LockSupport.unpark(blockedThread)
@@ -81,8 +98,14 @@ private class BlockingCoroutine<T>(parentContext: CoroutineContext) : AbstractCo
     fun joinBlocking(): T {
         while (isActive) {
             if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
-            LockSupport.park(this)
+            if (eventLoop == null || !eventLoop.processNextEvent())
+                LockSupport.park(this)
         }
+        // process remaining events (that could have been added after last processNextEvent and before cancel
+        if (hasPrivateEventLoop) {
+            while (eventLoop!!.processNextEvent()) { /* just spin */ }
+        }
+        // now return result
         val state = getState()
         (state as? CompletedExceptionally)?.let { throw it.exception }
         return state as T

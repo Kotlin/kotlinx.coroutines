@@ -4,13 +4,29 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 /**
+ * Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
+ * to its [context] and cancellation status via [isActive].
+ */
+public interface CoroutineScope {
+    /**
+     * Returns `true` when this coroutine is still active (was not cancelled).
+     */
+    public val isActive: Boolean
+
+    /**
+     * Returns the context of this coroutine.
+     */
+    public val context: CoroutineContext
+}
+
+/**
  * Abstract class to simplify writing of coroutine completion objects that
  * implements [Continuation] and [Job] interfaces.
  * It stores the result of continuation in the state of the job.
  */
 @Suppress("LeakingThis")
-public abstract class AbstractCoroutine<in T>(parentContext: CoroutineContext) : JobSupport(), Continuation<T> {
-    override val context: CoroutineContext = parentContext + this // merges this job into this context
+public abstract class AbstractCoroutine<in T>(newContext: CoroutineContext) : JobSupport(), Continuation<T>, CoroutineScope {
+    override val context: CoroutineContext = newContext + this // merges this job into this context
 
     final override fun resume(value: T) {
         while (true) { // lock-free loop on state

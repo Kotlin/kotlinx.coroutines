@@ -4,7 +4,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * Implemented by [CoroutineDispatcher] implementations that natively support non-blocking [delay] function.
+ * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
+ * non-blocking [delay] function.
  */
 public interface Delay {
     /**
@@ -16,13 +17,13 @@ public interface Delay {
     suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
         require(time >= 0) { "Delay time $time cannot be negative" }
         if (time <= 0) return // don't delay
-        return suspendCancellableCoroutine { resumeAfterDelay(time, unit, it) }
+        return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, unit, it) }
     }
 
     /**
-     * Resumes a specified continuation after a specified delay.
+     * Schedules resume of a specified [continuation] after a specified delay [time].
      */
-    fun resumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>)
+    fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>)
 }
 
 /**
@@ -39,7 +40,7 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
     if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
         (cont.context[ContinuationInterceptor] as? Delay)?.apply {
-            resumeAfterDelay(time, unit, cont)
+            scheduleResumeAfterDelay(time, unit, cont)
             return@sc
         }
         val timeout = scheduledExecutor.schedule({ cont.resume(Unit) }, time, unit)

@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental.swing
 import kotlinx.coroutines.experimental.CancellableContinuation
 import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Delay
+import kotlinx.coroutines.experimental.Yield
 import kotlinx.coroutines.experimental.swing.Swing.delay
 import java.awt.event.ActionListener
 import java.util.concurrent.TimeUnit
@@ -12,11 +13,15 @@ import javax.swing.Timer
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
-object Swing : CoroutineDispatcher(), Delay {
+object Swing : CoroutineDispatcher(), Yield, Delay {
     override fun isDispatchNeeded(): Boolean = !SwingUtilities.isEventDispatchThread()
     override fun dispatch(block: Runnable) = SwingUtilities.invokeLater(block)
 
-    override fun resumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
+        SwingUtilities.invokeLater { continuation.resume(Unit) }
+    }
+
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val timerTime = unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
         val timer = Timer(timerTime, ActionListener { continuation.resume(Unit) }).apply {
             isRepeats = false

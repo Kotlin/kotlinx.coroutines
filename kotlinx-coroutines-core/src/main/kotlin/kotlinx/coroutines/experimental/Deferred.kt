@@ -33,13 +33,13 @@ public interface Deferred<out T> : Job {
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  */
-public fun <T> defer(context: CoroutineContext, block: suspend () -> T) : Deferred<T> =
-    DeferredCoroutine<T>(newCoroutineContext(context)).also { block.startCoroutine(it) }
+public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T) : Deferred<T> =
+    DeferredCoroutine<T>(newCoroutineContext(context)).also { block.startCoroutine(it, it) }
 
 private class DeferredCoroutine<T>(
-        parentContext: CoroutineContext
-) : AbstractCoroutine<T>(parentContext), Deferred<T> {
-    init { initParentJob(parentContext[Job]) }
+    newContext: CoroutineContext
+) : AbstractCoroutine<T>(newContext), Deferred<T> {
+    init { initParentJob(newContext[Job]) }
 
     @Suppress("UNCHECKED_CAST")
     suspend override fun await(): T {

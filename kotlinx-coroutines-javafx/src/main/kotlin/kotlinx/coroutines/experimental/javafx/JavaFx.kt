@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
-object JavaFx : CoroutineDispatcher(), Delay {
+object JavaFx : CoroutineDispatcher(), Yield, Delay {
     private val pulseTimer by lazy {
         PulseTimer().apply { start() }
     }
@@ -33,7 +33,11 @@ object JavaFx : CoroutineDispatcher(), Delay {
         pulseTimer.onNext(cont)
     }
 
-    override fun resumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
+        Platform.runLater { continuation.resume(Unit) }
+    }
+
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val timeline = Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()),
                 EventHandler<ActionEvent> { continuation.resume(Unit) }))
         timeline.play()

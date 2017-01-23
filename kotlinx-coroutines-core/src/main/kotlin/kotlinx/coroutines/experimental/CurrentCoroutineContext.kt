@@ -3,7 +3,6 @@ package kotlinx.coroutines.experimental
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.ContinuationInterceptor.Key
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -34,7 +33,6 @@ public object Here : CoroutineDispatcher() {
  */
 public val currentCoroutineContext: CoroutineContext
     get() = CURRENT_CONTEXT.get() ?: throw IllegalStateException("Not inside a coroutine")
-
 
 /**
  * Returns the context of the coroutine that this function is invoked in or a specified [default]

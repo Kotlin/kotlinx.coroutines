@@ -1,6 +1,8 @@
 package kotlinx.coroutines.experimental.nio
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.join
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import org.apache.commons.io.FileUtils
 import org.junit.Rule
 import org.junit.Test
@@ -11,7 +13,6 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.AsynchronousServerSocketChannel
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.file.StandardOpenOption
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -36,7 +37,7 @@ class AsyncIOTest {
                     StandardOpenOption.CREATE, StandardOpenOption.WRITE)
         val buf = ByteBuffer.allocate(1024)
 
-        runBlocking(Here) {
+        runBlocking {
             var totalBytesRead = 0L
             var totalBytesWritten = 0L
             while (totalBytesRead < input.size()) {
@@ -60,7 +61,7 @@ class AsyncIOTest {
     }
 
     @Test
-    fun testNetworkChannels() = runBlocking<Unit>(Here) {
+    fun testNetworkChannels() = runBlocking {
         val serverChannel =
                 AsynchronousServerSocketChannel
                         .open()
@@ -68,7 +69,7 @@ class AsyncIOTest {
 
         val serverPort = (serverChannel.localAddress as InetSocketAddress).port
 
-        val c1 = launch(CommonPool) {
+        val c1 = launch(context) {
             val client = serverChannel.aAccept()
             val buffer = ByteBuffer.allocate(2)
             client.aRead(buffer)
@@ -79,7 +80,7 @@ class AsyncIOTest {
             client.close()
         }
 
-        val c2 = launch(CommonPool) {
+        val c2 = launch(context) {
             val connection =
                     AsynchronousSocketChannel.open()
             // async calls

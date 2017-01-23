@@ -23,6 +23,9 @@ import kotlin.coroutines.CoroutineContext
  * All functions on this interface are thread-safe.
  */
 public interface Job : CoroutineContext.Element {
+    /**
+     * Key for [Job] instance in the coroutine context.
+     */
     public companion object Key : CoroutineContext.Key<Job> {
         /**
          * Creates new job object. It is optionally a child of a [parent] job.

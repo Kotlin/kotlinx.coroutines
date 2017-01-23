@@ -37,7 +37,7 @@ private class ThreadPoolDispatcher(
         nThreads: Int,
         name: String,
         val job: Job
-) : CoroutineDispatcher(), ContinuationInterceptor, Delay {
+) : CoroutineDispatcher(), ContinuationInterceptor, Yield, Delay {
     val threadNo = AtomicInteger()
     val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
         thread(start = false, isDaemon = true,
@@ -55,7 +55,11 @@ private class ThreadPoolDispatcher(
 
     override fun dispatch(block: Runnable) = executor.execute(block)
 
-    override fun resumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
+        executor.execute { continuation.resume(Unit) }
+    }
+
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val timeout = executor.schedule({ continuation.resume(Unit) }, time, unit)
         continuation.cancelFutureOnCompletion(timeout)
     }
