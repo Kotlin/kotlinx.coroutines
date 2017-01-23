@@ -11,6 +11,7 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.javafx.JavaFx.delay
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 
 /**
@@ -21,8 +22,8 @@ object JavaFx : CoroutineDispatcher(), Yield, Delay {
         PulseTimer().apply { start() }
     }
 
-    override fun isDispatchNeeded(): Boolean = !Platform.isFxApplicationThread()
-    override fun dispatch(block: Runnable) = Platform.runLater(block)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
+    override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
 
     /**
      * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.

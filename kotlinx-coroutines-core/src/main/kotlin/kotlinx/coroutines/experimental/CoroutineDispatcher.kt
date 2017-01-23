@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Base class that shall be extended by all coroutine dispatcher implementations.
@@ -30,12 +31,12 @@ public abstract class CoroutineDispatcher :
     /**
      * Return `true` if execution shall be dispatched onto another thread.
      */
-    public abstract fun isDispatchNeeded(): Boolean
+    public abstract fun isDispatchNeeded(context: CoroutineContext): Boolean
 
     /**
-     * Dispatches execution of a runnable [block] onto another thread.
+     * Dispatches execution of a runnable [block] onto another thread in the given [context].
      */
-    public abstract fun dispatch(block: Runnable)
+    public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
             DispatchedContinuation<T>(this, continuation)
@@ -46,27 +47,29 @@ private class DispatchedContinuation<T>(
         val continuation: Continuation<T>
 ): Continuation<T> by continuation {
     override fun resume(value: T) {
-        if (dispatcher.isDispatchNeeded())
-            dispatcher.dispatch(Runnable {
-                withDefaultCoroutineContext(continuation.context) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, Runnable {
+                withDefaultCoroutineContext(context) {
                     continuation.resume(value)
                 }
             })
         else
-            withDefaultCoroutineContext(continuation.context) {
+            withDefaultCoroutineContext(context) {
                 continuation.resume(value)
             }
     }
 
     override fun resumeWithException(exception: Throwable) {
-        if (dispatcher.isDispatchNeeded())
-            dispatcher.dispatch(Runnable {
-                withDefaultCoroutineContext(continuation.context) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, Runnable {
+                withDefaultCoroutineContext(context) {
                     continuation.resumeWithException(exception)
                 }
             })
         else
-            withDefaultCoroutineContext(continuation.context) {
+            withDefaultCoroutineContext(context) {
                 continuation.resumeWithException(exception)
             }
     }

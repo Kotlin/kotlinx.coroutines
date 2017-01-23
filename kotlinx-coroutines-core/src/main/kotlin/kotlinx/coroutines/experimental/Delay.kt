@@ -43,7 +43,6 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
             scheduleResumeAfterDelay(time, unit, cont)
             return@sc
         }
-        val timeout = scheduledExecutor.schedule({ cont.resume(Unit) }, time, unit)
-        cont.cancelFutureOnCompletion(timeout)
+        scheduledExecutor.scheduleResumeAfterDelay(time, unit, cont)
     }
 }

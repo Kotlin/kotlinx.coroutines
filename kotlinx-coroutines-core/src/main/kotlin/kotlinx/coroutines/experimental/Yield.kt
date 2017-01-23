@@ -4,7 +4,8 @@ import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that
- * natively support [yield] function.
+ * natively support [yield] function. It shall be implemented only by [CoroutineDispatcher]
+ * classes with non-trivial [CoroutineDispatcher.isDispatchNeeded] implementations.
  */
 public interface Yield {
     /**

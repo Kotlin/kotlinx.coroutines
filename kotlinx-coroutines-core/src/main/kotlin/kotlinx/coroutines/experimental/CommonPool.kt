@@ -4,6 +4,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
  * When available, it wraps [ForkJoinPool.commonPool] and provides a similar shared pool where not.
  */
-object CommonPool : CoroutineDispatcher(), Yield {
+object CommonPool : CoroutineDispatcher() {
     private val pool: Executor = findPool()
 
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
@@ -35,10 +36,6 @@ object CommonPool : CoroutineDispatcher(), Yield {
 
     private fun defaultParallelism() = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
 
-    override fun isDispatchNeeded(): Boolean = true
-    override fun dispatch(block: Runnable) = pool.execute(block)
-
-    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
-        pool.execute { continuation.resume(Unit) }
-    }
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = true
+    override fun dispatch(context: CoroutineContext, block: Runnable) = pool.execute(block)
 }

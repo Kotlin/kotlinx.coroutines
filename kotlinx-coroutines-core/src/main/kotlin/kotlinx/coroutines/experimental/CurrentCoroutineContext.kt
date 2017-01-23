@@ -19,8 +19,8 @@ internal val CURRENT_CONTEXT = ThreadLocal<CoroutineContext>()
  * mandating any specific threading policy.
  */
 public object Here : CoroutineDispatcher() {
-    override fun isDispatchNeeded(): Boolean = false
-    override fun dispatch(block: Runnable) { throw UnsupportedOperationException() }
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
+    override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
 }
 
 /**

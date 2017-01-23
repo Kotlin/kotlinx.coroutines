@@ -9,13 +9,14 @@ import java.awt.event.ActionListener
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 import javax.swing.Timer
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 object Swing : CoroutineDispatcher(), Yield, Delay {
-    override fun isDispatchNeeded(): Boolean = !SwingUtilities.isEventDispatchThread()
-    override fun dispatch(block: Runnable) = SwingUtilities.invokeLater(block)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
+    override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
     override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
         SwingUtilities.invokeLater { continuation.resume(Unit) }

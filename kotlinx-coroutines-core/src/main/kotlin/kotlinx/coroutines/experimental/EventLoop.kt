@@ -4,6 +4,7 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -49,9 +50,9 @@ internal class EventLoopImpl(
         this.parentJob = coroutine
     }
 
-    override fun isDispatchNeeded(): Boolean = Thread.currentThread() != thread
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread() != thread
 
-    override fun dispatch(block: Runnable) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
         schedule(Dispatch(block))
     }
 

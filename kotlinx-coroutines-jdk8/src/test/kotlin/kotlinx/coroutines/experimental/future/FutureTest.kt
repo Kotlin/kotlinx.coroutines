@@ -7,6 +7,7 @@ import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -123,8 +124,8 @@ class FutureTest {
     }
 
     private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {
-        override fun isDispatchNeeded(): Boolean = true
-        override fun dispatch(block: Runnable) {
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean = true
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
             wrapper {
                 block.run()
             }
