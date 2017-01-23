@@ -187,4 +187,53 @@ class CoroutinesTest {
         }
         finish(5)
     }
+
+    @Test
+    fun testDeferSimple(): Unit = runBlocking {
+        expect(1)
+        val d = defer(context) {
+            expect(2)
+            42
+        }
+        expect(3)
+        check(d.await() == 42)
+        finish(4)
+    }
+
+    @Test
+    fun testDeferAndYield(): Unit = runBlocking {
+        expect(1)
+        val d = defer(context) {
+            expect(2)
+            yield()
+            expect(4)
+            42
+        }
+        expect(3)
+        check(d.await() == 42)
+        finish(5)
+    }
+
+    @Test(expected = IOException::class)
+    fun testDeferSimpleException(): Unit = runBlocking {
+        expect(1)
+        val d = defer(context) {
+            expect(2)
+            throw IOException()
+        }
+        finish(3)
+        d.await() // will throw IOException
+    }
+
+    @Test(expected = IOException::class)
+    fun testDeferAndYieldException(): Unit = runBlocking {
+        expect(1)
+        val d = defer(context) {
+            expect(2)
+            yield()
+            throw IOException()
+        }
+        finish(3)
+        d.await() // will throw IOException
+    }
 }
