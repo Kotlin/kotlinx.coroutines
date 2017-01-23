@@ -13,7 +13,12 @@ import kotlin.coroutines.suspendCoroutine
  * If the cancel reason was not a [CancellationException], then the original exception is added as cause of the
  * [CancellationException] that this continuation resumes with.
  */
-public interface CancellableContinuation<in T> : Continuation<T>, Job
+public interface CancellableContinuation<in T> : Continuation<T>, Job {
+    /**
+     * Returns `true` if this continuation was cancelled. It implies that [isActive] is `false`.
+     */
+    val isCancelled: Boolean
+}
 
 /**
  * Suspend coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
@@ -55,6 +60,9 @@ internal class SafeCancellableContinuation<in T>(
         if (state is CompletedExceptionally) throw state.exception
         return state
     }
+
+    override val isCancelled: Boolean
+        get() = getState() is Cancelled
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?) {
