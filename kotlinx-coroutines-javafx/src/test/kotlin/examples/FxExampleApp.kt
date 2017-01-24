@@ -15,14 +15,14 @@ import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
-import java.time.Instant
+import java.text.SimpleDateFormat
 import java.util.*
 
 fun main(args: Array<String>) {
     Application.launch(FxTestApp::class.java, *args)
 }
 
-fun log(msg: String) = println("${Instant.now()} [${Thread.currentThread().name}] $msg")
+fun log(msg: String) = println("${SimpleDateFormat("YYYYMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 
 class FxTestApp : Application() {
     val buttons = FlowPane().apply {

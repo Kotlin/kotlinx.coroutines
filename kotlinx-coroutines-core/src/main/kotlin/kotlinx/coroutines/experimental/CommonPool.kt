@@ -2,15 +2,14 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 /**
  * Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
- * It uses [ForkJoinPool] when available, which implements efficient work-stealing algorithm for its queues, so every
+ * It uses [java.util.concurrent.ForkJoinPool] when available, which implements efficient work-stealing algorithm for its queues, so every
  * coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
- * When available, it wraps [ForkJoinPool.commonPool] and provides a similar shared pool where not.
+ * When available, it wraps `ForkJoinPool.commonPool` and provides a similar shared pool where not.
  */
 object CommonPool : CoroutineDispatcher() {
     private val pool: Executor = findPool()

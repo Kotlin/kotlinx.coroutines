@@ -1,5 +1,6 @@
 package examples
 
-import java.time.Instant
+import java.text.SimpleDateFormat
+import java.util.*
 
-fun log(msg: String) = println("${Instant.now()} [${Thread.currentThread().name}] $msg")
+fun log(msg: String) = println("${SimpleDateFormat("YYYYMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")

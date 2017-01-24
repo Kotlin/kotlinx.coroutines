@@ -2,11 +2,12 @@ package examples
 
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.swing.Swing
-import java.time.Instant
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ForkJoinPool
 import kotlin.coroutines.suspendCoroutine
 
-fun log(msg: String) = println("${Instant.now()} [${Thread.currentThread().name}] $msg")
+fun log(msg: String) = println("${SimpleDateFormat("YYYYMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 
 suspend fun makeRequest(): String {
     log("Making request...")

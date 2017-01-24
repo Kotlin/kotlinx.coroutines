@@ -14,8 +14,22 @@
 
     <name>Kotlin coroutines core library</name>
 
+    <properties>
+        <kotlin.compiler.jdkHome>${env.JDK_16}</kotlin.compiler.jdkHome>
+    </properties>
+
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkMode>once</forkMode>
+                    <jvm>${env.JDK_16}/bin/java</jvm>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
