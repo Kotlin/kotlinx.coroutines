@@ -1,6 +1,6 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-17 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-18 release. 
 It contains worked-out implementation of coroutine builders, suspending functions, and contexts that are
 used as examples in 
 [Kotlin coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
@@ -74,7 +74,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-beta-17</kotlin.version>
+    <kotlin.version>1.1.0-beta-18</kotlin.version>
 </properties>
 ```
 
@@ -100,6 +100,6 @@ And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-beta-17'
+    ext.kotlin_version = '1.1.0-beta-18'
 }
 ```
