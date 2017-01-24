@@ -1,13 +1,23 @@
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.startCoroutine
 
+val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 50L)
+
 internal val scheduledExecutor by lazy<ScheduledExecutorService> {
-    Executors.newScheduledThreadPool(1) { r ->
-        Thread(r, "kotlinx.coroutines.ScheduledExecutor").apply { isDaemon = true }
+    ScheduledThreadPoolExecutor(1) { r ->
+        Thread(r, "kotlinx.coroutines.ScheduledExecutor")
+    }.apply {
+        setKeepAliveTime(KEEP_ALIVE, TimeUnit.MILLISECONDS)
+        allowCoreThreadTimeOut(true)
+        // "setRemoveOnCancelPolicy" is available only since JDK7, so try it via reflection
+        try {
+            val m = this::class.java.getMethod("setRemoveOnCancelPolicy", Boolean::class.javaPrimitiveType)
+            m.invoke(this, true)
+        } catch (ex: Throwable) { /* ignore */ }
     }
 }
 
