@@ -7,7 +7,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.3-beta-SNAPSHOT</version>
+    <version>0.4-beta-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Kotlin coroutines libraries</name>

@@ -4,6 +4,8 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 It contains worked-out implementation of coroutine builders, suspending functions, and contexts that are
 used as examples in 
 [Kotlin coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+
+See [change log](CHANGES.md) for a summary of changes between releases. 
  
 It consists of the following modules:
 
@@ -11,11 +13,12 @@ It consists of the following modules:
 and contains the following main pieces:
   * `launch(context) { ... }` to start a coroutine in the given context.
   * `run(context) { ... }` to switch to a different context inside a coroutine.
-  * `runBlocking(context) { ... }` to use asynchronous Kotlin APIs from a thread-blocking code.  
+  * `runBlocking { ... }` to use asynchronous Kotlin APIs from a thread-blocking code.  
   * `defer(context) { ... }` to get a deferred result of coroutine execution in a non-blocking way.
   * `delay(...)` for a non-blocking sleep in coroutines.
-  * `Here` and `CommonPool` contexts.
-  * `newSingleThreadContext(...)` and `newFixedThreadPoolContext(...)` functions.
+  * `Here` and `CommonPool` contexts, `context` or a parent coroutine.
+  * `newSingleThreadContext(...)` and `newFixedThreadPoolContext(...)` functions, 
+    `Executor.toCoroutineDispatcher()` extension.
   * Cancellation support with `Job` interface and `suspendCancellableCoroutine` helper function.
   * Debugging facilities for coroutines (run JVM with `-ea` or `-Dkotlinx.coroutines.debug` options) and
     `newCoroutineContext(context)` function to write user-defined coroutine builders that work with these
@@ -25,7 +28,7 @@ and contains the following main pieces:
   * `future { ... }` coroutine builder that returns `CompletableFuture` and works in `CommonPool` context by default.
   * `.await()` suspending function for `CompletableFuture`.
 
-* `kotlinx-coroutines-nio` module with extensions for asynchronous IO on JDK7+ (does not support cancellation yet).
+* `kotlinx-coroutines-nio` module with extensions for asynchronous IO on JDK7+.
 
 * `kotlinx-coroutines-swing` module with `Swing` context for Swing UI applications.
 
@@ -66,7 +69,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.3-beta</version>
+    <version>0.4-beta</version>
 </dependency>
 ```
 
@@ -93,7 +96,7 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.3-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.4-beta'
 ```
 
 And make sure that you use the right Kotlin version:
