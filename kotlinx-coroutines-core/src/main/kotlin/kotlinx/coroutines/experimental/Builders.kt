@@ -91,7 +91,8 @@ private class BlockingCoroutine<T>(
     init { initParentJob(newContext[Job]) }
 
     override fun afterCompletion(state: Any?) {
-        LockSupport.unpark(blockedThread)
+        if (Thread.currentThread() != blockedThread)
+            LockSupport.unpark(blockedThread)
     }
 
     @Suppress("UNCHECKED_CAST")

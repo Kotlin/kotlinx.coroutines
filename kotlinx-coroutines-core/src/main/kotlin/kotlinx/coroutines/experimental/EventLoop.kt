@@ -69,7 +69,8 @@ internal class EventLoopImpl(
         } else
             queue.addLastIf(node) { parentJob!!.isActive }
         if (added) {
-            LockSupport.unpark(thread)
+            if (Thread.currentThread() != thread)
+                LockSupport.unpark(thread)
         } else {
             node.run()
         }
