@@ -7,7 +7,17 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
-private val DEBUG = CoroutineId::class.java.desiredAssertionStatus() || System.getProperty(DEBUG_PROPERTY_NAME) != null
+
+private val DEBUG = run {
+    val value = System.getProperty(DEBUG_PROPERTY_NAME)
+    when (value) {
+        "auto", null -> CoroutineId::class.java.desiredAssertionStatus()
+        "on", "" -> true
+        "off" -> false
+        else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
+    }
+}
+
 private val COROUTINE_ID = AtomicLong()
 
 @PublishedApi
@@ -47,13 +57,17 @@ public fun currentCoroutineContextOrDefault(default: CoroutineDispatcher): Corou
  * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
  * This function shall be used to start new coroutines.
  *
- * **Debugging facilities:** When assertions are enabled or when "kotlinx.coroutines.debug" system property
- * is set, every coroutine is assigned a unique consecutive identifier. Every thread that executes
- * a coroutine has its name modified to include the name and identifier of the currently currently running coroutine.
- *
+ * **Debugging facilities:** In debug mode every coroutine is assigned a unique consecutive identifier.
+ * Every thread that executes a coroutine has its name modified to include the name and identifier of the
+ * currently currently running coroutine.
  * When one coroutine is suspended and resumes another coroutine in the same thread and a [CoroutineDispatcher]
  * is not explicitly or dispatcher executes continuation in the same thread, then the thread name displays
  * the whole stack of coroutine descriptions that are being executed on this thread.
+ *
+ * Enable debugging facilities with "`kotlinx.coroutines.debug`" system property, use the following values:
+ * * "`auto`" (default mode) -- enabled when assertions are enabled with "`-ea`" JVM option.
+ * * "`on`" or empty string -- enabled.
+ * * "`off`" -- disabled.
  *
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
