@@ -43,6 +43,11 @@
             <name>bintray</name>
             <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
         </pluginRepository>
+        <pluginRepository>
+            <id>bintray-kotlin-dokka</id>
+            <name>bintray-kotlin-dokka</name>
+            <url>http://dl.bintray.com/kotlin/dokka</url>
+        </pluginRepository>
     </pluginRepositories>
 
     <developers>
@@ -57,6 +62,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.1.0-beta-18</kotlin.version>
+        <dokka.version>0.9.13</dokka.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -171,7 +177,29 @@
                     </args>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${dokka.version}</version>
+                <executions>
+                    <execution>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>dokka</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceLinks>
+                        <link>
+                            <dir>${project.basedir}/src/main/kotlin</dir>
+                            <url>http://github.com/kotlin/kotlinx.coroutines/tree/master/${project.artifactId}/src/main/kotlin</url>
+                            <urlSuffix>#L</urlSuffix>
+                        </link>
+                    </sourceLinks>
+                    <outputFormat>gfm</outputFormat>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
