@@ -1,37 +1,9 @@
 package kotlinx.coroutines.experimental
 
-import org.junit.After
 import org.junit.Test
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
-class CoroutinesTest {
-    var actionIndex = AtomicInteger()
-    var finished = AtomicBoolean()
-    var error = AtomicReference<Throwable>()
-
-    fun expect(index: Int) {
-        val wasIndex = actionIndex.incrementAndGet()
-        check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
-    }
-
-    fun expectUnreached() {
-        throw IllegalStateException("Should not be reached").also { error.compareAndSet(null, it) }
-    }
-
-    fun finish(index: Int) {
-        expect(index)
-        finished.set(true)
-    }
-
-    @After
-    fun onCompletion() {
-        error.get()?.let { throw it }
-        check(finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
-    }
-
+class CoroutinesTest : TestBase() {
     @Test
     fun testSimple() = runBlocking {
         expect(1)
@@ -186,54 +158,5 @@ class CoroutinesTest {
             expect(4)
         }
         finish(5)
-    }
-
-    @Test
-    fun testDeferSimple(): Unit = runBlocking {
-        expect(1)
-        val d = defer(context) {
-            expect(2)
-            42
-        }
-        expect(3)
-        check(d.await() == 42)
-        finish(4)
-    }
-
-    @Test
-    fun testDeferAndYield(): Unit = runBlocking {
-        expect(1)
-        val d = defer(context) {
-            expect(2)
-            yield()
-            expect(4)
-            42
-        }
-        expect(3)
-        check(d.await() == 42)
-        finish(5)
-    }
-
-    @Test(expected = IOException::class)
-    fun testDeferSimpleException(): Unit = runBlocking {
-        expect(1)
-        val d = defer(context) {
-            expect(2)
-            throw IOException()
-        }
-        finish(3)
-        d.await() // will throw IOException
-    }
-
-    @Test(expected = IOException::class)
-    fun testDeferAndYieldException(): Unit = runBlocking {
-        expect(1)
-        val d = defer(context) {
-            expect(2)
-            yield()
-            throw IOException()
-        }
-        finish(3)
-        d.await() // will throw IOException
     }
 }

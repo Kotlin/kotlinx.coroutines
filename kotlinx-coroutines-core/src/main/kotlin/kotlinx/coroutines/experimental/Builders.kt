@@ -21,7 +21,10 @@ import kotlin.coroutines.*
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  */
 fun launch(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
-    StandaloneCoroutine(newCoroutineContext(context)).also { block.startCoroutine(it, it) }
+    StandaloneCoroutine(newCoroutineContext(context)).apply {
+        initParentJob(context[Job])
+        block.startCoroutine(this, this)
+    }
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
@@ -54,10 +57,10 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineSc
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
-    val privateEventLoop = if (context[ContinuationInterceptor] == null)
-        EventLoopImpl(currentThread) else null
+    val privateEventLoop = if (context[ContinuationInterceptor] == null) EventLoopImpl(currentThread) else null
     val newContext = newCoroutineContext(context + (privateEventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop != null)
+    coroutine.initParentJob(context[Job])
     privateEventLoop?.initParentJob(coroutine)
     block.startCoroutine(coroutine, coroutine)
     return coroutine.joinBlocking()
@@ -66,13 +69,11 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 // --------------- implementation ---------------
 
 private class StandaloneCoroutine(
-    val newContext: CoroutineContext
-) : AbstractCoroutine<Unit>(newContext) {
-    init { initParentJob(newContext[Job]) }
-
+    val parentContext: CoroutineContext
+) : AbstractCoroutine<Unit>(parentContext) {
     override fun afterCompletion(state: Any?) {
         // note the use of the parent's job context below!
-        if (state is CompletedExceptionally) handleCoroutineException(newContext, state.cancelReason)
+        if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.cancelReason)
     }
 }
 
@@ -84,13 +85,11 @@ private class InnerCoroutine<T>(
 }
 
 private class BlockingCoroutine<T>(
-    newContext: CoroutineContext,
+    context: CoroutineContext,
     val blockedThread: Thread,
     val hasPrivateEventLoop: Boolean
-) : AbstractCoroutine<T>(newContext) {
-    val eventLoop: EventLoop? = newContext[ContinuationInterceptor] as? EventLoop
-
-    init { initParentJob(newContext[Job]) }
+) : AbstractCoroutine<T>(context) {
+    val eventLoop: EventLoop? = context[ContinuationInterceptor] as? EventLoop
 
     override fun afterCompletion(state: Any?) {
         if (Thread.currentThread() != blockedThread)

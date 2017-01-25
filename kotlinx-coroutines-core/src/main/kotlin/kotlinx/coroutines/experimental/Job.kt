@@ -139,7 +139,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     }
 
     // invoke at most once after construction after all other initialization
-    protected fun initParentJob(parent: Job?) {
+    public fun initParentJob(parent: Job?) {
         if (parent == null) return
         check(registration == null)
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
@@ -155,9 +155,11 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
         expect as ActiveList // assert type
         require(update !is Active) // only active -> inactive transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
-        // #1. Unregister from parent job
+        // #1. Update linked state before invoking completion handlers
+        onStateUpdate(update)
+        // #2. Unregister from parent job
         registration?.unregister() // volatile read registration _after_ state was updated
-        // #2 Invoke completion handlers
+        // #3. Invoke completion handlers
         val reason = (update as? CompletedExceptionally)?.cancelReason
         var completionException: Throwable? = null
         expect.forEach<JobNode> { node ->
@@ -167,7 +169,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
                 completionException?.apply { addSuppressed(ex) } ?: run { completionException = ex }
             }
         }
-        // #3 Do other (overridable) processing
+        // #4. Do other (overridable) processing after completion handlers
         completionException?.let { handleCompletionException(it) }
         afterCompletion(update)
         return true
@@ -195,6 +197,11 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
             if (updateState(state, Cancelled(reason))) return true
         }
     }
+
+    /**
+     * Override to make linked state changes before completion handlers are invoked.
+     */
+    protected open fun onStateUpdate(update: Any?) {}
 
     /**
      * Override to process any exceptions that were encountered while invoking [onCompletion] handlers.

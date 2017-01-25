@@ -6,6 +6,7 @@ import kotlin.coroutines.startCoroutine
 /**
  * Deferred value is conceptually a non-blocking cancellable future.
  * It is created with [defer] coroutine builder.
+ * It is in [active][isActive] state while the value is being computed.
  */
 public interface Deferred<out T> : Job {
     /**
@@ -35,20 +36,33 @@ public interface Deferred<out T> : Job {
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  */
 public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T) : Deferred<T> =
-    DeferredCoroutine<T>(newCoroutineContext(context)).also { block.startCoroutine(it, it) }
+    DeferredCoroutine<T>(newCoroutineContext(context)).apply {
+        initParentJob(context[Job])
+        block.startCoroutine(this, this)
+    }
 
-private class DeferredCoroutine<T>(
-    newContext: CoroutineContext
-) : AbstractCoroutine<T>(newContext), Deferred<T> {
-    init { initParentJob(newContext[Job]) }
+internal open class DeferredCoroutine<T>(
+    context: CoroutineContext
+) : AbstractCoroutine<T>(context), Deferred<T> {
+    protected open fun start(): Boolean = false // LazyDeferredCoroutine overrides
 
     @Suppress("UNCHECKED_CAST")
     suspend override fun await(): T {
         // quick check if already complete (avoid extra object creation)
-        val state = getState()
-        if (state !is Active) {
-            if (state is CompletedExceptionally) throw state.exception
-            return state as T
+        getState().let { state ->
+            if (state !is Active) {
+                if (state is CompletedExceptionally) throw state.exception
+                return state as T
+            }
+        }
+        if (start()) { // LazyDeferredCoroutine overrides
+            // recheck state (may have started & already completed
+            getState().let { state ->
+                if (state !is Active) {
+                    if (state is CompletedExceptionally) throw state.exception
+                    return state as T
+                }
+            }
         }
         // Note: await is cancellable itself!
         return awaitGetValue()

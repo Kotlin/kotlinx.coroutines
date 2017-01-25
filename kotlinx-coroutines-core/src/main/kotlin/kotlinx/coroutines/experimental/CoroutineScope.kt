@@ -25,8 +25,8 @@ public interface CoroutineScope {
  * It stores the result of continuation in the state of the job.
  */
 @Suppress("LeakingThis")
-public abstract class AbstractCoroutine<in T>(newContext: CoroutineContext) : JobSupport(), Continuation<T>, CoroutineScope {
-    override val context: CoroutineContext = newContext + this // merges this job into this context
+public abstract class AbstractCoroutine<in T>(context: CoroutineContext) : JobSupport(), Continuation<T>, CoroutineScope {
+    override val context: CoroutineContext = context + this // merges this job into this context
 
     final override fun resume(value: T) {
         while (true) { // lock-free loop on state
