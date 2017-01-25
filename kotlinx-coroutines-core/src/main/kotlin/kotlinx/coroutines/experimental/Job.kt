@@ -12,13 +12,14 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * A background job. It has two states: _active_ (initial state) and _completed_ (final state).
- * It can be _cancelled_ at any time with [cancel] function that forces it to become completed immediately.
- * A job in the coroutine context represents the coroutine itself.
+ *
+ * A job can be _cancelled_ at any time with [cancel] function that forces it to become completed immediately.
+ * A job in the coroutine [context][CoroutineScope.context] represents the coroutine itself.
  * A job is active while the coroutine is working and job's cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
  * inside the coroutine.
  *
- * Jobs can have a _parent_. A job with a parent is cancelled when its parent completes.
+ * A job can have a _parent_. A job with a parent is cancelled when its parent completes.
  *
  * All functions on this interface are thread-safe.
  */

@@ -7,14 +7,16 @@ import kotlin.coroutines.*
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
- * The [context] for the new coroutine must be explicitly specified and must include [CoroutineDispatcher] element.
+ * The running coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
+ *
+ * The [context] for the new coroutine must be explicitly specified.
  * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
- * The specified context is added to the context of the parent running coroutine (if any) inside which this function
- * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
+ * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
  * Uncaught exceptions in this coroutine cancel parent job in the context by default
- * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used from another
- * coroutine, any uncaught exception leads to the cancellation of parent coroutine.
+ * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used with
+ * the context of another coroutine, then any uncaught exception leads to the cancellation of parent coroutine.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  */
@@ -23,9 +25,11 @@ fun launch(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit):
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
- * the result. It immediately applies dispatcher from the new context, shifting execution of the block into the
+ * the result.
+ *
+ * This function immediately applies dispatcher from the new context, shifting execution of the block into the
  * different thread inside the block, and back when it completes.
- * The specified [context] is merged onto the current coroutine context.
+ * The specified [context] is added onto the current coroutine context for the execution of the block.
  */
 public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T =
     suspendCoroutine { cont ->
@@ -41,8 +45,6 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineSc
  * The default [CoroutineDispatcher] for this builder in an implementation of [EventLoop] that processes continuations
  * in this blocked thread until the completion of this coroutine.
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
- * The specified [context] is added to the context of the parent running coroutine (if any) inside which this function
- * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
@@ -52,7 +54,7 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineSc
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
-    val privateEventLoop = if (context[ContinuationInterceptor] as? CoroutineDispatcher == null)
+    val privateEventLoop = if (context[ContinuationInterceptor] == null)
         EventLoopImpl(currentThread) else null
     val newContext = newCoroutineContext(context + (privateEventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop != null)

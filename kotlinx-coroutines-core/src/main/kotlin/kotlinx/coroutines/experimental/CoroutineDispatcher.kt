@@ -17,14 +17,9 @@ import kotlin.coroutines.CoroutineContext
  *   a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.
  * * Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * * [currentCoroutineContext] -- inherits the context of the parent coroutine,
- *   but throws [IllegalStateException] if used outside of coroutine. Use [currentCoroutineContextOrDefault]
- *   if a default is needed when outside of coroutine.
- *   This is an appropriate choice for libraries that need to inherit parent coroutine context.
- * * There are context implementations for UI libraries like `Swing` and `JavaFx` in separate modules.
+ * * An arbitrary [Executor][java.util.concurrent.Executor] can be converted to dispatcher with [toCoroutineDispatcher] extension function.
  *
- * This class ensures that [currentCoroutineContext] is correctly transferred to a new thread and that
- * debugging facilities in [newCoroutineContext] function work properly.
+ * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
  */
 public abstract class CoroutineDispatcher :
         AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
@@ -50,12 +45,12 @@ private class DispatchedContinuation<T>(
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
             dispatcher.dispatch(context, Runnable {
-                withDefaultCoroutineContext(context) {
+                withCoroutineContext(context) {
                     continuation.resume(value)
                 }
             })
         else
-            withDefaultCoroutineContext(context) {
+            withCoroutineContext(context) {
                 continuation.resume(value)
             }
     }
@@ -64,12 +59,12 @@ private class DispatchedContinuation<T>(
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
             dispatcher.dispatch(context, Runnable {
-                withDefaultCoroutineContext(context) {
+                withCoroutineContext(context) {
                     continuation.resumeWithException(exception)
                 }
             })
         else
-            withDefaultCoroutineContext(context) {
+            withCoroutineContext(context) {
                 continuation.resumeWithException(exception)
             }
     }
