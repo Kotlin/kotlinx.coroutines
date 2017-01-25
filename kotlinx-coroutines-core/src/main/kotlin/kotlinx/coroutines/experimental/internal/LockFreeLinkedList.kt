@@ -19,6 +19,8 @@ internal open class LockFreeLinkedListNode {
     private var _next: Any = this // DoubleLinkedNode | Removed | CondAdd
     @Volatile
     private var prev: Any = this // DoubleLinkedNode | Removed
+    @Volatile
+    private var removedRef: Removed? = null // lazily cached removed ref to this
 
     private companion object {
         @JvmStatic
@@ -27,12 +29,17 @@ internal open class LockFreeLinkedListNode {
         @JvmStatic
         val PREV: AtomicReferenceFieldUpdater<Node, Any> =
                 AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Any::class.java, "prev")
-
+        @JvmStatic
+        val REMOVED_REF: AtomicReferenceFieldUpdater<Node, Removed?> =
+            AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Removed::class.java, "removedRef")
     }
 
     private class Removed(val ref: Node) {
         override fun toString(): String = "Removed[$ref]"
     }
+
+    private fun removed(): Removed =
+        removedRef ?: Removed(this).also { REMOVED_REF.lazySet(this, it) }
 
     @PublishedApi
     internal abstract class CondAdd {
@@ -145,7 +152,7 @@ internal open class LockFreeLinkedListNode {
         while (true) { // lock-free loop on next
             val next = this.next
             if (next is Removed) return false // was already removed -- don't try to help (original thread will take care)
-            if (NEXT.compareAndSet(this, next, Removed(next as Node))) {
+            if (NEXT.compareAndSet(this, next, (next as Node).removed())) {
                 // was removed successfully (linearized remove) -- fixup the list
                 helpDelete()
                 next.helpInsert(prev.unwrap())
@@ -166,7 +173,7 @@ internal open class LockFreeLinkedListNode {
         while (true) { // lock-free loop on prev
             val prev = this.prev
             if (prev is Removed) return prev.ref
-            if (PREV.compareAndSet(this, prev, Removed(prev as Node))) return prev
+            if (PREV.compareAndSet(this, prev, (prev as Node).removed())) return prev
         }
     }
 
