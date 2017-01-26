@@ -77,7 +77,7 @@ private class StandaloneCoroutine(
     }
 }
 
-private class InnerCoroutine<T>(
+private class InnerCoroutine<in T>(
     override val context: CoroutineContext,
     continuation: Continuation<T>
 ) : Continuation<T> by continuation, CoroutineScope {

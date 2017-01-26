@@ -123,8 +123,7 @@ public suspend fun Job.join() {
  * This is an open class designed for extension by more specific classes that might augment the
  * state and mare store addition state information for completed jobs, like their result values.
  */
-@Suppress("LeakingThis")
-public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
+internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /*
        === States ===
        name       state class    is Active?
@@ -176,7 +175,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    public fun initParentJob(parent: Job?) {
+    fun initParentJob(parent: Job?) {
         if (parent == null) return
         check(registration == null)
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
@@ -189,12 +188,12 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Returns current state of this job.
      */
-    internal fun getState(): Any? = state
+    fun getState(): Any? = state
 
     /**
      * Tries to update current [state][getState] of this job.
      */
-    protected fun updateState(expect: Any, update: Any?): Boolean {
+    fun updateState(expect: Any, update: Any?): Boolean {
         require(expect is Active && update !is Active) // only active -> inactive transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // #1. Update linked state before invoking completion handlers
@@ -229,9 +228,9 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
         return true
     }
 
-    public final override val isActive: Boolean get() = state is Active
+    final override val isActive: Boolean get() = state is Active
 
-    public final override fun onCompletion(handler: CompletionHandler): Job.Registration {
+    final override fun onCompletion(handler: CompletionHandler): Job.Registration {
         var nodeCache: JobNode? = null
         while (true) { // lock-free loop on state
             val state = this.state
@@ -265,7 +264,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
         }
     }
 
-    internal fun removeNode(node: JobNode) {
+    fun removeNode(node: JobNode) {
         // remove logic depends on the state of the job
         while (true) { // lock-free loop on job state
             val state = this.state
@@ -290,7 +289,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
         }
     }
 
-    public final override fun cancel(reason: Throwable?): Boolean {
+    final override fun cancel(reason: Throwable?): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state as? Active ?: return false // quit if not active anymore
             if (updateState(state, Cancelled(reason))) return true
@@ -300,19 +299,19 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Override to make linked state changes before completion handlers are invoked.
      */
-    protected open fun onStateUpdate(update: Any?) {}
+    open fun onStateUpdate(update: Any?) {}
 
     /**
      * Override to process any exceptions that were encountered while invoking [onCompletion] handlers.
      */
-    protected open fun handleCompletionException(closeException: Throwable) {
+    open fun handleCompletionException(closeException: Throwable) {
         throw closeException
     }
 
     /**
      * Override for post-completion actions that need to do something with the state.
      */
-    protected open fun afterCompletion(state: Any?) {}
+    open fun afterCompletion(state: Any?) {}
 
     private fun makeNode(handler: CompletionHandler): JobNode =
             (handler as? JobNode)?.also { require(it.job === this) }
@@ -321,7 +320,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Marker interface for active [state][getState] of a job.
      */
-    public interface Active
+    internal interface Active
 
     private object Empty : Active
 
@@ -330,7 +329,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Abstract class for a [state][getState] of a job that had completed exceptionally, including cancellation.
      */
-    public abstract class CompletedExceptionally {
+    internal abstract class CompletedExceptionally {
         abstract val cancelReason: Throwable // original reason or fresh CancellationException
         abstract val exception: Throwable // the exception to be thrown in continuation
     }
@@ -338,7 +337,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Represents a [state][getState] of a cancelled job.
      */
-    public class Cancelled(specifiedReason: Throwable?) : CompletedExceptionally() {
+    internal class Cancelled(specifiedReason: Throwable?) : CompletedExceptionally() {
         @Volatile
         private var _cancelReason = specifiedReason // materialize CancellationException on first need
 
@@ -359,7 +358,7 @@ public open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Represents a [state][getState] of a failed job.
      */
-    public class Failed(override val exception: Throwable) : CompletedExceptionally() {
+    internal class Failed(override val exception: Throwable) : CompletedExceptionally() {
         override val cancelReason: Throwable
             get() = exception
     }

@@ -17,7 +17,7 @@ import kotlin.coroutines.startCoroutine
  * If this lazy deferred value is [cancelled][cancel], then it becomes immediately complete and
  * cancels ongoing computation coroutine if it was started.
  */
-public interface LazyDeferred<T> : Deferred<T> {
+public interface LazyDeferred<out T> : Deferred<T> {
     /**
      * Returns `true` if the coroutine is computing its value.
      */
@@ -41,7 +41,7 @@ public interface LazyDeferred<T> : Deferred<T> {
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  */
 public fun <T> lazyDefer(context: CoroutineContext, block: suspend CoroutineScope.() -> T) : LazyDeferred<T> =
-    LazyDeferredCoroutine<T>(newCoroutineContext(context), block).apply {
+    LazyDeferredCoroutine(newCoroutineContext(context), block).apply {
         initParentJob(context[Job])
     }
 
