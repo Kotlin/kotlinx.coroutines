@@ -111,6 +111,16 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
+    internal fun addIfEmpty(node: Node): Boolean {
+        require(node.isFresh)
+        PREV.lazySet(node, this)
+        NEXT.lazySet(node, this)
+        if (!NEXT.compareAndSet(this, this, node)) return false // this is not an empty list!
+        // added successfully (linearized add) -- fixup the list
+        node.finishAdd(this)
+        return true
+    }
+
     @PublishedApi
     internal fun addLastCC(node: Node, condAdd: CondAdd?): Boolean {
         require(node.isFresh)

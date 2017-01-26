@@ -60,4 +60,30 @@ class DeferTest : TestBase() {
         expect(3)
         d.await() // will throw IOException
     }
+
+    @Test
+    fun testDeferWithTwoWaiters() = runBlocking {
+        expect(1)
+        val d = defer(context) {
+            expect(2)
+            yield()
+            expect(8)
+            42
+        }
+        expect(3)
+        launch(context) {
+            expect(4)
+            check(d.await() == 42)
+            expect(9)
+        }
+        expect(5)
+        launch(context) {
+            expect(6)
+            check(d.await() == 42)
+            expect(10)
+        }
+        expect(7)
+        yield() // this actually yields control to defer, which produces results and resumes both waiters (in order)
+        finish(11)
+    }
 }
