@@ -79,7 +79,7 @@ fun main(args: Array<String>) {
         for (org in listOf("Kotlin", "ReactiveX")) {
             // `awaitSingle()` call here is a suspension point,
             // i.e. coroutine's code stops on it until request is not completed
-            val repos = github.orgRepos(org).take(5).awaitSingle().joinToString()
+            val repos = github.orgRepos(org).awaitSingle().joinToString()
 
             println("$org: $repos")
         }
