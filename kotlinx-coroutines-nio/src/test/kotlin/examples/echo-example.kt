@@ -45,7 +45,7 @@ fun main(args: Array<String>) = runBlocking {
     }
 }
 
-private suspend fun handleClient(client: AsynchronousSocketChannel) {
+suspend fun handleClient(client: AsynchronousSocketChannel) {
     val buffer = ByteBuffer.allocate(BUFFER_SIZE)
     while (true) {
         val bytes = withTimeout(CLIENT_READ_TIMEOUT) { client.aRead(buffer) }

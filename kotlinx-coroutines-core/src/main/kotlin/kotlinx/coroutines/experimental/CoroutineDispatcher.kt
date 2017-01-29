@@ -25,8 +25,9 @@ public abstract class CoroutineDispatcher :
         AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     /**
      * Return `true` if execution shall be dispatched onto another thread.
+     * The default behaviour for most dispatchers is to return `true`.
      */
-    public abstract fun isDispatchNeeded(context: CoroutineContext): Boolean
+    public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
      * Dispatches execution of a runnable [block] onto another thread in the given [context].
@@ -37,7 +38,7 @@ public abstract class CoroutineDispatcher :
             DispatchedContinuation<T>(this, continuation)
 }
 
-private class DispatchedContinuation<T>(
+internal class DispatchedContinuation<T>(
         val dispatcher: CoroutineDispatcher,
         val continuation: Continuation<T>
 ): Continuation<T> by continuation {
@@ -66,6 +67,24 @@ private class DispatchedContinuation<T>(
         else
             withCoroutineContext(context) {
                 continuation.resumeWithException(exception)
+            }
+    }
+
+    // used by "yield" implementation
+    fun resumeYield(job: Job?, value: T) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, Runnable {
+                withCoroutineContext(context) {
+                    if (job?.isActive == false)
+                        continuation.resumeWithException(job.getInactiveCancellationException())
+                    else
+                        continuation.resume(value)
+                }
+            })
+        else
+            withCoroutineContext(context) {
+                continuation.resume(value)
             }
     }
 }

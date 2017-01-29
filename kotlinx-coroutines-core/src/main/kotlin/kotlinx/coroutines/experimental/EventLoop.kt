@@ -3,7 +3,6 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -41,7 +40,7 @@ public interface EventLoop {
 
 internal class EventLoopImpl(
     val thread: Thread
-) : CoroutineDispatcher(), EventLoop, Yield {
+) : CoroutineDispatcher(), EventLoop {
     val queue = LockFreeLinkedListHead()
     var parentJob: Job? = null
 
@@ -50,16 +49,8 @@ internal class EventLoopImpl(
         this.parentJob = coroutine
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = Thread.currentThread() != thread
-
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         schedule(Dispatch(block))
-    }
-
-    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
-        val node = Resume(continuation)
-        if (schedule(node))
-            continuation.removeOnCompletion(node)
     }
 
     fun schedule(node: Node): Boolean {
@@ -69,7 +60,7 @@ internal class EventLoopImpl(
         } else
             queue.addLastIf(node) { parentJob!!.isActive }
         if (added) {
-            if (Thread.currentThread() != thread)
+            if (Thread.currentThread() !== thread)
                 LockSupport.unpark(thread)
         } else {
             node.run()
@@ -78,7 +69,7 @@ internal class EventLoopImpl(
     }
 
     override fun processNextEvent(): Boolean {
-        if (Thread.currentThread() != thread) return false
+        if (Thread.currentThread() !== thread) return false
         (queue.removeFirstOrNull() as? Runnable)?.apply {
             run()
             return true
@@ -89,9 +80,5 @@ internal class EventLoopImpl(
     abstract class Node : LockFreeLinkedListNode(), Runnable
 
     class Dispatch(block: Runnable) : Node(), Runnable by block
-
-    class Resume(val cont: Continuation<Unit>) : Node() {
-        override fun run() = cont.resume(Unit)
-    }
 }
 

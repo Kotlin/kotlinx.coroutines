@@ -5,11 +5,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.startCoroutine
 
-val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 50L)
+val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 1000L)
 
 internal val scheduledExecutor by lazy<ScheduledExecutorService> {
     ScheduledThreadPoolExecutor(1) { r ->
-        Thread(r, "kotlinx.coroutines.ScheduledExecutor")
+        Thread(r, "kotlinx.coroutines.ScheduledExecutor").apply { isDaemon = true }
     }.apply {
         setKeepAliveTime(KEEP_ALIVE, TimeUnit.MILLISECONDS)
         allowCoreThreadTimeOut(true)

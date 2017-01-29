@@ -4,7 +4,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.thread
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -30,33 +29,21 @@ fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null):
     return job + ThreadPoolDispatcher(nThreads, name, job)
 }
 
-private val thisThreadContext = ThreadLocal<ThreadPoolDispatcher>()
-
 private class ThreadPoolDispatcher(
         nThreads: Int,
         name: String,
         val job: Job
-) : CoroutineDispatcher(), Yield, Delay {
+) : CoroutineDispatcher(), Delay {
     val threadNo = AtomicInteger()
     val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
-        thread(start = false, isDaemon = true,
-                name = if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet()) {
-            thisThreadContext.set(this@ThreadPoolDispatcher)
-            target.run()
-        }
+        Thread(target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet()).apply { isDaemon = true }
     }
 
     init {
         job.onCompletion { executor.shutdown() }
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = thisThreadContext.get() != this
-
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
-
-    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
-        executor.scheduleResume(continuation)
-    }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         executor.scheduleResumeAfterDelay(time, unit, continuation)

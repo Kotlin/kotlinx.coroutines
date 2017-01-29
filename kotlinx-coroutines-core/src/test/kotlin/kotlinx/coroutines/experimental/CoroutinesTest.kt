@@ -21,11 +21,11 @@ class CoroutinesTest : TestBase() {
     fun testLaunchAndYieldJoin() = runBlocking {
         expect(1)
         val job = launch(context) {
-            expect(2)
+            expect(3)
             yield()
             expect(4)
         }
-        expect(3)
+        expect(2)
         job.join()
         finish(5)
     }
@@ -33,89 +33,88 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testNested() = runBlocking {
         expect(1)
-        launch(context) {
-            expect(2)
-            launch(context) {
-                expect(3)
-            }
-            expect(4)
-        }
-        finish(5)
-    }
-
-    @Test
-    fun testNestedAndYieldJoin() = runBlocking {
-        expect(1)
         val j1 = launch(context) {
-            expect(2)
+            expect(3)
             val j2 = launch(context) {
-                expect(3)
-                yield()
-                expect(6)
+                expect(5)
             }
             expect(4)
             j2.join()
-            expect(7)
+            expect(6)
         }
-        expect(5)
+        expect(2)
         j1.join()
-        finish(8)
+        finish(7)
     }
 
     @Test
     fun testCancelChildImplicit() = runBlocking {
         expect(1)
         launch(context) {
-            expect(2)
+            expect(3)
             yield() // parent finishes earlier, does not wait for us
             expectUnreached()
         }
-        finish(3)
+        expect(2)
+        yield()
+        finish(4)
     }
 
     @Test
     fun testCancelChildExplicit() = runBlocking {
         expect(1)
         val job = launch(context) {
-            expect(2)
+            expect(3)
             yield()
             expectUnreached()
         }
-        expect(3)
+        expect(2)
+        yield()
+        expect(4)
         job.cancel()
-        finish(4)
+        finish(5)
+    }
+
+    @Test
+    fun testCancelChildWithFinally() = runBlocking {
+        expect(1)
+        val job = launch(context) {
+            expect(3)
+            try {
+                yield()
+            } finally {
+                finish(6) // cancelled child will still execute finally
+            }
+            expectUnreached()
+        }
+        expect(2)
+        yield()
+        expect(4)
+        job.cancel()
+        expect(5)
     }
 
     @Test
     fun testCancelNestedImplicit() = runBlocking {
         expect(1)
         val j1 = launch(context) {
-            expect(2)
+            expect(3)
             val j2 = launch(context) {
-                expect(3)
+                expect(6)
                 yield() // parent finishes earlier, does not wait for us
                 expectUnreached()
             }
             expect(4)
-        }
-        finish(5)
-    }
-
-    @Test
-    fun testCancelNestedImplicit2() = runBlocking {
-        expect(1)
-        val j1 = launch(context) {
-            expect(2)
-            val j2 = launch(context) {
-                expect(3)
-                yield() // parent finishes earlier, does not wait for us
-                expectUnreached()
-            }
-            expect(4)
-            yield() // does not go further, because already cancelled
+            yield()
+            expect(7)
+            yield()  // does not go further, because already cancelled
             expectUnreached()
         }
-        finish(5)
+        expect(2)
+        yield()
+        expect(5)
+        yield()
+        finish(8)
     }
 
     @Test(expected = IOException::class)
@@ -128,35 +127,31 @@ class CoroutinesTest : TestBase() {
     fun testCancelParentOnChildException(): Unit = runBlocking {
         expect(1)
         launch(context) {
-            expect(2)
+            finish(3)
             throw IOException() // does not propagate exception to launch, but cancels parent (!)
         }
-        finish(3)
-    }
-
-    @Test(expected = CancellationException::class)
-    fun testCancelParentOnChildException2(): Unit = runBlocking {
-        expect(1)
-        launch(context) {
-            expect(2)
-            throw IOException()
-        }
-        finish(3)
-        yield() // parent is already cancelled (so gets CancellationException on this suspend attempt)
-        expectUnreached()
+        expect(2)
+        yield()
+        expectUnreached() // because of exception in child
     }
 
     @Test(expected = CancellationException::class)
     fun testCancelParentOnNestedException(): Unit = runBlocking {
         expect(1)
         launch(context) {
-            expect(2)
+            expect(3)
             launch(context) {
-                expect(3)
+                finish(6)
                 throw IOException() // unhandled exception kills all parents
             }
             expect(4)
+            yield()
+            expectUnreached() // because of exception in child
         }
-        finish(5)
+        expect(2)
+        yield()
+        expect(5)
+        yield()
+        expectUnreached() // because of exception in child
     }
 }

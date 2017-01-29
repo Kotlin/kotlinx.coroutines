@@ -42,23 +42,25 @@ class LazyDeferTest : TestBase() {
     fun testLazyDeferAndYield2(): Unit = runBlocking {
         expect(1)
         val d = lazyDefer(context) {
-            expect(5)
-            yield() // yield to the second child
             expect(7)
             42
         }
         expect(2)
         check(d.isActive && !d.isComputing)
         launch(context) { // see how it looks from another coroutine
-            expect(3)
+            expect(4)
             check(d.isActive && !d.isComputing)
-            yield()
+            yield() // yield back to main
             expect(6)
-            check(d.isActive && d.isComputing)
+            check(d.isActive && d.isComputing) // started by main!
+            yield() // yield to d
         }
-        expect(4)
+        expect(3)
         check(d.isActive && !d.isComputing)
-        check(d.await() == 42)
+        yield() // yield to second child (lazy defer is not computing yet)
+        expect(5)
+        check(d.isActive && !d.isComputing)
+        check(d.await() == 42) // starts computing
         check(!d.isActive && !d.isComputing)
         finish(8)
     }
@@ -111,17 +113,20 @@ class LazyDeferTest : TestBase() {
     fun testStart(): Unit = runBlocking {
         expect(1)
         val d = lazyDefer(context) {
-            expect(3)
+            expect(4)
             42
         }
         expect(2)
         check(d.isActive && !d.isComputing)
         check(d.start())
-        check(!d.isActive && !d.isComputing)
-        expect(4)
+        check(d.isActive && d.isComputing)
+        expect(3)
         check(!d.start())
+        yield() // yield to started coroutine
+        check(!d.isActive && !d.isComputing) // and it finishes
+        expect(5)
         check(d.await() == 42) // await sees result
-        finish(5)
+        finish(6)
     }
 
     @Test(expected = CancellationException::class)
@@ -146,8 +151,8 @@ class LazyDeferTest : TestBase() {
     fun testCancelWhileComputing(): Unit = runBlocking {
         expect(1)
         val d = lazyDefer(context) {
-            expect(3)
-            yield()
+            expect(4)
+            yield() // yield to main, that is going to cancel us
             expectUnreached()
             42
         }
@@ -155,11 +160,14 @@ class LazyDeferTest : TestBase() {
         check(d.isActive && !d.isComputing)
         check(d.start())
         check(d.isActive && d.isComputing)
-        expect(4)
+        expect(3)
+        yield() // yield to d
+        expect(5)
+        check(d.isActive && d.isComputing)
         check(d.cancel())
         check(!d.isActive && !d.isComputing)
         check(!d.cancel())
-        finish(5)
+        finish(6)
         check(d.await() == 42) // await shall throw CancellationException
         expectUnreached()
     }

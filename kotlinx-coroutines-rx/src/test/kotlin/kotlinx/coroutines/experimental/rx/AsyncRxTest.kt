@@ -1,4 +1,5 @@
-import kotlinx.coroutines.experimental.rx.*
+package kotlinx.coroutines.experimental.rx
+
 import org.junit.Test
 import rx.Observable
 import java.util.concurrent.TimeUnit

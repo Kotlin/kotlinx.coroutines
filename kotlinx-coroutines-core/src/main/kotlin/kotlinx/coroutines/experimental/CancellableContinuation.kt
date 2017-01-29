@@ -1,6 +1,8 @@
 package kotlinx.coroutines.experimental
 
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.intrinsics.SUSPENDED_MARKER
 import kotlin.coroutines.intrinsics.suspendCoroutineOrReturn
 import kotlin.coroutines.suspendCoroutine
@@ -37,25 +39,39 @@ public inline suspend fun <T> suspendCancellableCoroutine(crossinline block: (Ca
 internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
     val job = cont.context[Job]
     // fast path when parent job is already complete (we don't even construct SafeCancellableContinuation object)
-    job?.isActive?.let { if (!it) throw CancellationException() }
+    if (job != null && !job.isActive) throw job.getInactiveCancellationException()
     return job
 }
 
 @PublishedApi
 internal class SafeCancellableContinuation<in T>(
         private val delegate: Continuation<T>,
-        parentJob: Job?
+        private val parentJob: Job?
 ) : AbstractCoroutine<T>(delegate.context), CancellableContinuation<T> {
     // only updated from the thread that invoked suspendCancellableCoroutine
-    private var suspendedThread: Thread? = Thread.currentThread()
+
+    @Volatile
+    private var decision = UNDECIDED
+
+    private companion object {
+        val DECISION: AtomicIntegerFieldUpdater<SafeCancellableContinuation<*>> =
+                AtomicIntegerFieldUpdater.newUpdater(SafeCancellableContinuation::class.java, "decision")
+
+        const val UNDECIDED = 0
+        const val SUSPENDED = 1
+        const val RESUMED = 2
+        const val YIELD = 3 // used by cancellable "yield"
+    }
 
     init { initParentJob(parentJob) }
 
     fun getResult(): Any? {
-        if (suspendedThread != null) {
-            suspendedThread = null
-            return SUSPENDED_MARKER
+        val decision = this.decision // volatile read
+        when (decision) {
+            UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return SUSPENDED_MARKER
+            YIELD -> return SUSPENDED_MARKER
         }
+        // otherwise, afterCompletion was already invoked, and the result is in the state
         val state = getState()
         if (state is CompletedExceptionally) throw state.exception
         return state
@@ -66,15 +82,21 @@ internal class SafeCancellableContinuation<in T>(
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?) {
-        if (suspendedThread === Thread.currentThread()) {
-            // cancelled during suspendCancellableCoroutine in its thread
-            suspendedThread = null
-        } else {
-            // cancelled later or in other thread
-            if (state is CompletedExceptionally)
-                delegate.resumeWithException(state.exception)
-            else
-                delegate.resume(state as T)
-        }
+        val decision = this.decision // volatile read
+        if (decision == UNDECIDED && DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return // will get result in getResult
+        // otherwise, getResult has already commenced, i.e. it was resumed later or in other thread
+        if (state is CompletedExceptionally)
+            delegate.resumeWithException(state.exception)
+        else if (decision == YIELD && delegate is DispatchedContinuation)
+            delegate.resumeYield(parentJob, state as T)
+        else
+            delegate.resume(state as T)
+    }
+
+    // can only be invoked in the same thread as getResult (see "yield"), afterCompletion may be concurrent
+    fun resumeYield(value: T) {
+        if ((context[ContinuationInterceptor] as? CoroutineDispatcher)?.isDispatchNeeded(context) == true)
+            DECISION.compareAndSet(this, UNDECIDED, YIELD) // try mark as needing dispatch
+        resume(value)
     }
 }

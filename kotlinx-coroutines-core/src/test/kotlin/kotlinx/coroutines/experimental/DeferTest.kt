@@ -8,43 +8,26 @@ class DeferTest : TestBase() {
     fun testSimple(): Unit = runBlocking {
         expect(1)
         val d = defer(context) {
-            expect(2)
+            expect(3)
             42
         }
-        expect(3)
-        check(!d.isActive)
-        check(d.await() == 42)
-        expect(4)
-        check(d.await() == 42) // second await -- same result
-        finish(5)
-    }
-
-    @Test
-    fun testDeferAndYield(): Unit = runBlocking {
-        expect(1)
-        val d = defer(context) {
-            expect(2)
-            yield()
-            expect(4)
-            42
-        }
-        expect(3)
+        expect(2)
         check(d.isActive)
         check(d.await() == 42)
         check(!d.isActive)
-        expect(5)
+        expect(4)
         check(d.await() == 42) // second await -- same result
-        finish(6)
+        finish(5)
     }
 
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)
         val d = defer(context) {
-            expect(2)
+            finish(3)
             throw IOException()
         }
-        finish(3)
+        expect(2)
         d.await() // will throw IOException
     }
 
@@ -52,12 +35,12 @@ class DeferTest : TestBase() {
     fun testDeferAndYieldException(): Unit = runBlocking {
         expect(1)
         val d = defer(context) {
-            expect(2)
-            yield()
+            expect(3)
+            yield() // no effect, parent waiting
             finish(4)
             throw IOException()
         }
-        expect(3)
+        expect(2)
         d.await() // will throw IOException
     }
 
@@ -65,25 +48,29 @@ class DeferTest : TestBase() {
     fun testDeferWithTwoWaiters() = runBlocking {
         expect(1)
         val d = defer(context) {
-            expect(2)
+            expect(5)
             yield()
-            expect(8)
+            expect(9)
             42
         }
-        expect(3)
-        launch(context) {
-            expect(4)
-            check(d.await() == 42)
-            expect(9)
-        }
-        expect(5)
+        expect(2)
         launch(context) {
             expect(6)
             check(d.await() == 42)
-            expect(10)
+            expect(11)
         }
-        expect(7)
+        expect(3)
+        launch(context) {
+            expect(7)
+            check(d.await() == 42)
+            expect(12)
+        }
+        expect(4)
         yield() // this actually yields control to defer, which produces results and resumes both waiters (in order)
-        finish(11)
+        expect(8)
+        yield() // yield again to "d", which completes
+        expect(10)
+        yield() // yield to both waiters
+        finish(13)
     }
 }

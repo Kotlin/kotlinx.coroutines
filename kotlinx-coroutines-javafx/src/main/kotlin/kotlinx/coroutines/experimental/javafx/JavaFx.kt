@@ -17,12 +17,11 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
-object JavaFx : CoroutineDispatcher(), Yield, Delay {
+object JavaFx : CoroutineDispatcher(), Delay {
     private val pulseTimer by lazy {
         PulseTimer().apply { start() }
     }
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
     override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
 
     /**
@@ -32,10 +31,6 @@ object JavaFx : CoroutineDispatcher(), Yield, Delay {
      */
     suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
         pulseTimer.onNext(cont)
-    }
-
-    override fun scheduleResume(continuation: CancellableContinuation<Unit>) {
-        Platform.runLater { continuation.resume(Unit) }
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
