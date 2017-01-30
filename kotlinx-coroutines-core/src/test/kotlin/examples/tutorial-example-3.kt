@@ -8,5 +8,5 @@ fun main(args: Array<String>) = runBlocking {
         println("World!")
     }
     println("Hello,")
-    job.join() // wait until children coroutine completes
+    job.join() // wait until child coroutine completes
 }

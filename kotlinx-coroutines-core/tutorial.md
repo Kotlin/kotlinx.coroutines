@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
 Run this code:
 
 ```
-Hello!
+Hello,
 World!
 ```
 
@@ -60,9 +60,9 @@ fun main(args: Array<String>) = runBlocking { // start main coroutine
 The result is the same, but this code uses only non-blocking `delay`. 
 
 `runBlocking { ... }` works as an adaptor that is used here to start the top-level main coroutine. 
-The regular code outside of `runBlocking` _blocks_, until the coroutine inside `runBlocking` works. 
+The regular code outside of `runBlocking` _blocks_, until the coroutine inside `runBlocking` is active. 
 
-This is also how you write unit-test for suspending functions:
+This is also a way to write unit-tests for suspending functions:
  
 ```kotlin
 class MyTest {
@@ -76,7 +76,7 @@ class MyTest {
 ## Waiting for a job
 
 Delaying for a time while a _child_ coroutine is working is not a good approach. Let's explicitly 
-wait (in a non-blocking way) until other coroutine that we have launched is complete:
+wait (in a non-blocking way) until the other coroutine that we have launched is complete:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking { 
@@ -85,7 +85,7 @@ fun main(args: Array<String>) = runBlocking {
         println("World!")
     }
     println("Hello,")
-    job.join() // wait until children coroutine completes
+    job.join() // wait until child coroutine completes
 }
 ```
 
@@ -96,8 +96,8 @@ the child coroutine in any way. Much better.
 
 ## Extract function refactoring
 
-Let's extract the block of code inside `launch(Here} { ... }` into a separate function. If you 
-perform "Extract function" refactoring, you'll get a new function with `suspend` modifier.
+Let's extract the block of code inside `launch(Here} { ... }` into a separate function. When you 
+perform "Extract function" refactoring on this code you get a new function with `suspend` modifier.
 That is your first _suspending function_. Suspending functions can be used inside coroutines
 just like regular functions, but their additional feature is that they can, in turn, 
 use other suspending functions, like `delay` in this example, to _suspend_ execution of a coroutine.
