@@ -58,7 +58,10 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Cancel this activity with an optional cancellation [reason]. The result is `true` if this job was
-     * cancelled as a result of this invocation and `false` otherwise (if it was already cancelled).
+     * cancelled as a result of this invocation and `false` otherwise
+     * (if it was already cancelled or it is [NonCancellable]).
+     * Repeated invocation of this function has no effect and always produces `false`.
+     *
      * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing
      * both the context of cancellation and text description of the reason.
@@ -183,8 +186,11 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
      * It shall be invoked at most once after construction after all other initialization.
      */
     fun initParentJob(parent: Job?) {
-        if (parent == null) return
         check(registration == null)
+        if (parent == null) {
+            registration = EmptyRegistration
+            return
+        }
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
         val newRegistration = parent.onCompletion(CancelOnCompletion(parent, this))
         registration = newRegistration
@@ -260,7 +266,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
                 // SINGLE/SINGLE+ state -- one completion handler
                 state is JobNode -> {
                     // try promote it to the list (SINGLE+ state)
-                    state.addIfEmpty(NodeList())
+                    state.addFirstIfEmpty(NodeList())
                     // it must be in SINGLE+ state or state has changed (node could have need removed from state)
                     val list = state.next() // either NodeList or somebody else won the race, updated state
                     // just attempt converting it to list if state is still the same, then continue lock-free loop
@@ -424,7 +430,7 @@ private class CancelOnCompletion(
     override fun toString(): String = "CancelOnCompletion[$subordinateJob]"
 }
 
-private object EmptyRegistration : Job.Registration {
+internal object EmptyRegistration : Job.Registration {
     override fun unregister() {}
     override fun toString(): String = "EmptyRegistration"
 }

@@ -93,7 +93,15 @@ internal open class LockFreeLinkedListNode {
 
     fun next(): Node = next.unwrap()
 
-    fun addFirstCC(node: Node, condAdd: CondAdd?): Boolean {
+    fun prev(): Node {
+        while (true) {
+            prevHelper()?.let { return it.unwrap() }
+        }
+    }
+
+    // ------ addFirstXXX ------
+
+    private fun addFirstCC(node: Node, condAdd: CondAdd?): Boolean {
         require(node.isFresh)
         condAdd?.newNode = node
         while (true) { // lock-free loop on next
@@ -108,7 +116,20 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    fun addIfEmpty(node: Node): Boolean {
+    /**
+     * Adds first item to this list.
+     */
+    fun addFirst(node: Node) { addFirstCC(node, null) }
+
+    /**
+     * Adds first item to this list atomically if the [condition] is true.
+     */
+    inline fun addFirstIf(node: Node, crossinline condition: () -> Boolean): Boolean =
+        addFirstCC(node, object : CondAdd() {
+            override fun isCondition(): Boolean = condition()
+        })
+
+    fun addFirstIfEmpty(node: Node): Boolean {
         require(node.isFresh)
         PREV.lazySet(node, this)
         NEXT.lazySet(node, this)
@@ -118,15 +139,13 @@ internal open class LockFreeLinkedListNode {
         return true
     }
 
-    fun addLastCC(node: Node, condAdd: CondAdd?): Boolean {
+    // ------ addLastXXX ------
+
+    private fun addLastCC(node: Node, condAdd: CondAdd?): Boolean {
         require(node.isFresh)
         condAdd?.newNode = node
         while (true) { // lock-free loop on prev.next
-            val prev = this.prev as Node // this sentinel node is never removed
-            if (prev.next !== this) {
-                helpInsert(prev)
-                continue
-            }
+            val prev = prevHelper() ?: continue
             PREV.lazySet(node, prev)
             NEXT.lazySet(node, this)
             condAdd?.oldNext = this
@@ -137,19 +156,47 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    private fun finishAdd(next: Node) {
-        while (true) {
-            val nextPrev = next.prev
-            if (nextPrev is Removed || this.next !== next) return // next was removed, remover fixes up links
-            if (PREV.compareAndSet(next, nextPrev, this)) {
-                if (this.next is Removed) {
-                    // already removed
-                    next.helpInsert(nextPrev as Node)
-                }
-                return
-            }
+    /**
+     * Adds last item to this list.
+     */
+    fun addLast(node: Node) { addLastCC(node, null) }
+
+    /**
+     * Adds last item to this list atomically if the [condition] is true.
+     */
+    inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean =
+        addLastCC(node, object : CondAdd() {
+            override fun isCondition(): Boolean = condition()
+        })
+
+    inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
+        require(node.isFresh)
+        while (true) { // lock-free loop on prev.next
+            val prev = prevHelper() ?: continue
+            if (!predicate(prev)) return false
+            if (addAfterPrev(node, prev)) return true
         }
     }
+
+    private fun prevHelper(): Node? {
+        val prev = this.prev as Node // this sentinel node is never removed
+        if (prev.next === this) return prev
+        helpInsert(prev)
+        return null
+    }
+
+    private fun addAfterPrev(node: Node, prev: Node): Boolean {
+        PREV.lazySet(node, prev)
+        NEXT.lazySet(node, this)
+        if (NEXT.compareAndSet(prev, this, node)) {
+            // added successfully (linearized add) -- fixup the list
+            node.finishAdd(this)
+            return true
+        }
+        return false
+    }
+
+    // ------ removeXXX ------
 
     /**
      * Removes this node from the list. Returns `true` when removed successfully.
@@ -172,6 +219,42 @@ internal open class LockFreeLinkedListNode {
             val first = next()
             if (first == this) return null
             if (first.remove()) return first
+        }
+    }
+
+    inline fun <reified T> removeFirstIfIsInstanceOf(): T? {
+        while (true) { // try to linearize
+            val first = next()
+            if (first == this) return null
+            if (first !is T) return null
+            if (first.remove()) return first
+        }
+    }
+
+    // just peek at item when predicate is true
+    inline fun <reified T> removeFirstIfIsInstanceOfOrPeekIf(predicate: (T) -> Boolean): T? {
+        while (true) { // try to linearize
+            val first = next()
+            if (first == this) return null
+            if (first !is T) return null
+            if (predicate(first)) return first // just peek when predicate is true
+            if (first.remove()) return first
+        }
+    }
+
+    // ------ other helpers ------
+
+    private fun finishAdd(next: Node) {
+        while (true) {
+            val nextPrev = next.prev
+            if (nextPrev is Removed || this.next !== next) return // next was removed, remover fixes up links
+            if (PREV.compareAndSet(next, nextPrev, this)) {
+                if (this.next is Removed) {
+                    // already removed
+                    next.helpInsert(nextPrev as Node)
+                }
+                return
+            }
         }
     }
 
@@ -276,32 +359,7 @@ internal open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         }
     }
 
-    /**
-     * Adds first item to this list.
-     */
-    fun addFirst(node: Node) { addFirstCC(node, null) }
-
-    /**
-     * Adds first item to this list atomically if the [condition] is true.
-     */
-    inline fun addFirstIf(node: Node, crossinline condition: () -> Boolean): Boolean =
-        addFirstCC(node, object : CondAdd() {
-            override fun isCondition(): Boolean = condition()
-        })
-
-    /**
-     * Adds last item to this list.
-     */
-    fun addLast(node: Node) { addLastCC(node, null) }
-
-    /**
-     * Adds last item to this list atomically if the [condition] is true.
-     */
-    inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean =
-        addLastCC(node, object : CondAdd() {
-            override fun isCondition(): Boolean = condition()
-        })
-
+    // just a defensive programming -- makes sure that list head sentinel is never removed
     final override fun remove() = throw UnsupportedOperationException()
 
     fun validate() {
