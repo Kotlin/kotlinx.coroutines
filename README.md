@@ -1,18 +1,20 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-18 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-22 release. 
 
 ## Modules and features
 
 * `kotlinx-coroutines-core` module with core primitives to work with coroutines. It is designed to work on any JDK6+ and Android
 and contains the following main pieces:
-  * `launch(context) { ... }` to start a coroutine in the given context and get reference to its `Job`.
-  * `run(context) { ... }` to switch to a different context inside a coroutine.
-  * `runBlocking { ... }` to use asynchronous Kotlin APIs from a thread-blocking code.  
-  * `defer(context) { ... }` to get a deferred result of coroutine execution in a non-blocking way
-     via a light-weight future interface called `Deferred`.
-  * `delay(...)` for a non-blocking sleep in coroutines.
-  * `CommonPool` and `Here` contexts, `context` or a parent coroutine.
+  * `launch(context) {...}` to start a coroutine in the given context and get reference to its `Job`.
+  * `run(context) {...}` to switch to a different context inside a coroutine.
+  * `runBlocking {...}` to use asynchronous Kotlin APIs from a thread-blocking code.  
+  * `defer(context) {...}` and `lazyDefer(context) {...}` to get a deferred result of coroutine execution in a 
+     non-blocking way via a light-weight future interface called `Deferred`.
+  * `delay(...)` for a non-blocking sleep in coroutines and `yield` to release a thread in single-threaded dispatchers.
+  * `withTimeout(timeout) {...}` scope function to easily set coroutine time-limit (deadline),
+     and `NonCancellable` context to avoid it when needed.
+  * `CommonPool` and `Here` contexts, access to `context` of a parent coroutine in its `CoroutineScope`.
   * `newSingleThreadContext(...)` and `newFixedThreadPoolContext(...)` functions, 
     `Executor.toCoroutineDispatcher()` extension.
   * Cancellation support with `Job` interface and `suspendCancellableCoroutine` helper function.
@@ -36,9 +38,9 @@ from inside coroutines. It is in very basic form now (example-only, not even clo
 
 ## References and documentation
 
-* [Coroutines guide](coroutines-guide.md) 
-* [Change log](CHANGES.md)
-* [Coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+* [Guide to kotlinx.coroutines by example](coroutines-guide.md) 
+* [Change log for kotlinx.coroutines](CHANGES.md)
+* [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
  
 ## Using in your projects
 
@@ -79,7 +81,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-beta-18</kotlin.version>
+    <kotlin.version>1.1.0-beta-22</kotlin.version>
 </properties>
 ```
 
@@ -105,6 +107,6 @@ And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-beta-18'
+    ext.kotlin_version = '1.1.0-beta-22'
 }
 ```

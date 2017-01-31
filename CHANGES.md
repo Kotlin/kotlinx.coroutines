@@ -1,4 +1,17 @@
-# kotlinx.coroutines change log
+# Change log for kotlinx.coroutines 
+
+## Version 0.5-beta
+
+* Switched to Kotlin version 1.1.0-beta-22 (republished version).
+* Removed `currentCoroutineContext` and related thread-locals without replacement.
+  Explicitly pass coroutine context around if needed.
+* `lazyDefer(context) {...}` coroutine builder and `LazyDeferred` interface are introduced.
+* The default behaviour of all coroutine dispatchers is changed to always schedule execution of new coroutine 
+  for later in this thread or thread pool. Correspondingly, `CoroutineDispatcher.isDispatchNeeded` function
+  has a default implementation that returns `true`.
+* `NonCancellable` context is introduced.  
+* Performance optimizations for cancellable continuations (fewer objects created).
+* A [guide on coroutines](coroutines-guide.md) is added.  
 
 ## Version 0.4-beta
 
