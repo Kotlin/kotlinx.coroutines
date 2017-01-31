@@ -3,7 +3,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can

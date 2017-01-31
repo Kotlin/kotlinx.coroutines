@@ -2,7 +2,7 @@ package kotlinx.coroutines.experimental.rx
 
 import rx.Observable
 import rx.subjects.AsyncSubject
-import kotlin.coroutines.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Run asynchronous computations based on [block] coroutine parameter

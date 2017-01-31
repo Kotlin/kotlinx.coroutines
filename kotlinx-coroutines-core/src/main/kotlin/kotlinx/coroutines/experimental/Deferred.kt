@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Deferred value is conceptually a non-blocking cancellable future.

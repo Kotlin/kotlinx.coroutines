@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.*
+import kotlin.coroutines.experimental.*
 
 // --------------- basic coroutine builders ---------------
 

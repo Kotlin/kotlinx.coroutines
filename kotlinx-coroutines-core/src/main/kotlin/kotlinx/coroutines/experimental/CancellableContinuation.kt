@@ -1,11 +1,11 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.intrinsics.SUSPENDED_MARKER
-import kotlin.coroutines.intrinsics.suspendCoroutineOrReturn
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.ContinuationInterceptor
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.suspendCoroutine
 
 // --------------- cancellable continuations ---------------
 
@@ -68,8 +68,8 @@ internal class SafeCancellableContinuation<in T>(
     fun getResult(): Any? {
         val decision = this.decision // volatile read
         when (decision) {
-            UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return SUSPENDED_MARKER
-            YIELD -> return SUSPENDED_MARKER
+            UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return COROUTINE_SUSPENDED
+            YIELD -> return COROUTINE_SUSPENDED
         }
         // otherwise, afterCompletion was already invoked, and the result is in the state
         val state = getState()

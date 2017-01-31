@@ -1,6 +1,6 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-22 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc release. 
 
 ## Modules and features
 
@@ -48,7 +48,7 @@ from inside coroutines. It is in very basic form now (example-only, not even clo
 
 The libraries are published to [kotlin-eap-1.1](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines) bintray repository.
 
-These libraries require kotlin compiler version to be at least `1.1-Beta` and 
+These libraries require kotlin compiler version to be at least `1.1.0-rc` and 
 require kotlin runtime of the same version as a dependency, which can be obtained from the same repository.
 
 ### Maven
@@ -73,7 +73,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.5-beta</version>
+    <version>0.6-rc</version>
 </dependency>
 ```
 
@@ -81,7 +81,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-beta-22</kotlin.version>
+    <kotlin.version>1.1.0-rc</kotlin.version>
 </properties>
 ```
 
@@ -100,13 +100,13 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.5-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.6-rc'
 ```
 
 And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-beta-22'
+    ext.kotlin_version = '1.1.0-rc'
 }
 ```

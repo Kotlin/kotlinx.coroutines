@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Lazy deferred value is conceptually a non-blocking cancellable future that is started on

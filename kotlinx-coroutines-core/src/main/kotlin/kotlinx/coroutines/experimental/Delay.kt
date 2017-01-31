@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.experimental.ContinuationInterceptor
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support

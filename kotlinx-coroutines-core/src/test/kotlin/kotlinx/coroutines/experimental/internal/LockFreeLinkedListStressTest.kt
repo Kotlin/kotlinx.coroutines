@@ -4,6 +4,7 @@ import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
+import kotlin.coroutines.experimental.buildIterator
 
 class LockFreeLinkedListStressTest {
     private data class IntNode(val i: Int) : LockFreeLinkedListNode()

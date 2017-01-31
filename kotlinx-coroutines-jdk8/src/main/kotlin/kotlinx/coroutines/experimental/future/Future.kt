@@ -2,9 +2,9 @@ package kotlinx.coroutines.experimental.future
 
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Starts new coroutine and returns its results an an implementation of [CompletableFuture].

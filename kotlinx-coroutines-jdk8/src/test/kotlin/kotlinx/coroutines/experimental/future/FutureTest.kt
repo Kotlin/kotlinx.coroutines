@@ -5,7 +5,7 @@ import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

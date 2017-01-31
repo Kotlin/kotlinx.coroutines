@@ -3,7 +3,7 @@ package kotlinx.coroutines.experimental
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.startCoroutine
 
 val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 1000L)
 

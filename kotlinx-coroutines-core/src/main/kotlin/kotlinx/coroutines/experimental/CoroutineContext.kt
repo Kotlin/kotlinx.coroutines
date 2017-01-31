@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.CoroutineContext
 
 private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 

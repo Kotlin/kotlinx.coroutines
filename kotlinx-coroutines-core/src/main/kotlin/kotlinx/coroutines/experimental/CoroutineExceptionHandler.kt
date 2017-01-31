@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.experimental.CoroutineContext
 
 
 /**
