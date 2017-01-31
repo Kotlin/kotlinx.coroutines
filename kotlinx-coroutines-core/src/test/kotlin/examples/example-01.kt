@@ -1,11 +1,11 @@
 package examples
 
-import kotlinx.coroutines.experimental.Here
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 
 fun main(args: Array<String>) {
-    launch(Here) { // create new coroutine without an explicit threading policy
+    launch(CommonPool) { // create new coroutine in common thread pool
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }

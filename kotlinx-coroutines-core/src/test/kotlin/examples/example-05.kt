@@ -2,9 +2,9 @@ package examples
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main(args: Array<String>) = runBlocking<Unit> {
     val jobs = List(100_000) { // create a lot of coroutines and list their jobs
-        launch(Here) {
+        launch(CommonPool) {
             delay(1000L)
             print(".")
         }

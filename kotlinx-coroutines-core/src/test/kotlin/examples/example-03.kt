@@ -2,8 +2,8 @@ package examples
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking {
-    val job = launch(Here) { // create new coroutine and keep a reference to its Job
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val job = launch(CommonPool) { // create new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
     }

@@ -1,22 +1,18 @@
 # kotlinx.coroutines
 
 Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-18 release. 
-It contains worked-out implementation of coroutine builders, suspending functions, and contexts that are
-used as examples in 
-[Kotlin coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 
-See [change log](CHANGES.md) for a summary of changes between releases. 
- 
-It consists of the following modules:
+## Modules and features
 
 * `kotlinx-coroutines-core` module with core primitives to work with coroutines. It is designed to work on any JDK6+ and Android
 and contains the following main pieces:
-  * `launch(context) { ... }` to start a coroutine in the given context.
+  * `launch(context) { ... }` to start a coroutine in the given context and get reference to its `Job`.
   * `run(context) { ... }` to switch to a different context inside a coroutine.
   * `runBlocking { ... }` to use asynchronous Kotlin APIs from a thread-blocking code.  
-  * `defer(context) { ... }` to get a deferred result of coroutine execution in a non-blocking way.
+  * `defer(context) { ... }` to get a deferred result of coroutine execution in a non-blocking way
+     via a light-weight future interface called `Deferred`.
   * `delay(...)` for a non-blocking sleep in coroutines.
-  * `Here` and `CommonPool` contexts, `context` or a parent coroutine.
+  * `CommonPool` and `Here` contexts, `context` or a parent coroutine.
   * `newSingleThreadContext(...)` and `newFixedThreadPoolContext(...)` functions, 
     `Executor.toCoroutineDispatcher()` extension.
   * Cancellation support with `Job` interface and `suspendCancellableCoroutine` helper function.
@@ -38,6 +34,12 @@ and contains the following main pieces:
 [RxJava](https://github.com/ReactiveX/RxJava) with imperative coroutines and consume their values 
 from inside coroutines. It is in very basic form now (example-only, not even close to production use)
 
+## References and documentation
+
+* [Coroutines guide](coroutines-guide.md) 
+* [Change log](CHANGES.md)
+* [Coroutines design document](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+ 
 ## Using in your projects
 
 > Note that these libraries are experimental and are subject to change.

@@ -2,8 +2,8 @@ package examples
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking {
-    val job = launch(Here) { doWorld() }
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val job = launch(CommonPool) { doWorld() }
     println("Hello,")
     job.join()
 }

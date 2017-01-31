@@ -1,12 +1,12 @@
 package examples
 
-import kotlinx.coroutines.experimental.Here
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 
-fun main(args: Array<String>) = runBlocking { // start main coroutine
-    launch(Here) { // create new coroutine without an explicit threading policy
+fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
+    launch(CommonPool) { // create new coroutine in common thread pool
         delay(1000L)
         println("World!")
     }
