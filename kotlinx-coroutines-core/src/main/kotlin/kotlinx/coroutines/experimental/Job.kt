@@ -68,6 +68,13 @@ public interface Job : CoroutineContext.Element {
      */
     public fun cancel(reason: Throwable? = null): Boolean
 
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated(message = "Operator '+' on two Job objects is meaningless. " +
+                    "Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
+                    "The job to the right of `+` just replaces the job the left of `+`.",
+            level = DeprecationLevel.ERROR)
+    public operator fun plus(other: Job) = other
+
     /**
      * Registration object for [onCompletion]. It can be used to [unregister] if needed.
      * There is no need to unregister after completion.

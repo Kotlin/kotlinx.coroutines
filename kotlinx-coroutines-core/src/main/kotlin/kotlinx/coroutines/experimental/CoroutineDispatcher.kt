@@ -36,6 +36,13 @@ public abstract class CoroutineDispatcher :
 
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
             DispatchedContinuation<T>(this, continuation)
+
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated(message = "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
+            "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
+            "The dispatcher to the right of `+` just replaces the dispacher the left of `+`.",
+            level = DeprecationLevel.ERROR)
+    public operator fun plus(other: CoroutineDispatcher) = other
 }
 
 internal class DispatchedContinuation<T>(
