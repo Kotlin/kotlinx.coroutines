@@ -1,4 +1,4 @@
-package examples
+package example22
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.delay
@@ -18,8 +18,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
     }
     delay(1300L) // delay a bit
-    println("I'm tired of waiting!")
+    println("main: I'm tired of waiting!")
     job.cancel() // cancels the job
     delay(1300L) // delay a bit to see if it was cancelled....
-    println("Now I can quit.")
+    println("main: Now I can quit.")
 }
