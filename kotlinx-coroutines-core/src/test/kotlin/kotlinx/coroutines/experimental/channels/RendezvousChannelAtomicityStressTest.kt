@@ -31,7 +31,7 @@ class RendezvousChannelAtomicityStressTest {
         launchReceiver()
         val rnd = Random()
         while (System.currentTimeMillis() < deadline) {
-            when (rnd.nextInt(4)) {
+            when (rnd.nextInt(3)) {
                 0 -> { // cancel & restart sender
                     stopSender()
                     launchSender()
@@ -41,7 +41,6 @@ class RendezvousChannelAtomicityStressTest {
                     launchReceiver()
                 }
                 2 -> yield() // just yield (burn a little time)
-                3 -> delay(1L) // delay for more a bit
             }
         }
         stopSender()
