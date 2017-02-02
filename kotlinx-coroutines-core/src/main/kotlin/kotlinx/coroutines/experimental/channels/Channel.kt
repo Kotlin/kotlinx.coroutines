@@ -102,7 +102,7 @@ public interface ReceiveChannel<out E> {
      * Retrieves and removes the head of this queue, or returns `null` if this queue [isEmpty]
      * or [isClosedForReceive].
      */
-    public fun pool(): E?
+    public fun poll(): E?
 
     /**
      * Returns new iterator to receive elements from this channels using `for` loop.
@@ -153,7 +153,23 @@ public interface ChannelIterator<out E> {
  * Conceptually, a channel is similar to [BlockingQueue][java.util.concurrent.BlockingQueue],
  * but it has suspending operations instead of blocking ones and it can be closed.
  */
-public interface Channel<E> : SendChannel<E>, ReceiveChannel<E>
+public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
+    /**
+     * Factory for channels.
+     */
+    public companion object Factory {
+        /**
+         * Creates a channel with specified buffer capacity (or without a buffer by default).
+         */
+        public operator fun <E> invoke(capacity: Int = 0): Channel<E> {
+            check(capacity >= 0) { "Channel capacity cannot be negative, but $capacity was specified" }
+            return if (capacity == 0)
+                RendezvousChannel()
+            else
+                ArrayChannel(capacity)
+        }
+    }
+}
 
 /**
  * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel.

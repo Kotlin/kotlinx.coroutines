@@ -2,13 +2,22 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.*
 import kotlin.test.assertEquals
 
-class RendezvousChannelAtomicityStressTest {
+@RunWith(Parameterized::class)
+class ChannelAtomicCancelStressTest(val kind: TestChannelKind) {
+    companion object {
+        @Parameterized.Parameters(name = "{0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> = TestChannelKind.values().map { arrayOf<Any>(it) }
+    }
+
     val TEST_DURATION = 3000L
 
-    val channel = RendezvousChannel<Int>()
+    val channel = kind.create()
     val senderDone = RendezvousChannel<Boolean>()
     val receiverDone = RendezvousChannel<Boolean>()
 
@@ -25,7 +34,7 @@ class RendezvousChannelAtomicityStressTest {
     lateinit var receiver: Job
 
     @Test
-    fun testStress() = runBlocking {
+    fun testAtomicCancelStress() = runBlocking {
         val deadline = System.currentTimeMillis() + TEST_DURATION
         launchSender()
         launchReceiver()

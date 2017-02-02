@@ -213,16 +213,24 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
     /**
      * Tries to update current [state][getState] of this job.
      */
-    fun updateState(expect: Any, update: Any?, onSuccess: ((Any?) -> Unit)? = null): Boolean {
+    fun updateState(expect: Any, update: Any?): Boolean {
+        if (!tryUpdateState(expect, update)) return false
+        completeUpdateState(expect, update)
+        return true
+    }
+
+    fun tryUpdateState(expect: Any, update: Any?): Boolean  {
         require(expect is Active && update !is Active) // only active -> inactive transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // #1. Update linked state before invoking completion handlers
         onStateUpdate(update)
         // #2. Unregister from parent job
         registration?.unregister() // volatile read registration _after_ state was updated
-        // #3. Additional (optional) callback
-        onSuccess?.invoke(update)
-        // #4. Invoke completion handlers
+        return true // continues in completeUpdateState
+    }
+
+    fun completeUpdateState(expect: Any, update: Any?) {
+        // #3. Invoke completion handlers
         val reason = (update as? CompletedExceptionally)?.cancelReason
         var completionException: Throwable? = null
         when (expect) {
@@ -244,10 +252,9 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
             // otherwise -- do nothing (Empty)
             else -> check(expect == Empty)
         }
-        // #5. Do other (overridable) processing after completion handlers
+        // #4. Do other (overridable) processing after completion handlers
         completionException?.let { handleCompletionException(it) }
         afterCompletion(update)
-        return true
     }
 
     final override val isActive: Boolean get() = state is Active

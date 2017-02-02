@@ -103,14 +103,14 @@ class RendezvousChannelTest : TestBase() {
         expect(1)
         launch(context) {
             expect(3)
-            assertEquals(null, q.pool())
+            assertEquals(null, q.poll())
             expect(4)
             assertEquals(2, q.receive())
             expect(7)
-            assertEquals(null, q.pool())
+            assertEquals(null, q.poll())
             yield()
             expect(9)
-            assertEquals(3, q.pool())
+            assertEquals(3, q.poll())
             expect(10)
         }
         expect(2)
@@ -122,5 +122,111 @@ class RendezvousChannelTest : TestBase() {
         expect(8)
         q.send(3)
         finish(11)
+    }
+
+    @Test
+    fun testIteratorClosed() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(3)
+            q.close()
+            expect(4)
+        }
+        expect(2)
+        for (x in q) {
+            expectUnreached()
+        }
+        finish(5)
+    }
+
+    @Test
+    fun testIteratorOne() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(3)
+            q.send(1)
+            expect(4)
+            q.close()
+            expect(5)
+        }
+        expect(2)
+        for (x in q) {
+            expect(6)
+            assertEquals(1, x)
+        }
+        finish(7)
+    }
+
+    @Test
+    fun testIteratorOneWithYield() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(3)
+            q.send(1) // will suspend
+            expect(6)
+            q.close()
+            expect(7)
+        }
+        expect(2)
+        yield() // yield to sender coroutine right before starting for loop
+        expect(4)
+        for (x in q) {
+            expect(5)
+            assertEquals(1, x)
+        }
+        finish(8)
+    }
+
+    @Test
+    fun testIteratorTwo() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(3)
+            q.send(1)
+            expect(4)
+            q.send(2)
+            expect(7)
+            q.close()
+            expect(8)
+        }
+        expect(2)
+        for (x in q) {
+            when (x) {
+                1 -> expect(5)
+                2 -> expect(6)
+                else -> expectUnreached()
+            }
+        }
+        finish(9)
+    }
+
+    @Test
+    fun testIteratorTwoWithYield() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(3)
+            q.send(1) // will suspend
+            expect(6)
+            q.send(2)
+            expect(7)
+            q.close()
+            expect(8)
+        }
+        expect(2)
+        yield() // yield to sender coroutine right before starting for loop
+        expect(4)
+        for (x in q) {
+            when (x) {
+                1 -> expect(5)
+                2 -> expect(9)
+                else -> expectUnreached()
+            }
+        }
+        finish(10)
     }
 }
