@@ -33,7 +33,7 @@
         <repository>
             <id>bintray</id>
             <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-dev</url>
+            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
         </repository>
     </repositories>
 
@@ -41,7 +41,7 @@
         <pluginRepository>
             <id>bintray</id>
             <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-dev</url>
+            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
         </pluginRepository>
         <pluginRepository>
             <id>bintray-kotlin-dokka</id>
