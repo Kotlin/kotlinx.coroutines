@@ -1,9 +1,10 @@
 # Change log for kotlinx.coroutines 
 
 
-## Version 0.6-rc
+## Version 0.6-beta
 
-* Switched to Kotlin version 1.1.0-rc.
+* Switched to Kotlin version 1.1.0-beta-37.
+* A [guide on coroutines](coroutines-guide.md) is expanded.  
 
 ## Version 0.5-beta
 

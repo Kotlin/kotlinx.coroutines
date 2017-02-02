@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
-        <version>0.6-rc-SNAPSHOT</version>
+        <version>0.6-beta-SNAPSHOT</version>
     </parent>
 
     <artifactId>kotlinx-coroutines-rx-example</artifactId>
