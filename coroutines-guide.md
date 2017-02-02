@@ -194,7 +194,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 ## Cancellation is cooperative
 
-Coroutine cancellation is _cooperative_. A coroutine code has to cooperate be cancellable.
+Coroutine cancellation is _cooperative_. A coroutine code has to cooperate to be cancellable.
 All the suspending functions in `kotlinx.coroutines` are _cancellable_. They check for cancellation of 
 coroutine and throw `CancellationException` when cancelled. However, if a coroutine is working in 
 a computation and does not check for cancellation, then it cannot be cancelled, like the following 
