@@ -87,4 +87,8 @@ internal open class DeferredCoroutine<T>(
         if (state is CompletedExceptionally) throw state.exception
         return state as T
     }
+
+    // for nicer debugging
+    override fun toString(): String = "${javaClass.simpleName}{" +
+        (if (isActive) "isActive=true" else "completed=${getState()}") + "}"
 }

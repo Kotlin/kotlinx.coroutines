@@ -22,6 +22,15 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Sequential by default](#sequential-by-default)
   * [Concurrent using deferred value](#concurrent-using-deferred-value)
   * [Lazily deferred value](#lazily-deferred-value)
+* [Coroutine context and dispatchers](#coroutine-context-and-dispatchers)
+  * [Dispatchers and threads](#Dispatchers-and-threads)
+  * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
+  * [Debugging coroutines and threads](#debugging-coroutines-and-threads)
+  * [Jumping between threads](#jumping-between-threads)
+  * [Job in the context](#job-in-the-context)
+  * [Children of a coroutine](#children-of-a-coroutine)
+  * [Combining contexts](#combining-contexts)
+  * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
   
 <!--- KNIT kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
 
@@ -555,5 +564,310 @@ So, we are back to two sequential execution, because we _first_ await for the `o
 for the second one. It is not the intended use-case for `lazyDefer`. It is designed as a replacement for
 the standard `lazy` function in cases when computation of the value involve suspending functions.
 
+## Coroutine context and dispatchers
+
+We've already seen `launch(CommonPool) {...}`, `defer(CommonPool) {...}`, `run(NonCancellable) {...}`, etc.
+In these code snippets `CommonPool` and `NonCancellable` are _coroutine contexts_. 
+This section covers other available choices.
+
+### Dispatchers and threads
+
+Coroutine context includes a _coroutine dispatcher_ which determines what thread or threads 
+the corresponding coroutine uses for its execution. Coroutine dispatcher can confine coroutine execution 
+to a specific thread, dispatch it to a thread pool, or let it run unconfined. Try the following example:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val jobs = arrayListOf<Job>()
+    jobs += launch(Unconfined) { // not confined -- will work with main thread
+        println(" 'Unconfined': I'm working in thread ${Thread.currentThread().name}")
+    }
+    jobs += launch(context) { // context of the parent, runBlocking coroutine
+        println("    'context': I'm working in thread ${Thread.currentThread().name}")
+    }
+    jobs += launch(CommonPool) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+        println(" 'CommonPool': I'm working in thread ${Thread.currentThread().name}")
+    }
+    jobs += launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
+        println("     'newSTC': I'm working in thread ${Thread.currentThread().name}")
+    }
+    jobs.forEach { it.join() }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-41.kt)
+
+It produces the following output (maybe in different order):
+
+```
+ 'Unconfined': I'm working in thread main
+ 'CommonPool': I'm working in thread ForkJoinPool.commonPool-worker-1
+     'newSTC': I'm working in thread MyOwnThread
+    'context': I'm working in thread main
+```
+
+The difference between parent `context` and `Unconfied` context will be shown later.
+
+### Unconfined vs confined dispatcher
+ 
+The `Unconfined` coroutine dispatcher starts coroutine in the caller thread, but only until the
+first suspension point. After suspension it resumes in the thread that is fully determined by the
+suspending function that was invoked. Unconfined dispatcher is appropriate when coroutine does not
+consume CPU time nor updates any shared data (like UI) that is confined to a specific thread. 
+
+On the other side, `context` property that is available inside the block of any coroutine 
+via `CoroutineScope` interface, is a reference to a context of this particular coroutine. 
+This way, a parent context can be inherited. The default context of `runBlocking`, in particular,
+is confined to be invoker thread, so inheriting it has the effect of confining execution to
+this thread with a predictable FIFO scheduling.
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val jobs = arrayListOf<Job>()
+    jobs += launch(Unconfined) { // not confined -- will work with main thread
+        println(" 'Unconfined': I'm working in thread ${Thread.currentThread().name}")
+        delay(1000)
+        println(" 'Unconfined': After delay in thread ${Thread.currentThread().name}")
+    }
+    jobs += launch(context) { // context of the parent, runBlocking coroutine
+        println("    'context': I'm working in thread ${Thread.currentThread().name}")
+        delay(1000)
+        println("    'context': After delay in thread ${Thread.currentThread().name}")
+    }
+    jobs.forEach { it.join() }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-42.kt)
+
+Produces the output: 
+ 
+```
+ 'Unconfined': I'm working in thread main
+    'context': I'm working in thread main
+ 'Unconfined': After delay in thread kotlinx.coroutines.ScheduledExecutor
+    'context': After delay in thread main
+```
+ 
+So, the coroutine the had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
+while the unconfined one had resumed in the scheduler thread that `delay` function is using.
+
+### Debugging coroutines and threads
+
+Coroutines can suspend on one thread and resume on another thread with `Unconfined` dispatcher or 
+with a multi-threaded dispatcher like `CommonPool`. Even with a single-threaded dispatcher it might be hard to
+figure out what coroutine was doing what, where, and when. The common approach to debugging applications with 
+threads is to print the thread name in the log file on each log statement. This feature is universally supported
+by logging frameworks. When using coroutines, the thread name alone does not give much of a context, so 
+`kotlinx.coroutines` includes debugging facilities to make it easier. 
+
+Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
+
+```kotlin
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val a = defer(context) {
+        log("I'm computing a piece of the answer")
+        6
+    }
+    val b = defer(context) {
+        log("I'm computing another piece of the answer")
+        7
+    }
+    log("The answer is ${a.await() * b.await()}")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-43.kt)
+
+There are three coroutines. The main couroutine (#1) -- `runBlocking` one, 
+and two coroutines computing deferred values `a` (#2) and `b` (#3).
+They are all executing in the context of `runBlocking` and are confined to the main thread.
+The output of this code is:
+
+```
+[main @coroutine#2] I'm computing a piece of the answer
+[main @coroutine#3] I'm computing another piece of the answer
+[main @coroutine#1] The answer is 42
+```
+
+The `log` function prints the name of the thread in square brackets and you can see, that it is the `main`
+thread, but the identifier of the currently executing coroutine is appended to it. This identifier 
+is consecutively assigned to all created coroutines when debugging mode is turned on.
+
+You can read more about debugging facilities in documentation for `newCoroutineContext` function.
+
+### Jumping between threads
+
+Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
+
+```kotlin
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+fun main(args: Array<String>) {
+    val ctx1 = newSingleThreadContext("Ctx1")
+    val ctx2 = newSingleThreadContext("Ctx2")
+    runBlocking(ctx1) {
+        log("Started in ctx1")
+        run(ctx2) {
+            log("Working in ctx2")
+        }
+        log("Back to ctx1")
+    }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-44.kt)
+
+It demonstrates two new techniques. One is using `runBlocking` with an explicitly specified context, and
+the second one is using `run(context) {...}` to change a context of a coroutine while still staying in the 
+same coroutine as you can see in the output below:
+
+```
+[Ctx1 @coroutine#1] Started in ctx1
+[Ctx2 @coroutine#1] Working in ctx2
+[Ctx1 @coroutine#1] Back to ctx1
+```
+
+### Job in the context
+
+The coroutine `Job` is part of its context. The coroutine can retrieve it from its own context 
+using `context[Job]` expression:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    println("My job is ${context[Job]}")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-45.kt)
+
+It produces
+
+```
+My job is BlockingCoroutine{isActive=true}
+```
+
+So, `isActive` in `CoroutineScope` is just a convenient shortcut for `context[Job]!!.isActive`.
+
+### Children of a coroutine
+
+When `context` of a coroutine is used to launch another coroutine, the `Job` of the new coroutine becomes
+a _child_ of the parent coroutine's job. When the parent coroutine is cancelled, all its children
+are recursively cancelled, too. 
+  
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    // start a coroutine to process some kind of incoming request
+    val request = launch(CommonPool) {
+        // it spawns two other jobs, one with its separate context
+        val job1 = launch(CommonPool) {
+            println("job1: I have my own context and execute independently!")
+            delay(1000)
+            println("job1: I am not affected by cancellation of the request")
+        }
+        // and the other inherits the parent context
+        val job2 = launch(context) {
+            println("job2: I am a child of the request coroutine")
+            delay(1000)
+            println("job2: I will not execute this line if my parent request is cancelled")
+        }
+        // request completes when both its sub-jobs complete:
+        job1.join()
+        job2.join()
+    }
+    delay(500)
+    request.cancel() // cancel processing of the request
+    delay(1000) // delay a second to see what happens
+    println("main: Who has survived request cancellation?")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-46.kt)
+
+The output of this code is:
+
+```
+job1: I have my own context and execute independently!
+job2: I am a child of the request coroutine
+job1: I am not affected by cancellation of the request
+main: Who has survived request cancellation?
+```
+
+### Combining contexts
+
+Coroutine context can be combined using `+` operator. The context on the right-hand side replaces relevant entries
+of the context on the left-hand side. For example, a `Job` of the parent coroutine can be inherited, while 
+its dispatcher replaced:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    // start a coroutine to process some kind of incoming request
+    val request = launch(context) { // use the context of `runBlocking`
+        // spawns CPU-intensive child job in CommonPool !!! 
+        val job = launch(context + CommonPool) {
+            println("job: I am a child of the request coroutine, but with a different dispatcher")
+            delay(1000)
+            println("job: I will not execute this line if my parent request is cancelled")
+        }
+        job.join() // request completes when its sub-job completes
+    }
+    delay(500)
+    request.cancel() // cancel processing of the request
+    delay(1000) // delay a second to see what happens
+    println("main: Who has survived request cancellation?")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-47.kt)
+
+The expected outcome of this code is: 
+
+```
+job: I am a child of the request coroutine, but with a different dispatcher
+main: Who has survived request cancellation?
+```
+
+### Naming coroutines for debugging
+
+Automatically assignmed ids are good when coroutines log often and you just need to correlate log records
+coming from the same coroutine. However, when coroutine is tied to the processing of a specific request
+or doing some specific background task, it is better to name it explicitly for debugging purposes.
+Coroutine name serves the same function as a thread name. It'll get displayed in the thread name that
+is executing this coroutine when debugging more is turned on.
+
+The following example demonstrates this concept:
+
+```kotlin
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+    log("Started main coroutine")
+    // run two background value computations
+    val v1 = defer(CommonPool + CoroutineName("v1coroutine")) {
+        log("Computing v1")
+        delay(500)
+        252
+    }
+    val v2 = defer(CommonPool + CoroutineName("v2coroutine")) {
+        log("Computing v2")
+        delay(1000)
+        6
+    }
+    log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-48.kt)
+
+The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
+ 
+```
+[main @main#1] Started main coroutine
+[ForkJoinPool.commonPool-worker-1 @v1coroutine#2] Computing v1
+[ForkJoinPool.commonPool-worker-2 @v2coroutine#3] Computing v2
+[main @main#1] The answer for v1 / v2 = 42
+```
 
 

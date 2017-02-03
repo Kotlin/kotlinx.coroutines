@@ -9,9 +9,10 @@ import kotlin.coroutines.experimental.CoroutineContext
  * Base class that shall be extended by all coroutine dispatcher implementations.
  *
  * The following standard implementations are provided by `kotlinx.coroutines`:
- * * [Here] -- starts coroutine execution _right here_ in the current call-frame until the first suspension. On first
- *   suspension the coroutine builder function returns. The coroutine will resume in whatever thread that is used by the
- *   corresponding suspending function, without mandating any specific threading policy.
+ * * [Unconfined] -- starts coroutine execution in the current call-frame until the first suspension.
+ *   On first  suspension the coroutine builder function returns.
+ *   The coroutine will resume in whatever thread that is used by the
+ *   corresponding suspending function, without confining it to any specific thread or pool.
  *   This in an appropriate choice for IO-intensive coroutines that do not consume CPU resources.
  * * [CommonPool] -- immediately returns from the coroutine builder and schedules coroutine execution to
  *   a common pool of shared background threads.

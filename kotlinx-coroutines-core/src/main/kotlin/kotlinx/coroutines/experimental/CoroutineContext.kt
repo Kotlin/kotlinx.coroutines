@@ -19,14 +19,19 @@ private val DEBUG = run {
 private val COROUTINE_ID = AtomicLong()
 
 /**
- * A coroutine dispatcher that executes initial continuation of the coroutine _right here_ in the current call-frame
+ * A coroutine dispatcher that is not confined to any specific thread.
+ * It executes initial continuation of the coroutine _right here_ in the current call-frame
  * and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
  * mandating any specific threading policy.
  */
-public object Here : CoroutineDispatcher() {
+public object Unconfined : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
     override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
 }
+
+@Deprecated(message = "`Here` was renamed to `Unconfined`",
+        replaceWith = ReplaceWith(expression = "Unconfined"))
+public typealias Here = Unconfined
 
 /**
  * Creates context for the new coroutine with optional support for debugging facilities (when turned on).

@@ -1,8 +1,9 @@
-package examples
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.example44
 
-import kotlinx.coroutines.experimental.newSingleThreadContext
-import kotlinx.coroutines.experimental.run
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
+
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main(args: Array<String>) {
     val ctx1 = newSingleThreadContext("Ctx1")

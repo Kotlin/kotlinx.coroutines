@@ -346,6 +346,9 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
             (handler as? JobNode)?.also { require(it.job === this) }
                     ?: InvokeOnCompletion(this, handler)
 
+    // for nicer debugging
+    override fun toString(): String = "${javaClass.simpleName}{isActive=$isActive}"
+
     /**
      * Marker interface for active [state][getState] of a job.
      */
