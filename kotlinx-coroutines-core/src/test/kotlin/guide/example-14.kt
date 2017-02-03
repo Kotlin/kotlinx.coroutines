@@ -1,4 +1,5 @@
-package example14
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.example14
 
 import kotlinx.coroutines.experimental.*
 

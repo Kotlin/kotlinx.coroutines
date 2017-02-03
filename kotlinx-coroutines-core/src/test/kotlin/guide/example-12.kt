@@ -1,9 +1,7 @@
-package example12
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.example12
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
     launch(CommonPool) { // create new coroutine in common thread pool

@@ -22,7 +22,16 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Sequential by default](#sequential-by-default)
   * [Concurrent using deferred value](#concurrent-using-deferred-value)
   * [Lazily deferred value](#lazily-deferred-value)
+  
+<!--- KNIT kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
 
+<!--- INCLUDE .*/example-([0-9]+)\.kt 
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.example$$1
+
+import kotlinx.coroutines.experimental.*
+-->
+  
 ## Coroutine basics
 
 This section covers basic coroutine concepts.
@@ -42,7 +51,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-11.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-11.kt)
 
 Run this code:
 
@@ -80,7 +89,7 @@ fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-12.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-12.kt)
 
 The result is the same, but this code uses only non-blocking `delay`. 
 
@@ -97,6 +106,8 @@ class MyTest {
     }
 }
 ```
+
+<!--- CLEAR -->
  
 ### Waiting for a job
 
@@ -114,7 +125,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-13.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-13.kt)
 
 Now the result is still the same, but the code of the main coroutine is not tied to the duration of
 the background job in any way. Much better.
@@ -141,7 +152,7 @@ suspend fun doWorld() {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-14.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-14.kt)
 
 ### Coroutines ARE light-weight
 
@@ -159,7 +170,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-15.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-15.kt)
 
 It starts 100K coroutines and, after a second, each coroutine prints a dot. 
 Now, try that with threads. What would happen? (Most likely your code will produce some sort of out-of-memory error)
@@ -181,7 +192,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-16.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-16.kt)
 
 You can run and see that it prints three lines and terminates:
 
@@ -219,7 +230,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-21.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-21.kt)
 
 It produces the following output:
 
@@ -262,7 +273,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-22.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-22.kt)
 
 Run it to see that it continues to print "I'm sleeping" even after cancellation.
 
@@ -274,7 +285,28 @@ The other one is to explicitly check the cancellation status. Let us try the lat
 
 Replace `while (true)` in the previous example with `while (isActive)` and rerun it. 
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-23.kt)
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val job = launch(CommonPool) {
+        var nextPrintTime = 0L
+        var i = 0
+        while (isActive) { // cancellable computation loop
+            val currentTime = System.currentTimeMillis()
+            if (currentTime >= nextPrintTime) {
+                println("I'm sleeping ${i++} ...")
+                nextPrintTime = currentTime + 500L
+            }
+        }
+    }
+    delay(1300L) // delay a bit
+    println("main: I'm tired of waiting!")
+    job.cancel() // cancels the job
+    delay(1300L) // delay a bit to see if it was cancelled....
+    println("main: Now I can quit.")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-23.kt)
 
 As you can see, now this loop can be cancelled. `isActive` is a property that is available inside
 the code of coroutines via `CoroutineScope` object.
@@ -305,7 +337,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-24.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-24.kt)
 
 The example above produces the following output:
 
@@ -351,7 +383,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-25.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-25.kt)
 
 ### Timeout
 
@@ -372,7 +404,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-26.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-26.kt)
 
 It produces the following output:
 
@@ -422,6 +454,10 @@ We just use a normal sequential invocation, because the code in the coroutine, j
 code, is _sequential_ by default. The following example demonstrates that by measuring the total 
 time it takes to execute both suspending functions:
 
+<!--- INCLUDE .*/example-3[1-9].kt
+import kotlin.system.measureTimeMillis
+-->
+
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
@@ -433,7 +469,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-31.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-31.kt)
 
 It produces something like this:
 
@@ -453,6 +489,19 @@ does not carry any resulting value, while `defer` returns a `Deferred` -- a kind
 that represent a promise to provide result later. You can use `.await()` on a deferred value to get its eventual result,
 but `Deferred` is also a `Job`, so you can cancel it if needed.
  
+<!--- INCLUDE .*/example-3[2-9].kt
+
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
+}
+-->
+ 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
@@ -464,7 +513,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-32.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-32.kt)
 
 It produces something like this:
 
@@ -493,7 +542,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/examples/example-33.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-33.kt)
 
 It produces something like this:
 

@@ -1,8 +1,7 @@
-package example26
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.example26
 
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.withTimeout
+import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     withTimeout(1300L) {
