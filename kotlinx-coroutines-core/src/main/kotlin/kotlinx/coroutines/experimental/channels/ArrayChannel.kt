@@ -30,12 +30,13 @@ public class ArrayChannel<E>(val capacity: Int) : AbstractChannel<E>() {
     override val isBufferEmpty: Boolean get() = size == 0
     override val isBufferFull: Boolean get() = size == capacity
 
-    override fun offerInternal(element: E): Int {
+    // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
+    override fun offerInternal(element: E): Any {
         var token: Any? = null
         var receive: ReceiveOrClosed<E>? = null
         locked {
             val size = this.size
-            if (isClosedForSend) return OFFER_CLOSED
+            closedForSend?.let { return it }
             if (size < capacity) {
                 // tentatively put element to buffer
                 this.size = size + 1 // update size before checking queue (!!!)
@@ -61,14 +62,14 @@ public class ArrayChannel<E>(val capacity: Int) : AbstractChannel<E>() {
         return receive!!.offerResult
     }
 
-    // result is `E | POLL_EMPTY | POLL_CLOSED`
+    // result is `E | POLL_EMPTY | Closed`
     override fun pollInternal(): Any? {
         var token: Any? = null
         var send: Send? = null
         var result: Any? = null
         locked {
             val size = this.size
-            if (size == 0) return if (isClosedTokenFirstInQueue) POLL_CLOSED else POLL_EMPTY
+            if (size == 0) return closedForSend ?: POLL_EMPTY
             // size > 0: not empty -- retrieve element
             result = buffer[head]
             buffer[head] = null
@@ -85,7 +86,7 @@ public class ArrayChannel<E>(val capacity: Int) : AbstractChannel<E>() {
                     }
                 }
             }
-            if (replacement !== POLL_EMPTY && replacement !== POLL_CLOSED) {
+            if (replacement !== POLL_EMPTY && !isClosed(replacement)) {
                 this.size = size // restore size
                 buffer[(head + size) % capacity] = replacement
             }

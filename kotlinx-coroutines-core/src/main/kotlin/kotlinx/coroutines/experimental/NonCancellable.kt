@@ -16,5 +16,5 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     override val isActive: Boolean  get() = true
     override fun getInactiveCancellationException(): CancellationException = throw IllegalStateException("This job is always active")
     override fun onCompletion(handler: CompletionHandler): Job.Registration = EmptyRegistration
-    override fun cancel(reason: Throwable?): Boolean = false
+    override fun cancel(cause: Throwable?): Boolean = false
 }

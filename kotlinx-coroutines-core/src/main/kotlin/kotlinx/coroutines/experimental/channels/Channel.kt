@@ -4,7 +4,6 @@ import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.yield
-import java.util.*
 
 /**
  * Sender's interface to [Channel].
@@ -12,7 +11,9 @@ import java.util.*
 public interface SendChannel<in E> {
     /**
      * Returns `true` if this channel was closed by invocation of [close] and thus
-     * the [send] attempt will throw [ClosedSendChannelException].
+     * the [send] attempt throws [ClosedSendChannelException]. If the channel was closed because of the exception, it
+     * is considered closed, too, but it is called a _failed_ channel. All suspending attempts to send
+     * an element to a failed channel throw the original [close] cause exception.
      */
     public val isClosedForSend: Boolean
 
@@ -24,7 +25,8 @@ public interface SendChannel<in E> {
 
     /**
      * Adds [element] into to this queue, suspending the caller while this queue [isFull],
-     * or throws [ClosedSendChannelException] if the channel [isClosedForSend].
+     * or throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
+     * It throws the original [close] cause exception if the channel has _failed_.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
@@ -39,18 +41,24 @@ public interface SendChannel<in E> {
     /**
      * Adds [element] into this queue if it is possible to do so immediately without violating capacity restrictions
      * and returns `true`. Otherwise, it returns `false` immediately
-     * or throws [ClosedSendChannelException] if the channel [isClosedForSend].
+     * or throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
+     * It throws the original [close] cause exception if the channel has _failed_.
      */
     public fun offer(element: E): Boolean
 
     /**
-     * Closes this channel. This is an idempotent operation -- repeated invocations of this function have no effect.
+     * Closes this channel with an optional exceptional [cause].
+     * This is an idempotent operation -- repeated invocations of this function have no effect and return `false`.
      * Conceptually, its sends a special close token of this channel. Immediately after invocation of this function
      * [isClosedForSend] starts returning `true`. However, [isClosedForReceive][ReceiveChannel.isClosedForReceive]
      * on the side of [ReceiveChannel] starts returning `true` only after all previously sent elements
      * are received.
+     *
+     * A channel that was closed without a [cause], is considered to be _closed normally_.
+     * A channel that was closed with non-null [cause] is called a _failed channel_. Attempts to send or
+     * receive on a failed channel throw this cause exception.
      */
-    public fun close()
+    public fun close(cause: Throwable? = null): Boolean
 }
 
 /**
@@ -59,8 +67,10 @@ public interface SendChannel<in E> {
 public interface ReceiveChannel<out E> {
     /**
      * Returns `true` if this channel was closed by invocation of [close][SendChannel.close] on the [SendChannel]
-     * side and all previously sent items were already received, so that the [receive] attempt will
-     * throw [ClosedReceiveChannelException].
+     * side and all previously sent items were already received, so that the [receive] attempt
+     * throws [ClosedReceiveChannelException]. If the channel was closed because of the exception, it
+     * is considered closed, too, but it is called a _failed_ channel. All suspending attempts to receive
+     * an element from a failed channel throw the original [close][SendChannel.close] cause exception.
      */
     public val isClosedForReceive: Boolean
 
@@ -73,6 +83,8 @@ public interface ReceiveChannel<out E> {
     /**
      * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
      * or throws [ClosedReceiveChannelException] if the channel [isClosedForReceive].
+     * If the channel was closed because of the exception, it is called a _failed_ channel and this function
+     * throws the original [close][SendChannel.close] cause exception.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
@@ -86,7 +98,8 @@ public interface ReceiveChannel<out E> {
 
     /**
      * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
-     * or returns `null` if the channel [isClosedForReceive].
+     * or returns `null` if the channel is [closed][isClosedForReceive] _normally_,
+     * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
@@ -100,12 +113,15 @@ public interface ReceiveChannel<out E> {
 
     /**
      * Retrieves and removes the head of this queue, or returns `null` if this queue [isEmpty]
-     * or [isClosedForReceive].
+     * or is [closed][isClosedForReceive] _normally_,
+     * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
     public fun poll(): E?
 
     /**
      * Returns new iterator to receive elements from this channels using `for` loop.
+     * Iteration completes normally when the channel is [closed][isClosedForReceive] _normally_ and
+     * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
     public operator fun iterator(): ChannelIterator<E>
 }
@@ -117,8 +133,10 @@ public interface ReceiveChannel<out E> {
 public interface ChannelIterator<out E> {
     /**
      * Returns `true` if the channel has more elements suspending the caller while this channel
-     * [isEmpty][ReceiveChannel.isEmpty] or `false` [ClosedReceiveChannelException] if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive].
+     * [isEmpty][ReceiveChannel.isEmpty] or returns `false` if the channel
+     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] _normally_.
+     * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     *
      * This function retrieves and removes the element from this channel for the subsequent invocation
      * of [next].
      *
@@ -136,6 +154,7 @@ public interface ChannelIterator<out E> {
      * Retrieves and removes the element from this channel suspending the caller while this channel
      * [isEmpty][ReceiveChannel.isEmpty] or throws [ClosedReceiveChannelException] if the channel
      * [isClosedForReceive][ReceiveChannel.isClosedForReceive].
+     * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
@@ -172,12 +191,15 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
 }
 
 /**
- * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel.
+ * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel
+ * that was closed _normally_. A _failed_ channel rethrows the original [close][SendChannel.close] cause
+ * exception on send attempts.
  */
-public class ClosedSendChannelException : IllegalStateException()
+public class ClosedSendChannelException(message: String?) : IllegalStateException(message)
 
 /**
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
- * channel.
+ * channel that was closed _normally_. A _failed_ channel rethrows the original [close][SendChannel.close] cause
+ * exception on receive attempts.
  */
-public class ClosedReceiveChannelException : NoSuchElementException()
+public class ClosedReceiveChannelException(message: String?) : NoSuchElementException(message)

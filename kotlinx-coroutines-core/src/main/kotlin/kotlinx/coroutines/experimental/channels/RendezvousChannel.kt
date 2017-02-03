@@ -13,8 +13,8 @@ public class RendezvousChannel<E> : AbstractChannel<E>() {
     override val isBufferEmpty: Boolean get() = true
     override val isBufferFull: Boolean get() = true
 
-    // result is `OFFER_SUCCESS | OFFER_FAILED | OFFER_CLOSED`
-    override fun offerInternal(element: E): Int {
+    // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
+    override fun offerInternal(element: E): Any {
         while (true) {
             val receive = takeFirstReceiveOrPeekClosed() ?: return OFFER_FAILED
             val token = receive.tryResumeReceive(element)
@@ -25,7 +25,7 @@ public class RendezvousChannel<E> : AbstractChannel<E>() {
         }
     }
 
-    // result is `E | POLL_EMPTY | POLL_CLOSED`
+    // result is `E | POLL_EMPTY | Closed`
     override fun pollInternal(): Any? {
         while (true) {
             val send = takeFirstSendOrPeekClosed() ?: return POLL_EMPTY

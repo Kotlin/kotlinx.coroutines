@@ -20,24 +20,25 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     /**
      * Tries to add element to buffer or to queued receiver.
-     * Return type is `OFFER_SUCCESS | OFFER_FAILED | OFFER_CLOSED`.
+     * Return type is `OFFER_SUCCESS | OFFER_FAILED | Closed`.
      */
-    protected abstract fun offerInternal(element: E): Int
+    protected abstract fun offerInternal(element: E): Any
 
     /**
      * Tries to remove element from buffer or from queued sender.
-     * Return type is `E | POLL_EMPTY | POLL_CLOSED`
+     * Return type is `E | POLL_EMPTY | Closed`
      */
     protected abstract fun pollInternal(): Any?
 
 
-    // ------ state function for concrete implementations ------
+    // ------ state functions for concrete implementations ------
 
-    protected val isClosedTokenFirstInQueue: Boolean get() = queue.next() is Closed<*>
+    protected val closedForReceive: Any? get() = queue.next() as? Closed<*>
+    protected val closedForSend: Any? get() = queue.prev() as? Closed<*>
 
     // ------ SendChannel ------
 
-    override val isClosedForSend: Boolean get() = queue.prev() is Closed<*>
+    override val isClosedForSend: Boolean get() = closedForSend != null
     override val isFull: Boolean get() = queue.next() !is ReceiveOrClosed<*> && isBufferFull
 
     suspend override fun send(element: E) {
@@ -47,12 +48,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
         return sendSuspend(element)
     }
 
-    override fun offer(element: E): Boolean =
-        when (offerInternal(element)) {
-            OFFER_SUCCESS -> true
-            OFFER_FAILED -> false
-            else -> throw ClosedSendChannelException()
+    override fun offer(element: E): Boolean {
+        val result = offerInternal(element)
+        return when {
+            result === OFFER_SUCCESS -> true
+            result is Closed<*> -> throw result.sendException
+            else -> false
         }
+    }
 
     private suspend fun sendSuspend(element: E): Unit = suspendCancellableCoroutine(true) sc@ { cont ->
         val send = SendElement(cont, element)
@@ -63,13 +66,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
                 return@sc
             }
             // hm... something is not right. try to offer
-            when (offerInternal(element)) {
-                OFFER_SUCCESS -> {
+            val result = offerInternal(element)
+            when {
+                result === OFFER_SUCCESS -> {
                     cont.resume(Unit)
                     return@sc
                 }
-                OFFER_CLOSED -> {
-                    cont.resumeWithException(ClosedSendChannelException())
+                result is Closed<*> -> {
+                    cont.resumeWithException(result.sendException)
                     return@sc
                 }
             }
@@ -82,17 +86,18 @@ public abstract class AbstractChannel<E> : Channel<E> {
         else
             queue.addLastIfPrev(send, { it !is ReceiveOrClosed<*> })
 
-    override fun close() {
+    override fun close(cause: Throwable?): Boolean {
+        val closed = Closed<E>(cause)
         while (true) {
             val receive = takeFirstReceiveOrPeekClosed()
             if (receive == null) {
                 // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(Closed<E>(), { it !is ReceiveOrClosed<*> })) return
+                if (queue.addLastIfPrev(closed, { it !is ReceiveOrClosed<*> })) return true
                 continue // retry on failure
             }
-            if (receive is Closed<*>) return // already marked as closed -- nothing to do
+            if (receive is Closed<*>) return false // already marked as closed -- nothing to do
             receive as Receive<E> // type assertion
-            receive.resumeReceiveClosed()
+            receive.resumeReceiveClosed(closed)
         }
     }
 
@@ -101,17 +106,22 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     // ------ ReceiveChannel ------
 
-    override val isClosedForReceive: Boolean get() = isClosedTokenFirstInQueue && isBufferEmpty
+    override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
     override val isEmpty: Boolean get() = queue.next() !is Send && isBufferEmpty
 
     @Suppress("UNCHECKED_CAST")
     suspend override fun receive(): E {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result === POLL_CLOSED) throw ClosedReceiveChannelException()
-        if (result !== POLL_EMPTY) return result as E
+        if (result !== POLL_EMPTY) return receiveResult(result)
         // slow-path does suspend
         return receiveSuspend()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun receiveResult(result: Any?): E {
+        if (result is Closed<*>) throw result.receiveException
+        return result as E
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -125,8 +135,8 @@ public abstract class AbstractChannel<E> : Channel<E> {
             }
             // hm... something is not right. try to poll
             val result = pollInternal()
-            if (result === POLL_CLOSED) {
-                cont.resumeWithException(ClosedReceiveChannelException())
+            if (result is Closed<*>) {
+                cont.resumeWithException(result.receiveException)
                 return@sc
             }
             if (result !== POLL_EMPTY) {
@@ -146,10 +156,18 @@ public abstract class AbstractChannel<E> : Channel<E> {
     suspend override fun receiveOrNull(): E? {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result === POLL_CLOSED) return null
-        if (result !== POLL_EMPTY) return result as E
+        if (result !== POLL_EMPTY) return receiveOrNullResult(result)
         // slow-path does suspend
         return receiveOrNullSuspend()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun receiveOrNullResult(result: Any?): E? {
+        if (result is Closed<*>) {
+            if (result.closeCause != null) throw result.receiveException
+            return null
+        }
+        return result as E
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -163,8 +181,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
             }
             // hm... something is not right. try to poll
             val result = pollInternal()
-            if (result === POLL_CLOSED) {
-                cont.resume(null)
+            if (result is Closed<*>) {
+                if (result.closeCause == null)
+                    cont.resume(null)
+                else
+                    cont.resumeWithException(result.receiveException)
                 return@sc
             }
             if (result !== POLL_EMPTY) {
@@ -177,7 +198,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     @Suppress("UNCHECKED_CAST")
     override fun poll(): E? {
         val result = pollInternal()
-        return if (result === POLL_EMPTY || result === POLL_CLOSED) null else result as E
+        return if (result === POLL_EMPTY) null else receiveOrNullResult(result)
     }
 
     override fun iterator(): ChannelIterator<E> = Iterator(this)
@@ -186,12 +207,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
         queue.removeFirstIfIsInstanceOfOrPeekIf<Send> { it is Closed<*> }
 
     protected companion object {
-        const val OFFER_SUCCESS = 0
-        const val OFFER_FAILED = 1
-        const val OFFER_CLOSED = 2
+        const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
+
+        val OFFER_SUCCESS: Any = Marker("OFFER_SUCCESS")
+        val OFFER_FAILED: Any = Marker("OFFER_FAILED")
 
         val POLL_EMPTY: Any = Marker("POLL_EMPTY")
-        val POLL_CLOSED: Any = Marker("POLL_CLOSED")
+
+        fun isClosed(result: Any?): Boolean = result is Closed<*>
     }
 
     // for debugging
@@ -204,12 +227,20 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
         suspend override fun hasNext(): Boolean {
             // check for repeated hasNext
-            if (result !== POLL_EMPTY) return result !== POLL_CLOSED
+            if (result !== POLL_EMPTY) return hasNextResult(result)
             // fast path -- try poll non-blocking
             result = channel.pollInternal()
-            if (result !== POLL_EMPTY) return result !== POLL_CLOSED
+            if (result !== POLL_EMPTY) return hasNextResult(result)
             // slow-path does suspend
             return hasNextSuspend()
+        }
+
+        private fun hasNextResult(result: Any?): Boolean {
+            if (result is Closed<*>) {
+                if (result.closeCause != null) throw result.receiveException
+                return false
+            }
+            return true
         }
 
         private suspend fun hasNextSuspend(): Boolean = suspendCancellableCoroutine(true) sc@ { cont ->
@@ -221,9 +252,13 @@ public abstract class AbstractChannel<E> : Channel<E> {
                     return@sc
                 }
                 // hm... something is not right. try to poll
-                result = channel.pollInternal()
-                if (result === POLL_CLOSED) {
-                    cont.resume(false)
+                val result = channel.pollInternal()
+                this.result = result
+                if (result is Closed<*>) {
+                    if (result.closeCause == null)
+                        cont.resume(false)
+                    else
+                        cont.resumeWithException(result.receiveException)
                     return@sc
                 }
                 if (result !== POLL_EMPTY) {
@@ -235,11 +270,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
         @Suppress("UNCHECKED_CAST")
         suspend override fun next(): E {
-            if (result === POLL_CLOSED) throw ClosedReceiveChannelException()
+            val result = this.result
+            if (result is Closed<*>) throw result.receiveException
             if (result !== POLL_EMPTY) {
-                val value = this.result as E
                 this.result = POLL_EMPTY
-                return value
+                return result as E
             }
             // rare case when hasNext was not invoked yet -- just delegate to receive (leave state as is)
             return channel.receive()
@@ -247,13 +282,13 @@ public abstract class AbstractChannel<E> : Channel<E> {
     }
 
     protected interface Send {
-        val pollResult: Any? // E | POLL_CLOSED
+        val pollResult: Any? // E | Closed
         fun tryResumeSend(): Any?
         fun completeResumeSend(token: Any)
     }
 
     protected interface ReceiveOrClosed<in E> {
-        val offerResult: Int // OFFER_SUCCESS | OFFER_CLOSED
+        val offerResult: Any // OFFER_SUCCESS | Closed
         fun tryResumeReceive(value: E): Any?
         fun completeResumeReceive(token: Any)
     }
@@ -267,30 +302,51 @@ public abstract class AbstractChannel<E> : Channel<E> {
         override fun completeResumeSend(token: Any) = cont.completeResume(token)
     }
 
-    private class Closed<in E> : LockFreeLinkedListNode(), Send, ReceiveOrClosed<E> {
-        override val offerResult get() = OFFER_CLOSED
-        override val pollResult get() = POLL_CLOSED
+    private class Closed<in E>(
+        val closeCause: Throwable?
+    ) : LockFreeLinkedListNode(), Send, ReceiveOrClosed<E> {
+        @Volatile
+        var _sendException: Throwable? = null
+
+        val sendException: Throwable get() = _sendException ?:
+            (closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE))
+                    .also { _sendException = it }
+
+        @Volatile
+        var _receiveException: Throwable? = null
+
+        val receiveException: Throwable get() = _receiveException ?:
+            (closeCause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE))
+                    .also { _receiveException = it }
+
+        override val offerResult get() = this
+        override val pollResult get() = this
         override fun tryResumeSend(): Boolean = true
         override fun completeResumeSend(token: Any) {}
-        override fun tryResumeReceive(value: E): Any? = throw ClosedSendChannelException()
-        override fun completeResumeReceive(token: Any) = throw ClosedSendChannelException()
+        override fun tryResumeReceive(value: E): Any? = throw sendException
+        override fun completeResumeReceive(token: Any) = throw sendException
     }
 
     private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
         override val offerResult get() = OFFER_SUCCESS
-        abstract fun resumeReceiveClosed()
+        abstract fun resumeReceiveClosed(closed: Closed<*>)
     }
 
     private class ReceiveNonNull<in E>(val cont: CancellableContinuation<E>) : Receive<E>() {
         override fun tryResumeReceive(value: E): Any? = cont.tryResume(value)
         override fun completeResumeReceive(token: Any) = cont.completeResume(token)
-        override fun resumeReceiveClosed() = cont.resumeWithException(ClosedReceiveChannelException())
+        override fun resumeReceiveClosed(closed: Closed<*>) = cont.resumeWithException(closed.receiveException)
     }
 
     private class ReceiveOrNull<in E>(val cont: CancellableContinuation<E?>) : Receive<E>() {
         override fun tryResumeReceive(value: E): Any? = cont.tryResume(value)
         override fun completeResumeReceive(token: Any) = cont.completeResume(token)
-        override fun resumeReceiveClosed() = cont.resume(null)
+        override fun resumeReceiveClosed(closed: Closed<*>) {
+            if (closed.closeCause == null)
+                cont.resume(null)
+            else
+                cont.resumeWithException(closed.receiveException)
+        }
     }
 
     private class ReceiveHasNext<E>(
@@ -305,13 +361,15 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
         override fun completeResumeReceive(token: Any) = cont.completeResume(token)
 
-        override fun resumeReceiveClosed() {
-            val token = cont.tryResume(false)
+        override fun resumeReceiveClosed(closed: Closed<*>) {
+            val token = if (closed.closeCause == null)
+                cont.tryResume(false)
+            else
+                cont.tryResumeWithException(closed.receiveException)
             if (token != null) {
-                iterator.result = POLL_CLOSED
+                iterator.result = closed
                 cont.completeResume(token)
             }
         }
     }
 }
-

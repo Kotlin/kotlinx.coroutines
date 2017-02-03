@@ -57,7 +57,7 @@ public interface Job : CoroutineContext.Element {
     public fun onCompletion(handler: CompletionHandler): Registration
 
     /**
-     * Cancel this activity with an optional cancellation [reason]. The result is `true` if this job was
+     * Cancel this activity with an optional cancellation [cause]. The result is `true` if this job was
      * cancelled as a result of this invocation and `false` otherwise
      * (if it was already cancelled or it is [NonCancellable]).
      * Repeated invocation of this function has no effect and always produces `false`.
@@ -66,7 +66,7 @@ public interface Job : CoroutineContext.Element {
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing
      * both the context of cancellation and text description of the reason.
      */
-    public fun cancel(reason: Throwable? = null): Boolean
+    public fun cancel(cause: Throwable? = null): Boolean
 
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "Operator '+' on two Job objects is meaningless. " +
@@ -231,7 +231,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
 
     fun completeUpdateState(expect: Any, update: Any?) {
         // #3. Invoke completion handlers
-        val reason = (update as? CompletedExceptionally)?.cancelReason
+        val reason = (update as? CompletedExceptionally)?.cancelCause
         var completionException: Throwable? = null
         when (expect) {
             // SINGLE/SINGLE+ state -- one completion handler (common case)
@@ -295,7 +295,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
                 }
                 // is not active anymore
                 else -> {
-                    handler((state as? Cancelled)?.cancelReason)
+                    handler((state as? Cancelled)?.cancelCause)
                     return EmptyRegistration
                 }
             }
@@ -327,10 +327,10 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
         }
     }
 
-    final override fun cancel(reason: Throwable?): Boolean {
+    final override fun cancel(cause: Throwable?): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state as? Active ?: return false // quit if not active anymore
-            if (updateState(state, Cancelled(reason))) return true
+            if (updateState(state, Cancelled(cause))) return true
         }
     }
 
@@ -371,31 +371,31 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
      * Abstract class for a [state][getState] of a job that had completed exceptionally, including cancellation.
      */
     internal abstract class CompletedExceptionally {
-        abstract val cancelReason: Throwable // original reason or fresh CancellationException
+        abstract val cancelCause: Throwable // original reason or fresh CancellationException
         abstract val exception: Throwable // the exception to be thrown in continuation
 
-        // convert cancelReason to CancellationException on first need
+        // convert cancelCause to CancellationException on first need
         @Volatile
         private var _cancellationException: CancellationException? = null
 
         val cancellationException: CancellationException get() =
             _cancellationException ?: // atomic read volatile var or else build new
-                (cancelReason as? CancellationException ?:
-                        CancellationException(cancelReason.message).apply { initCause(cancelReason) })
-                        .also { _cancellationException = it }
-
+                (cancelCause as? CancellationException ?:
+                        CancellationException(cancelCause.message)
+                                .apply { initCause(cancelCause) })
+                                .also { _cancellationException = it }
     }
 
     /**
      * Represents a [state][getState] of a cancelled job.
      */
-    internal class Cancelled(specifiedReason: Throwable?) : CompletedExceptionally() {
+    internal class Cancelled(specifiedCause: Throwable?) : CompletedExceptionally() {
         @Volatile
-        private var _cancelReason = specifiedReason // materialize CancellationException on first need
+        private var _cancelCause = specifiedCause // materialize CancellationException on first need
 
-        override val cancelReason: Throwable get() =
-            _cancelReason ?: // atomic read volatile var or else create new
-                CancellationException("Job was cancelled without specified reason").also { _cancelReason = it }
+        override val cancelCause: Throwable get() =
+            _cancelCause ?: // atomic read volatile var or else create new
+                CancellationException("Job was cancelled").also { _cancelCause = it }
 
         override val exception: Throwable get() = cancellationException
     }
@@ -404,7 +404,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
      * Represents a [state][getState] of a failed job.
      */
     internal class Failed(override val exception: Throwable) : CompletedExceptionally() {
-        override val cancelReason: Throwable get() = exception
+        override val cancelCause: Throwable get() = exception
     }
 }
 

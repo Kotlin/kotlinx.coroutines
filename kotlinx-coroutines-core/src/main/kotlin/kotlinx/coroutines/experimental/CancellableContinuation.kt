@@ -29,7 +29,14 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
     fun tryResume(value: T): Any?
 
     /**
-     * Completes the execution of [tryResume] on its non-null result.
+     * Tries to resume this continuation with a given exception and returns non-null object token if it was successful,
+     * or `null` otherwise (it was already resumed or cancelled). When non-null object was returned,
+     * [completeResume] must be invoked with it.
+     */
+    fun tryResumeWithException(exception: Throwable): Any?
+
+    /**
+     * Completes the execution of [tryResume] or [tryResumeWithException] on its non-null result.
      */
     fun completeResume(token: Any)
 
@@ -112,6 +119,16 @@ internal class SafeCancellableContinuation<in T>(
             val state = getState() // atomic read
             when (state) {
                 is Active -> if (tryUpdateState(state, value)) return state
+                else -> return null // cannot resume -- not active anymore
+            }
+        }
+    }
+
+    override fun tryResumeWithException(exception: Throwable): Any? {
+        while (true) { // lock-free loop on state
+            val state = getState() // atomic read
+            when (state) {
+                is Active -> if (tryUpdateState(state, Failed(exception))) return state
                 else -> return null // cannot resume -- not active anymore
             }
         }

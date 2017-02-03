@@ -73,7 +73,7 @@ private class StandaloneCoroutine(
 ) : AbstractCoroutine<Unit>(parentContext) {
     override fun afterCompletion(state: Any?) {
         // note the use of the parent's job context below!
-        if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.cancelReason)
+        if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.cancelCause)
     }
 }
 
