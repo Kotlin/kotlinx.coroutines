@@ -2,9 +2,7 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.*
 
 class RendezvousChannelTest : TestBase() {
     @Test

@@ -26,6 +26,7 @@ class LockFreeLinkedListStressTest {
                 for (i in j until nAdded step nAddThreads) {
                     list.addFirst(IntNode(i))
                 }
+                println("${Thread.currentThread().name} completed")
                 workingAdders.decrementAndGet()
             }
         for (j in 0 until nAddThreads)
@@ -33,6 +34,7 @@ class LockFreeLinkedListStressTest {
                 for (i in -j-1 downTo -nAdded step nAddThreads) {
                     list.addLast(IntNode(i))
                 }
+                println("${Thread.currentThread().name} completed")
                 workingAdders.decrementAndGet()
             }
         for (j in 0 until nRemoveThreads)
@@ -45,6 +47,7 @@ class LockFreeLinkedListStressTest {
                             node.remove()
                     }
                 } while (!lastTurn)
+                println("${Thread.currentThread().name} completed")
             }
         println("Starting ${threads.size} threads")
         for (thread in threads)

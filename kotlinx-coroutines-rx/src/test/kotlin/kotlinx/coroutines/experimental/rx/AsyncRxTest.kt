@@ -1,10 +1,9 @@
 package kotlinx.coroutines.experimental.rx
 
+import org.junit.Assert.*
 import org.junit.Test
 import rx.Observable
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class AsyncRxTest {
     @Test

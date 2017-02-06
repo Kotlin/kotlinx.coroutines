@@ -6,9 +6,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-
+import org.junit.Assert.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -72,7 +70,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(0, dupes.get())
         assertEquals(nEvents, received.size)
         repeat(nReceivers) { receiveIndex ->
-            assertTrue(receivedBy[receiveIndex] > 0, "Each receiver should have received something")
+            assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
         }
     }
 

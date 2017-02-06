@@ -13,8 +13,7 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.AsynchronousServerSocketChannel
 import java.nio.channels.AsynchronousSocketChannel
 import java.nio.file.StandardOpenOption
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import org.junit.Assert.*
 
 class AsyncIOTest {
     @Rule

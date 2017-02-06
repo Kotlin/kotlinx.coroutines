@@ -6,10 +6,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import org.junit.Assert.*
 
 class FutureTest {
     @Test
@@ -96,22 +93,20 @@ class FutureTest {
             it()
             depth.andDecrement
         }) {
-            assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
+            assertEquals("Part before first suspension must be wrapped", 1, depth.get())
 
             val result =
                     CompletableFuture.supplyAsync {
-                        while (depth.get() > 0);
-
-                        assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
+                        while (depth.get() > 0) ;
+                        assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                         "OK"
                     }.await()
 
-            assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
+            assertEquals("Part after first suspension should be wrapped", 1, depth.get())
 
             CompletableFuture.supplyAsync {
-                while (depth.get() > 0);
-
-                assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
+                while (depth.get() > 0) ;
+                assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                 "ignored"
             }.await()
 

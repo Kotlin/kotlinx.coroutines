@@ -2,7 +2,7 @@ package kotlinx.coroutines.experimental
 
 import org.junit.Test
 import java.io.IOException
-import kotlin.test.assertTrue
+import org.junit.Assert.*
 
 class DeferTest : TestBase() {
     @Test

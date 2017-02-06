@@ -6,7 +6,7 @@ import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import kotlin.test.assertEquals
+import org.junit.Assert.*
 
 @RunWith(Parameterized::class)
 class SimpleSendReceiveTest(
