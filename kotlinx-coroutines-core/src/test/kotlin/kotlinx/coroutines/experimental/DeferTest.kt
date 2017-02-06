@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental
 
 import org.junit.Test
 import java.io.IOException
+import kotlin.test.assertTrue
 
 class DeferTest : TestBase() {
     @Test
@@ -72,5 +73,22 @@ class DeferTest : TestBase() {
         expect(10)
         yield() // yield to both waiters
         finish(13)
+    }
+
+    class BadClass {
+        override fun equals(other: Any?): Boolean = error("equals")
+        override fun hashCode(): Int = error("hashCode")
+        override fun toString(): String = error("toString")
+    }
+
+    @Test
+    fun testDeferBadClass() = runBlocking {
+        val bad = BadClass()
+        val d = defer(context) {
+            expect(1)
+            bad
+        }
+        assertTrue(d.await() === bad)
+        finish(2)
     }
 }

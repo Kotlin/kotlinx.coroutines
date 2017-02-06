@@ -250,7 +250,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
 
             }
             // otherwise -- do nothing (Empty)
-            else -> check(expect == Empty)
+            else -> check(expect === Empty)
         }
         // #4. Do other (overridable) processing after completion handlers
         completionException?.let { handleCompletionException(it) }
@@ -291,7 +291,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
                 // LIST -- a list of completion handlers
                 state is NodeList -> {
                     val node = nodeCache ?: makeNode(handler).also { nodeCache = it }
-                    if (state.addLastIf(node) { this.state == state }) return node
+                    if (state.addLastIf(node) { this.state === state }) return node
                 }
                 // is not active anymore
                 else -> {
