@@ -1,5 +1,5 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.example23
+package guide.cancel.example03
 
 import kotlinx.coroutines.experimental.*
 

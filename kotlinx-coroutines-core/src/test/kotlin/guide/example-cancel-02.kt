@@ -1,22 +1,23 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.example24
+package guide.cancel.example02
 
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
-        try {
-            repeat(1000) { i ->
-                println("I'm sleeping $i ...")
-                delay(500L)
+        var nextPrintTime = 0L
+        var i = 0
+        while (true) { // computation loop
+            val currentTime = System.currentTimeMillis()
+            if (currentTime >= nextPrintTime) {
+                println("I'm sleeping ${i++} ...")
+                nextPrintTime = currentTime + 500L
             }
-        } finally {
-            println("I'm running finally")
         }
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
     job.cancel() // cancels the job
-    delay(1300L) // delay a bit to ensure it was cancelled indeed
+    delay(1300L) // delay a bit to see if it was cancelled....
     println("main: Now I can quit.")
 }
