@@ -4,23 +4,8 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 ## Modules and features
 
-* `kotlinx-coroutines-core` module with core primitives to work with coroutines. It is designed to work on any JDK6+ and Android
-and contains the following main pieces:
-  * `launch(context) {...}` to start a coroutine in the given context and get reference to its `Job`.
-  * `run(context) {...}` to switch to a different context inside a coroutine.
-  * `runBlocking {...}` to use asynchronous Kotlin APIs from a thread-blocking code.  
-  * `defer(context) {...}` and `lazyDefer(context) {...}` to get a deferred result of coroutine execution in a 
-     non-blocking way via a light-weight future interface called `Deferred`.
-  * `delay(...)` for a non-blocking sleep in coroutines and `yield` to release a thread in single-threaded dispatchers.
-  * `withTimeout(timeout) {...}` scope function to easily set coroutine time-limit (deadline),
-     and `NonCancellable` context to avoid it when needed.
-  * `CommonPool` and `Here` contexts, access to `context` of a parent coroutine in its `CoroutineScope`.
-  * `newSingleThreadContext(...)` and `newFixedThreadPoolContext(...)` functions, 
-    `Executor.toCoroutineDispatcher()` extension.
-  * Cancellation support with `Job` interface and `suspendCancellableCoroutine` helper function.
-  * Debugging facilities for coroutines (run JVM with `-ea` or `-Dkotlinx.coroutines.debug` options) and
-    `newCoroutineContext(context)` function to write user-defined coroutine builders that work with these
-     debugging facilities.
+* `kotlinx-coroutines-core` module with core primitives to work with coroutines. 
+   Its functionality is covered by the [guide to kotlinx.coroutines](coroutines-guide.md). 
  
 * `kotlinx-coroutines-jdk8` module with additional libraries for JDK8 (or Android API level 24).
   * `future { ... }` coroutine builder that returns `CompletableFuture` and works in `CommonPool` context by default.
@@ -73,7 +58,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.6-beta</version>
+    <version>0.7-beta</version>
 </dependency>
 ```
 
@@ -100,7 +85,7 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.6-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.7-beta'
 ```
 
 And make sure that you use the right Kotlin version:

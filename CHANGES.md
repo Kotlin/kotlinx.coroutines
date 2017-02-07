@@ -1,6 +1,13 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.7-beta
 
+* Buffered and unbuffered channels are introduced: `Channel`, `SendChannel`, and `ReceiveChannel` interfaces,
+  `RendezvousChannel` and `ArrayChannel` implementations, `Channel()` factory function and `buildChannel{}`
+  coroutines builder.
+* `Here` context is renamed to `Unconfined` (the old name is deprecated).
+* A [guide on coroutines](coroutines-guide.md) is expanded: sections on contexts and channels.  
+ 
 ## Version 0.6-beta
 
 * Switched to Kotlin version 1.1.0-beta-37.
