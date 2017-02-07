@@ -44,6 +44,7 @@
                 <configuration>
                     <forkMode>once</forkMode>
                     <jvm>${env.JDK_16}/bin/java</jvm>
+                    <argLine>-ea -Xmx1g -Xms1g</argLine>
                 </configuration>
             </plugin>
         </plugins>
