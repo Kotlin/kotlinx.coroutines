@@ -1023,7 +1023,7 @@ Alternatively, we could have run pipeline coroutines as
 
 ### Prime numbers with pipeline
 
-Let's take pipelines to the extreme, with an example that generates prime numbers using a pipeline 
+Let's take pipelines to the extreme with an example that generates prime numbers using a pipeline 
 of coroutines. We start with an infinite sequence of numbers. This time we introduce an 
 explicit context parameter, so that caller can control where our coroutines run:
  
@@ -1048,7 +1048,7 @@ fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) 
 ```
 
 Now we build our pipeline by starting a stream of numbers from 2, taking a prime number from the current channel, 
-and launching new pipeline stage for each prime number found. The following example prints first ten prime numbers, 
+and launching new pipeline stage for each prime number found. The following example prints the first ten prime numbers, 
 running the whole pipeline in the context of the main thread:
 
 ```kotlin
@@ -1154,7 +1154,7 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 }
 ```
 
-Now, let us see what happen if we launch a couple of coroutines sending strings 
+Now, let us see what happens if we launch a couple of coroutines sending strings 
 (in this example we launch them in the context of the main thread):
 
 ```kotlin
