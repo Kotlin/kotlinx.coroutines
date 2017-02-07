@@ -28,8 +28,6 @@
     <artifactId>kotlinx-coroutines-javafx</artifactId>
     <packaging>jar</packaging>
 
-    <name>Kotlin coroutines JavaFx library</name>
-
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>

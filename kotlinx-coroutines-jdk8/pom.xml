@@ -28,8 +28,6 @@
     <artifactId>kotlinx-coroutines-jdk8</artifactId>
     <packaging>jar</packaging>
 
-    <name>Kotlin coroutines JDK8 support library</name>
-
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>

@@ -1,0 +1,11 @@
+# Jekyll configuration file
+title: kotlinx.coroutines
+description: Library support for kotlin coroutines
+baseurl: "/kotlinx.coroutines"
+url: "https://kotlin.github.io"
+
+# Build settings
+markdown: kramdown
+exclude:
+  - Gemfile
+  - Gemfile.lock
