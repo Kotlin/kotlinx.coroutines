@@ -1,0 +1,8 @@
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the kotlix.coroutines library.                    ==
+   =========================================================================
+
+   kotlinx.coroutines library.
+   Copyright 2016-2017 JetBrains s.r.o and respective authors and developers
