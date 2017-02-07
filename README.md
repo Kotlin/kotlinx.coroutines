@@ -4,23 +4,14 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 ## Modules and features
 
-* `kotlinx-coroutines-core` module with core primitives to work with coroutines. 
+* [kotlinx-coroutines-core](kotlinx-coroutines-core) module with core primitives to work with coroutines. 
    Its functionality is covered by the [guide to kotlinx.coroutines](coroutines-guide.md). 
+* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8) module with additional libraries for JDK8 (or Android API level 24).
+* [kotlinx-coroutines-nio](kotlinx-coroutines-nio) module with extensions for asynchronous IO on JDK7+.
+* [kotlinx-coroutines-swing](kotlinx-coroutines-swing) module with `Swing` context for Swing UI applications.
+* [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx) module with `JavaFx` context for JavaFX UI applications.
+* [kotlinx-coroutines-rx](kotlinx-coroutines-rx) module with utilities for [RxJava](https://github.com/ReactiveX/RxJava).
  
-* `kotlinx-coroutines-jdk8` module with additional libraries for JDK8 (or Android API level 24).
-  * `future { ... }` coroutine builder that returns `CompletableFuture` and works in `CommonPool` context by default.
-  * `.await()` suspending function for `CompletableFuture`.
-
-* `kotlinx-coroutines-nio` module with extensions for asynchronous IO on JDK7+.
-
-* `kotlinx-coroutines-swing` module with `Swing` context for Swing UI applications.
-
-* `kotlinx-coroutines-javafx` module with `JavaFx` context for JavaFX UI applications.
-
-* `kotlinx-coroutines-rx` module with utilities to build `Observable` objects from
-[RxJava](https://github.com/ReactiveX/RxJava) with imperative coroutines and consume their values 
-from inside coroutines. It is in very basic form now (example-only, not even close to production use)
-
 ## References and documentation
 
 * [Guide to kotlinx.coroutines by example](coroutines-guide.md) 
