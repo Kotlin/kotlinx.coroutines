@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RendezvousChannel.&lt;init&gt; - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/-init-.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.channels</a> / <a href="index.html">RendezvousChannel</a> / <a href=".">&lt;init&gt;</a></div>
+
+<h1 id="init">&lt;init&gt;</h1>
+
+<div class="signature"><code><span class="identifier">RendezvousChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
+
+<p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
+to receiver only when <a href="#">send</a> and <a href="../-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="../-abstract-channel/receive.html">receive</a> and <a href="../-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+
+<p>This implementation is fully lock-free.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

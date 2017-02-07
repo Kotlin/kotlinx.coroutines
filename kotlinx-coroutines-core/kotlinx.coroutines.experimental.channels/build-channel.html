@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>buildChannel - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/build-channel.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental.channels</a> / <a href=".">buildChannel</a></div>
+
+<h1 id="buildchannel">buildChannel</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">buildChannel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">@ExtensionFunctionType</span> <span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><a href="-channel-builder.html"><span class="identifier">ChannelBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">,</span>&nbsp;<span class="identifier">Unit</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-channel-job.html"><span class="identifier">ChannelJob</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ChannelBuilder.kt#L52">(source)</a></div>
+
+<p>Launches new coroutine without blocking current thread to send data over channel
+and returns a reference to the coroutine as a <a href="-channel-job.html">ChannelJob</a>, which implements
+both <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> and <a href="-receive-channel/index.html">ReceiveChannel</a>.
+The scope of the coroutine contains <a href="-channel-builder.html">ChannelBuilder</a> interface, which implements
+both <a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a> and <a href="-send-channel/index.html">SendChannel</a>, so that coroutine can invoke
+<a href="-send-channel/send.html">send</a> directly. The channel is <a href="-send-channel/close.html">closed</a>
+when the coroutine completes.
+The running coroutine is cancelled when the its job is <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancelled</a>.</p>
+
+<p>The <a href="build-channel.html#kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/context">context</a> for the new coroutine must be explicitly specified.
+See <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the standard <a href="build-channel.html#kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/context">context</a> implementations that are provided by <code>kotlinx.coroutines</code>.
+The <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> of the parent coroutine from its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">scope</a> may be used,
+in which case the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the resulting coroutine is a child of the job of the parent coroutine.</p>
+
+<p>Uncaught exceptions in this coroutine close the channel with this exception as a cause and
+the resulting channel becomes <em>failed</em>, so that any attempt to receive from such a channel throws exception.</p>
+
+<p>See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

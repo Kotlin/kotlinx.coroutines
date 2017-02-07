@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx.coroutines.experimental.nio.java.nio.channels.AsynchronousSocketChannel - kotlinx-coroutines-nio</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-nio/kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-socket-channel/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-nio</a> / <a href="../index.html">kotlinx.coroutines.experimental.nio</a> / <a href=".">java.nio.channels.AsynchronousSocketChannel</a></div>
+
+<h3 id="extensions-for-javaniochannelsasynchronoussocketchannel">Extensions for java.nio.channels.AsynchronousSocketChannel</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="a-connect.html">aConnect</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/6/docs/api/java/nio/channels/AsynchronousSocketChannel.html"><span class="identifier">AsynchronousSocketChannel</span></a><span class="symbol">.</span><span class="identifier">aConnect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aConnect(java.nio.channels.AsynchronousSocketChannel, java.net.SocketAddress)/socketAddress">socketAddress</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/net/SocketAddress.html"><span class="identifier">SocketAddress</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Performs <a href="#">AsynchronousServerSocketChannel.connect</a> without blocking a thread and resumes when asynchronous operation completes.
+This suspending function is cancellable.
+If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
+<em>closes the underlying channel</em> and immediately resumes with <a href="#">CancellationException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="a-read.html">aRead</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/6/docs/api/java/nio/channels/AsynchronousSocketChannel.html"><span class="identifier">AsynchronousSocketChannel</span></a><span class="symbol">.</span><span class="identifier">aRead</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/buf">buf</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span>&nbsp;<span class="symbol">=</span>&nbsp;0L<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/timeUnit">timeUnit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+
+        <p>Performs <a href="#">AsynchronousServerSocketChannel.read</a> without blocking a thread and resumes when asynchronous operation completes.
+This suspending function is cancellable.
+If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
+<em>closes the underlying channel</em> and immediately resumes with <a href="#">CancellationException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="a-write.html">aWrite</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/6/docs/api/java/nio/channels/AsynchronousSocketChannel.html"><span class="identifier">AsynchronousSocketChannel</span></a><span class="symbol">.</span><span class="identifier">aWrite</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aWrite(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/buf">buf</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aWrite(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span>&nbsp;<span class="symbol">=</span>&nbsp;0L<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aWrite(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)/timeUnit">timeUnit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+
+        <p>Performs <a href="#">AsynchronousServerSocketChannel.write</a> without blocking a thread and resumes when asynchronous operation completes.
+This suspending function is cancellable.
+If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
+<em>closes the underlying channel</em> and immediately resumes with <a href="#">CancellationException</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

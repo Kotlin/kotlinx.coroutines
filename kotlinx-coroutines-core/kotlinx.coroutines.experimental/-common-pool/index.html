@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CommonPool - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href=".">CommonPool</a></div>
+
+<h1 id="commonpool">CommonPool</h1>
+
+<div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CommonPool.kt#L30">(source)</a></div>
+
+<p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
+It uses <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
+coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
+When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="dispatch.html">dispatch</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CommonPool$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CommonPool$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Dispatches execution of a runnable <a href="dispatch.html#kotlinx.coroutines.experimental.CommonPool$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</a> onto another thread in the given <a href="dispatch.html#kotlinx.coroutines.experimental.CommonPool$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inherited-functions">Inherited Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../-coroutine-dispatcher/intercept-continuation.html">interceptContinuation</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-coroutine-dispatcher/is-dispatch-needed.html">isDispatchNeeded</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Return <code>true</code> if execution shall be dispatched onto another thread.
+The default behaviour for most dispatchers is to return <code>true</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-coroutine-dispatcher/plus.html">plus</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$plus(kotlinx.coroutines.experimental.CoroutineDispatcher)/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

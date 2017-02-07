@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deferred.isCompletedExceptionally - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/is-completed-exceptionally.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Deferred</a> / <a href=".">isCompletedExceptionally</a></div>
+
+<h1 id="iscompletedexceptionally">isCompletedExceptionally</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompletedExceptionally</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L45">(source)</a></div>
+
+<p>Returns <code>true</code> if computation of this deferred value has <em>completed exceptionally</em> – it had
+either <em>failed</em> with exception during computation or was <a href="../-job/cancel.html">cancelled</a>.
+It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code>.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

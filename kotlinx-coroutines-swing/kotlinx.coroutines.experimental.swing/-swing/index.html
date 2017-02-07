@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swing - kotlinx-coroutines-swing</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-swing/kotlinx.coroutines.experimental.swing/-swing/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-swing</a> / <a href="../index.html">kotlinx.coroutines.experimental.swing</a> / <a href=".">Swing</a></div>
+
+<h1 id="swing">Swing</h1>
+
+<div class="signature"><code><span class="keyword">object </span><span class="identifier">Swing</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineDispatcher</span><span class="symbol">, </span><span class="identifier">Delay</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-swing/src/main/kotlin/kotlinx/coroutines/experimental/swing/Swing.kt#L32">(source)</a></div>
+
+<p>Dispatches execution onto Swing event dispatching thread and provides native <a href="#">delay</a> support.</p>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="dispatch.html">dispatch</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="is-dispatch-needed.html">isDispatchNeeded</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="schedule-resume-after-delay.html">scheduleResumeAfterDelay</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">scheduleResumeAfterDelay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.swing.Swing$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="identifier">Unit</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

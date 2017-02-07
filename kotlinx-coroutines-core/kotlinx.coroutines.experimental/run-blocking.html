@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>runBlocking - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental</a> / <a href=".">runBlocking</a></div>
+
+<h1 id="runblocking">runBlocking</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">@ExtensionFunctionType</span> <span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Builders.kt#L74">(source)</a></div>
+
+<p>Runs new coroutine and <em>blocks</em> current thread <em>interruptibly</em> until its completion.
+This function should not be used from coroutine. It is designed to bridge regular blocking code
+to libraries that are written in suspending style, to be used in <code>main</code> functions and in tests.</p>
+
+<p>The default <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for this builder in an implementation of <a href="-event-loop/index.html">EventLoop</a> that processes continuations
+in this blocked thread until the completion of this coroutine.
+See <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the other implementations that are provided by <code>kotlinx.coroutines</code>.</p>
+
+<p>If this blocked thread is interrupted (see <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/Thread.html#interrupt()">Thread.interrupt</a>), then the coroutine job is cancelled and
+this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>
+
+<p>See <a href="new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

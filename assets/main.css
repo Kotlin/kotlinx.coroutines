@@ -1,0 +1,217 @@
+@import url("//fonts.googleapis.com/css?family=Open+Sans:300,300italic,400italic,700italic,400,700");
+body, h1, h2, h3, h4, h5, h6,
+p, blockquote, pre, hr,
+dl, dd, ol, ul, figure {
+  margin: 0;
+  padding: 0; }
+
+body {
+  font: 400 14px/20px "Open Sans", Helvetica, Arial, sans-serif;
+  color: #111;
+  background-color: #fdfdfd;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal; }
+
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre,
+ul, ol, dl, figure {
+  margin-bottom: 15px; }
+
+ul, ol {
+  margin-left: 30px; }
+
+li > ul,
+li > ol {
+  margin-bottom: 0; }
+
+a {
+  color: #2a7ae2;
+  text-decoration: none; }
+  a:visited {
+    color: #1756a9; }
+  a:hover {
+    color: #111;
+    text-decoration: underline; }
+
+blockquote {
+  color: #828282;
+  border-left: 4px solid #e8e8e8;
+  padding-left: 15px;
+  font-size: 18px;
+  letter-spacing: -1px;
+  font-style: italic; }
+  blockquote > :last-child {
+    margin-bottom: 0; }
+
+.wrapper {
+  max-width: -webkit-calc(800px - (30px * 2));
+  max-width: calc(800px - (30px * 2));
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: 30px;
+  padding-left: 30px; }
+  @media screen and (max-width: 800px) {
+    .wrapper {
+      max-width: -webkit-calc(800px - (30px));
+      max-width: calc(800px - (30px));
+      padding-right: 15px;
+      padding-left: 15px; } }
+
+.wrapper:after {
+  content: "";
+  display: table;
+  clear: both; }
+
+.site-header {
+  border-top: 5px solid #424242;
+  border-bottom: 1px solid #e8e8e8;
+  min-height: 56px;
+  position: relative; }
+
+.site-title {
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 56px;
+  letter-spacing: -1px;
+  margin-bottom: 0;
+  float: left; }
+  .site-title, .site-title:visited {
+    color: #424242; }
+
+.site-footer {
+  border-top: 1px solid #e8e8e8;
+  padding: 30px 0; }
+
+.page-content {
+  padding: 30px 0; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+  text-rendering: optimizeLegibility; }
+
+a {
+  text-decoration: underline; }
+
+h1 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 30px;
+  line-height: 33px; }
+  h1:first-of-type {
+    margin-top: 0;
+    margin-bottom: 30px; }
+  @media print {
+    h1 {
+      page-break-before: always;
+      page-break-after: avoid; } }
+h2 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 24px;
+  line-height: 27px; }
+  h2:first-of-type {
+    margin-top: 0; }
+  @media print {
+    h2 {
+      page-break-after: avoid; } }
+
+h3 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 19px;
+  line-height: 22px; }
+  @media print {
+    h3 {
+      page-break-after: avoid; } }
+
+h4 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: bold; }
+  @media print {
+    h4 {
+      page-break-after: avoid; } }
+
+h5 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: normal; }
+  @media print {
+    h5 {
+      page-break-after: avoid; } }
+
+caption {
+  margin: 0; }
+
+table {
+  margin-bottom: 30px;
+  line-height: inherit;
+  font-size: inherit;
+  border: 1px solid #dcdcdc;
+  border-collapse: collapse;
+  border-spacing: 0; }
+  table.zebra tbody tr:nth-child(odd) {
+    background-color: #f5f5f5; }
+  table.wide {
+    min-width: 100%; }
+  table thead {
+    background-color: #F7F7F7;
+    border-bottom-width: 2px; }
+  table tfoot {
+    color: #ccc; }
+    table tfoot tr {
+      border-bottom: none; }
+  table tr {
+    border-bottom: 1px solid #dcdcdc; }
+  table th {
+    padding-top: 10px;
+    padding-bottom: 6px;
+    text-align: left;
+    font-weight: bold; }
+  table th,
+  table td {
+    padding: 6px 10px;
+    vertical-align: top; }
+    table th:first-child,
+    table td:first-child {
+      padding-left: 12px; }
+    table th:last-child,
+    table td:last-child {
+      padding-right: 12px; }
+  table p:last-child,
+  table pre:last-child {
+    margin-bottom: 0; }
+
+.api-docs-breadcrumbs {
+  margin-bottom: 25px; }
+
+code {
+  font-family: "Liberation Mono", Consolas, Menlo, Courier, monospace;
+  font-style: normal;
+  background-color: #efefef; }
+
+code :target {
+  background-color: #FFFFCC; }
+
+.signature {
+  background-color: #efefef;
+  padding: 4px; }
+
+.keyword {
+  color: #0000C0; }
+
+.summarizedTypeName {
+  background-color: lightcyan;
+  font-style: italic; }
+
+.parameterName {
+  font-weight: bold; }

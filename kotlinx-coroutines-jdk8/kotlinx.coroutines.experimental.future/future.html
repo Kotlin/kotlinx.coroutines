@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>future - kotlinx-coroutines-jdk8</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-jdk8</a> / <a href="index.html">kotlinx.coroutines.experimental.future</a> / <a href=".">future</a></div>
+
+<h1 id="future">future</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">future</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.future$future(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.future.future.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span>&nbsp;<span class="symbol">=</span>&nbsp;CommonPool<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.future$future(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.future.future.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction0</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/CompletableFuture.html"><span class="identifier">CompletableFuture</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-jdk8/src/main/kotlin/kotlinx/coroutines/experimental/future/Future.kt#L37">(source)</a></div>
+
+<p>Starts new coroutine and returns its results an an implementation of <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a>.
+This coroutine builder uses <a href="#">CommonPool</a> context by default and is conceptually similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/CompletableFuture.html#supplyAsync(java.util.function.Supplier&lt;U&gt;)">CompletableFuture.supplyAsync</a>.</p>
+
+<p>The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
+If the <a href="future.html#kotlinx.coroutines.experimental.future$future(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.future.future.T)))/context">context</a> for the new coroutine is explicitly specified, then it must include <a href="#">CoroutineDispatcher</a> element.
+See <a href="#">CoroutineDispatcher</a> for the standard <a href="future.html#kotlinx.coroutines.experimental.future$future(kotlin.coroutines.experimental.CoroutineContext, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.future.future.T)))/context">context</a> implementations that are provided by <code>kotlinx.coroutines</code>.
+The specified context is added to the context of the parent running coroutine (if any) inside which this function
+is invoked. The <a href="#">Job</a> of the resulting coroutine is a child of the job of the parent coroutine (if any).</p>
+
+<p>See <a href="#">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

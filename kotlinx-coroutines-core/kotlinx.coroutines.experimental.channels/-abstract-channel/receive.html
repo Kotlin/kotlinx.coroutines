@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AbstractChannel.receive - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.channels</a> / <a href="index.html">AbstractChannel</a> / <a href=".">receive</a></div>
+
+<h1 id="receive">receive</h1>
+
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L129">(source)</a></div>
+
+<p>Overrides <a href="../-receive-channel/receive.html">ReceiveChannel.receive</a></p>
+
+<p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="is-empty.html">isEmpty</a>
+or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="is-closed-for-receive.html">isClosedForReceive</a>.
+If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
+throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
+
+<p>This suspending function is cancellable. If the <a href="#">Job</a> of the current coroutine is completed while this
+function is suspended, this function immediately resumes with <a href="#">CancellationException</a>.
+Cancellation of suspended receive is <em>atomic</em> – when this function
+throws <a href="#">CancellationException</a> it means that the element was not retrieved from this channel.</p>
+
+<p>Note, that this function does not check for cancellation when it is not suspended.
+Use <a href="#">yield</a> or <a href="#">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

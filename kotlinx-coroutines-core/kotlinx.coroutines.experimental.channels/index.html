@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx.coroutines.experimental.channels - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href=".">kotlinx.coroutines.experimental.channels</a></div>
+
+<h2 id="package-kotlinxcoroutinesexperimentalchannels">Package kotlinx.coroutines.experimental.channels</h2>
+
+<p>Channels – non-blocking primitives for communicating a stream of values between coroutines.</p>
+
+<ul>
+  <li><code>Channel</code>, <code>SendChannel</code>, and <code>ReceiveChannel</code> interfaces,</li>
+  <li><code>RendezvousChannel</code> (unbuffered) and <code>ArrayChannel</code> (buffered) implementations</li>
+  <li><code>Channel()</code> factory function and <code>buildChannel{}</code> coroutines builder.</li>
+</ul>
+
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="-abstract-channel/index.html">AbstractChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Abstract channel. It is a base class for buffered and unbuffered channels.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-array-channel/index.html">ArrayChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Channel with array buffer of a fixed <a href="-array-channel/capacity.html">capacity</a>.
+Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-channel/index.html">Channel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Channel is a non-blocking primitive for communication between sender using <a href="-send-channel/index.html">SendChannel</a> and receiver using <a href="-receive-channel/index.html">ReceiveChannel</a>.
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+but it has suspending operations instead of blocking ones and it can be closed.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-channel-builder.html">ChannelBuilder</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelBuilder</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Scope for <a href="build-channel.html">buildChannel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-channel-iterator/index.html">ChannelIterator</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Iterator for <a href="-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
+from concurrent coroutines.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-channel-job.html">ChannelJob</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelJob</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Return type for <a href="build-channel.html">buildChannel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-receive-channel/index.html">ReceiveChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Receiver’s interface to <a href="-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-rendezvous-channel/index.html">RendezvousChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">RendezvousChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
+to receiver only when <a href="#">send</a> and <a href="-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="-abstract-channel/receive.html">receive</a> and <a href="-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-send-channel/index.html">SendChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Sender’s interface to <a href="-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedReceiveChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">NoSuchElementException</span></code></div>
+
+        <p>Indicates attempt to <a href="-receive-channel/receive.html">receive</a> on <a href="-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
+channel that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="-send-channel/close.html">close</a> cause
+exception on receive attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-closed-send-channel-exception/index.html">ClosedSendChannelException</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">IllegalStateException</span></code></div>
+
+        <p>Indicates attempt to <a href="-send-channel/send.html">send</a> on <a href="-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="-send-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="build-channel.html">buildChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">buildChannel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$buildChannel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ChannelBuilder((kotlinx.coroutines.experimental.channels.buildChannel.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><a href="-channel-builder.html"><span class="identifier">ChannelBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">,</span>&nbsp;<span class="identifier">Unit</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-channel-job.html"><span class="identifier">ChannelJob</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Launches new coroutine without blocking current thread to send data over channel
+and returns a reference to the coroutine as a <a href="-channel-job.html">ChannelJob</a>, which implements
+both <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> and <a href="-receive-channel/index.html">ReceiveChannel</a>.
+The scope of the coroutine contains <a href="-channel-builder.html">ChannelBuilder</a> interface, which implements
+both <a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a> and <a href="-send-channel/index.html">SendChannel</a>, so that coroutine can invoke
+<a href="-send-channel/send.html">send</a> directly. The channel is <a href="-send-channel/close.html">closed</a>
+when the coroutine completes.
+The running coroutine is cancelled when the its job is <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancelled</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClosedSendChannelException - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-closed-send-channel-exception/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.channels</a> / <a href=".">ClosedSendChannelException</a></div>
+
+<h1 id="closedsendchannelexception">ClosedSendChannelException</h1>
+
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">IllegalStateException</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L214">(source)</a></div>
+
+<p>Indicates attempt to <a href="../-send-channel/send.html">send</a> on <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+<h3 id="constructors">Constructors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="identifier">ClosedSendChannelException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ClosedSendChannelException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<span class="identifier">String</span><span class="symbol">?</span><span class="symbol">)</span></code></div>
+
+        <p>Indicates attempt to <a href="../-send-channel/send.html">send</a> on <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

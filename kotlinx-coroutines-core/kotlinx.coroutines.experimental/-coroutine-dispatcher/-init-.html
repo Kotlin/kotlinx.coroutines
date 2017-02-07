@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoroutineDispatcher.&lt;init&gt; - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/-init-.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">CoroutineDispatcher</a> / <a href=".">&lt;init&gt;</a></div>
+
+<h1 id="init">&lt;init&gt;</h1>
+
+<div class="signature"><code><span class="identifier">CoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
+
+<p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
+
+<p>The following standard implementations are provided by <code>kotlinx.coroutines</code>:</p>
+
+<ul>
+  <li><a href="../-unconfined/index.html">Unconfined</a> – starts coroutine execution in the current call-frame until the first suspension.
+On first  suspension the coroutine builder function returns.
+The coroutine will resume in whatever thread that is used by the
+corresponding suspending function, without confining it to any specific thread or pool.
+This in an appropriate choice for IO-intensive coroutines that do not consume CPU resources.</li>
+  <li><a href="../-common-pool/index.html">CommonPool</a> – immediately returns from the coroutine builder and schedules coroutine execution to
+a common pool of shared background threads.
+This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.</li>
+  <li>Private thread pools can be created with <a href="../new-single-thread-context.html">newSingleThreadContext</a> and <a href="../new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</li>
+  <li>An arbitrary <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Executor.html">Executor</a> can be converted to dispatcher with <a href="../java.util.concurrent.-executor/to-coroutine-dispatcher.html">toCoroutineDispatcher</a> extension function.</li>
+</ul>
+
+<p>This class ensures that debugging facilities in <a href="../new-coroutine-context.html">newCoroutineContext</a> function work properly.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

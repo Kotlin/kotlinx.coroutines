@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>alltypes - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Core primitives to work with coroutines.</p>
+
+<h3 id="all-types">All Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractChannel</a></p>
+      </td>
+<td>
+
+        <p>Abstract channel. It is a base class for buffered and unbuffered channels.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-array-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayChannel</a></p>
+      </td>
+<td>
+
+        <p>Channel with array buffer of a fixed <a href="../kotlinx.coroutines.experimental.channels/-array-channel/capacity.html">capacity</a>.
+Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-cancellable-continuation/index.html">kotlinx.coroutines.experimental.CancellableContinuation</a></p>
+      </td>
+<td>
+
+        <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
+When <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> function is explicitly invoked, this continuation resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> or
+with the specified cancel cause.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">kotlinx.coroutines.experimental.CancellationException</a></p>
+      </td>
+<td>
+
+        <p>Thrown by cancellable suspending functions if the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">kotlinx.coroutines.experimental.channels.Channel</a></p>
+      </td>
+<td>
+
+        <p>Channel is a non-blocking primitive for communication between sender using <a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">SendChannel</a> and receiver using <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>.
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+but it has suspending operations instead of blocking ones and it can be closed.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-channel-builder.html">kotlinx.coroutines.experimental.channels.ChannelBuilder</a></p>
+      </td>
+<td>
+
+        <p>Scope for <a href="../kotlinx.coroutines.experimental.channels/build-channel.html">buildChannel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-channel-iterator/index.html">kotlinx.coroutines.experimental.channels.ChannelIterator</a></p>
+      </td>
+<td>
+
+        <p>Iterator for <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
+from concurrent coroutines.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-channel-job.html">kotlinx.coroutines.experimental.channels.ChannelJob</a></p>
+      </td>
+<td>
+
+        <p>Return type for <a href="../kotlinx.coroutines.experimental.channels/build-channel.html">buildChannel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-closed-receive-channel-exception/index.html">kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException</a></p>
+      </td>
+<td>
+
+        <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">receive</a> on <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
+channel that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
+exception on receive attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-closed-send-channel-exception/index.html">kotlinx.coroutines.experimental.channels.ClosedSendChannelException</a></p>
+      </td>
+<td>
+
+        <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a> on <a href="../kotlinx.coroutines.experimental.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
+that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-common-pool/index.html">kotlinx.coroutines.experimental.CommonPool</a></p>
+      </td>
+<td>
+
+        <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
+It uses <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
+coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
+When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-completion-handler.html">kotlinx.coroutines.experimental.CompletionHandler</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">kotlinx.coroutines.experimental.CoroutineDispatcher</a></p>
+      </td>
+<td>
+
+        <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-exception-handler/index.html">kotlinx.coroutines.experimental.CoroutineExceptionHandler</a></p>
+      </td>
+<td>
+
+        <p>An optional element on the coroutine context to handler uncaught exceptions.
+See <a href="../kotlinx.coroutines.experimental/handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-name/index.html">kotlinx.coroutines.experimental.CoroutineName</a></p>
+      </td>
+<td>
+
+        <p>User-specified name of coroutine. This name is used in debugging mode.
+See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newCoroutineContext</a> for the description of coroutine debugging facilities.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">kotlinx.coroutines.experimental.CoroutineScope</a></p>
+      </td>
+<td>
+
+        <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
+to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> and cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-deferred/index.html">kotlinx.coroutines.experimental.Deferred</a></p>
+      </td>
+<td>
+
+        <p>Deferred value is conceptually a non-blocking cancellable future.
+It is created with <a href="../kotlinx.coroutines.experimental/defer.html">defer</a> coroutine builder.
+It is in <a href="../kotlinx.coroutines.experimental/-job/is-active.html">active</a> state while the value is being computed.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-delay/index.html">kotlinx.coroutines.experimental.Delay</a></p>
+      </td>
+<td>
+
+        <p>This dispatcher <em>feature</em> is implemented by <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that natively support
+non-blocking <a href="../kotlinx.coroutines.experimental/-delay/delay.html">delay</a> function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-event-loop/index.html">kotlinx.coroutines.experimental.EventLoop</a></p>
+      </td>
+<td>
+
+        <p>Implemented by <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that have event loop inside and can
+be asked to process next event from their event queue. It is used by <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> to
+continue processing events when invoked from the event dispatch thread.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/java.util.concurrent.-executor/index.html">java.util.concurrent.Executor</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-here.html">kotlinx.coroutines.experimental.Here</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-job/index.html">kotlinx.coroutines.experimental.Job</a></p>
+      </td>
+<td>
+
+        <p>A background job.
+A job can be <em>cancelled</em> at any time with <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> function that forces it to become <em>completed</em> immediately.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-lazy-deferred/index.html">kotlinx.coroutines.experimental.LazyDeferred</a></p>
+      </td>
+<td>
+
+        <p>Lazy deferred value is conceptually a non-blocking cancellable future that is started on
+the first <a href="../kotlinx.coroutines.experimental/-deferred/await.html">await</a> or <a href="../kotlinx.coroutines.experimental/-lazy-deferred/start.html">start</a> invocation.
+It is created with <a href="../kotlinx.coroutines.experimental/lazy-defer.html">lazyDefer</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-non-cancellable/index.html">kotlinx.coroutines.experimental.NonCancellable</a></p>
+      </td>
+<td>
+
+        <p>A non-cancelable job that is always <a href="../kotlinx.coroutines.experimental/-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="../kotlinx.coroutines.experimental/run.html">run</a> builder
+to prevent cancellation of code blocks that need to run without cancellation.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">kotlinx.coroutines.experimental.channels.ReceiveChannel</a></p>
+      </td>
+<td>
+
+        <p>Receiver’s interface to <a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-rendezvous-channel/index.html">kotlinx.coroutines.experimental.channels.RendezvousChannel</a></p>
+      </td>
+<td>
+
+        <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
+to receiver only when <a href="#">send</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">kotlinx.coroutines.experimental.channels.SendChannel</a></p>
+      </td>
+<td>
+
+        <p>Sender’s interface to <a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.intrinsics/kotlin.coroutines.-suspend-function0/index.html">kotlin.coroutines.SuspendFunction0</a> (extensions in package kotlinx.coroutines.experimental.intrinsics)</p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-unconfined/index.html">kotlinx.coroutines.experimental.Unconfined</a></p>
+      </td>
+<td>
+
+        <p>A coroutine dispatcher that is not confined to any specific thread.
+It executes initial continuation of the coroutine <em>right here</em> in the current call-frame
+and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
+mandating any specific threading policy.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+
