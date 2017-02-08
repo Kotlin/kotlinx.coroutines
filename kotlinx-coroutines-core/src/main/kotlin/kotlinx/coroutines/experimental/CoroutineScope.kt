@@ -59,7 +59,7 @@ internal abstract class AbstractCoroutine<in T>(context: CoroutineContext) : Job
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (updateState(state, Failed(exception))) return
+                is Active -> if (updateState(state, CompletedExceptionally(exception))) return
                 is Cancelled -> {
                     // ignore resumes on cancelled continuation, but handle exception if a different one is here
                     if (exception != state.exception) handleCoroutineException(context, exception)

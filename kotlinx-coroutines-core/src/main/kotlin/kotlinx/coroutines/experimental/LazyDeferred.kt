@@ -25,10 +25,20 @@ import kotlin.coroutines.experimental.startCoroutine
  * the first [await] or [start] invocation.
  * It is created with [lazyDefer] coroutine builder.
  *
- * Unlike a simple [Deferred] value, a lazy deferred value has three states:
- * * _Pending_ -- before the starts of the coroutine ([isActive] is `true`, but [isComputing] is `false`).
- * * _Computing_ -- while computing the value ([isActive] is `true` and [isComputing] is `true`).
- * * _Complete_ -- when done computing the value ([isActive] is `false` and [isComputing] is `false`).
+ * Unlike a simple [Deferred] value, a lazy deferred value has five states:
+ *
+ * * _Pending_ (initial, _active_ state before the starts of the coroutine) --
+ *   [isActive] `true`, but [isComputing] `false`,
+ *   [isCompletedExceptionally] `false`, and [isCancelled] `false`.
+ * * _Computing_ (intermediate state while computing the value) --
+ *   [isActive] `true`, [isComputing] `true`,
+ *   [isCompletedExceptionally] `false`, and [isCancelled] `false`.
+ * * _Computed_ (final _completed_ state) -- [isActive] `false`, [isComputing] `false`,
+ *   [isCompletedExceptionally] `false`, [isCancelled] `false`.
+ * * _Failed_ (final _completed_ state) -- [isActive] `false`, [isComputing] `false`,
+ *   [isCompletedExceptionally] `true`, [isCancelled] `false`.
+ * * _Canceled_ (final _completed_ state) -- [isActive] `false`, [isComputing] `false`,
+ *   [isCompletedExceptionally] `true`, [isCancelled] `true`.
  *
  * If this lazy deferred value is [cancelled][cancel], then it becomes immediately complete and
  * cancels ongoing computation coroutine if it was started.

@@ -26,14 +26,24 @@ import kotlin.coroutines.experimental.suspendCoroutine
 // --------------- cancellable continuations ---------------
 
 /**
- * Cancellable continuation. Its job is completed when it is resumed or cancelled.
- * When [cancel] function is explicitly invoked, this continuation resumes with [CancellationException].
- * If the cancel reason was not a [CancellationException], then the original exception is added as cause of the
- * [CancellationException] that this continuation resumes with.
+ * Cancellable continuation. Its job is _completed_ when it is resumed or cancelled.
+ * When [cancel] function is explicitly invoked, this continuation resumes with [CancellationException] or
+ * with the specified cancel cause.
+ *
+ * Cancellable continuation has three states:
+ * * _Active_ (initial state) -- [isActive] `true`, [isCancelled] `false`.
+ * * _Resumed_ (final _completed_ state) -- [isActive] `false`, [isCancelled] `false`.
+ * * _Canceled_ (final _completed_ state) -- [isActive] `false`, [isCancelled] `true`.
+ *
+ * Invocation of [cancel] transitions this continuation from _active_ to _cancelled_ state, while
+ * invocation of [resume] or [resumeWithException] transitions it from _active_ to _resumed_ state.
+ *
+ * Invocation of [resume] or [resumeWithException] in _resumed_ state produces [IllegalStateException]
+ * but is ignored in _cancelled_ state.
  */
 public interface CancellableContinuation<in T> : Continuation<T>, Job {
     /**
-     * Returns `true` if this continuation was cancelled. It implies that [isActive] is `false`.
+     * Returns `true` if this continuation was [cancelled][cancel]. It implies that [isActive] is `false`.
      */
     val isCancelled: Boolean
 
@@ -87,7 +97,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
 internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
     val job = cont.context[Job]
     // fast path when parent job is already complete (we don't even construct SafeCancellableContinuation object)
-    if (job != null && !job.isActive) throw job.getInactiveCancellationException()
+    if (job != null && !job.isActive) throw job.getCompletionException()
     return job
 }
 
@@ -144,7 +154,7 @@ internal class SafeCancellableContinuation<in T>(
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (tryUpdateState(state, Failed(exception))) return state
+                is Active -> if (tryUpdateState(state, CompletedExceptionally(exception))) return state
                 else -> return null // cannot resume -- not active anymore
             }
         }

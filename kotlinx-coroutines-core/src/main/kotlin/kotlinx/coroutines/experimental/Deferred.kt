@@ -23,8 +23,33 @@ import kotlin.coroutines.experimental.startCoroutine
  * Deferred value is conceptually a non-blocking cancellable future.
  * It is created with [defer] coroutine builder.
  * It is in [active][isActive] state while the value is being computed.
+ *
+ * Deferred value has four states:
+ *
+ * * _Active_ (initial state) -- [isActive] `true`, [isCompletedExceptionally] `false`,
+ *   and [isCancelled] `false`.
+ *   Both [getCompleted] and [getCompletionException] throw [IllegalStateException].
+ * * _Computed_ (final _completed_ state) -- [isActive] `false`,
+ *   [isCompletedExceptionally] `false`, [isCancelled] `false`.
+ * * _Failed_ (final _completed_ state) -- [isActive] `false`,
+ *   [isCompletedExceptionally] `true`, [isCancelled] `false`.
+ * * _Canceled_ (final _completed_ state) -- [isActive] `false`,
+ *   [isCompletedExceptionally] `true`, [isCancelled] `true`.
  */
 public interface Deferred<out T> : Job {
+    /**
+     * Returns `true` if computation of this deferred value has _completed exceptionally_ -- it had
+     * either _failed_ with exception during computation or was [cancelled][cancel].
+     * It implies that [isActive] is `false`.
+     */
+    val isCompletedExceptionally: Boolean
+
+    /**
+     * Returns `true` if computation of this deferred value was [cancelled][cancel].
+     * It implies that [isActive] is `false` and [isCompletedExceptionally] is `true`.
+     */
+    val isCancelled: Boolean
+
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete.
      * This suspending function is cancellable.
@@ -61,6 +86,9 @@ internal open class DeferredCoroutine<T>(
     context: CoroutineContext
 ) : AbstractCoroutine<T>(context), Deferred<T> {
     protected open fun start(): Boolean = false // LazyDeferredCoroutine overrides
+
+    override val isCompletedExceptionally: Boolean get() = getState() is CompletedExceptionally
+    override val isCancelled: Boolean get() = getState() is Cancelled
 
     @Suppress("UNCHECKED_CAST")
     suspend override fun await(): T {

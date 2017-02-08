@@ -139,7 +139,7 @@ class CoroutinesTest : TestBase() {
         throw IOException()
     }
 
-    @Test(expected = CancellationException::class)
+    @Test(expected = IOException::class)
     fun testCancelParentOnChildException(): Unit = runBlocking {
         expect(1)
         launch(context) {
@@ -151,7 +151,7 @@ class CoroutinesTest : TestBase() {
         expectUnreached() // because of exception in child
     }
 
-    @Test(expected = CancellationException::class)
+    @Test(expected = IOException::class)
     fun testCancelParentOnNestedException(): Unit = runBlocking {
         expect(1)
         launch(context) {

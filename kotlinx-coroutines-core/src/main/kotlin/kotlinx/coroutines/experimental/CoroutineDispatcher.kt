@@ -101,7 +101,7 @@ internal class DispatchedContinuation<T>(
             dispatcher.dispatch(context, Runnable {
                 withCoroutineContext(context) {
                     if (job?.isActive == false)
-                        continuation.resumeWithException(job.getInactiveCancellationException())
+                        continuation.resumeWithException(job.getCompletionException())
                     else
                         continuation.resume(value)
                 }

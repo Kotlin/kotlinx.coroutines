@@ -27,17 +27,23 @@ import kotlin.coroutines.experimental.CoroutineContext
 // --------------- core job interfaces ---------------
 
 /**
- * A background job. It has two states: _active_ (initial state) and _completed_ (final state).
+ * A background job.
+ * A job can be _cancelled_ at any time with [cancel] function that forces it to become _completed_ immediately.
  *
- * A job can be _cancelled_ at any time with [cancel] function that forces it to become completed immediately.
+ * It has two states:
+ * * _Active_ (initial state) -- [isActive] `true`,
+ *   [getCompletionException] throws [IllegalStateException].
+ * * _Completed_ (final state) -- [isActive] `false`.
+ *
  * A job in the coroutine [context][CoroutineScope.context] represents the coroutine itself.
  * A job is active while the coroutine is working and job's cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
- * inside the coroutine.
+ * or the cancellation cause inside the coroutine.
  *
  * A job can have a _parent_. A job with a parent is cancelled when its parent completes.
  *
- * All functions on this interface are thread-safe.
+ * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * be safely invoked from concurrent coroutines without external synchronization.
  */
 public interface Job : CoroutineContext.Element {
     /**
@@ -56,17 +62,23 @@ public interface Job : CoroutineContext.Element {
     public val isActive: Boolean
 
     /**
-     * Returns [CancellationException] that [cancellable][suspendCancellableCoroutine] suspending functions throw when
-     * trying to suspend in the context of this job. This function throws [IllegalAccessException] when invoked
-     * for an [active][isActive] job.
+     * Returns the exception that signals the completion of this job -- it returns the original
+     * [cancel] cause or an instance of [CancellationException] if this job had completed
+     * normally or was cancelled without a cause. This function throws
+     * [IllegalStateException] when invoked for an [active][isActive] job.
+     *
+     * The [cancellable][suspendCancellableCoroutine] suspending functions throw this exception
+     * when trying to suspend in the context of this job.
      */
-    fun getInactiveCancellationException(): CancellationException
+    fun getCompletionException(): Throwable
 
     /**
      * Registers completion handler. The action depends on the state of this job.
      * When job is cancelled with [cancel], then the handler is immediately invoked
-     * with a cancellation reason. Otherwise, handler will be invoked once when this
-     * job is complete (cancellation also is a form of completion).
+     * with a cancellation cause or with a fresh [CancellationException].
+     * Otherwise, handler will be invoked once when this job is complete
+     * (cancellation also is a form of completion).
+     *
      * The resulting [Registration] can be used to [Registration.unregister] if this
      * registration is no longer needed. There is no need to unregister after completion.
      */
@@ -75,8 +87,8 @@ public interface Job : CoroutineContext.Element {
     /**
      * Cancel this activity with an optional cancellation [cause]. The result is `true` if this job was
      * cancelled as a result of this invocation and `false` otherwise
-     * (if it was already cancelled or it is [NonCancellable]).
-     * Repeated invocation of this function has no effect and always produces `false`.
+     * (if it was already _completed_ or if it is [NonCancellable]).
+     * Repeated invocations of this function have no effect and always produce `false`.
      *
      * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing
@@ -247,19 +259,19 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
 
     fun completeUpdateState(expect: Any, update: Any?) {
         // #3. Invoke completion handlers
-        val reason = (update as? CompletedExceptionally)?.cancelCause
+        val cause = (update as? CompletedExceptionally)?.exception
         var completionException: Throwable? = null
         when (expect) {
             // SINGLE/SINGLE+ state -- one completion handler (common case)
             is JobNode -> try {
-                expect.invoke(reason)
+                expect.invoke(cause)
             } catch (ex: Throwable) {
                 completionException = ex
             }
             // LIST state -- a list of completion handlers
             is NodeList -> expect.forEach<JobNode> { node ->
                 try {
-                    node.invoke(reason)
+                    node.invoke(cause)
                 } catch (ex: Throwable) {
                     completionException?.apply { addSuppressed(ex) } ?: run { completionException = ex }
                 }
@@ -275,12 +287,12 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
 
     final override val isActive: Boolean get() = state is Active
 
-    override fun getInactiveCancellationException(): CancellationException {
+    override fun getCompletionException(): Throwable {
         val state = getState()
         return when (state) {
             is Active -> throw IllegalStateException("Job is still active")
-            is CompletedExceptionally -> state.cancellationException
-            else -> CancellationException("Job has completed with result")
+            is CompletedExceptionally -> state.exception
+            else -> CancellationException("Job has completed normally")
         }
     }
 
@@ -311,7 +323,7 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
                 }
                 // is not active anymore
                 else -> {
-                    handler((state as? Cancelled)?.cancelCause)
+                    handler((state as? CompletedExceptionally)?.exception)
                     return EmptyRegistration
                 }
             }
@@ -379,49 +391,40 @@ internal open class JobSupport : AbstractCoroutineContextElement(Job), Job {
      */
     internal interface Active
 
-    private object Empty : Active
+    private object Empty : Active {
+        override fun toString(): String = "Empty"
+    }
 
-    private class NodeList : LockFreeLinkedListHead(), Active
+    private class NodeList : LockFreeLinkedListHead(), Active {
+        override fun toString(): String = buildString {
+            append("[")
+            var first = true
+            this@NodeList.forEach<JobNode> { node ->
+                if (first) first = false else append(", ")
+                append(node)
+            }
+            append("]")
+        }
+    }
 
     /**
-     * Abstract class for a [state][getState] of a job that had completed exceptionally, including cancellation.
+     * Class for a [state][getState] of a job that had completed exceptionally, including cancellation.
      */
-    internal abstract class CompletedExceptionally {
-        abstract val cancelCause: Throwable // original reason or fresh CancellationException
-        abstract val exception: Throwable // the exception to be thrown in continuation
-
-        // convert cancelCause to CancellationException on first need
+    internal open class CompletedExceptionally(cause: Throwable?) {
         @Volatile
-        private var _cancellationException: CancellationException? = null
+        private var _exception: Throwable? = cause // materialize CancellationException on first need
 
-        val cancellationException: CancellationException get() =
-            _cancellationException ?: // atomic read volatile var or else build new
-                (cancelCause as? CancellationException ?:
-                        CancellationException(cancelCause.message)
-                                .apply { initCause(cancelCause) })
-                                .also { _cancellationException = it }
+        val exception: Throwable get() =
+            _exception ?: // atomic read volatile var or else create new
+                CancellationException("Job was cancelled").also { _exception = it }
+
+        override fun toString(): String = "${javaClass.simpleName}[$exception]"
     }
 
     /**
-     * Represents a [state][getState] of a cancelled job.
+     * A specific subclass of [CompletedExceptionally] for cancelled jobs.
      */
-    internal class Cancelled(specifiedCause: Throwable?) : CompletedExceptionally() {
-        @Volatile
-        private var _cancelCause = specifiedCause // materialize CancellationException on first need
-
-        override val cancelCause: Throwable get() =
-            _cancelCause ?: // atomic read volatile var or else create new
-                CancellationException("Job was cancelled").also { _cancelCause = it }
-
-        override val exception: Throwable get() = cancellationException
-    }
-
-    /**
-     * Represents a [state][getState] of a failed job.
-     */
-    internal class Failed(override val exception: Throwable) : CompletedExceptionally() {
-        override val cancelCause: Throwable get() = exception
-    }
+    internal class Cancelled(cause: Throwable?) : CompletedExceptionally(cause)
 }
 
 internal abstract class JobNode(
@@ -438,7 +441,7 @@ private class InvokeOnCompletion(
     val handler: CompletionHandler
 ) : JobNode(job)  {
     override fun invoke(reason: Throwable?) = handler.invoke(reason)
-    override fun toString() = "InvokeOnCompletion[${handler::class.java.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
+    override fun toString() = "InvokeOnCompletion[${handler.javaClass.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
 }
 
 private class ResumeOnCompletion(
