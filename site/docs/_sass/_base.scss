@@ -1,22 +1,7 @@
-/*!
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Bits and pieces from Minima Jekyll Layout
+// The MIT License (MIT) Copyright (c) 2016 Parker Moor
 
-/**
- * Reset some basic elements
- */
+// Reset some basic elements
 body, h1, h2, h3, h4, h5, h6,
 p, blockquote, pre, hr,
 dl, dd, ol, ul, figure {
@@ -24,9 +9,7 @@ dl, dd, ol, ul, figure {
   padding: 0;
 }
 
-/**
- * Basic styling
- */
+// Basic styling
 body {
   font: $base-font-weight #{$base-font-size}/#{$base-line-height} $base-font-family;
   color: $text-color;
@@ -39,11 +22,7 @@ body {
   font-kerning: normal;
 }
 
-
-
-/**
- * Set `margin-bottom` to maintain vertical rhythm
- */
+// Set `margin-bottom` to maintain vertical rhythm
 h1, h2, h3, h4, h5, h6,
 p, blockquote, pre,
 ul, ol, dl, figure,
@@ -51,34 +30,7 @@ ul, ol, dl, figure,
   margin-bottom: $spacing-unit / 2;
 }
 
-
-
-/**
- * Images
- */
-img {
-  max-width: 100%;
-  vertical-align: middle;
-}
-
-
-
-/**
- * Figures
- */
-figure > img {
-  display: block;
-}
-
-figcaption {
-  font-size: $small-font-size;
-}
-
-
-
-/**
- * Lists
- */
+// Lists
 ul, ol {
   margin-left: $spacing-unit;
 }
@@ -90,20 +42,7 @@ li {
   }
 }
 
-
-
-/**
- * Headings
- */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: $base-font-weight;
-}
-
-
-
-/**
- * Links
- */
+// Links
 a {
   color: $brand-color;
   text-decoration: none;
@@ -118,11 +57,7 @@ a {
   }
 }
 
-
-
-/**
- * Blockquotes
- */
+// Blockquotes
 blockquote {
   color: $grey-color;
   border-left: 4px solid $grey-color-light;
@@ -136,9 +71,7 @@ blockquote {
   }
 }
 
-/**
- * Wrapper
- */
+// Wrapper
 .wrapper {
   max-width: -webkit-calc(#{$content-width} - (#{$spacing-unit} * 2));
   max-width:         calc(#{$content-width} - (#{$spacing-unit} * 2));
@@ -156,27 +89,9 @@ blockquote {
   }
 }
 
-
-
-/**
- * Clearfix
- */
+// Clearfix
 %clearfix:after {
   content: "";
   display: table;
   clear: both;
-}
-
-
-
-/**
- * Icons
- */
-.icon > svg {
-  display: inline-block;
-  vertical-align: middle;
-
-  path {
-    fill: $grey-color;
-  }
 }

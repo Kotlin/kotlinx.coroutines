@@ -88,17 +88,6 @@ h5 {
   }
 }
 
-// Remove most spacing between table cells
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-
-th,
-td {
-  padding: 0;
-}
-
 caption {margin: 0;}
 
 $vertical-rhythm-unit: 15px !global;
@@ -109,6 +98,11 @@ table {
   margin-bottom: $vertical-rhythm-unit*2;
   line-height: inherit;
   font-size: inherit;
+  border: 1px solid #dcdcdc;
+
+  // Remove most spacing between table cells
+  border-collapse: collapse;
+  border-spacing: 0;
 
   &.zebra {
     tbody tr:nth-child(odd) {
@@ -160,17 +154,12 @@ table {
       padding-right: 12px;
     }
   }
-}
 
-// api-docs-table
-
-.api-docs-table {
-  border: 1px solid #dcdcdc;
-}
-
-.api-docs-table p:last-child,
-.api-docs-table pre:last-child {
-  margin-bottom: 0;
+  // ???
+  p:last-child,
+  pre:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .api-docs-breadcrumbs {
@@ -192,7 +181,7 @@ code :target {
   background-color: #FFFFCC;
 }
 
-// kotlin syntax hightlight
+// kotlin syntax highlight
 
 .signature {
   background-color: $code-background;
