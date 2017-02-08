@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
     Application.launch(FxTestApp::class.java, *args)
 }
 
-fun log(msg: String) = println("${SimpleDateFormat("YYYYMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
+fun log(msg: String) = println("${SimpleDateFormat("yyyyMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 
 class FxTestApp : Application() {
     val buttons = FlowPane().apply {
