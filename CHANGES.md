@@ -1,5 +1,21 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.8-beta
+
+* `defer` coroutine builder is renamed to `async`.
+* `lazyDefer` is deprecated, `async` has an optional `start` parameter instead.
+* `LazyDeferred` interface is deprecated, lazy start functionality is integrated into `Job` interface.
+* `launch` has an optional `start` parameter for lazily started coroutines.
+* `Job.start` and `Job.isCompleted` are introduced.
+* `Deferred.isCompletedExceptionally` and `Deferred.isCancelled` are introduced.
+* `Job.getInactiveCancellationException` is renamed to `getCompletionException`.
+* `Job.join` is now a member function.
+* Internal `JobSupport` state machine is enhanced to support _new_ (not-started-yet) state.
+  So, lazy coroutines do not need a separate state variable to track their started/not-started (new/active) status.
+* Exception transparency in `Job.cancel` (original cause is rethrown).
+* Clarified possible states for `Job`/`CancellableContinuation`/`Deferred` in docs.
+* Example on async-style functions and links to API reference site from [coroutines guide](coroutines-guide.md).
+
 ## Version 0.7-beta
 
 * Buffered and unbuffered channels are introduced: `Channel`, `SendChannel`, and `ReceiveChannel` interfaces,
