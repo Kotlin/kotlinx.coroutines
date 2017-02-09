@@ -51,7 +51,10 @@ public abstract class CoroutineDispatcher :
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
-    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+    /**
+     * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
+     */
+    public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
             DispatchedContinuation(this, continuation)
 
     /**

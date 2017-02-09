@@ -30,8 +30,19 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     // ------ extension points for buffered channels ------
 
+    /**
+     * Returns `true` if this channel has buffer.
+     */
     protected abstract val hasBuffer: Boolean
+
+    /**
+     * Returns `true` if this channel's buffer is empty.
+     */
     protected abstract val isBufferEmpty: Boolean
+
+    /**
+     * Returns `true` if this channel's buffer is full.
+     */
     protected abstract val isBufferFull: Boolean
 
     /**
@@ -49,7 +60,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     // ------ state functions for concrete implementations ------
 
+    /**
+     * Returns non-null closed token if it is first in the queue.
+     */
     protected val closedForReceive: Any? get() = queue.next() as? Closed<*>
+
+    /**
+     * Returns non-null closed token if it is last in the queue.
+     */
     protected val closedForSend: Any? get() = queue.prev() as? Closed<*>
 
     // ------ SendChannel ------
@@ -117,6 +135,9 @@ public abstract class AbstractChannel<E> : Channel<E> {
         }
     }
 
+    /**
+     * Retrieves first receiving waiter from the queue or returns closed token.
+     */
     protected fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
         queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>> { it is Closed<*> }
 
@@ -219,6 +240,9 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     override fun iterator(): ChannelIterator<E> = Iterator(this)
 
+    /**
+     * Retrieves first sending waiter from the queue or returns closed token.
+     */
     protected fun takeFirstSendOrPeekClosed(): Send? =
         queue.removeFirstIfIsInstanceOfOrPeekIf<Send> { it is Closed<*> }
 
@@ -297,12 +321,18 @@ public abstract class AbstractChannel<E> : Channel<E> {
         }
     }
 
+    /**
+     * Represents sending waiter in the queue.
+     */
     protected interface Send {
         val pollResult: Any? // E | Closed
         fun tryResumeSend(): Any?
         fun completeResumeSend(token: Any)
     }
 
+    /**
+     * Represents receiver waiter in the queue or closed token.
+     */
     protected interface ReceiveOrClosed<in E> {
         val offerResult: Any // OFFER_SUCCESS | Closed
         fun tryResumeReceive(value: E): Any?

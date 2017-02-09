@@ -25,7 +25,12 @@ import java.util.concurrent.locks.ReentrantLock
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lists of suspended senders or receivers are lock-free.
  */
-public class ArrayChannel<E>(val capacity: Int) : AbstractChannel<E>() {
+public class ArrayChannel<E>(
+    /**
+     * Buffer capacity.
+     */
+    val capacity: Int
+) : AbstractChannel<E>() {
     init {
         check(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }
