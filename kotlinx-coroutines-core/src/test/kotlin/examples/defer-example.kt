@@ -22,7 +22,7 @@ val receiverThread = newSingleThreadContext("ReceiverThread")
 
 fun main(args: Array<String>) = runBlocking {
     val va = Array<Deferred<String>>(10) { i ->
-        defer(CommonPool) {
+        async(CommonPool) {
             val sleepTime = i * 200L
             log("This value #$i will delay for $sleepTime ms before producing result")
             try {

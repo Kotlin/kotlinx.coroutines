@@ -20,11 +20,11 @@ import org.junit.Test
 import java.io.IOException
 import org.junit.Assert.*
 
-class DeferTest : TestBase() {
+class AsyncTest : TestBase() {
     @Test
     fun testSimple(): Unit = runBlocking {
         expect(1)
-        val d = defer(context) {
+        val d = async(context) {
             expect(3)
             42
         }
@@ -40,7 +40,7 @@ class DeferTest : TestBase() {
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)
-        val d = defer(context) {
+        val d = async(context) {
             finish(3)
             throw IOException()
         }
@@ -51,7 +51,7 @@ class DeferTest : TestBase() {
     @Test(expected = IOException::class)
     fun testDeferAndYieldException(): Unit = runBlocking {
         expect(1)
-        val d = defer(context) {
+        val d = async(context) {
             expect(3)
             yield() // no effect, parent waiting
             finish(4)
@@ -64,7 +64,7 @@ class DeferTest : TestBase() {
     @Test
     fun testDeferWithTwoWaiters() = runBlocking {
         expect(1)
-        val d = defer(context) {
+        val d = async(context) {
             expect(5)
             yield()
             expect(9)
@@ -83,7 +83,7 @@ class DeferTest : TestBase() {
             expect(12)
         }
         expect(4)
-        yield() // this actually yields control to defer, which produces results and resumes both waiters (in order)
+        yield() // this actually yields control to async, which produces results and resumes both waiters (in order)
         expect(8)
         yield() // yield again to "d", which completes
         expect(10)
@@ -100,7 +100,7 @@ class DeferTest : TestBase() {
     @Test
     fun testDeferBadClass() = runBlocking {
         val bad = BadClass()
-        val d = defer(context) {
+        val d = async(context) {
             expect(1)
             bad
         }

@@ -23,12 +23,16 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
- * The running coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
+ * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
  * The [context] for the new coroutine must be explicitly specified.
  * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ *
+ * An optional [start] parameter can be set to `false` to start coroutine _lazily_. When `start = false`,
+ * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
+ * and will be started implicitly on the first invocation of [join][Job.join].
  *
  * Uncaught exceptions in this coroutine cancel parent job in the context by default
  * (unless [CoroutineExceptionHandler] is explicitly specified), which means that when `launch` is used with
@@ -36,11 +40,15 @@ import kotlin.coroutines.experimental.*
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  */
-fun launch(context: CoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
-    StandaloneCoroutine(newCoroutineContext(context)).apply {
-        initParentJob(context[Job])
-        block.startCoroutine(this, this)
-    }
+fun launch(context: CoroutineContext, start: Boolean = true, block: suspend CoroutineScope.() -> Unit): Job {
+    val newContext = newCoroutineContext(context)
+    val coroutine = if (start)
+        StandaloneCoroutine(newContext, active = true) else
+        LazyStandaloneCoroutine(newContext, block)
+    coroutine.initParentJob(context[Job])
+    if (start) block.startCoroutine(coroutine, coroutine)
+    return coroutine
+}
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
@@ -57,7 +65,7 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineSc
     }
 
 /**
- * Runs new coroutine and *blocks* current thread *interruptibly* until its completion.
+ * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
  * This function should not be used from coroutine. It is designed to bridge regular blocking code
  * to libraries that are written in suspending style, to be used in `main` functions and in tests.
  *
@@ -84,12 +92,22 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 
 // --------------- implementation ---------------
 
-private class StandaloneCoroutine(
-    val parentContext: CoroutineContext
-) : AbstractCoroutine<Unit>(parentContext) {
+private open class StandaloneCoroutine(
+    val parentContext: CoroutineContext,
+    active: Boolean
+) : AbstractCoroutine<Unit>(parentContext, active) {
     override fun afterCompletion(state: Any?) {
         // note the use of the parent's job context below!
         if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.exception)
+    }
+}
+
+private class LazyStandaloneCoroutine(
+    parentContext: CoroutineContext,
+    val block: suspend CoroutineScope.() -> Unit
+) : StandaloneCoroutine(parentContext, active = false) {
+    override fun onStart() {
+        block.startCoroutine(this, this)
     }
 }
 
@@ -104,7 +122,7 @@ private class BlockingCoroutine<T>(
     context: CoroutineContext,
     val blockedThread: Thread,
     val hasPrivateEventLoop: Boolean
-) : AbstractCoroutine<T>(context) {
+) : AbstractCoroutine<T>(context, active = true) {
     val eventLoop: EventLoop? = context[ContinuationInterceptor] as? EventLoop
 
     override fun afterCompletion(state: Any?) {

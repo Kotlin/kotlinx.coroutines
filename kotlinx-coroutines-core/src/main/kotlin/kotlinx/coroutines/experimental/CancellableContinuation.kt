@@ -31,9 +31,11 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * with the specified cancel cause.
  *
  * Cancellable continuation has three states:
- * * _Active_ (initial state) -- [isActive] `true`, [isCancelled] `false`.
- * * _Resumed_ (final _completed_ state) -- [isActive] `false`, [isCancelled] `false`.
- * * _Canceled_ (final _completed_ state) -- [isActive] `false`, [isCancelled] `true`.
+ *
+ * | **State**                           | [isActive] | [isCompleted] | [isCancelled] |
+ * | _Active_ (initial state)            | `true`     | `false`       | `false`       |
+ * | _Resumed_ (final _completed_ state) | `false`    | `true`        | `false`       |
+ * | _Canceled_ (final _completed_ state)| `false`    | `true`        | `true`        |
  *
  * Invocation of [cancel] transitions this continuation from _active_ to _cancelled_ state, while
  * invocation of [resume] or [resumeWithException] transitions it from _active_ to _resumed_ state.
@@ -43,7 +45,9 @@ import kotlin.coroutines.experimental.suspendCoroutine
  */
 public interface CancellableContinuation<in T> : Continuation<T>, Job {
     /**
-     * Returns `true` if this continuation was [cancelled][cancel]. It implies that [isActive] is `false`.
+     * Returns `true` if this continuation was [cancelled][cancel].
+     *
+     * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
     val isCancelled: Boolean
 
@@ -105,7 +109,7 @@ internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
 internal class SafeCancellableContinuation<in T>(
         private val delegate: Continuation<T>,
         private val parentJob: Job?
-) : AbstractCoroutine<T>(delegate.context), CancellableContinuation<T> {
+) : AbstractCoroutine<T>(delegate.context, active = true), CancellableContinuation<T> {
     // only updated from the thread that invoked suspendCancellableCoroutine
 
     @Volatile
@@ -144,7 +148,7 @@ internal class SafeCancellableContinuation<in T>(
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (tryUpdateState(state, value)) return state
+                is Incomplete -> if (tryUpdateState(state, value)) return state
                 else -> return null // cannot resume -- not active anymore
             }
         }
@@ -154,7 +158,7 @@ internal class SafeCancellableContinuation<in T>(
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (tryUpdateState(state, CompletedExceptionally(exception))) return state
+                is Incomplete -> if (tryUpdateState(state, CompletedExceptionally(exception))) return state
                 else -> return null // cannot resume -- not active anymore
             }
         }

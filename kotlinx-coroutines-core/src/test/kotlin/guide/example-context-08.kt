@@ -24,12 +24,12 @@ fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
     log("Started main coroutine")
     // run two background value computations
-    val v1 = defer(CommonPool + CoroutineName("v1coroutine")) {
+    val v1 = async(CommonPool + CoroutineName("v1coroutine")) {
         log("Computing v1")
         delay(500)
         252
     }
-    val v2 = defer(CommonPool + CoroutineName("v2coroutine")) {
+    val v2 = async(CommonPool + CoroutineName("v2coroutine")) {
         log("Computing v2")
         delay(1000)
         6

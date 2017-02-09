@@ -9,7 +9,7 @@ General-purpose coroutine builders and contexts.
 * `launch(context) {...}` to start a coroutine in the given context and get reference to its `Job`.
 * `run(context) {...}` to switch to a different context inside a coroutine.
 * `runBlocking {...}` to use asynchronous Kotlin APIs from a thread-blocking code.  
-* `defer(context) {...}` and `lazyDefer(context) {...}` to get a deferred result of coroutine execution in a 
+* `async(context) {...}` to get a deferred result of coroutine execution in a 
    non-blocking way via a light-weight future interface called `Deferred`.
 * `delay(...)` for a non-blocking sleep in coroutines and 
   `yield()` to release a thread in single-threaded dispatchers.

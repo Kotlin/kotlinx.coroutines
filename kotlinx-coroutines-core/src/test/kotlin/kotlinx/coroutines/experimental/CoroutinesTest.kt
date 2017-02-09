@@ -42,7 +42,9 @@ class CoroutinesTest : TestBase() {
             expect(4)
         }
         expect(2)
+        check(job.isActive && !job.isCompleted)
         job.join()
+        check(!job.isActive && job.isCompleted)
         finish(5)
     }
 

@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental.nio
 
-import kotlinx.coroutines.experimental.join
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.apache.commons.io.FileUtils

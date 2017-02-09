@@ -71,7 +71,7 @@ class FxTestApp : Application() {
 
     private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
-        val job = launch(JavaFx, block)
+        val job = launch(JavaFx, block = block)
         animations += job
         job.onCompletion { root.children -= node }
     }

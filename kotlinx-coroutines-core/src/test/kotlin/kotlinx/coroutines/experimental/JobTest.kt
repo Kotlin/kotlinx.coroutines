@@ -22,7 +22,7 @@ import org.junit.Test
 class JobTest {
     @Test
     fun testState() {
-        val job = JobSupport()
+        val job = Job()
         check(job.isActive)
         job.cancel()
         check(!job.isActive)
@@ -30,7 +30,7 @@ class JobTest {
 
     @Test
     fun testHandler() {
-        val job = JobSupport()
+        val job = Job()
         var fireCount = 0
         job.onCompletion { fireCount++ }
         check(job.isActive)
@@ -47,7 +47,7 @@ class JobTest {
 
     @Test
     fun testManyHandlers() {
-        val job = JobSupport()
+        val job = Job()
         val n = 100
         val fireCount = IntArray(n)
         for (i in 0 until n) job.onCompletion { fireCount[i]++ }
@@ -65,7 +65,7 @@ class JobTest {
 
     @Test
     fun testUnregisterInHandler() {
-        val job = JobSupport()
+        val job = Job()
         val n = 100
         val fireCount = IntArray(n)
         for (i in 0 until n) {
@@ -89,7 +89,7 @@ class JobTest {
 
     @Test
     fun testManyHandlersWithUnregister() {
-        val job = JobSupport()
+        val job = Job()
         val n = 100
         val fireCount = IntArray(n)
         val registrations = Array<Job.Registration>(n) { i -> job.onCompletion { fireCount[i]++ } }
@@ -104,7 +104,7 @@ class JobTest {
 
     @Test
     fun testExceptionsInHandler() {
-        val job = JobSupport()
+        val job = Job()
         val n = 100
         val fireCount = IntArray(n)
         class TestException : Throwable()
@@ -122,7 +122,7 @@ class JobTest {
 
     @Test
     fun testMemoryRelease() {
-        val job = JobSupport()
+        val job = Job()
         val n = 10_000_000
         var fireCount = 0
         for (i in 0 until n) job.onCompletion { fireCount++ }.unregister()

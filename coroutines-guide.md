@@ -40,8 +40,9 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Timeout](#timeout)
 * [Composing suspending functions](#composing-suspending-functions)
   * [Sequential by default](#sequential-by-default)
-  * [Concurrent using deferred value](#concurrent-using-deferred-value)
-  * [Lazily deferred value](#lazily-deferred-value)
+  * [Concurrent using async](#concurrent-using-async)
+  * [Lazily started async](#lazily-started-async)
+  * [Async-style functions](#async-style-functions)
 * [Coroutine context and dispatchers](#coroutine-context-and-dispatchers)
   * [Dispatchers and threads](#dispatchers-and-threads)
   * [Unconfined vs confined dispatcher](#unconfined-vs-confined-dispatcher)
@@ -511,7 +512,7 @@ In practise we do this if we use the results of the first function to make a dec
 to invoke the second one or to decide on how to invoke it.
 
 We just use a normal sequential invocation, because the code in the coroutine, just like in the regular 
-code, is _sequential_ by default. The following example demonstrates that by measuring the total 
+code, is _sequential_ by default. The following example demonstrates it by measuring the total 
 time it takes to execute both suspending functions:
 
 ```kotlin
@@ -534,22 +535,22 @@ The answer is 42
 Completed in 2017 ms
 ```
 
-### Concurrent using deferred value
+### Concurrent using async
 
 What if there are no dependencies between invocation of `doSomethingUsefulOne` and `doSomethingUsefulTwo` and
-we want to get the answer faster, by doing both _concurrently_? This is where `defer` comes to helps. 
+we want to get the answer faster, by doing both _concurrently_? This is where `async` comes to help. 
  
-Conceptually, `defer` is just like `launch`. It starts a separate coroutine which is a light-weight thread 
+Conceptually, `async` is just like `launch`. It starts a separate coroutine which is a light-weight thread 
 that works concurrently with all the other coroutines. The difference is that `launch` returns a `Job` and 
-does not carry any resulting value, while `defer` returns a `Deferred` -- a kind of light-weight non-blocking future
-that represent a promise to provide result later. You can use `.await()` on a deferred value to get its eventual result,
+does not carry any resulting value, while `async` returns a `Deferred` -- a light-weight non-blocking future
+that represents a promise to provide a result later. You can use `.await()` on a deferred value to get its eventual result,
 but `Deferred` is also a `Job`, so you can cancel it if needed.
  
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
-        val one = defer(CommonPool) { doSomethingUsefulOne() }
-        val two = defer(CommonPool) { doSomethingUsefulTwo() }
+        val one = async(CommonPool) { doSomethingUsefulOne() }
+        val two = async(CommonPool) { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
@@ -568,17 +569,17 @@ Completed in 1017 ms
 This is twice as fast, because we have concurrent execution of two coroutines. 
 Note, that concurrency with coroutines is always explicit.
 
-### Lazily deferred value
+### Lazily started async
 
-There is a lazy alternative to `defer` that is called `lazyDefer`. It is just like `defer`, but it 
-starts coroutine only when its result is needed by some `await` or if a special `start` function 
-is invoked. Run the following example:
+There is a laziness option to `async` with `start = false` parameter. 
+It starts coroutine only when its result is needed by some `await` or if a `start` function 
+is invoked. Run the following example that differs from the previous one only by this option:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
-        val one = lazyDefer(CommonPool) { doSomethingUsefulOne() }
-        val two = lazyDefer(CommonPool) { doSomethingUsefulTwo() }
+        val one = async(CommonPool, start = false) { doSomethingUsefulOne() }
+        val two = async(CommonPool, start = false) { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
@@ -594,13 +595,57 @@ The answer is 42
 Completed in 2017 ms
 ```
 
-So, we are back to two sequential execution, because we _first_ await for the `one` deferred, _and then_ await
-for the second one. It is not the intended use-case for `lazyDefer`. It is designed as a replacement for
-the standard `lazy` function in cases when computation of the value involve suspending functions.
+So, we are back to sequential execution, because we _first_ start and await for `one`, _and then_ start and await
+for `two`. It is not the intended use-case for laziness. It is designed as a replacement for
+the standard `lazy` function in cases when computation of the value involves suspending functions.
+
+### Async-style functions
+
+We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
+_asynchronously_ using `async` coroutine builder. It is a good style to name such functions with 
+either "async" prefix of "Async" suffix to highlight the fact that they only start asynchronous 
+computation and one needs to use the resulting deferred value to get the result.
+
+```kotlin
+// The result type of asyncSomethingUsefulOne is Deferred<Int>
+fun asyncSomethingUsefulOne() = async(CommonPool) {
+    doSomethingUsefulOne()
+}
+
+// The result type of asyncSomethingUsefulTwo is Deferred<Int>
+fun asyncSomethingUsefulTwo() = async(CommonPool)  {
+    doSomethingUsefulTwo()
+}
+```
+
+Note, that these `asyncXXX` function are **not** _suspending_ functions. They can be used from anywhere.
+However, their use always implies asynchronous (here meaning _concurrent_) execution of their action
+with the invoking code.
+ 
+The following example shows their use outside of coroutine:  
+ 
+```kotlin
+// note, that we don't have `runBlocking` to the right of `main` in this example
+fun main(args: Array<String>) {
+    val time = measureTimeMillis {
+        // we can initiate async actions outside of a coroutine
+        val one = asyncSomethingUsefulOne()
+        val two = asyncSomethingUsefulTwo()
+        // but waiting for a result must involve either suspending or blocking.
+        // here we use `runBlocking { ... }` to block the main thread while waiting for the result
+        runBlocking {
+            println("The answer is ${one.await() + two.await()}")
+        }
+    }
+    println("Completed in $time ms")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-04.kt)
 
 ## Coroutine context and dispatchers
 
-We've already seen `launch(CommonPool) {...}`, `defer(CommonPool) {...}`, `run(NonCancellable) {...}`, etc.
+We've already seen `launch(CommonPool) {...}`, `async(CommonPool) {...}`, `run(NonCancellable) {...}`, etc.
 In these code snippets `CommonPool` and `NonCancellable` are _coroutine contexts_. 
 This section covers other available choices.
 
@@ -701,11 +746,11 @@ Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val a = defer(context) {
+    val a = async(context) {
         log("I'm computing a piece of the answer")
         6
     }
-    val b = defer(context) {
+    val b = async(context) {
         log("I'm computing another piece of the answer")
         7
     }
@@ -879,12 +924,12 @@ fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
     log("Started main coroutine")
     // run two background value computations
-    val v1 = defer(CommonPool + CoroutineName("v1coroutine")) {
+    val v1 = async(CommonPool + CoroutineName("v1coroutine")) {
         log("Computing v1")
         delay(500)
         252
     }
-    val v2 = defer(CommonPool + CoroutineName("v2coroutine")) {
+    val v2 = async(CommonPool + CoroutineName("v2coroutine")) {
         log("Computing v2")
         delay(1000)
         6

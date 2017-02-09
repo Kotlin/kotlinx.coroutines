@@ -52,17 +52,22 @@ public abstract class CoroutineDispatcher :
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
-            DispatchedContinuation<T>(this, continuation)
+            DispatchedContinuation(this, continuation)
 
+    /**
+     * **Error**: Operator '+' on two CoroutineDispatcher objects is meaningless.
+     * CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts.
+     * The dispatcher to the right of `+` just replaces the dispatcher the left of `+`.
+     */
     @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated(message = "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
             "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
-            "The dispatcher to the right of `+` just replaces the dispacher the left of `+`.",
+            "The dispatcher to the right of `+` just replaces the dispatcher the left of `+`.",
             level = DeprecationLevel.ERROR)
     public operator fun plus(other: CoroutineDispatcher) = other
 }
 
-internal class DispatchedContinuation<T>(
+internal class DispatchedContinuation<in T>(
         val dispatcher: CoroutineDispatcher,
         val continuation: Continuation<T>
 ): Continuation<T> by continuation {
@@ -100,7 +105,7 @@ internal class DispatchedContinuation<T>(
         if (dispatcher.isDispatchNeeded(context))
             dispatcher.dispatch(context, Runnable {
                 withCoroutineContext(context) {
-                    if (job?.isActive == false)
+                    if (job?.isCompleted == true)
                         continuation.resumeWithException(job.getCompletionException())
                     else
                         continuation.resume(value)

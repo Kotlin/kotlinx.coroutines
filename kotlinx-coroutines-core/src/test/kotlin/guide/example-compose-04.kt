@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.compose.example03
+package guide.compose.example04
 
 import kotlinx.coroutines.experimental.*
 import kotlin.system.measureTimeMillis
@@ -30,11 +30,27 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+// The result type of asyncSomethingUsefulOne is Deferred<Int>
+fun asyncSomethingUsefulOne() = async(CommonPool) {
+    doSomethingUsefulOne()
+}
+
+// The result type of asyncSomethingUsefulTwo is Deferred<Int>
+fun asyncSomethingUsefulTwo() = async(CommonPool)  {
+    doSomethingUsefulTwo()
+}
+
+// note, that we don't have `runBlocking` to the right of `main` in this example
+fun main(args: Array<String>) {
     val time = measureTimeMillis {
-        val one = async(CommonPool, start = false) { doSomethingUsefulOne() }
-        val two = async(CommonPool, start = false) { doSomethingUsefulTwo() }
-        println("The answer is ${one.await() + two.await()}")
+        // we can initiate async actions outside of a coroutine
+        val one = asyncSomethingUsefulOne()
+        val two = asyncSomethingUsefulTwo()
+        // but waiting for a result must involve either suspending or blocking.
+        // here we use `runBlocking { ... }` to block the main thread while waiting for the result
+        runBlocking {
+            println("The answer is ${one.await() + two.await()}")
+        }
     }
     println("Completed in $time ms")
 }

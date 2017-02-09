@@ -64,7 +64,7 @@ public fun <E> buildChannel(
 private class ChannelCoroutine<E>(
     context: CoroutineContext,
     val channel: Channel<E>
-) : AbstractCoroutine<Unit>(context), ChannelBuilder<E>, ChannelJob<E>, Channel<E> by channel {
+) : AbstractCoroutine<Unit>(context, active = true), ChannelBuilder<E>, ChannelJob<E>, Channel<E> by channel {
     override fun afterCompletion(state: Any?) {
         val cause = (state as? CompletedExceptionally)?.exception
         if (!channel.close(cause) && cause != null)

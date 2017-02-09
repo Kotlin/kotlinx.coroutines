@@ -19,18 +19,18 @@ package kotlinx.coroutines.experimental
 import org.junit.Test
 import java.io.IOException
 
-class LazyDeferTest : TestBase() {
+class AsyncLazyTest : TestBase() {
     @Test
     fun testSimple(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(3)
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.await() == 42)
-        check(!d.isActive && !d.isComputing)
+        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         expect(4)
         check(d.await() == 42) // second await -- same result
         finish(5)
@@ -39,16 +39,16 @@ class LazyDeferTest : TestBase() {
     @Test
     fun testLazyDeferAndYield(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             expect(4)
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.await() == 42)
-        check(!d.isActive && !d.isComputing)
+        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         expect(5)
         check(d.await() == 42) // second await -- same result
         finish(6)
@@ -57,69 +57,69 @@ class LazyDeferTest : TestBase() {
     @Test
     fun testLazyDeferAndYield2(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(7)
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         launch(context) { // see how it looks from another coroutine
             expect(4)
-            check(d.isActive && !d.isComputing)
+            check(!d.isActive && !d.isCompleted)
             yield() // yield back to main
             expect(6)
-            check(d.isActive && d.isComputing) // started by main!
+            check(d.isActive && !d.isCompleted) // implicitly started by main's await
             yield() // yield to d
         }
         expect(3)
-        check(d.isActive && !d.isComputing)
-        yield() // yield to second child (lazy defer is not computing yet)
+        check(!d.isActive && !d.isCompleted)
+        yield() // yield to second child (lazy async is not computing yet)
         expect(5)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.await() == 42) // starts computing
-        check(!d.isActive && !d.isComputing)
+        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         finish(8)
     }
 
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             finish(3)
             throw IOException()
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         d.await() // will throw IOException
     }
 
     @Test(expected = IOException::class)
     fun testLazyDeferAndYieldException(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             finish(4)
             throw IOException()
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         d.await() // will throw IOException
     }
 
     @Test
     fun testCatchException(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(3)
             throw IOException()
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         try {
             d.await() // will throw IOException
         } catch (e: IOException) {
-            check(!d.isActive && !d.isComputing)
+            check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && !d.isCancelled)
             expect(4)
         }
         finish(5)
@@ -128,18 +128,18 @@ class LazyDeferTest : TestBase() {
     @Test
     fun testStart(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(4)
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.start())
-        check(d.isActive && d.isComputing)
+        check(d.isActive && !d.isCompleted)
         expect(3)
         check(!d.start())
         yield() // yield to started coroutine
-        check(!d.isActive && !d.isComputing) // and it finishes
+        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally) // and it finishes
         expect(5)
         check(d.await() == 42) // await sees result
         finish(6)
@@ -148,14 +148,14 @@ class LazyDeferTest : TestBase() {
     @Test(expected = CancellationException::class)
     fun testCancelBeforeStart(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expectUnreached()
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.cancel())
-        check(!d.isActive && !d.isComputing)
+        check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
         check(!d.cancel())
         check(!d.start())
         finish(3)
@@ -166,22 +166,22 @@ class LazyDeferTest : TestBase() {
     @Test(expected = CancellationException::class)
     fun testCancelWhileComputing(): Unit = runBlocking {
         expect(1)
-        val d = lazyDefer(context) {
+        val d = async(context, start = false) {
             expect(4)
             yield() // yield to main, that is going to cancel us
             expectUnreached()
             42
         }
         expect(2)
-        check(d.isActive && !d.isComputing)
+        check(!d.isActive && !d.isCompleted)
         check(d.start())
-        check(d.isActive && d.isComputing)
+        check(d.isActive && !d.isCompleted)
         expect(3)
         yield() // yield to d
         expect(5)
-        check(d.isActive && d.isComputing)
+        check(d.isActive && !d.isCompleted)
         check(d.cancel())
-        check(!d.isActive && !d.isComputing)
+        check(!d.isActive && d.isCancelled && d.isCompletedExceptionally && d.isCancelled)
         check(!d.cancel())
         finish(6)
         check(d.await() == 42) // await shall throw CancellationException

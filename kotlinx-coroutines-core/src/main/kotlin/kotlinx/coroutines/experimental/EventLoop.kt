@@ -74,7 +74,7 @@ internal class EventLoopImpl(
             queue.addLast(node)
             true
         } else
-            queue.addLastIf(node) { parentJob!!.isActive }
+            queue.addLastIf(node) { !parentJob!!.isCompleted }
         if (added) {
             if (Thread.currentThread() !== thread)
                 LockSupport.unpark(thread)
@@ -96,5 +96,7 @@ internal class EventLoopImpl(
     abstract class Node : LockFreeLinkedListNode(), Runnable
 
     class Dispatch(block: Runnable) : Node(), Runnable by block
+
+    override fun toString(): String = "EventLoopImpl@${Integer.toHexString(System.identityHashCode(this))}"
 }
 

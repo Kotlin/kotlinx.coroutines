@@ -21,11 +21,20 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
- * to its [context] and cancellation status via [isActive].
+ * to its [context] and its cancellation status via [isActive].
  */
 public interface CoroutineScope {
     /**
-     * Returns `true` when this coroutine is still active (was not cancelled).
+     * Returns `true` when this coroutine is still active (has not completed yet).
+     *
+     * Check this property in long-running computation loops to support cancellation:
+     * ```
+     * while (isActive) {
+     *     // do some computation
+     * }
+     * ```
+     *
+     * This property is a shortcut for `context[Job]!!.isActive`. See [context] and [Job].
      */
     public val isActive: Boolean
 
@@ -41,14 +50,17 @@ public interface CoroutineScope {
  * It stores the result of continuation in the state of the job.
  */
 @Suppress("LeakingThis")
-internal abstract class AbstractCoroutine<in T>(context: CoroutineContext) : JobSupport(), Continuation<T>, CoroutineScope {
+internal abstract class AbstractCoroutine<in T>(
+    context: CoroutineContext,
+    active: Boolean
+) : JobSupport(active), Continuation<T>, CoroutineScope {
     override val context: CoroutineContext = context + this // merges this job into this context
 
     final override fun resume(value: T) {
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (updateState(state, value)) return
+                is Incomplete -> if (updateState(state, value)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
                 else -> throw IllegalStateException("Already resumed, but got value $value")
             }
@@ -59,7 +71,7 @@ internal abstract class AbstractCoroutine<in T>(context: CoroutineContext) : Job
         while (true) { // lock-free loop on state
             val state = getState() // atomic read
             when (state) {
-                is Active -> if (updateState(state, CompletedExceptionally(exception))) return
+                is Incomplete -> if (updateState(state, CompletedExceptionally(exception))) return
                 is Cancelled -> {
                     // ignore resumes on cancelled continuation, but handle exception if a different one is here
                     if (exception != state.exception) handleCoroutineException(context, exception)

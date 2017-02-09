@@ -45,6 +45,9 @@ public object Unconfined : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
 }
 
+/**
+ * **Deprecated**: `Here` was renamed to `Unconfined`.
+ */
 @Deprecated(message = "`Here` was renamed to `Unconfined`",
         replaceWith = ReplaceWith(expression = "Unconfined"))
 public typealias Here = Unconfined

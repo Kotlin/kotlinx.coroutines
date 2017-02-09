@@ -31,8 +31,24 @@ import kotlin.coroutines.experimental.AbstractCoroutineContextElement
  * ```
  */
 object NonCancellable : AbstractCoroutineContextElement(Job), Job {
+    /** Always returns `true`. */
     override val isActive: Boolean  get() = true
+
+    /** Always returns `false`. */
+    override val isCompleted: Boolean get() = false
+
+    /** Always returns `false`. */
+    override fun start(): Boolean = false
+
+    /** Always throws [UnsupportedOperationException]. */
+    suspend override fun join() { throw UnsupportedOperationException("This job is always active") }
+
+    /** Always throws [IllegalStateException]. */
     override fun getCompletionException(): CancellationException = throw IllegalStateException("This job is always active")
+
+    /** Always returns [EmptyRegistration]. */
     override fun onCompletion(handler: CompletionHandler): Job.Registration = EmptyRegistration
+
+    /** Always returns `false`. */
     override fun cancel(cause: Throwable?): Boolean = false
 }
