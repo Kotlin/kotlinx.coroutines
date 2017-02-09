@@ -115,7 +115,9 @@ Hello,
 World!
 ```
 
-Essentially, coroutines are light-weight threads. You can achieve the same result replacing
+Essentially, coroutines are light-weight threads.
+They are launched with [launch] _coroutine builder_.
+You can achieve the same result replacing
 `launch(CommonPool) { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. Try it.
 
 If you start by replacing `launch(CommonPool)` by `thread`, the compiler produces the following error:
@@ -124,14 +126,14 @@ If you start by replacing `launch(CommonPool)` by `thread`, the compiler produce
 Error: Kotlin: Suspend functions are only allowed to be called from a coroutine or another suspend function
 ```
 
-That is because `delay` is a special _suspending function_ that does not block a thread, but _suspends_
+That is because [delay] is a special _suspending function_ that does not block a thread, but _suspends_
 coroutine and it can be only used from a coroutine.
 
 ### Bridging blocking and non-blocking worlds
 
 The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same
 code of `main` function. It is easy to get lost. Let's cleanly separate blocking and non-blocking
-worlds by using `runBlocking { ... }`:
+worlds by using [runBlocking]:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
@@ -146,7 +148,7 @@ fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02.kt)
 
-The result is the same, but this code uses only non-blocking `delay`. 
+The result is the same, but this code uses only non-blocking [delay]. 
 
 `runBlocking { ... }` works as an adaptor that is used here to start the top-level main coroutine. 
 The regular code outside of `runBlocking` _blocks_, until the coroutine inside `runBlocking` is active. 
@@ -167,7 +169,7 @@ class MyTest {
 ### Waiting for a job
 
 Delaying for a time while another coroutine is working is not a good approach. Let's explicitly 
-wait (in a non-blocking way) until the background job coroutine that we have launched is complete:
+wait (in a non-blocking way) until the background [Job] that we have launched is complete:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -267,7 +269,7 @@ This section covers coroutine cancellation and timeouts.
 
 In small application the return from "main" method might sound like a good idea to get all coroutines 
 implicitly terminated. In a larger, long-running application, you need finer-grained control.
-The `launch` function returns a `Job` that can be used to cancel running coroutine:
+The [launch] function returns a [Job] that can be used to cancel running coroutine:
  
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -303,7 +305,7 @@ As soon as main invokes `job.cancel`, we don't see any output from the other cor
 
 Coroutine cancellation is _cooperative_. A coroutine code has to cooperate to be cancellable.
 All the suspending functions in `kotlinx.coroutines` are _cancellable_. They check for cancellation of 
-coroutine and throw `CancellationException` when cancelled. However, if a coroutine is working in 
+coroutine and throw [CancellationException] when cancelled. However, if a coroutine is working in 
 a computation and does not check for cancellation, then it cannot be cancelled, like the following 
 example shows:
 
@@ -335,7 +337,7 @@ Run it to see that it continues to print "I'm sleeping" even after cancellation.
 ### Making computation code cancellable
 
 There are two approaches to making computation code cancellable. The first one is to periodically 
-invoke a suspending function. There is a `yield` function that is a good choice for that purpose.
+invoke a suspending function. There is a [yield] function that is a good choice for that purpose.
 The other one is to explicitly check the cancellation status. Let us try the later approach. 
 
 Replace `while (true)` in the previous example with `while (isActive)` and rerun it. 
@@ -363,12 +365,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-03.kt)
 
-As you can see, now this loop can be cancelled. `isActive` is a property that is available inside
-the code of coroutines via `CoroutineScope` object.
+As you can see, now this loop can be cancelled. [isActive][CoroutineScope.isActive] is a property that is available inside
+the code of coroutines via [CoroutineScope] object.
 
 ### Closing resources with finally
 
-Cancellable suspending functions throw `CancellationException` on cancellation which can be handled in 
+Cancellable suspending functions throw [CancellationException] on cancellation which can be handled in 
 all the usual way. For example, the `try {...} finally {...}` and Kotlin `use` function execute their
 finalization actions normally when coroutine is cancelled:
  
@@ -408,11 +410,11 @@ main: Now I can quit.
 ### Run non-cancellable block
 
 Any attempt to use a suspending function in the `finally` block of the previous example will cause
-`CancellationException`, because the coroutine running this code is cancelled. Usually, this is not a 
+[CancellationException], because the coroutine running this code is cancelled. Usually, this is not a 
 problem, since all well-behaving closing operations (closing a file, cancelling a job, or closing any kind of a 
 communication channel) are usually non-blocking and do not involve any suspending functions. However, in the 
 rare case when you need to suspend in the cancelled coroutine you can wrap the corresponding code in
-`run(NonCancellable) {...}` as the following example shows:
+`run(NonCancellable) {...}` using [run] function and [NonCancellable] context as the following example shows:
  
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -444,8 +446,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The most obvious reason to cancel coroutine execution in practice, 
 is because its execution time has exceeded some timeout.
-While you can manually track the reference to the corresponding `job` and launch a separate coroutine to cancel 
-the tracked one after delay, there is a ready to use `withTimeout(...) {...}` function that does it.
+While you can manually track the reference to the corresponding [Job] and launch a separate coroutine to cancel 
+the tracked one after delay, there is a ready to use [withTimeout] function that does it.
 Look at the following example:
 
 ```kotlin
@@ -470,7 +472,7 @@ I'm sleeping 2 ...
 Exception in thread "main" java.util.concurrent.CancellationException: Timed out waiting for 1300 MILLISECONDS
 ```
 
-We have not seen the `CancellationException` stack trace printed on the console before. That is because
+We have not seen the [CancellationException] stack trace printed on the console before. That is because
 inside a cancelled coroutine `CancellationException` is a considered a normal reason for coroutine completion. 
 However, in this example we have used `withTimeout` right inside the `main` function. 
 
@@ -538,11 +540,11 @@ Completed in 2017 ms
 ### Concurrent using async
 
 What if there are no dependencies between invocation of `doSomethingUsefulOne` and `doSomethingUsefulTwo` and
-we want to get the answer faster, by doing both _concurrently_? This is where `async` comes to help. 
+we want to get the answer faster, by doing both _concurrently_? This is where [async] comes to help. 
  
-Conceptually, `async` is just like `launch`. It starts a separate coroutine which is a light-weight thread 
-that works concurrently with all the other coroutines. The difference is that `launch` returns a `Job` and 
-does not carry any resulting value, while `async` returns a `Deferred` -- a light-weight non-blocking future
+Conceptually, [async] is just like [launch]. It starts a separate coroutine which is a light-weight thread 
+that works concurrently with all the other coroutines. The difference is that `launch` returns a [Job] and 
+does not carry any resulting value, while `async` returns a [Deferred] -- a light-weight non-blocking future
 that represents a promise to provide a result later. You can use `.await()` on a deferred value to get its eventual result,
 but `Deferred` is also a `Job`, so you can cancel it if needed.
  
@@ -571,8 +573,9 @@ Note, that concurrency with coroutines is always explicit.
 
 ### Lazily started async
 
-There is a laziness option to `async` with `start = false` parameter. 
-It starts coroutine only when its result is needed by some `await` or if a `start` function 
+There is a laziness option to [async] with `start = false` parameter. 
+It starts coroutine only when its result is needed by some 
+[await][Deferred.await] or if a [start][Job.start] function 
 is invoked. Run the following example that differs from the previous one only by this option:
 
 ```kotlin
@@ -602,7 +605,7 @@ the standard `lazy` function in cases when computation of the value involves sus
 ### Async-style functions
 
 We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
-_asynchronously_ using `async` coroutine builder. It is a good style to name such functions with 
+_asynchronously_ using [async] coroutine builder. It is a good style to name such functions with 
 either "async" prefix of "Async" suffix to highlight the fact that they only start asynchronous 
 computation and one needs to use the resulting deferred value to get the result.
 
@@ -646,12 +649,12 @@ fun main(args: Array<String>) {
 ## Coroutine context and dispatchers
 
 We've already seen `launch(CommonPool) {...}`, `async(CommonPool) {...}`, `run(NonCancellable) {...}`, etc.
-In these code snippets `CommonPool` and `NonCancellable` are _coroutine contexts_. 
+In these code snippets [CommonPool] and [NonCancellable] are _coroutine contexts_. 
 This section covers other available choices.
 
 ### Dispatchers and threads
 
-Coroutine context includes a _coroutine dispatcher_ which determines what thread or threads 
+Coroutine context includes a [_coroutine dispatcher_][CoroutineDispatcher] which determines what thread or threads 
 the corresponding coroutine uses for its execution. Coroutine dispatcher can confine coroutine execution 
 to a specific thread, dispatch it to a thread pool, or let it run unconfined. Try the following example:
 
@@ -685,18 +688,18 @@ It produces the following output (maybe in different order):
     'context': I'm working in thread main
 ```
 
-The difference between parent `context` and `Unconfied` context will be shown later.
+The difference between parent [context][CoroutineScope.context] and [Unconfined] context will be shown later.
 
 ### Unconfined vs confined dispatcher
  
-The `Unconfined` coroutine dispatcher starts coroutine in the caller thread, but only until the
+The [Unconfined] coroutine dispatcher starts coroutine in the caller thread, but only until the
 first suspension point. After suspension it resumes in the thread that is fully determined by the
 suspending function that was invoked. Unconfined dispatcher is appropriate when coroutine does not
 consume CPU time nor updates any shared data (like UI) that is confined to a specific thread. 
 
-On the other side, `context` property that is available inside the block of any coroutine 
-via `CoroutineScope` interface, is a reference to a context of this particular coroutine. 
-This way, a parent context can be inherited. The default context of `runBlocking`, in particular,
+On the other side, [context][CoroutineScope.context] property that is available inside the block of any coroutine 
+via [CoroutineScope] interface, is a reference to a context of this particular coroutine. 
+This way, a parent context can be inherited. The default context of [runBlocking], in particular,
 is confined to be invoker thread, so inheriting it has the effect of confining execution to
 this thread with a predictable FIFO scheduling.
 
@@ -729,12 +732,12 @@ Produces the output:
 ```
  
 So, the coroutine the had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
-while the unconfined one had resumed in the scheduler thread that `delay` function is using.
+while the unconfined one had resumed in the scheduler thread that [delay] function is using.
 
 ### Debugging coroutines and threads
 
-Coroutines can suspend on one thread and resume on another thread with `Unconfined` dispatcher or 
-with a multi-threaded dispatcher like `CommonPool`. Even with a single-threaded dispatcher it might be hard to
+Coroutines can suspend on one thread and resume on another thread with [Unconfined] dispatcher or 
+with a multi-threaded dispatcher like [CommonPool]. Even with a single-threaded dispatcher it might be hard to
 figure out what coroutine was doing what, where, and when. The common approach to debugging applications with 
 threads is to print the thread name in the log file on each log statement. This feature is universally supported
 by logging frameworks. When using coroutines, the thread name alone does not give much of a context, so 
@@ -775,7 +778,7 @@ The `log` function prints the name of the thread in square brackets and you can 
 thread, but the identifier of the currently executing coroutine is appended to it. This identifier 
 is consecutively assigned to all created coroutines when debugging mode is turned on.
 
-You can read more about debugging facilities in the documentation for `newCoroutineContext` function.
+You can read more about debugging facilities in the documentation for [newCoroutineContext] function.
 
 ### Jumping between threads
 
@@ -799,8 +802,8 @@ fun main(args: Array<String>) {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-04.kt)
 
-It demonstrates two new techniques. One is using `runBlocking` with an explicitly specified context, and
-the second one is using `run(context) {...}` to change a context of a coroutine while still staying in the 
+It demonstrates two new techniques. One is using [runBlocking] with an explicitly specified context, and
+the second one is using [run] function to change a context of a coroutine while still staying in the 
 same coroutine as you can see in the output below:
 
 ```
@@ -811,7 +814,7 @@ same coroutine as you can see in the output below:
 
 ### Job in the context
 
-The coroutine `Job` is part of its context. The coroutine can retrieve it from its own context 
+The coroutine [Job] is part of its context. The coroutine can retrieve it from its own context 
 using `context[Job]` expression:
 
 ```kotlin
@@ -828,11 +831,12 @@ It produces
 My job is BlockingCoroutine{isActive=true}
 ```
 
-So, `isActive` in `CoroutineScope` is just a convenient shortcut for `context[Job]!!.isActive`.
+So, [isActive][CoroutineScope.isActive] in [CoroutineScope] is just a convenient shortcut for `context[Job]!!.isActive`.
 
 ### Children of a coroutine
 
-When `context` of a coroutine is used to launch another coroutine, the `Job` of the new coroutine becomes
+When [context][CoroutineScope.context] of a coroutine is used to launch another coroutine, 
+the [Job] of the new coroutine becomes
 a _child_ of the parent coroutine's job. When the parent coroutine is cancelled, all its children
 are recursively cancelled, too. 
   
@@ -877,7 +881,7 @@ main: Who has survived request cancellation?
 ### Combining contexts
 
 Coroutine context can be combined using `+` operator. The context on the right-hand side replaces relevant entries
-of the context on the left-hand side. For example, a `Job` of the parent coroutine can be inherited, while 
+of the context on the left-hand side. For example, a [Job] of the parent coroutine can be inherited, while 
 its dispatcher replaced:
 
 ```kotlin
@@ -913,7 +917,7 @@ main: Who has survived request cancellation?
 Automatically assigned ids are good when coroutines log often and you just need to correlate log records
 coming from the same coroutine. However, when coroutine is tied to the processing of a specific request
 or doing some specific background task, it is better to name it explicitly for debugging purposes.
-Coroutine name serves the same function as a thread name. It'll get displayed in the thread name that
+[CoroutineName] serves the same function as a thread name. It'll get displayed in the thread name that
 is executing this coroutine when debugging more is turned on.
 
 The following example demonstrates this concept:
@@ -960,9 +964,9 @@ import kotlinx.coroutines.experimental.channels.*
 
 ### Channel basics
 
-A `Channel` is conceptually very similar to `BlockingQueue`. One key difference is that
-instead of a blocking `put` operation it has a suspending `send`, and instead of 
-a blocking `take` operation it has a suspending `receive`.
+A [Channel] is conceptually very similar to `BlockingQueue`. One key difference is that
+instead of a blocking `put` operation it has a suspending [send][SendChannel.send], and instead of 
+a blocking `take` operation it has a suspending [receive][ReceiveChannel.receive].
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -985,7 +989,7 @@ Unlike a queue, a channel can be closed to indicate that no more elements are co
 On the receiver side it is convenient to use a regular `for` loop to receive elements 
 from the channel. 
  
-Conceptually, a `close` is like sending a special close token to the channel. 
+Conceptually, a [close][SendChannel.close] is like sending a special close token to the channel. 
 The iteration stops as soon as this close token is received, so there is a guarantee 
 that all previously sent elements before the close are received:
 
@@ -1009,7 +1013,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 The pattern where a coroutine is producing a sequence of elements into a channel is quite common.
 You could abstract such a producer into a function that takes channel as its parameter, but this goes contrary
 to common sense that results must be returned from functions. Here is a convenience 
-coroutine builder named `buildChannel` that makes it easy to do it right:
+coroutine builder named [buildChannel] that makes it easy to do it right:
 
 ```kotlin
 fun produceSquares() = buildChannel<Int>(CommonPool) {
@@ -1231,8 +1235,8 @@ BAR!
 The channels shown so far had no buffer. Unbuffered channels transfer elements when sender and receiver 
 meet each other (aka rendezvous). If send is invoked first, then it is suspended until receive is invoked, 
 if receive is invoked first, it is suspended until send is invoked.
- 
-Both `Channel()` factory and `buildChanner{}` builder take an optional `capacity` parameter to 
+
+Both [Channel()][Channel.invoke] factory function and [buildChannel] builder take an optional `capacity` parameter to 
 specify _buffer size_. Buffer allows senders to send multiple elements before suspending, 
 similar to the `BlockingQueue` with a specified capacity, which blocks when buffer is full.
 
@@ -1265,3 +1269,36 @@ Sending 4
 ```
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
+
+<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/ -->
+<!--- INDEX kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/kotlinx.coroutines.experimental/index.md -->
+[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
+[CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
+[CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
+[CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/context.html
+[CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/is-active.html
+[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
+[Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
+[Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/start.html
+[NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
+[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
+[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
+[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
+[newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
+[run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
+[withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
+<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ -->
+<!--- INDEX kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/index.md -->
+[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
+[Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/invoke.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/receive.html
+[SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/close.html
+[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/send.html
+[buildChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/build-channel.html
+<!--- END -->

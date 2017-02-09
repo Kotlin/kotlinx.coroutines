@@ -26,11 +26,15 @@ val TOC_DIRECTIVE = "TOC"
 val KNIT_DIRECTIVE = "KNIT"
 val INCLUDE_DIRECTIVE = "INCLUDE"
 val CLEAR_DIRECTIVE = "CLEAR"
+val SITE_ROOT_DIRECTIVE = "SITE_ROOT"
+val INDEX_DIRECTIVE = "INDEX"
 
 val CODE_START = "```kotlin"
 val CODE_END = "```"
 
 val SECTION_START = "##"
+
+val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_.]+)\\]($|[^\\[\\(])")
 
 fun main(args: Array<String>) {
     if(args.size != 1) {
@@ -43,10 +47,15 @@ fun main(args: Array<String>) {
     val includes = arrayListOf<Include>()
     val code = arrayListOf<String>()
     val files = mutableSetOf<String>()
+    val allApiRefs = arrayListOf<ApiRef>()
+    val remainingApiRefNames = mutableSetOf<String>()
+    var siteRoot: String? = null
     // read markdown file
+    var putBackLine: String? = null
     val markdown = markdownFile.withMarkdownTextReader {
         mainLoop@ while (true) {
-            val inLine = readLine() ?: break
+            val inLine = putBackLine ?: readLine() ?: break
+            putBackLine = null
             val directive = directive(inLine)
             if (directive != null && markdownPart == MarkdownPart.TOC) {
                 markdownPart = MarkdownPart.POST_TOC
@@ -54,13 +63,13 @@ fun main(args: Array<String>) {
             }
             when (directive?.name) {
                 TOC_DIRECTIVE -> {
-                    require(directive.singleLine) { "TOC directive must end on the same line with '$DIRECTIVE_END'" }
+                    requireSingleLine(directive)
                     require(directive.param.isEmpty()) { "TOC directive must not have parameters" }
                     require(markdownPart == MarkdownPart.PRE_TOC) { "Only one TOC directive is supported" }
                     markdownPart = MarkdownPart.TOC
                 }
                 KNIT_DIRECTIVE -> {
-                    require(directive.singleLine) { "KNIT directive must end on the same line with '$DIRECTIVE_END'" }
+                    requireSingleLine(directive)
                     require(!directive.param.isEmpty()) { "KNIT directive must include regex parameter" }
                     require(knitRegex == null) { "Only one KNIT directive is supported"}
                     knitRegex = Regex("\\((" + directive.param + ")\\)")
@@ -83,10 +92,30 @@ fun main(args: Array<String>) {
                     continue@mainLoop
                 }
                 CLEAR_DIRECTIVE -> {
-                    require(directive.singleLine) { "CLEAR directive must end on the same line with '$DIRECTIVE_END'" }
+                    requireSingleLine(directive)
                     require(directive.param.isEmpty()) { "CLEAR directive must not have parameters" }
                     code.clear()
                     continue@mainLoop
+                }
+                SITE_ROOT_DIRECTIVE -> {
+                    requireSingleLine(directive)
+                    siteRoot = directive.param
+                }
+                INDEX_DIRECTIVE -> {
+                    requireSingleLine(directive)
+                    require(siteRoot != null) { "$SITE_ROOT_DIRECTIVE must be specified" }
+                    val indexLines = readApiIndex(directive.param, remainingApiRefNames, siteRoot!!)
+                    skip = true
+                    while (true) {
+                        val skipLine = readLine() ?: break@mainLoop
+                        if (directive(skipLine) != null) {
+                            putBackLine = skipLine
+                            break
+                        }
+                    }
+                    skip = false
+                    postTocText += indexLines
+                    postTocText += putBackLine!!
                 }
             }
             if (inLine.startsWith(CODE_START)) {
@@ -104,6 +133,11 @@ fun main(args: Array<String>) {
                 val name = inLine.substring(i + 1).trim()
                 toc += "  ".repeat(i - 2) + "* [$name](#${makeSectionRef(name)})"
                 continue@mainLoop
+            }
+            for (match in API_REF_REGEX.findAll(inLine)) {
+                val apiRef = ApiRef(lineNumber, match.groups[2]!!.value)
+                allApiRefs += apiRef
+                remainingApiRefNames += apiRef.name
             }
             knitRegex?.find(inLine)?.let { knitMatch ->
                 val fileName = knitMatch.groups[1]!!.value
@@ -132,6 +166,16 @@ fun main(args: Array<String>) {
     // update markdown file with toc
     val newLines = markdown.preTocText + "" + toc + "" + markdown.postTocText
     if (newLines != markdown.allText) writeLines(markdownFile, newLines)
+    // check apiRefs
+    for (apiRef in allApiRefs) {
+        if (apiRef.name in remainingApiRefNames) {
+            println("WARNING: $markdownFile: ${apiRef.line}: Broken reference to [${apiRef.name}]")
+        }
+    }
+}
+
+private fun requireSingleLine(directive: Directive) {
+    require(directive.singleLine) { "${directive.name} directive must end on the same line with '$DIRECTIVE_END'" }
 }
 
 fun makeSectionRef(name: String): String = name.replace(' ', '-').replace(".", "").toLowerCase()
@@ -155,6 +199,8 @@ fun directive(line: String): Directive? {
     return Directive(name, param, singleLine)
 }
 
+class ApiRef(val line: Int, val name: String)
+
 enum class MarkdownPart { PRE_TOC, TOC, POST_TOC }
 
 class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
@@ -162,34 +208,71 @@ class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
     val preTocText = arrayListOf<String>()
     val postTocText = arrayListOf<String>()
     var markdownPart: MarkdownPart = MarkdownPart.PRE_TOC
+    var skip = false
 
     override fun readLine(): String? {
         val line = super.readLine() ?: return null
         allText += line
-        when (markdownPart) {
-            MarkdownPart.PRE_TOC -> preTocText += line
-            MarkdownPart.POST_TOC -> postTocText += line
-            MarkdownPart.TOC -> {} // do nothing
+        if (!skip) {
+            when (markdownPart) {
+                MarkdownPart.PRE_TOC -> preTocText += line
+                MarkdownPart.POST_TOC -> postTocText += line
+                MarkdownPart.TOC -> {
+                } // do nothing
+            }
         }
         return line
     }
 }
 
-fun File.withMarkdownTextReader(block: MarkdownTextReader.() -> Unit): MarkdownTextReader {
-    MarkdownTextReader(reader()).use {
+fun <T : LineNumberReader> File.withLineNumberReader(factory: (Reader) -> T, block: T.() -> Unit): T {
+    val reader = factory(reader())
+    reader.use {
         try {
             it.block()
         } catch (e: IllegalArgumentException) {
-            println("ERROR: $this: ${it.lineNumber}: ${e.message}")
+            println("ERROR: ${this@withLineNumberReader}: ${it.lineNumber}: ${e.message}")
         }
-        return it
     }
+    return reader
 }
 
-private fun writeLines(file: File, lines: List<String>) {
+fun File.withMarkdownTextReader(block: MarkdownTextReader.() -> Unit): MarkdownTextReader =
+    withLineNumberReader<MarkdownTextReader>(::MarkdownTextReader, block)
+
+fun writeLines(file: File, lines: List<String>) {
     println(" Writing $file ...")
     file.parentFile?.mkdirs()
     file.printWriter().use { out ->
         lines.forEach { out.println(it) }
     }
+}
+
+val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
+val INDEX_HTML = "/index.html"
+val INDEX_MD = "/index.md"
+
+fun readApiIndex(fileName: String, remainingApiRefNames: MutableSet<String>, siteRoot: String, prefix: String = ""): List<String> {
+    println("Reading index from $fileName")
+    val indexList = arrayListOf<String>()
+    val visited = mutableSetOf<String>()
+    File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
+        while (true) {
+            val line = readLine() ?: break
+            val result = REF_LINE_REGEX.matchEntire(line) ?: continue
+            val refLink = result.groups[1]!!.value
+            val refName = prefix + result.groups[2]!!.value
+            if (remainingApiRefNames.remove(refName)) {
+                indexList += "[$refName]: $siteRoot$refLink"
+            }
+            if (!refLink.startsWith("..") && refLink.endsWith(INDEX_HTML) && fileName.endsWith(INDEX_MD)) {
+                if (visited.add(refLink)) {
+                    val fileName2 = fileName.substring(0, fileName.length - INDEX_MD.length) + "/" +
+                        refLink.substring(0, refLink.length - INDEX_HTML.length) + INDEX_MD
+                    indexList += readApiIndex(fileName2, remainingApiRefNames, siteRoot, refName + ".")
+                }
+            }
+        }
+    }
+    return indexList
 }
