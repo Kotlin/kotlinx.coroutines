@@ -1,0 +1,37 @@
+<project name="site" default="site">
+    <target name="site">
+        <copy todir="target">
+            <fileset dir="docs"/>
+            <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
+            <fileset dir="../kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
+            <fileset dir="../kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
+            <fileset dir="../kotlinx-coroutines-swing/target/dokka" includes="**/*.md"/>
+            <fileset dir="../kotlinx-coroutines-javafx/target/dokka" includes="**/*.md"/>
+            <fileset dir="../kotlinx-coroutines-rx/target/dokka" includes="**/*.md"/>
+        </copy>
+        <antcall target="jekyll"/>
+    </target>
+
+    <target name="checkos">
+        <condition property="isWindows" value="true">
+            <os family="windows" />
+        </condition>
+        <condition property="isUnix" value="true">
+            <os family="unix" />
+        </condition>
+    </target>
+
+    <target name="jekyll" depends="checkos, jekyll.windows, jekyll.unix"/>
+
+    <target name="jekyll.windows" if="isWindows">
+        <exec executable="jekyll.bat" dir="target">
+            <arg line="build"/>
+        </exec>
+    </target>
+
+    <target name="jekyll.unix" if="isUnix">
+        <exec executable="jekyll" dir="target">
+            <arg line="build"/>
+        </exec>
+    </target>
+</project>

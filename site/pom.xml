@@ -76,18 +76,7 @@
                         <phase>site</phase>
                         <configuration>
                             <tasks>
-                                <copy todir="target">
-                                    <fileset dir="docs"/>
-                                    <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
-                                    <fileset dir="../kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
-                                    <fileset dir="../kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
-                                    <fileset dir="../kotlinx-coroutines-swing/target/dokka" includes="**/*.md"/>
-                                    <fileset dir="../kotlinx-coroutines-javafx/target/dokka" includes="**/*.md"/>
-                                    <fileset dir="../kotlinx-coroutines-rx/target/dokka" includes="**/*.md"/>
-                                </copy>
-                                <exec executable="jekyll" dir="target">
-                                    <arg line="build"/>
-                                </exec>
+                                <ant target="site"/>
                             </tasks>
                         </configuration>
                         <goals>
