@@ -1097,7 +1097,13 @@ fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) 
 ```
 
 Now we build our pipeline by starting a stream of numbers from 2, taking a prime number from the current channel, 
-and launching new pipeline stage for each prime number found. The following example prints the first ten prime numbers, 
+and launching new pipeline stage for each prime number found:
+ 
+```
+numbers -> filter(2) -> filter(3) -> filter(5) -> filter(7) ... 
+``` 
+ 
+The following example prints the first ten prime numbers, 
 running the whole pipeline in the context of the main thread:
 
 ```kotlin
@@ -1128,6 +1134,17 @@ The output of this code is:
 29
 ```
 
+Note, that you can build the same pipeline using `buildIterator` from the standard library. 
+Replace `buildSequence` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
+`ReceiveChannel` with `Iterator`, and get rid of the context. You will not need `runBlocking` either.
+However, the benefit of a pipeline that uses channels as shown above is that it can actually use 
+multiple CPU cores if you run it in [CommonPool] context.
+
+Anyway, this is an extremely impractical way to find prime numbers. In practise, pipelines do involve some
+other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
+built using `buildSeqeunce`/`buildIterator`, because they do not allow arbitrary suspension, unlike
+`buildChannel` which is fully asynchronous.
+ 
 ### Fan-out
 
 Multiple coroutines may receive from the same channel, distributing work between themselves.
