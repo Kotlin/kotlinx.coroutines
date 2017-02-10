@@ -5,7 +5,9 @@ layout: api
 
 # kotlinx.coroutines reference documentation
 
-Library support for Kotlin coroutines.
+Library support for Kotlin coroutines. This reference is a companion to 
+[Guide to kotlinx.coroutines by example](https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md).
+
 
 ## Modules
 
