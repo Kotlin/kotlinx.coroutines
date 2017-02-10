@@ -41,8 +41,31 @@ import kotlin.coroutines.experimental.CoroutineContext
 public abstract class CoroutineDispatcher :
         AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     /**
-     * Return `true` if execution shall be dispatched onto another thread.
+     * Returns `true` if execution shall be dispatched onto another thread.
      * The default behaviour for most dispatchers is to return `true`.
+     *
+     * UI dispatchers _should not_ override `isDispatchNeeded`, but leave a default implementation that
+     * returns `true`. To understand the rationale beyond this recommendation, consider the following code:
+     *
+     * ```kotlin
+     * fun asyncUpdateUI() = async(MainThread) {
+     *     // do something here that updates something in UI
+     * }
+     * ```
+     *
+     * When you invoke `asyncUpdateUI` in some background thread, it immediately continues to the next
+     * line, while UI update happens asynchronously in the UI thread. However, if you invoke
+     * it in the UI thread itself, it updates UI _synchronously_ if your `isDispatchNeeded` is
+     * overridden with a thread check. Checking if we are already in the UI thread seems more
+     * efficient (and it might indeed save a few CPU cycles), but this subtle and context-sensitive
+     * difference in behavior makes the resulting async code harder to debug.
+     *
+     * Basically, the choice here is between "JS-style" asynchronous approach (async actions
+     * are always postponed to be executed later in the even dispatch thread) and "C#-style" approach
+     * (async actions are executed in the invoker thread until the first suspension point).
+     * While, C# approach seems to be more efficient, it ends up with recommendations like
+     * "use `yield` if you need to ....". This is error-prone. JS-style approach is more consistent
+     * and does not require programmers to think about whether they need to yield or not.
      */
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
@@ -78,28 +101,34 @@ internal class DispatchedContinuation<in T>(
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
             dispatcher.dispatch(context, Runnable {
-                withCoroutineContext(context) {
-                    continuation.resume(value)
-                }
+                resumeUndispatched(value)
             })
         else
-            withCoroutineContext(context) {
-                continuation.resume(value)
-            }
+            resumeUndispatched(value)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    inline fun resumeUndispatched(value: T) {
+        withCoroutineContext(context) {
+            continuation.resume(value)
+        }
     }
 
     override fun resumeWithException(exception: Throwable) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
             dispatcher.dispatch(context, Runnable {
-                withCoroutineContext(context) {
-                    continuation.resumeWithException(exception)
-                }
+                resumeUndispatchedWithException(exception)
             })
         else
-            withCoroutineContext(context) {
-                continuation.resumeWithException(exception)
-            }
+            resumeUndispatchedWithException(exception)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    inline fun resumeUndispatchedWithException(exception: Throwable) {
+        withCoroutineContext(context) {
+            continuation.resumeWithException(exception)
+        }
     }
 
     // used by "yield" implementation

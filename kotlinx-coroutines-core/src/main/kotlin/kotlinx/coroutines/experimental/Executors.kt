@@ -17,9 +17,9 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -32,16 +32,26 @@ internal open class ExecutorCoroutineDispatcher(val executor: Executor) : Corout
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        (executor as? ScheduledExecutorService ?: scheduledExecutor).scheduleResumeAfterDelay(time, unit, continuation)
+        val timeout = if (executor is ScheduledExecutorService)
+            executor.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) else
+            scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
+        continuation.cancelFutureOnCompletion(timeout)
     }
 }
 
-internal fun ExecutorService.scheduleResume(cont: CancellableContinuation<Unit>) {
-    val future = submit { cont.resume(Unit) }
-    cont.cancelFutureOnCompletion(future)
+// --- reusing these classes in other places ---
+
+internal class ResumeUndispatchedRunnable(
+    val dispatcher: CoroutineDispatcher,
+    val continuation: CancellableContinuation<Unit>
+) : Runnable {
+    override fun run() {
+        with(continuation) { dispatcher.resumeUndispatched(Unit) }
+    }
 }
 
-internal fun ScheduledExecutorService.scheduleResumeAfterDelay(time: Long, unit: TimeUnit, cont: CancellableContinuation<Unit>) {
-    val timeout = schedule({ cont.resume(Unit) }, time, unit)
-    cont.cancelFutureOnCompletion(timeout)
+internal class ResumeRunnable(val continuation: Continuation<Unit>) : Runnable {
+    override fun run() {
+        continuation.resume(Unit)
+    }
 }

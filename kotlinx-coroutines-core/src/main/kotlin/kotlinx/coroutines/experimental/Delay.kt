@@ -38,6 +38,18 @@ public interface Delay {
 
     /**
      * Schedules resume of a specified [continuation] after a specified delay [time].
+     *
+     * Continuation **must be scheduled** to resume even if it is already cancelled, because a cancellation is just
+     * an exception that the coroutine that used `delay` might wanted to catch and process. It might
+     * need to close some resources in its `finally` blocks, for example.
+     *
+     * This implementation is supposed to use dispatcher's native ability for scheduled execution in its thread(s).
+     * In order to avoid an extra delay of execution, the following code shall be used to resume this
+     * [continuation] when the code is already executing in the appropriate thread:
+     *
+     * ```kotlin
+     * with(continuation) { resumeUndispatched(Unit) }
+     * ```
      */
     fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>)
 }
@@ -59,6 +71,7 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
             scheduleResumeAfterDelay(time, unit, cont)
             return@sc
         }
-        scheduledExecutor.scheduleResumeAfterDelay(time, unit, cont)
+        val timeout = scheduledExecutor.schedule(ResumeRunnable(cont), time, unit)
+        cont.cancelFutureOnCompletion(timeout)
     }
 }

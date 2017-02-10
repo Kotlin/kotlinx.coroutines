@@ -62,6 +62,7 @@ private class ThreadPoolDispatcher(
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        executor.scheduleResumeAfterDelay(time, unit, continuation)
+        val timeout = executor.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit)
+        continuation.cancelFutureOnCompletion(timeout)
     }
 }

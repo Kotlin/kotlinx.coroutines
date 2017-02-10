@@ -49,32 +49,54 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    val isCancelled: Boolean
+    public val isCancelled: Boolean
 
     /**
      * Tries to resume this continuation with a given value and returns non-null object token if it was successful,
      * or `null` otherwise (it was already resumed or cancelled). When non-null object was returned,
      * [completeResume] must be invoked with it.
      */
-    fun tryResume(value: T): Any?
+    public fun tryResume(value: T): Any?
 
     /**
      * Tries to resume this continuation with a given exception and returns non-null object token if it was successful,
      * or `null` otherwise (it was already resumed or cancelled). When non-null object was returned,
      * [completeResume] must be invoked with it.
      */
-    fun tryResumeWithException(exception: Throwable): Any?
+    public fun tryResumeWithException(exception: Throwable): Any?
 
     /**
      * Completes the execution of [tryResume] or [tryResumeWithException] on its non-null result.
      */
-    fun completeResume(token: Any)
+    public fun completeResume(token: Any)
 
     /**
      * Makes this continuation cancellable. Use it with `holdCancellability` optional parameter to
      * [suspendCancellableCoroutine] function. It throws [IllegalStateException] if invoked more than once.
      */
-    fun initCancellability()
+    public fun initCancellability()
+
+    /**
+     * Resumes this continuation with a given [value] in the invoker thread without going though
+     * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
+     * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
+     * **It should not be used in general code**.
+     *
+     * The receiver [CoroutineDispatcher] of this function be equal to the context dispatcher or
+     * [IllegalArgumentException] if thrown.
+     */
+    public fun CoroutineDispatcher.resumeUndispatched(value: T)
+
+    /**
+     * Resumes this continuation with a given [exception] in the invoker thread without going though
+     * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
+     * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
+     * **It should not be used in general code**.
+     *
+     * The receiver [CoroutineDispatcher] of this function be equal to the context dispatcher or
+     * [IllegalArgumentException] if thrown.
+     */
+    public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
 }
 
 /**
@@ -123,6 +145,7 @@ internal class SafeCancellableContinuation<in T>(
         const val SUSPENDED = 1
         const val RESUMED = 2
         const val YIELD = 3 // used by cancellable "yield"
+        const val UNDISPATCHED = 4 // used by "undispatchedXXX"
     }
 
     override fun initCancellability() {
@@ -173,12 +196,21 @@ internal class SafeCancellableContinuation<in T>(
         val decision = this.decision // volatile read
         if (decision == UNDECIDED && DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return // will get result in getResult
         // otherwise, getResult has already commenced, i.e. it was resumed later or in other thread
+        when {
+            decision == UNDISPATCHED -> undispatchedCompletion(state)
+            state is CompletedExceptionally -> delegate.resumeWithException(state.exception)
+            decision == YIELD && delegate is DispatchedContinuation -> delegate.resumeYield(parentJob, state as T)
+            else -> delegate.resume(state as T)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun undispatchedCompletion(state: Any?) {
+        delegate as DispatchedContinuation // type assertion -- was checked in resumeUndispatched
         if (state is CompletedExceptionally)
-            delegate.resumeWithException(state.exception)
-        else if (decision == YIELD && delegate is DispatchedContinuation)
-            delegate.resumeYield(parentJob, state as T)
+            delegate.resumeUndispatchedWithException(state.exception)
         else
-            delegate.resume(state as T)
+            delegate.resumeUndispatched(state as T)
     }
 
     // can only be invoked in the same thread as getResult (see "yield"), afterCompletion may be concurrent
@@ -186,5 +218,19 @@ internal class SafeCancellableContinuation<in T>(
         if ((context[ContinuationInterceptor] as? CoroutineDispatcher)?.isDispatchNeeded(context) == true)
             DECISION.compareAndSet(this, UNDECIDED, YIELD) // try mark as needing dispatch
         resume(value)
+    }
+
+    override fun CoroutineDispatcher.resumeUndispatched(value: T) {
+        val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
+        check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
+        DECISION.compareAndSet(this@SafeCancellableContinuation, SUSPENDED, UNDISPATCHED)
+        resume(value)
+    }
+
+    override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
+        val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
+        check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
+        DECISION.compareAndSet(this@SafeCancellableContinuation, SUSPENDED, UNDISPATCHED)
+        resumeWithException(exception)
     }
 }

@@ -30,15 +30,19 @@ import kotlin.coroutines.experimental.CoroutineContext
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 object Swing : CoroutineDispatcher(), Delay {
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val timerTime = unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-        val timer = Timer(timerTime, ActionListener { continuation.resume(Unit) }).apply {
+        val action = ActionListener {
+            with(continuation) { resumeUndispatched(Unit) }
+        }
+        val timer = Timer(timerTime, action).apply {
             isRepeats = false
             start()
         }
         continuation.onCompletion { timer.stop() }
     }
+
+    override fun toString() = "Swing"
 }
