@@ -178,7 +178,7 @@ public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Regis
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
  * ```
- * onCompletion { future.cancel(true) }
+ * onCompletion { future.cancel(false) }
  * ```
  */
 public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
