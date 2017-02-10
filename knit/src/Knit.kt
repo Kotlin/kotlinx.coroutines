@@ -26,7 +26,9 @@ val TOC_DIRECTIVE = "TOC"
 val KNIT_DIRECTIVE = "KNIT"
 val INCLUDE_DIRECTIVE = "INCLUDE"
 val CLEAR_DIRECTIVE = "CLEAR"
+
 val SITE_ROOT_DIRECTIVE = "SITE_ROOT"
+val DOCS_ROOT_DIRECTIVE = "DOCS_ROOT"
 val INDEX_DIRECTIVE = "INDEX"
 
 val CODE_START = "```kotlin"
@@ -50,6 +52,7 @@ fun main(args: Array<String>) {
     val allApiRefs = arrayListOf<ApiRef>()
     val remainingApiRefNames = mutableSetOf<String>()
     var siteRoot: String? = null
+    var docsRoot: String? = null
     // read markdown file
     var putBackLine: String? = null
     val markdown = markdownFile.withMarkdownTextReader {
@@ -101,10 +104,15 @@ fun main(args: Array<String>) {
                     requireSingleLine(directive)
                     siteRoot = directive.param
                 }
+                DOCS_ROOT_DIRECTIVE -> {
+                    requireSingleLine(directive)
+                    docsRoot = directive.param
+                }
                 INDEX_DIRECTIVE -> {
                     requireSingleLine(directive)
                     require(siteRoot != null) { "$SITE_ROOT_DIRECTIVE must be specified" }
-                    val indexLines = readApiIndex(directive.param, remainingApiRefNames, siteRoot!!)
+                    require(docsRoot != null) { "$DOCS_ROOT_DIRECTIVE must be specified" }
+                    val indexLines = readApiIndex(directive.param, remainingApiRefNames, siteRoot!!, docsRoot!!)
                     skip = true
                     while (true) {
                         val skipLine = readLine() ?: break@mainLoop
@@ -252,7 +260,14 @@ val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
 
-fun readApiIndex(fileName: String, remainingApiRefNames: MutableSet<String>, siteRoot: String, prefix: String = ""): List<String> {
+fun readApiIndex(
+        path: String,
+        remainingApiRefNames: MutableSet<String>,
+        siteRoot: String,
+        docsRoot: String,
+        prefix: String = ""
+): List<String> {
+    val fileName = docsRoot + "/" + path + INDEX_MD
     println("Reading index from $fileName")
     val indexList = arrayListOf<String>()
     val visited = mutableSetOf<String>()
@@ -261,15 +276,15 @@ fun readApiIndex(fileName: String, remainingApiRefNames: MutableSet<String>, sit
             val line = readLine() ?: break
             val result = REF_LINE_REGEX.matchEntire(line) ?: continue
             val refLink = result.groups[1]!!.value
+            if (refLink.startsWith("..")) continue // ignore cross-references
             val refName = prefix + result.groups[2]!!.value
             if (remainingApiRefNames.remove(refName)) {
-                indexList += "[$refName]: $siteRoot$refLink"
+                indexList += "[$refName]: $siteRoot/$path/$refLink"
             }
-            if (!refLink.startsWith("..") && refLink.endsWith(INDEX_HTML) && fileName.endsWith(INDEX_MD)) {
+            if (refLink.endsWith(INDEX_HTML)) {
                 if (visited.add(refLink)) {
-                    val fileName2 = fileName.substring(0, fileName.length - INDEX_MD.length) + "/" +
-                        refLink.substring(0, refLink.length - INDEX_HTML.length) + INDEX_MD
-                    indexList += readApiIndex(fileName2, remainingApiRefNames, siteRoot, refName + ".")
+                    val path2 = path + "/" + refLink.substring(0, refLink.length - INDEX_HTML.length)
+                    indexList += readApiIndex(path2, remainingApiRefNames, siteRoot, docsRoot, refName + ".")
                 }
             }
         }
