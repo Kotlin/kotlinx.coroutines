@@ -21,8 +21,13 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 private typealias Node = LockFreeLinkedListNode
 
+@PublishedApi
 internal const val UNDECIDED = 0
+
+@PublishedApi
 internal const val SUCCESS = 1
+
+@PublishedApi
 internal const val FAILURE = 2
 
 /**
@@ -32,9 +37,11 @@ internal const val FAILURE = 2
  * by Sundell and Tsigas.
  * The instance of this class serves both as list head/tail sentinel and as the list item.
  * Sentinel node should be never removed.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
  */
 @Suppress("LeakingThis")
-internal open class LockFreeLinkedListNode {
+public open class LockFreeLinkedListNode {
     @Volatile
     private var _next: Any = this // DoubleLinkedNode | Removed | CondAdd
     @Volatile
@@ -61,7 +68,8 @@ internal open class LockFreeLinkedListNode {
     private fun removed(): Removed =
         removedRef ?: Removed(this).also { REMOVED_REF.lazySet(this, it) }
 
-    abstract class CondAdd(val newNode: Node) {
+    @PublishedApi
+    internal abstract class CondAdd(val newNode: Node) {
         lateinit var oldNext: Node
         @Volatile
         private var consensus: Int = UNDECIDED // status of operation
@@ -96,15 +104,17 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    private inline fun makeCondAdd(node: Node, crossinline condition: () -> Boolean): CondAdd = object : CondAdd(node) {
+    @PublishedApi
+    internal inline fun makeCondAdd(node: Node, crossinline condition: () -> Boolean): CondAdd = object : CondAdd(node) {
         override fun isCondition(): Boolean = condition()
     }
 
-    val isRemoved: Boolean get() = _next is Removed
+    public val isRemoved: Boolean get() = _next is Removed
 
     private val isFresh: Boolean get() = _next === this && prev === this
 
-    private val next: Any get() {
+    @PublishedApi
+    internal val next: Any get() {
         while (true) { // helper loop on _next
             val next = this._next
             if (next !is CondAdd) return next
@@ -112,9 +122,9 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    fun next(): Node = next.unwrap()
+    public fun next(): Node = next.unwrap()
 
-    fun prev(): Node {
+    public fun prev(): Node {
         while (true) {
             prevHelper()?.let { return it.unwrap() }
         }
@@ -125,7 +135,7 @@ internal open class LockFreeLinkedListNode {
     /**
      * Adds first item to this list.
      */
-    fun addFirst(node: Node) {
+    public fun addFirst(node: Node) {
         while (true) { // lock-free loop on next
             val next = this.next as Node // this sentinel node is never removed
             if (addNext(node, next)) return
@@ -135,7 +145,7 @@ internal open class LockFreeLinkedListNode {
     /**
      * Adds first item to this list atomically if the [condition] is true.
      */
-    inline fun addFirstIf(node: Node, crossinline condition: () -> Boolean): Boolean {
+    public inline fun addFirstIf(node: Node, crossinline condition: () -> Boolean): Boolean {
         val condAdd = makeCondAdd(node, condition)
         while (true) { // lock-free loop on next
             val next = this.next as Node // this sentinel node is never removed
@@ -146,7 +156,7 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    fun addFirstIfEmpty(node: Node): Boolean {
+    public fun addFirstIfEmpty(node: Node): Boolean {
         PREV.lazySet(node, this)
         NEXT.lazySet(node, this)
         if (!NEXT.compareAndSet(this, this, node)) return false // this is not an empty list!
@@ -160,7 +170,7 @@ internal open class LockFreeLinkedListNode {
     /**
      * Adds last item to this list.
      */
-    fun addLast(node: Node) {
+    public fun addLast(node: Node) {
         while (true) { // lock-free loop on prev.next
             val prev = prevHelper() ?: continue
             if (prev.addNext(node, this)) return
@@ -170,7 +180,7 @@ internal open class LockFreeLinkedListNode {
     /**
      * Adds last item to this list atomically if the [condition] is true.
      */
-    inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
+    public inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
         val condAdd = makeCondAdd(node, condition)
         while (true) { // lock-free loop on prev.next
             val prev = prevHelper() ?: continue
@@ -181,7 +191,7 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
+    public inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
         while (true) { // lock-free loop on prev.next
             val prev = prevHelper() ?: continue
             if (!predicate(prev)) return false
@@ -189,7 +199,7 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    inline fun addLastIfPrevAndIf(
+    public inline fun addLastIfPrevAndIf(
             node: Node,
             predicate: (Node) -> Boolean, // prev node predicate
             crossinline condition: () -> Boolean // atomically checked condition
@@ -205,7 +215,8 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    private fun prevHelper(): Node? {
+    @PublishedApi
+    internal fun prevHelper(): Node? {
         val prev = this.prev as Node // this sentinel node is never removed
         if (prev.next === this) return prev
         helpInsert(prev)
@@ -214,7 +225,8 @@ internal open class LockFreeLinkedListNode {
 
     // ------ addXXX util ------
 
-    private fun addNext(node: Node, next: Node): Boolean {
+    @PublishedApi
+    internal fun addNext(node: Node, next: Node): Boolean {
         PREV.lazySet(node, this)
         NEXT.lazySet(node, next)
         if (!NEXT.compareAndSet(this, next, node)) return false
@@ -224,7 +236,8 @@ internal open class LockFreeLinkedListNode {
     }
 
     // returns UNDECIDED, SUCCESS or FAILURE
-    private fun tryCondAddNext(node: Node, next: Node, condAdd: CondAdd): Int {
+    @PublishedApi
+    internal fun tryCondAddNext(node: Node, next: Node, condAdd: CondAdd): Int {
         PREV.lazySet(node, this)
         NEXT.lazySet(node, next)
         condAdd.oldNext = next
@@ -238,7 +251,7 @@ internal open class LockFreeLinkedListNode {
     /**
      * Removes this node from the list. Returns `true` when removed successfully.
      */
-    open fun remove(): Boolean {
+    public open fun remove(): Boolean {
         while (true) { // lock-free loop on next
             val next = this.next
             if (next is Removed) return false // was already removed -- don't try to help (original thread will take care)
@@ -251,7 +264,7 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    fun removeFirstOrNull(): Node? {
+    public fun removeFirstOrNull(): Node? {
         while (true) { // try to linearize
             val first = next()
             if (first == this) return null
@@ -259,7 +272,7 @@ internal open class LockFreeLinkedListNode {
         }
     }
 
-    inline fun <reified T> removeFirstIfIsInstanceOf(): T? {
+    public inline fun <reified T> removeFirstIfIsInstanceOf(): T? {
         while (true) { // try to linearize
             val first = next()
             if (first == this) return null
@@ -269,7 +282,7 @@ internal open class LockFreeLinkedListNode {
     }
 
     // just peek at item when predicate is true
-    inline fun <reified T> removeFirstIfIsInstanceOfOrPeekIf(predicate: (T) -> Boolean): T? {
+    public inline fun <reified T> removeFirstIfIsInstanceOfOrPeekIf(predicate: (T) -> Boolean): T? {
         while (true) { // try to linearize
             val first = next()
             if (first == this) return null
@@ -376,19 +389,24 @@ internal open class LockFreeLinkedListNode {
 
     private fun Any.unwrap(): Node = if (this is Removed) ref else this as Node
 
-    fun validateNode(prev: Node, next: Node) {
+    internal fun validateNode(prev: Node, next: Node) {
         check(prev === this.prev)
         check(next === this.next)
     }
 }
 
-internal open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
-    val isEmpty: Boolean get() = next() == this
+/**
+ * Head (sentinel) item of the linked list that is never removed.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
+    public val isEmpty: Boolean get() = next() == this
 
     /**
      * Iterates over all elements in this list of a specified type.
      */
-    inline fun <reified T : Node> forEach(block: (T) -> Unit) {
+    public inline fun <reified T : Node> forEach(block: (T) -> Unit) {
         var cur: Node = next()
         while (cur != this) {
             if (cur is T) block(cur)
@@ -397,9 +415,9 @@ internal open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    final override fun remove() = throw UnsupportedOperationException()
+    public final override fun remove() = throw UnsupportedOperationException()
 
-    fun validate() {
+    internal fun validate() {
         var prev: Node = this
         var cur: Node = next()
         while (cur != this) {

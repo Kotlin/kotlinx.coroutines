@@ -46,14 +46,18 @@ public interface CoroutineScope {
 
 /**
  * Abstract class to simplify writing of coroutine completion objects that
- * implements [Continuation] and [Job] interfaces.
+ * implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
  * It stores the result of continuation in the state of the job.
+ *
+ * @param context the new context for the coroutine. Use [newCoroutineContext] to create it.
+ * @param active when `true` coroutine is created in _active_ state, when `false` in _new_ state. See [Job] for details.
+ * @suppress **This is unstable API and it is subject to change.**
  */
-@Suppress("LeakingThis")
-internal abstract class AbstractCoroutine<in T>(
+public abstract class AbstractCoroutine<in T>(
     context: CoroutineContext,
     active: Boolean
 ) : JobSupport(active), Continuation<T>, CoroutineScope {
+    @Suppress("LeakingThis")
     override val context: CoroutineContext = context + this // merges this job into this context
 
     final override fun resume(value: T) {
@@ -84,5 +88,12 @@ internal abstract class AbstractCoroutine<in T>(
 
     final override fun handleCompletionException(closeException: Throwable) {
         handleCoroutineException(context, closeException)
+    }
+
+    // for nicer debugging
+    override fun toString(): String {
+        val state = getState()
+        val result = if (state is Incomplete) "" else "[$state]"
+        return "${javaClass.simpleName}{${describeState(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
     }
 }

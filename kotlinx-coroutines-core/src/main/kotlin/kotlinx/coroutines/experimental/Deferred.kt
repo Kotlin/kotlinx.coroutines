@@ -157,13 +157,6 @@ private open class DeferredCoroutine<T>(
         if (state is CompletedExceptionally) throw state.exception
         return state as T
     }
-
-    // for nicer debugging
-    override fun toString(): String {
-        val state = getState()
-        val result = if (state is Incomplete) "" else "[$state]"
-        return "${javaClass.simpleName}{${describeState(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
-    }
 }
 
 private class LazyDeferredCoroutine<T>(

@@ -184,7 +184,11 @@ public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Regis
 public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
     onCompletion(CancelFutureOnCompletion(this, future))
 
-internal fun Job.removeOnCompletion(node: LockFreeLinkedListNode): Job.Registration =
+/**
+ * Removes a given node on completion.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public fun Job.removeOnCompletion(node: LockFreeLinkedListNode): Job.Registration =
     onCompletion(RemoveOnCompletion(this, node))
 
 /**
@@ -214,9 +218,10 @@ public object EmptyRegistration : Job.Registration {
  * This is an open class designed for extension by more specific classes that might augment the
  * state and mare store addition state information for completed jobs, like their result values.
  *
- * Initial state of this job is either _active_ when `active = true` or _new_ when `active = false`.
+ * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
+ * @suppress **This is unstable API and it is subject to change.**
  */
-internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(Job), Job {
+public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(Job), Job {
     /*
        === Internal states ===
 
@@ -279,7 +284,7 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
      */
-    fun initParentJob(parent: Job?) {
+    public fun initParentJob(parent: Job?) {
         check(registration == null)
         if (parent == null) {
             registration = EmptyRegistration
@@ -295,18 +300,18 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
     /**
      * Returns current state of this job.
      */
-    fun getState(): Any? = state
+    protected fun getState(): Any? = state
 
     /**
      * Tries to update current [state][getState] of this job.
      */
-    fun updateState(expect: Any, update: Any?): Boolean {
+    internal fun updateState(expect: Any, update: Any?): Boolean {
         if (!tryUpdateState(expect, update)) return false
         completeUpdateState(expect, update)
         return true
     }
 
-    fun tryUpdateState(expect: Any, update: Any?): Boolean  {
+    internal fun tryUpdateState(expect: Any, update: Any?): Boolean  {
         require(expect is Incomplete && update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // Unregister from parent job
@@ -314,7 +319,7 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
         return true // continues in completeUpdateState
     }
 
-    fun completeUpdateState(expect: Any, update: Any?) {
+    internal fun completeUpdateState(expect: Any, update: Any?) {
         // Invoke completion handlers
         val cause = (update as? CompletedExceptionally)?.exception
         var completionException: Throwable? = null
@@ -335,7 +340,7 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
 
             }
             // otherwise -- do nothing (it was Empty*)
-            else -> check(expect === EmptyActive || expect == EmptyNew)
+            else -> check(expect is Empty)
         }
         // Do other (overridable) processing after completion handlers
         completionException?.let { handleCompletionException(it) }
@@ -359,7 +364,7 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
     }
 
     // return: 0 -> false (not new), 1 -> true (started), -1 -> retry
-    protected fun startInternal(state: Any?): Int {
+    internal fun startInternal(state: Any?): Int {
         when {
             // EMPTY_NEW state -- no completion handlers, new
             state === EmptyNew -> {
@@ -379,10 +384,12 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
         }
     }
 
-    // override to provide the actual start action
+    /**
+     * Override to provide the actual [start] action.
+     */
     protected open fun onStart() {}
 
-    override fun getCompletionException(): Throwable {
+    final override fun getCompletionException(): Throwable {
         val state = getState()
         return when (state) {
             is Incomplete -> throw IllegalStateException("Job has not completed yet")
@@ -442,7 +449,7 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
         cont.unregisterOnCompletion(onCompletion(ResumeOnCompletion(this, cont)))
     }
 
-    fun removeNode(node: JobNode) {
+    internal fun removeNode(node: JobNode) {
         // remove logic depends on the state of the job
         while (true) { // lock-free loop on job state
             val state = this.state
@@ -475,14 +482,14 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
     /**
      * Override to process any exceptions that were encountered while invoking [onCompletion] handlers.
      */
-    open fun handleCompletionException(closeException: Throwable) {
+    protected open fun handleCompletionException(closeException: Throwable) {
         throw closeException
     }
 
     /**
      * Override for post-completion actions that need to do something with the state.
      */
-    open fun afterCompletion(state: Any?) {}
+    protected open fun afterCompletion(state: Any?) {}
 
     private fun makeNode(handler: CompletionHandler): JobNode =
             (handler as? JobNode)?.also { require(it.job === this) }
@@ -494,18 +501,8 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
     /**
      * Interface for incomplete [state][getState] of a job.
      */
-    internal interface Incomplete {
+    public interface Incomplete {
         val isActive: Boolean
-    }
-
-    private object EmptyNew : Incomplete {
-        override val isActive: Boolean get() = false
-        override fun toString(): String = "Empty{New}"
-    }
-
-    private object EmptyActive : Incomplete {
-        override val isActive: Boolean get() = true
-        override fun toString(): String = "Empty{Active}"
     }
 
     private class NodeList(
@@ -535,12 +532,18 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
 
     /**
      * Class for a [state][getState] of a job that had completed exceptionally, including cancellation.
+     *
+     * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
+     *        if created on first get from [exception] property.
      */
-    internal open class CompletedExceptionally(cause: Throwable?) {
+    public open class CompletedExceptionally(cause: Throwable?) {
         @Volatile
         private var _exception: Throwable? = cause // materialize CancellationException on first need
 
-        val exception: Throwable get() =
+        /**
+         * Returns completion exception.
+         */
+        public val exception: Throwable get() =
             _exception ?: // atomic read volatile var or else create new
                 CancellationException("Job was cancelled").also { _exception = it }
 
@@ -550,7 +553,14 @@ internal open class JobSupport(active: Boolean) : AbstractCoroutineContextElemen
     /**
      * A specific subclass of [CompletedExceptionally] for cancelled jobs.
      */
-    internal class Cancelled(cause: Throwable?) : CompletedExceptionally(cause)
+    public class Cancelled(cause: Throwable?) : CompletedExceptionally(cause)
+}
+
+private val EmptyNew = Empty(false)
+private val EmptyActive = Empty(true)
+
+private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
+    override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
 internal abstract class JobNode(
