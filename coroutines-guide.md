@@ -52,6 +52,7 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Children of a coroutine](#children-of-a-coroutine)
   * [Combining contexts](#combining-contexts)
   * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
+  * [Cancellation via explicit job](#cancellation-via-explicit-job)
 * [Channels](#channels)
   * [Channel basics](#channel-basics)
   * [Closing and iteration over channels](#closing-and-iteration-over-channels)
@@ -953,6 +954,55 @@ The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar t
 [main @main#1] The answer for v1 / v2 = 42
 ```
 
+### Cancellation via explicit job
+
+Let us put our knowledge about contexts, children and jobs together. Assume that our application has
+an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
+and launch various coroutines in the context of an Android activity to perform asynchronous operations to fetch 
+and update data, do animations, etc. All of these coroutines must be cancelled when activity is destroyed
+to avoid memory leaks. 
+  
+We can manage a lifecycle of our coroutines by creating an instance of [Job] that is tied to 
+the lifecycle of our activity. A job instance is created using [Job()][Job.invoke] factory function
+as the following example shows. We need to make sure that all the coroutines are started 
+with this job in their context and then a single invocation of [Job.cancel] terminates them all.
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val job = Job() // create a job object to manage our lifecycle
+    // now launch ten coroutines for a demo, each working for a different time
+    val coroutines = List(10) { i ->
+        // they are all children of our job object
+        launch(context + job) { // we use the context of main runBlocking thread, but with our own job object 
+            delay(i * 200L) // variable delay 0ms, 200ms, 400ms, ... etc
+            println("Coroutine $i is done")
+        }
+    }
+    println("Launched ${coroutines.size} coroutines")
+    delay(500L) // delay for half a second
+    println("Cancelling job!")
+    job.cancel() // cancel our job.. !!!
+    delay(1000L) // delay for more to see if our coroutines are still working
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-09.kt)
+
+The output of this example is:
+
+```
+Launched 10 coroutines
+Coroutine 0 is done
+Coroutine 1 is done
+Coroutine 2 is done
+Cancelling job!
+```
+
+As you can see, only the first three coroutines had printed a message and the others were cancelled 
+by a single  invocation of `job.cancel()`. So all we need to do in our hypothetical Android 
+application is to create a parent job object when activity is created, use it for child coroutines,
+and cancel it when activity is destroyed.
+
 ## Channels
 
 Deferred values provide a convenient way to transfer a single value between coroutines.
@@ -1299,7 +1349,9 @@ The first four elements are added to the buffer and the sender suspends when try
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
 [Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/start.html
+[Job.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/invoke.html
 [NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
