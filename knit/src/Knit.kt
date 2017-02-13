@@ -39,11 +39,16 @@ val SECTION_START = "##"
 val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_.]+)\\]($|[^\\[\\(])")
 
 fun main(args: Array<String>) {
-    if(args.size != 1) {
-        println("Usage: Knit <markdown-file>")
+    if (args.isEmpty()) {
+        println("Usage: Knit <markdown-files>")
         return
     }
-    val markdownFile = File(args[0])
+    args.forEach(::knit)
+}
+
+fun knit(markdownFileName: String) {
+    println("*** Reading $markdownFileName")
+    val markdownFile = File(markdownFileName)
     val toc = arrayListOf<String>()
     var knitRegex: Regex? = null
     val includes = arrayListOf<Include>()
@@ -122,8 +127,8 @@ fun main(args: Array<String>) {
                         }
                     }
                     skip = false
-                    postTocText += indexLines
-                    postTocText += putBackLine!!
+                    outText += indexLines
+                    outText += putBackLine!!
                 }
             }
             if (inLine.startsWith(CODE_START)) {
@@ -172,14 +177,28 @@ fun main(args: Array<String>) {
         }
     }
     // update markdown file with toc
-    val newLines = markdown.preTocText + "" + toc + "" + markdown.postTocText
-    if (newLines != markdown.allText) writeLines(markdownFile, newLines)
+    val newLines = buildList<String> {
+        addAll(markdown.preTocText)
+        if (!toc.isEmpty()) {
+            add("")
+            addAll(toc)
+            add("")
+        }
+        addAll(markdown.postTocText)
+    }
+    if (newLines != markdown.inText) writeLines(markdownFile, newLines)
     // check apiRefs
     for (apiRef in allApiRefs) {
         if (apiRef.name in remainingApiRefNames) {
             println("WARNING: $markdownFile: ${apiRef.line}: Broken reference to [${apiRef.name}]")
         }
     }
+}
+
+private inline fun <T> buildList(block: ArrayList<T>.() -> Unit): List<T> {
+    val result = arrayListOf<T>()
+    result.block()
+    return result
 }
 
 private fun requireSingleLine(directive: Directive) {
@@ -212,23 +231,23 @@ class ApiRef(val line: Int, val name: String)
 enum class MarkdownPart { PRE_TOC, TOC, POST_TOC }
 
 class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
-    val allText = arrayListOf<String>()
+    val inText = arrayListOf<String>()
     val preTocText = arrayListOf<String>()
     val postTocText = arrayListOf<String>()
     var markdownPart: MarkdownPart = MarkdownPart.PRE_TOC
     var skip = false
 
+    val outText: MutableList<String> get() = when (markdownPart) {
+        MarkdownPart.PRE_TOC -> preTocText
+        MarkdownPart.POST_TOC -> postTocText
+        else -> throw IllegalStateException("Wrong state: $markdownPart")
+    }
+
     override fun readLine(): String? {
         val line = super.readLine() ?: return null
-        allText += line
-        if (!skip) {
-            when (markdownPart) {
-                MarkdownPart.PRE_TOC -> preTocText += line
-                MarkdownPart.POST_TOC -> postTocText += line
-                MarkdownPart.TOC -> {
-                } // do nothing
-            }
-        }
+        inText += line
+        if (!skip && markdownPart != MarkdownPart.TOC)
+            outText += line
         return line
     }
 }

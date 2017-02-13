@@ -16,9 +16,12 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.*
-import org.junit.Test
+import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.yield
 import org.junit.Assert.*
+import org.junit.Test
 
 class RendezvousChannelTest : TestBase() {
     @Test
@@ -251,9 +254,9 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testDeferBadClass() = runBlocking {
+    fun testProduceBadClass() = runBlocking {
         val bad = BadClass()
-        val c = buildChannel(context) {
+        val c = produce(context) {
             expect(1)
             send(bad)
         }

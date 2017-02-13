@@ -1,20 +1,26 @@
-<!---
+<!--- INCLUDE .*/example-([a-z]+)-([0-9]+)\.kt 
+/*
+ * Copyright 2016-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-Copyright 2016-2017 JetBrains s.r.o.
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.$$1.example$$2
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+import kotlinx.coroutines.experimental.*
 -->
+<!--- KNIT kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
 
 # Guide to kotlinx.coroutines by example
 
@@ -63,31 +69,8 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
 
-<!--- KNIT kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
+<!--- END_TOC -->
 
-<!--- INCLUDE .*/example-([a-z]+)-([0-9]+)\.kt 
-/*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.$$1.example$$2
-
-import kotlinx.coroutines.experimental.*
--->
-  
 ## Coroutine basics
 
 This section covers basic coroutine concepts.
@@ -1060,13 +1043,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 ### Building channel producers
 
-The pattern where a coroutine is producing a sequence of elements into a channel is quite common.
+The pattern where a coroutine is producing a sequence of elements is quite common. 
+This is a part of _producer-consumer_ pattern that is often found in concurrent code. 
 You could abstract such a producer into a function that takes channel as its parameter, but this goes contrary
-to common sense that results must be returned from functions. Here is a convenience 
-coroutine builder named [buildChannel] that makes it easy to do it right:
+to common sense that results must be returned from functions. 
+
+There is a convenience coroutine builder named [produce] that makes it easy to do it right:
 
 ```kotlin
-fun produceSquares() = buildChannel<Int>(CommonPool) {
+fun produceSquares() = produce<Int>(CommonPool) {
     for (x in 1..5) send(x * x)
 }
 
@@ -1084,22 +1069,22 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 Pipeline is a pattern where one coroutine is producing, possibly infinite, stream of values:
 
 ```kotlin
-fun produceNumbers() = buildChannel<Int>(CommonPool) {
+fun produceNumbers() = produce<Int>(CommonPool) {
     var x = 1
     while (true) send(x++) // infinite stream of integers starting from 1
 }
 ```
 
-And another coroutine or coroutines are receiving that stream, doing some processing, and sending the result.
+And another coroutine or coroutines are consuming that stream, doing some processing, and producing some other results.
 In the below example the numbers are just squared:
 
 ```kotlin
-fun square(numbers: ReceiveChannel<Int>) = buildChannel<Int>(CommonPool) {
+fun square(numbers: ReceiveChannel<Int>) = produce<Int>(CommonPool) {
     for (x in numbers) send(x * x)
 }
 ```
 
-The main code starts and connects pipeline:
+The main code starts and connects the whole pipeline:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1131,7 +1116,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 -->
  
 ```kotlin
-fun numbersFrom(context: CoroutineContext, start: Int) = buildChannel<Int>(context) {
+fun numbersFrom(context: CoroutineContext, start: Int) = produce<Int>(context) {
     var x = start
     while (true) send(x++) // infinite stream of integers from start
 }
@@ -1141,7 +1126,7 @@ The following pipeline stage filters an incoming stream of numbers, removing all
 that are divisible by the given prime number:
 
 ```kotlin
-fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) = buildChannel<Int>(context) {
+fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) = produce<Int>(context) {
     for (x in numbers) if (x % prime != 0) send(x)
 }
 ```
@@ -1150,7 +1135,7 @@ Now we build our pipeline by starting a stream of numbers from 2, taking a prime
 and launching new pipeline stage for each prime number found:
  
 ```
-numbers -> filter(2) -> filter(3) -> filter(5) -> filter(7) ... 
+numbersFrom(2) -> filter(2) -> filter(3) -> filter(5) -> filter(7) ... 
 ``` 
  
 The following example prints the first ten prime numbers, 
@@ -1184,16 +1169,16 @@ The output of this code is:
 29
 ```
 
-Note, that you can build the same pipeline using `buildIterator` from the standard library. 
-Replace `buildSequence` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
+Note, that you can build the same pipeline using `buildIterator` coroutine builder from the standard library. 
+Replace `produce` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
 `ReceiveChannel` with `Iterator`, and get rid of the context. You will not need `runBlocking` either.
 However, the benefit of a pipeline that uses channels as shown above is that it can actually use 
 multiple CPU cores if you run it in [CommonPool] context.
 
-Anyway, this is an extremely impractical way to find prime numbers. In practise, pipelines do involve some
+Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
 built using `buildSeqeunce`/`buildIterator`, because they do not allow arbitrary suspension, unlike
-`buildChannel` which is fully asynchronous.
+`produce` which is fully asynchronous.
  
 ### Fan-out
 
@@ -1202,7 +1187,7 @@ Let us start with a producer coroutine that is periodically producing integers
 (ten numbers per second):
 
 ```kotlin
-fun produceNumbers() = buildChannel<Int>(CommonPool) {
+fun produceNumbers() = produce<Int>(CommonPool) {
     var x = 1 // start from 1
     while (true) {
         send(x++) // produce next
@@ -1303,7 +1288,7 @@ The channels shown so far had no buffer. Unbuffered channels transfer elements w
 meet each other (aka rendezvous). If send is invoked first, then it is suspended until receive is invoked, 
 if receive is invoked first, it is suspended until send is invoked.
 
-Both [Channel()][Channel.invoke] factory function and [buildChannel] builder take an optional `capacity` parameter to 
+Both [Channel()][Channel.invoke] factory function and [produce] builder take an optional `capacity` parameter to 
 specify _buffer size_. Buffer allows senders to send multiple elements before suspending, 
 similar to the `BlockingQueue` with a specified capacity, which blocks when buffer is full.
 
@@ -1369,5 +1354,5 @@ The first four elements are added to the buffer and the sender suspends when try
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
-[buildChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/build-channel.html
+[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 <!--- END -->
