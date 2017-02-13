@@ -322,7 +322,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     internal fun completeUpdateState(expect: Any, update: Any?) {
         // Invoke completion handlers
-        val cause = (update as? CompletedExceptionally)?.exception
+        val cause = (update as? CompletedExceptionally)?.cause
         var completionException: Throwable? = null
         when (expect) {
             // SINGLE/SINGLE+ state -- one completion handler (common case)
@@ -537,7 +537,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
      *        if created on first get from [exception] property.
      */
-    public open class CompletedExceptionally(cause: Throwable?) {
+    public open class CompletedExceptionally(val cause: Throwable?) {
         @Volatile
         private var _exception: Throwable? = cause // materialize CancellationException on first need
 
