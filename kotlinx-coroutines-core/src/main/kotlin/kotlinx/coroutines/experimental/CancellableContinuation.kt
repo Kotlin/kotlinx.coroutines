@@ -33,6 +33,7 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * Cancellable continuation has three states:
  *
  * | **State**                           | [isActive] | [isCompleted] | [isCancelled] |
+ * | ----------------------------------- | ---------- | ------------- | ------------- |
  * | _Active_ (initial state)            | `true`     | `false`       | `false`       |
  * | _Resumed_ (final _completed_ state) | `false`    | `true`        | `false`       |
  * | _Canceled_ (final _completed_ state)| `false`    | `true`        | `true`        |

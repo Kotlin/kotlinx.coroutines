@@ -27,6 +27,7 @@ import kotlin.coroutines.experimental.startCoroutine
  * Deferred value has four or five possible states.
  *
  * | **State**                        | [isActive] | [isCompleted] | [isCompletedExceptionally] | [isCancelled] |
+ * | -------------------------------- | ---------- | ------------- | -------------------------- | ------------- |
  * | _New_ (optional initial state)   | `false`    | `false`       | `false`                    | `false`       |
  * | _Active_ (default initial state) | `true`     | `false`       | `false`                    | `false`       |
  * | _Resolved_  (final state)        | `false`    | `true`        | `false`                    | `false`       |

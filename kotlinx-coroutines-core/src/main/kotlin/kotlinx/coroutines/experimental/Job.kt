@@ -35,6 +35,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * A job has two or three states:
  *
  * | **State**                        | [isActive] | [isCompleted] |
+ * | -------------------------------- | ---------- | ------------- |
  * | _New_ (optional initial state)   | `false`    | `false`       |
  * | _Active_ (default initial state) | `true`     | `false`       |
  * | _Completed_ (final state)        | `false`    | `true`        |
