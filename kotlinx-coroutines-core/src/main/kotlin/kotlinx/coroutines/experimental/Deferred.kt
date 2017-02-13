@@ -75,7 +75,7 @@ public interface Deferred<out T> : Job {
     public fun getCompleted(): T
 
     /**
-     * **Deprecated**: Use `isActive`.
+     * @suppress **Deprecated**: Use `isActive`.
      */
     @Deprecated(message = "Use `isActive`", replaceWith = ReplaceWith("isActive"))
     public val isComputing: Boolean get() = isActive
@@ -108,7 +108,7 @@ public fun <T> async(context: CoroutineContext, start: Boolean = true, block: su
 }
 
 /**
- * **Deprecated**: `defer` was renamed to `async`.
+ * @suppress **Deprecated**: `defer` was renamed to `async`.
  */
 @Deprecated(message = "`defer` was renamed to `async`", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("async(context, block = block)"))

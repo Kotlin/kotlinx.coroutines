@@ -46,7 +46,7 @@ public object Unconfined : CoroutineDispatcher() {
 }
 
 /**
- * **Deprecated**: `Here` was renamed to `Unconfined`.
+ * @suppress **Deprecated**: `Here` was renamed to `Unconfined`.
  */
 @Deprecated(message = "`Here` was renamed to `Unconfined`",
         replaceWith = ReplaceWith(expression = "Unconfined"))

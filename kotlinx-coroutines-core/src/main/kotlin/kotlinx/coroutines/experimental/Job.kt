@@ -129,7 +129,7 @@ public interface Job : CoroutineContext.Element {
     public fun cancel(cause: Throwable? = null): Boolean
 
     /**
-     * **Error**: Operator '+' on two Job objects is meaningless.
+     * @suppress **Error**: Operator '+' on two Job objects is meaningless.
      * Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts.
      * The job to the right of `+` just replaces the job the left of `+`.
      */
@@ -192,7 +192,7 @@ public fun Job.removeOnCompletion(node: LockFreeLinkedListNode): Job.Registratio
     onCompletion(RemoveOnCompletion(this, node))
 
 /**
- * **Deprecated**: `join` is now a member function of `Job`.
+ * @suppress **Deprecated**: `join` is now a member function of `Job`.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DeprecatedCallableAddReplaceWith")
 @Deprecated(message = "`join` is now a member function of `Job`")

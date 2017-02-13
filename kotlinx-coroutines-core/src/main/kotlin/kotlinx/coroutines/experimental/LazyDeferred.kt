@@ -19,14 +19,14 @@ package kotlinx.coroutines.experimental
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
- * **Deprecated**: `Deferred` incorporates functionality of `LazyDeferred`. See [Deferred].
+ * @suppress **Deprecated**: `Deferred` incorporates functionality of `LazyDeferred`. See [Deferred].
  */
 @Deprecated(message = "`Deferred` incorporates functionality of `LazyDeferred`", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("Deferred"))
 typealias LazyDeferred<T> = Deferred<T>
 
 /**
- * **Deprecated**: Replace with `async(context, start = false) { ... }`. See [async].
+ * @suppress **Deprecated**: Replace with `async(context, start = false) { ... }`. See [async].
  */
 @Deprecated(message = "This functionality is incorporated into `async", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("async(context, start = false, block = block)"))
