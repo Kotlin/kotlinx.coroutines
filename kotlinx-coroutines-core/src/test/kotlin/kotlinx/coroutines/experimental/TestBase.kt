@@ -43,7 +43,7 @@ open class TestBase {
     @After
     fun onCompletion() {
         error.get()?.let { throw it }
-        check(finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
     }
 
 }
