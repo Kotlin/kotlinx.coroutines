@@ -94,6 +94,6 @@ public abstract class AbstractCoroutine<in T>(
     override fun toString(): String {
         val state = getState()
         val result = if (state is Incomplete) "" else "[$state]"
-        return "${javaClass.simpleName}{${describeState(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
+        return "${this::class.java.simpleName}{${describeState(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
     }
 }

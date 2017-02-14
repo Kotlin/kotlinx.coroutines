@@ -343,8 +343,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             // otherwise -- do nothing (it was Empty*)
             else -> check(expect is Empty)
         }
-        // Do other (overridable) processing after completion handlers
+        // handle onCompletion exceptions
         completionException?.let { handleCompletionException(it) }
+        // Do other (overridable) processing after completion handlers
         afterCompletion(update)
     }
 
@@ -497,7 +498,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     ?: InvokeOnCompletion(this, handler)
 
     // for nicer debugging
-    override fun toString(): String = "${javaClass.simpleName}{${describeState(state)}}@${Integer.toHexString(System.identityHashCode(this))}"
+    override fun toString(): String = "${this::class.java.simpleName}{${describeState(state)}}@${Integer.toHexString(System.identityHashCode(this))}"
 
     /**
      * Interface for incomplete [state][getState] of a job.
@@ -548,7 +549,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             _exception ?: // atomic read volatile var or else create new
                 CancellationException("Job was cancelled").also { _exception = it }
 
-        override fun toString(): String = "${javaClass.simpleName}[$exception]"
+        override fun toString(): String = "${this::class.java.simpleName}[$exception]"
     }
 
     /**
@@ -579,7 +580,7 @@ private class InvokeOnCompletion(
     val handler: CompletionHandler
 ) : JobNode(job)  {
     override fun invoke(reason: Throwable?) = handler.invoke(reason)
-    override fun toString() = "InvokeOnCompletion[${handler.javaClass.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
+    override fun toString() = "InvokeOnCompletion[${handler::class.java.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
 }
 
 private class ResumeOnCompletion(
