@@ -112,7 +112,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val safe = SafeCancellableContinuation(cont, getParentJobOrAbort(cont))
+        val safe = CancellableContinuationImpl(cont, getParentJobOrAbort(cont))
         if (!holdCancellability) safe.initCancellability()
         block(safe)
         safe.getResult()
@@ -123,13 +123,13 @@ public inline suspend fun <T> suspendCancellableCoroutine(
 @PublishedApi
 internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
     val job = cont.context[Job]
-    // fast path when parent job is already complete (we don't even construct SafeCancellableContinuation object)
+    // fast path when parent job is already complete (we don't even construct CancellableContinuationImpl object)
     if (job != null && !job.isActive) throw job.getCompletionException()
     return job
 }
 
 @PublishedApi
-internal class SafeCancellableContinuation<in T>(
+internal class CancellableContinuationImpl<in T>(
         private val delegate: Continuation<T>,
         private val parentJob: Job?
 ) : AbstractCoroutine<T>(delegate.context, active = true), CancellableContinuation<T> {
@@ -139,8 +139,8 @@ internal class SafeCancellableContinuation<in T>(
     private var decision = UNDECIDED
 
     private companion object {
-        val DECISION: AtomicIntegerFieldUpdater<SafeCancellableContinuation<*>> =
-                AtomicIntegerFieldUpdater.newUpdater(SafeCancellableContinuation::class.java, "decision")
+        val DECISION: AtomicIntegerFieldUpdater<CancellableContinuationImpl<*>> =
+                AtomicIntegerFieldUpdater.newUpdater(CancellableContinuationImpl::class.java, "decision")
 
         const val UNDECIDED = 0
         const val SUSPENDED = 1
@@ -224,14 +224,14 @@ internal class SafeCancellableContinuation<in T>(
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        DECISION.compareAndSet(this@SafeCancellableContinuation, SUSPENDED, UNDISPATCHED)
+        DECISION.compareAndSet(this@CancellableContinuationImpl, SUSPENDED, UNDISPATCHED)
         resume(value)
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        DECISION.compareAndSet(this@SafeCancellableContinuation, SUSPENDED, UNDISPATCHED)
+        DECISION.compareAndSet(this@CancellableContinuationImpl, SUSPENDED, UNDISPATCHED)
         resumeWithException(exception)
     }
 }

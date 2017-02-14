@@ -25,5 +25,5 @@ package kotlinx.coroutines.experimental
  * this function is waiting for dispatching, it resumes with [CancellationException].
  */
 suspend fun yield(): Unit = suspendCancellableCoroutine sc@ { cont ->
-    (cont as SafeCancellableContinuation).resumeYield(Unit)
+    (cont as CancellableContinuationImpl).resumeYield(Unit)
 }
