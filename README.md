@@ -1,11 +1,11 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-beta-38 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc-69 release. 
 
 ## Modules and features
 
 * [kotlinx-coroutines-core](kotlinx-coroutines-core) module with core primitives to work with coroutines. 
-   Its functionality is covered by the [guide to kotlinx.coroutines](coroutines-guide.md). 
+  * This module's functionality is covered by the [guide to kotlinx.coroutines](coroutines-guide.md). 
 * [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8) module with additional libraries for JDK8 (or Android API level 24).
 * [kotlinx-coroutines-nio](kotlinx-coroutines-nio) module with extensions for asynchronous IO on JDK7+.
 * [kotlinx-coroutines-swing](kotlinx-coroutines-swing) module with `Swing` context for Swing UI applications.
@@ -24,7 +24,7 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 The libraries are published to [kotlin-eap-1.1](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines) bintray repository.
 
-These libraries require kotlin compiler version to be at least `1.1.0-beta-38` and 
+These libraries require kotlin compiler version to be at least `1.1.0-rc-69` and 
 require kotlin runtime of the same version as a dependency, which can be obtained from the same repository.
 
 ### Maven
@@ -49,7 +49,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.8-beta</version>
+    <version>0.9-rc</version>
 </dependency>
 ```
 
@@ -57,7 +57,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-beta-38</kotlin.version>
+    <kotlin.version>1.1.0-rc-69</kotlin.version>
 </properties>
 ```
 
@@ -76,13 +76,13 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.8-beta'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.9-rc'
 ```
 
 And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-beta-38'
+    ext.kotlin_version = '1.1.0-rc-69'
 }
 ```

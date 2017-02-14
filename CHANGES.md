@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.9-rc
+
+* Switched to Kotlin version 1.1.0-rc-69.
+* `Mutex` synchronization primitive is introduced.
+* `buildChannel` is renamed to `produce`, old name is deprecated.
+* `delay` implementation in Swing, JavaFx, and scheduled executors is fixed to avoid an extra dispatch.
+* `CancellableContinuation.resumeUndispatched` is introduced to make this efficient implementation possible.
+* Suppress deprecated and internal APIs from docs.
+* Remove unnecessary creation of `CancellationException` to improve performance.
+
 ## Version 0.8-beta
 
 * `defer` coroutine builder is renamed to `async`.
