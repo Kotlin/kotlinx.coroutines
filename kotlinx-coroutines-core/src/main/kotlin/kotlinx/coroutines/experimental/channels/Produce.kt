@@ -106,7 +106,7 @@ private class ProducerCoroutine<E>(
     override val channel: Channel<E>
 ) : AbstractCoroutine<Unit>(context, active = true), ProducerScope<E>, ProducerJob<E>, Channel<E> by channel {
     override fun afterCompletion(state: Any?) {
-        val cause = (state as? CompletedExceptionally)?.exception
+        val cause = (state as? CompletedExceptionally)?.cause
         if (!channel.close(cause) && cause != null)
             handleCoroutineException(context, cause)
     }
