@@ -17,9 +17,8 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.channel.example03
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.produce
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 
 fun produceSquares() = produce<Int>(CommonPool) {
     for (x in 1..5) send(x * x)
