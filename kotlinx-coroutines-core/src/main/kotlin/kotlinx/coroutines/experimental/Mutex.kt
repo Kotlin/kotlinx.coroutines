@@ -158,10 +158,22 @@ public class Mutex(locked: Boolean = false) {
     // atomic unlock operation that checks that waiters queue is empty
     private inner class UnlockOp(val queue: LockFreeLinkedListHead) {
         fun helpComplete(): Boolean {
-            val success = queue.isEmpty // Note: queue cannot change anymore (so decision is consistent)
+            /*
+               Note: queue cannot change while this UnlockOp is in progress, so all concurrent attempts to
+               make a decision will reach it consistently. It does not matter what is a proposed
+               decision when this UnlockOp is not longer active, because in this case the following CAS
+               will fail anyway.
+             */
+            val success = queue.isEmpty
             val update: Any = if (success) EmptyUnlocked else queue
             STATE.compareAndSet(this@Mutex, this@UnlockOp, update)
-            return success
+            /*
+                `helpComplete` invocation from the original `unlock` invocation may be coming too late, when
+                some other thread had already helped to complete it (either successfully or not).
+                That operation was unsuccessful if `state` was restored to this `queue` reference and
+                that is what is being checked below.
+             */
+            return state !== queue
         }
     }
 }
