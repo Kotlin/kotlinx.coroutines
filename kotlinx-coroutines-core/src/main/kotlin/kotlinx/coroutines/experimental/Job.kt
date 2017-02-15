@@ -186,13 +186,6 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
     onCompletion(CancelFutureOnCompletion(this, future))
 
 /**
- * Removes a given node on completion.
- * @suppress **This is unstable API and it is subject to change.**
- */
-public fun Job.removeOnCompletion(node: LockFreeLinkedListNode): Job.Registration =
-    onCompletion(RemoveOnCompletion(this, node))
-
-/**
  * @suppress **Deprecated**: `join` is now a member function of `Job`.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DeprecatedCallableAddReplaceWith")
@@ -326,13 +319,13 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         var completionException: Throwable? = null
         when (expect) {
             // SINGLE/SINGLE+ state -- one completion handler (common case)
-            is JobNode -> try {
+            is JobNode<*> -> try {
                 expect.invoke(cause)
             } catch (ex: Throwable) {
                 completionException = ex
             }
             // LIST state -- a list of completion handlers
-            is NodeList -> expect.forEach<JobNode> { node ->
+            is NodeList -> expect.forEach<JobNode<*>> { node ->
                 try {
                     node.invoke(cause)
                 } catch (ex: Throwable) {
@@ -401,7 +394,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     final override fun onCompletion(handler: CompletionHandler): Job.Registration {
-        var nodeCache: JobNode? = null
+        var nodeCache: JobNode<*>? = null
         while (true) { // lock-free loop on state
             val state = this.state
             when {
@@ -417,7 +410,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     STATE.compareAndSet(this, state, NodeList(active = 0))
                 }
                 // SINGLE/SINGLE+ state -- one completion handler
-                state is JobNode -> {
+                state is JobNode<*> -> {
                     // try to promote it to list (SINGLE+ state)
                     state.addFirstIfEmpty(NodeList(active = 1))
                     // it must be in SINGLE+ state or state has changed (node could have need removed from state)
@@ -451,13 +444,13 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         cont.unregisterOnCompletion(onCompletion(ResumeOnCompletion(this, cont)))
     }
 
-    internal fun removeNode(node: JobNode) {
+    internal fun removeNode(node: JobNode<*>) {
         // remove logic depends on the state of the job
         while (true) { // lock-free loop on job state
             val state = this.state
             when (state) {
                 // SINGE/SINGLE+ state -- one completion handler
-                is JobNode -> {
+                is JobNode<*> -> {
                     if (state !== this) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
                     if (STATE.compareAndSet(this, state, EmptyActive)) return
@@ -493,8 +486,8 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      */
     protected open fun afterCompletion(state: Any?) {}
 
-    private fun makeNode(handler: CompletionHandler): JobNode =
-            (handler as? JobNode)?.also { require(it.job === this) }
+    private fun makeNode(handler: CompletionHandler): JobNode<*> =
+            (handler as? JobNode<*>)?.also { require(it.job === this) }
                     ?: InvokeOnCompletion(this, handler)
 
     // for nicer debugging
@@ -524,7 +517,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             append(if (isActive) "{Active}" else "{New}")
             append("[")
             var first = true
-            this@NodeList.forEach<JobNode> { node ->
+            this@NodeList.forEach<JobNode<*>> { node ->
                 if (first) first = false else append(", ")
                 append(node)
             }
@@ -565,8 +558,8 @@ private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
-internal abstract class JobNode(
-    val job: Job
+internal abstract class JobNode<out J : Job>(
+    val job: J
 ) : LockFreeLinkedListNode(), Job.Registration, CompletionHandler, JobSupport.Incomplete {
     final override val isActive: Boolean get() = true
     // if unregister is called on this instance, then Job was an instance of JobSupport that added this node it itself
@@ -578,7 +571,7 @@ internal abstract class JobNode(
 private class InvokeOnCompletion(
     job: Job,
     val handler: CompletionHandler
-) : JobNode(job)  {
+) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = handler.invoke(reason)
     override fun toString() = "InvokeOnCompletion[${handler::class.java.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
 }
@@ -586,7 +579,7 @@ private class InvokeOnCompletion(
 private class ResumeOnCompletion(
     job: Job,
     val continuation: Continuation<Unit>
-) : JobNode(job)  {
+) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = continuation.resume(Unit)
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
@@ -594,7 +587,7 @@ private class ResumeOnCompletion(
 private class UnregisterOnCompletion(
     job: Job,
     val registration: Job.Registration
-) : JobNode(job) {
+) : JobNode<Job>(job) {
     override fun invoke(reason: Throwable?) = registration.unregister()
     override fun toString(): String = "UnregisterOnCompletion[$registration]"
 }
@@ -602,7 +595,7 @@ private class UnregisterOnCompletion(
 private class CancelOnCompletion(
     parentJob: Job,
     val subordinateJob: Job
-) : JobNode(parentJob) {
+) : JobNode<Job>(parentJob) {
     override fun invoke(reason: Throwable?) { subordinateJob.cancel(reason) }
     override fun toString(): String = "CancelOnCompletion[$subordinateJob]"
 }
@@ -610,21 +603,13 @@ private class CancelOnCompletion(
 private class CancelFutureOnCompletion(
     job: Job,
     val future: Future<*>
-) : JobNode(job)  {
+) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
     }
     override fun toString() = "CancelFutureOnCompletion[$future]"
-}
-
-private class RemoveOnCompletion(
-    job: Job,
-    val node: LockFreeLinkedListNode
-) : JobNode(job)  {
-    override fun invoke(reason: Throwable?) { node.remove() }
-    override fun toString() = "RemoveOnCompletion[$node]"
 }
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {

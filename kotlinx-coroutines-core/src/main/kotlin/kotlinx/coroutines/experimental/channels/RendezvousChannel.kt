@@ -23,14 +23,14 @@ package kotlinx.coroutines.experimental.channels
  *
  * This implementation is fully lock-free.
  */
-public class RendezvousChannel<E> : AbstractChannel<E>() {
+public open class RendezvousChannel<E> : AbstractChannel<E>() {
 
-    override val hasBuffer: Boolean get() = false
-    override val isBufferEmpty: Boolean get() = true
-    override val isBufferFull: Boolean get() = true
+    protected final override val hasBuffer: Boolean get() = false
+    protected final override val isBufferEmpty: Boolean get() = true
+    protected final override val isBufferFull: Boolean get() = true
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
-    override fun offerInternal(element: E): Any {
+    protected final override fun offerInternal(element: E): Any {
         while (true) {
             val receive = takeFirstReceiveOrPeekClosed() ?: return OFFER_FAILED
             val token = receive.tryResumeReceive(element)
@@ -42,7 +42,7 @@ public class RendezvousChannel<E> : AbstractChannel<E>() {
     }
 
     // result is `E | POLL_EMPTY | Closed`
-    override fun pollInternal(): Any? {
+    protected final override fun pollInternal(): Any? {
         while (true) {
             val send = takeFirstSendOrPeekClosed() ?: return POLL_EMPTY
             val token = send.tryResumeSend()

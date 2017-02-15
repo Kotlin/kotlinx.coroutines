@@ -118,7 +118,7 @@ public class Mutex(locked: Boolean = false) {
                     if (state.addLastIf(waiter, { this.state === state })) {
                         // added to waiter list!
                         cont.initCancellability()
-                        cont.removeOnCompletion(waiter)
+                        cont.removeOnCancel(waiter)
                         return@sc
                     }
                 }

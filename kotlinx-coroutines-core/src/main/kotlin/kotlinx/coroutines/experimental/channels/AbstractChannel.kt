@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.CancellableContinuation
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import kotlinx.coroutines.experimental.removeOnCompletion
+import kotlinx.coroutines.experimental.removeOnCancel
 import kotlinx.coroutines.experimental.suspendCancellableCoroutine
 
 /**
@@ -72,17 +72,17 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     // ------ SendChannel ------
 
-    override val isClosedForSend: Boolean get() = closedForSend != null
-    override val isFull: Boolean get() = queue.next() !is ReceiveOrClosed<*> && isBufferFull
+    public final override val isClosedForSend: Boolean get() = closedForSend != null
+    public final override val isFull: Boolean get() = queue.next() !is ReceiveOrClosed<*> && isBufferFull
 
-    suspend override fun send(element: E) {
+    public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
         if (offer(element)) return
         // slow-path does suspend
         return sendSuspend(element)
     }
 
-    override fun offer(element: E): Boolean {
+    public final override fun offer(element: E): Boolean {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
@@ -96,7 +96,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         loop@ while (true) {
             if (enqueueSend(send)) {
                 cont.initCancellability() // make it properly cancellable
-                cont.removeOnCompletion(send)
+                cont.removeOnCancel(send)
                 return@sc
             }
             // hm... something is not right. try to offer
@@ -120,13 +120,16 @@ public abstract class AbstractChannel<E> : Channel<E> {
         else
             queue.addLastIfPrev(send, { it !is ReceiveOrClosed<*> })
 
-    override fun close(cause: Throwable?): Boolean {
+    public final override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
         while (true) {
             val receive = takeFirstReceiveOrPeekClosed()
             if (receive == null) {
                 // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(closed, { it !is ReceiveOrClosed<*> })) return true
+                if (queue.addLastIfPrev(closed, { it !is ReceiveOrClosed<*> })) {
+                    afterClose(cause)
+                    return true
+                }
                 continue // retry on failure
             }
             if (receive is Closed<*>) return false // already marked as closed -- nothing to do
@@ -136,6 +139,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
     }
 
     /**
+     * Invoked after successful [close].
+     */
+    protected open fun afterClose(cause: Throwable?) {}
+
+    /**
      * Retrieves first receiving waiter from the queue or returns closed token.
      */
     protected fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
@@ -143,11 +151,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     // ------ ReceiveChannel ------
 
-    override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    override val isEmpty: Boolean get() = queue.next() !is Send && isBufferEmpty
+    public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
+    public final override val isEmpty: Boolean get() = queue.next() !is Send && isBufferEmpty
 
     @Suppress("UNCHECKED_CAST")
-    suspend override fun receive(): E {
+    public final override suspend fun receive(): E {
         // fast path -- try poll non-blocking
         val result = pollInternal()
         if (result !== POLL_EMPTY) return receiveResult(result)
@@ -167,7 +175,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         while (true) {
             if (enqueueReceive(receive)) {
                 cont.initCancellability() // make it properly cancellable
-                cont.removeOnCompletion(receive)
+                removeReceiveOnCancel(cont, receive)
                 return@sc
             }
             // hm... something is not right. try to poll
@@ -183,14 +191,16 @@ public abstract class AbstractChannel<E> : Channel<E> {
         }
     }
 
-    private fun enqueueReceive(receive: Receive<E>) =
-        if (hasBuffer)
-            queue.addLastIfPrevAndIf(receive, { it !is Send }, { isBufferEmpty })
-        else
+    private fun enqueueReceive(receive: Receive<E>): Boolean {
+        val result = if (hasBuffer)
+            queue.addLastIfPrevAndIf(receive, { it !is Send }, { isBufferEmpty }) else
             queue.addLastIfPrev(receive, { it !is Send })
+        if (result) onEnqueuedReceive()
+        return result
+    }
 
     @Suppress("UNCHECKED_CAST")
-    suspend override fun receiveOrNull(): E? {
+    public final override suspend fun receiveOrNull(): E? {
         // fast path -- try poll non-blocking
         val result = pollInternal()
         if (result !== POLL_EMPTY) return receiveOrNullResult(result)
@@ -213,7 +223,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         while (true) {
             if (enqueueReceive(receive)) {
                 cont.initCancellability() // make it properly cancellable
-                cont.removeOnCompletion(receive)
+                removeReceiveOnCancel(cont, receive)
                 return@sc
             }
             // hm... something is not right. try to poll
@@ -233,12 +243,12 @@ public abstract class AbstractChannel<E> : Channel<E> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun poll(): E? {
+    public final override fun poll(): E? {
         val result = pollInternal()
         return if (result === POLL_EMPTY) null else receiveOrNullResult(result)
     }
 
-    override fun iterator(): ChannelIterator<E> = Iterator(this)
+    public final override fun iterator(): ChannelIterator<E> = Iterator(this)
 
     /**
      * Retrieves first sending waiter from the queue or returns closed token.
@@ -261,6 +271,23 @@ public abstract class AbstractChannel<E> : Channel<E> {
     private class Marker(val string: String) {
         override fun toString(): String = string
     }
+
+    private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
+        cont.onCompletion {
+            if (cont.isCancelled && receive.remove())
+                onCancelledReceive()
+        }
+    }
+
+    /**
+     * Invoked when receiver is successfully enqueued to the queue of waiting receivers.
+     */
+    protected open fun onEnqueuedReceive() {}
+
+    /**
+     * Invoked when enqueued receiver was successfully cancelled.
+     */
+    protected open fun onCancelledReceive() {}
 
     private class Iterator<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
         var result: Any? = POLL_EMPTY // E | POLL_CLOSED | POLL_EMPTY
@@ -288,7 +315,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
             while (true) {
                 if (channel.enqueueReceive(receive)) {
                     cont.initCancellability() // make it properly cancellable
-                    cont.removeOnCompletion(receive)
+                    channel.removeReceiveOnCancel(cont, receive)
                     return@sc
                 }
                 // hm... something is not right. try to poll

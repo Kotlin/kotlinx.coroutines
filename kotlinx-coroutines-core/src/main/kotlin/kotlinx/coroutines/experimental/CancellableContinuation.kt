@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
@@ -118,7 +119,26 @@ public inline suspend fun <T> suspendCancellableCoroutine(
         safe.getResult()
     }
 
+
+/**
+ * Removes a given node on cancellation.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): Job.Registration =
+    onCompletion(RemoveOnCancel(this, node))
+
 // --------------- implementation details ---------------
+
+private class RemoveOnCancel(
+    cont: CancellableContinuation<*>,
+    val node: LockFreeLinkedListNode
+) : JobNode<CancellableContinuation<*>>(cont)  {
+    override fun invoke(reason: Throwable?) {
+        if (job.isCancelled)
+            node.remove()
+    }
+    override fun toString() = "RemoveOnCancel[$node]"
+}
 
 @PublishedApi
 internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
