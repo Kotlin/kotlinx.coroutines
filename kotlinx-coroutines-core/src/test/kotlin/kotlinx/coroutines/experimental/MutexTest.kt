@@ -45,12 +45,19 @@ class MutexTest : TestBase() {
     @Test
     fun tryLockTest() {
         val mutex = Mutex()
+        assertFalse(mutex.isLocked)
         assertTrue(mutex.tryLock())
+        assertTrue(mutex.isLocked)
         assertFalse(mutex.tryLock())
+        assertTrue(mutex.isLocked)
         mutex.unlock()
+        assertFalse(mutex.isLocked)
         assertTrue(mutex.tryLock())
+        assertTrue(mutex.isLocked)
         assertFalse(mutex.tryLock())
+        assertTrue(mutex.isLocked)
         mutex.unlock()
+        assertFalse(mutex.isLocked)
     }
 
     @Test

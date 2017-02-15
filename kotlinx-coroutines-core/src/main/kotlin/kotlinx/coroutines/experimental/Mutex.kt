@@ -36,15 +36,24 @@ public class Mutex(locked: Boolean = false) {
 
     private companion object {
         @JvmStatic
-        private val STATE: AtomicReferenceFieldUpdater<Mutex, Any?> =
+        val STATE: AtomicReferenceFieldUpdater<Mutex, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(Mutex::class.java, Any::class.java, "state")
 
         @JvmStatic
-        private val EmptyLocked = Empty(true)
+        val EmptyLocked = Empty(true)
 
         @JvmStatic
-        private val EmptyUnlocked = Empty(false)
+        val EmptyUnlocked = Empty(false)
+
+        @JvmStatic
+        fun isLocked(state: Any?) = state !is Empty || state.locked
+
     }
+
+    /**
+     * Returns `true` when this mutex is locked.
+     */
+    public val isLocked: Boolean get() = isLocked(state)
 
     /**
      * Tries to lock this mutex, returning `false` if this mutex is already locked.
