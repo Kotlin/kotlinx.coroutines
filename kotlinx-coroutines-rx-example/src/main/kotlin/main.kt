@@ -15,8 +15,9 @@
  */
 
 
-import kotlinx.coroutines.experimental.rx.awaitSingle
-import kotlinx.coroutines.experimental.rx.rxSingle
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.rx1.awaitSingle
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -47,7 +48,7 @@ fun main(args: Array<String>) {
 
     val github = retrofit.create(GitHub::class.java)
 
-    rxSingle {
+    launch(CommonPool) {
         val contributors =
                 github.contributors("JetBrains", "Kotlin")
                       .awaitSingle().take(10)

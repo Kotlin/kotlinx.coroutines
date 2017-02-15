@@ -78,7 +78,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.1.0-rc-91</kotlin.version>
-        <dokka.version>0.9.13</dokka.version>
+        <dokka.version>0.9.14</dokka.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -101,7 +101,9 @@
         <module>kotlinx-coroutines-javafx</module>
         <module>kotlinx-coroutines-jdk8</module>
         <module>kotlinx-coroutines-nio</module>
-        <module>kotlinx-coroutines-rx</module>
+        <module>kotlinx-coroutines-reactive</module>
+        <module>kotlinx-coroutines-rx1</module>
+        <module>kotlinx-coroutines-rx2</module>
         <module>kotlinx-coroutines-rx-example</module>
         <module>site</module>
     </modules>

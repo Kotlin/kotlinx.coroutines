@@ -247,7 +247,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
        FINAL_C    Cancelled    : Completed     cancelled (final state)
        FINAL_F    Failed       : Completed     failed for other reason (final state)
        FINAL_R    <any>        : Completed     produced some result
-       
+
        === Transitions ===
 
            New states      Active states     Inactive states

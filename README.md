@@ -12,7 +12,9 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 * [kotlinx-coroutines-nio](kotlinx-coroutines-nio) module with extensions for asynchronous IO on JDK7+.
 * [kotlinx-coroutines-swing](kotlinx-coroutines-swing) module with `Swing` context for Swing UI applications.
 * [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx) module with `JavaFx` context for JavaFX UI applications.
-* [kotlinx-coroutines-rx](kotlinx-coroutines-rx) module with utilities for [RxJava](https://github.com/ReactiveX/RxJava).
+* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) module with utilities for [Reactive Streams](http://www.reactive-streams.org)
+* [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1) module with utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
+* [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2) module with utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
  
 ## References and documentation
 
