@@ -57,9 +57,10 @@ public interface Deferred<out T> : Job {
     val isCancelled: Boolean
 
     /**
-     * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete.
-     * This suspending function is cancellable.
+     * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
+     * returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.
      *
+     * This suspending function is cancellable.
      * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
      */

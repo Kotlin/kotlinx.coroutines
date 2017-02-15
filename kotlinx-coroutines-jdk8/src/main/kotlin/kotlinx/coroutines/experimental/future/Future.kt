@@ -62,7 +62,9 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> {
 }
 
 /**
- * Awaits for completion of the future without blocking a thread. This suspending function is cancellable.
+ * Awaits for completion of the future without blocking a thread.
+ *
+ * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException] .
  */

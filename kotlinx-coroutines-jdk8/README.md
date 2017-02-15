@@ -2,9 +2,32 @@
 
 Additional libraries for JDK8 (or Android API level 24).
 
-# Package kotlinx.coroutines.experimental.jdk8
+Coroutine builders:
 
-Additional libraries for JDK8 (or Android API level 24).
+| **Name** | **Result** | **Scope**  | **Description**
+| -------- | ---------- | ---------- | ---------------
+| [future] | [CompletableFuture][java.util.concurrent.CompletableFuture] | [CoroutineScope] | Returns a single value with the future result 
 
-* `future { ... }` coroutine builder that returns `CompletableFuture` and works in `CommonPool` context by default.
-* `.await()` suspending function for `CompletableFuture`.
+Extension functions:
+
+| **Name** | **Description**
+| -------- | ---------------
+| [CompletableFuture.await][java.util.concurrent.CompletableFuture.await] | Awaits for completion of the future
+| [Deferred.toCompletableFuture][kotlinx.coroutines.experimental.Deferred.toCompletableFuture] | Converts a deferred value to the future
+
+<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
+<!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
+<!--- INDEX kotlinx.coroutines.experimental -->
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
+<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8 -->
+<!--- DOCS_ROOT kotlinx-coroutines-jdk8/target/dokka/kotlinx-coroutines-jdk8 -->
+<!--- INDEX kotlinx.coroutines.experimental.future -->
+[java.util.concurrent.CompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html
+[java.util.concurrent.CompletableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/await.html
+[kotlinx.coroutines.experimental.Deferred.toCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/to-completable-future.html
+[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html
+<!--- END -->
+
+# Package kotlinx.coroutines.experimental.future
+
+Additional libraries for JDK8 [CompletableFuture][java.util.concurrent.CompletableFuture].

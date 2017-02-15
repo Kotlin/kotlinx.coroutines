@@ -2,7 +2,7 @@
 
 Core primitives to work with coroutines.
 
-This module provides the following coroutine builders:
+Coroutine builder functions:
 
 | **Name**      | **Result**    | **Scope**        | **Description**
 | ------------- | ------------- | ---------------- | ---------------
@@ -11,7 +11,7 @@ This module provides the following coroutine builders:
 | [produce]     | [ProducerJob] | [ProducerScope]  | Produces a stream of elements
 | [runBlocking] | `T`           | [CoroutineScope] | Blocks the thread while the coroutine runs
 
-These builders can be used with the following [coroutine dispatchers][CoroutineDispatcher]:
+Coroutine dispatchers implementing [CoroutineDispatcher]:
  
 | **Name**                    | **Description**
 | --------------------------- | ---------------
@@ -28,7 +28,7 @@ Synchronization primitives for coroutines:
 | [Mutex]    | [lock][Mutex.lock]                                          | Mutual exclusion 
 | [Channel]  | [send][SendChannel.send], [receive][ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
 
-The following _top-level_ suspending functions are provided to be used inside coroutines:
+Top-level suspending functions:
 
 | **Name**      | **Description**
 | ------------- | ---------------
