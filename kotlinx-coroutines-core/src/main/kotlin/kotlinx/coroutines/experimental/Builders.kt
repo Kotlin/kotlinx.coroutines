@@ -142,7 +142,7 @@ private class BlockingCoroutine<T>(
             while (eventLoop!!.processNextEvent()) { /* just spin */ }
         }
         // now return result
-        val state = getState()
+        val state = this.state
         (state as? CompletedExceptionally)?.let { throw it.exception }
         return state as T
     }

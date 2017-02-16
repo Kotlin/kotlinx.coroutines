@@ -63,17 +63,17 @@ public abstract class AbstractChannel<E> : Channel<E> {
     /**
      * Returns non-null closed token if it is first in the queue.
      */
-    protected val closedForReceive: Any? get() = queue.next() as? Closed<*>
+    protected val closedForReceive: Any? get() = queue.next as? Closed<*>
 
     /**
      * Returns non-null closed token if it is last in the queue.
      */
-    protected val closedForSend: Any? get() = queue.prev() as? Closed<*>
+    protected val closedForSend: Any? get() = queue.prev as? Closed<*>
 
     // ------ SendChannel ------
 
     public final override val isClosedForSend: Boolean get() = closedForSend != null
-    public final override val isFull: Boolean get() = queue.next() !is ReceiveOrClosed<*> && isBufferFull
+    public final override val isFull: Boolean get() = queue.next !is ReceiveOrClosed<*> && isBufferFull
 
     public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
@@ -152,7 +152,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     // ------ ReceiveChannel ------
 
     public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    public final override val isEmpty: Boolean get() = queue.next() !is Send && isBufferEmpty
+    public final override val isEmpty: Boolean get() = queue.next !is Send && isBufferEmpty
 
     @Suppress("UNCHECKED_CAST")
     public final override suspend fun receive(): E {

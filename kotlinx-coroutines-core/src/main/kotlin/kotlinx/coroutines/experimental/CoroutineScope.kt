@@ -62,7 +62,7 @@ public abstract class AbstractCoroutine<in T>(
 
     final override fun resume(value: T) {
         while (true) { // lock-free loop on state
-            val state = getState() // atomic read
+            val state = this.state // atomic read
             when (state) {
                 is Incomplete -> if (updateState(state, value)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
@@ -73,7 +73,7 @@ public abstract class AbstractCoroutine<in T>(
 
     final override fun resumeWithException(exception: Throwable) {
         while (true) { // lock-free loop on state
-            val state = getState() // atomic read
+            val state = this.state // atomic read
             when (state) {
                 is Incomplete -> if (updateState(state, CompletedExceptionally(exception))) return
                 is Cancelled -> {
@@ -92,8 +92,8 @@ public abstract class AbstractCoroutine<in T>(
 
     // for nicer debugging
     override fun toString(): String {
-        val state = getState()
+        val state = this.state
         val result = if (state is Incomplete) "" else "[$state]"
-        return "${this::class.java.simpleName}{${describeState(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
+        return "${this::class.java.simpleName}{${stateToString(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
     }
 }

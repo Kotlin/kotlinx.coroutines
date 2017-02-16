@@ -113,10 +113,10 @@ public inline suspend fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val safe = CancellableContinuationImpl(cont, getParentJobOrAbort(cont))
-        if (!holdCancellability) safe.initCancellability()
-        block(safe)
-        safe.getResult()
+        val cancellable = CancellableContinuationImpl(cont, getParentJobOrAbort(cont), active = true)
+        if (!holdCancellability) cancellable.initCancellability()
+        block(cancellable)
+        cancellable.getResult()
     }
 
 
@@ -149,12 +149,11 @@ internal fun getParentJobOrAbort(cont: Continuation<*>): Job? {
 }
 
 @PublishedApi
-internal class CancellableContinuationImpl<in T>(
-        private val delegate: Continuation<T>,
-        private val parentJob: Job?
-) : AbstractCoroutine<T>(delegate.context, active = true), CancellableContinuation<T> {
-    // only updated from the thread that invoked suspendCancellableCoroutine
-
+internal open class CancellableContinuationImpl<in T>(
+    private val delegate: Continuation<T>,
+    private val parentJob: Job?,
+    active: Boolean
+) : AbstractCoroutine<T>(delegate.context, active), CancellableContinuation<T> {
     @Volatile
     private var decision = UNDECIDED
 
@@ -173,24 +172,24 @@ internal class CancellableContinuationImpl<in T>(
         initParentJob(parentJob)
     }
 
-    fun getResult(): Any? {
+    @PublishedApi
+    internal fun getResult(): Any? {
         val decision = this.decision // volatile read
         when (decision) {
             UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return COROUTINE_SUSPENDED
             YIELD -> return COROUTINE_SUSPENDED
         }
         // otherwise, afterCompletion was already invoked, and the result is in the state
-        val state = getState()
+        val state = this.state
         if (state is CompletedExceptionally) throw state.exception
         return state
     }
 
-    override val isCancelled: Boolean
-        get() = getState() is Cancelled
+    override val isCancelled: Boolean get() = state is Cancelled
 
     override fun tryResume(value: T): Any? {
         while (true) { // lock-free loop on state
-            val state = getState() // atomic read
+            val state = this.state // atomic read
             when (state) {
                 is Incomplete -> if (tryUpdateState(state, value)) return state
                 else -> return null // cannot resume -- not active anymore
@@ -200,7 +199,7 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun tryResumeWithException(exception: Throwable): Any? {
         while (true) { // lock-free loop on state
-            val state = getState() // atomic read
+            val state = this.state // atomic read
             when (state) {
                 is Incomplete -> if (tryUpdateState(state, CompletedExceptionally(exception))) return state
                 else -> return null // cannot resume -- not active anymore
@@ -209,7 +208,7 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token, getState())
+        completeUpdateState(token, state)
     }
 
     @Suppress("UNCHECKED_CAST")

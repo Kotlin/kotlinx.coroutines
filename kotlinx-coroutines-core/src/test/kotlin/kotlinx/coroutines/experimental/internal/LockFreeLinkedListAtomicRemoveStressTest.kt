@@ -23,20 +23,20 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 /**
- * This stress test has 6 threads adding randomly first to the list and them immediately undoing
- * this addition by remove, and 4 threads removing first node. The resulting list that is being
- * stressed is very short.
+ * This stress test has 4 threads adding randomly first to the list and them immediately undoing
+ * this addition by remove, and 4 threads trying to remove nodes from two lists simultaneously (atomically).
  */
-class LockFreeLinkedListShortStressTest {
+class LockFreeLinkedListAtomicRemoveStressTest {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
-    val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
-    val nAdderThreads = 6
+    val nLists = 4
     val nRemoverThreads = 4
     val timeout = 5000L
     val completedAdder = AtomicInteger()
     val completedRemover = AtomicInteger()
+
+    val lists = Array(nLists) { LockFreeLinkedListHead() }
 
     val undone = AtomicInteger()
     val missed = AtomicInteger()
@@ -45,34 +45,63 @@ class LockFreeLinkedListShortStressTest {
     @Test
     fun testStress() {
         val deadline = System.currentTimeMillis() + timeout
-        repeat(nAdderThreads) { threadId ->
+        repeat(nLists) { threadId ->
             threads += thread(start = false, name = "adder-$threadId") {
                 val rnd = Random()
+                val list = lists[threadId]
                 while (System.currentTimeMillis() < deadline) {
                     var node: IntNode? = IntNode(threadId)
                     when (rnd.nextInt(3)) {
                         0 -> list.addLast(node!!)
                         1 -> assertTrue(list.addLastIf(node!!, { true })) // just to test conditional add
-                        2 -> { // just to test failed conditional add
+                        2 -> { // just to test failed conditional add and burn some time
                             assertFalse(list.addLastIf(node!!, { false }))
                             node = null
                         }
+                        else -> error("Cannot happen")
                     }
-                    if (node != null) {
-                        if (node.remove())
-                            undone.incrementAndGet()
-                        else
-                            missed.incrementAndGet()
+                    if (node == null) continue
+                    when (rnd.nextInt(3)) {
+                        0 -> {} // nothing -- be quick
+                        1 -> {
+                            // burn some time
+                            Thread.yield()
+                        }
+                        2 -> {
+                            // burn more time
+                            Thread.sleep(1)
+                        }
+                        else -> error("Cannot happen")
                     }
+                    // undo add
+                    if (node.remove())
+                        undone.incrementAndGet()
+                    else
+                        missed.incrementAndGet()
                 }
                 completedAdder.incrementAndGet()
             }
         }
         repeat(nRemoverThreads) { threadId ->
             threads += thread(start = false, name = "remover-$threadId") {
+                val rnd = Random()
                 while (System.currentTimeMillis() < deadline) {
-                    val node = list.removeFirstOrNull()
-                    if (node != null) removed.incrementAndGet()
+                    val idx1 = rnd.nextInt(nLists - 1)
+                    val idx2 = idx1 + 1 + rnd.nextInt(nLists - idx1 - 1)
+                    check(idx1 < idx2) // that is our global order
+                    val list1 = lists[idx1]
+                    val list2 = lists[idx2]
+                    val remove1 = list1.describeRemoveFirst()
+                    val remove2 = list2.describeRemoveFirst()
+                    val op = object : AtomicOp() {
+                        override fun prepare(): Any? = remove1.prepare(this) ?: remove2.prepare(this)
+                        override fun complete(affected: Any?, failure: Any?) {
+                            remove1.complete(this, failure)
+                            remove2.complete(this, failure)
+                        }
+                    }
+                    val success = op.perform(null) == null
+                    if (success) removed.addAndGet(2)
 
                 }
                 completedRemover.incrementAndGet()
@@ -85,11 +114,11 @@ class LockFreeLinkedListShortStressTest {
         println("  Adders undone ${undone.get()} node additions")
         println("  Adders missed ${missed.get()} nodes")
         println("Remover removed ${removed.get()} nodes")
-        assertEquals(nAdderThreads, completedAdder.get())
+        assertEquals(nLists, completedAdder.get())
         assertEquals(nRemoverThreads, completedRemover.get())
         assertEquals(missed.get(), removed.get())
         assertTrue(undone.get() > 0)
         assertTrue(missed.get() > 0)
-        list.validate()
+        lists.forEach { it.validate() }
     }
 }

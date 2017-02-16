@@ -20,30 +20,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class LockFreeLinkedListTest {
-    private data class IntNode(val i: Int) : LockFreeLinkedListNode()
-
-    @Test
-    fun testSimpleAddFirst() {
-        val list = LockFreeLinkedListHead()
-        assertContents(list)
-        val n1 = IntNode(1).apply { list.addFirst(this) }
-        assertContents(list, 1)
-        val n2 = IntNode(2).apply { list.addFirst(this) }
-        assertContents(list, 2, 1)
-        val n3 = IntNode(3).apply { list.addFirst(this) }
-        assertContents(list, 3, 2, 1)
-        val n4 = IntNode(4).apply { list.addFirst(this) }
-        assertContents(list, 4, 3, 2, 1)
-        assertTrue(n1.remove())
-        assertContents(list, 4, 3, 2)
-        assertTrue(n3.remove())
-        assertFalse(n3.remove())
-        assertContents(list, 4, 2)
-        assertTrue(n4.remove())
-        assertContents(list, 2)
-        assertTrue(n2.remove())
-        assertContents(list)
-    }
+    data class IntNode(val i: Int) : LockFreeLinkedListNode()
 
     @Test
     fun testSimpleAddLast() {
@@ -76,10 +53,61 @@ class LockFreeLinkedListTest {
         assertContents(list, 1)
         assertFalse(list.addLastIf(IntNode(2)) { false })
         assertContents(list, 1)
-        assertTrue(list.addFirstIf(IntNode(3)) { true })
-        assertContents(list, 3, 1)
-        assertFalse(list.addFirstIf(IntNode(4)) { false })
-        assertContents(list, 3, 1)
+        assertTrue(list.addLastIf(IntNode(3)) { true })
+        assertContents(list, 1, 3)
+        assertFalse(list.addLastIf(IntNode(4)) { false })
+        assertContents(list, 1, 3)
+    }
+
+    @Test
+    fun testRemoveTwoAtomic() {
+        val list = LockFreeLinkedListHead()
+        val n1 = IntNode(1).apply { list.addLast(this) }
+        val n2 = IntNode(2).apply { list.addLast(this) }
+        assertContents(list, 1, 2)
+        assertFalse(n1.isRemoved)
+        assertFalse(n2.isRemoved)
+        val remove1Desc = n1.describeRemove()!!
+        val remove2Desc = n2.describeRemove()!!
+        val operation = object : AtomicOp() {
+            override fun prepare(): Any? = remove1Desc.prepare(this) ?: remove2Desc.prepare(this)
+            override fun complete(affected: Any?, failure: Any?) {
+                remove1Desc.complete(this, failure)
+                remove2Desc.complete(this, failure)
+            }
+        }
+        assertTrue(operation.perform(null) == null)
+        assertTrue(n1.isRemoved)
+        assertTrue(n2.isRemoved)
+        assertContents(list)
+    }
+
+    @Test
+    fun testAtomicOpsSingle() {
+        val list = LockFreeLinkedListHead()
+        assertContents(list)
+        val n1 = IntNode(1).also { list.addLast(it) }
+        assertContents(list, 1)
+        val n2 = IntNode(2).also { list.addLast(it) }
+        assertContents(list, 1, 2)
+        val n3 = IntNode(3).also { list.addLast(it) }
+        assertContents(list, 1, 2, 3)
+        val n4 = IntNode(4).also { list.addLast(it) }
+        assertContents(list, 1, 2, 3, 4)
+        single(n3.describeRemove()!!)
+        assertContents(list, 1, 2, 4)
+        assertTrue(n3.describeRemove() == null)
+        single(list.describeRemoveFirst()!!)
+        assertContents(list, 2, 4)
+        assertTrue(n1.describeRemove() == null)
+    }
+
+    private fun single(part: AtomicDesc) {
+        val operation = object : AtomicOp() {
+            override fun prepare(): Any? = part.prepare(this)
+            override fun complete(affected: Any?, failure: Any?) = part.complete(this, failure)
+        }
+        assertTrue(operation.perform(null) == null)
     }
 
     private fun assertContents(list: LockFreeLinkedListHead, vararg expected: Int) {

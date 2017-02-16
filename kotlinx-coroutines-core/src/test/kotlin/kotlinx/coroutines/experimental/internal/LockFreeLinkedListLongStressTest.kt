@@ -28,31 +28,23 @@ import kotlin.coroutines.experimental.buildIterator
  * stressed is long.
  */
 class LockFreeLinkedListLongStressTest {
-    private data class IntNode(val i: Int) : LockFreeLinkedListNode()
-    private val list = LockFreeLinkedListHead()
+    data class IntNode(val i: Int) : LockFreeLinkedListNode()
+    val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
     val nAdded = 10_000_000
-    val nAddThreads = 2
+    val nAddThreads = 4 // must be power of 2 (!!!)
     val nRemoveThreads = 6
     val removeProbability = 0.2
-    val workingAdders = AtomicInteger(nAddThreads * 2)
+    val workingAdders = AtomicInteger(nAddThreads)
 
     fun shallRemove(i: Int) = i and 63 != 42
 
     @Test
     fun testStress() {
         for (j in 0 until nAddThreads)
-            threads += thread(start = false, name = "firstAdder-$j") {
+            threads += thread(start = false, name = "adder-$j") {
                 for (i in j until nAdded step nAddThreads) {
-                    list.addFirst(IntNode(i))
-                }
-                println("${Thread.currentThread().name} completed")
-                workingAdders.decrementAndGet()
-            }
-        for (j in 0 until nAddThreads)
-            threads += thread(start = false, name = "lastAdder-$j") {
-                for (i in -j-1 downTo -nAdded step nAddThreads) {
                     list.addLast(IntNode(i))
                 }
                 println("${Thread.currentThread().name} completed")
@@ -80,7 +72,7 @@ class LockFreeLinkedListLongStressTest {
         println("Verify result")
         list.validate()
         val expected = buildIterator {
-            for (i in nAdded - 1 downTo -nAdded)
+            for (i in 0 until nAdded)
                 if (!shallRemove(i))
                     yield(i)
         }

@@ -121,14 +121,14 @@ private open class DeferredCoroutine<T>(
     context: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<T>(context, active), Deferred<T> {
-    override val isCompletedExceptionally: Boolean get() = getState() is CompletedExceptionally
-    override val isCancelled: Boolean get() = getState() is Cancelled
+    override val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
+    override val isCancelled: Boolean get() = state is Cancelled
 
     @Suppress("UNCHECKED_CAST")
     suspend override fun await(): T {
         // fast-path -- check state (avoid extra object creation)
         while(true) { // lock-free loop on state
-            val state = this.getState()
+            val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result
                 if (state is CompletedExceptionally) throw state.exception
@@ -143,7 +143,7 @@ private open class DeferredCoroutine<T>(
     @Suppress("UNCHECKED_CAST")
     private suspend fun awaitSuspend(): T = suspendCancellableCoroutine { cont ->
         cont.unregisterOnCompletion(invokeOnCompletion {
-            val state = getState()
+            val state = this.state
             check(state !is Incomplete)
             if (state is CompletedExceptionally)
                 cont.resumeWithException(state.exception)
@@ -154,7 +154,7 @@ private open class DeferredCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     override fun getCompleted(): T {
-        val state = getState()
+        val state = this.state
         check(state !is Incomplete) { "This deferred value has not completed yet" }
         if (state is CompletedExceptionally) throw state.exception
         return state as T

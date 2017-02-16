@@ -16,10 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
+import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
@@ -260,10 +258,12 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
        This state machine and its transition matrix are optimized for the common case when job is created in active
        state (EMPTY_A) and at most one completion listener is added to it during its life-time.
+
+       Note, that the actual `_state` variable can also be a reference to atomic operation descriptor `OpDescriptor`
      */
 
     @Volatile
-    private var state: Any? = if (active) EmptyActive else EmptyNew // shared objects while we have no listeners
+    private var _state: Any? = if (active) EmptyActive else EmptyNew // shared objects while we have no listeners
 
     @Volatile
     private var registration: Job.Registration? = null
@@ -271,9 +271,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     protected companion object {
         @JvmStatic
         private val STATE: AtomicReferenceFieldUpdater<JobSupport, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(JobSupport::class.java, Any::class.java, "state")
+            AtomicReferenceFieldUpdater.newUpdater(JobSupport::class.java, Any::class.java, "_state")
 
-        fun describeState(state: Any?): String =
+        fun stateToString(state: Any?): String =
                 if (state is Incomplete)
                     if (state.isActive) "Active" else "New"
                 else "Completed"
@@ -299,10 +299,16 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     /**
      * Returns current state of this job.
      */
-    protected fun getState(): Any? = state
+    protected val state: Any? get() {
+        while (true) { // lock-free helping loop
+            val state = _state
+            if (state !is OpDescriptor) return state
+            state.perform(this)
+        }
+    }
 
     /**
-     * Tries to update current [state][getState] of this job.
+     * Tries to update current [state] of this job.
      */
     internal fun updateState(expect: Any, update: Any?): Boolean {
         if (!tryUpdateState(expect, update)) return false
@@ -347,14 +353,20 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         afterCompletion(update)
     }
 
-    final override val isActive: Boolean get() {
+    public final override val isActive: Boolean get() {
         val state = this.state
         return state is Incomplete && state.isActive
     }
 
-    final override val isCompleted: Boolean get() = state !is Incomplete
+    public final override val isCompleted: Boolean get() = state !is Incomplete
 
-    final override fun start(): Boolean {
+    // this is for `select` operator. `isSelected` state means "not new" (== was started or already completed)
+    public val isSelected: Boolean get() {
+        val state = this.state
+        return state !is Incomplete || state.isActive
+    }
+
+    public final override fun start(): Boolean {
         while (true) { // lock-free loop on state
             when (startInternal(state)) {
                 0 -> return false
@@ -375,7 +387,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             // LIST -- a list of completion handlers (either new or active)
             state is NodeList -> {
                 if (state.isActive) return 0
-                if (!NodeList.ACTIVE.compareAndSet(state, 0, 1)) return -1
+                if (!NodeList.ACTIVE.compareAndSet(state, null, NodeList.ACTIVE_STATE)) return -1
                 onStart()
                 return 1
             }
@@ -384,13 +396,53 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
+    internal fun describeStart(failureMarker: Any): AtomicDesc =
+        object : AtomicDesc() {
+            override fun prepare(op: AtomicOp): Any? {
+                while (true) { // lock-free loop on state
+                    val state = this@JobSupport._state
+                    when {
+                        state === op -> return null // already in progress
+                        state is OpDescriptor -> state.perform(this@JobSupport) // help
+                        state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
+                            if (STATE.compareAndSet(this@JobSupport, state, op)) return null // success
+                        }
+                        state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
+                            if (state.isActive) return failureMarker
+                            if (NodeList.ACTIVE.compareAndSet(state, null, op)) return null // success
+                        }
+                        else -> return failureMarker // not a new state
+                    }
+                }
+            }
+
+            override fun complete(op: AtomicOp, failure: Any?) {
+                val success = failure == null
+                val state = this@JobSupport._state
+                when {
+                    state === op -> {
+                        if (STATE.compareAndSet(this@JobSupport, op, if (success) EmptyActive else EmptyNew)) {
+                            if (success) onStart()
+                        }
+                    }
+                    state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
+                        if (state._active === op) {
+                            if (NodeList.ACTIVE.compareAndSet(state, op, if (success) NodeList.ACTIVE_STATE else null)) {
+                                if (success) onStart()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     /**
      * Override to provide the actual [start] action.
      */
     protected open fun onStart() {}
 
     final override fun getCompletionException(): Throwable {
-        val state = getState()
+        val state = this.state
         return when (state) {
             is Incomplete -> throw IllegalStateException("Job has not completed yet")
             is CompletedExceptionally -> state.exception
@@ -414,14 +466,14 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                 // EMPTY_NEW state -- no completion handlers, new
                 state === EmptyNew -> {
                     // try to promote it to list in new state
-                    STATE.compareAndSet(this, state, NodeList(active = 0))
+                    STATE.compareAndSet(this, state, NodeList(active = false))
                 }
                 // SINGLE/SINGLE+ state -- one completion handler
                 state is JobNode<*> -> {
                     // try to promote it to list (SINGLE+ state)
-                    state.addFirstIfEmpty(NodeList(active = 1))
+                    state.addOneIfEmpty(NodeList(active = true))
                     // it must be in SINGLE+ state or state has changed (node could have need removed from state)
-                    val list = state.next() // either NodeList or somebody else won the race, updated state
+                    val list = state.next // either NodeList or somebody else won the race, updated state
                     // just attempt converting it to list if state is still the same, then continue lock-free loop
                     STATE.compareAndSet(this, state, list)
                 }
@@ -498,25 +550,36 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     ?: InvokeOnCompletion(this, handler)
 
     // for nicer debugging
-    override fun toString(): String = "${this::class.java.simpleName}{${describeState(state)}}@${Integer.toHexString(System.identityHashCode(this))}"
+    override fun toString(): String = "${this::class.java.simpleName}{${stateToString(state)}}@${Integer.toHexString(System.identityHashCode(this))}"
 
     /**
-     * Interface for incomplete [state][getState] of a job.
+     * Interface for incomplete [state] of a job.
      */
     public interface Incomplete {
         val isActive: Boolean
     }
 
     private class NodeList(
-        @Volatile
-        var active: Int
+        active: Boolean
     ) : LockFreeLinkedListHead(), Incomplete {
-        override val isActive: Boolean get() = active != 0
+        @Volatile
+        var _active: Any? = if (active) ACTIVE_STATE else null
+
+        override val isActive: Boolean get() {
+            while (true) { // helper loop for atomic ops
+                val active = this._active
+                if (active !is OpDescriptor) return active != null
+                active.perform(this)
+            }
+        }
 
         companion object {
             @JvmStatic
-            val ACTIVE: AtomicIntegerFieldUpdater<NodeList> =
-                    AtomicIntegerFieldUpdater.newUpdater(NodeList::class.java, "active")
+            val ACTIVE: AtomicReferenceFieldUpdater<NodeList, Any?> =
+                    AtomicReferenceFieldUpdater.newUpdater(NodeList::class.java, Any::class.java, "_active")
+
+            @JvmStatic
+            val ACTIVE_STATE = Symbol("ACTIVE_STATE")
         }
 
         override fun toString(): String = buildString {
@@ -533,7 +596,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     /**
-     * Class for a [state][getState] of a job that had completed exceptionally, including cancellation.
+     * Class for a [state] of a job that had completed exceptionally, including cancellation.
      *
      * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
      *        if created on first get from [exception] property.
