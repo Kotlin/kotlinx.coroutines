@@ -273,7 +273,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     }
 
     private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
-        cont.onCompletion {
+        cont.invokeOnCompletion {
             if (cont.isCancelled && receive.remove())
                 onCancelledReceive()
         }

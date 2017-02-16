@@ -41,7 +41,7 @@ object Swing : CoroutineDispatcher(), Delay {
             isRepeats = false
             start()
         }
-        continuation.onCompletion { timer.stop() }
+        continuation.invokeOnCompletion { timer.stop() }
     }
 
     override fun toString() = "Swing"

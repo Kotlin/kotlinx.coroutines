@@ -55,7 +55,7 @@ object JavaFx : CoroutineDispatcher(), Delay {
         }
         val timeline = Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler))
         timeline.play()
-        continuation.onCompletion { timeline.stop() }
+        continuation.invokeOnCompletion { timeline.stop() }
     }
 
     private class PulseTimer : AnimationTimer() {

@@ -73,7 +73,7 @@ class FxTestApp : Application() {
         root.children += node
         val job = launch(JavaFx, block = block)
         animations += job
-        job.onCompletion { root.children -= node }
+        job.invokeOnCompletion { root.children -= node }
     }
 
     fun doRect() {

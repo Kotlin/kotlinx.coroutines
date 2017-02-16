@@ -96,15 +96,20 @@ public interface Job : CoroutineContext.Element {
     fun getCompletionException(): Throwable
 
     /**
-     * Registers completion handler. The action depends on the state of this job.
-     * When job is cancelled with [cancel], then the handler is immediately invoked
-     * with a cancellation cause or with a fresh [CancellationException].
-     * Otherwise, handler will be invoked once when this job is complete
-     * (cancellation also is a form of completion).
+     * Registers handler that is **synchronously** invoked on completion of this job.
+     * When job is already complete, then the handler is immediately invoked
+     * with a cancellation cause or `null`. Otherwise, handler will be invoked once when this
+     * job is complete. Note, that [cancellation][cancel] is also a form of completion).
      *
      * The resulting [Registration] can be used to [Registration.unregister] if this
      * registration is no longer needed. There is no need to unregister after completion.
      */
+    public fun invokeOnCompletion(handler: CompletionHandler): Registration
+
+    /**
+     * @suppress **Deprecated**: Renamed to `invokeOnCompletion`
+     */
+    @Deprecated(message = "Renamed to `invokeOnCompletion`", replaceWith = ReplaceWith("invokeOnCompletion"))
     public fun onCompletion(handler: CompletionHandler): Registration
 
     /**
@@ -142,7 +147,7 @@ public interface Job : CoroutineContext.Element {
     public operator fun plus(other: Job) = other
 
     /**
-     * Registration object for [onCompletion]. It can be used to [unregister] if needed.
+     * Registration object for [invokeOnCompletion]. It can be used to [unregister] if needed.
      * There is no need to unregister after completion.
      */
     public interface Registration {
@@ -154,7 +159,7 @@ public interface Job : CoroutineContext.Element {
 }
 
 /**
- * Handler for [Job.onCompletion].
+ * Handler for [Job.invokeOnCompletion].
  */
 public typealias CompletionHandler = (Throwable?) -> Unit
 
@@ -168,22 +173,22 @@ public typealias CancellationException = java.util.concurrent.CancellationExcept
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
  * ```
- * onCompletion { registration.unregister() }
+ * invokeOnCompletion { registration.unregister() }
  * ```
  */
 public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Registration =
-    onCompletion(UnregisterOnCompletion(this, registration))
+    invokeOnCompletion(UnregisterOnCompletion(this, registration))
 
 /**
  * Cancels a specified [future] when this job is complete.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
  * ```
- * onCompletion { future.cancel(false) }
+ * invokeOnCompletion { future.cancel(false) }
  * ```
  */
 public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
-    onCompletion(CancelFutureOnCompletion(this, future))
+    invokeOnCompletion(CancelFutureOnCompletion(this, future))
 
 /**
  * @suppress **Deprecated**: `join` is now a member function of `Job`.
@@ -285,7 +290,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             return
         }
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
-        val newRegistration = parent.onCompletion(CancelOnCompletion(parent, this))
+        val newRegistration = parent.invokeOnCompletion(CancelOnCompletion(parent, this))
         registration = newRegistration
         // now check our state _after_ registering (see updateState order of actions)
         if (isCompleted) newRegistration.unregister()
@@ -336,7 +341,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             // otherwise -- do nothing (it was Empty*)
             else -> check(expect is Empty)
         }
-        // handle onCompletion exceptions
+        // handle invokeOnCompletion exceptions
         completionException?.let { handleCompletionException(it) }
         // Do other (overridable) processing after completion handlers
         afterCompletion(update)
@@ -393,7 +398,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    final override fun onCompletion(handler: CompletionHandler): Job.Registration {
+    override fun onCompletion(handler: CompletionHandler): Job.Registration = invokeOnCompletion(handler)
+
+    final override fun invokeOnCompletion(handler: CompletionHandler): Job.Registration {
         var nodeCache: JobNode<*>? = null
         while (true) { // lock-free loop on state
             val state = this.state
@@ -441,7 +448,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     private suspend fun joinSuspend() = suspendCancellableCoroutine<Unit> { cont ->
-        cont.unregisterOnCompletion(onCompletion(ResumeOnCompletion(this, cont)))
+        cont.unregisterOnCompletion(invokeOnCompletion(ResumeOnCompletion(this, cont)))
     }
 
     internal fun removeNode(node: JobNode<*>) {
@@ -475,7 +482,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     /**
-     * Override to process any exceptions that were encountered while invoking [onCompletion] handlers.
+     * Override to process any exceptions that were encountered while invoking [invokeOnCompletion] handlers.
      */
     protected open fun handleCompletionException(closeException: Throwable) {
         throw closeException

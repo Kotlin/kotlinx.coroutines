@@ -56,7 +56,7 @@ private class ThreadPoolDispatcher(
     }
 
     init {
-        job.onCompletion { executor.shutdown() }
+        job.invokeOnCompletion { executor.shutdown() }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)

@@ -125,7 +125,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
  * @suppress **This is unstable API and it is subject to change.**
  */
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): Job.Registration =
-    onCompletion(RemoveOnCancel(this, node))
+    invokeOnCompletion(RemoveOnCancel(this, node))
 
 // --------------- implementation details ---------------
 

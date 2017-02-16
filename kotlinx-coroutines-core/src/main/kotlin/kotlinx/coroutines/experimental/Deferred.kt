@@ -71,7 +71,7 @@ public interface Deferred<out T> : Job {
      * [completed][isCompleted] yet. It throws the corresponding exception if this deferred has
      * [completed exceptionally][isCompletedExceptionally].
      *
-     * This function is designed to be used from [onCompletion] handlers, when there is an absolute certainty that
+     * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete.
      */
     public fun getCompleted(): T
@@ -142,7 +142,7 @@ private open class DeferredCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun awaitSuspend(): T = suspendCancellableCoroutine { cont ->
-        cont.unregisterOnCompletion(onCompletion {
+        cont.unregisterOnCompletion(invokeOnCompletion {
             val state = getState()
             check(state !is Incomplete)
             if (state is CompletedExceptionally)

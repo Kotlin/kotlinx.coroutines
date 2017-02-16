@@ -51,7 +51,7 @@ public fun <T> future(context: CoroutineContext = CommonPool, block: suspend () 
 public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     future.whenComplete { _, exception -> cancel(exception) }
-    onCompletion {
+    invokeOnCompletion {
         try {
             future.complete(getCompleted())
         } catch (exception: Exception) {

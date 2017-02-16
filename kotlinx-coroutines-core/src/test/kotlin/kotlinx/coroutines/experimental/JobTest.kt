@@ -32,7 +32,7 @@ class JobTest {
     fun testHandler() {
         val job = Job()
         var fireCount = 0
-        job.onCompletion { fireCount++ }
+        job.invokeOnCompletion { fireCount++ }
         check(job.isActive)
         assertEquals(0, fireCount)
         // cancel once
@@ -50,7 +50,7 @@ class JobTest {
         val job = Job()
         val n = 100
         val fireCount = IntArray(n)
-        for (i in 0 until n) job.onCompletion { fireCount[i]++ }
+        for (i in 0 until n) job.invokeOnCompletion { fireCount[i]++ }
         check(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         // cancel once
@@ -70,7 +70,7 @@ class JobTest {
         val fireCount = IntArray(n)
         for (i in 0 until n) {
             var registration: Job.Registration? = null
-            registration = job.onCompletion {
+            registration = job.invokeOnCompletion {
                 fireCount[i]++
                 registration!!.unregister()
             }
@@ -92,7 +92,7 @@ class JobTest {
         val job = Job()
         val n = 100
         val fireCount = IntArray(n)
-        val registrations = Array<Job.Registration>(n) { i -> job.onCompletion { fireCount[i]++ } }
+        val registrations = Array<Job.Registration>(n) { i -> job.invokeOnCompletion { fireCount[i]++ } }
         check(job.isActive)
         fun unreg(i: Int) = i % 4 <= 1
         for (i in 0 until n) if (unreg(i)) registrations[i].unregister()
@@ -108,7 +108,7 @@ class JobTest {
         val n = 100
         val fireCount = IntArray(n)
         class TestException : Throwable()
-        for (i in 0 until n) job.onCompletion {
+        for (i in 0 until n) job.invokeOnCompletion {
             fireCount[i]++
             throw TestException()
         }
@@ -125,7 +125,7 @@ class JobTest {
         val job = Job()
         val n = 10_000_000
         var fireCount = 0
-        for (i in 0 until n) job.onCompletion { fireCount++ }.unregister()
+        for (i in 0 until n) job.invokeOnCompletion { fireCount++ }.unregister()
     }
     
     @Test
