@@ -1,6 +1,6 @@
 # kotlinx.coroutines
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc-69 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc-91 release. 
 
 ## Modules and features
 
@@ -24,7 +24,7 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 The libraries are published to [kotlin-eap-1.1](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines) bintray repository.
 
-These libraries require kotlin compiler version to be at least `1.1.0-rc-69` and 
+These libraries require kotlin compiler version to be at least `1.1.0-rc-91` and 
 require kotlin runtime of the same version as a dependency, which can be obtained from the same repository.
 
 ### Maven
@@ -57,7 +57,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-rc-69</kotlin.version>
+    <kotlin.version>1.1.0-rc-91</kotlin.version>
 </properties>
 ```
 
@@ -83,6 +83,6 @@ And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-rc-69'
+    ext.kotlin_version = '1.1.0-rc-91'
 }
 ```
