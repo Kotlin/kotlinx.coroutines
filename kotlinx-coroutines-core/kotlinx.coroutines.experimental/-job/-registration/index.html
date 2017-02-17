@@ -7,7 +7,7 @@
   <title>Job.Registration - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/-registration/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/-registration/">
 </head>
 
   <body>
@@ -23,9 +23,9 @@
 
 <h1 id="registration">Registration</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Registration</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L110">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Registration</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L151">(source)</a></div>
 
-<p>Registration object for <a href="../on-completion.html">onCompletion</a>. It can be used to <a href="unregister.html">unregister</a> if needed.
+<p>Registration object for <a href="../invoke-on-completion.html">invokeOnCompletion</a>. It can be used to <a href="unregister.html">unregister</a> if needed.
 There is no need to unregister after completion.</p>
 
 <h3 id="functions">Functions</h3>
@@ -40,6 +40,24 @@ There is no need to unregister after completion.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unregister</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
 
         <p>Unregisters completion handler.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inheritors">Inheritors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../../-empty-registration/index.html">EmptyRegistration</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">object </span><span class="identifier">EmptyRegistration</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Registration</span></code></div>
+
+        <p>No-op implementation of Job.Registration.</p>
 
       </td>
 </tr>

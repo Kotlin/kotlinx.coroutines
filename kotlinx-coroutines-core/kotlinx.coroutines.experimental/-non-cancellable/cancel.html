@@ -7,7 +7,7 @@
   <title>NonCancellable.cancel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/cancel.html">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/cancel.html">
 </head>
 
   <body>
@@ -23,18 +23,11 @@
 
 <h1 id="cancel">cancel</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/NonCancellable.kt#L37">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/NonCancellable.kt#L55">(source)</a></div>
 
 <p>Overrides <a href="../-job/cancel.html">Job.cancel</a></p>
 
-<p>Cancel this activity with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.NonCancellable$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is <a href="index.html">NonCancellable</a>).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
-
-<p>When cancellation has a clear reason in the code, an instance of <a href="../-cancellation-exception.html">CancellationException</a> should be created
-at the corresponding original cancellation site and passed into this method to aid in debugging by providing
-both the context of cancellation and text description of the reason.</p>
+<p>Always returns <code>false</code>.</p>
 
 
       </div>

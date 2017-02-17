@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job.invokeOnCompletion - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/invoke-on-completion.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Job</a> / <a href=".">invokeOnCompletion</a></div>
+
+<h1 id="invokeoncompletion">invokeOnCompletion</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L105">(source)</a></div>
+
+<p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete. Note, that <a href="cancel.html">cancellation</a> is also a form of completion).</p>
+
+<p>The resulting <a href="-registration/index.html">Registration</a> can be used to <a href="-registration/unregister.html">Registration.unregister</a> if this
+registration is no longer needed. There is no need to unregister after completion.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

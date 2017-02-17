@@ -7,7 +7,7 @@
   <title>kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/">
 </head>
 
   <body>
@@ -21,6 +21,139 @@
       <div class="wrapper">
         <p>Core primitives to work with coroutines.</p>
 
+<p>Coroutine builder functions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Result</strong></th>
+      <th><strong>Scope</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/launch.html">launch</a></td>
+      <td><a href="kotlinx.coroutines.experimental/-job/index.html">Job</a></td>
+      <td><a href="kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Launches coroutine that does not have any result</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/async.html">async</a></td>
+      <td><a href="kotlinx.coroutines.experimental/-deferred/index.html">Deferred</a></td>
+      <td><a href="kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Returns a single value with the future result</td>
+    </tr>
+    <tr>
+      <td><a href="#">produce</a></td>
+      <td><a href="#">ProducerJob</a></td>
+      <td><a href="#">ProducerScope</a></td>
+      <td>Produces a stream of elements</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a></td>
+      <td><code>T</code></td>
+      <td><a href="kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
+      <td>Blocks the thread while the coroutine runs</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Coroutine dispatchers implementing <a href="kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/-common-pool/index.html">CommonPool</a></td>
+      <td>Confines coroutine execution to a shared pool of threads</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/new-single-thread-context.html">newSingleThreadContext</a></td>
+      <td>Create new single-threaded coroutine context</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></td>
+      <td>Creates new thread pool of a fixed size</td>
+    </tr>
+    <tr>
+      <td><a href="#">Executor.toCoroutineDispatcher</a></td>
+      <td>Extension to convert any executor</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/-unconfined/index.html">Unconfined</a></td>
+      <td>Does not confine coroutine execution in any way</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Synchronization primitives for coroutines:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Suspending functions</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/-mutex/index.html">Mutex</a></td>
+      <td><a href="kotlinx.coroutines.experimental/-mutex/lock.html">lock</a></td>
+      <td>Mutual exclusion</td>
+    </tr>
+    <tr>
+      <td><a href="#">Channel</a></td>
+      <td><a href="#">send</a>, <a href="#">receive</a></td>
+      <td>Communication channel (aka queue or exchanger)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Top-level suspending functions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/delay.html">delay</a></td>
+      <td>Non-blocking sleep</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/yield.html">yield</a></td>
+      <td>Yields thread in single-threaded dispatchers</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/run.html">run</a></td>
+      <td>Switches to a different context</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental/with-timeout.html">withTimeout</a></td>
+      <td>Set execution time-limit (deadline)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Cancellation support for user-defined suspending functions is available with <a href="kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>
+helper function. <a href="kotlinx.coroutines.experimental/-non-cancellable/index.html">NonCancellable</a> job object is provided to suppress cancellation with 
+<code>run(NonCancellable) {...}</code> block of code.</p>
+
+<p>This module provides debugging facilities for coroutines (run JVM with <code>-ea</code> or <code>-Dkotlinx.coroutines.debug</code> options) 
+and <a href="kotlinx.coroutines.experimental/new-coroutine-context.html">newCoroutineContext</a> function to write user-defined coroutine builders that work with these
+debugging facilities.</p>
+
 <h3 id="packages">Packages</h3>
 
 <table class="api-docs-table">
@@ -31,7 +164,7 @@
       </td>
 <td>
 
-        <p>General-purpose coroutine builders and contexts.</p>
+        <p>General-purpose coroutine builders, contexts, and helper functions.</p>
 
       </td>
 </tr>
@@ -41,15 +174,7 @@
       </td>
 <td>
 
-        <p>Channels – non-blocking primitives for communicating a stream of values between coroutines.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="kotlinx.coroutines.experimental.intrinsics/index.html">kotlinx.coroutines.experimental.intrinsics</a></p>
-      </td>
-<td>
+        <p>Channels – non-blocking primitives for communicating a stream of elements between coroutines.</p>
 
       </td>
 </tr>

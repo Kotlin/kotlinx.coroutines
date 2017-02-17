@@ -7,7 +7,7 @@
   <title>Deferred - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/">
 </head>
 
   <body>
@@ -23,25 +23,68 @@
 
 <h1 id="deferred">Deferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L39">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L43">(source)</a></div>
 
-<p>Deferred value is conceptually a non-blocking cancellable future.
-It is created with <a href="../defer.html">defer</a> coroutine builder.
+<p>Deferred value is a non-blocking cancellable future.
+It is created with <a href="../async.html">async</a> coroutine builder.
 It is in <a href="../-job/is-active.html">active</a> state while the value is being computed.</p>
 
-<p>Deferred value has four states:</p>
+<p>Deferred value has four or five possible states.</p>
 
-<ul>
-  <li><em>Active</em> (initial state) – <a href="../-job/is-active.html">isActive</a> <code>true</code>, <a href="is-completed-exceptionally.html">isCompletedExceptionally</a> <code>false</code>,
-and <a href="is-cancelled.html">isCancelled</a> <code>false</code>.
-Both <a href="get-completed.html">getCompleted</a> and <a href="../-job/get-completion-exception.html">getCompletionException</a> throw <a href="#">IllegalStateException</a>.</li>
-  <li><em>Computed</em> (final <em>completed</em> state) – <a href="../-job/is-active.html">isActive</a> <code>false</code>,
-<a href="is-completed-exceptionally.html">isCompletedExceptionally</a> <code>false</code>, <a href="is-cancelled.html">isCancelled</a> <code>false</code>.</li>
-  <li><em>Failed</em> (final <em>completed</em> state) – <a href="../-job/is-active.html">isActive</a> <code>false</code>,
-<a href="is-completed-exceptionally.html">isCompletedExceptionally</a> <code>true</code>, <a href="is-cancelled.html">isCancelled</a> <code>false</code>.</li>
-  <li><em>Canceled</em> (final <em>completed</em> state) – <a href="../-job/is-active.html">isActive</a> <code>false</code>,
-<a href="is-completed-exceptionally.html">isCompletedExceptionally</a> <code>true</code>, <a href="is-cancelled.html">isCancelled</a> <code>true</code>.</li>
-</ul>
+<table>
+  <thead>
+    <tr>
+      <th><strong>State</strong></th>
+      <th><a href="../-job/is-active.html">isActive</a></th>
+      <th><a href="../-job/is-completed.html">isCompleted</a></th>
+      <th><a href="is-completed-exceptionally.html">isCompletedExceptionally</a></th>
+      <th><a href="is-cancelled.html">isCancelled</a></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>New</em> (optional initial state)</td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Active</em> (default initial state)</td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Resolved</em>  (final state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Failed</em>    (final state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Cancelled</em> (final state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+      <td><code>true</code></td>
+      <td><code>true</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Usually, a deferred value is created in <em>active</em> state (it is created and started), so its only visible
+states are <em>active</em> and <em>completed</em> (<em>resolved</em>, <em>failed</em>, or <em>cancelled</em>) state.
+However, <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in <em>new</em> state
+when this parameter is set to <code>false</code>.
+Such a deferred can be be made <em>active</em> by invoking <a href="../-job/start.html">start</a>, <a href="../-job/join.html">join</a>, or <a href="await.html">await</a>.</p>
 
 <h3 id="properties">Properties</h3>
 
@@ -54,8 +97,7 @@ Both <a href="get-completed.html">getCompleted</a> and <a href="../-job/get-comp
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> if computation of this deferred value was <a href="../-job/cancel.html">cancelled</a>.
-It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code> and <a href="is-completed-exceptionally.html">isCompletedExceptionally</a> is <code>true</code>.</p>
+        <p>Returns <code>true</code> if computation of this deferred value was <a href="../-job/cancel.html">cancelled</a>.</p>
 
       </td>
 </tr>
@@ -67,8 +109,7 @@ It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</co
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompletedExceptionally</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
         <p>Returns <code>true</code> if computation of this deferred value has <em>completed exceptionally</em> – it had
-either <em>failed</em> with exception during computation or was <a href="../-job/cancel.html">cancelled</a>.
-It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code>.</p>
+either <em>failed</em> with exception during computation or was <a href="../-job/cancel.html">cancelled</a>.</p>
 
       </td>
 </tr>
@@ -86,7 +127,18 @@ It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</co
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> when job is still active.</p>
+        <p>Returns <code>true</code> when this job is active.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-job/is-completed.html">isCompleted</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> when this job has completed for any reason.</p>
 
       </td>
 </tr>
@@ -104,10 +156,8 @@ It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</co
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete.
-This suspending function is cancellable.
-If the <a href="../-job/index.html">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
-immediately resumes with <a href="../-cancellation-exception.html">CancellationException</a>.</p>
+        <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
+returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.</p>
 
       </td>
 </tr>
@@ -118,10 +168,9 @@ immediately resumes with <a href="../-cancellation-exception.html">CancellationE
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Returns <em>completed</em> result or throws <a href="#">IllegalStateException</a> if this deferred value is still <a href="../-job/is-active.html">isActive</a>.
-It throws the corresponding exception if this deferred has completed exceptionally.
-This function is designed to be used from <a href="../-job/on-completion.html">onCompletion</a> handlers, when there is an absolute certainty that
-the value is already complete.</p>
+        <p>Returns <em>completed</em> result or throws <a href="#">IllegalStateException</a> if this deferred value has not
+<a href="../-job/is-completed.html">completed</a> yet. It throws the corresponding exception if this deferred has
+<a href="is-completed-exceptionally.html">completed exceptionally</a>.</p>
 
       </td>
 </tr>
@@ -156,31 +205,47 @@ Repeated invocations of this function have no effect and always produce <code>fa
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../-job/cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an <a href="../-job/is-active.html">active</a> job.</p>
+<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> yet.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../-job/on-completion.html">onCompletion</a></p>
+        <p><a href="../-job/invoke-on-completion.html">invokeOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$onCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Registers completion handler. The action depends on the state of this job.
-When job is cancelled with <a href="../-job/cancel.html">cancel</a>, then the handler is immediately invoked
-with a cancellation cause or with a fresh <a href="../-cancellation-exception.html">CancellationException</a>.
-Otherwise, handler will be invoked once when this job is complete
-(cancellation also is a form of completion).</p>
+        <p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete. Note, that <a href="../-job/cancel.html">cancellation</a> is also a form of completion).</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../-job/plus.html">plus</a></p>
+        <p><a href="../-job/join.html">join</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$plus(kotlinx.coroutines.experimental.Job)/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+when the job is complete for any reason. This function also <a href="../-job/start.html">starts</a> the corresponding coroutine
+if the <a href="../-job/index.html">Job</a> was still in <em>new</em> state.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-job/start.html">start</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Starts coroutine related to this job (if any) if it was not started yet.
+The result <code>true</code> if this invocation actually started coroutine or <code>false</code>
+if it was already started or completed.</p>
 
       </td>
 </tr>
@@ -198,20 +263,7 @@ Otherwise, handler will be invoked once when this job is complete
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../join.html">join</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
-when the job is complete for any reason.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -222,28 +274,7 @@ when the job is complete for any reason.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">unregisterOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</span><span class="symbol">:</span>&nbsp;<a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-        <p><a href="../-lazy-deferred/index.html">LazyDeferred</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">LazyDeferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Lazy deferred value is conceptually a non-blocking cancellable future that is started on
-the first <a href="await.html">await</a> or <a href="../-lazy-deferred/start.html">start</a> invocation.
-It is created with <a href="../lazy-defer.html">lazyDefer</a> coroutine builder.</p>
+        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.</p>
 
       </td>
 </tr>

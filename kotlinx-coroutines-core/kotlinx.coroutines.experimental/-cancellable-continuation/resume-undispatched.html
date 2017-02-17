@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CancellableContinuation.resumeUndispatched - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/resume-undispatched.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">CancellableContinuation</a> / <a href=".">resumeUndispatched</a></div>
+
+<h1 id="resumeundispatched">resumeUndispatched</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">resumeUndispatched</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L90">(source)</a></div>
+
+<p>Resumes this continuation with a given <a href="resume-undispatched.html#kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</a> in the invoker thread without going though
+<a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> function of the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the <a href="#">context</a>.
+This function is designed to be used only by the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations themselves.
+<strong>It should not be used in general code</strong>.</p>
+
+<p>The receiver <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> of this function be equal to the context dispatcher or
+<a href="#">IllegalArgumentException</a> if thrown.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

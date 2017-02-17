@@ -7,7 +7,7 @@
   <title>Job - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
 </head>
 
   <body>
@@ -23,18 +23,45 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L48">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L56">(source)</a></div>
 
-<p>A background job.
+<p>A background job. It is created with <a href="../launch.html">launch</a> coroutine builder or with a
+<a href="invoke.html"><code>Job()</code></a> factory function.
 A job can be <em>cancelled</em> at any time with <a href="cancel.html">cancel</a> function that forces it to become <em>completed</em> immediately.</p>
 
-<p>It has two states:</p>
+<p>A job has two or three states:</p>
 
-<ul>
-  <li><em>Active</em> (initial state) – <a href="is-active.html">isActive</a> <code>true</code>,
-<a href="get-completion-exception.html">getCompletionException</a> throws <a href="#">IllegalStateException</a>.</li>
-  <li><em>Completed</em> (final state) – <a href="is-active.html">isActive</a> <code>false</code>.</li>
-</ul>
+<table>
+  <thead>
+    <tr>
+      <th><strong>State</strong></th>
+      <th><a href="is-active.html">isActive</a></th>
+      <th><a href="is-completed.html">isCompleted</a></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>New</em> (optional initial state)</td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Active</em> (default initial state)</td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Completed</em> (final state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Usually, a job is created in <em>active</em> state (it is created and started), so its only visible
+states are <em>active</em> and <em>completed</em>. However, coroutine builders that provide an optional <code>start</code> parameter
+create a coroutine in <em>new</em> state when this parameter is set to <code>false</code>. Such a job can
+be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
 
 <p>A job in the coroutine <a href="../-coroutine-scope/context.html">context</a> represents the coroutine itself.
 A job is active while the coroutine is working and job’s cancellation aborts the coroutine when
@@ -57,7 +84,7 @@ be safely invoked from concurrent coroutines without external synchronization.</
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Registration</span></code></div>
 
-        <p>Registration object for <a href="on-completion.html">onCompletion</a>. It can be used to <a href="-registration/unregister.html">unregister</a> if needed.
+        <p>Registration object for <a href="invoke-on-completion.html">invokeOnCompletion</a>. It can be used to <a href="-registration/unregister.html">unregister</a> if needed.
 There is no need to unregister after completion.</p>
 
       </td>
@@ -76,7 +103,18 @@ There is no need to unregister after completion.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> when job is still active.</p>
+        <p>Returns <code>true</code> when this job is active.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="is-completed.html">isCompleted</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> when this job has completed for any reason.</p>
 
       </td>
 </tr>
@@ -111,31 +149,47 @@ Repeated invocations of this function have no effect and always produce <code>fa
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an <a href="is-active.html">active</a> job.</p>
+<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="is-completed.html">completed</a> yet.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="on-completion.html">onCompletion</a></p>
+        <p><a href="invoke-on-completion.html">invokeOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$onCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Registers completion handler. The action depends on the state of this job.
-When job is cancelled with <a href="cancel.html">cancel</a>, then the handler is immediately invoked
-with a cancellation cause or with a fresh <a href="../-cancellation-exception.html">CancellationException</a>.
-Otherwise, handler will be invoked once when this job is complete
-(cancellation also is a form of completion).</p>
+        <p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete. Note, that <a href="cancel.html">cancellation</a> is also a form of completion).</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="plus.html">plus</a></p>
+        <p><a href="join.html">join</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$plus(kotlinx.coroutines.experimental.Job)/other">other</span><span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Job</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+when the job is complete for any reason. This function also <a href="start.html">starts</a> the corresponding coroutine
+if the Job was still in <em>new</em> state.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="start.html">start</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Starts coroutine related to this job (if any) if it was not started yet.
+The result <code>true</code> if this invocation actually started coroutine or <code>false</code>
+if it was already started or completed.</p>
 
       </td>
 </tr>
@@ -153,7 +207,8 @@ Otherwise, handler will be invoked once when this job is complete
 <td>
         <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job.Key$invoke(kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Job</span></code></div>
 
-        <p>Creates new job object. It is optionally a child of a <a href="invoke.html#kotlinx.coroutines.experimental.Job.Key$invoke(kotlinx.coroutines.experimental.Job)/parent">parent</a> job.</p>
+        <p>Creates a new job object in <em>active</em> state.
+It is optionally a child of a <a href="invoke.html#kotlinx.coroutines.experimental.Job.Key$invoke(kotlinx.coroutines.experimental.Job)/parent">parent</a> job.</p>
 
       </td>
 </tr>
@@ -171,20 +226,7 @@ Otherwise, handler will be invoked once when this job is complete
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../join.html">join</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
-when the job is complete for any reason.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -195,8 +237,7 @@ when the job is complete for any reason.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">unregisterOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</span><span class="symbol">:</span>&nbsp;<a href="-registration/index.html"><span class="identifier">Registration</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
+        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -222,24 +263,13 @@ with the specified cancel cause.</p>
 </tr>
 <tr>
 <td>
-        <p><a href="../../kotlinx.coroutines.experimental.channels/-channel-job.html">ChannelJob</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ChannelJob</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Return type for <a href="../../kotlinx.coroutines.experimental.channels/build-channel.html">buildChannel</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../-deferred/index.html">Deferred</a></p>
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span></code></div>
 
-        <p>Deferred value is conceptually a non-blocking cancellable future.
-It is created with <a href="../defer.html">defer</a> coroutine builder.
+        <p>Deferred value is a non-blocking cancellable future.
+It is created with <a href="../async.html">async</a> coroutine builder.
 It is in <a href="is-active.html">active</a> state while the value is being computed.</p>
 
       </td>
@@ -253,6 +283,17 @@ It is in <a href="is-active.html">active</a> state while the value is being comp
 
         <p>A non-cancelable job that is always <a href="../-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="../run.html">run</a> builder
 to prevent cancellation of code blocks that need to run without cancellation.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.channels/-producer-job/index.html">ProducerJob</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerJob</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Return type for <a href="../../kotlinx.coroutines.experimental.channels/produce.html">produce</a> coroutine builder.</p>
 
       </td>
 </tr>

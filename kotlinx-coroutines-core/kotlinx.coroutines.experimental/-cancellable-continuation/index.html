@@ -7,7 +7,7 @@
   <title>CancellableContinuation - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="cancellablecontinuation">CancellableContinuation</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L44">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L48">(source)</a></div>
 
 <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
 When <a href="../-job/cancel.html">cancel</a> function is explicitly invoked, this continuation resumes with <a href="../-cancellation-exception.html">CancellationException</a> or
@@ -31,11 +31,36 @@ with the specified cancel cause.</p>
 
 <p>Cancellable continuation has three states:</p>
 
-<ul>
-  <li><em>Active</em> (initial state) – <a href="../-job/is-active.html">isActive</a> <code>true</code>, <a href="is-cancelled.html">isCancelled</a> <code>false</code>.</li>
-  <li><em>Resumed</em> (final <em>completed</em> state) – <a href="../-job/is-active.html">isActive</a> <code>false</code>, <a href="is-cancelled.html">isCancelled</a> <code>false</code>.</li>
-  <li><em>Canceled</em> (final <em>completed</em> state) – <a href="../-job/is-active.html">isActive</a> <code>false</code>, <a href="is-cancelled.html">isCancelled</a> <code>true</code>.</li>
-</ul>
+<table>
+  <thead>
+    <tr>
+      <th><strong>State</strong></th>
+      <th><a href="../-job/is-active.html">isActive</a></th>
+      <th><a href="../-job/is-completed.html">isCompleted</a></th>
+      <th><a href="is-cancelled.html">isCancelled</a></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Active</em> (initial state)</td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Resumed</em> (final <em>completed</em> state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+      <td><code>false</code></td>
+    </tr>
+    <tr>
+      <td><em>Canceled</em> (final <em>completed</em> state)</td>
+      <td><code>false</code></td>
+      <td><code>true</code></td>
+      <td><code>true</code></td>
+    </tr>
+  </tbody>
+</table>
 
 <p>Invocation of <a href="../-job/cancel.html">cancel</a> transitions this continuation from <em>active</em> to <em>cancelled</em> state, while
 invocation of <a href="#">resume</a> or <a href="#">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
@@ -54,7 +79,7 @@ but is ignored in <em>cancelled</em> state.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> if this continuation was <a href="../-job/cancel.html">cancelled</a>. It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code>.</p>
+        <p>Returns <code>true</code> if this continuation was <a href="../-job/cancel.html">cancelled</a>.</p>
 
       </td>
 </tr>
@@ -72,7 +97,18 @@ but is ignored in <em>cancelled</em> state.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> when job is still active.</p>
+        <p>Returns <code>true</code> when this job is active.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-job/is-completed.html">isCompleted</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> when this job has completed for any reason.</p>
 
       </td>
 </tr>
@@ -103,6 +139,34 @@ but is ignored in <em>cancelled</em> state.</p>
 
         <p>Makes this continuation cancellable. Use it with <code>holdCancellability</code> optional parameter to
 <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function. It throws <a href="#">IllegalStateException</a> if invoked more than once.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="resume-undispatched.html">resumeUndispatched</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">resumeUndispatched</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Resumes this continuation with a given <a href="resume-undispatched.html#kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</a> in the invoker thread without going though
+<a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> function of the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the <a href="#">context</a>.
+This function is designed to be used only by the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations themselves.
+<strong>It should not be used in general code</strong>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="resume-undispatched-with-exception.html">resumeUndispatchedWithException</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">.</span><span class="identifier">resumeUndispatchedWithException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatchedWithException(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Resumes this continuation with a given <a href="resume-undispatched-with-exception.html#kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatchedWithException(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlin.Throwable)/exception">exception</a> in the invoker thread without going though
+<a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> function of the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the <a href="#">context</a>.
+This function is designed to be used only by the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations themselves.
+<strong>It should not be used in general code</strong>.</p>
 
       </td>
 </tr>
@@ -163,31 +227,47 @@ Repeated invocations of this function have no effect and always produce <code>fa
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../-job/cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an <a href="../-job/is-active.html">active</a> job.</p>
+<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> yet.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../-job/on-completion.html">onCompletion</a></p>
+        <p><a href="../-job/invoke-on-completion.html">invokeOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">onCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$onCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Registers completion handler. The action depends on the state of this job.
-When job is cancelled with <a href="../-job/cancel.html">cancel</a>, then the handler is immediately invoked
-with a cancellation cause or with a fresh <a href="../-cancellation-exception.html">CancellationException</a>.
-Otherwise, handler will be invoked once when this job is complete
-(cancellation also is a form of completion).</p>
+        <p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete. Note, that <a href="../-job/cancel.html">cancellation</a> is also a form of completion).</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../-job/plus.html">plus</a></p>
+        <p><a href="../-job/join.html">join</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$plus(kotlinx.coroutines.experimental.Job)/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+when the job is complete for any reason. This function also <a href="../-job/start.html">starts</a> the corresponding coroutine
+if the <a href="../-job/index.html">Job</a> was still in <em>new</em> state.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-job/start.html">start</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Starts coroutine related to this job (if any) if it was not started yet.
+The result <code>true</code> if this invocation actually started coroutine or <code>false</code>
+if it was already started or completed.</p>
 
       </td>
 </tr>
@@ -205,20 +285,7 @@ Otherwise, handler will be invoked once when this job is complete
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../join.html">join</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
-when the job is complete for any reason.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -229,8 +296,7 @@ when the job is complete for any reason.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">unregisterOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</span><span class="symbol">:</span>&nbsp;<a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
+        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.</p>
 
       </td>
 </tr>

@@ -7,7 +7,7 @@
   <title>NonCancellable - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/">
 </head>
 
   <body>
@@ -45,7 +45,18 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Returns <code>true</code> when job is still active.</p>
+        <p>Always returns <code>true</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="is-completed.html">isCompleted</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Always returns <code>false</code>.</p>
 
       </td>
 </tr>
@@ -63,10 +74,7 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Cancel this activity with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.NonCancellable$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is NonCancellable).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+        <p>Always returns <code>false</code>.</p>
 
       </td>
 </tr>
@@ -77,41 +85,40 @@ Repeated invocations of this function have no effect and always produce <code>fa
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cancellation-exception.html"><span class="identifier">CancellationException</span></a></code></div>
 
-        <p>Returns the exception that signals the completion of this job – it returns the original
-<a href="cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
-normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an <a href="is-active.html">active</a> job.</p>
+        <p>Always throws <a href="#">IllegalStateException</a>.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="on-completion.html">onCompletion</a></p>
+        <p><a href="invoke-on-completion.html">invokeOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">onCompletion</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$onCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Registers completion handler. The action depends on the state of this job.
-When job is cancelled with <a href="cancel.html">cancel</a>, then the handler is immediately invoked
-with a cancellation cause or with a fresh <a href="../-cancellation-exception.html">CancellationException</a>.
-Otherwise, handler will be invoked once when this job is complete
-(cancellation also is a form of completion).</p>
+        <p>Always returns <a href="../-empty-registration/index.html">EmptyRegistration</a>.</p>
 
       </td>
 </tr>
-</tbody>
-</table>
-
-<h3 id="inherited-functions">Inherited Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
 <tr>
 <td>
-        <p><a href="../-job/plus.html">plus</a></p>
+        <p><a href="join.html">join</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$plus(kotlinx.coroutines.experimental.Job)/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Always throws <a href="#">UnsupportedOperationException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="start.html">start</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Always returns <code>false</code>.</p>
 
       </td>
 </tr>
@@ -129,20 +136,7 @@ Otherwise, handler will be invoked once when this job is complete
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../join.html">join</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
-when the job is complete for any reason.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -153,8 +147,7 @@ when the job is complete for any reason.</p>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">unregisterOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</span><span class="symbol">:</span>&nbsp;<a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
-        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.
-This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
+        <p>Unregisters a specified <a href="../unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.</p>
 
       </td>
 </tr>

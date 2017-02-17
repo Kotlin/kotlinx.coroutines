@@ -7,7 +7,7 @@
   <title>Unconfined.isDispatchNeeded - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/is-dispatch-needed.html">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/is-dispatch-needed.html">
 </head>
 
   <body>
@@ -27,8 +27,31 @@
 
 <p>Overrides <a href="../-coroutine-dispatcher/is-dispatch-needed.html">CoroutineDispatcher.isDispatchNeeded</a></p>
 
-<p>Return <code>true</code> if execution shall be dispatched onto another thread.
+<p>Returns <code>true</code> if execution shall be dispatched onto another thread.
 The default behaviour for most dispatchers is to return <code>true</code>.</p>
+
+<p>UI dispatchers <em>should not</em> override <code>isDispatchNeeded</code>, but leave a default implementation that
+returns <code>true</code>. To understand the rationale beyond this recommendation, consider the following code:</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">asyncUpdateUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">async</span><span class="p">(</span><span class="n">MainThread</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// do something here that updates something in UI
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p>When you invoke <code>asyncUpdateUI</code> in some background thread, it immediately continues to the next
+line, while UI update happens asynchronously in the UI thread. However, if you invoke
+it in the UI thread itself, it updates UI <em>synchronously</em> if your <code>isDispatchNeeded</code> is
+overridden with a thread check. Checking if we are already in the UI thread seems more
+efficient (and it might indeed save a few CPU cycles), but this subtle and context-sensitive
+difference in behavior makes the resulting async code harder to debug.</p>
+
+<p>Basically, the choice here is between “JS-style” asynchronous approach (async actions
+are always postponed to be executed later in the even dispatch thread) and “C#-style” approach
+(async actions are executed in the invoker thread until the first suspension point).
+While, C# approach seems to be more efficient, it ends up with recommendations like
+“use <code>yield</code> if you need to ….”. This is error-prone. JS-style approach is more consistent
+and does not require programmers to think about whether they need to yield or not.</p>
 
 
       </div>

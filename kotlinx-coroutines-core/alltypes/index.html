@@ -7,7 +7,7 @@
   <title>alltypes - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
 </head>
 
   <body>
@@ -82,32 +82,12 @@ but it has suspending operations instead of blocking ones and it can be closed.<
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-channel-builder.html">kotlinx.coroutines.experimental.channels.ChannelBuilder</a></p>
-      </td>
-<td>
-
-        <p>Scope for <a href="../kotlinx.coroutines.experimental.channels/build-channel.html">buildChannel</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-channel-iterator/index.html">kotlinx.coroutines.experimental.channels.ChannelIterator</a></p>
       </td>
 <td>
 
         <p>Iterator for <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
 from concurrent coroutines.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-channel-job.html">kotlinx.coroutines.experimental.channels.ChannelJob</a></p>
-      </td>
-<td>
-
-        <p>Return type for <a href="../kotlinx.coroutines.experimental.channels/build-channel.html">buildChannel</a>.</p>
 
       </td>
 </tr>
@@ -154,6 +134,8 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
       </td>
 <td>
 
+        <p>Handler for <a href="../kotlinx.coroutines.experimental/-job/invoke-on-completion.html">Job.invokeOnCompletion</a>.</p>
+
       </td>
 </tr>
 <tr>
@@ -195,7 +177,7 @@ See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newC
 <td>
 
         <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
-to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> and cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
+to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> and its cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
 
       </td>
 </tr>
@@ -205,8 +187,8 @@ to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html
       </td>
 <td>
 
-        <p>Deferred value is conceptually a non-blocking cancellable future.
-It is created with <a href="../kotlinx.coroutines.experimental/defer.html">defer</a> coroutine builder.
+        <p>Deferred value is a non-blocking cancellable future.
+It is created with <a href="../kotlinx.coroutines.experimental/async.html">async</a> coroutine builder.
 It is in <a href="../kotlinx.coroutines.experimental/-job/is-active.html">active</a> state while the value is being computed.</p>
 
       </td>
@@ -219,6 +201,16 @@ It is in <a href="../kotlinx.coroutines.experimental/-job/is-active.html">active
 
         <p>This dispatcher <em>feature</em> is implemented by <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that natively support
 non-blocking <a href="../kotlinx.coroutines.experimental/-delay/delay.html">delay</a> function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-empty-registration/index.html">kotlinx.coroutines.experimental.EmptyRegistration</a></p>
+      </td>
+<td>
+
+        <p>No-op implementation of <a href="../kotlinx.coroutines.experimental/-job/-registration/index.html">Job.Registration</a>.</p>
 
       </td>
 </tr>
@@ -244,32 +236,23 @@ continue processing events when invoked from the event dispatch thread.</p>
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-here.html">kotlinx.coroutines.experimental.Here</a></p>
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental/-job/index.html">kotlinx.coroutines.experimental.Job</a></p>
       </td>
 <td>
 
-        <p>A background job.
+        <p>A background job. It is created with <a href="../kotlinx.coroutines.experimental/launch.html">launch</a> coroutine builder or with a
+<a href="../kotlinx.coroutines.experimental/-job/invoke.html"><code>Job()</code></a> factory function.
 A job can be <em>cancelled</em> at any time with <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> function that forces it to become <em>completed</em> immediately.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-lazy-deferred/index.html">kotlinx.coroutines.experimental.LazyDeferred</a></p>
+        <p><a href="../kotlinx.coroutines.experimental/-mutex/index.html">kotlinx.coroutines.experimental.Mutex</a></p>
       </td>
 <td>
 
-        <p>Lazy deferred value is conceptually a non-blocking cancellable future that is started on
-the first <a href="../kotlinx.coroutines.experimental/-deferred/await.html">await</a> or <a href="../kotlinx.coroutines.experimental/-lazy-deferred/start.html">start</a> invocation.
-It is created with <a href="../kotlinx.coroutines.experimental/lazy-defer.html">lazyDefer</a> coroutine builder.</p>
+        <p>Mutual exclusion for coroutines.</p>
 
       </td>
 </tr>
@@ -281,6 +264,26 @@ It is created with <a href="../kotlinx.coroutines.experimental/lazy-defer.html">
 
         <p>A non-cancelable job that is always <a href="../kotlinx.coroutines.experimental/-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="../kotlinx.coroutines.experimental/run.html">run</a> builder
 to prevent cancellation of code blocks that need to run without cancellation.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-producer-job/index.html">kotlinx.coroutines.experimental.channels.ProducerJob</a></p>
+      </td>
+<td>
+
+        <p>Return type for <a href="../kotlinx.coroutines.experimental.channels/produce.html">produce</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-producer-scope/index.html">kotlinx.coroutines.experimental.channels.ProducerScope</a></p>
+      </td>
+<td>
+
+        <p>Scope for <a href="../kotlinx.coroutines.experimental.channels/produce.html">produce</a> coroutine builder.</p>
 
       </td>
 </tr>
@@ -313,14 +316,6 @@ until another coroutine invokes <a href="../kotlinx.coroutines.experimental.chan
 <td>
 
         <p>Sender’s interface to <a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">Channel</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.intrinsics/kotlin.coroutines.-suspend-function0/index.html">kotlin.coroutines.SuspendFunction0</a> (extensions in package kotlinx.coroutines.experimental.intrinsics)</p>
-      </td>
-<td>
 
       </td>
 </tr>

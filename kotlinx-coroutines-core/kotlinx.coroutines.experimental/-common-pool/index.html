@@ -7,7 +7,7 @@
   <title>CommonPool - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/">
 </head>
 
   <body>
@@ -59,6 +59,8 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 <td>
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
+        <p>Returns continuation that wraps the original <a href="../-coroutine-dispatcher/intercept-continuation.html#kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
+
       </td>
 </tr>
 <tr>
@@ -68,17 +70,8 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 <td>
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
 
-        <p>Return <code>true</code> if execution shall be dispatched onto another thread.
+        <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
 The default behaviour for most dispatchers is to return <code>true</code>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-coroutine-dispatcher/plus.html">plus</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><s><span class="identifier">plus</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$plus(kotlinx.coroutines.experimental.CoroutineDispatcher)/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
       </td>
 </tr>

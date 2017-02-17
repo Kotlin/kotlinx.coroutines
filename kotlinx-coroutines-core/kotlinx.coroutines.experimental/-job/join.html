@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job.join - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Job</a> / <a href=".">join</a></div>
+
+<h1 id="join">join</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L121">(source)</a></div>
+
+<p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
+when the job is complete for any reason. This function also <a href="start.html">starts</a> the corresponding coroutine
+if the <a href="index.html">Job</a> was still in <em>new</em> state.</p>
+
+<p>This suspending function is cancellable. If the <a href="index.html">Job</a> of the invoking coroutine is completed while this
+suspending function is suspended, this function immediately resumes with <a href="../-cancellation-exception.html">CancellationException</a>.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -7,7 +7,7 @@
   <title>CancellableContinuation.isCancelled - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/is-cancelled.html">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/is-cancelled.html">
 </head>
 
   <body>
@@ -23,9 +23,11 @@
 
 <h1 id="iscancelled">isCancelled</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L48">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L54">(source)</a></div>
 
-<p>Returns <code>true</code> if this continuation was <a href="../-job/cancel.html">cancelled</a>. It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code>.</p>
+<p>Returns <code>true</code> if this continuation was <a href="../-job/cancel.html">cancelled</a>.</p>
+
+<p>It implies that <a href="../-job/is-active.html">isActive</a> is <code>false</code> and <a href="../-job/is-completed.html">isCompleted</a> is <code>true</code>.</p>
 
 
       </div>
