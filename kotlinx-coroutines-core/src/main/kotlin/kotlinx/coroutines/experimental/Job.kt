@@ -107,7 +107,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * @suppress **Deprecated**: Renamed to `invokeOnCompletion`
      */
-    @Deprecated(message = "Renamed to `invokeOnCompletion`", replaceWith = ReplaceWith("invokeOnCompletion"))
+    @Deprecated(message = "Renamed to `invokeOnCompletion`", replaceWith = ReplaceWith("invokeOnCompletion(handler)"))
     public fun onCompletion(handler: CompletionHandler): Registration
 
     /**
