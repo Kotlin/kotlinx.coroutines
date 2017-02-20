@@ -211,7 +211,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
  * that was closed _normally_. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on send attempts.
  */
-public class ClosedSendChannelException(message: String?) : IllegalStateException(message)
+public class ClosedSendChannelException(message: String?) : CancellationException(message)
 
 /**
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
