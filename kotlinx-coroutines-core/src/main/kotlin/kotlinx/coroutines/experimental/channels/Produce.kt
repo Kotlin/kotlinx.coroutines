@@ -93,7 +93,7 @@ public fun <E> produce(
 /**
  * @suppress **Deprecated**: Renamed to `produce`.
  */
-@Deprecated(message = "Renamed to `produce`", replaceWith = ReplaceWith("produce"))
+@Deprecated(message = "Renamed to `produce`", replaceWith = ReplaceWith("produce(context, capacity, block)"))
 public fun <E> buildChannel(
     context: CoroutineContext,
     capacity: Int = 0,
