@@ -45,14 +45,21 @@ fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null):
     return job + ThreadPoolDispatcher(nThreads, name, job)
 }
 
-private class ThreadPoolDispatcher(
+internal class PoolThread(
+    val dispatcher: ThreadPoolDispatcher, // for debugging & tests
+    target: Runnable, name: String
+) : Thread(target, name) {
+    init { isDaemon = true }
+}
+
+internal class ThreadPoolDispatcher(
         nThreads: Int,
         name: String,
         val job: Job
 ) : CoroutineDispatcher(), Delay {
     val threadNo = AtomicInteger()
     val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
-        Thread(target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet()).apply { isDaemon = true }
+        PoolThread(this, target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
     }
 
     init {

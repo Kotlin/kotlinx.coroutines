@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -28,15 +29,20 @@ import kotlin.coroutines.experimental.CoroutineContext
  * When available, it wraps `ForkJoinPool.commonPool` and provides a similar shared pool where not.
  */
 object CommonPool : CoroutineDispatcher() {
-    private val pool: ExecutorService = findPool()
+    private var usePrivatePool = false
+
+    @Volatile
+    private var _pool: ExecutorService? = null
 
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
 
-    private fun findPool(): ExecutorService {
+    private fun createPool(): ExecutorService {
         val fjpClass = Try { Class.forName("java.util.concurrent.ForkJoinPool") }
             ?: return createPlainPool()
-        Try { fjpClass.getMethod("commonPool")?.invoke(null) as? ExecutorService }
-            ?. let { return it }
+        if (!usePrivatePool) {
+            Try { fjpClass.getMethod("commonPool")?.invoke(null) as? ExecutorService }
+                ?.let { return it }
+        }
         Try { fjpClass.getConstructor(Int::class.java).newInstance(defaultParallelism()) as? ExecutorService }
             ?. let { return it }
         return createPlainPool()
@@ -51,5 +57,29 @@ object CommonPool : CoroutineDispatcher() {
 
     private fun defaultParallelism() = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = pool.execute(block)
+    @Synchronized
+    private fun getOrCreatePoolSync(): ExecutorService =
+        _pool ?: createPool().also { _pool = it }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        (_pool ?: getOrCreatePoolSync()).execute(block)
+
+    // used for tests
+    @Synchronized
+    internal fun usePrivatePool() {
+        shutdownAndRelease(0)
+        usePrivatePool = true
+    }
+
+    // used for tests
+    @Synchronized
+    internal fun shutdownAndRelease(timeout: Long) {
+        _pool?.apply {
+            shutdown()
+            if (timeout > 0)
+                awaitTermination(timeout, TimeUnit.MILLISECONDS)
+            _pool = null
+        }
+        usePrivatePool = false
+    }
 }

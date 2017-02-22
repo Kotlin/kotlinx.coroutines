@@ -20,7 +20,15 @@ package guide.$$1.example$$2
 
 import kotlinx.coroutines.experimental.*
 -->
-<!--- KNIT kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
+<!--- KNIT     kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
+<!--- TEST_OUT kotlinx-coroutines-core/src/test/kotlin/guide/test/GuideTest.kt
+// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
+package guide.test
+
+import org.junit.Test
+
+class GuideTest {
+--> 
 
 # Guide to kotlinx.coroutines by example
 
@@ -106,10 +114,12 @@ fun main(args: Array<String>) {
 
 Run this code:
 
-```
+```text
 Hello,
 World!
 ```
+
+<!--- TEST -->
 
 Essentially, coroutines are light-weight threads.
 They are launched with [launch] _coroutine builder_.
@@ -143,6 +153,11 @@ fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02.kt)
+
+<!--- TEST
+Hello,
+World!
+-->
 
 The result is the same, but this code uses only non-blocking [delay]. 
 
@@ -180,6 +195,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-03.kt)
 
+<!--- TEST
+Hello,
+World!
+-->
+
 Now the result is still the same, but the code of the main coroutine is not tied to the duration of
 the background job in any way. Much better.
 
@@ -207,6 +227,11 @@ suspend fun doWorld() {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-04.kt)
 
+<!--- TEST
+Hello,
+World!
+-->
+
 ### Coroutines ARE light-weight
 
 Run the following code:
@@ -224,6 +249,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-05.kt)
+
+<!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
 It starts 100K coroutines and, after a second, each coroutine prints a dot. 
 Now, try that with threads. What would happen? (Most likely your code will produce some sort of out-of-memory error)
@@ -249,11 +276,13 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 You can run and see that it prints three lines and terminates:
 
-```
+```text
 I'm sleeping 0 ...
 I'm sleeping 1 ...
 I'm sleeping 2 ...
 ```
+
+<!--- TEST -->
 
 Active coroutines do not keep the process alive. They are like daemon threads.
 
@@ -287,13 +316,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces the following output:
 
-```
+```text
 I'm sleeping 0 ...
 I'm sleeping 1 ...
 I'm sleeping 2 ...
 main: I'm tired of waiting!
 main: Now I can quit.
 ```
+
+<!--- TEST -->
 
 As soon as main invokes `job.cancel`, we don't see any output from the other coroutine because it was cancelled. 
 
@@ -310,7 +341,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
         var nextPrintTime = 0L
         var i = 0
-        while (true) { // computation loop
+        while (i < 10) { // computation loop
             val currentTime = System.currentTimeMillis()
             if (currentTime >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
@@ -329,6 +360,17 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-02.kt)
 
 Run it to see that it continues to print "I'm sleeping" even after cancellation.
+
+<!--- TEST 
+I'm sleeping 0 ...
+I'm sleeping 1 ...
+I'm sleeping 2 ...
+main: I'm tired of waiting!
+I'm sleeping 3 ...
+I'm sleeping 4 ...
+I'm sleeping 5 ...
+main: Now I can quit.
+-->
 
 ### Making computation code cancellable
 
@@ -364,6 +406,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 As you can see, now this loop can be cancelled. [isActive][CoroutineScope.isActive] is a property that is available inside
 the code of coroutines via [CoroutineScope] object.
 
+<!--- TEST
+I'm sleeping 0 ...
+I'm sleeping 1 ...
+I'm sleeping 2 ...
+main: I'm tired of waiting!
+main: Now I can quit.
+-->
+
 ### Closing resources with finally
 
 Cancellable suspending functions throw [CancellationException] on cancellation which can be handled in 
@@ -394,7 +444,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The example above produces the following output:
 
-```
+```text
 I'm sleeping 0 ...
 I'm sleeping 1 ...
 I'm sleeping 2 ...
@@ -402,6 +452,8 @@ main: I'm tired of waiting!
 I'm running finally
 main: Now I can quit.
 ```
+
+<!--- TEST -->
 
 ### Run non-cancellable block
 
@@ -438,6 +490,16 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-05.kt)
 
+<!--- TEST
+I'm sleeping 0 ...
+I'm sleeping 1 ...
+I'm sleeping 2 ...
+main: I'm tired of waiting!
+I'm running finally
+And I've just delayed for 1 sec because I'm non-cancellable
+main: Now I can quit.
+-->
+
 ### Timeout
 
 The most obvious reason to cancel coroutine execution in practice, 
@@ -461,12 +523,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces the following output:
 
-```
+```text
 I'm sleeping 0 ...
 I'm sleeping 1 ...
 I'm sleeping 2 ...
 Exception in thread "main" java.util.concurrent.CancellationException: Timed out waiting for 1300 MILLISECONDS
 ```
+
+<!--- TEST STARTS_WITH -->
 
 We have not seen the [CancellationException] stack trace printed on the console before. That is because
 inside a cancelled coroutine `CancellationException` is a considered a normal reason for coroutine completion. 
@@ -528,10 +592,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces something like this:
 
-```
+```text
 The answer is 42
 Completed in 2017 ms
 ```
+
+<!--- TEST FLEXIBLE_TIME -->
 
 ### Concurrent using async
 
@@ -559,10 +625,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces something like this:
 
-```
+```text
 The answer is 42
 Completed in 1017 ms
 ```
+
+<!--- TEST FLEXIBLE_TIME -->
 
 This is twice as fast, because we have concurrent execution of two coroutines. 
 Note, that concurrency with coroutines is always explicit.
@@ -589,10 +657,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces something like this:
 
-```
+```text
 The answer is 42
 Completed in 2017 ms
 ```
+
+<!--- TEST FLEXIBLE_TIME -->
 
 So, we are back to sequential execution, because we _first_ start and await for `one`, _and then_ start and await
 for `two`. It is not the intended use-case for laziness. It is designed as a replacement for
@@ -642,6 +712,11 @@ fun main(args: Array<String>) {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-04.kt)
 
+<!--- TEST FLEXIBLE_TIME
+The answer is 42
+Completed in 1085 ms
+-->
+
 ## Coroutine context and dispatchers
 
 We've already seen `launch(CommonPool) {...}`, `async(CommonPool) {...}`, `run(NonCancellable) {...}`, etc.
@@ -677,12 +752,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It produces the following output (maybe in different order):
 
-```
+```text
  'Unconfined': I'm working in thread main
  'CommonPool': I'm working in thread ForkJoinPool.commonPool-worker-1
      'newSTC': I'm working in thread MyOwnThread
     'context': I'm working in thread main
 ```
+
+<!--- TEST LINES_START_UNORDERED -->
 
 The difference between parent [context][CoroutineScope.context] and [Unconfined] context will be shown later.
 
@@ -720,12 +797,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 Produces the output: 
  
-```
+```text
  'Unconfined': I'm working in thread main
     'context': I'm working in thread main
  'Unconfined': After delay in thread kotlinx.coroutines.ScheduledExecutor
     'context': After delay in thread main
 ```
+
+<!--- TEST LINES_START -->
  
 So, the coroutine the had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
 while the unconfined one had resumed in the scheduler thread that [delay] function is using.
@@ -764,11 +843,13 @@ and two coroutines computing deferred values `a` (#2) and `b` (#3).
 They are all executing in the context of `runBlocking` and are confined to the main thread.
 The output of this code is:
 
-```
+```text
 [main @coroutine#2] I'm computing a piece of the answer
 [main @coroutine#3] I'm computing another piece of the answer
 [main @coroutine#1] The answer is 42
 ```
+
+<!--- TEST -->
 
 The `log` function prints the name of the thread in square brackets and you can see, that it is the `main`
 thread, but the identifier of the currently executing coroutine is appended to it. This identifier 
@@ -802,11 +883,13 @@ It demonstrates two new techniques. One is using [runBlocking] with an explicitl
 the second one is using [run] function to change a context of a coroutine while still staying in the 
 same coroutine as you can see in the output below:
 
-```
+```text
 [Ctx1 @coroutine#1] Started in ctx1
 [Ctx2 @coroutine#1] Working in ctx2
 [Ctx1 @coroutine#1] Back to ctx1
 ```
+
+<!--- TEST -->
 
 ### Job in the context
 
@@ -821,11 +904,13 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-05.kt)
 
-It produces
+It produces somethine like
 
 ```
-My job is BlockingCoroutine{isActive=true}
+My job is BlockingCoroutine{Active}@65ae6ba4
 ```
+
+<!--- TEST lines.size == 1 && lines[0].startsWith("My job is BlockingCoroutine{Active}@") -->
 
 So, [isActive][CoroutineScope.isActive] in [CoroutineScope] is just a convenient shortcut for `context[Job]!!.isActive`.
 
@@ -867,12 +952,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The output of this code is:
 
-```
+```text
 job1: I have my own context and execute independently!
 job2: I am a child of the request coroutine
 job1: I am not affected by cancellation of the request
 main: Who has survived request cancellation?
 ```
+
+<!--- TEST -->
 
 ### Combining contexts
 
@@ -903,10 +990,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The expected outcome of this code is: 
 
-```
+```text
 job: I am a child of the request coroutine, but with a different dispatcher
 main: Who has survived request cancellation?
 ```
+
+<!--- TEST -->
 
 ### Naming coroutines for debugging
 
@@ -942,12 +1031,14 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
-```
+```text
 [main @main#1] Started main coroutine
 [ForkJoinPool.commonPool-worker-1 @v1coroutine#2] Computing v1
 [ForkJoinPool.commonPool-worker-2 @v2coroutine#3] Computing v2
 [main @main#1] The answer for v1 / v2 = 42
 ```
+
+<!--- TEST FLEXIBLE_THREAD -->
 
 ### Cancellation via explicit job
 
@@ -985,13 +1076,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The output of this example is:
 
-```
+```text
 Launched 10 coroutines
 Coroutine 0 is done
 Coroutine 1 is done
 Coroutine 2 is done
 Cancelling job!
 ```
+
+<!--- TEST -->
 
 As you can see, only the first three coroutines had printed a message and the others were cancelled 
 by a single  invocation of `job.cancel()`. So all we need to do in our hypothetical Android 
@@ -1028,6 +1121,19 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-01.kt)
 
+The output of this code is:
+
+```text
+1
+4
+9
+16
+25
+Done!
+```
+
+<!--- TEST -->
+
 ### Closing and iteration over channels 
 
 Unlike a queue, a channel can be closed to indicate that no more elements are coming. 
@@ -1053,6 +1159,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-02.kt)
 
+<!--- TEST 
+1
+4
+9
+16
+25
+Done!
+-->
+
 ### Building channel producers
 
 The pattern where a coroutine is producing a sequence of elements is quite common. 
@@ -1075,6 +1190,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-03.kt)
+
+<!--- TEST 
+1
+4
+9
+16
+25
+Done!
+-->
 
 ### Pipelines
 
@@ -1110,6 +1234,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-04.kt)
+
+<!--- TEST 
+1
+4
+9
+16
+25
+Done!
+-->
 
 We don't have to cancel these coroutines in this example app, because
 [coroutines are like daemon threads](#coroutines-are-like-daemon-threads), 
@@ -1168,7 +1301,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The output of this code is:
 
-```
+```text
 2
 3
 5
@@ -1180,6 +1313,8 @@ The output of this code is:
 23
 29
 ```
+
+<!--- TEST -->
 
 Note, that you can build the same pipeline using `buildIterator` coroutine builder from the standard library. 
 Replace `produce` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
@@ -1249,6 +1384,8 @@ Processor #1 received 9
 Processor #3 received 10
 ```
 
+<!--- TEST lines.size == 10 && lines.withIndex().all { (i, line) -> line.startsWith("Processor #") && line.endsWith(" received ${i + 1}") } -->
+
 Note, that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
 over the channel that processor coroutines are doing.
 
@@ -1285,7 +1422,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The output is:
 
-```
+```text
 foo
 foo
 BAR!
@@ -1293,6 +1430,8 @@ foo
 foo
 BAR!
 ```
+
+<!--- TEST -->
 
 ### Buffered channels
 
@@ -1324,13 +1463,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 It prints "sending" _five_ times using a buffered channel with capacity of _four_:
 
-```
+```text
 Sending 0
 Sending 1
 Sending 2
 Sending 3
 Sending 4
 ```
+
+<!--- TEST -->
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
 
@@ -1394,6 +1535,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-01.kt)
 
+<!--- TEST lines.size == 2 && lines[1].startsWith("Counter = ") -->
+
 What does it print at the end? It is highly unlikely to ever print "100000", because all the 
 100k coroutines increment the `counter` concurrently without any synchronization.
 
@@ -1416,6 +1559,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-02.kt)
+
+<!--- TEST lines.size == 2 && lines[1] == "Counter = 100000" -->
 
 This is the fastest solution for this particular problem. It works for plain counters, collections, queues and other
 standard data structures and basic operations on them. However, it does not easily scale to complex
@@ -1444,6 +1589,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-03.kt)
 
+<!--- TEST lines.size == 2 && lines[1] == "Counter = 100000" -->
+
 ### Mutual exclusion
 
 Mutual exclusion solution to the problem is to protect all modifications of the shared state with a _critical section_
@@ -1466,6 +1613,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-04.kt)
+
+<!--- TEST lines.size == 2 && lines[1] == "Counter = 100000" -->
 
 ### Actors
 
@@ -1504,6 +1653,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 ```
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-05.kt)
+
+<!--- TEST lines.size == 2 && lines[1] == "Counter = 100000" -->
 
 Notice, that it does not matter (for correctness) what context the actor itself is executed in. An actor is
 a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
@@ -1574,7 +1725,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The result of this code is: 
 
-```
+```text
 fizz -> 'Fizz'
 buzz -> 'Buzz!'
 fizz -> 'Fizz'
@@ -1583,6 +1734,8 @@ buzz -> 'Buzz!'
 fizz -> 'Fizz'
 buzz -> 'Buzz!'
 ```
+
+<!--- TEST -->
 
 ### Selecting on close
 
@@ -1631,7 +1784,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The result of this code is quite interesting, so we'll analyze it in mode detail:
 
-```
+```text
 a -> 'Hello 0'
 a -> 'Hello 1'
 b -> 'World 0'
@@ -1641,6 +1794,8 @@ b -> 'World 1'
 Channel 'a' is closed
 Channel 'a' is closed
 ```
+
+<!--- TEST -->
 
 There are couple of observations to make out of it. 
 
@@ -1692,7 +1847,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
   
 So let us see what happens:
  
-```
+```text
 Consuming 1
 Side channel has 2
 Side channel has 3
@@ -1705,6 +1860,8 @@ Side channel has 9
 Consuming 10
 Done consuming
 ```
+
+<!--- TEST -->
 
 ### Selecting deferred values
 
@@ -1757,10 +1914,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The output is:
 
-```
+```text
 Deferred 4 produced answer 'Waited for 128 ms'
 11 coroutines are still active
 ```
+
+<!--- TEST -->
 
 ### Switch over a channel of deferred values
 
@@ -1827,13 +1986,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 The result of this code:
 
-```
+```text
 BEGIN
 Replace
 END
 Channel was closed
 ```
 
+<!--- TEST -->
 
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
