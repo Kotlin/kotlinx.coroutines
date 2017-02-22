@@ -117,7 +117,7 @@ fun knit(markdownFileName: String) {
                     requireSingleLine(directive)
                     require(siteRoot != null) { "$SITE_ROOT_DIRECTIVE must be specified" }
                     require(docsRoot != null) { "$DOCS_ROOT_DIRECTIVE must be specified" }
-                    val indexLines = readApiIndex(directive.param, remainingApiRefNames, siteRoot!!, docsRoot!!)
+                    val indexLines = processApiIndex(siteRoot!!, docsRoot!!, directive.param, remainingApiRefNames)
                     skip = true
                     while (true) {
                         val skipLine = readLine() ?: break@mainLoop
@@ -275,38 +275,62 @@ fun writeLines(file: File, lines: List<String>) {
     }
 }
 
+data class ApiIndexKey(
+    val docsRoot: String,
+    val pkg: String
+)
+
+val apiIndexCache: MutableMap<ApiIndexKey, Map<String, String>> = HashMap()
+
 val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
 
-fun readApiIndex(
-        path: String,
-        remainingApiRefNames: MutableSet<String>,
-        siteRoot: String,
-        docsRoot: String,
-        prefix: String = ""
-): List<String> {
+fun loadApiIndex(
+    docsRoot: String,
+    path: String,
+    pkg: String,
+    namePrefix: String = ""
+): Map<String, String> {
     val fileName = docsRoot + "/" + path + INDEX_MD
     println("Reading index from $fileName")
-    val indexList = arrayListOf<String>()
     val visited = mutableSetOf<String>()
+    val map = HashMap<String,String>()
     File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
         while (true) {
             val line = readLine() ?: break
             val result = REF_LINE_REGEX.matchEntire(line) ?: continue
             val refLink = result.groups[1]!!.value
             if (refLink.startsWith("..")) continue // ignore cross-references
-            val refName = prefix + result.groups[2]!!.value
-            if (remainingApiRefNames.remove(refName)) {
-                indexList += "[$refName]: $siteRoot/$path/$refLink"
-            }
+            val refName = namePrefix + result.groups[2]!!.value
+            map.put(refName, refLink)
+            map.put(pkg + "." + refName, refLink)
             if (refLink.endsWith(INDEX_HTML)) {
                 if (visited.add(refLink)) {
                     val path2 = path + "/" + refLink.substring(0, refLink.length - INDEX_HTML.length)
-                    indexList += readApiIndex(path2, remainingApiRefNames, siteRoot, docsRoot, refName + ".")
+                    map += loadApiIndex(docsRoot, path2, pkg, refName + ".")
                 }
             }
         }
+    }
+    return map
+}
+
+fun processApiIndex(
+    siteRoot: String,
+    docsRoot: String,
+    pkg: String,
+    remainingApiRefNames: MutableSet<String>
+): List<String> {
+    val key = ApiIndexKey(docsRoot, pkg)
+    val map = apiIndexCache.getOrPut(key, { loadApiIndex(docsRoot, pkg, pkg) })
+    val indexList = arrayListOf<String>()
+    val it = remainingApiRefNames.iterator()
+    while (it.hasNext()) {
+        val refName = it.next()
+        val refLink = map[refName] ?: continue
+        indexList += "[$refName]: $siteRoot/$pkg/$refLink"
+        it.remove()
     }
     return indexList
 }

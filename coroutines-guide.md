@@ -68,6 +68,12 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Fan-out](#fan-out)
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
+* [Select expression](#select-expression)
+  * [Selecting from channels](#selecting-from-channels)
+  * [Selecting on close](#selecting-on-close)
+  * [Selecting to send](#selecting-to-send)
+  * [Selecting deferred values](#selecting-deferred-values)
+  * [Switch over a channel of deferred values](#switch-over-a-channel-of-deferred-values)
 
 <!--- END_TOC -->
 
@@ -1322,37 +1328,373 @@ Sending 4
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
 
+## Select expression
+
+Select expression makes it possible to await multiple suspending function simultaneously and _select_
+the first one that becomes available.
+
+<!--- INCLUDE .*/example-select-([0-9]+).kt
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
+-->
+
+### Selecting from channels
+
+Let us have two channels of strings `fizz` and `buzz`. The `fizz` channel produces "Fizz" string every 300 ms:
+ 
+```kotlin
+val fizz = produce<String>(CommonPool) { // produce using common thread pool
+    while (true) {
+        delay(300)
+        send("Fizz")
+    }
+}
+```
+
+And the `buzz` channel produces "Buzz!" string every 500 ms:
+
+```kotlin
+val buzz = produce<String>(CommonPool) {
+    while (true) {
+        delay(500)
+        send("Buzz!")
+    }
+}
+```
+
+Using [receive][ReceiveChannel.receive] suspending function we can receive _either_ from one channel or the
+other. But [select] expression allows us to receive from _both_ simultaneously using its
+[onReceive][SelectBuilder.onReceive] clauses:
+
+```kotlin
+suspend fun selectFizzBuzz() {
+    select<Unit> { // <Unit> means that this select expression does not produce any result 
+        fizz.onReceive { value ->  // this is the first select clause
+            println("fizz -> '$value'")
+        }
+        buzz.onReceive { value ->  // this is the second select clause
+            println("buzz -> '$value'")
+        }
+    }
+}
+```
+
+Let us run it for 7 times:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    repeat(7) {
+        selectFizzBuzz()
+    }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-01.kt)
+
+The result of this code is: 
+
+```
+fizz -> 'Fizz'
+buzz -> 'Buzz!'
+fizz -> 'Fizz'
+fizz -> 'Fizz'
+buzz -> 'Buzz!'
+fizz -> 'Fizz'
+buzz -> 'Buzz!'
+```
+
+### Selecting on close
+
+The [onReceive][SelectBuilder.onReceive] clause in `select` fails when the channel is closed and the corresponding
+`select` throws an exception. We can use [onReceiveOrNull][SelectBuilder.onReceiveOrNull] clause to perform a
+specific action when channel is closed. This example also show that `select` is an expression that returns 
+the result of its selected clause:
+
+```kotlin
+suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
+    select<String> {
+        a.onReceiveOrNull { value -> 
+            if (value == null) 
+                "Channel 'a' is closed" 
+            else 
+                "a -> '$value'"
+        }
+        b.onReceiveOrNull { value -> 
+            if (value == null) 
+                "Channel 'b' is closed"
+            else    
+                "b -> '$value'"
+        }
+    }
+```
+
+Lets have channel `a` that produces "Hello" string 4 and `b` that produces "World" 4 times for this example:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    // we are using the context of the main thread in this example for predictability ... 
+    val a = produce<String>(context) { 
+        repeat(4) {
+            send("Hello $it")
+        }
+    }
+    val b = produce<String>(context) { 
+        repeat(4) {
+            send("World $it")
+        }
+    }
+    repeat(8) { // print first eight results
+        println(selectAorB(a, b))
+    }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-02.kt)
+
+The result of this code is quite interesting, so we'll analyze it in mode details:
+
+```
+a -> 'Hello 0'
+a -> 'Hello 1'
+b -> 'World 0'
+a -> 'Hello 2'
+a -> 'Hello 3'
+b -> 'World 1'
+Channel 'a' is closed
+Channel 'a' is closed
+```
+
+There are a couple of observations to make out of it. 
+
+First of all, `select` is _biased_ to the first clause. When several clauses are selectable at the same time, 
+the first one among them gets selected. Here, both channels are constantly producing strings, so `a` channel,
+being the first clause in select wins. However, because we are using unbuffered channel, the `a` gets suspended from
+time to time on its [send][SendChannel.send] invocation and gives a chance for `b` to send, too.
+
+The second observation, is that [onReceiveOrNull][SelectBuilder.onReceiveOrNull] gets immediately selected when the 
+channel is already closed.
+
+### Selecting to send
+
+Select expression has [onSend][SelectBuilder.onSend] clause that can be used for a great good in combination 
+with a biased nature of selection.
+
+Let us write an example of producer of integer numbers that sends its values to a `side` channel when 
+the consumers on its primary channel cannot keep up with it:
+
+```kotlin
+fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
+    for (num in 1..10) { // produce 10 numbers from 1 to 10
+        delay(100) // every 100 ms
+        select<Unit> {
+            onSend(num) { } // Send to the primary channel
+            side.onSend(num) { } // or to the side channel     
+        }
+    }
+}
+```
+
+Consumer is going to be quite slow, taking 250 ms to process each number:
+ 
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val side = Channel<Int>() // allocate side channel
+    launch(context) { // this is a very fast consumer for the side channel
+        for (num in side) println("Side channel has $num")
+    }
+    for (num in produceNumbers(side)) {
+        println("Consuming $num")
+        delay(250) // let us digest the consumed number properly, do not hurry
+    }
+    println("Done consuming")
+}
+``` 
+ 
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-03.kt)
+  
+So let us see what happens:
+ 
+```
+Consuming 1
+Side channel has 2
+Side channel has 3
+Consuming 4
+Side channel has 5
+Side channel has 6
+Consuming 7
+Side channel has 8
+Side channel has 9
+Consuming 10
+Done consuming
+```
+
+### Selecting deferred values
+
+Deferred values can be selected using [onAwait][SelectBuilder.onAwait] clause, which enables "wait first" 
+type of logic. Let us start with an async-style function that returns a deferred string value after 
+a random delay:
+
+<!--- INCLUDE .*/example-select-04.kt
+import java.util.*
+-->
+
+```kotlin
+fun asyncString(time: Int) = async(CommonPool) {
+    delay(time.toLong())
+    "Waited for $time ms"
+}
+```
+
+Let us start a dozen for them with random delay with the following function that returns a 
+collection of deferred values:
+
+```kotlin
+fun asyncStringsList(): List<Deferred<String>> {
+    val random = Random(3)
+    return (1..12).map { asyncString(random.nextInt(1000)) }
+}
+```
+
+Now the main function awaits for the first of them to complete and count the number of deferred values
+that are still active. Note, that we've used here the fact that `select` expression is a Kotlin DSL, 
+and we can provide clauses for it using an arbitrary code. In this case we iterate over a list
+of deferred values to produce an `onAwait` clause for each one of them.
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val list = asyncStringsList()
+    val result = select<String> {
+        list.withIndex().forEach { (index, deferred) ->
+            deferred.onAwait { answer ->
+                "Deferred $index produced answer '$answer'"
+            }
+        }
+    }
+    println(result)
+    val countActive = list.sumBy { deferred -> if (deferred.isActive) 1 else 0 }
+    println("$countActive coroutines are still active")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-04.kt)
+
+The output is:
+
+```
+Deferred 4 produced answer 'Waited for 254 ms'
+11 coroutines are still active
+```
+
+### Switch over a channel of deferred values
+
+Let us write a channel producer function that consumes a channel of deferred string values, await for each received
+deferred value, but only until next deferred value comes over or the channel is closed. This example puts together 
+[onReceiveOrNull][SelectBuilder.onReceiveOrNull] and [onAwait][SelectBuilder.onAwait] clauses in the same `select`:
+
+```kotlin
+fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String>(CommonPool) {
+    var current = input.receive() // will start with first received deferred value
+    while (isActive) { // loop while not cancelled/closed
+        val next = select<Deferred<String>?> { // return next deferred value from this select or null
+            input.onReceiveOrNull { update ->
+                update // replaces next value to wait
+            }
+            current.onAwait { value ->  
+                send(value) // send value that current deferred has produced
+                input.receiveOrNull() // and use the next deferred from the input channel
+            }
+        }
+        if (next == null) {
+            println("Channel was closed")
+            break // out of loop
+        } else {
+            current = next
+        }
+    }
+}
+```
+
+To test it, we'll use a simple async function that resolves to a specified string after a specified time:
+
+```kotlin
+fun asyncString(str: String, time: Long) = async(CommonPool) {
+    delay(time)
+    str
+}
+```
+
+The main function just launches a coroutine to print results of `switchMapDeferreds` and sends some test
+data to it:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val chan = Channel<Deferred<String>>() // the channel for test
+    launch(context) { // launch printing coroutines
+        for (s in switchMapDeferreds(chan)) 
+            println(s) // print each received string
+    }
+    chan.send(asyncString("BEGIN", 100))
+    delay(200) // enough time for "BEGIN" to be produced
+    chan.send(asyncString("Slow", 500))
+    delay(100) // not enough time for slow
+    chan.send(asyncString("Replace", 100))
+    delay(500) // will give it time before the last one
+    chan.send(asyncString("END", 500))
+    delay(1000) // give it time to process
+    chan.close() // and close the channel immediately 
+    delay(500) // and wait some time to let it finish
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-05.kt)
+
+The result of this code:
+
+```
+BEGIN
+Replace
+END
+Channel was closed
+```
+
+
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
+[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
+[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
+[CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/is-active.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
+[run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
+[NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
+[withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
+[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
+[Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await.html
+[Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/start.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
-[CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/context.html
-[CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/is-active.html
-[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
-[Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
-[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/start.html
-[Job.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/invoke.html
-[NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
+[CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/context.html
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
-[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
-[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
-[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
-[run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
-[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
+[CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
+[Job.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/invoke.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/cancel.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/invoke.html
-[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
-[SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
-[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
+[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/send.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/receive.html
+[SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
+[Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/invoke.html
+<!--- INDEX kotlinx.coroutines.experimental.selects -->
+[select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
+[SelectBuilder.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/on-receive.html
+[SelectBuilder.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/on-receive-or-null.html
+[SelectBuilder.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/on-send.html
+[SelectBuilder.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/on-await.html
 <!--- END -->
