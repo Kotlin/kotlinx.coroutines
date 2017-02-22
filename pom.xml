@@ -187,6 +187,7 @@
                         <include>${project.basedir}/README.md</include>
                     </includes>
                     <outputFormat>kotlin-website</outputFormat>
+                    <jdkVersion>8</jdkVersion>
                 </configuration>
             </plugin>
             <plugin>
