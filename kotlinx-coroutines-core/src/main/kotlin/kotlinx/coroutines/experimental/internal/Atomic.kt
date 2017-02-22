@@ -36,25 +36,29 @@ public abstract class AtomicOp : OpDescriptor() {
         private val CONSENSUS: AtomicReferenceFieldUpdater<AtomicOp, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(AtomicOp::class.java, Any::class.java, "_consensus")
 
+        @JvmStatic
         private val UNDECIDED: Any = Symbol("UNDECIDED")
     }
 
     val isDecided: Boolean get() = _consensus !== UNDECIDED
 
+    fun tryDecide(decision: Any?): Boolean {
+        check(decision !== UNDECIDED)
+        return CONSENSUS.compareAndSet(this, UNDECIDED, decision)
+    }
+
+    private fun decide(decision: Any?): Any? = if (tryDecide(decision)) decision else _consensus
+
     abstract fun prepare(): Any? // `null` if Ok, or failure reason
+
     abstract fun complete(affected: Any?, failure: Any?) // failure != null if failed to prepare op
 
     // returns `null` on success
     final override fun perform(affected: Any?): Any? {
         // make decision on status
-        var decision: Any?
-        while (true) {
-            decision = this._consensus
-            if (decision !== UNDECIDED) break
-            decision = prepare()
-            check(decision !== UNDECIDED)
-            if (CONSENSUS.compareAndSet(this, UNDECIDED, decision)) break
-        }
+        var decision = this._consensus
+        if (decision === UNDECIDED)
+            decision = decide(prepare())
         complete(affected, decision)
         return decision
     }

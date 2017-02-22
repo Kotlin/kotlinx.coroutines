@@ -94,8 +94,8 @@ public abstract class CoroutineDispatcher :
 }
 
 internal class DispatchedContinuation<in T>(
-        val dispatcher: CoroutineDispatcher,
-        val continuation: Continuation<T>
+    @JvmField val dispatcher: CoroutineDispatcher,
+    @JvmField val continuation: Continuation<T>
 ): Continuation<T> by continuation {
     override fun resume(value: T) {
         val context = continuation.context
@@ -132,20 +132,15 @@ internal class DispatchedContinuation<in T>(
     }
 
     // used by "yield" implementation
-    fun resumeYield(job: Job?, value: T) {
+    internal fun dispatchYield(job: Job?, value: T) {
         val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, Runnable {
-                withCoroutineContext(context) {
-                    if (job?.isCompleted == true)
-                        continuation.resumeWithException(job.getCompletionException())
-                    else
-                        continuation.resume(value)
-                }
-            })
-        else
+        dispatcher.dispatch(context, Runnable {
             withCoroutineContext(context) {
-                continuation.resume(value)
+                if (job != null && job.isCompleted)
+                    continuation.resumeWithException(job.getCompletionException())
+                else
+                    continuation.resume(value)
             }
+        })
     }
 }

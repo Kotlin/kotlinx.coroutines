@@ -49,33 +49,48 @@ public interface CoroutineScope {
  * implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
  * It stores the result of continuation in the state of the job.
  *
- * @param context the new context for the coroutine. Use [newCoroutineContext] to create it.
  * @param active when `true` coroutine is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AbstractCoroutine<in T>(
-    context: CoroutineContext,
     active: Boolean
 ) : JobSupport(active), Continuation<T>, CoroutineScope {
-    @Suppress("LeakingThis")
-    override val context: CoroutineContext = context + this // merges this job into this context
+    // context must be Ok for unsafe publishing (it is persistent),
+    // so we don't mark this _context variable as volatile, but leave potential benign race here
+    private var _context: CoroutineContext? = null // created on first need
 
-    final override fun resume(value: T) {
+    @Suppress("LeakingThis")
+    public final override val context: CoroutineContext
+        get() = _context ?: createContext().also { _context = it }
+
+    protected abstract val parentContext: CoroutineContext
+
+    protected open fun createContext() = parentContext + this
+
+    protected open fun defaultResumeMode(): Int = 0
+
+    final override fun resume(value: T) = resume(value, defaultResumeMode())
+
+    protected fun resume(value: T, mode: Int) {
         while (true) { // lock-free loop on state
             val state = this.state // atomic read
             when (state) {
-                is Incomplete -> if (updateState(state, value)) return
+                is Incomplete -> if (updateState(state, value, mode)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
                 else -> throw IllegalStateException("Already resumed, but got value $value")
             }
         }
     }
 
-    final override fun resumeWithException(exception: Throwable) {
+    final override fun resumeWithException(exception: Throwable) = resumeWithException(exception, defaultResumeMode())
+
+    protected fun resumeWithException(exception: Throwable, mode: Int) {
         while (true) { // lock-free loop on state
             val state = this.state // atomic read
             when (state) {
-                is Incomplete -> if (updateState(state, CompletedExceptionally(exception))) return
+                is Incomplete -> {
+                    if (updateState(state, CompletedExceptionally(state.idempotentStart, exception), mode)) return
+                }
                 is Cancelled -> {
                     // ignore resumes on cancelled continuation, but handle exception if a different one is here
                     if (exception != state.exception) handleCoroutineException(context, exception)

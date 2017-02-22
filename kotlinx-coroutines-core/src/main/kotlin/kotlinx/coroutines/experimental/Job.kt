@@ -290,10 +290,14 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             return
         }
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
-        val newRegistration = parent.invokeOnCompletion(CancelOnCompletion(parent, this))
+        val newRegistration = parent.invokeOnCompletion(ParentOnCompletion(parent, this))
         registration = newRegistration
         // now check our state _after_ registering (see updateState order of actions)
         if (isCompleted) newRegistration.unregister()
+    }
+
+    internal open fun onParentCompletion(cause: Throwable?) {
+        cancel()
     }
 
     /**
@@ -310,9 +314,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     /**
      * Tries to update current [state] of this job.
      */
-    internal fun updateState(expect: Any, update: Any?): Boolean {
+    internal fun updateState(expect: Any, update: Any?, mode: Int): Boolean {
         if (!tryUpdateState(expect, update)) return false
-        completeUpdateState(expect, update)
+        completeUpdateState(expect, update, mode)
         return true
     }
 
@@ -324,7 +328,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         return true // continues in completeUpdateState
     }
 
-    internal fun completeUpdateState(expect: Any, update: Any?) {
+    internal fun completeUpdateState(expect: Any, update: Any?, mode: Int) {
         // Invoke completion handlers
         val cause = (update as? CompletedExceptionally)?.cause
         var completionException: Throwable? = null
@@ -350,7 +354,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         // handle invokeOnCompletion exceptions
         completionException?.let { handleCompletionException(it) }
         // Do other (overridable) processing after completion handlers
-        afterCompletion(update)
+        afterCompletion(update, mode)
     }
 
     public final override val isActive: Boolean get() {
@@ -378,63 +382,110 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     // return: 0 -> false (not new), 1 -> true (started), -1 -> retry
     internal fun startInternal(state: Any?): Int {
         when {
-            // EMPTY_NEW state -- no completion handlers, new
-            state === EmptyNew -> {
+            state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
                 if (!STATE.compareAndSet(this, state, EmptyActive)) return -1
                 onStart()
                 return 1
             }
-            // LIST -- a list of completion handlers (either new or active)
-            state is NodeList -> {
+            state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
                 if (state.isActive) return 0
                 if (!NodeList.ACTIVE.compareAndSet(state, null, NodeList.ACTIVE_STATE)) return -1
                 onStart()
                 return 1
             }
-            // not a new state
-            else -> return 0
+            else -> return 0 // not a new state
         }
     }
 
-    internal fun describeStart(failureMarker: Any): AtomicDesc =
-        object : AtomicDesc() {
-            override fun prepare(op: AtomicOp): Any? {
-                while (true) { // lock-free loop on state
-                    val state = this@JobSupport._state
-                    when {
-                        state === op -> return null // already in progress
-                        state is OpDescriptor -> state.perform(this@JobSupport) // help
-                        state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
-                            if (STATE.compareAndSet(this@JobSupport, state, op)) return null // success
+    // it is just like start(), but support idempotent start
+    public fun trySelect(idempotent: Any?): Boolean {
+        if (idempotent == null) return start() // non idempotent -- use plain start
+        check(idempotent !is OpDescriptor) { "cannot use OpDescriptor as idempotent marker"}
+        while (true) { // lock-free loop on state
+            val state = this.state
+            when {
+                state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
+                    // try to promote it to list in new state
+                    STATE.compareAndSet(this, state, NodeList(active = false))
+                }
+                state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
+                    val active = state.active
+                    if (active === idempotent) return true // was activated with the same marker --> true
+                    if (active != null) return false
+                    if (NodeList.ACTIVE.compareAndSet(state, null, idempotent)) {
+                        onStart()
+                        return true
+                    }
+                }
+                state is CompletedIdempotentStart -> { // remembers idempotent start token
+                    return state.idempotentStart === idempotent
+                }
+                else -> return false
+            }
+        }
+    }
+
+    public fun performAtomicTrySelect(desc: AtomicDesc): Any? = AtomicSelectOp(desc, true).perform(null)
+    public fun performAtomicIfNotSelected(desc: AtomicDesc): Any? = AtomicSelectOp(desc, false).perform(null)
+
+    private inner class AtomicSelectOp(
+        @JvmField val desc: AtomicDesc,
+        @JvmField val activate: Boolean
+    ) : AtomicOp () {
+        override fun prepare(): Any? = prepareIfNotSelected() ?: desc.prepare(this)
+
+        override fun complete(affected: Any?, failure: Any?) {
+            completeSelect(failure)
+            desc.complete(this, failure)
+        }
+
+        fun prepareIfNotSelected(): Any? {
+            while (true) { // lock-free loop on state
+                val state = _state
+                when {
+                    state === this@AtomicSelectOp -> return null // already in progress
+                    state is OpDescriptor -> state.perform(this@JobSupport) // help
+                    state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
+                        if (STATE.compareAndSet(this@JobSupport, state, this@AtomicSelectOp)) return null // success
+                    }
+                    state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
+                        val active = state._active
+                        when {
+                            active == null -> {
+                                if (NodeList.ACTIVE.compareAndSet(state, null, this@AtomicSelectOp)) return null // success
+                            }
+                            active === this@AtomicSelectOp -> return null // already in progress
+                            active is OpDescriptor -> active.perform(state) // help
+                            else -> return ALREADY_SELECTED // active state
                         }
-                        state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                            if (state.isActive) return failureMarker
-                            if (NodeList.ACTIVE.compareAndSet(state, null, op)) return null // success
+                    }
+                    else -> return ALREADY_SELECTED // not a new state
+                }
+            }
+        }
+
+        private fun completeSelect(failure: Any?) {
+            val success = failure == null
+            val state = _state
+            when {
+                state === this -> {
+                    val update = if (success && activate) EmptyActive else EmptyNew
+                    if (STATE.compareAndSet(this@JobSupport, this, update)) {
+                        if (success) onStart()
+                    }
+                }
+                state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
+                    if (state._active === this) {
+                        val update = if (success && activate) NodeList.ACTIVE_STATE else null
+                        if (NodeList.ACTIVE.compareAndSet(state, this, update)) {
+                            if (success) onStart()
                         }
-                        else -> return failureMarker // not a new state
                     }
                 }
             }
 
-            override fun complete(op: AtomicOp, failure: Any?) {
-                val success = failure == null
-                val state = this@JobSupport._state
-                when {
-                    state === op -> {
-                        if (STATE.compareAndSet(this@JobSupport, op, if (success) EmptyActive else EmptyNew)) {
-                            if (success) onStart()
-                        }
-                    }
-                    state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                        if (state._active === op) {
-                            if (NodeList.ACTIVE.compareAndSet(state, op, if (success) NodeList.ACTIVE_STATE else null)) {
-                                if (success) onStart()
-                            }
-                        }
-                    }
-                }
-            }
         }
+    }
 
     /**
      * Override to provide the actual [start] action.
@@ -457,19 +508,16 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         while (true) { // lock-free loop on state
             val state = this.state
             when {
-                // EMPTY_ACTIVE state -- no completion handlers, active
-                state === EmptyActive -> {
+                state === EmptyActive -> { // EMPTY_ACTIVE state -- no completion handlers, active
                     // try move to SINGLE state
                     val node = nodeCache ?: makeNode(handler).also { nodeCache = it }
                     if (STATE.compareAndSet(this, state, node)) return node
                 }
-                // EMPTY_NEW state -- no completion handlers, new
-                state === EmptyNew -> {
+                state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
                     // try to promote it to list in new state
                     STATE.compareAndSet(this, state, NodeList(active = false))
                 }
-                // SINGLE/SINGLE+ state -- one completion handler
-                state is JobNode<*> -> {
+                state is JobNode<*> -> { // SINGLE/SINGLE+ state -- one completion handler
                     // try to promote it to list (SINGLE+ state)
                     state.addOneIfEmpty(NodeList(active = true))
                     // it must be in SINGLE+ state or state has changed (node could have need removed from state)
@@ -477,13 +525,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     // just attempt converting it to list if state is still the same, then continue lock-free loop
                     STATE.compareAndSet(this, state, list)
                 }
-                // LIST -- a list of completion handlers (either new or active)
-                state is NodeList -> {
+                state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
                     val node = nodeCache ?: makeNode(handler).also { nodeCache = it }
                     if (state.addLastIf(node) { this.state === state }) return node
                 }
-                // is inactive
-                else -> {
+                else -> { // is inactive
                     handler((state as? CompletedExceptionally)?.exception)
                     return EmptyRegistration
                 }
@@ -529,7 +575,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     final override fun cancel(cause: Throwable?): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state as? Incomplete ?: return false // quit if already complete
-            if (updateState(state, Cancelled(cause))) return true
+            if (updateState(state, Cancelled(state.idempotentStart, cause), mode = 0)) return true
         }
     }
 
@@ -543,7 +589,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     /**
      * Override for post-completion actions that need to do something with the state.
      */
-    protected open fun afterCompletion(state: Any?) {}
+    protected open fun afterCompletion(state: Any?, mode: Int) {}
 
     private fun makeNode(handler: CompletionHandler): JobNode<*> =
             (handler as? JobNode<*>)?.also { require(it.job === this) }
@@ -557,20 +603,29 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      */
     public interface Incomplete {
         val isActive: Boolean
+        val idempotentStart: Any? // != null if this state is a descendant of trySelect(idempotent)
     }
 
     private class NodeList(
         active: Boolean
     ) : LockFreeLinkedListHead(), Incomplete {
         @Volatile
+        @JvmField
         var _active: Any? = if (active) ACTIVE_STATE else null
 
-        override val isActive: Boolean get() {
+        val active: Any? get() {
             while (true) { // helper loop for atomic ops
                 val active = this._active
-                if (active !is OpDescriptor) return active != null
+                if (active !is OpDescriptor) return active
                 active.perform(this)
             }
+        }
+
+        override val isActive: Boolean get() = active != null
+
+        override val idempotentStart: Any? get() {
+            val active = this.active
+            return if (active === ACTIVE_STATE) null else active
         }
 
         companion object {
@@ -595,13 +650,20 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
+    public open class CompletedIdempotentStart(
+        @JvmField val idempotentStart: Any?
+    )
+
     /**
      * Class for a [state] of a job that had completed exceptionally, including cancellation.
      *
      * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
      *        if created on first get from [exception] property.
      */
-    public open class CompletedExceptionally(val cause: Throwable?) {
+    public open class CompletedExceptionally(
+        idempotentStart: Any?,
+        @JvmField val cause: Throwable?
+    ) : CompletedIdempotentStart(idempotentStart) {
         @Volatile
         private var _exception: Throwable? = cause // materialize CancellationException on first need
 
@@ -618,20 +680,27 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     /**
      * A specific subclass of [CompletedExceptionally] for cancelled jobs.
      */
-    public class Cancelled(cause: Throwable?) : CompletedExceptionally(cause)
+    public class Cancelled(
+        idempotentStart: Any?,
+        cause: Throwable?
+    ) : CompletedExceptionally(idempotentStart, cause)
 }
+
+internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
 
 private val EmptyNew = Empty(false)
 private val EmptyActive = Empty(true)
 
 private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
+    override val idempotentStart: Any? get() = null
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
 internal abstract class JobNode<out J : Job>(
-    val job: J
+    @JvmField val job: J
 ) : LockFreeLinkedListNode(), Job.Registration, CompletionHandler, JobSupport.Incomplete {
     final override val isActive: Boolean get() = true
+    final override val idempotentStart: Any? get() = null
     // if unregister is called on this instance, then Job was an instance of JobSupport that added this node it itself
     // directly without wrapping
     final override fun unregister() = (job as JobSupport).removeNode(this)
@@ -640,7 +709,7 @@ internal abstract class JobNode<out J : Job>(
 
 private class InvokeOnCompletion(
     job: Job,
-    val handler: CompletionHandler
+    @JvmField val handler: CompletionHandler
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = handler.invoke(reason)
     override fun toString() = "InvokeOnCompletion[${handler::class.java.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
@@ -648,15 +717,15 @@ private class InvokeOnCompletion(
 
 private class ResumeOnCompletion(
     job: Job,
-    val continuation: Continuation<Unit>
+    @JvmField val continuation: Continuation<Unit>
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = continuation.resume(Unit)
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
 
-private class UnregisterOnCompletion(
+internal class UnregisterOnCompletion(
     job: Job,
-    val registration: Job.Registration
+    @JvmField val registration: Job.Registration
 ) : JobNode<Job>(job) {
     override fun invoke(reason: Throwable?) = registration.unregister()
     override fun toString(): String = "UnregisterOnCompletion[$registration]"
@@ -664,15 +733,23 @@ private class UnregisterOnCompletion(
 
 private class CancelOnCompletion(
     parentJob: Job,
-    val subordinateJob: Job
+    @JvmField val subordinateJob: Job
 ) : JobNode<Job>(parentJob) {
     override fun invoke(reason: Throwable?) { subordinateJob.cancel(reason) }
     override fun toString(): String = "CancelOnCompletion[$subordinateJob]"
 }
 
+private class ParentOnCompletion(
+    parentJob: Job,
+    @JvmField val subordinateJob: JobSupport
+) : JobNode<Job>(parentJob) {
+    override fun invoke(reason: Throwable?) { subordinateJob.onParentCompletion(reason) }
+    override fun toString(): String = "ParentOnCompletion[$subordinateJob]"
+}
+
 private class CancelFutureOnCompletion(
     job: Job,
-    val future: Future<*>
+    @JvmField val future: Future<*>
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this

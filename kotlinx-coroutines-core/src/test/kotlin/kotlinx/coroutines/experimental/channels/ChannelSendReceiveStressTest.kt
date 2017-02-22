@@ -17,12 +17,14 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.selects.select
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import org.junit.Assert.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -35,12 +37,13 @@ class ChannelSendReceiveStressTest(
         @JvmStatic
         fun params(): Collection<Array<Any>> =
                 listOf(1, 2, 10).flatMap { nSenders ->
-                    listOf(1, 6).flatMap { nReceivers ->
+                    listOf(1, 10).flatMap { nReceivers ->
                         TestChannelKind.values().map { arrayOf<Any>(it, nSenders, nReceivers) }
                     }
                 }
     }
 
+    val timeLimit = 30_000L // 30 sec
     val nEvents = 1_000_000
 
     val channel = kind.create()
@@ -55,24 +58,34 @@ class ChannelSendReceiveStressTest(
         val receivers = List(nReceivers) { receiverIndex ->
             // different event receivers use different code
             launch(CommonPool + CoroutineName("receiver$receiverIndex")) {
-                when (receiverIndex % 3) {
+                when (receiverIndex % 5) {
                     0 -> doReceive(receiverIndex)
                     1 -> doReceiveOrNull(receiverIndex)
                     2 -> doIterator(receiverIndex)
+                    3 -> doReceiveSelect(receiverIndex)
+                    4 -> doReceiveSelectOrNull(receiverIndex)
                 }
                 receiversCompleted.incrementAndGet()
             }
         }
         val senders = List(nSenders) { senderIndex ->
             launch(CommonPool + CoroutineName("sender$senderIndex")) {
-                for (i in senderIndex until nEvents step nSenders)
-                    channel.send(i)
+                when (senderIndex % 2) {
+                    0 -> doSend(senderIndex)
+                    1 -> doSendSelect(senderIndex)
+                }
                 sendersCompleted.incrementAndGet()
             }
         }
-        senders.forEach { it.join() }
-        channel.close()
-        receivers.forEach { it.join() }
+        try {
+            withTimeout(timeLimit) {
+                senders.forEach { it.join() }
+                channel.close()
+                receivers.forEach { it.join() }
+            }
+        } catch (e: CancellationException) {
+            println("!!! Test timed out $e")
+        }
         println("Tested $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         println("Completed successfully ${sendersCompleted.get()} sender coroutines")
         println("Completed successfully ${receiversCompleted.get()} receiver coroutines")
@@ -90,9 +103,19 @@ class ChannelSendReceiveStressTest(
         }
     }
 
+    private suspend fun doSend(senderIndex: Int) {
+        for (i in senderIndex until nEvents step nSenders)
+            channel.send(i)
+    }
+
+    private suspend fun doSendSelect(senderIndex: Int) {
+        for (i in senderIndex until nEvents step nSenders)
+            select<Unit> { channel.onSend(i) { Unit } }
+    }
+
     private fun doReceived(receiverIndex: Int, event: Int) {
         if (received.put(event, event) != null) {
-            println("Duplicate event $event")
+            println("Duplicate event $event at $receiverIndex")
             dupes.incrementAndGet()
         }
         receivedBy[receiverIndex]++
@@ -103,7 +126,6 @@ class ChannelSendReceiveStressTest(
             try { doReceived(receiverIndex, channel.receive()) }
             catch (ex: ClosedReceiveChannelException) { break }
         }
-
     }
 
     private suspend fun doReceiveOrNull(receiverIndex: Int) {
@@ -114,6 +136,22 @@ class ChannelSendReceiveStressTest(
 
     private suspend fun doIterator(receiverIndex: Int) {
         for (event in channel) {
+            doReceived(receiverIndex, event)
+        }
+    }
+
+    private suspend fun doReceiveSelect(receiverIndex: Int) {
+        while (true) {
+            try {
+                val event = select<Int> { channel.onReceive { it } }
+                doReceived(receiverIndex, event)
+            } catch (ex: ClosedReceiveChannelException) { break }
+        }
+    }
+
+    private suspend fun doReceiveSelectOrNull(receiverIndex: Int) {
+        while (true) {
+            val event = select<Int?> { channel.onReceiveOrNull { it } } ?: break
             doReceived(receiverIndex, event)
         }
     }

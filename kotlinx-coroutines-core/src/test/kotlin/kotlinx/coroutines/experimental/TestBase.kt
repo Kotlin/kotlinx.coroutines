@@ -26,18 +26,28 @@ open class TestBase {
     var finished = AtomicBoolean()
     var error = AtomicReference<Throwable>()
 
+    public fun error(message: Any): Nothing {
+        val exception = IllegalStateException(message.toString())
+        error.compareAndSet(null, exception)
+        throw exception
+    }
+
+    public inline fun check(value: Boolean, lazyMessage: () -> Any): Unit {
+        if (!value) error(lazyMessage())
+    }
+
     fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
 
     fun expectUnreached() {
-        throw IllegalStateException("Should not be reached").also { error.compareAndSet(null, it) }
+        error("Should not be reached")
     }
 
     fun finish(index: Int) {
         expect(index)
-        finished.set(true)
+        check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
     }
 
     @After

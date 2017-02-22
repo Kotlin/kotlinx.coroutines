@@ -16,14 +16,16 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import kotlinx.coroutines.experimental.removeOnCancel
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Abstract channel. It is a base class for buffered and unbuffered channels.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AbstractChannel<E> : Channel<E> {
     private val queue = LockFreeLinkedListHead()
@@ -52,11 +54,22 @@ public abstract class AbstractChannel<E> : Channel<E> {
     protected abstract fun offerInternal(element: E): Any
 
     /**
+     * Tries to add element to buffer or to queued receiver if select statement clause was not selected yet.
+     * Return type is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`.
+     */
+    protected abstract fun offerSelectInternal(element: E, select: SelectInstance<*>): Any
+
+    /**
      * Tries to remove element from buffer or from queued sender.
-     * Return type is `E | POLL_EMPTY | Closed`
+     * Return type is `E | POLL_FAILED | Closed`
      */
     protected abstract fun pollInternal(): Any?
 
+    /**
+     * Tries to remove element from buffer or from queued sender if select statement clause was not selected yet.
+     * Return type is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
+     */
+    protected abstract fun pollSelectInternal(select: SelectInstance<*>): Any?
 
     // ------ state functions for concrete implementations ------
 
@@ -68,7 +81,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     /**
      * Returns non-null closed token if it is last in the queue.
      */
-    protected val closedForSend: Any? get() = queue.prev as? Closed<*>
+    protected val closedForSend: ReceiveOrClosed<*>? get() = queue.prev as? Closed<*>
 
     // ------ SendChannel ------
 
@@ -86,13 +99,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
+            result === OFFER_FAILED -> false
             result is Closed<*> -> throw result.sendException
-            else -> false
+            else -> error("offerInternal returned $result")
         }
     }
 
     private suspend fun sendSuspend(element: E): Unit = suspendCancellableCoroutine(true) sc@ { cont ->
-        val send = SendElement(cont, element)
+        val send = SendElement(element, cont)
         loop@ while (true) {
             if (enqueueSend(send)) {
                 cont.initCancellability() // make it properly cancellable
@@ -106,10 +120,12 @@ public abstract class AbstractChannel<E> : Channel<E> {
                     cont.resume(Unit)
                     return@sc
                 }
+                result === OFFER_FAILED -> continue@loop
                 result is Closed<*> -> {
                     cont.resumeWithException(result.sendException)
                     return@sc
                 }
+                else -> error("offerInternal returned $result")
             }
         }
     }
@@ -147,7 +163,82 @@ public abstract class AbstractChannel<E> : Channel<E> {
      * Retrieves first receiving waiter from the queue or returns closed token.
      */
     protected fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
-        queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>> { it is Closed<*> }
+        queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>>({ it is Closed<*> })
+
+    // ------ registerSelectSend ------
+
+    protected fun describeTryOffer(element: E): TryOfferDesc<E> = TryOfferDesc(element, queue)
+
+    protected class TryOfferDesc<E>(
+        @JvmField val element: E,
+        queue: LockFreeLinkedListHead
+    ) : RemoveFirstDesc<ReceiveOrClosed<E>>(queue) {
+        @JvmField var resumeToken: Any? = null
+
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
+            if (affected !is ReceiveOrClosed<*>) return OFFER_FAILED
+            if (affected is Closed<*>) return affected
+            return null
+        }
+
+        override fun validatePrepared(node: ReceiveOrClosed<E>): Boolean {
+            val token = node.tryResumeReceive(element, idempotent = this) ?: return false
+            resumeToken = token
+            return true
+        }
+    }
+
+    private inner class TryEnqueueSendDesc<E, R>(
+        element: E,
+        select: SelectInstance<R>,
+        block: suspend () -> R
+    ) : AddLastDesc(queue, SendSelect(element, select, block)) {
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
+            if (affected is ReceiveOrClosed<*>) {
+                return affected as? Closed<*> ?: ENQUEUE_FAILED
+            }
+            return null
+        }
+
+        override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
+            if (!isBufferFull) return ENQUEUE_FAILED
+            return super.onPrepare(affected, next)
+        }
+
+        override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
+            super.finishOnSuccess(affected, next)
+            // we can actually remove on select start, but this is also Ok (it'll get removed if discovered there)
+            (node as SendSelect<*>).removeOnSelectCompletion()
+        }
+    }
+
+    override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
+        while (true) {
+            if (select.isSelected) return
+            if (isFull) {
+                val enqueueOp = TryEnqueueSendDesc(element, select, block)
+                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
+                when {
+                    enqueueResult === ALREADY_SELECTED -> return
+                    enqueueResult === ENQUEUE_FAILED -> {} // retry
+                    enqueueResult is Closed<*> -> throw enqueueResult.sendException
+                    else -> error("performAtomicIfNotSelected(TryEnqueueSendDesc) returned $enqueueResult")
+                }
+            } else {
+                val offerResult = offerSelectInternal(element, select)
+                when {
+                    offerResult === ALREADY_SELECTED -> return
+                    offerResult === OFFER_FAILED -> {} // retry
+                    offerResult === OFFER_SUCCESS -> {
+                        block.startUndispatchedCoroutine(select.completion)
+                        return
+                    }
+                    offerResult is Closed<*> -> throw offerResult.sendException
+                    else -> error("offerSelectInternal returned $offerResult")
+                }
+            }
+        }
+    }
 
     // ------ ReceiveChannel ------
 
@@ -158,7 +249,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     public final override suspend fun receive(): E {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result !== POLL_EMPTY) return receiveResult(result)
+        if (result !== POLL_FAILED) return receiveResult(result)
         // slow-path does suspend
         return receiveSuspend()
     }
@@ -171,7 +262,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun receiveSuspend(): E = suspendCancellableCoroutine(true) sc@ { cont ->
-        val receive = ReceiveNonNull(cont)
+        val receive = ReceiveElement(cont as CancellableContinuation<E?>, nullOnClose = false)
         while (true) {
             if (enqueueReceive(receive)) {
                 cont.initCancellability() // make it properly cancellable
@@ -184,7 +275,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
                 cont.resumeWithException(result.receiveException)
                 return@sc
             }
-            if (result !== POLL_EMPTY) {
+            if (result !== POLL_FAILED) {
                 cont.resume(result as E)
                 return@sc
             }
@@ -203,7 +294,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     public final override suspend fun receiveOrNull(): E? {
         // fast path -- try poll non-blocking
         val result = pollInternal()
-        if (result !== POLL_EMPTY) return receiveOrNullResult(result)
+        if (result !== POLL_FAILED) return receiveOrNullResult(result)
         // slow-path does suspend
         return receiveOrNullSuspend()
     }
@@ -211,7 +302,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     @Suppress("UNCHECKED_CAST")
     private fun receiveOrNullResult(result: Any?): E? {
         if (result is Closed<*>) {
-            if (result.closeCause != null) throw result.receiveException
+            if (result.closeCause != null) throw result.closeCause
             return null
         }
         return result as E
@@ -219,7 +310,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun receiveOrNullSuspend(): E? = suspendCancellableCoroutine(true) sc@ { cont ->
-        val receive = ReceiveOrNull(cont)
+        val receive = ReceiveElement(cont, nullOnClose = true)
         while (true) {
             if (enqueueReceive(receive)) {
                 cont.initCancellability() // make it properly cancellable
@@ -232,10 +323,10 @@ public abstract class AbstractChannel<E> : Channel<E> {
                 if (result.closeCause == null)
                     cont.resume(null)
                 else
-                    cont.resumeWithException(result.receiveException)
+                    cont.resumeWithException(result.closeCause)
                 return@sc
             }
-            if (result !== POLL_EMPTY) {
+            if (result !== POLL_FAILED) {
                 cont.resume(result as E)
                 return@sc
             }
@@ -245,7 +336,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
     @Suppress("UNCHECKED_CAST")
     public final override fun poll(): E? {
         val result = pollInternal()
-        return if (result === POLL_EMPTY) null else receiveOrNullResult(result)
+        return if (result === POLL_FAILED) null else receiveOrNullResult(result)
     }
 
     public final override fun iterator(): ChannelIterator<E> = Iterator(this)
@@ -256,27 +347,139 @@ public abstract class AbstractChannel<E> : Channel<E> {
     protected fun takeFirstSendOrPeekClosed(): Send? =
         queue.removeFirstIfIsInstanceOfOrPeekIf<Send> { it is Closed<*> }
 
-    protected companion object {
-        const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
+    // ------ registerSelectReceive ------
 
-        val OFFER_SUCCESS: Any = Marker("OFFER_SUCCESS")
-        val OFFER_FAILED: Any = Marker("OFFER_FAILED")
+    protected fun describeTryPoll(): TryPollDesc<E> = TryPollDesc(queue)
 
-        val POLL_EMPTY: Any = Marker("POLL_EMPTY")
+    protected class TryPollDesc<E>(queue: LockFreeLinkedListHead) : RemoveFirstDesc<Send>(queue) {
+        @JvmField var resumeToken: Any? = null
+        @JvmField var pollResult: E? = null
 
-        fun isClosed(result: Any?): Boolean = result is Closed<*>
-    }
-
-    // for debugging
-    private class Marker(val string: String) {
-        override fun toString(): String = string
-    }
-
-    private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
-        cont.invokeOnCompletion {
-            if (cont.isCancelled && receive.remove())
-                onCancelledReceive()
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
+            if (affected is Closed<*>) return affected
+            if (affected !is Send) return POLL_FAILED
+            return null
         }
+
+        @Suppress("UNCHECKED_CAST")
+        override fun validatePrepared(node: Send): Boolean {
+            val token = node.tryResumeSend(this) ?: return false
+            resumeToken = token
+            pollResult = node.pollResult as E
+            return true
+        }
+    }
+
+    private inner class TryEnqueueReceiveDesc<E, R>(
+        select: SelectInstance<R>,
+        block: suspend (E?) -> R,
+        nullOnClose: Boolean
+    ) : AddLastDesc(queue, ReceiveSelect(select, block, nullOnClose)) {
+        override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
+            if (affected is Send) return ENQUEUE_FAILED
+            return null
+        }
+
+        override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
+            if (!isBufferEmpty) return ENQUEUE_FAILED
+            return super.onPrepare(affected, next)
+        }
+
+        override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
+            super.finishOnSuccess(affected, next)
+            // we can actually remove on select start, but this is also Ok (it'll get removed if discovered there)
+            (node as ReceiveSelect<*, *>).removeOnSelectCompletion()
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) {
+        while (true) {
+            if (select.isSelected) return
+            if (isEmpty) {
+                val enqueueOp = TryEnqueueReceiveDesc(select, block as (suspend (E?) -> R), nullOnClose = false)
+                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
+                when {
+                    enqueueResult === ALREADY_SELECTED -> return
+                    enqueueResult === ENQUEUE_FAILED -> {} // retry
+                    else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
+                }
+            } else {
+                val pollResult = pollSelectInternal(select)
+                when {
+                    pollResult === ALREADY_SELECTED -> return
+                    pollResult === POLL_FAILED -> {} // retry
+                    pollResult is Closed<*> -> throw pollResult.receiveException
+                    else -> {
+                        block.startUndispatchedCoroutine(pollResult as E, select.completion)
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) {
+        while (true) {
+            if (select.isSelected) return
+            if (isEmpty) {
+                val enqueueOp = TryEnqueueReceiveDesc(select, block, nullOnClose = true)
+                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
+                when {
+                    enqueueResult === ALREADY_SELECTED -> return
+                    enqueueResult === ENQUEUE_FAILED -> {} // retry
+                    else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
+                }
+            } else {
+                val pollResult = pollSelectInternal(select)
+                when {
+                    pollResult === ALREADY_SELECTED -> return
+                    pollResult === POLL_FAILED -> {} // retry
+                    pollResult is Closed<*> -> {
+                        if (pollResult.closeCause == null) {
+                            if (select.trySelect(idempotent = null))
+                                block.startUndispatchedCoroutine(null, select.completion)
+                            return
+                        } else
+                            throw pollResult.closeCause
+                    }
+                    else -> {
+                        // selected successfully
+                        block.startUndispatchedCoroutine(pollResult as E, select.completion)
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    // ------ protected ------
+
+    protected companion object {
+        private const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
+
+        @JvmStatic
+        val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
+        @JvmStatic
+        val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
+
+        @JvmStatic
+        val POLL_FAILED: Any = Symbol("POLL_FAILED")
+
+        @JvmStatic
+        val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
+
+        @JvmStatic
+        private val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
+        @JvmStatic
+        private val NULL_VALUE: Any = Symbol("NULL_VALUE")
+
+        @JvmStatic
+        private val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
+
+        @JvmStatic
+        fun isClosed(result: Any?): Boolean = result is Closed<*>
     }
 
     /**
@@ -289,15 +492,24 @@ public abstract class AbstractChannel<E> : Channel<E> {
      */
     protected open fun onCancelledReceive() {}
 
+    // ------ private ------
+
+    private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
+        cont.invokeOnCompletion {
+            if (cont.isCancelled && receive.remove())
+                onCancelledReceive()
+        }
+    }
+
     private class Iterator<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
-        var result: Any? = POLL_EMPTY // E | POLL_CLOSED | POLL_EMPTY
+        var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
 
         suspend override fun hasNext(): Boolean {
             // check for repeated hasNext
-            if (result !== POLL_EMPTY) return hasNextResult(result)
+            if (result !== POLL_FAILED) return hasNextResult(result)
             // fast path -- try poll non-blocking
             result = channel.pollInternal()
-            if (result !== POLL_EMPTY) return hasNextResult(result)
+            if (result !== POLL_FAILED) return hasNextResult(result)
             // slow-path does suspend
             return hasNextSuspend()
         }
@@ -328,7 +540,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
                         cont.resumeWithException(result.receiveException)
                     return@sc
                 }
-                if (result !== POLL_EMPTY) {
+                if (result !== POLL_FAILED) {
                     cont.resume(true)
                     return@sc
                 }
@@ -339,8 +551,8 @@ public abstract class AbstractChannel<E> : Channel<E> {
         suspend override fun next(): E {
             val result = this.result
             if (result is Closed<*>) throw result.receiveException
-            if (result !== POLL_EMPTY) {
-                this.result = POLL_EMPTY
+            if (result !== POLL_FAILED) {
+                this.result = POLL_FAILED
                 return result as E
             }
             // rare case when hasNext was not invoked yet -- just delegate to receive (leave state as is)
@@ -353,7 +565,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
      */
     protected interface Send {
         val pollResult: Any? // E | Closed
-        fun tryResumeSend(): Any?
+        fun tryResumeSend(idempotent: Any?): Any?
         fun completeResumeSend(token: Any)
     }
 
@@ -362,31 +574,59 @@ public abstract class AbstractChannel<E> : Channel<E> {
      */
     protected interface ReceiveOrClosed<in E> {
         val offerResult: Any // OFFER_SUCCESS | Closed
-        fun tryResumeReceive(value: E): Any?
+        fun tryResumeReceive(value: E, idempotent: Any?): Any?
         fun completeResumeReceive(token: Any)
     }
 
     @Suppress("UNCHECKED_CAST")
     private class SendElement(
-            val cont: CancellableContinuation<Unit>,
-            override val pollResult: Any?
+        override val pollResult: Any?,
+        @JvmField val cont: CancellableContinuation<Unit>
     ) : LockFreeLinkedListNode(), Send {
-        override fun tryResumeSend(): Any? = cont.tryResume(Unit)
+        override fun tryResumeSend(idempotent: Any?): Any? = cont.tryResume(Unit, idempotent)
         override fun completeResumeSend(token: Any) = cont.completeResume(token)
+        override fun toString(): String = "SendElement($pollResult)[$cont]"
     }
 
-    private class Closed<in E>(
-        val closeCause: Throwable?
+    private class SendSelect<R>(
+        override val pollResult: Any?,
+        @JvmField val select: SelectInstance<R>,
+        @JvmField val block: suspend () -> R
+    ) : LockFreeLinkedListNode(), Send, CompletionHandler {
+        override fun tryResumeSend(idempotent: Any?): Any? =
+            if (select.trySelect(idempotent)) SELECT_STARTED else null
+
+        override fun completeResumeSend(token: Any) {
+            check(token === SELECT_STARTED)
+            block.startCoroutine(select.completion)
+        }
+
+        fun removeOnSelectCompletion() {
+            select.invokeOnCompletion(this)
+        }
+
+        override fun invoke(cause: Throwable?) {
+            remove()
+        }
+
+        override fun toString(): String = "SendSelect($pollResult)[$select]"
+    }
+
+    /**
+     * Represents closed channel.
+     */
+    protected class Closed<in E>(
+        @JvmField val closeCause: Throwable?
     ) : LockFreeLinkedListNode(), Send, ReceiveOrClosed<E> {
         @Volatile
-        var _sendException: Throwable? = null
+        private var _sendException: Throwable? = null
 
         val sendException: Throwable get() = _sendException ?:
             (closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE))
                     .also { _sendException = it }
 
         @Volatile
-        var _receiveException: Throwable? = null
+        private var _receiveException: Throwable? = null
 
         val receiveException: Throwable get() = _receiveException ?:
             (closeCause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE))
@@ -394,10 +634,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
 
         override val offerResult get() = this
         override val pollResult get() = this
-        override fun tryResumeSend(): Boolean = true
-        override fun completeResumeSend(token: Any) {}
-        override fun tryResumeReceive(value: E): Any? = throw sendException
+        override fun tryResumeSend(idempotent: Any?): Any? = CLOSE_RESUMED
+        override fun completeResumeSend(token: Any) { check(token === CLOSE_RESUMED) }
+        override fun tryResumeReceive(value: E, idempotent: Any?): Any? = throw sendException
         override fun completeResumeReceive(token: Any) = throw sendException
+        override fun toString(): String = "Closed[$closeCause]"
     }
 
     private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
@@ -405,34 +646,51 @@ public abstract class AbstractChannel<E> : Channel<E> {
         abstract fun resumeReceiveClosed(closed: Closed<*>)
     }
 
-    private class ReceiveNonNull<in E>(val cont: CancellableContinuation<E>) : Receive<E>() {
-        override fun tryResumeReceive(value: E): Any? = cont.tryResume(value)
-        override fun completeResumeReceive(token: Any) = cont.completeResume(token)
-        override fun resumeReceiveClosed(closed: Closed<*>) = cont.resumeWithException(closed.receiveException)
-    }
-
-    private class ReceiveOrNull<in E>(val cont: CancellableContinuation<E?>) : Receive<E>() {
-        override fun tryResumeReceive(value: E): Any? = cont.tryResume(value)
+    private class ReceiveElement<in E>(
+        @JvmField val cont: CancellableContinuation<E?>,
+        @JvmField val nullOnClose: Boolean
+    ) : Receive<E>() {
+        override fun tryResumeReceive(value: E, idempotent: Any?): Any? = cont.tryResume(value, idempotent)
         override fun completeResumeReceive(token: Any) = cont.completeResume(token)
         override fun resumeReceiveClosed(closed: Closed<*>) {
-            if (closed.closeCause == null)
+            if (closed.closeCause == null && nullOnClose)
                 cont.resume(null)
             else
                 cont.resumeWithException(closed.receiveException)
         }
+        override fun toString(): String = "ReceiveElement[$cont,nullOnClose=$nullOnClose]"
     }
 
+    private class IdempotentTokenValue<out E>(
+        @JvmField val token: Any,
+        @JvmField val value: E
+    )
+
     private class ReceiveHasNext<E>(
-            val iterator: Iterator<E>,
-            val cont: CancellableContinuation<Boolean>
+        @JvmField val iterator: Iterator<E>,
+        @JvmField val cont: CancellableContinuation<Boolean>
     ) : Receive<E>() {
-        override fun tryResumeReceive(value: E): Any? {
-            val token = cont.tryResume(true)
-            if (token != null) iterator.result = value
+        override fun tryResumeReceive(value: E, idempotent: Any?): Any? {
+            val token = cont.tryResume(true, idempotent)
+            if (token != null) {
+                /*
+                   When idempotent != null this invocation can be stale and we cannot directly update iterator.result
+                   Instead, we save both token & result into a temporary IdempotentTokenValue object and
+                   set iterator result only in completeResumeReceive that is going to be invoked just once
+                 */
+                if (idempotent != null) return IdempotentTokenValue(token, value)
+                iterator.result = value
+            }
             return token
         }
 
-        override fun completeResumeReceive(token: Any) = cont.completeResume(token)
+        override fun completeResumeReceive(token: Any) {
+            if (token is IdempotentTokenValue<*>) {
+                iterator.result = token.value
+                cont.completeResume(token.token)
+            } else
+                cont.completeResume(token)
+        }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
             val token = if (closed.closeCause == null)
@@ -444,5 +702,40 @@ public abstract class AbstractChannel<E> : Channel<E> {
                 cont.completeResume(token)
             }
         }
+        override fun toString(): String = "ReceiveHasNext[$cont]"
+    }
+
+    private class ReceiveSelect<R, in E>(
+        @JvmField val select: SelectInstance<R>,
+        @JvmField val block: suspend (E?) -> R,
+        @JvmField val nullOnClose: Boolean
+    ) : Receive<E>(), CompletionHandler {
+        override fun tryResumeReceive(value: E, idempotent: Any?): Any?  =
+            if (select.trySelect(idempotent)) (value ?: NULL_VALUE) else null
+
+        @Suppress("UNCHECKED_CAST")
+        override fun completeResumeReceive(token: Any) {
+            val value: E = (if (token === NULL_VALUE) null else token) as E
+            block.startCoroutine(value, select.completion)
+        }
+
+        override fun resumeReceiveClosed(closed: Closed<*>) {
+            if (select.trySelect(idempotent = null)) {
+                if (closed.closeCause == null && nullOnClose) {
+                    block.startCoroutine(null, select.completion)
+                } else
+                    select.resumeSelectWithException(closed.receiveException)
+            }
+        }
+
+        fun removeOnSelectCompletion() {
+            select.invokeOnCompletion(this)
+        }
+
+        override fun invoke(cause: Throwable?) {
+            remove()
+        }
+
+        override fun toString(): String = "ReceiveSelect[$select,nullOnClose=$nullOnClose]"
     }
 }

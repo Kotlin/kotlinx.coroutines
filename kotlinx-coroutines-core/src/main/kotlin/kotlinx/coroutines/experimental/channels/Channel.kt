@@ -19,6 +19,9 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.select
 import kotlinx.coroutines.experimental.yield
 
 /**
@@ -40,7 +43,7 @@ public interface SendChannel<in E> {
     public val isFull: Boolean
 
     /**
-     * Adds [element] into to this queue, suspending the caller while this queue [isFull],
+     * Adds [element] into to this channel, suspending the caller while this channel [isFull],
      * or throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
      * It throws the original [close] cause exception if the channel has _failed_.
      *
@@ -51,6 +54,9 @@ public interface SendChannel<in E> {
      *
      * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocation with [onSend][SelectBuilder.onSend] clause.
+     * Use [offer] to try sending to this channel without waiting.
      */
     public suspend fun send(element: E)
 
@@ -61,6 +67,12 @@ public interface SendChannel<in E> {
      * It throws the original [close] cause exception if the channel has _failed_.
      */
     public fun offer(element: E): Boolean
+
+    /**
+     * Registers [onSend][SelectBuilder.onSend] select clause.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R)
 
     /**
      * Closes this channel with an optional exceptional [cause].
@@ -109,6 +121,9 @@ public interface ReceiveChannel<out E> {
      *
      * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocation with [onReceive][SelectBuilder.onReceive] clause.
+     * Use [poll] to try receiving from this channel without waiting.
      */
     public suspend fun receive(): E
 
@@ -124,6 +139,9 @@ public interface ReceiveChannel<out E> {
      *
      * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocation with [onReceiveOrNull][SelectBuilder.onReceiveOrNull] clause.
+     * Use [poll] to try receiving from this channel without waiting.
      */
     public suspend fun receiveOrNull(): E?
 
@@ -140,6 +158,18 @@ public interface ReceiveChannel<out E> {
      * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
     public operator fun iterator(): ChannelIterator<E>
+
+    /**
+     * Registers [onReceive][SelectBuilder.onReceive] select clause.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R)
+
+    /**
+     * Registers [onReceiveOrNull][SelectBuilder.onReceiveOrNull] select clause.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R)
 }
 
 /**

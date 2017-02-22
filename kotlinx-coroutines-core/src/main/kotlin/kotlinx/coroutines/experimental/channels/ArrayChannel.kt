@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.ALREADY_SELECTED
+import kotlinx.coroutines.experimental.selects.SelectInstance
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -53,8 +55,8 @@ public class ArrayChannel<E>(
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
     override fun offerInternal(element: E): Any {
-        var token: Any? = null
         var receive: ReceiveOrClosed<E>? = null
+        var token: Any? = null
         locked {
             val size = this.size
             closedForSend?.let { return it }
@@ -63,9 +65,13 @@ public class ArrayChannel<E>(
                 this.size = size + 1 // update size before checking queue (!!!)
                 // check for receivers that were waiting on empty queue
                 if (size == 0) {
-                    while (true) {
-                        receive = takeFirstReceiveOrPeekClosed() ?: break // break when no receivers queued
-                        token = receive!!.tryResumeReceive(element)
+                    loop@ while (true) {
+                        receive = takeFirstReceiveOrPeekClosed() ?: break@loop // break when no receivers queued
+                        if (receive is Closed) {
+                            this.size = size // restore size
+                            return receive!!
+                        }
+                        token = receive!!.tryResumeReceive(element, idempotent = null)
                         if (token != null) {
                             this.size = size // restore size
                             return@locked
@@ -83,33 +89,142 @@ public class ArrayChannel<E>(
         return receive!!.offerResult
     }
 
-    // result is `E | POLL_EMPTY | Closed`
-    override fun pollInternal(): Any? {
+    // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`.
+    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+        var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
+        locked {
+            val size = this.size
+            closedForSend?.let { return it }
+            if (size < capacity) {
+                // tentatively put element to buffer
+                this.size = size + 1 // update size before checking queue (!!!)
+                // check for receivers that were waiting on empty queue
+                if (size == 0) {
+                    loop@ while (true) {
+                        val offerOp = describeTryOffer(element)
+                        val failure = select.performAtomicTrySelect(offerOp)
+                        when {
+                            failure == null -> { // offered successfully
+                                this.size = size // restore size
+                                receive = offerOp.result
+                                token = offerOp.resumeToken
+                                check(token != null)
+                                return@locked
+                            }
+                            failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
+                            failure === ALREADY_SELECTED || failure is Closed<*> -> {
+                                this.size = size // restore size
+                                return failure
+                            }
+                            else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
+                        }
+                    }
+                }
+                // let's try to select sending this element to buffer
+                if (!select.trySelect(null)) {
+                    this.size = size // restore size
+                    return ALREADY_SELECTED
+                }
+                buffer[(head + size) % capacity] = element // actually queue element
+                return OFFER_SUCCESS
+            }
+            // size == capacity: full
+            return OFFER_FAILED
+        }
+        // breaks here if offer meets receiver
+        receive!!.completeResumeReceive(token!!)
+        return receive!!.offerResult
+    }
+
+    // result is `E | POLL_FAILED | Closed`
+    override fun pollInternal(): Any? {
         var send: Send? = null
+        var token: Any? = null
         var result: Any? = null
         locked {
             val size = this.size
-            if (size == 0) return closedForSend ?: POLL_EMPTY
+            if (size == 0) return closedForSend ?: POLL_FAILED
             // size > 0: not empty -- retrieve element
             result = buffer[head]
             buffer[head] = null
             this.size = size - 1 // update size before checking queue (!!!)
             // check for senders that were waiting on full queue
-            var replacement: Any? = POLL_EMPTY
+            var replacement: Any? = POLL_FAILED
             if (size == capacity) {
-                while (true) {
+                loop@ while (true) {
                     send = takeFirstSendOrPeekClosed() ?: break
-                    token = send!!.tryResumeSend()
+                    token = send!!.tryResumeSend(idempotent = null)
                     if (token != null) {
                         replacement = send!!.pollResult
-                        break
+                        break@loop
                     }
                 }
             }
-            if (replacement !== POLL_EMPTY && !isClosed(replacement)) {
+            if (replacement !== POLL_FAILED && !isClosed(replacement)) {
                 this.size = size // restore size
                 buffer[(head + size) % capacity] = replacement
+            }
+            head = (head + 1) % capacity
+        }
+        // complete send the we're taken replacement from
+        if (token != null)
+            send!!.completeResumeSend(token!!)
+        return result
+    }
+
+    // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
+    override fun pollSelectInternal(select: SelectInstance<*>): Any? {
+        var send: Send? = null
+        var token: Any? = null
+        var result: Any? = null
+        locked {
+            val size = this.size
+            if (size == 0) return closedForSend ?: POLL_FAILED
+            // size > 0: not empty -- retrieve element
+            result = buffer[head]
+            buffer[head] = null
+            this.size = size - 1 // update size before checking queue (!!!)
+            // check for senders that were waiting on full queue
+            var replacement: Any? = POLL_FAILED
+            if (size == capacity) {
+                loop@ while (true) {
+                    val pollOp = describeTryPoll()
+                    val failure = select.performAtomicTrySelect(pollOp)
+                    when {
+                        failure == null -> { // polled successfully
+                            send = pollOp.result
+                            token = pollOp.resumeToken
+                            check(token != null)
+                            replacement = send!!.pollResult
+                            break@loop
+                        }
+                        failure === POLL_FAILED -> break@loop // cannot poll -> Ok to take from buffer
+                        failure === ALREADY_SELECTED -> {
+                            this.size = size // restore size
+                            buffer[head] = result // restore head
+                            return failure
+                        }
+                        failure is Closed<*> -> {
+                            send = failure
+                            token = failure.tryResumeSend(idempotent = null)
+                            replacement = failure
+                            break@loop
+                        }
+                        else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
+                    }
+                }
+            }
+            if (replacement !== POLL_FAILED && !isClosed(replacement)) {
+                this.size = size // restore size
+                buffer[(head + size) % capacity] = replacement
+            } else {
+                // failed to poll or is already closed --> let's try to select receiving this element from buffer
+                if (!select.trySelect(null)) {
+                    this.size = size // restore size
+                    buffer[head] = result // restore head
+                    return ALREADY_SELECTED
+                }
             }
             head = (head + 1) % capacity
         }

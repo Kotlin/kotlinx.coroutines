@@ -86,13 +86,13 @@ class LockFreeLinkedListTest {
     fun testAtomicOpsSingle() {
         val list = LockFreeLinkedListHead()
         assertContents(list)
-        val n1 = IntNode(1).also { list.addLast(it) }
+        val n1 = IntNode(1).also { single(list.describeAddLast(it)) }
         assertContents(list, 1)
-        val n2 = IntNode(2).also { list.addLast(it) }
+        val n2 = IntNode(2).also { single(list.describeAddLast(it)) }
         assertContents(list, 1, 2)
-        val n3 = IntNode(3).also { list.addLast(it) }
+        val n3 = IntNode(3).also { single(list.describeAddLast(it)) }
         assertContents(list, 1, 2, 3)
-        val n4 = IntNode(4).also { list.addLast(it) }
+        val n4 = IntNode(4).also { single(list.describeAddLast(it)) }
         assertContents(list, 1, 2, 3, 4)
         single(n3.describeRemove()!!)
         assertContents(list, 1, 2, 4)

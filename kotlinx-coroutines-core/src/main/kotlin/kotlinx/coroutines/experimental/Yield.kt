@@ -16,6 +16,9 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+
 /**
  * Yields a thread (or thread pool) of the current coroutine dispatcher to other coroutines to run.
  * If the coroutine dispatcher does not have its own thread pool (like [Unconfined] dispatcher) then this
@@ -24,6 +27,12 @@ package kotlinx.coroutines.experimental
  * If the [Job] of the current coroutine is completed when this suspending function is invoked or while
  * this function is waiting for dispatching, it resumes with [CancellationException].
  */
-suspend fun yield(): Unit = suspendCancellableCoroutine sc@ { cont ->
-    (cont as CancellableContinuationImpl).resumeYield(Unit)
+suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
+    val context = cont.context
+    val job = context[Job]
+    if (job != null && job.isCompleted) throw job.getCompletionException()
+    if (cont !is DispatchedContinuation<Unit>) return@sc Unit
+    if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
+    cont.dispatchYield(job, Unit)
+    COROUTINE_SUSPENDED
 }
