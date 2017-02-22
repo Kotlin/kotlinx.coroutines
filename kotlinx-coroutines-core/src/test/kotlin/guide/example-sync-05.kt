@@ -42,7 +42,7 @@ class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request wit
 // This function launches a new counter actor
 fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
     var counter = 0 // actor state
-    while (true) { // main loop of the actor
+    while (isActive) { // main loop of the actor
         val msg = request.receive()
         when (msg) {
             is IncCounter -> counter++

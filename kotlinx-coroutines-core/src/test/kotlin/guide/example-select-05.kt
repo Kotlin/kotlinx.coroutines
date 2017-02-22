@@ -22,7 +22,7 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
 
 fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String>(CommonPool) {
-    var current = input.receive() // will start with first received deferred value
+    var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
             input.onReceiveOrNull { update ->
@@ -49,18 +49,18 @@ fun asyncString(str: String, time: Long) = async(CommonPool) {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val chan = Channel<Deferred<String>>() // the channel for test
-    launch(context) { // launch printing coroutines
+    launch(context) { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
             println(s) // print each received string
     }
     chan.send(asyncString("BEGIN", 100))
     delay(200) // enough time for "BEGIN" to be produced
     chan.send(asyncString("Slow", 500))
-    delay(100) // not enough time for slow
+    delay(100) // not enough time to produce slow
     chan.send(asyncString("Replace", 100))
-    delay(500) // will give it time before the last one
+    delay(500) // give it time before the last one
     chan.send(asyncString("END", 500))
     delay(1000) // give it time to process
-    chan.close() // and close the channel immediately 
+    chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
 }

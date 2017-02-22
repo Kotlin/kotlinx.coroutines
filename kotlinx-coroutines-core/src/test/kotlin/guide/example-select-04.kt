@@ -29,7 +29,7 @@ fun asyncString(time: Int) = async(CommonPool) {
 
 fun asyncStringsList(): List<Deferred<String>> {
     val random = Random(3)
-    return (1..12).map { asyncString(random.nextInt(1000)) }
+    return List(12) { asyncString(random.nextInt(1000)) }
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {

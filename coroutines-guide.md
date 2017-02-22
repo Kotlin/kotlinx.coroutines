@@ -1379,7 +1379,7 @@ suspend fun massiveRun(action: suspend () -> Unit) {
 
 <!--- INCLUDE .*/example-sync-([0-9]+).kt -->
 
-We start with a very simple action, that increments a shared mutable variable. 
+We start with a very simple action that increments a shared mutable variable. 
 
 ```kotlin
 var counter = 0
@@ -1482,7 +1482,7 @@ class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request wit
 // This function launches a new counter actor
 fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
     var counter = 0 // actor state
-    while (true) { // main loop of the actor
+    while (isActive) { // main loop of the actor
         val msg = request.receive()
         when (msg) {
             is IncCounter -> counter++
@@ -1511,7 +1511,7 @@ works as a solution to the problem of shared mutable state.
 
 ## Select expression
 
-Select expression makes it possible to await multiple suspending function simultaneously and _select_
+Select expression makes it possible to await multiple suspending functions simultaneously and _select_
 the first one that becomes available.
 
 <!--- INCLUDE .*/example-select-([0-9]+).kt
@@ -1560,7 +1560,7 @@ suspend fun selectFizzBuzz() {
 }
 ```
 
-Let us run it for 7 times:
+Let us run it seven times:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1588,7 +1588,7 @@ buzz -> 'Buzz!'
 
 The [onReceive][SelectBuilder.onReceive] clause in `select` fails when the channel is closed and the corresponding
 `select` throws an exception. We can use [onReceiveOrNull][SelectBuilder.onReceiveOrNull] clause to perform a
-specific action when channel is closed. This example also show that `select` is an expression that returns 
+specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
 ```kotlin
@@ -1609,20 +1609,17 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
     }
 ```
 
-Lets have channel `a` that produces "Hello" string 4 and `b` that produces "World" 4 times for this example:
+Let's use it with channel `a` that produces "Hello" string four times and 
+channel `b` that produces "World" four times:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     // we are using the context of the main thread in this example for predictability ... 
     val a = produce<String>(context) { 
-        repeat(4) {
-            send("Hello $it")
-        }
+        repeat(4) { send("Hello $it") }
     }
     val b = produce<String>(context) { 
-        repeat(4) {
-            send("World $it")
-        }
+        repeat(4) { send("World $it") }
     }
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
@@ -1632,7 +1629,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-select-02.kt)
 
-The result of this code is quite interesting, so we'll analyze it in mode details:
+The result of this code is quite interesting, so we'll analyze it in mode detail:
 
 ```
 a -> 'Hello 0'
@@ -1645,11 +1642,11 @@ Channel 'a' is closed
 Channel 'a' is closed
 ```
 
-There are a couple of observations to make out of it. 
+There are couple of observations to make out of it. 
 
 First of all, `select` is _biased_ to the first clause. When several clauses are selectable at the same time, 
 the first one among them gets selected. Here, both channels are constantly producing strings, so `a` channel,
-being the first clause in select wins. However, because we are using unbuffered channel, the `a` gets suspended from
+being the first clause in select, wins. However, because we are using unbuffered channel, the `a` gets suspended from
 time to time on its [send][SendChannel.send] invocation and gives a chance for `b` to send, too.
 
 The second observation, is that [onReceiveOrNull][SelectBuilder.onReceiveOrNull] gets immediately selected when the 
@@ -1660,7 +1657,7 @@ channel is already closed.
 Select expression has [onSend][SelectBuilder.onSend] clause that can be used for a great good in combination 
 with a biased nature of selection.
 
-Let us write an example of producer of integer numbers that sends its values to a `side` channel when 
+Let us write an example of producer of integers that sends its values to a `side` channel when 
 the consumers on its primary channel cannot keep up with it:
 
 ```kotlin
@@ -1668,8 +1665,8 @@ fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
     for (num in 1..10) { // produce 10 numbers from 1 to 10
         delay(100) // every 100 ms
         select<Unit> {
-            onSend(num) { } // Send to the primary channel
-            side.onSend(num) { } // or to the side channel     
+            onSend(num) {} // Send to the primary channel
+            side.onSend(num) {} // or to the side channel     
         }
     }
 }
@@ -1711,8 +1708,8 @@ Done consuming
 
 ### Selecting deferred values
 
-Deferred values can be selected using [onAwait][SelectBuilder.onAwait] clause, which enables "wait first" 
-type of logic. Let us start with an async-style function that returns a deferred string value after 
+Deferred values can be selected using [onAwait][SelectBuilder.onAwait] clause. 
+Let us start with an async function that returns a deferred string value after 
 a random delay:
 
 <!--- INCLUDE .*/example-select-04.kt
@@ -1726,20 +1723,19 @@ fun asyncString(time: Int) = async(CommonPool) {
 }
 ```
 
-Let us start a dozen for them with random delay with the following function that returns a 
-collection of deferred values:
+Let us start a dozen of them with a random delay.
 
 ```kotlin
 fun asyncStringsList(): List<Deferred<String>> {
     val random = Random(3)
-    return (1..12).map { asyncString(random.nextInt(1000)) }
+    return List(12) { asyncString(random.nextInt(1000)) }
 }
 ```
 
-Now the main function awaits for the first of them to complete and count the number of deferred values
+Now the main function awaits for the first of them to complete and counts the number of deferred values
 that are still active. Note, that we've used here the fact that `select` expression is a Kotlin DSL, 
-and we can provide clauses for it using an arbitrary code. In this case we iterate over a list
-of deferred values to produce an `onAwait` clause for each one of them.
+so we can provide clauses for it using an arbitrary code. In this case we iterate over a list
+of deferred values to provide `onAwait` clause for each deferred value.
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1762,19 +1758,19 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 The output is:
 
 ```
-Deferred 4 produced answer 'Waited for 254 ms'
+Deferred 4 produced answer 'Waited for 128 ms'
 11 coroutines are still active
 ```
 
 ### Switch over a channel of deferred values
 
-Let us write a channel producer function that consumes a channel of deferred string values, await for each received
-deferred value, but only until next deferred value comes over or the channel is closed. This example puts together 
+Let us write a channel producer function that consumes a channel of deferred string values, waits for each received
+deferred value, but only until the next deferred value comes over or the channel is closed. This example puts together 
 [onReceiveOrNull][SelectBuilder.onReceiveOrNull] and [onAwait][SelectBuilder.onAwait] clauses in the same `select`:
 
 ```kotlin
 fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String>(CommonPool) {
-    var current = input.receive() // will start with first received deferred value
+    var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
             input.onReceiveOrNull { update ->
@@ -1810,19 +1806,19 @@ data to it:
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val chan = Channel<Deferred<String>>() // the channel for test
-    launch(context) { // launch printing coroutines
+    launch(context) { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
             println(s) // print each received string
     }
     chan.send(asyncString("BEGIN", 100))
     delay(200) // enough time for "BEGIN" to be produced
     chan.send(asyncString("Slow", 500))
-    delay(100) // not enough time for slow
+    delay(100) // not enough time to produce slow
     chan.send(asyncString("Replace", 100))
-    delay(500) // will give it time before the last one
+    delay(500) // give it time before the last one
     chan.send(asyncString("END", 500))
     delay(1000) // give it time to process
-    chan.close() // and close the channel immediately 
+    chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
 }
 ```
