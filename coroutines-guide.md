@@ -68,6 +68,12 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Fan-out](#fan-out)
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
+* [Shared mutable state and concurrency](#shared-mutable-state-and-concurrency)
+  * [The problem](#the-problem)
+  * [Thread-safe data structures](#thread-safe-data-structures)
+  * [Thread confinement](#thread-confinement)
+  * [Mutual exclusion](#mutual-exclusion)
+  * [Actors](#actors)
 * [Select expression](#select-expression)
   * [Selecting from channels](#selecting-from-channels)
   * [Selecting on close](#selecting-on-close)
@@ -1328,6 +1334,181 @@ Sending 4
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
 
+## Shared mutable state and concurrency
+
+Coroutines can be executed concurrently using a multi-threaded dispatcher like [CommonPool]. It presents
+all the usual concurrency problems. The main problem being synchronization of access to **shared mutable state**. 
+Some solutions to this problem in the land of coroutines are similar to the solutions in the multi-threaded world, 
+but others are unique.
+
+### The problem
+
+Let us launch 100k coroutines all doing the same action. We'll also measure their completion time for 
+further comparisons:
+
+<!--- INCLUDE .*/example-sync-([0-9]+).kt
+import kotlin.system.measureTimeMillis
+-->
+
+<!--- INCLUDE .*/example-sync-02.kt
+import java.util.concurrent.atomic.AtomicInteger
+-->
+
+<!--- INCLUDE .*/example-sync-04.kt
+import kotlinx.coroutines.experimental.sync.Mutex
+-->
+
+<!--- INCLUDE .*/example-sync-05.kt
+import kotlinx.coroutines.experimental.channels.*
+-->
+
+```kotlin
+suspend fun massiveRun(action: suspend () -> Unit) {
+    val n = 100_000
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch(CommonPool) {
+                action()
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed in $time ms")    
+}
+```
+
+<!--- INCLUDE .*/example-sync-([0-9]+).kt -->
+
+We start with a very simple action, that increments a shared mutable variable. 
+
+```kotlin
+var counter = 0
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    massiveRun {
+        counter++
+    }
+    println("Counter = $counter")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-01.kt)
+
+What does it print at the end? It is highly unlikely to ever print "100000", because all the 
+100k coroutines increment the `counter` concurrently without any synchronization.
+
+### Thread-safe data structures
+
+The general solution that works both for threads and for coroutines is to use a thread-safe (aka synchronized,
+linearizable, or atomic) data structure that provides all the necessarily synchronization for the corresponding 
+operations that needs to be performed on a shared state. 
+In the case of a simple counter we can use `AtomicInteger` class:
+
+```kotlin
+var counter = AtomicInteger()
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    massiveRun {
+        counter.incrementAndGet()
+    }
+    println("Counter = ${counter.get()}")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-02.kt)
+
+This is the fastest solution for this particular problem. It works for plain counters, collections, queues and other
+standard data structures and basic operations on them. However, it does not easily scale to complex
+state or to complex operations that do not have ready-to-use thread-safe implementations. 
+
+### Thread confinement
+
+Thread confinement is an approach to the problem of shared mutable state where all access to the particular shared
+state is confined to a single thread. It is typically used in UI applications, where all UI state is confined to 
+the single event-dispatch/application thread. It is easy to apply with coroutines by using a  
+single-threaded context:
+
+```kotlin
+val counterContext = newSingleThreadContext("CounterContext")
+var counter = 0
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    massiveRun {
+        run(counterContext) {
+            counter++
+        }
+    }
+    println("Counter = $counter")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-03.kt)
+
+### Mutual exclusion
+
+Mutual exclusion solution to the problem is to protect all modifications of the shared state with a _critical section_
+that is never executed concurrently. In a blocking world you'd typically use `synchronized` or `ReentrantLock` for that.
+Coroutine's alternative is called [Mutex]. It has [lock][Mutex.lock] and [unlock][Mutex.unlock] functions to 
+delimit a critical section. The key difference is that `Mutex.lock` is a suspending function. It does not block a thread.
+
+```kotlin
+val mutex = Mutex()
+var counter = 0
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    massiveRun {
+        mutex.lock()
+        try { counter++ }
+        finally { mutex.unlock() }
+    }
+    println("Counter = $counter")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-04.kt)
+
+### Actors
+
+An actor is a combination of a coroutine, the state that is confined and is encapsulated into this coroutine,
+and a channel to communicate with other coroutines. A simple actor can be written as a function, 
+but an actor with a complex state is better suited for a class. 
+
+```kotlin
+// Message types for counterActor
+sealed class CounterMsg
+object IncCounter : CounterMsg() // one-way message to increment counter
+class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request with reply
+
+// This function launches a new counter actor
+fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
+    var counter = 0 // actor state
+    while (true) { // main loop of the actor
+        val msg = request.receive()
+        when (msg) {
+            is IncCounter -> counter++
+            is GetCounter -> msg.response.send(counter)
+        }
+    }
+}
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val request = Channel<CounterMsg>()
+    counterActor(request)
+    massiveRun {
+        request.send(IncCounter)
+    }
+    val response = Channel<Int>()
+    request.send(GetCounter(response))
+    println("Counter = ${response.receive()}")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-05.kt)
+
+Notice, that it does not matter (for correctness) what context the actor itself is executed in. An actor is
+a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
+works as a solution to the problem of shared mutable state.
+
 ## Select expression
 
 Select expression makes it possible to await multiple suspending function simultaneously and _select_
@@ -1684,6 +1865,10 @@ Channel was closed
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/invoke.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/cancel.html
+<!--- INDEX kotlinx.coroutines.experimental.sync -->
+[Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/index.html
+[Mutex.lock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/lock.html
+[Mutex.unlock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/unlock.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/send.html
