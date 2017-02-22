@@ -7,7 +7,7 @@
   <title>Job - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L56">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L61">(source)</a></div>
 
 <p>A background job. It is created with <a href="../launch.html">launch</a> coroutine builder or with a
 <a href="invoke.html"><code>Job()</code></a> factory function.
@@ -224,9 +224,21 @@ It is optionally a child of a <a href="invoke.html#kotlinx.coroutines.experiment
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
         <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-join.html">onJoin</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">onJoin</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onJoin(kotlinx.coroutines.experimental.Job, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction0</span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Clause for <a href="join.html">Job.join</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-join.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onJoin(kotlinx.coroutines.experimental.Job, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> when the job is complete.
+This clause never fails, even if the job completes exceptionally.</p>
 
       </td>
 </tr>

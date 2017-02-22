@@ -7,7 +7,7 @@
   <title>ReceiveChannel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="receivechannel">ReceiveChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L83">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L95">(source)</a></div>
 
 <p>Receiver’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -121,6 +121,41 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tbody>
 </table>
 
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-receive.html">onReceive</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onReceive</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onReceive(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Clause for <a href="receive.html">ReceiveChannel.receive</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-receive.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onReceive(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> with the element that
+is received from the channel. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel
+<a href="is-closed-for-receive.html">isClosedForReceive</a> <em>normally</em> or with the original
+<a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-receive-or-null.html">onReceiveOrNull</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onReceiveOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onReceiveOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Clause for <a href="receive-or-null.html">ReceiveChannel.receiveOrNull</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-receive-or-null.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onReceiveOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> with the element that
+is received from the channel or selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-receive-or-null.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onReceiveOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> with <code>null</code> if if the channel
+<a href="is-closed-for-receive.html">isClosedForReceive</a> <em>normally</em>. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with
+the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="inheritors">Inheritors</h3>
 
 <table class="api-docs-table">
@@ -133,7 +168,7 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using ReceiveChannel.
-Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>

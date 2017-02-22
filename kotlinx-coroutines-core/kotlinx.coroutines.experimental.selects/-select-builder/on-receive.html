@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SelectBuilder.onReceive - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-receive.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.selects</a> / <a href="index.html">SelectBuilder</a> / <a href=".">onReceive</a></div>
+
+<h1 id="onreceive">onReceive</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onReceive</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onReceive(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L60">(source)</a></div>
+
+<p>Clause for <a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">ReceiveChannel.receive</a> suspending function that selects the given <a href="on-receive.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onReceive(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive.E, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> with the element that
+is received from the channel. The <a href="../select.html">select</a> invocation fails with <a href="../../kotlinx.coroutines.experimental.channels/-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel
+<a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> <em>normally</em> or with the original
+<a href="../../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -7,7 +7,7 @@
   <title>RendezvousChannel.&lt;init&gt; - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/-init-.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/-init-.html">
 </head>
 
   <body>
@@ -26,8 +26,8 @@
 <div class="signature"><code><span class="identifier">RendezvousChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
 
 <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
-to receiver only when <a href="#">send</a> and <a href="../-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
-until another coroutine invokes <a href="../-abstract-channel/receive.html">receive</a> and <a href="../-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+to receiver only when <a href="#">send</a> and <a href="#">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="#">receive</a> and <a href="#">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
 
 <p>This implementation is fully lock-free.</p>
 

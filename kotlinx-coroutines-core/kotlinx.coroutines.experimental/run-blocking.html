@@ -7,7 +7,7 @@
   <title>runBlocking - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">
 </head>
 
   <body>
@@ -33,8 +33,8 @@ to libraries that are written in suspending style, to be used in <code>main</cod
 in this blocked thread until the completion of this coroutine.
 See <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the other implementations that are provided by <code>kotlinx.coroutines</code>.</p>
 
-<p>If this blocked thread is interrupted (see <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/Thread.html#interrupt()">Thread.interrupt</a>), then the coroutine job is cancelled and
-this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>
+<p>If this blocked thread is interrupted (see <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#interrupt()">Thread.interrupt</a>), then the coroutine job is cancelled and
+this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>
 
 <p>See <a href="new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
 

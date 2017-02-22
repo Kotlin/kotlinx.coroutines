@@ -7,7 +7,7 @@
   <title>ArrayChannel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-array-channel/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-array-channel/">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="arraychannel">ArrayChannel</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayChannel.kt#L28">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayChannel.kt#L30">(source)</a></div>
 
 <p>Channel with array buffer of a fixed <a href="capacity.html">capacity</a>.
 Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
@@ -101,88 +101,6 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
 </tbody>
 </table>
 
-<h3 id="inherited-properties">Inherited Properties</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/closed-for-receive.html">closedForReceive</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">closedForReceive</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
-
-        <p>Returns non-null closed token if it is first in the queue.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/closed-for-send.html">closedForSend</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">closedForSend</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
-
-        <p>Returns non-null closed token if it is last in the queue.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
-side and all previously sent items were already received, so that the <a href="../-abstract-channel/receive.html">receive</a> attempt
-throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to receive
-an element from a failed channel throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-abstract-channel/close.html">close</a> and thus
-the <a href="../-abstract-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
-an element to a failed channel throw the original <a href="../-abstract-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/is-empty.html">isEmpty</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-abstract-channel/receive.html">receive</a> attempt will suspend.
-This function returns <code>false</code> for <a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/is-full.html">isFull</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-abstract-channel/send.html">send</a> attempt will suspend.
-This function returns <code>false</code> for <a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="functions">Functions</h3>
 
 <table class="api-docs-table">
@@ -201,144 +119,37 @@ Return type is <code>OFFER_SUCCESS | OFFER_FAILED | Closed</code>.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="offer-select-internal.html">offerSelectInternal</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">offerSelectInternal</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayChannel$offerSelectInternal(kotlinx.coroutines.experimental.channels.ArrayChannel.E, kotlinx.coroutines.experimental.selects.SelectInstance((kotlin.Any)))/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayChannel$offerSelectInternal(kotlinx.coroutines.experimental.channels.ArrayChannel.E, kotlinx.coroutines.experimental.selects.SelectInstance((kotlin.Any)))/select">select</span><span class="symbol">:</span>&nbsp;<span class="identifier">SelectInstance</span><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span></code></div>
+
+        <p>Tries to add element to buffer or to queued receiver if select statement clause was not selected yet.
+Return type is <code>ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="poll-internal.html">pollInternal</a></p>
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">pollInternal</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
 
         <p>Tries to remove element from buffer or from queued sender.
-Return type is <code>E | POLL_EMPTY | Closed</code></p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inherited-functions">Inherited Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/after-close.html">afterClose</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Invoked after successful <a href="../-abstract-channel/close.html">close</a>.</p>
+Return type is <code>E | POLL_FAILED | Closed</code></p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../-abstract-channel/close.html">close</a></p>
+        <p><a href="poll-select-internal.html">pollSelectInternal</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">pollSelectInternal</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayChannel$pollSelectInternal(kotlinx.coroutines.experimental.selects.SelectInstance((kotlin.Any)))/select">select</span><span class="symbol">:</span>&nbsp;<span class="identifier">SelectInstance</span><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
 
-        <p>Closes this channel with an optional exceptional <a href="../-abstract-channel/close.html#kotlinx.coroutines.experimental.channels.AbstractChannel$close(kotlin.Throwable)/cause">cause</a>.
-This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special close token of this channel. Immediately after invocation of this function
-<a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
-on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
-are received.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/iterator.html">iterator</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Returns new iterator to receive elements from this channels using <code>for</code> loop.
-Iteration completes normally when the channel is <a href="../-abstract-channel/is-closed-for-receive.html">closed</a> <em>normally</em> and
-throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/on-cancelled-receive.html">onCancelledReceive</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancelledReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Invoked when enqueued receiver was successfully cancelled.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/on-enqueued-receive.html">onEnqueuedReceive</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onEnqueuedReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Invoked when receiver is successfully enqueued to the queue of waiting receivers.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/poll.html">poll</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
-
-        <p>Retrieves and removes the head of this queue, or returns <code>null</code> if this queue <a href="../-abstract-channel/is-empty.html">isEmpty</a>
-or is <a href="../-abstract-channel/is-closed-for-receive.html">closed</a> <em>normally</em>,
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/receive.html">receive</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
-
-        <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="../-abstract-channel/is-empty.html">isEmpty</a>
-or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a>.
-If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
-throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/receive-or-null.html">receiveOrNull</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
-
-        <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="../-abstract-channel/is-empty.html">isEmpty</a>
-or returns <code>null</code> if the channel is <a href="../-abstract-channel/is-closed-for-receive.html">closed</a> <em>normally</em>,
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/take-first-receive-or-peek-closed.html">takeFirstReceiveOrPeekClosed</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">takeFirstReceiveOrPeekClosed</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-abstract-channel/-receive-or-closed/index.html"><span class="identifier">ReceiveOrClosed</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">?</span></code></div>
-
-        <p>Retrieves first receiving waiter from the queue or returns closed token.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/take-first-send-or-peek-closed.html">takeFirstSendOrPeekClosed</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">takeFirstSendOrPeekClosed</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-abstract-channel/-send/index.html"><span class="identifier">Send</span></a><span class="symbol">?</span></code></div>
-
-        <p>Retrieves first sending waiter from the queue or returns closed token.</p>
+        <p>Tries to remove element from buffer or from queued sender if select statement clause was not selected yet.
+Return type is <code>ALREADY_SELECTED | E | POLL_FAILED | Closed</code></p>
 
       </td>
 </tr>

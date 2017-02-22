@@ -7,7 +7,7 @@
   <title>alltypes - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
 </head>
 
   <body>
@@ -25,16 +25,6 @@
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractChannel</a></p>
-      </td>
-<td>
-
-        <p>Abstract channel. It is a base class for buffered and unbuffered channels.</p>
-
-      </td>
-</tr>
 <tr>
 <td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-array-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayChannel</a></p>
@@ -75,7 +65,7 @@ with the specified cancel cause.</p>
 <td>
 
         <p>Channel is a non-blocking primitive for communication between sender using <a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">SendChannel</a> and receiver using <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>.
-Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>
@@ -122,7 +112,7 @@ exception on send attempts.</p>
 <td>
 
         <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
-It uses <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
+It uses <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
 coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
 When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
 
@@ -248,7 +238,7 @@ A job can be <em>cancelled</em> at any time with <a href="../kotlinx.coroutines.
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-mutex/index.html">kotlinx.coroutines.experimental.Mutex</a></p>
+        <p><a href="../kotlinx.coroutines.experimental.sync/-mutex/index.html">kotlinx.coroutines.experimental.sync.Mutex</a></p>
       </td>
 <td>
 
@@ -304,8 +294,18 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <td>
 
         <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
-to receiver only when <a href="#">send</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
-until another coroutine invokes <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+to receiver only when <a href="#">send</a> and <a href="#">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="#">receive</a> and <a href="#">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.selects/-select-builder/index.html">kotlinx.coroutines.experimental.selects.SelectBuilder</a></p>
+      </td>
+<td>
+
+        <p>Scope for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation.</p>
 
       </td>
 </tr>

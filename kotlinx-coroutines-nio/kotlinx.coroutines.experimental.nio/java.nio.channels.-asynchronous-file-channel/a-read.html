@@ -7,7 +7,7 @@
   <title>aRead - kotlinx-coroutines-nio</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-nio/kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-read.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-nio/kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-read.html">
 </head>
 
   <body>
@@ -23,9 +23,9 @@
 
 <h1 id="aread">aRead</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/6/docs/api/java/nio/channels/AsynchronousFileChannel.html"><span class="identifier">AsynchronousFileChannel</span></a><span class="symbol">.</span><span class="identifier">aRead</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/buf">buf</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/position">position</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Int</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-nio/src/main/kotlin/kotlinx/coroutines/experimental/nio/Nio.kt#L60">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html"><span class="identifier">AsynchronousFileChannel</span></a><span class="symbol">.</span><span class="identifier">aRead</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/buf">buf</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/position">position</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Int</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-nio/src/main/kotlin/kotlinx/coroutines/experimental/nio/Nio.kt#L60">(source)</a></div>
 
-<p>Performs <a href="http://docs.oracle.com/javase/6/docs/api/java/nio/channels/AsynchronousFileChannel.html#read(java.nio.ByteBuffer, long, A, java.nio.channels.CompletionHandler&lt;java.lang.Integer,? super A&gt;)">AsynchronousFileChannel.read</a> without blocking a thread and resumes when asynchronous operation completes.
+<p>Performs <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html#read(java.nio.ByteBuffer, long, A, java.nio.channels.CompletionHandler&lt;java.lang.Integer,? super A&gt;)">AsynchronousFileChannel.read</a> without blocking a thread and resumes when asynchronous operation completes.
 This suspending function is cancellable.
 If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
 <em>closes the underlying channel</em> and immediately resumes with <a href="#">CancellationException</a>.</p>

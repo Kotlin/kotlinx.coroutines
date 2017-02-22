@@ -7,7 +7,7 @@
   <title>CancellableContinuation - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/">
 </head>
 
   <body>
@@ -121,17 +121,6 @@ but is ignored in <em>cancelled</em> state.</p>
 <tbody>
 <tr>
 <td>
-        <p><a href="complete-resume.html">completeResume</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">completeResume</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$completeResume(kotlin.Any)/token">token</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Completes the execution of <a href="try-resume.html">tryResume</a> or <a href="try-resume-with-exception.html">tryResumeWithException</a> on its non-null result.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="init-cancellability.html">initCancellability</a></p>
       </td>
 <td>
@@ -167,32 +156,6 @@ This function is designed to be used only by the <a href="../-coroutine-dispatch
 <a href="../-coroutine-dispatcher/dispatch.html">dispatch</a> function of the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in the <a href="#">context</a>.
 This function is designed to be used only by the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations themselves.
 <strong>It should not be used in general code</strong>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="try-resume.html">tryResume</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryResume</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$tryResume(kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
-
-        <p>Tries to resume this continuation with a given value and returns non-null object token if it was successful,
-or <code>null</code> otherwise (it was already resumed or cancelled). When non-null object was returned,
-<a href="complete-resume.html">completeResume</a> must be invoked with it.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="try-resume-with-exception.html">tryResumeWithException</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryResumeWithException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$tryResumeWithException(kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code></div>
-
-        <p>Tries to resume this continuation with a given exception and returns non-null object token if it was successful,
-or <code>null</code> otherwise (it was already resumed or cancelled). When non-null object was returned,
-<a href="complete-resume.html">completeResume</a> must be invoked with it.</p>
 
       </td>
 </tr>
@@ -283,7 +246,7 @@ if it was already started or completed.</p>
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
         <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 

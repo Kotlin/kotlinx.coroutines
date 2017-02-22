@@ -7,7 +7,7 @@
   <title>RendezvousChannel.pollInternal - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/poll-internal.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/poll-internal.html">
 </head>
 
   <body>
@@ -23,12 +23,10 @@
 
 <h1 id="pollinternal">pollInternal</h1>
 
-<div class="signature"><code><span class="keyword">protected</span> <span class="keyword">fun </span><span class="identifier">pollInternal</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/RendezvousChannel.kt#L45">(source)</a></div>
-
-<p>Overrides <a href="../-abstract-channel/poll-internal.html">AbstractChannel.pollInternal</a></p>
+<div class="signature"><code><span class="keyword">protected</span> <span class="keyword">fun </span><span class="identifier">pollInternal</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Any</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/RendezvousChannel.kt#L58">(source)</a></div>
 
 <p>Tries to remove element from buffer or from queued sender.
-Return type is <code>E | POLL_EMPTY | Closed</code></p>
+Return type is <code>E | POLL_FAILED | Closed</code></p>
 
 
       </div>

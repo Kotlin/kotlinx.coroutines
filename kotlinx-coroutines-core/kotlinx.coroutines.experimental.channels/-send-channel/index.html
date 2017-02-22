@@ -7,7 +7,7 @@
   <title>SendChannel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L27">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L30">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -101,9 +101,30 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
 
-        <p>Adds <a href="send.html#kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</a> into to this queue, suspending the caller while this queue <a href="is-full.html">isFull</a>,
+        <p>Adds <a href="send.html#kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="is-full.html">isFull</a>,
 or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
 It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html">onSend</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onSend</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction0</span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Clause for <a href="send.html">SendChannel.send</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> when the <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/element">element</a> is sent to
+the channel. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel
+<a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em> or with the original
+<a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
 </tr>
@@ -122,7 +143,7 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Channel is a non-blocking primitive for communication between sender using SendChannel and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
-Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>
