@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
-        <version>0.10-rc-SNAPSHOT</version>
+        <version>0.11-rc-SNAPSHOT</version>
     </parent>
 
     <artifactId>kotlinx-coroutines-rx</artifactId>
