@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.sync
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -26,18 +27,57 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
  * Mutex has two states: _locked_ and _unlocked_.
  * It is **non-reentrant**, that is invoking [lock] even from the same thread/coroutine that currently holds
  * the lock still suspends the invoker.
- *
- * @param locked initial state of the mutex
  */
-public class Mutex(locked: Boolean = false) {
+public interface Mutex {
+    /**
+     * Factory for [Mutex] instances.
+     */
+    public companion object Factory {
+        /**
+         * Creates new [Mutex] instance.
+         * @param locked initial state of the mutex.
+         */
+        public operator fun invoke(locked: Boolean = false) : Mutex = MutexImpl(locked)
+    }
+
+    /**
+     * Returns `true` when this mutex is locked.
+     */
+    public val isLocked: Boolean
+
+    /**
+     * Tries to lock this mutex, returning `false` if this mutex is already locked.
+     */
+    public fun tryLock(): Boolean
+
+    /**
+     * Locks this mutex, suspending caller while the mutex is locked.
+     *
+     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * function is suspended, this function immediately resumes with [CancellationException].
+     * Cancellation of suspended lock invocation is *atomic* -- when this function
+     * throws [CancellationException] it means that the mutex was not locked.
+     *
+     * Note, that this function does not check for cancellation when it is not suspended.
+     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     */
+    public suspend fun lock()
+
+    /**
+     * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked.
+     */
+    public fun unlock()
+}
+
+private class MutexImpl(locked: Boolean) : Mutex {
     // State is: Empty | UnlockOp | LockFreeLinkedListHead (queue of Waiter objects)
     @Volatile
     private var state: Any? = if (locked) EmptyLocked else EmptyUnlocked // shared objects while we have no waiters
 
     private companion object {
         @JvmStatic
-        val STATE: AtomicReferenceFieldUpdater<Mutex, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(Mutex::class.java, Any::class.java, "state")
+        val STATE: AtomicReferenceFieldUpdater<MutexImpl, Any?> =
+            AtomicReferenceFieldUpdater.newUpdater(MutexImpl::class.java, Any::class.java, "state")
 
         @JvmStatic
         val EmptyLocked = Empty(true)
@@ -50,15 +90,9 @@ public class Mutex(locked: Boolean = false) {
 
     }
 
-    /**
-     * Returns `true` when this mutex is locked.
-     */
-    public val isLocked: Boolean get() = isLocked(state)
+    public override val isLocked: Boolean get() = isLocked(state)
 
-    /**
-     * Tries to lock this mutex, returning `false` if this mutex is already locked.
-     */
-    public fun tryLock(): Boolean {
+    public override fun tryLock(): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state
             when (state) {
@@ -72,18 +106,7 @@ public class Mutex(locked: Boolean = false) {
         }
     }
 
-    /**
-     * Locks this mutex, suspending caller while the mutex is locked.
-     *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
-     * function is suspended, this function immediately resumes with [CancellationException].
-     * Cancellation of suspended lock invocation is *atomic* -- when this function
-     * throws [CancellationException] it means that the mutex was not locked.
-     *
-     * Note, that this function does not check for cancellation when it is not suspended.
-     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
-     */
-    public suspend fun lock() {
+    public override suspend fun lock() {
         // fast-path -- try lock
         if (tryLock()) return
         // slow-path -- suspend
@@ -126,10 +149,7 @@ public class Mutex(locked: Boolean = false) {
         }
     }
 
-    /**
-     * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked.
-     */
-    public fun unlock() {
+    public override fun unlock() {
         while (true) { // lock-free loop on state
             val state = this.state
             when (state) {
@@ -159,7 +179,7 @@ public class Mutex(locked: Boolean = false) {
     }
 
     private class Empty(val locked: Boolean) {
-        override fun toString(): String = "Empty[${if (locked) "Locked" else "Unlocked"}]";
+        override fun toString(): String = "Empty[${if (locked) "Locked" else "Unlocked"}]"
     }
 
     private class Waiter(val cont: CancellableContinuation<Unit>) : LockFreeLinkedListNode()
@@ -175,7 +195,7 @@ public class Mutex(locked: Boolean = false) {
              */
             val success = queue.isEmpty
             val update: Any = if (success) EmptyUnlocked else queue
-            STATE.compareAndSet(this@Mutex, this@UnlockOp, update)
+            STATE.compareAndSet(this@MutexImpl, this@UnlockOp, update)
             /*
                 `helpComplete` invocation from the original `unlock` invocation may be coming too late, when
                 some other thread had already helped to complete it (either successfully or not).

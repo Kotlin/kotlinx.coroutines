@@ -18,7 +18,8 @@
 package guide.select.example04
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.select
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
 import java.util.*
 
 fun asyncString(time: Int) = async(CommonPool) {

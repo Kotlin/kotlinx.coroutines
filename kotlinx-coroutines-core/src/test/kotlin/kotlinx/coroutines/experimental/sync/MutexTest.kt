@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.sync
 
+import kotlinx.coroutines.experimental.*
 import org.junit.Assert.*
 import org.junit.Test
 

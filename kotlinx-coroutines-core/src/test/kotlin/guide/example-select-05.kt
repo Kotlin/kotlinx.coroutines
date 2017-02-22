@@ -18,10 +18,8 @@
 package guide.select.example05
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.produce
-import kotlinx.coroutines.experimental.selects.select
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
 
 fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String>(CommonPool) {
     var current = input.receive() // will start with first received deferred value
