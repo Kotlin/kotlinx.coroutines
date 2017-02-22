@@ -41,6 +41,7 @@ Top-level suspending functions:
 
 | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
 | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
+| [Job]            | [join][Job.join]                              | [onJoin][SelectBuilder.onJoin]                   | [isCompleted][Job.isCompleted]
 | [Deferred]       | [await][Deferred.await]                       | [onAwait][kotlinx.coroutines.experimental.selects.SelectBuilder.onAwait]                 | [isCompleted][Job.isCompleted]
 | [SendChannel][kotlinx.coroutines.experimental.channels.SendChannel]    | [send][kotlinx.coroutines.experimental.channels.SendChannel.send]                      | [onSend][kotlinx.coroutines.experimental.selects.SelectBuilder.onSend]                   | [offer][kotlinx.coroutines.experimental.channels.SendChannel.offer]
 | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [receive][kotlinx.coroutines.experimental.channels.ReceiveChannel.receive]             | [onReceive][kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive]             | [poll][kotlinx.coroutines.experimental.channels.ReceiveChannel.poll]

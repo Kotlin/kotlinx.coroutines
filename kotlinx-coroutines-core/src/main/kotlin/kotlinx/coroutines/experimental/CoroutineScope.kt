@@ -67,7 +67,7 @@ public abstract class AbstractCoroutine<in T>(
 
     protected open fun createContext() = parentContext + this
 
-    protected open fun defaultResumeMode(): Int = 0
+    protected open fun defaultResumeMode(): Int = MODE_DISPATCHED
 
     final override fun resume(value: T) = resume(value, defaultResumeMode())
 

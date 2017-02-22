@@ -31,6 +31,12 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  */
 public interface SelectBuilder<in R> : CoroutineScope {
     /**
+     * Clause for [Job.join] suspending function that selects the given [block] when the job is complete.
+     * This clause never fails, even if the job completes exceptionally.
+     */
+    public fun Job.onJoin(block: suspend () -> R)
+
+    /**
      * Clause for [Deferred.await] suspending function that selects the given [block] with the deferred value is
      * resolved. The [select] invocation fails if the deferred value completes exceptionally (either fails or
      * it cancelled).
@@ -89,9 +95,14 @@ public interface SelectInstance<in R> {
      */
     public fun performAtomicIfNotSelected(desc: AtomicDesc): Any?
 
+    /**
+     * Returns completion continuation of this select instance.
+     * This select instance must be _selected_ first.
+     * All resumption through this instance happen _directly_ (as if `mode` is [MODE_DIRECT]).
+     */
     public val completion: Continuation<R>
 
-    public fun resumeSelectWithException(exception: Throwable)
+    public fun resumeSelectWithException(exception: Throwable, mode: Int)
 
     public fun invokeOnCompletion(handler: CompletionHandler): Job.Registration
 
@@ -113,7 +124,8 @@ public interface SelectInstance<in R> {
  *
  * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
  * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
- * | [Deferred]       | [await][Deferred.await]                       | [onAwait][SelectBuilder.onAwait]                 | [isCompleted][Deferred.isCompleted]
+ * | [Job]            | [join][Job.join]                              | [onJoin][SelectBuilder.onJoin]                   | [isCompleted][Job.isCompleted]
+ * | [Deferred]       | [await][Deferred.await]                       | [onAwait][SelectBuilder.onAwait]                 | [isCompleted][Job.isCompleted]
  * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SelectBuilder.onSend]                   | [offer][SendChannel.offer]
  * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][SelectBuilder.onReceive]             | [poll][ReceiveChannel.poll]
  * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][SelectBuilder.onReceiveOrNull] | [poll][ReceiveChannel.poll]
@@ -183,9 +195,13 @@ internal class SelectBuilderImpl<in R>(
         return this
     }
 
-    override fun resumeSelectWithException(exception: Throwable) {
+    override fun resumeSelectWithException(exception: Throwable, mode: Int) {
         check(isSelected) { "Must be selected first" }
-        resumeWithException(exception, mode = 0)
+        resumeWithException(exception, mode)
+    }
+
+    override fun Job.onJoin(block: suspend () -> R) {
+        registerSelectJoin(this@SelectBuilderImpl, block)
     }
 
     override fun <T> Deferred<T>.onAwait(block: suspend (T) -> R) {

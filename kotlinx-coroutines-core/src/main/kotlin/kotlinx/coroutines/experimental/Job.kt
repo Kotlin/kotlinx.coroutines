@@ -17,11 +17,16 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 // --------------- core job interfaces ---------------
 
@@ -117,8 +122,17 @@ public interface Job : CoroutineContext.Element {
      *
      * This suspending function is cancellable. If the [Job] of the invoking coroutine is completed while this
      * suspending function is suspended, this function immediately resumes with [CancellationException].
+     *
+     * This function can be used in [select] invocation with [onJoin][SelectBuilder.onJoin] clause.
+     * Use [isCompleted] to check for completion of this job without waiting.
      */
     public suspend fun join()
+
+    /**
+     * Registers [onJoin][SelectBuilder.onJoin] select clause.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R)
 
     /**
      * Cancel this activity with an optional cancellation [cause]. The result is `true` if this job was
@@ -549,6 +563,25 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         cont.unregisterOnCompletion(invokeOnCompletion(ResumeOnCompletion(this, cont)))
     }
 
+    override fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R) {
+        // fast-path -- check state and select/return if needed
+        while (true) {
+            if (select.isSelected) return
+            val state = this.state
+            if (state !is Incomplete) {
+                // already complete -- select result
+                if (select.trySelect(idempotent = null))
+                    block.startUndispatchedCoroutine(select.completion)
+                return
+            }
+            if (startInternal(state) == 0) {
+                // slow-path -- register waiter for completion
+                select.unregisterOnCompletion(invokeOnCompletion(SelectJoinOnCompletion(this, select, block)))
+                return
+            }
+        }
+    }
+
     internal fun removeNode(node: JobNode<*>) {
         // remove logic depends on the state of the job
         while (true) { // lock-free loop on job state
@@ -758,6 +791,20 @@ private class CancelFutureOnCompletion(
     }
     override fun toString() = "CancelFutureOnCompletion[$future]"
 }
+
+private class SelectJoinOnCompletion<R>(
+    job: JobSupport,
+    private val select: SelectInstance<R>,
+    private val block: suspend () -> R
+) : JobNode<JobSupport>(job) {
+    override fun invoke(reason: Throwable?) {
+        if (select.trySelect(idempotent = null))
+            block.startCoroutine(select.completion)
+    }
+    override fun toString(): String = "SelectJoinOnCompletion[$select]"
+}
+
+
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {
     init { initParentJob(parent) }

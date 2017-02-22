@@ -724,7 +724,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
                 if (closed.closeCause == null && nullOnClose) {
                     block.startCoroutine(null, select.completion)
                 } else
-                    select.resumeSelectWithException(closed.receiveException)
+                    select.resumeSelectWithException(closed.receiveException, MODE_DISPATCHED)
             }
         }
 

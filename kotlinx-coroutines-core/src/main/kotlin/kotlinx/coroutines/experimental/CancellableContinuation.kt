@@ -149,6 +149,10 @@ private class RemoveOnCancel(
     override fun toString() = "RemoveOnCancel[$node]"
 }
 
+internal const val MODE_DISPATCHED = 0
+internal const val MODE_UNDISPATCHED = 1
+internal const val MODE_DIRECT = 2
+
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
     @JvmField
@@ -169,9 +173,6 @@ internal open class CancellableContinuationImpl<in T>(
         const val UNDECIDED = 0
         const val SUSPENDED = 1
         const val RESUMED = 2
-
-        const val MODE_UNDISPATCHED = 1
-        const val MODE_DIRECT = 2
 
         @Suppress("UNCHECKED_CAST")
         fun <T> getSuccessfulResult(state: Any?): T = if (state is CompletedIdempotentResult) state.result as T else state as T
@@ -228,7 +229,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token, state, mode = 0)
+        completeUpdateState(token, state, defaultResumeMode())
     }
 
     override fun afterCompletion(state: Any?, mode: Int) {
@@ -238,7 +239,7 @@ internal open class CancellableContinuationImpl<in T>(
         if (state is CompletedExceptionally) {
             val exception = state.exception
             when (mode) {
-                0 -> delegate.resumeWithException(exception)
+                MODE_DISPATCHED -> delegate.resumeWithException(exception)
                 MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWithException(exception)
                 MODE_DIRECT -> {
                     if (delegate is DispatchedContinuation)
@@ -251,7 +252,7 @@ internal open class CancellableContinuationImpl<in T>(
         } else {
             val value = getSuccessfulResult<T>(state)
             when (mode) {
-                0 -> delegate.resume(value)
+                MODE_DISPATCHED -> delegate.resume(value)
                 MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatched(value)
                 MODE_DIRECT -> {
                     if (delegate is DispatchedContinuation)

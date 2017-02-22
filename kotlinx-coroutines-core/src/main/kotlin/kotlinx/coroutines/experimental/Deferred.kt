@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.select
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -66,6 +67,9 @@ public interface Deferred<out T> : Job {
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
+     *
+     * This function can be used in [select] invocation with [onAwait][SelectBuilder.onAwait] clause.
+     * Use [isCompleted] to check for completion of this deferred value without waiting.
      */
     public suspend fun await(): T
 
@@ -161,22 +165,37 @@ private open class DeferredCoroutine<T>(
         })
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) {
-        if (select.isSelected) return
-        val state = this.state
-        if (state is Incomplete) {
-            select.unregisterOnCompletion(invokeOnCompletion(SelectOnCompletion(this, select, block)))
-        } else
-            selectCompletion(select, block, state)
+        // fast-path -- check state and select/return if needed
+        while (true) {
+            if (select.isSelected) return
+            val state = this.state
+            if (state !is Incomplete) {
+                // already complete -- select result
+                if (select.trySelect(idempotent = null)) {
+                    if (state is CompletedExceptionally)
+                        select.resumeSelectWithException(state.exception, MODE_DIRECT)
+                    else
+                        block.startUndispatchedCoroutine(state as T, select.completion)
+                }
+                return
+            }
+            if (startInternal(state) == 0) {
+                // slow-path -- register waiter for completion
+                select.unregisterOnCompletion(invokeOnCompletion(SelectAwaitOnCompletion(this, select, block)))
+                return
+            }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal fun <R> selectCompletion(select: SelectInstance<R>, block: suspend (T) -> R, state: Any? = this.state) {
+    internal fun <R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R, state: Any? = this.state) {
         if (select.trySelect(idempotent = null)) {
             if (state is CompletedExceptionally)
-                select.resumeSelectWithException(state.exception)
+                select.resumeSelectWithException(state.exception, MODE_DISPATCHED)
             else
-                block.startUndispatchedCoroutine(state as T, select.completion)
+                block.startCoroutine(state as T, select.completion)
         }
     }
 
@@ -189,13 +208,13 @@ private open class DeferredCoroutine<T>(
     }
 }
 
-private class SelectOnCompletion<T, R>(
+private class SelectAwaitOnCompletion<T, R>(
     deferred: DeferredCoroutine<T>,
     private val select: SelectInstance<R>,
     private val block: suspend (T) -> R
 ) : JobNode<DeferredCoroutine<T>>(deferred) {
-    override fun invoke(reason: Throwable?) = job.selectCompletion(select, block)
-    override fun toString(): String = "SelectOnCompletion[$select]"
+    override fun invoke(reason: Throwable?) = job.selectAwaitCompletion(select, block)
+    override fun toString(): String = "SelectAwaitOnCompletion[$select]"
 }
 
 private class LazyDeferredCoroutine<T>(

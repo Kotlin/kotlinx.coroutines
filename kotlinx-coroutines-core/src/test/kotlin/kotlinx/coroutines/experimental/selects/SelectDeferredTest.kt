@@ -33,25 +33,50 @@ class SelectDeferredTest : TestBase() {
             42
         }
         launch(context) {
-            expect(5)
+            expect(4)
             yield() // back to main
-            expect(9)
+            expect(6)
         }
         expect(2)
         val res = select<String> {
             d1.onAwait { v ->
-                expect(4)
+                expect(5)
                 assertEquals(42, v)
                 yield() // to launch
-                expect(6)
+                expect(7)
                 "OK"
             }
         }
-        expect(7)
+        finish(8)
         assertEquals("OK", res)
-        expect(8)
-        yield() // to launch again
-        finish(10)
+    }
+
+    @Test
+    fun testSelectIncompleteLazy() = runBlocking<Unit> {
+        expect(1)
+        val d1 = async<Int>(context, start = false) {
+            expect(5)
+            42
+        }
+        launch(context) {
+            expect(3)
+            val res = select<String> {
+                d1.onAwait { v ->
+                    expect(7)
+                    assertEquals(42, v)
+                    "OK"
+                }
+            }
+            expect(8)
+            assertEquals("OK", res)
+        }
+        expect(2)
+        yield() // to launch
+        expect(4)
+        yield() // to started async
+        expect(6)
+        yield() // to triggered select
+        finish(9)
     }
 
     @Test
@@ -60,7 +85,9 @@ class SelectDeferredTest : TestBase() {
         val d1 = async<String>(context) {
             expect(3)
             yield() // to the other deffered
-            expect(6)
+            expect(5)
+            yield() // to fired select
+            expect(7)
             "d1"
         }
         val d2 = async<String>(context) {
@@ -74,15 +101,15 @@ class SelectDeferredTest : TestBase() {
                 "FAIL"
             }
             d2.onAwait { v2 ->
-                expect(5)
+                expect(6)
                 assertEquals("d2", v2)
                 yield() // to first deferred
-                expect(7)
+                expect(8)
                 "OK"
             }
         }
         assertEquals("OK", res)
-        finish(8)
+        finish(9)
     }
 
 }
