@@ -42,10 +42,9 @@ object IncCounter : CounterMsg() // one-way message to increment counter
 class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request with reply
 
 // This function launches a new counter actor
-fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
+fun counterActor() = actor<CounterMsg>(CommonPool) {
     var counter = 0 // actor state
-    while (isActive) { // main loop of the actor
-        val msg = request.receive()
+    for (msg in channel) { // iterate over incoming messages
         when (msg) {
             is IncCounter -> counter++
             is GetCounter -> msg.response.send(counter)
@@ -54,12 +53,12 @@ fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val request = Channel<CounterMsg>()
-    counterActor(request)
+    val counter = counterActor() // create the actor
     massiveRun(CommonPool) {
-        request.send(IncCounter)
+        counter.send(IncCounter)
     }
     val response = Channel<Int>()
-    request.send(GetCounter(response))
+    counter.send(GetCounter(response))
     println("Counter = ${response.receive()}")
+    counter.close() // shutdown the actor
 }

@@ -39,7 +39,7 @@ val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    massiveRun(counterContext) { // run each coroutine in single-threaded context
+    massiveRun(counterContext) { // run each coroutine in the single-threaded context
         counter++
     }
     println("Counter = $counter")

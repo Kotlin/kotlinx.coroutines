@@ -1700,6 +1700,10 @@ An actor is a combination of a coroutine, the state that is confined and is enca
 and a channel to communicate with other coroutines. A simple actor can be written as a function, 
 but an actor with a complex state is better suited for a class. 
 
+There is an [actor] coroutine builder that conveniently combines actor's mailbox channel into its 
+scope to receive messages from and combines the send channel into the resulting job object, so that a 
+single reference to the actor can be carried around as its handle.
+
 ```kotlin
 // Message types for counterActor
 sealed class CounterMsg
@@ -1707,10 +1711,9 @@ object IncCounter : CounterMsg() // one-way message to increment counter
 class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request with reply
 
 // This function launches a new counter actor
-fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
+fun counterActor() = actor<CounterMsg>(CommonPool) {
     var counter = 0 // actor state
-    while (isActive) { // main loop of the actor
-        val msg = request.receive()
+    for (msg in channel) { // iterate over incoming messages
         when (msg) {
             is IncCounter -> counter++
             is GetCounter -> msg.response.send(counter)
@@ -1719,14 +1722,14 @@ fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val request = Channel<CounterMsg>()
-    counterActor(request)
+    val counter = counterActor() // create the actor
     massiveRun(CommonPool) {
-        request.send(IncCounter)
+        counter.send(IncCounter)
     }
     val response = Channel<Int>()
-    request.send(GetCounter(response))
+    counter.send(GetCounter(response))
     println("Counter = ${response.receive()}")
+    counter.close() // shutdown the actor
 }
 ```
 
@@ -1737,12 +1740,16 @@ Completed 1000000 actions in xxx ms
 Counter = 1000000
 -->
 
-Notice, that it does not matter (for correctness) what context the actor itself is executed in. An actor is
+It does not matter (for correctness) what context the actor itself is executed in. An actor is
 a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
 works as a solution to the problem of shared mutable state.
 
-Actor is more efficient than locking under load, because in this case it always has work to do and does not 
-have to switch at all.
+Actor is more efficient than locking under load, because in this case it always has work to do and it does not 
+have to switch to a different context at all.
+
+> Note, that an [actor] coroutine builder is a dual of [produce] coroutine builder. An actor is associated 
+  with the channel that it receives messages from, while a producer is associated with the channel that it 
+  sends elements to.
 
 ## Select expression
 
@@ -2116,6 +2123,7 @@ Channel was closed
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/invoke.html
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [SelectBuilder.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/on-receive.html

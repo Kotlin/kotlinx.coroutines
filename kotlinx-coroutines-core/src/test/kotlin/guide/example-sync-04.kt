@@ -40,7 +40,7 @@ var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     massiveRun(CommonPool) { // run each coroutine in CommonPool
-        run(counterContext) { // but confine each increment to a single-threaded context
+        run(counterContext) { // but confine each increment to the single-threaded context
             counter++
         }
     }

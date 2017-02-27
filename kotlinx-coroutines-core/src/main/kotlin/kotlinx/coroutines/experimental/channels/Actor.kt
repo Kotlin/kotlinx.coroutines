@@ -24,31 +24,13 @@ import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
 /**
- * Scope for [produce] coroutine builder.
+ * Scope for [actor] coroutine builder.
  */
-public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
+public interface ActorScope<out E> : CoroutineScope, ReceiveChannel<E> {
     /**
-     * A reference to the channel that this coroutine [sends][send] elements to.
+     * A reference to the mailbox channel that this coroutine [receives][receive] messages from.
      * It is provided for convenience, so that the code in the coroutine can refer
      * to the channel as `channel` as apposed to `this`.
-     * All the [SendChannel] functions on this interface delegate to
-     * the channel instance returned by this function.
-     */
-    val channel: SendChannel<E>
-}
-
-/**
- * @suppress **Deprecated**: Renamed to `ProducerScope`.
- */
-@Deprecated(message = "Renamed to `ProducerScope`", replaceWith = ReplaceWith("ProducerScope"))
-typealias ChannelBuilder<E> = ProducerScope<E>
-
-/**
- * Return type for [produce] coroutine builder.
- */
-public interface ProducerJob<out E> : Job, ReceiveChannel<E> {
-    /**
-     * A reference to the channel that this coroutine is producing.
      * All the [ReceiveChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
@@ -56,19 +38,25 @@ public interface ProducerJob<out E> : Job, ReceiveChannel<E> {
 }
 
 /**
- * @suppress **Deprecated**: Renamed to `ProducerJob`.
+ * Return type for [actor] coroutine builder.
  */
-@Deprecated(message = "Renamed to `ProducerJob`", replaceWith = ReplaceWith("ProducerJob"))
-typealias ChannelJob<E> = ProducerJob<E>
+public interface ActorJob<in E> : Job, SendChannel<E> {
+    /**
+     * A reference to the mailbox channel that this coroutine is receiving messages from.
+     * All the [SendChannel] functions on this interface delegate to
+     * the channel instance returned by this function.
+     */
+    val channel: SendChannel<E>
+}
 
 /**
- * Launches new coroutine to produce a stream of values by sending them to a channel
- * and returns a reference to the coroutine as a [ProducerJob]. This resulting
- * object can be used to [receive][ReceiveChannel.receive] elements produced by this coroutine.
+ * Launches new coroutine that is receiving messages from its mailbox channel
+ * and returns a reference to the coroutine as an [ActorJob]. The resulting
+ * object can be used to [send][SendChannel.send] messages to this coroutine.
  *
- * The scope of the coroutine contains [ProducerScope] interface, which implements
- * both [CoroutineScope] and [SendChannel], so that coroutine can invoke
- * [send][SendChannel.send] directly. The channel is [closed][SendChannel.close]
+ * The scope of the coroutine contains [ActorScope] interface, which implements
+ * both [CoroutineScope] and [ReceiveChannel], so that coroutine can invoke
+ * [receive][ReceiveChannel.receive] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
  * The running coroutine is cancelled when the its job is [cancelled][Job.cancel].
  *
@@ -78,7 +66,7 @@ typealias ChannelJob<E> = ProducerJob<E>
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
- * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
+ * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
@@ -86,28 +74,17 @@ typealias ChannelJob<E> = ProducerJob<E>
  * @param capacity capacity of the channel's buffer (no buffer by default)
  * @param block the coroutine code
  */
-public fun <E> produce(
+public fun <E> actor(
     context: CoroutineContext,
     capacity: Int = 0,
-    block: suspend ProducerScope<E>.() -> Unit
-): ProducerJob<E> {
+    block: suspend ActorScope<E>.() -> Unit
+): ActorJob<E> {
     val channel = Channel<E>(capacity)
-    return ProducerCoroutine(newCoroutineContext(context), channel).apply {
+    return ActorCoroutine(newCoroutineContext(context), channel).apply {
         initParentJob(context[Job])
         block.startCoroutine(this, this)
     }
 }
 
-/**
- * @suppress **Deprecated**: Renamed to `produce`.
- */
-@Deprecated(message = "Renamed to `produce`", replaceWith = ReplaceWith("produce(context, capacity, block)"))
-public fun <E> buildChannel(
-    context: CoroutineContext,
-    capacity: Int = 0,
-    block: suspend ProducerScope<E>.() -> Unit
-): ProducerJob<E> =
-    produce(context, capacity, block)
-
-private class ProducerCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
-    ChannelCoroutine<E>(parentContext, channel), ProducerScope<E>, ProducerJob<E>
+private class ActorCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
+    ChannelCoroutine<E>(parentContext, channel), ActorScope<E>, ActorJob<E>
