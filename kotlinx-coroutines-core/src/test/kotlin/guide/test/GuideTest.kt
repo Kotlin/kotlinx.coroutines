@@ -335,6 +335,18 @@ class GuideTest {
     }
 
     @Test
+    fun testGuideChannelExample09() {
+        test { guide.channel.example09.main(emptyArray()) }.verifyLines(
+            "ping Ball(hits=1)",
+            "pong Ball(hits=2)",
+            "ping Ball(hits=3)",
+            "pong Ball(hits=4)",
+            "ping Ball(hits=5)",
+            "pong Ball(hits=6)"
+        )
+    }
+
+    @Test
     fun testGuideSyncExample01() {
         test { guide.sync.example01.main(emptyArray()) }.verifyLinesStart(
             "Completed 1000000 actions in",

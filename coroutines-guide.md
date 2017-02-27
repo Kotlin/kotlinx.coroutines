@@ -76,6 +76,7 @@ This is a short guide on core features of `kotlinx.coroutines` with a series of 
   * [Fan-out](#fan-out)
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
+  * [Channels are fair](#channels-are-fair)
 * [Shared mutable state and concurrency](#shared-mutable-state-and-concurrency)
   * [The problem](#the-problem)
   * [Volatiles are of no help](#volatiles-are-of-no-help)
@@ -1476,6 +1477,53 @@ Sending 4
 <!--- TEST -->
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
+
+
+### Channels are fair
+
+Send and receive operations to channels are _fair_ with respect to the order of their invocation from 
+multiple coroutines. They are served in first-in first-out order, e.g. the first coroutine to invoke `receive` 
+gets the element. In the following example two coroutines "ping" and "pong" are 
+receiving the "ball" object from the shared "table" channel. 
+
+```kotlin
+data class Ball(var hits: Int)
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val table = Channel<Ball>() // a shared table
+    launch(context) { player("ping", table) }
+    launch(context) { player("pong", table) }
+    table.send(Ball(0)) // serve the ball
+    delay(1000) // delay 1 second
+    table.receive() // game over, grab the ball
+}
+
+suspend fun player(name: String, table: Channel<Ball>) {
+    for (ball in table) { // receive the ball in a loop
+        ball.hits++
+        println("$name $ball")
+        delay(200) // wait a bit
+        table.send(ball) // send the ball back
+    }
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-09.kt)
+
+The "ping" coroutine is started first, so it is the first one to receive the ball. Even though "ping"
+coroutine immediately starts receiving the ball again after sending it back to the table, the ball gets
+received by the "pong" coroutine, because it was already waiting for it:
+
+```text
+ping Ball(hits=1)
+pong Ball(hits=2)
+ping Ball(hits=3)
+pong Ball(hits=4)
+ping Ball(hits=5)
+pong Ball(hits=6)
+```
+
+<!--- TEST -->
 
 ## Shared mutable state and concurrency
 
