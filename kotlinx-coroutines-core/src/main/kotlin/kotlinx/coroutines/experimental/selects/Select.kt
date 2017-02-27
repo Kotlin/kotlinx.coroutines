@@ -118,6 +118,10 @@ public interface SelectInstance<in R> {
  * becomes the result of the select. If any clause _fails_, then the select invocation produces the
  * corresponding exception. No clause is selected in this case.
  *
+ * This select function is _biased_ to the first clause. When multiple clauses can be selected at the same time,
+ * the first one of them gets priority. Use [selectUnbiased] for an unbiased (randomized) selection among
+ * the clauses.
+
  * There is no `default` clause for select expression. Instead, each selectable suspending function has the
  * corresponding non-suspending version that can be used with a regular `when` expression to select one
  * of the alternatives or to perform default (`else`) action if none of them can be immediately selected.
