@@ -29,7 +29,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 /**
  * Scope for [select] invocation.
  */
-public interface SelectBuilder<in R> : CoroutineScope {
+public interface SelectBuilder<in R> {
     /**
      * Clause for [Job.join] suspending function that selects the given [block] when the job is complete.
      * This clause never fails, even if the job completes exceptionally.
