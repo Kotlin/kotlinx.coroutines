@@ -18,25 +18,27 @@
 package guide.sync.example01
 
 import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
 
-suspend fun massiveRun(action: suspend () -> Unit) {
-    val n = 100_000
+suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
+    val n = 1000 // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
         val jobs = List(n) {
-            launch(CommonPool) {
-                action()
+            launch(context) {
+                repeat(k) { action() }
             }
         }
         jobs.forEach { it.join() }
     }
-    println("Completed in $time ms")    
+    println("Completed ${n * k} actions in $time ms")    
 }
 
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    massiveRun {
+    massiveRun(CommonPool) {
         counter++
     }
     println("Counter = $counter")

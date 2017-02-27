@@ -15,11 +15,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.sync.example05
+package guide.sync.example07
 
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
+import kotlinx.coroutines.experimental.channels.*
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch
@@ -35,12 +36,30 @@ suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     println("Completed ${n * k} actions in $time ms")    
 }
 
-val counterContext = newSingleThreadContext("CounterContext")
-var counter = 0
+// Message types for counterActor
+sealed class CounterMsg
+object IncCounter : CounterMsg() // one-way message to increment counter
+class GetCounter(val response: SendChannel<Int>) : CounterMsg() // a request with reply
+
+// This function launches a new counter actor
+fun counterActor(request: ReceiveChannel<CounterMsg>) = launch(CommonPool) {
+    var counter = 0 // actor state
+    while (isActive) { // main loop of the actor
+        val msg = request.receive()
+        when (msg) {
+            is IncCounter -> counter++
+            is GetCounter -> msg.response.send(counter)
+        }
+    }
+}
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    massiveRun(counterContext) { // run each coroutine in single-threaded context
-        counter++
+    val request = Channel<CounterMsg>()
+    counterActor(request)
+    massiveRun(CommonPool) {
+        request.send(IncCounter)
     }
-    println("Counter = $counter")
+    val response = Channel<Int>()
+    request.send(GetCounter(response))
+    println("Counter = ${response.receive()}")
 }

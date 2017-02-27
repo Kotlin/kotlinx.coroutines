@@ -63,28 +63,38 @@ private fun shutdownDispatcherPools() {
     }
 }
 
-private fun sanitize(s: String, flexibleTime: Boolean = false, flexibleThread: Boolean = false): String {
+enum class SanitizeMode {
+    NONE,
+    ARBITRARY_TIME,
+    FLEXIBLE_TIME,
+    FLEXIBLE_THREAD
+}
+
+private fun sanitize(s: String, mode: SanitizeMode): String {
     var res = s
-    if (flexibleTime) {
-        res = res.replace(Regex("[0-9][0-9][0-9] ms"), "xxx ms")
-    }
-    if (flexibleThread) {
-        res = res.replace(Regex("ForkJoinPool\\.commonPool-worker-[0-9]+"), "CommonPool")
-        res = res.replace(Regex("ForkJoinPool-[0-9]+-worker-[0-9]+"), "CommonPool")
-        res = res.replace(Regex("CommonPool-worker-[0-9]+"), "CommonPool")
+    when (mode) {
+        SanitizeMode.ARBITRARY_TIME -> {
+            res = res.replace(Regex(" [0-9]+ ms"), " xxx ms")
+        }
+        SanitizeMode.FLEXIBLE_TIME -> {
+            res = res.replace(Regex("[0-9][0-9][0-9] ms"), "xxx ms")
+        }
+        SanitizeMode.FLEXIBLE_THREAD -> {
+            res = res.replace(Regex("ForkJoinPool\\.commonPool-worker-[0-9]+"), "CommonPool")
+            res = res.replace(Regex("ForkJoinPool-[0-9]+-worker-[0-9]+"), "CommonPool")
+            res = res.replace(Regex("CommonPool-worker-[0-9]+"), "CommonPool")
+
+        }
+        SanitizeMode.NONE -> {}
     }
     return res
 }
 
-private fun List<String>.verifyCommonLines(
-    expected: Array<out String>,
-    flexibleTime: Boolean = false,
-    flexibleThread: Boolean = false
-) {
+private fun List<String>.verifyCommonLines(expected: Array<out String>, mode: SanitizeMode = SanitizeMode.NONE) {
     val n = minOf(size, expected.size)
     for (i in 0 until n) {
-        val exp = sanitize(expected[i], flexibleTime = flexibleTime, flexibleThread = flexibleThread)
-        val act = sanitize(get(i), flexibleTime = flexibleTime, flexibleThread = flexibleThread)
+        val exp = sanitize(expected[i], mode)
+        val act = sanitize(get(i), mode)
         assertEquals("Line ${i + 1}", exp, act)
     }
 }
@@ -99,13 +109,18 @@ fun List<String>.verifyLinesStartWith(vararg expected: String) {
     assertTrue("Number of lines", expected.size <= size)
 }
 
+fun List<String>.verifyLinesArbitraryTime(vararg expected: String) {
+    verifyCommonLines(expected, SanitizeMode.ARBITRARY_TIME)
+    assertEquals("Number of lines", expected.size, size)
+}
+
 fun List<String>.verifyLinesFlexibleTime(vararg expected: String) {
-    verifyCommonLines(expected, flexibleTime = true)
+    verifyCommonLines(expected, SanitizeMode.FLEXIBLE_TIME)
     assertEquals("Number of lines", expected.size, size)
 }
 
 fun List<String>.verifyLinesFlexibleThread(vararg expected: String) {
-    verifyCommonLines(expected, flexibleThread = true)
+    verifyCommonLines(expected, SanitizeMode.FLEXIBLE_THREAD)
     assertEquals("Number of lines", expected.size, size)
 }
 
@@ -117,8 +132,8 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) {
 fun List<String>.verifyLinesStart(vararg expected: String) {
     val n = minOf(size, expected.size)
     for (i in 0 until n) {
-        val exp = sanitize(expected[i], flexibleThread = true)
-        val act = sanitize(get(i), flexibleThread = true)
+        val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
+        val act = sanitize(get(i), SanitizeMode.FLEXIBLE_THREAD)
         assertEquals("Line ${i + 1}", exp, act.substring(0, minOf(act.length, exp.length)))
     }
     assertEquals("Number of lines", expected.size, size)

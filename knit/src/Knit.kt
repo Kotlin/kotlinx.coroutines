@@ -41,6 +41,7 @@ const val SECTION_START = "##"
 
 const val PACKAGE_PREFIX = "package "
 const val STARTS_WITH_PREDICATE = "STARTS_WITH"
+const val ARBITRARY_TIME_PREDICATE = "ARBITRARY_TIME"
 const val FLEXIBLE_TIME_PREDICATE = "FLEXIBLE_TIME"
 const val FLEXIBLE_THREAD_PREDICATE = "FLEXIBLE_THREAD"
 const val LINES_START_UNORDERED_PREDICATE = "LINES_START_UNORDERED"
@@ -250,6 +251,7 @@ fun writeTest(testOut: PrintWriter, pgk: String, test: List<String>, predicate: 
         when (predicate) {
             "" -> writeTestLines("verifyLines", test)
             STARTS_WITH_PREDICATE -> writeTestLines("verifyLinesStartWith", test)
+            ARBITRARY_TIME_PREDICATE -> writeTestLines("verifyLinesArbitraryTime", test)
             FLEXIBLE_TIME_PREDICATE -> writeTestLines("verifyLinesFlexibleTime", test)
             FLEXIBLE_THREAD_PREDICATE -> writeTestLines("verifyLinesFlexibleThread", test)
             LINES_START_UNORDERED_PREDICATE -> writeTestLines("verifyLinesStartUnordered", test)

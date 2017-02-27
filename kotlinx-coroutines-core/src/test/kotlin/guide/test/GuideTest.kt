@@ -336,37 +336,58 @@ class GuideTest {
 
     @Test
     fun testGuideSyncExample01() {
-        test { guide.sync.example01.main(emptyArray()) }.also { lines ->
-            check(lines.size == 2 && lines[1].startsWith("Counter = "))
-        }
+        test { guide.sync.example01.main(emptyArray()) }.verifyLinesStart(
+            "Completed 1000000 actions in",
+            "Counter ="
+        )
     }
 
     @Test
     fun testGuideSyncExample02() {
-        test { guide.sync.example02.main(emptyArray()) }.also { lines ->
-            check(lines.size == 2 && lines[1] == "Counter = 100000")
-        }
+        test { guide.sync.example02.main(emptyArray()) }.verifyLinesStart(
+            "Completed 1000000 actions in",
+            "Counter ="
+        )
     }
 
     @Test
     fun testGuideSyncExample03() {
-        test { guide.sync.example03.main(emptyArray()) }.also { lines ->
-            check(lines.size == 2 && lines[1] == "Counter = 100000")
-        }
+        test { guide.sync.example03.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
     }
 
     @Test
     fun testGuideSyncExample04() {
-        test { guide.sync.example04.main(emptyArray()) }.also { lines ->
-            check(lines.size == 2 && lines[1] == "Counter = 100000")
-        }
+        test { guide.sync.example04.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
     }
 
     @Test
     fun testGuideSyncExample05() {
-        test { guide.sync.example05.main(emptyArray()) }.also { lines ->
-            check(lines.size == 2 && lines[1] == "Counter = 100000")
-        }
+        test { guide.sync.example05.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
+    }
+
+    @Test
+    fun testGuideSyncExample06() {
+        test { guide.sync.example06.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
+    }
+
+    @Test
+    fun testGuideSyncExample07() {
+        test { guide.sync.example07.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
     }
 
     @Test
