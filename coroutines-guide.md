@@ -533,7 +533,7 @@ Exception in thread "main" java.util.concurrent.CancellationException: Timed out
 <!--- TEST STARTS_WITH -->
 
 We have not seen the [CancellationException] stack trace printed on the console before. That is because
-inside a cancelled coroutine `CancellationException` is a considered a normal reason for coroutine completion. 
+inside a cancelled coroutine `CancellationException` is considered to be a normal reason for coroutine completion. 
 However, in this example we have used `withTimeout` right inside the `main` function. 
 
 Because cancellation is just an exception, all the resources will be closed in a usual way. 
@@ -806,7 +806,7 @@ Produces the output:
 
 <!--- TEST LINES_START -->
  
-So, the coroutine the had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
+So, the coroutine that had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
 while the unconfined one had resumed in the scheduler thread that [delay] function is using.
 
 ### Debugging coroutines and threads
@@ -1905,7 +1905,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
     }
     println(result)
-    val countActive = list.sumBy { deferred -> if (deferred.isActive) 1 else 0 }
+    val countActive = list.count { it.isActive }
     println("$countActive coroutines are still active")
 }
 ```

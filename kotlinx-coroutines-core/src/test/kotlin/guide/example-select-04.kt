@@ -42,6 +42,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
     }
     println(result)
-    val countActive = list.sumBy { deferred -> if (deferred.isActive) 1 else 0 }
+    val countActive = list.count { it.isActive }
     println("$countActive coroutines are still active")
 }
