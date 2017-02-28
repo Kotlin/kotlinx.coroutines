@@ -1,5 +1,7 @@
 # kotlinx.coroutines
 
+[ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap-1.1/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines/_latestVersion)
+
 Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc-91 release. 
 
 ## Modules and features
