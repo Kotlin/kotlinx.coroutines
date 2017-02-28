@@ -224,14 +224,25 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
      */
     public companion object Factory {
         /**
+         * Requests channel with unlimited capacity buffer in [Channel()][invoke] factory function.
+         */
+        public const val UNLIMITED = Int.MAX_VALUE
+
+        /**
          * Creates a channel with specified buffer capacity (or without a buffer by default).
+         *
+         * The resulting channel type depends on the specified [capacity] parameter:
+         * * when `capacity` is 0 -- creates [RendezvousChannel];
+         * * when `capacity` is [UNLIMITED] -- creates [LinkedListChannel];
+         * * otherwise -- creates [ArrayChannel].
          */
         public operator fun <E> invoke(capacity: Int = 0): Channel<E> {
             check(capacity >= 0) { "Channel capacity cannot be negative, but $capacity was specified" }
-            return if (capacity == 0)
-                RendezvousChannel()
-            else
-                ArrayChannel(capacity)
+            return when (capacity) {
+                0 -> RendezvousChannel()
+                UNLIMITED -> LinkedListChannel()
+                else -> ArrayChannel(capacity)
+            }
         }
     }
 }

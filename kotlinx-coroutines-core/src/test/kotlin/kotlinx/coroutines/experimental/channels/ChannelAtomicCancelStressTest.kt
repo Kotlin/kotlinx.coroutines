@@ -107,6 +107,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         sender = launch(CommonPool) {
             val rnd = Random()
             cancellable(senderDone) {
+                var counter = 0
                 while (true) {
                     val trySend = lastSent + 1
                     when (rnd.nextInt(2)) {
@@ -114,8 +115,8 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
                         1 -> select { channel.onSend(trySend) {} }
                         else -> error("cannot happen")
                     }
-
                     lastSent = trySend // update on success
+                    if (counter++ % 1000 == 0) yield() // yield periodically to check cancellation on LinkedListChannel
                 }
             }
         }

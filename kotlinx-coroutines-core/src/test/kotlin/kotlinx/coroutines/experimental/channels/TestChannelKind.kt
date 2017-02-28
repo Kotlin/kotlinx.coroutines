@@ -28,6 +28,10 @@ enum class TestChannelKind {
     ARRAY_10 {
         override fun create(): Channel<Int> = ArrayChannel<Int>(8)
         override fun toString(): String = "ArrayChannel(8)"
+    },
+    LINKED_LIST {
+        override fun create(): Channel<Int> = LinkedListChannel<Int>()
+        override fun toString(): String = "LinkedListChannel"
     }
     ;
 

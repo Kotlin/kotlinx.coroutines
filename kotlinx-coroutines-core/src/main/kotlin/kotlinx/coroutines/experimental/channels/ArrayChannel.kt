@@ -27,7 +27,7 @@ import java.util.concurrent.locks.ReentrantLock
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lists of suspended senders or receivers are lock-free.
  */
-public class ArrayChannel<E>(
+public open class ArrayChannel<E>(
     /**
      * Buffer capacity.
      */
@@ -49,12 +49,13 @@ public class ArrayChannel<E>(
         finally { lock.unlock() }
     }
 
-    override val hasBuffer: Boolean get() = true
-    override val isBufferEmpty: Boolean get() = size == 0
-    override val isBufferFull: Boolean get() = size == capacity
+    protected final override val isBufferAlwaysEmpty: Boolean get() = false
+    protected final override val isBufferEmpty: Boolean get() = size == 0
+    protected final override val isBufferAlwaysFull: Boolean get() = false
+    protected final override val isBufferFull: Boolean get() = size == capacity
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
-    override fun offerInternal(element: E): Any {
+    protected override fun offerInternal(element: E): Any {
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
         locked {
@@ -90,7 +91,7 @@ public class ArrayChannel<E>(
     }
 
     // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`.
-    override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
+    protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
         locked {
@@ -138,7 +139,7 @@ public class ArrayChannel<E>(
     }
 
     // result is `E | POLL_FAILED | Closed`
-    override fun pollInternal(): Any? {
+    protected override fun pollInternal(): Any? {
         var send: Send? = null
         var token: Any? = null
         var result: Any? = null
@@ -174,7 +175,7 @@ public class ArrayChannel<E>(
     }
 
     // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
-    override fun pollSelectInternal(select: SelectInstance<*>): Any? {
+    protected override fun pollSelectInternal(select: SelectInstance<*>): Any? {
         var send: Send? = null
         var token: Any? = null
         var result: Any? = null
