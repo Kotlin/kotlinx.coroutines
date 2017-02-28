@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.TestBase
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
@@ -26,14 +27,15 @@ import kotlin.concurrent.thread
  * This stress test has 4 threads adding randomly to the list and them immediately undoing
  * this addition by remove, and 4 threads trying to remove nodes from two lists simultaneously (atomically).
  */
-class LockFreeLinkedListAtomicStressTest {
+class LockFreeLinkedListAtomicStressTest : TestBase() {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
+
+    val TEST_DURATION = 5000L * stressTestMultiplier
 
     val threads = mutableListOf<Thread>()
     val nLists = 4
     val nAdderThreads = 4
     val nRemoverThreads = 4
-    val timeout = 5000L
     val completedAdder = AtomicInteger()
     val completedRemover = AtomicInteger()
 
@@ -45,7 +47,7 @@ class LockFreeLinkedListAtomicStressTest {
 
     @Test
     fun testStress() {
-        val deadline = System.currentTimeMillis() + timeout
+        val deadline = System.currentTimeMillis() + TEST_DURATION
         repeat(nAdderThreads) { threadId ->
             threads += thread(start = false, name = "adder-$threadId") {
                 val rnd = Random()

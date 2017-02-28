@@ -29,14 +29,14 @@ import java.util.concurrent.atomic.AtomicReference
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
  */
 @RunWith(Parameterized::class)
-class ChannelAtomicCancelStressTest(val kind: TestChannelKind) {
+class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> = TestChannelKind.values().map { arrayOf<Any>(it) }
     }
 
-    val TEST_DURATION = 3000L
+    val TEST_DURATION = 3000L * stressTestMultiplier
 
     val channel = kind.create()
     val senderDone = ArrayChannel<Boolean>(1)

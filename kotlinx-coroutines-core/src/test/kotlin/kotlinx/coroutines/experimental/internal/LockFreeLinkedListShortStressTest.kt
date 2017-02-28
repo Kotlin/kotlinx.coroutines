@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.TestBase
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
@@ -27,14 +28,15 @@ import kotlin.concurrent.thread
  * this addition by remove, and 4 threads removing first node. The resulting list that is being
  * stressed is very short.
  */
-class LockFreeLinkedListShortStressTest {
+class LockFreeLinkedListShortStressTest : TestBase() {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
     val list = LockFreeLinkedListHead()
+
+    val TEST_DURATION = 5000L * stressTestMultiplier
 
     val threads = mutableListOf<Thread>()
     val nAdderThreads = 6
     val nRemoverThreads = 4
-    val timeout = 5000L
     val completedAdder = AtomicInteger()
     val completedRemover = AtomicInteger()
 
@@ -44,7 +46,7 @@ class LockFreeLinkedListShortStressTest {
 
     @Test
     fun testStress() {
-        val deadline = System.currentTimeMillis() + timeout
+        val deadline = System.currentTimeMillis() + TEST_DURATION
         repeat(nAdderThreads) { threadId ->
             threads += thread(start = false, name = "adder-$threadId") {
                 val rnd = Random()

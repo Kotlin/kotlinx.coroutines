@@ -226,7 +226,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectSendResourceCleanup() = runBlocking<Unit> {
         val channel = ArrayChannel<Int>(1)
-        val n = 10_000_000
+        val n = 10_000_000 * stressTestMultiplier
         expect(1)
         channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
         repeat(n) { i ->
@@ -241,7 +241,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveResourceCleanup() = runBlocking<Unit> {
         val channel = ArrayChannel<Int>(1)
-        val n = 10_000_000
+        val n = 10_000_000 * stressTestMultiplier
         expect(1)
         repeat(n) { i ->
             select {

@@ -72,7 +72,7 @@ class SelectMutexTest : TestBase() {
 
     @Test
     fun testSelectCancelledResourceRelease() = runBlocking<Unit> {
-        val n = 1_000
+        val n = 1_000 * stressTestMultiplier
         val mutex = Mutex(true) as MutexImpl // locked
         expect(1)
         repeat(n) { i ->

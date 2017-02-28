@@ -235,7 +235,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectSendResourceCleanup() = runBlocking<Unit> {
         val channel = RendezvousChannel<Int>()
-        val n = 10_000_000
+        val n = 10_000_000 * stressTestMultiplier
         expect(1)
         repeat(n) { i ->
             select {
@@ -249,7 +249,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveResourceCleanup() = runBlocking<Unit> {
         val channel = RendezvousChannel<Int>()
-        val n = 10_000_000
+        val n = 10_000_000 * stressTestMultiplier
         expect(1)
         repeat(n) { i ->
             select {

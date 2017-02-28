@@ -21,8 +21,8 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class SelectPhilosophersStressTest {
-    val TEST_DURATION = 3000L
+class SelectPhilosophersStressTest : TestBase() {
+    val TEST_DURATION = 3000L * stressTestMultiplier
 
     val n = 10 // number of philosophers
     val forks = Array<Mutex>(n) { Mutex() }

@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.TestBase
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -27,12 +28,12 @@ import kotlin.coroutines.experimental.buildIterator
  * and 6 threads iterating and concurrently removing items. The resulting list that is being
  * stressed is long.
  */
-class LockFreeLinkedListLongStressTest {
+class LockFreeLinkedListLongStressTest : TestBase() {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
     val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
-    val nAdded = 10_000_000
+    val nAdded = 10_000_000 * stressTestMultiplier
     val nAddThreads = 4 // must be power of 2 (!!!)
     val nRemoveThreads = 6
     val removeProbability = 0.2

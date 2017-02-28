@@ -22,6 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 open class TestBase {
+    val isStressTest = System.getProperty("stressTest") != null
+    val stressTestMultiplier = if (isStressTest) 10 else 1
+
     var actionIndex = AtomicInteger()
     var finished = AtomicBoolean()
     var error = AtomicReference<Throwable>()

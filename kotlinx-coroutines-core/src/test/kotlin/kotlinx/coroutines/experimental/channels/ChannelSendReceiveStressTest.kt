@@ -31,7 +31,7 @@ class ChannelSendReceiveStressTest(
     val kind: TestChannelKind,
     val nSenders: Int,
     val nReceivers: Int
-) {
+) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}, nSenders={1}, nReceivers={2}")
         @JvmStatic
@@ -43,8 +43,8 @@ class ChannelSendReceiveStressTest(
                 }
     }
 
-    val timeLimit = 30_000L // 30 sec
-    val nEvents = 1_000_000
+    val timeLimit = 30_000L * stressTestMultiplier // 30 sec
+    val nEvents = 1_000_000 * stressTestMultiplier
 
     val channel = kind.create()
     val sendersCompleted = AtomicInteger()

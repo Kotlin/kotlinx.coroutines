@@ -63,7 +63,7 @@ class MutexTest : TestBase() {
 
     @Test
     fun testStress() = runBlocking<Unit> {
-        val n = 1000
+        val n = 1000 * stressTestMultiplier
         val k = 100
         var shared = 0
         val mutex = Mutex()
