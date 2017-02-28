@@ -289,7 +289,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
             super.finishOnSuccess(affected, next)
             // we can actually remove on select start, but this is also Ok (it'll get removed if discovered there)
-            (node as SendSelect<*>).removeOnSelectCompletion()
+            node.removeOnSelectCompletion()
         }
     }
 

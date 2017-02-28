@@ -23,8 +23,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicIntegerArray
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -50,7 +50,8 @@ class ChannelSendReceiveStressTest(
     val sendersCompleted = AtomicInteger()
     val receiversCompleted = AtomicInteger()
     val dupes = AtomicInteger()
-    val received = ConcurrentHashMap<Int,Int>()
+    val received = AtomicIntegerArray(nEvents)
+    val receivedTotal = AtomicInteger()
     val receivedBy = IntArray(nReceivers)
 
     @Test
@@ -89,7 +90,7 @@ class ChannelSendReceiveStressTest(
         println("Tested $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         println("Completed successfully ${sendersCompleted.get()} sender coroutines")
         println("Completed successfully ${receiversCompleted.get()} receiver coroutines")
-        println("              Received ${received.size} events")
+        println("              Received ${receivedTotal.get()} events")
         println("        Received dupes ${dupes.get()}")
         repeat(nReceivers) { receiveIndex ->
             println("        Received by #$receiveIndex ${receivedBy[receiveIndex]}")
@@ -97,7 +98,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(nSenders, sendersCompleted.get())
         assertEquals(nReceivers, receiversCompleted.get())
         assertEquals(0, dupes.get())
-        assertEquals(nEvents, received.size)
+        assertEquals(nEvents, receivedTotal.get())
         repeat(nReceivers) { receiveIndex ->
             assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
         }
@@ -114,10 +115,11 @@ class ChannelSendReceiveStressTest(
     }
 
     private fun doReceived(receiverIndex: Int, event: Int) {
-        if (received.put(event, event) != null) {
+        if (!received.compareAndSet(event, 0, 1)) {
             println("Duplicate event $event at $receiverIndex")
             dupes.incrementAndGet()
         }
+        receivedTotal.incrementAndGet()
         receivedBy[receiverIndex]++
     }
 
