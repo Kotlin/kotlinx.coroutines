@@ -22,6 +22,8 @@ import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.internal.AtomicDesc
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
+import kotlinx.coroutines.experimental.sync.Mutex
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
@@ -66,6 +68,14 @@ public interface SelectBuilder<in R> {
      * the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
     public fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R)
+
+    /**
+     * Clause for [Mutex.lock] suspending function that selects the given [block] when the mutex is locked.
+     *
+     * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
+     *        is already locked with the same token (same identity), this clause throws [IllegalStateException].
+     */
+    public fun Mutex.onLock(owner: Any? = null, block: suspend () -> R)
 }
 
 /**
@@ -107,6 +117,8 @@ public interface SelectInstance<in R> {
     public fun invokeOnCompletion(handler: CompletionHandler): Job.Registration
 
     public fun unregisterOnCompletion(registration: Job.Registration)
+
+    public fun removeOnCompletion(node: LockFreeLinkedListNode)
 }
 
 /**
@@ -133,6 +145,7 @@ public interface SelectInstance<in R> {
  * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SelectBuilder.onSend]                   | [offer][SendChannel.offer]
  * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][SelectBuilder.onReceive]             | [poll][ReceiveChannel.poll]
  * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][SelectBuilder.onReceiveOrNull] | [poll][ReceiveChannel.poll]
+ * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][SelectBuilder.onLock]                   | [tryLock][Mutex.tryLock]
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
@@ -224,7 +237,23 @@ internal class SelectBuilderImpl<in R>(
         registerSelectReceiveOrNull(this@SelectBuilderImpl, block)
     }
 
+    override fun Mutex.onLock(owner: Any?, block: suspend () -> R) {
+        registerSelectLock(this@SelectBuilderImpl, owner, block)
+    }
+
     override fun unregisterOnCompletion(registration: Job.Registration) {
         invokeOnCompletion(UnregisterOnCompletion(this, registration))
     }
+
+    override fun removeOnCompletion(node: LockFreeLinkedListNode) {
+        invokeOnCompletion(RemoveOnCompletion(this, node))
+    }
+}
+
+private class RemoveOnCompletion(
+    select: SelectBuilderImpl<*>,
+    @JvmField val node: LockFreeLinkedListNode
+) : JobNode<SelectBuilderImpl<*>>(select) {
+    override fun invoke(reason: Throwable?) { node.remove() }
+    override fun toString(): String = "RemoveOnCompletion[$node]"
 }

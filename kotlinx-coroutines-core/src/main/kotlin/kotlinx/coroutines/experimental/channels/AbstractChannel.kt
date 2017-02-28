@@ -192,7 +192,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         element: E,
         select: SelectInstance<R>,
         block: suspend () -> R
-    ) : AddLastDesc(queue, SendSelect(element, select, block)) {
+    ) : AddLastDesc<SendSelect<R>>(queue, SendSelect(element, select, block)) {
         override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
             if (affected is ReceiveOrClosed<*>) {
                 return affected as? Closed<*> ?: ENQUEUE_FAILED
@@ -370,11 +370,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
         }
     }
 
-    private inner class TryEnqueueReceiveDesc<E, R>(
+    private inner class TryEnqueueReceiveDesc<in E, R>(
         select: SelectInstance<R>,
         block: suspend (E?) -> R,
         nullOnClose: Boolean
-    ) : AddLastDesc(queue, ReceiveSelect(select, block, nullOnClose)) {
+    ) : AddLastDesc<ReceiveSelect<R, E>>(queue, ReceiveSelect(select, block, nullOnClose)) {
         override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
             if (affected is Send) return ENQUEUE_FAILED
             return null

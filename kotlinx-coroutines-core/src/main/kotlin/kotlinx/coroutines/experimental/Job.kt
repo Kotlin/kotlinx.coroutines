@@ -764,14 +764,6 @@ internal class UnregisterOnCompletion(
     override fun toString(): String = "UnregisterOnCompletion[$registration]"
 }
 
-private class CancelOnCompletion(
-    parentJob: Job,
-    @JvmField val subordinateJob: Job
-) : JobNode<Job>(parentJob) {
-    override fun invoke(reason: Throwable?) { subordinateJob.cancel(reason) }
-    override fun toString(): String = "CancelOnCompletion[$subordinateJob]"
-}
-
 private class ParentOnCompletion(
     parentJob: Job,
     @JvmField val subordinateJob: JobSupport
@@ -803,8 +795,6 @@ private class SelectJoinOnCompletion<R>(
     }
     override fun toString(): String = "SelectJoinOnCompletion[$select]"
 }
-
-
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {
     init { initParentJob(parent) }

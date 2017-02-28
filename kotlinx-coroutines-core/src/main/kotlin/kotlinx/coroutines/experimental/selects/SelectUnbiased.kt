@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.sync.Mutex
 import java.util.*
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
@@ -85,5 +86,9 @@ internal class UnbiasedSelectBuilderImpl<in R>(cont: Continuation<R>) : SelectBu
 
     override fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R) {
         clauses += { registerSelectReceiveOrNull(instance, block) }
+    }
+
+    override fun Mutex.onLock(owner: Any?, block: suspend () -> R) {
+        clauses += { registerSelectLock(instance, owner, block) }
     }
 }

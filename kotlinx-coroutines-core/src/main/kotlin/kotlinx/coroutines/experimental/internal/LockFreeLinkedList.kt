@@ -48,7 +48,7 @@ public typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-public typealias AddLastDesc = LockFreeLinkedListNode.AddLastDesc
+public typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
 
 /**
  * Doubly-linked concurrent list node with remove support.
@@ -160,7 +160,7 @@ public open class LockFreeLinkedListNode {
         }
     }
 
-    public fun describeAddLast(node: Node): AddLastDesc = AddLastDesc(this, node)
+    public fun <T : Node> describeAddLast(node: T): AddLastDesc<T> = AddLastDesc(this, node)
 
     /**
      * Adds last item to this list atomically if the [condition] is true.
@@ -293,7 +293,10 @@ public open class LockFreeLinkedListNode {
 
     // ------ multi-word atomic operations helpers ------
 
-    public open class AddLastDesc(val queue: Node, val node: Node) : AbstractAtomicDesc() {
+    public open class AddLastDesc<out T : Node>(
+        @JvmField val queue: Node,
+        @JvmField val node: T
+    ) : AbstractAtomicDesc() {
         init {
             // require freshly allocated node here
             check(node._next === node && node._prev === node)
@@ -337,7 +340,9 @@ public open class LockFreeLinkedListNode {
         }
     }
 
-    public open class RemoveFirstDesc<T>(val queue: Node) : AbstractAtomicDesc() {
+    public open class RemoveFirstDesc<T>(
+        @JvmField val queue: Node
+    ) : AbstractAtomicDesc() {
         @Suppress("UNCHECKED_CAST")
         public val result: T get() = affectedNode!! as T
 
