@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>rxSingle - kotlinx-coroutines-rx2</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.experimental.rx2/rx-single.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-rx2</a> / <a href="index.html">kotlinx.coroutines.experimental.rx2</a> / <a href=".">rxSingle</a></div>
+
+<h1 id="rxsingle">rxSingle</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxSingle</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx2.rxSingle.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx2.rxSingle.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="identifier">CoroutineScope</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Single</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-rx2/src/main/kotlin/kotlinx/coroutines/experimental/rx2/RxSingle.kt#L39">(source)</a></div>
+
+<p>Creates cold <a href="#">single</a> that will run a given <a href="rx-single.html#kotlinx.coroutines.experimental.rx2$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx2.rxSingle.T)))/block">block</a> in a coroutine.
+Every time the returned observable is subscribed, it starts a new coroutine in the specified <a href="rx-single.html#kotlinx.coroutines.experimental.rx2$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx2.rxSingle.T)))/context">context</a>.
+Coroutine returns a single value. Unsubscribing cancels running coroutine.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Coroutine action</strong></th>
+      <th><strong>Signal to subscriber</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Returns a value</td>
+      <td><code>onSuccess</code></td>
+    </tr>
+    <tr>
+      <td>Failure with exception or unsubscribe</td>
+      <td><code>onError</code></td>
+    </tr>
+  </tbody>
+</table>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

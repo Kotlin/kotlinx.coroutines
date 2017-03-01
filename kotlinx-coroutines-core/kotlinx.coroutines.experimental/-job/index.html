@@ -7,7 +7,7 @@
   <title>Job - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/">
 </head>
 
   <body>
@@ -232,18 +232,6 @@ It is optionally a child of a <a href="invoke.html#kotlinx.coroutines.experiment
 </tr>
 <tr>
 <td>
-        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-join.html">onJoin</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">onJoin</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onJoin(kotlinx.coroutines.experimental.Job, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction0</span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Clause for <a href="join.html">Job.join</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-join.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onJoin(kotlinx.coroutines.experimental.Job, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> when the job is complete.
-This clause never fails, even if the job completes exceptionally.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../unregister-on-completion.html">unregisterOnCompletion</a></p>
       </td>
 <td>
@@ -260,6 +248,17 @@ This clause never fails, even if the job completes exceptionally.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental.channels/-actor-job/index.html">ActorJob</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Return type for <a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
         <p><a href="../-cancellable-continuation/index.html">CancellableContinuation</a></p>

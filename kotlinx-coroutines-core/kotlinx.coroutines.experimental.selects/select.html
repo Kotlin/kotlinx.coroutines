@@ -7,7 +7,7 @@
   <title>select - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html">
 </head>
 
   <body>
@@ -23,7 +23,7 @@
 
 <h1 id="select">select</h1>
 
-<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L141">(source)</a></div>
+<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L158">(source)</a></div>
 
 <p>Waits for the result of multiple suspending functions simultaneously, which are specified using <em>clauses</em>
 in the <a href="select.html#kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</a> scope of this select invocation. The caller is suspended until one of the clauses
@@ -32,6 +32,10 @@ is either <em>selected</em> or <em>fails</em>.</p>
 <p>At most one clause is <em>atomically</em> selected and its block is executed. The result of the selected clause
 becomes the result of the select. If any clause <em>fails</em>, then the select invocation produces the
 corresponding exception. No clause is selected in this case.</p>
+
+<p>This select function is <em>biased</em> to the first clause. When multiple clauses can be selected at the same time,
+the first one of them gets priority. Use <a href="select-unbiased.html">selectUnbiased</a> for an unbiased (randomized) selection among
+the clauses.</p>
 
 <p>There is no <code>default</code> clause for select expression. Instead, each selectable suspending function has the
 corresponding non-suspending version that can be used with a regular <code>when</code> expression to select one
@@ -76,6 +80,12 @@ of the alternatives or to perform default (<code>else</code>) action if none of 
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive-or-null.html">receiveOrNull</a></td>
       <td><a href="-select-builder/on-receive-or-null.html">onReceiveOrNull</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/poll.html">poll</a></td>
+    </tr>
+    <tr>
+      <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/index.html">Mutex</a></td>
+      <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/lock.html">lock</a></td>
+      <td><a href="-select-builder/on-lock.html">onLock</a></td>
+      <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/try-lock.html">tryLock</a></td>
     </tr>
   </tbody>
 </table>

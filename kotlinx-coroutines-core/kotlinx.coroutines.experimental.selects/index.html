@@ -7,7 +7,7 @@
   <title>kotlinx.coroutines.experimental.selects - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/">
 </head>
 
   <body>
@@ -34,7 +34,7 @@
         <p><a href="-select-builder/index.html">SelectBuilder</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectBuilder</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectBuilder</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
 
         <p>Scope for <a href="select.html">select</a> invocation.</p>
 
@@ -57,6 +57,18 @@
         <p>Waits for the result of multiple suspending functions simultaneously, which are specified using <em>clauses</em>
 in the <a href="select.html#kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</a> scope of this select invocation. The caller is suspended until one of the clauses
 is either <em>selected</em> or <em>fails</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="select-unbiased.html">selectUnbiased</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">selectUnbiased</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$selectUnbiased(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.selectUnbiased.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+
+        <p>Waits for the result of multiple suspending functions simultaneously like <a href="select.html">select</a>, but in an <em>unbiased</em>
+way when multiple clauses are selectable at the same time.</p>
 
       </td>
 </tr>

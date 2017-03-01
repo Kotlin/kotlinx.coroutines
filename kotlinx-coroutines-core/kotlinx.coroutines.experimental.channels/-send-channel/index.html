@@ -7,7 +7,7 @@
   <title>SendChannel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/">
 </head>
 
   <body>
@@ -110,31 +110,21 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 </tbody>
 </table>
 
-<h3 id="extension-functions">Extension Functions</h3>
+<h3 id="inheritors">Inheritors</h3>
 
 <table class="api-docs-table">
 <tbody>
 <tr>
 <td>
-        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html">onSend</a></p>
+        <p><a href="../-actor-job/index.html">ActorJob</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onSend</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction0</span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="send.html">SendChannel.send</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> when the <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-send.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onSend(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E)), kotlinx.coroutines.experimental.selects.SelectBuilder.onSend.E, kotlin.coroutines.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/element">element</a> is sent to
-the channel. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel
-<a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em> or with the original
-<a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+        <p>Return type for <a href="../actor.html">actor</a> coroutine builder.</p>
 
       </td>
 </tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
 <tr>
 <td>
         <p><a href="../-channel/index.html">Channel</a></p>

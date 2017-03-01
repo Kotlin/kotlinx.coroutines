@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ActorScope - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-actor-scope/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.channels</a> / <a href=".">ActorScope</a></div>
+
+<h1 id="actorscope">ActorScope</h1>
+
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Actor.kt#L29">(source)</a></div>
+
+<p>Scope for <a href="../actor.html">actor</a> coroutine builder.</p>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="channel.html">channel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">channel</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>A reference to the mailbox channel that this coroutine <a href="../-receive-channel/receive.html">receives</a> messages from.
+It is provided for convenience, so that the code in the coroutine can refer
+to the channel as <code>channel</code> as apposed to <code>this</code>.
+All the <a href="../-receive-channel/index.html">ReceiveChannel</a> functions on this interface delegate to
+the channel instance returned by this function.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inherited-properties">Inherited Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+
+        <p>Returns the context of this coroutine.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
+side and all previously sent items were already received, so that the <a href="../-receive-channel/receive.html">receive</a> attempt
+throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a>. If the channel was closed because of the exception, it
+is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to receive
+an element from a failed channel throw the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-receive-channel/receive.html">receive</a> attempt will suspend.
+This function returns <code>false</code> for <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inherited-functions">Inherited Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../-receive-channel/iterator.html">iterator</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns new iterator to receive elements from this channels using <code>for</code> loop.
+Iteration completes normally when the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> <em>normally</em> and
+throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-receive-channel/poll.html">poll</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Retrieves and removes the head of this queue, or returns <code>null</code> if this queue <a href="../-receive-channel/is-empty.html">isEmpty</a>
+or is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> <em>normally</em>,
+or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-receive-channel/receive.html">receive</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="../-receive-channel/is-empty.html">isEmpty</a>
+or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>.
+If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
+throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="../-receive-channel/is-empty.html">isEmpty</a>
+or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> <em>normally</em>,
+or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

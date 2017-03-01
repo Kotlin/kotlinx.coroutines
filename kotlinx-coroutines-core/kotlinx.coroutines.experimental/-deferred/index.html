@@ -7,7 +7,7 @@
   <title>Deferred - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/">
 </head>
 
   <body>
@@ -264,19 +264,6 @@ if it was already started or completed.</p>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
 
         <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-await.html">onAwait</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">onAwait</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onAwait(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.selects.SelectBuilder.onAwait.T)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onAwait.T, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">,</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Clause for <a href="await.html">Deferred.await</a> suspending function that selects the given <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-await.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onAwait(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.selects.SelectBuilder.onAwait.T)), kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.selects.SelectBuilder.onAwait.T, kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> with the deferred value is
-resolved. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails if the deferred value completes exceptionally (either fails or
-it cancelled).</p>
 
       </td>
 </tr>

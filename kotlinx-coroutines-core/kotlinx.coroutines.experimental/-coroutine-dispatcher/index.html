@@ -7,7 +7,7 @@
   <title>CoroutineDispatcher - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/">
 </head>
 
   <body>
@@ -97,41 +97,6 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 
         <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
 The default behaviour for most dispatchers is to return <code>true</code>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="extension-functions">Extension Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-        <p><a href="../-cancellable-continuation/resume-undispatched.html">resumeUndispatched</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">CoroutineDispatcher</span><span class="symbol">.</span><span class="identifier">resumeUndispatched</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Resumes this continuation with a given <a href="../-cancellable-continuation/resume-undispatched.html#kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatched(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlinx.coroutines.experimental.CancellableContinuation.T)/value">value</a> in the invoker thread without going though
-<a href="dispatch.html">dispatch</a> function of the CoroutineDispatcher in the <a href="#">context</a>.
-This function is designed to be used only by the CoroutineDispatcher implementations themselves.
-<strong>It should not be used in general code</strong>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-cancellable-continuation/resume-undispatched-with-exception.html">resumeUndispatchedWithException</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">CoroutineDispatcher</span><span class="symbol">.</span><span class="identifier">resumeUndispatchedWithException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatchedWithException(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Resumes this continuation with a given <a href="../-cancellable-continuation/resume-undispatched-with-exception.html#kotlinx.coroutines.experimental.CancellableContinuation$resumeUndispatchedWithException(kotlinx.coroutines.experimental.CoroutineDispatcher, kotlin.Throwable)/exception">exception</a> in the invoker thread without going though
-<a href="dispatch.html">dispatch</a> function of the CoroutineDispatcher in the <a href="#">context</a>.
-This function is designed to be used only by the CoroutineDispatcher implementations themselves.
-<strong>It should not be used in general code</strong>.</p>
 
       </td>
 </tr>

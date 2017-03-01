@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx-coroutines-rx1</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-rx1/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Utilities for <a href="https://github.com/ReactiveX/RxJava/tree/1.x">RxJava 1.x</a>.</p>
+
+<p>Coroutine builders:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Result</strong></th>
+      <th><strong>Scope</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental.rx1/rx-completable.html">rxCompletable</a></td>
+      <td><a href="#">Completable</a></td>
+      <td><a href="#">CoroutineScope</a></td>
+      <td>Cold completable that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental.rx1/rx-single.html">rxSingle</a></td>
+      <td><a href="#">Single</a></td>
+      <td><a href="#">CoroutineScope</a></td>
+      <td>Cold single that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental.rx1/rx-observable.html">rxObservable</a></td>
+      <td><a href="#">Observable</a></td>
+      <td><a href="#">ProducerScope</a></td>
+      <td>Cold observable that starts coroutine on subscribe</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Suspending extension functions and suspending iteration:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#">Completable.await</a></td>
+      <td>Awaits for completion of the completable value</td>
+    </tr>
+    <tr>
+      <td><a href="#">Single.await</a></td>
+      <td>Awaits for completion of the single value and returns it</td>
+    </tr>
+    <tr>
+      <td><a href="#">Observable.awaitFirst</a></td>
+      <td>Returns the first value from the given observable</td>
+    </tr>
+    <tr>
+      <td><a href="#">Observable.awaitLast</a></td>
+      <td>Returns the last value from the given observable</td>
+    </tr>
+    <tr>
+      <td><a href="#">Observable.awaitSingle</a></td>
+      <td>Returns the single value from the given observable</td>
+    </tr>
+    <tr>
+      <td><a href="#">Observable.open</a></td>
+      <td>Subscribes to observable and returns <a href="#">ReceiveChannel</a></td>
+    </tr>
+    <tr>
+      <td><a href="#">Observable.iterator</a></td>
+      <td>Subscribes to observable and returns <a href="#">ChannelIterator</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Conversion functions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#">Job.toCompletable</a></td>
+      <td>Converts job to hot completable</td>
+    </tr>
+    <tr>
+      <td><a href="#">Deferred.toSingle</a></td>
+      <td>Converts deferred value to hot single</td>
+    </tr>
+    <tr>
+      <td><a href="#">ReceiveChannel.toObservable</a></td>
+      <td>Converts streaming channel to hot observable</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="packages">Packages</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="kotlinx.coroutines.experimental.rx1/index.html">kotlinx.coroutines.experimental.rx1</a></p>
+      </td>
+<td>
+
+        <p>Utilities for <a href="https://github.com/ReactiveX/RxJava/tree/1.x">RxJava 1.x</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="index">Index</h3>
+
+<p><a href="alltypes/index.html">All Types</a></p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

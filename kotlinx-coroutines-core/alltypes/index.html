@@ -7,7 +7,7 @@
   <title>alltypes - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
 </head>
 
   <body>
@@ -25,6 +25,36 @@
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractChannel</a></p>
+      </td>
+<td>
+
+        <p>Abstract channel. It is a base class for all channel implementations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-actor-job/index.html">kotlinx.coroutines.experimental.channels.ActorJob</a></p>
+      </td>
+<td>
+
+        <p>Return type for <a href="../kotlinx.coroutines.experimental.channels/actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-actor-scope/index.html">kotlinx.coroutines.experimental.channels.ActorScope</a></p>
+      </td>
+<td>
+
+        <p>Scope for <a href="../kotlinx.coroutines.experimental.channels/actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-array-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayChannel</a></p>
@@ -238,6 +268,17 @@ A job can be <em>cancelled</em> at any time with <a href="../kotlinx.coroutines.
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html">kotlinx.coroutines.experimental.channels.LinkedListChannel</a></p>
+      </td>
+<td>
+
+        <p>Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
+Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.sync/-mutex/index.html">kotlinx.coroutines.experimental.sync.Mutex</a></p>
       </td>
 <td>
@@ -294,8 +335,8 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <td>
 
         <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
-to receiver only when <a href="#">send</a> and <a href="#">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
-until another coroutine invokes <a href="#">receive</a> and <a href="#">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+to receiver only when <a href="#">send</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
 
       </td>
 </tr>

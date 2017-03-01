@@ -7,7 +7,7 @@
   <title>Mutex.unlock - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/unlock.html">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/unlock.html">
 </head>
 
   <body>
@@ -23,10 +23,14 @@
 
 <h1 id="unlock">unlock</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unlock</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L69">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unlock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$unlock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L91">(source)</a></div>
 
 <p>Unlocks this mutex. Throws <a href="#">IllegalStateException</a> if invoked on a mutex that is not locked.</p>
 
+<h3 id="parameters">Parameters</h3>
+
+<p><code>owner</code> - Optional owner token for debugging. When <code>owner</code> is specified (non-null value) and this mutex
+    was locked with the different token (by identity), this function throws <a href="#">IllegalStateException</a>.</p>
 
       </div>
     </main>

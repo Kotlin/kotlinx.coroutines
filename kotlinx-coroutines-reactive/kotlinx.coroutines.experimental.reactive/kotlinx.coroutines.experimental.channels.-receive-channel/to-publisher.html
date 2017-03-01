@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>toPublisher - kotlinx-coroutines-reactive</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/kotlinx.coroutines.experimental.channels.-receive-channel/to-publisher.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactive</a> / <a href="../index.html">kotlinx.coroutines.experimental.reactive</a> / <a href="index.html">kotlinx.coroutines.experimental.channels.ReceiveChannel</a> / <a href=".">toPublisher</a></div>
+
+<h1 id="topublisher">toPublisher</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toPublisher</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.reactive$toPublisher(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.reactive.toPublisher.T)), kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-reactive/src/main/kotlin/kotlinx/coroutines/experimental/reactive/Convert.kt#L31">(source)</a></div>
+
+<p>Converts a stream of elements received from the channel to the hot reactive publisher.</p>
+
+<p>Every subscriber receives values from this channel in <strong>fan-out</strong> fashion. If the are multiple subscribers,
+they’ll receive values in round-robin way.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>context</code> - – the coroutine context from which the resulting observable is going to be signalled</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx.coroutines.experimental.reactive.org.reactivestreams.Publisher - kotlinx-coroutines-reactive</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-reactive</a> / <a href="../index.html">kotlinx.coroutines.experimental.reactive</a> / <a href=".">org.reactivestreams.Publisher</a></div>
+
+<h3 id="extensions-for-orgreactivestreamspublisher">Extensions for org.reactivestreams.Publisher</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="await-first.html">awaitFirst</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+
+        <p>Awaits for the first value from the given publisher without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="await-last.html">awaitLast</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitLast</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+
+        <p>Awaits for the last value from the given publisher without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="await-single.html">awaitSingle</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+
+        <p>Awaits for the single value from the given publisher without blocking a thread and
+returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="iterator.html">iterator</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Subscribes to this <a href="#">Publisher</a> and returns an iterator to receive elements emitted by it.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="open.html">open</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Subscribes to this <a href="#">Publisher</a> and returns a channel to receive elements emitted by it.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

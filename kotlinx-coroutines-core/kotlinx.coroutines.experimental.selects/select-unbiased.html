@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>selectUnbiased - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select-unbiased.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental.selects</a> / <a href=".">selectUnbiased</a></div>
+
+<h1 id="selectunbiased">selectUnbiased</h1>
+
+<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">selectUnbiased</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$selectUnbiased(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.selectUnbiased.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/SelectUnbiased.kt#L38">(source)</a></div>
+
+<p>Waits for the result of multiple suspending functions simultaneously like <a href="select.html">select</a>, but in an <em>unbiased</em>
+way when multiple clauses are selectable at the same time.</p>
+
+<p>This unbiased implementation of <code>select</code> expression randomly shuffles the clauses before checking
+if they are selectable, thus ensuring that there is no statistical bias to the selection of the first
+clauses.</p>
+
+<p>See <a href="select.html">select</a> function description for all the other details.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

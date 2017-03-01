@@ -7,7 +7,7 @@
   <title>kotlinx.coroutines.experimental.channels - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/">
 </head>
 
   <body>
@@ -31,10 +31,43 @@
 <tbody>
 <tr>
 <td>
+        <p><a href="-abstract-channel/index.html">AbstractChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Abstract channel. It is a base class for all channel implementations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-actor-job/index.html">ActorJob</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Return type for <a href="actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-actor-scope/index.html">ActorScope</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Scope for <a href="actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="-array-channel/index.html">ArrayChannel</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Channel with array buffer of a fixed <a href="-array-channel/capacity.html">capacity</a>.
 Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
@@ -63,6 +96,18 @@ but it has suspending operations instead of blocking ones and it can be closed.<
 
         <p>Iterator for <a href="-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
 from concurrent coroutines.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-linked-list-channel/index.html">LinkedListChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">LinkedListChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
+Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
 
       </td>
 </tr>
@@ -104,11 +149,11 @@ from concurrent coroutines.</p>
         <p><a href="-rendezvous-channel/index.html">RendezvousChannel</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">RendezvousChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">RendezvousChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
-to receiver only when <a href="#">send</a> and <a href="#">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
-until another coroutine invokes <a href="#">receive</a> and <a href="#">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
+to receiver only when <a href="#">send</a> and <a href="-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
+until another coroutine invokes <a href="-abstract-channel/receive.html">receive</a> and <a href="-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
 
       </td>
 </tr>
@@ -165,13 +210,27 @@ exception on send attempts.</p>
 <tbody>
 <tr>
 <td>
+        <p><a href="actor.html">actor</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-actor-scope/index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-actor-job/index.html"><span class="identifier">ActorJob</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Launches new coroutine that is receiving messages from its mailbox channel
+and returns a reference to the coroutine as an <a href="-actor-job/index.html">ActorJob</a>. The resulting
+object can be used to <a href="-send-channel/send.html">send</a> messages to this coroutine.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="produce.html">produce</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">produce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.coroutines.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">SuspendFunction1</span><span class="symbol">&lt;</span><a href="-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">,</span>&nbsp;<span class="identifier">Unit</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-producer-job/index.html"><span class="identifier">ProducerJob</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">produce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-producer-job/index.html"><span class="identifier">ProducerJob</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Launches new coroutine to produce a stream of values by sending them to a channel
-and returns a reference to the coroutine as a <a href="-producer-job/index.html">ProducerJob</a>.</p>
+and returns a reference to the coroutine as a <a href="-producer-job/index.html">ProducerJob</a>. This resulting
+object can be used to <a href="-receive-channel/receive.html">receive</a> elements produced by this coroutine.</p>
 
       </td>
 </tr>

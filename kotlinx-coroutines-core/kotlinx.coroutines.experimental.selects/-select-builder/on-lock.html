@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SelectBuilder.onLock - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-lock.html">
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.selects</a> / <a href="index.html">SelectBuilder</a> / <a href=".">onLock</a></div>
+
+<h1 id="onlock">onLock</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><a href="../../kotlinx.coroutines.experimental.sync/-mutex/index.html"><span class="identifier">Mutex</span></a><span class="symbol">.</span><span class="identifier">onLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/owner">owner</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects.SelectBuilder$onLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L78">(source)</a></div>
+
+<p>Clause for <a href="../../kotlinx.coroutines.experimental.sync/-mutex/lock.html">Mutex.lock</a> suspending function that selects the given <a href="on-lock.html#kotlinx.coroutines.experimental.selects.SelectBuilder$onLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.selects.SelectBuilder.R)))/block">block</a> when the mutex is locked.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>owner</code> - Optional owner token for debugging. When <code>owner</code> is specified (non-null value) and this mutex
+    is already locked with the same token (same identity), this clause throws <a href="#">IllegalStateException</a>.</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+
