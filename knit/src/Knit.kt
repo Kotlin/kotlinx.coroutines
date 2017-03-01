@@ -411,8 +411,8 @@ fun loadApiIndex(
             val refLink = result.groups[1]!!.value
             if (refLink.startsWith("..")) continue // ignore cross-references
             val refName = namePrefix + result.groups[2]!!.value
-            map.put(refName, refLink)
-            map.put(pkg + "." + refName, refLink)
+            map.put(refName, path + "/" + refLink)
+            map.put(pkg + "." + refName, path + "/" + refLink)
             if (refLink.endsWith(INDEX_HTML)) {
                 if (visited.add(refLink)) {
                     val path2 = path + "/" + refLink.substring(0, refLink.length - INDEX_HTML.length)
@@ -437,7 +437,7 @@ fun processApiIndex(
     while (it.hasNext()) {
         val refName = it.next()
         val refLink = map[refName] ?: continue
-        indexList += "[$refName]: $siteRoot/$pkg/$refLink"
+        indexList += "[$refName]: $siteRoot/$refLink"
         it.remove()
     }
     return indexList
