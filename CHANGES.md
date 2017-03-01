@@ -1,5 +1,21 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.12
+
+* Switched to Kotlin version 1.1.0 release.
+* Reworked and updated utilities for 
+  [Reactive Streams](kotlinx-coroutines-reactive), 
+  [Rx 1.x](kotlinx-coroutines-rx1), and 
+  [Rx 2.x](kotlinx-coroutines-rx2) with library-specific 
+  coroutine builders, suspending functions, converters and iteration support.
+* `LinkedListChannel` with unlimited buffer (`offer` always succeeds).
+* `onLock` select clause and an optional `owner` parameter in all `Mutex` functions.
+* `selectUnbiased` function.
+* `actor` coroutine builder.
+* Couple more examples for "Shared mutable state and concurrency" section and 
+  "Channels are fair" section with ping-pong table example 
+  in [coroutines guide](coroutines-guide.md).
+
 ## Version 0.11-rc
 
 * `select` expression with onJoin/onAwait/onSend/onReceive clauses.

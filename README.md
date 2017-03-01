@@ -1,8 +1,6 @@
-# kotlinx.coroutines
+# kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap-1.1/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines/_latestVersion)
 
-[ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap-1.1/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines/_latestVersion)
-
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0-rc-91 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0 release. 
 
 ## Modules and features
 
@@ -28,8 +26,8 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 The libraries are published to [kotlin-eap-1.1](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines) bintray repository.
 
-These libraries require kotlin compiler version to be at least `1.1.0-rc-91` and 
-require kotlin runtime of the same version as a dependency, which can be obtained from the same repository.
+These libraries require kotlin compiler version to be at least `1.1.0` and 
+require kotlin runtime of the same version as a dependency.
 
 ### Maven
 
@@ -53,7 +51,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.11-rc</version>
+    <version>0.12</version>
 </dependency>
 ```
 
@@ -61,7 +59,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0-rc-91</kotlin.version>
+    <kotlin.version>1.1.0</kotlin.version>
 </properties>
 ```
 
@@ -80,13 +78,13 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.11-rc'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.12'
 ```
 
 And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0-rc-91'
+    ext.kotlin_version = '1.1.0'
 }
 ```
