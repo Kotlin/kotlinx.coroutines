@@ -1,4 +1,4 @@
-# Module kotlinx-coroutines-rx1
+# Module kotlinx-coroutines-rx2
 
 Utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava).
 
@@ -22,8 +22,8 @@ Suspending extension functions and suspending iteration:
 | [ObservableSource.open][io.reactivex.ObservableSource.open] | Subscribes to observable and returns [ReceiveChannel] 
 | [ObservableSource.iterator][io.reactivex.ObservableSource.iterator] | Subscribes to observable and returns [ChannelIterator]
 
-Note, that [Flowable][io.reactivex.Flowable] is a subclass of [Reactive Streams](http://www.reactive-streams.org)
-[Publisher][org.reactivestreams.Publisher] and extensions for it are covered by
+Note, that `Flowable` is a subclass of [Reactive Streams](http://www.reactive-streams.org)
+`Publisher` and extensions for it are covered by
 [kotlinx-coroutines-reactive](../kotlinx-coroutines-reactive) module.
 
 Conversion functions:
