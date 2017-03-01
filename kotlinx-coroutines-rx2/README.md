@@ -6,9 +6,9 @@ Coroutine builders:
 
 | **Name**        | **Result**                              | **Scope**        | **Description**
 | --------------- | --------------------------------------- | ---------------- | ---------------
-| [rxCompletable] | [Completable][io.reactivex.Completable] | [CoroutineScope] | Cold completable that starts coroutine on subscribe
-| [rxSingle]      | [Single][io.reactivex.Single]           | [CoroutineScope] | Cold single that starts coroutine on subscribe
-| [rxObservable]  | [Observable][io.reactivex.Observable]   | [ProducerScope]  | Cold observable that starts coroutine on subscribe
+| [rxCompletable] | `Completable`                           | [CoroutineScope] | Cold completable that starts coroutine on subscribe
+| [rxSingle]      | `Single`                                | [CoroutineScope] | Cold single that starts coroutine on subscribe
+| [rxObservable]  | `Observable`                            | [ProducerScope]  | Cold observable that starts coroutine on subscribe
 
 Suspending extension functions and suspending iteration:
 

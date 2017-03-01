@@ -6,7 +6,7 @@ Coroutine builders:
 
 | **Name**        | **Result**                    | **Scope**        | **Description**
 | --------------- | ----------------------------- | ---------------- | ---------------
-| [publish]       | [Publisher][org.reactivestreams.Publisher] | [ProducerScope] | Cold reactive publisher that starts coroutine on subscribe
+| [publish]       | `Publisher`                   | [ProducerScope] | Cold reactive publisher that starts coroutine on subscribe
 
 Suspending extension functions and suspending iteration:
 
