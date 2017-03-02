@@ -368,15 +368,18 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     /**
-     * Tries to update current [state] of this job.
+     * Updates current [state] of this job.
      */
-    internal fun updateState(expect: Any, update: Any?, mode: Int): Boolean {
+    protected fun updateState(expect: Any, update: Any?, mode: Int): Boolean {
         if (!tryUpdateState(expect, update)) return false
         completeUpdateState(expect, update, mode)
         return true
     }
 
-    internal fun tryUpdateState(expect: Any, update: Any?): Boolean  {
+    /**
+     * Tries to initiate update of the current [state] of this job.
+     */
+    protected fun tryUpdateState(expect: Any, update: Any?): Boolean  {
         require(expect is Incomplete && update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // Unregister from parent job
@@ -384,7 +387,10 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         return true // continues in completeUpdateState
     }
 
-    internal fun completeUpdateState(expect: Any, update: Any?, mode: Int) {
+    /**
+     * Completes update of the current [state] of this job.
+     */
+    protected fun completeUpdateState(expect: Any, update: Any?, mode: Int) {
         // Invoke completion handlers
         val cause = (update as? CompletedExceptionally)?.cause
         var completionException: Throwable? = null
