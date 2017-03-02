@@ -29,10 +29,9 @@ fun produceNumbers() = produce<Int>(CommonPool) {
 }
 
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) {
-    while (true) {
-        val x = channel.receive()
+    for (x in channel) {
         println("Processor #$id received $x")
-    }
+    }    
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {

@@ -1351,10 +1351,9 @@ received number:
 
 ```kotlin
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) {
-    while (true) {
-        val x = channel.receive()
+    for (x in channel) {
         println("Processor #$id received $x")
-    }
+    }    
 }
 ```
 
