@@ -33,7 +33,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
     val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
-    val nAdded = 10_000_000 * stressTestMultiplier
+    val nAdded = 10_000_000 // should not stress more, because that'll run out of memory
     val nAddThreads = 4 // must be power of 2 (!!!)
     val nRemoveThreads = 6
     val removeProbability = 0.2
