@@ -1810,22 +1810,26 @@ import kotlinx.coroutines.experimental.selects.*
 
 ### Selecting from channels
 
-Let us have two channels of strings `fizz` and `buzz`. The `fizz` channel produces "Fizz" string every 300 ms:
- 
+Let us have two producers of strings: `fizz` and `buzz`. The `fizz` produces "Fizz" string every 300 ms:
+
+<!--- INCLUDE .*/example-select-01.kt
+import kotlin.coroutines.experimental.CoroutineContext
+-->
+
 ```kotlin
-val fizz = produce<String>(CommonPool) { // produce using common thread pool
-    while (true) {
+fun fizz(context: CoroutineContext) = produce<String>(context) {
+    while (true) { // sends "Fizz" every 300 ms
         delay(300)
         send("Fizz")
     }
 }
 ```
 
-And the `buzz` channel produces "Buzz!" string every 500 ms:
+And the `buzz` produces "Buzz!" string every 500 ms:
 
 ```kotlin
-val buzz = produce<String>(CommonPool) {
-    while (true) {
+fun buzz(context: CoroutineContext) = produce<String>(context) {
+    while (true) { // sends "Buzz!" every 500 ms
         delay(500)
         send("Buzz!")
     }
@@ -1837,7 +1841,7 @@ other. But [select] expression allows us to receive from _both_ simultaneously u
 [onReceive][SelectBuilder.onReceive] clauses:
 
 ```kotlin
-suspend fun selectFizzBuzz() {
+suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
     select<Unit> { // <Unit> means that this select expression does not produce any result 
         fizz.onReceive { value ->  // this is the first select clause
             println("fizz -> '$value'")
@@ -1849,12 +1853,14 @@ suspend fun selectFizzBuzz() {
 }
 ```
 
-Let us run it seven times:
+Let us run it all seven times:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
+    val fizz = fizz(context)
+    val buzz = buzz(context)
     repeat(7) {
-        selectFizzBuzz()
+        selectFizzBuzz(fizz, buzz)
     }
 }
 ```

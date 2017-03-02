@@ -20,22 +20,23 @@ package guide.select.example01
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
+import kotlin.coroutines.experimental.CoroutineContext
 
-val fizz = produce<String>(CommonPool) { // produce using common thread pool
-    while (true) {
+fun fizz(context: CoroutineContext) = produce<String>(context) {
+    while (true) { // sends "Fizz" every 300 ms
         delay(300)
         send("Fizz")
     }
 }
 
-val buzz = produce<String>(CommonPool) {
-    while (true) {
+fun buzz(context: CoroutineContext) = produce<String>(context) {
+    while (true) { // sends "Buzz!" every 500 ms
         delay(500)
         send("Buzz!")
     }
 }
 
-suspend fun selectFizzBuzz() {
+suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
     select<Unit> { // <Unit> means that this select expression does not produce any result 
         fizz.onReceive { value ->  // this is the first select clause
             println("fizz -> '$value'")
@@ -47,7 +48,9 @@ suspend fun selectFizzBuzz() {
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
+    val fizz = fizz(context)
+    val buzz = buzz(context)
     repeat(7) {
-        selectFizzBuzz()
+        selectFizzBuzz(fizz, buzz)
     }
 }
