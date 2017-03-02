@@ -16,12 +16,16 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.ContinuationInterceptor
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
- * non-blocking [delay] function.
+ * scheduled execution of tasks.
+ *
+ * Implementation of this interface affects operation of
+ * [delay][kotlinx.coroutines.experimental.delay] and [withTimeout] functions.
  */
 public interface Delay {
     /**
@@ -52,6 +56,16 @@ public interface Delay {
      * ```
      */
     fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>)
+
+    /**
+     * Schedules invocation of a specified [block] after a specified delay [time].
+     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
+     * request if it is not needed anymore.
+     *
+     * This implementation uses a built-in single-threaded scheduled executor service.
+     */
+    fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
+        DisposableFutureHandle(scheduledExecutor.schedule(block, time, unit))
 }
 
 /**
@@ -60,18 +74,26 @@ public interface Delay {
  * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
  * immediately resumes with [CancellationException].
  *
- * This function delegates to [Delay] implementation of the context [CoroutineDispatcher] if possible,
- * otherwise it resumes using a built-in single-threaded scheduled executor service.
+ * This function delegates to [Delay.scheduleResumeAfterDelay] if the context [CoroutineDispatcher]
+ * implements [Delay] interface, otherwise it resumes using a built-in single-threaded scheduled executor service.
  */
 suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
     require(time >= 0) { "Delay time $time cannot be negative" }
     if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        (cont.context[ContinuationInterceptor] as? Delay)?.apply {
-            scheduleResumeAfterDelay(time, unit, cont)
-            return@sc
-        }
-        val timeout = scheduledExecutor.schedule(ResumeRunnable(cont), time, unit)
-        cont.cancelFutureOnCompletion(timeout)
+        val delay = cont.context[ContinuationInterceptor] as? Delay
+        if (delay != null)
+            delay.scheduleResumeAfterDelay(time, unit, cont) else
+            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(ResumeRunnable(cont), time, unit))
     }
+}
+
+/**
+ * An implementation of [DisposableHandle] that cancels the specified future on dispose.
+ */
+public class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
+    override fun dispose() {
+        future.cancel(false)
+    }
+    override fun toString(): String = "DisposableFutureHandle[$future]"
 }

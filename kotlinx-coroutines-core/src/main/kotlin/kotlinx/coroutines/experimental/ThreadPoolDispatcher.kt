@@ -72,4 +72,7 @@ internal class ThreadPoolDispatcher(
         val timeout = executor.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit)
         continuation.cancelFutureOnCompletion(timeout)
     }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
+        DisposableFutureHandle(executor.schedule(block, time, unit))
 }

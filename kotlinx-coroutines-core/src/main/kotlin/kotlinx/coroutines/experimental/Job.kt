@@ -102,18 +102,14 @@ public interface Job : CoroutineContext.Element {
      * Registers handler that is **synchronously** invoked on completion of this job.
      * When job is already complete, then the handler is immediately invoked
      * with a cancellation cause or `null`. Otherwise, handler will be invoked once when this
-     * job is complete. Note, that [cancellation][cancel] is also a form of completion).
+     * job is complete. Note, that [cancellation][cancel] is also a form of completion.
      *
-     * The resulting [Registration] can be used to [Registration.unregister] if this
-     * registration is no longer needed. There is no need to unregister after completion.
+     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
+     * registration of this handler and release its memory if its invocation is no longer needed.
+     * There is no need to dispose the handler after completion of this job. The reference to
+     * all the handlers are released when this job completes.
      */
-    public fun invokeOnCompletion(handler: CompletionHandler): Registration
-
-    /**
-     * @suppress **Deprecated**: Renamed to `invokeOnCompletion`
-     */
-    @Deprecated(message = "Renamed to `invokeOnCompletion`", replaceWith = ReplaceWith("invokeOnCompletion(handler)"))
-    public fun onCompletion(handler: CompletionHandler): Registration
+    public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
 
     /**
      * Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
@@ -161,13 +157,38 @@ public interface Job : CoroutineContext.Element {
     /**
      * Registration object for [invokeOnCompletion]. It can be used to [unregister] if needed.
      * There is no need to unregister after completion.
+     * @suppress **Deprecated**: Replace with `DisposableHandle`
      */
+    @Deprecated(message = "Replace with `DisposableHandle`",
+        replaceWith = ReplaceWith("DisposableHandle"))
     public interface Registration {
         /**
          * Unregisters completion handler.
+         * @suppress **Deprecated**: Replace with `dispose`
          */
+        @Deprecated(message = "Replace with `dispose`",
+            replaceWith = ReplaceWith("dispose()"))
         public fun unregister()
     }
+}
+
+/**
+ * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
+ */
+public interface DisposableHandle : Job.Registration {
+    /**
+     * Disposes the corresponding object, making it eligible for garbage collection.
+     * Repeated invocation of this function has no effect.
+     */
+    public fun dispose()
+
+    /**
+     * Unregisters completion handler.
+     * @suppress **Deprecated**: Replace with `dispose`
+     */
+    @Deprecated(message = "Replace with `dispose`",
+        replaceWith = ReplaceWith("dispose()"))
+    public override fun unregister() = dispose()
 }
 
 /**
@@ -187,9 +208,23 @@ public typealias CancellationException = java.util.concurrent.CancellationExcept
  * ```
  * invokeOnCompletion { registration.unregister() }
  * ```
+ * @suppress: **Deprecated**: Renamed to `disposeOnCompletion`.
  */
-public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Registration =
-    invokeOnCompletion(UnregisterOnCompletion(this, registration))
+@Deprecated(message = "Renamed to `disposeOnCompletion`",
+    replaceWith = ReplaceWith("disposeOnCompletion(registration)"))
+public fun Job.unregisterOnCompletion(registration: DisposableHandle): DisposableHandle =
+    invokeOnCompletion(DisposeOnCompletion(this, registration))
+
+/**
+ * Disposes a specified [handle] when this job is complete.
+ *
+ * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
+ * ```
+ * invokeOnCompletion { handle.dispose() }
+ * ```
+ */
+public fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
+    invokeOnCompletion(DisposeOnCompletion(this, handle))
 
 /**
  * Cancels a specified [future] when this job is complete.
@@ -199,7 +234,7 @@ public fun Job.unregisterOnCompletion(registration: Job.Registration): Job.Regis
  * invokeOnCompletion { future.cancel(false) }
  * ```
  */
-public fun Job.cancelFutureOnCompletion(future: Future<*>): Job.Registration =
+public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
     invokeOnCompletion(CancelFutureOnCompletion(this, future))
 
 /**
@@ -212,12 +247,19 @@ public suspend fun Job.join() = this.join()
 /**
  * No-op implementation of [Job.Registration].
  */
-public object EmptyRegistration : Job.Registration {
-    /** Does not do anything. */
-    override fun unregister() {}
+@Deprecated(message = "Replace with `NonDisposableHandle`",
+    replaceWith = ReplaceWith("NonDisposableHandle"))
+typealias EmptyRegistration = NonDisposableHandle
 
-    /** Returns "EmptyRegistration" string. */
-    override fun toString(): String = "EmptyRegistration"
+/**
+ * No-op implementation of [DisposableHandle].
+ */
+public object NonDisposableHandle : DisposableHandle {
+    /** Does not do anything. */
+    override fun dispose() {}
+
+    /** Returns "NonDisposableHandle" string. */
+    override fun toString(): String = "NonDisposableHandle"
 }
 
 // --------------- utility classes to simplify job implementation
@@ -280,7 +322,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     private var _state: Any? = if (active) EmptyActive else EmptyNew // shared objects while we have no listeners
 
     @Volatile
-    private var registration: Job.Registration? = null
+    private var parentHandle: DisposableHandle? = null
 
     protected companion object {
         @JvmStatic
@@ -298,16 +340,16 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      * It shall be invoked at most once after construction after all other initialization.
      */
     public fun initParentJob(parent: Job?) {
-        check(registration == null)
+        check(parentHandle == null)
         if (parent == null) {
-            registration = EmptyRegistration
+            parentHandle = NonDisposableHandle
             return
         }
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
         val newRegistration = parent.invokeOnCompletion(ParentOnCompletion(parent, this))
-        registration = newRegistration
+        parentHandle = newRegistration
         // now check our state _after_ registering (see updateState order of actions)
-        if (isCompleted) newRegistration.unregister()
+        if (isCompleted) newRegistration.dispose()
     }
 
     internal open fun onParentCompletion(cause: Throwable?) {
@@ -338,7 +380,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         require(expect is Incomplete && update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!STATE.compareAndSet(this, expect, update)) return false
         // Unregister from parent job
-        registration?.unregister() // volatile read registration _after_ state was updated
+        parentHandle?.dispose() // volatile read parentHandle _after_ state was updated
         return true // continues in completeUpdateState
     }
 
@@ -515,9 +557,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    override fun onCompletion(handler: CompletionHandler): Job.Registration = invokeOnCompletion(handler)
-
-    final override fun invokeOnCompletion(handler: CompletionHandler): Job.Registration {
+    final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle {
         var nodeCache: JobNode<*>? = null
         while (true) { // lock-free loop on state
             val state = this.state
@@ -545,7 +585,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                 }
                 else -> { // is inactive
                     handler((state as? CompletedExceptionally)?.exception)
-                    return EmptyRegistration
+                    return NonDisposableHandle
                 }
             }
         }
@@ -560,7 +600,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     private suspend fun joinSuspend() = suspendCancellableCoroutine<Unit> { cont ->
-        cont.unregisterOnCompletion(invokeOnCompletion(ResumeOnCompletion(this, cont)))
+        cont.disposeOnCompletion(invokeOnCompletion(ResumeOnCompletion(this, cont)))
     }
 
     override fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R) {
@@ -576,7 +616,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             }
             if (startInternal(state) == 0) {
                 // slow-path -- register waiter for completion
-                select.unregisterOnCompletion(invokeOnCompletion(SelectJoinOnCompletion(this, select, block)))
+                select.disposeOnSelect(invokeOnCompletion(SelectJoinOnCompletion(this, select, block)))
                 return
             }
         }
@@ -731,12 +771,12 @@ private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
 
 internal abstract class JobNode<out J : Job>(
     @JvmField val job: J
-) : LockFreeLinkedListNode(), Job.Registration, CompletionHandler, JobSupport.Incomplete {
+) : LockFreeLinkedListNode(), DisposableHandle, CompletionHandler, JobSupport.Incomplete {
     final override val isActive: Boolean get() = true
     final override val idempotentStart: Any? get() = null
     // if unregister is called on this instance, then Job was an instance of JobSupport that added this node it itself
     // directly without wrapping
-    final override fun unregister() = (job as JobSupport).removeNode(this)
+    final override fun dispose() = (job as JobSupport).removeNode(this)
     override abstract fun invoke(reason: Throwable?)
 }
 
@@ -756,12 +796,12 @@ private class ResumeOnCompletion(
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
 
-internal class UnregisterOnCompletion(
+internal class DisposeOnCompletion(
     job: Job,
-    @JvmField val registration: Job.Registration
+    @JvmField val handle: DisposableHandle
 ) : JobNode<Job>(job) {
-    override fun invoke(reason: Throwable?) = registration.unregister()
-    override fun toString(): String = "UnregisterOnCompletion[$registration]"
+    override fun invoke(reason: Throwable?) = handle.dispose()
+    override fun toString(): String = "DisposeOnCompletion[$handle]"
 }
 
 private class ParentOnCompletion(

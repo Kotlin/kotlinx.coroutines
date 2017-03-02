@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.startCoroutine
 
 private val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 1000L)
@@ -62,18 +63,32 @@ internal fun scheduledExecutorShutdownNowAndRelease() {
 /**
  * Runs a given suspending block of code inside a coroutine with a specified timeout and throws
  * [CancellationException] if timeout was exceeded.
+ *
+ * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
+ * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
  */
-suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T {
+public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T {
     require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) throw CancellationException("Timed out immediately")
-    return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<T> ->
         // schedule cancellation of this continuation on time
-        val timeout = scheduledExecutor.schedule({
-            // create an exception with a specific text
-            cont.cancel(CancellationException("Timed out waiting for $time $unit"))
-        }, time, unit)
-        cont.cancelFutureOnCompletion(timeout)
+        val runnable = CancelTimedOutContinuationRunnable(time, unit, cont)
+        val delay = cont.context[ContinuationInterceptor] as? Delay
+        if (delay != null)
+            cont.disposeOnCompletion(delay.invokeOnTimeout(time, unit, runnable)) else
+            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(runnable, time, unit))
         // restart block in a separate coroutine using cancellable context of this continuation,
         block.startCoroutine(cont)
     }
+}
+
+private class CancelTimedOutContinuationRunnable(
+    private val time: Long,
+    private val unit: TimeUnit,
+    private val cont: CancellableContinuation<*>
+): Runnable {
+    override fun run() {
+        cont.cancel(CancellationException("Timed out waiting for $time $unit"))
+    }
+    override fun toString(): String = "CancelTimedOutContinuationRunnable[$time,$unit,$cont]"
 }

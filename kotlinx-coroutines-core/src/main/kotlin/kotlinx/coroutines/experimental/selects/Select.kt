@@ -114,11 +114,10 @@ public interface SelectInstance<in R> {
 
     public fun resumeSelectWithException(exception: Throwable, mode: Int)
 
-    public fun invokeOnCompletion(handler: CompletionHandler): Job.Registration
-
-    public fun unregisterOnCompletion(registration: Job.Registration)
-
-    public fun removeOnCompletion(node: LockFreeLinkedListNode)
+    // This function is actually implemented to dispose the handle only when the whole
+    // select expression complete. It is later than it could be, but if resource will get released anyway
+    // :todo: Invoke this function on select really
+    public fun disposeOnSelect(handle: DisposableHandle)
 }
 
 /**
@@ -241,19 +240,7 @@ internal class SelectBuilderImpl<in R>(
         registerSelectLock(this@SelectBuilderImpl, owner, block)
     }
 
-    override fun unregisterOnCompletion(registration: Job.Registration) {
-        invokeOnCompletion(UnregisterOnCompletion(this, registration))
+    override fun disposeOnSelect(handle: DisposableHandle) {
+        invokeOnCompletion(DisposeOnCompletion(this, handle))
     }
-
-    override fun removeOnCompletion(node: LockFreeLinkedListNode) {
-        invokeOnCompletion(RemoveOnCompletion(this, node))
-    }
-}
-
-private class RemoveOnCompletion(
-    select: SelectBuilderImpl<*>,
-    @JvmField val node: LockFreeLinkedListNode
-) : JobNode<SelectBuilderImpl<*>>(select) {
-    override fun invoke(reason: Throwable?) { node.remove() }
-    override fun toString(): String = "RemoveOnCompletion[$node]"
 }

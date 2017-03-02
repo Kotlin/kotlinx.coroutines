@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.swing
 import kotlinx.coroutines.experimental.CancellableContinuation
 import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Delay
+import kotlinx.coroutines.experimental.DisposableHandle
 import kotlinx.coroutines.experimental.swing.Swing.delay
 import java.awt.event.ActionListener
 import java.util.concurrent.TimeUnit
@@ -33,16 +34,28 @@ object Swing : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timerTime = unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-        val action = ActionListener {
+        val timer = schedule(time, unit, ActionListener {
             with(continuation) { resumeUndispatched(Unit) }
+        })
+        continuation.invokeOnCompletion { timer.stop() }
+    }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val timer = schedule(time, unit, ActionListener {
+            block.run()
+        })
+        return object : DisposableHandle {
+            override fun dispose() {
+                timer.stop()
+            }
         }
-        val timer = Timer(timerTime, action).apply {
+    }
+
+    private fun schedule(time: Long, unit: TimeUnit, action: ActionListener): Timer =
+        Timer(unit.toMillis(time).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), action).apply {
             isRepeats = false
             start()
         }
-        continuation.invokeOnCompletion { timer.stop() }
-    }
 
     override fun toString() = "Swing"
 }

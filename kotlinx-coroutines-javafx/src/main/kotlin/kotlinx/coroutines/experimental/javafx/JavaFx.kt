@@ -50,13 +50,25 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val handler = EventHandler<ActionEvent> {
+        val timeline = schedule(time, unit, EventHandler<ActionEvent> {
             with(continuation) { resumeUndispatched(Unit) }
-        }
-        val timeline = Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler))
-        timeline.play()
+        })
         continuation.invokeOnCompletion { timeline.stop() }
     }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val timeline = schedule(time, unit, EventHandler<ActionEvent> {
+            block.run()
+        })
+        return object : DisposableHandle {
+            override fun dispose() {
+                timeline.stop()
+            }
+        }
+    }
+
+    private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
+        Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }
 
     private class PulseTimer : AnimationTimer() {
         val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()

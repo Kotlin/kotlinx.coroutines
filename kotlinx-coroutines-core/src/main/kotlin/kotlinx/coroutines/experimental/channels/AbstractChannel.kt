@@ -148,7 +148,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
      */
     protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
 
-    private class SendBufferedDesc<E>(
+    private class SendBufferedDesc<out E>(
         queue: LockFreeLinkedListHead,
         element: E
     ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
@@ -289,7 +289,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
             super.finishOnSuccess(affected, next)
             // we can actually remove on select start, but this is also Ok (it'll get removed if discovered there)
-            node.removeOnSelectCompletion()
+            node.disposeOnSelect()
         }
     }
 
@@ -694,7 +694,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         override val pollResult: Any?,
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend () -> R
-    ) : LockFreeLinkedListNode(), Send, CompletionHandler {
+    ) : LockFreeLinkedListNode(), Send, DisposableHandle {
         override fun tryResumeSend(idempotent: Any?): Any? =
             if (select.trySelect(idempotent)) SELECT_STARTED else null
 
@@ -703,11 +703,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
             block.startCoroutine(select.completion)
         }
 
-        fun removeOnSelectCompletion() {
-            select.invokeOnCompletion(this)
+        fun disposeOnSelect() {
+            select.disposeOnSelect(this)
         }
 
-        override fun invoke(cause: Throwable?) {
+        override fun dispose() {
             remove()
         }
 
@@ -820,7 +820,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
         @JvmField val select: SelectInstance<R>,
         @JvmField val block: suspend (E?) -> R,
         @JvmField val nullOnClose: Boolean
-    ) : Receive<E>(), CompletionHandler {
+    ) : Receive<E>(), DisposableHandle {
         override fun tryResumeReceive(value: E, idempotent: Any?): Any?  =
             if (select.trySelect(idempotent)) (value ?: NULL_VALUE) else null
 
@@ -839,9 +839,11 @@ public abstract class AbstractChannel<E> : Channel<E> {
             }
         }
 
-        fun removeOnSelectCompletion() { select.invokeOnCompletion(this) }
+        fun removeOnSelectCompletion() {
+            select.disposeOnSelect(this)
+        }
 
-        override fun invoke(cause: Throwable?) { // invoked on select completion
+        override fun dispose() { // invoked on select completion
             if (remove())
                 onCancelledReceive() // notify cancellation of receive
         }

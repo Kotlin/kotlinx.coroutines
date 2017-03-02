@@ -57,10 +57,8 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /** Always throws [IllegalStateException]. */
     override fun getCompletionException(): CancellationException = throw IllegalStateException("This job is always active")
 
-    override fun onCompletion(handler: CompletionHandler): Job.Registration = invokeOnCompletion(handler)
-
-    /** Always returns [EmptyRegistration]. */
-    override fun invokeOnCompletion(handler: CompletionHandler): Job.Registration = EmptyRegistration
+    /** Always returns [NonDisposableHandle]. */
+    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle = NonDisposableHandle
 
     /** Always returns `false`. */
     override fun cancel(cause: Throwable?): Boolean = false

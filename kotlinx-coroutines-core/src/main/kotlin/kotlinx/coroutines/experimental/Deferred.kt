@@ -155,7 +155,7 @@ private open class DeferredCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun awaitSuspend(): T = suspendCancellableCoroutine { cont ->
-        cont.unregisterOnCompletion(invokeOnCompletion {
+        cont.disposeOnCompletion(invokeOnCompletion {
             val state = this.state
             check(state !is Incomplete)
             if (state is CompletedExceptionally)
@@ -183,7 +183,7 @@ private open class DeferredCoroutine<T>(
             }
             if (startInternal(state) == 0) {
                 // slow-path -- register waiter for completion
-                select.unregisterOnCompletion(invokeOnCompletion(SelectAwaitOnCompletion(this, select, block)))
+                select.disposeOnSelect(invokeOnCompletion(SelectAwaitOnCompletion(this, select, block)))
                 return
             }
         }

@@ -28,7 +28,9 @@ import kotlin.coroutines.experimental.CoroutineContext
 public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcher(this)
 
-internal open class ExecutorCoroutineDispatcher(val executor: Executor) : CoroutineDispatcher(), Delay {
+internal open class ExecutorCoroutineDispatcher(
+    private val executor: Executor
+) : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
@@ -37,20 +39,29 @@ internal open class ExecutorCoroutineDispatcher(val executor: Executor) : Corout
             scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
         continuation.cancelFutureOnCompletion(timeout)
     }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val timeout = if (executor is ScheduledExecutorService)
+            executor.schedule(block, time, unit) else
+            scheduledExecutor.schedule(block, time, unit)
+        return DisposableFutureHandle(timeout)
+    }
 }
 
 // --- reusing these classes in other places ---
 
 internal class ResumeUndispatchedRunnable(
-    val dispatcher: CoroutineDispatcher,
-    val continuation: CancellableContinuation<Unit>
+    private val dispatcher: CoroutineDispatcher,
+    private val continuation: CancellableContinuation<Unit>
 ) : Runnable {
     override fun run() {
         with(continuation) { dispatcher.resumeUndispatched(Unit) }
     }
 }
 
-internal class ResumeRunnable(val continuation: Continuation<Unit>) : Runnable {
+internal class ResumeRunnable(
+    private val continuation: Continuation<Unit>
+) : Runnable {
     override fun run() {
         continuation.resume(Unit)
     }

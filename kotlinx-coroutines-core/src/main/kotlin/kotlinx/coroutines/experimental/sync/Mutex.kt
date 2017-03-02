@@ -232,7 +232,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                     val failure = select.performAtomicIfNotSelected(enqueueOp)
                     when {
                         failure == null -> { // successfully enqueued
-                            select.removeOnCompletion(enqueueOp.node)
+                            select.disposeOnSelect(enqueueOp.node)
                             return
                         }
                         failure === ALREADY_SELECTED -> return // already selected -- bail out
@@ -345,7 +345,8 @@ internal class MutexImpl(locked: Boolean) : Mutex {
 
     private abstract class LockWaiter(
         @JvmField val owner: Any?
-    ) : LockFreeLinkedListNode() {
+    ) : LockFreeLinkedListNode(), DisposableHandle {
+        final override fun dispose() { remove() }
         abstract fun tryResumeLockWaiter(): Any?
         abstract fun completeResumeLockWaiter(token: Any)
     }
