@@ -18,20 +18,29 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
+import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
- * be asked to process next event from their event queue. It is used by [runBlocking] to
+ * be asked to process next event from their event queue.
+ *
+ * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
  */
 public interface EventLoop {
     /**
-     * Processes next event in this event loop and returns `true` or returns `false` if there are
-     * no events to process or when invoked from the wrong thread.
+     * Processes next event in this event loop.
+     *
+     * The result of this function is to be interpreted like this:
+     * * `<= 0` -- there are potentially more events for immediate processing;
+     * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
+     * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
      */
-    public fun processNextEvent(): Boolean
+    public fun processNextEvent(): Long
 
     public companion object Factory {
         /**
@@ -43,7 +52,7 @@ public interface EventLoop {
          * ```
          * while (needsToBeRunning) {
          *     if (Thread.interrupted()) break // or handle somehow
-         *     if (!eventLoop.processNextEvent()) LockSupport.park() // event loop will unpark
+         *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
          * }
          * ```
          */
@@ -55,10 +64,12 @@ public interface EventLoop {
 }
 
 internal class EventLoopImpl(
-    val thread: Thread
-) : CoroutineDispatcher(), EventLoop {
-    val queue = LockFreeLinkedListHead()
-    var parentJob: Job? = null
+    private val thread: Thread
+) : CoroutineDispatcher(), EventLoop, Delay {
+    private val queue = LockFreeLinkedListHead()
+    private val delayed = ConcurrentSkipListMap<DelayedTask, DelayedTask>()
+    private val nextSequence = AtomicLong()
+    private var parentJob: Job? = null
 
     fun initParentJob(coroutine: Job) {
         require(this.parentJob == null)
@@ -66,37 +77,127 @@ internal class EventLoopImpl(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        schedule(Dispatch(block))
-    }
-
-    fun schedule(node: Node): Boolean {
-        val added = if (parentJob == null) {
-            queue.addLast(node)
-            true
-        } else
-            queue.addLastIf(node) { !parentJob!!.isCompleted }
-        if (added) {
-            if (Thread.currentThread() !== thread)
-                LockSupport.unpark(thread)
+        if (scheduleQueued(QueuedRunnableTask(block))) {
+            unpark()
         } else {
-            node.run()
+            block.run()
         }
-        return added
     }
 
-    override fun processNextEvent(): Boolean {
-        if (Thread.currentThread() !== thread) return false
-        (queue.removeFirstOrNull() as? Runnable)?.apply {
-            run()
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        if (scheduleDelayed(DelayedResumeTask(time, unit, continuation))) {
+            // todo: we should unpark only when this delayed task became first in the queue
+            unpark()
+        } else {
+            scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
+        }
+    }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
+        DelayedRunnableTask(time, unit, block).also { scheduleDelayed(it) }
+
+    override fun processNextEvent(): Long {
+        if (Thread.currentThread() !== thread) return Long.MAX_VALUE
+        // queue all delayed tasks that are due to be executed
+        while (true) {
+            val delayedTask = delayed.firstEntry()?.key ?: break
+            val now = System.nanoTime()
+            if (delayedTask.nanoTime - now > 0) break
+            if (!scheduleQueued(delayedTask)) break
+            delayed.remove(delayedTask)
+        }
+        // then process one event from queue
+        (queue.removeFirstOrNull() as? QueuedTask)?.let { queuedTask ->
+            queuedTask()
+        }
+        if (!queue.isEmpty) return 0
+        val nextDelayedTask = delayed.firstEntry()?.key ?: return Long.MAX_VALUE
+        return nextDelayedTask.nanoTime - System.nanoTime()
+    }
+
+    fun shutdown() {
+        // complete processing of all queued tasks
+        while (true) {
+            val queuedTask = (queue.removeFirstOrNull() ?: break) as QueuedTask
+            queuedTask()
+        }
+        // cancel all delayed tasks
+        while (true) {
+            val delayedTask = delayed.pollFirstEntry()?.key ?: break
+            delayedTask.cancel()
+        }
+    }
+
+    override fun toString(): String = "EventLoopImpl@${Integer.toHexString(System.identityHashCode(this))}"
+
+    private fun scheduleQueued(queuedTask: QueuedTask): Boolean {
+        if (parentJob == null) {
+            queue.addLast(queuedTask)
             return true
         }
+        return queue.addLastIf(queuedTask, { !parentJob!!.isCompleted })
+    }
+
+    private fun scheduleDelayed(delayedTask: DelayedTask): Boolean {
+        delayed.put(delayedTask, delayedTask)
+        if (parentJob?.isActive != false) return true
+        delayedTask.dispose()
         return false
     }
 
-    abstract class Node : LockFreeLinkedListNode(), Runnable
+    private fun unpark() {
+        if (Thread.currentThread() !== thread)
+            LockSupport.unpark(thread)
+    }
 
-    class Dispatch(block: Runnable) : Node(), Runnable by block
+    private abstract class QueuedTask : LockFreeLinkedListNode(), () -> Unit
 
-    override fun toString(): String = "EventLoopImpl@${Integer.toHexString(System.identityHashCode(this))}"
+    private class QueuedRunnableTask(
+        private val block: Runnable
+    ) : QueuedTask() {
+        override fun invoke() { block.run() }
+    }
+
+    private abstract inner class DelayedTask(
+        time: Long, timeUnit: TimeUnit
+    ) : QueuedTask(), Comparable<DelayedTask>, DisposableHandle {
+        @JvmField val nanoTime: Long = System.nanoTime() + timeUnit.toNanos(time)
+        @JvmField val sequence: Long = nextSequence.getAndIncrement()
+
+        override fun compareTo(other: DelayedTask): Int {
+            val dTime = nanoTime - other.nanoTime
+            if (dTime > 0) return 1
+            if (dTime < 0) return -1
+            val dSequence = sequence - other.sequence
+            return if (dSequence > 0) 1 else if (dSequence < 0) -1 else 0
+        }
+
+        override final fun dispose() {
+            delayed.remove(this)
+            cancel()
+        }
+
+        open fun cancel() {}
+    }
+
+    private inner class DelayedResumeTask(
+        time: Long, timeUnit: TimeUnit,
+        private val cont: CancellableContinuation<Unit>
+    ) : DelayedTask(time, timeUnit) {
+        override fun invoke() {
+            with(cont) { resumeUndispatched(Unit) }
+        }
+        override fun cancel() {
+            if (!cont.isActive) return
+            val remaining = nanoTime - System.nanoTime()
+            scheduledExecutor.schedule(ResumeRunnable(cont), remaining, TimeUnit.NANOSECONDS)
+        }
+    }
+
+    private inner class DelayedRunnableTask(
+        time: Long, timeUnit: TimeUnit,
+        private val block: Runnable
+    ) : DelayedTask(time, timeUnit) {
+        override fun invoke() { block.run() }
+    }
 }
-

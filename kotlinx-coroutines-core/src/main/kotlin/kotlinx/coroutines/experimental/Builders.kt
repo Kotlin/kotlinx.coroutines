@@ -81,11 +81,11 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineSc
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
-    val privateEventLoop = if (context[ContinuationInterceptor] == null) EventLoopImpl(currentThread) else null
-    val newContext = newCoroutineContext(context + (privateEventLoop ?: EmptyCoroutineContext))
-    val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop != null)
+    val eventLoop = if (context[ContinuationInterceptor] == null) EventLoopImpl(currentThread) else null
+    val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
+    val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop = eventLoop != null)
     coroutine.initParentJob(context[Job])
-    privateEventLoop?.initParentJob(coroutine)
+    eventLoop?.initParentJob(coroutine)
     block.startCoroutine(coroutine, coroutine)
     return coroutine.joinBlocking()
 }
@@ -104,7 +104,7 @@ private open class StandaloneCoroutine(
 
 private class LazyStandaloneCoroutine(
     parentContext: CoroutineContext,
-    val block: suspend CoroutineScope.() -> Unit
+    private val block: suspend CoroutineScope.() -> Unit
 ) : StandaloneCoroutine(parentContext, active = false) {
     override fun onStart() {
         block.startCoroutine(this, this)
@@ -120,10 +120,14 @@ private class InnerCoroutine<in T>(
 
 private class BlockingCoroutine<T>(
     override val parentContext: CoroutineContext,
-    val blockedThread: Thread,
-    val hasPrivateEventLoop: Boolean
+    private val blockedThread: Thread,
+    private val privateEventLoop: Boolean
 ) : AbstractCoroutine<T>(active = true) {
     val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
+
+    init {
+        if (privateEventLoop) require(eventLoop is EventLoopImpl)
+    }
 
     override fun afterCompletion(state: Any?, mode: Int) {
         if (Thread.currentThread() != blockedThread)
@@ -132,15 +136,15 @@ private class BlockingCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
-        while (isActive) {
+        while (true) {
             if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
-            if (eventLoop == null || !eventLoop.processNextEvent())
-                LockSupport.park(this)
+            val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
+            // note: process next even may look unpark flag, so check !isActive before parking
+            if (!isActive) break
+            LockSupport.parkNanos(this, parkNanos)
         }
-        // process remaining events (that could have been added after last processNextEvent and before cancel
-        if (hasPrivateEventLoop) {
-            while (eventLoop!!.processNextEvent()) { /* just spin */ }
-        }
+        // process queued events (that could have been added after last processNextEvent and before cancel
+        if (privateEventLoop) (eventLoop as EventLoopImpl).shutdown()
         // now return result
         val state = this.state
         (state as? CompletedExceptionally)?.let { throw it.exception }
