@@ -16,11 +16,13 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 private val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 1000L)
 
@@ -70,25 +72,25 @@ internal fun scheduledExecutorShutdownNowAndRelease() {
 public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T {
     require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) throw CancellationException("Timed out immediately")
-    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<T> ->
+    return suspendCoroutineOrReturn sc@ { delegate: Continuation<T> ->
         // schedule cancellation of this continuation on time
-        val runnable = CancelTimedOutContinuationRunnable(time, unit, cont)
+        val cont = TimeoutContinuation(time, unit, delegate)
         val delay = cont.context[ContinuationInterceptor] as? Delay
         if (delay != null)
-            cont.disposeOnCompletion(delay.invokeOnTimeout(time, unit, runnable)) else
-            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(runnable, time, unit))
-        // restart block in a separate coroutine using cancellable context of this continuation,
-        block.startCoroutine(cont)
+            cont.disposeOnCompletion(delay.invokeOnTimeout(time, unit, cont)) else
+            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(cont, time, unit))
+        // restart block using cancellable context of this continuation,
+        // however start it as undispatched coroutine, because we are already in the proper context
+        block.startUndispatchedCoroutine(cont)
+        cont.getResult()
     }
 }
 
-private class CancelTimedOutContinuationRunnable(
+private class TimeoutContinuation<T>(
     private val time: Long,
     private val unit: TimeUnit,
-    private val cont: CancellableContinuation<*>
-): Runnable {
-    override fun run() {
-        cont.cancel(CancellationException("Timed out waiting for $time $unit"))
-    }
-    override fun toString(): String = "CancelTimedOutContinuationRunnable[$time,$unit,$cont]"
+    delegate: Continuation<T>
+) : CancellableContinuationImpl<T>(delegate, active = true), Runnable {
+    override fun defaultResumeMode(): Int = MODE_DIRECT
+    override fun run() { cancel(CancellationException("Timed out waiting for $time $unit")) }
 }

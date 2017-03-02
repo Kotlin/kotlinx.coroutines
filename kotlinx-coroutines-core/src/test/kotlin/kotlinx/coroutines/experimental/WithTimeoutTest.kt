@@ -18,7 +18,30 @@ package kotlinx.coroutines.experimental
 
 import org.junit.Test
 
-class RunBlockingTest {
+class WithTimeoutTest : TestBase() {
+    /**
+     * Tests property dispatching of `withTimeout` blocks
+     */
+    @Test
+    fun testDispatch() = runBlocking {
+        expect(1)
+        launch(context) {
+            expect(4)
+            yield() // back to main
+            expect(7)
+        }
+        expect(2)
+        // test that it does not yield to the above job when started
+        withTimeout(1000) {
+            expect(3)
+            yield() // yield only now
+            expect(5)
+        }
+        expect(6)
+        yield() // back to launch
+        finish(8)
+    }
+
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
