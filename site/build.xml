@@ -21,11 +21,12 @@
             <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
             <fileset dir="../kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
             <fileset dir="../kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
-            <fileset dir="../kotlinx-coroutines-swing/target/dokka" includes="**/*.md"/>
-            <fileset dir="../kotlinx-coroutines-javafx/target/dokka" includes="**/*.md"/>
             <fileset dir="../kotlinx-coroutines-reactive/target/dokka" includes="**/*.md"/>
             <fileset dir="../kotlinx-coroutines-rx1/target/dokka" includes="**/*.md"/>
             <fileset dir="../kotlinx-coroutines-rx2/target/dokka" includes="**/*.md"/>
+            <fileset dir="../ui/kotlinx-coroutines-android/target/dokka" includes="**/*.md"/>
+            <fileset dir="../ui/kotlinx-coroutines-javafx/target/dokka" includes="**/*.md"/>
+            <fileset dir="../ui/kotlinx-coroutines-swing/target/dokka" includes="**/*.md"/>
         </copy>
         <antcall target="jekyll"/>
     </target>

@@ -23,6 +23,7 @@
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
         <version>0.12</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>kotlinx-coroutines-javafx</artifactId>

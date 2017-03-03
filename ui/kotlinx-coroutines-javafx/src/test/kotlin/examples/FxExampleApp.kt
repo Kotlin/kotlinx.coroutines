@@ -59,10 +59,10 @@ class FxTestApp : Application() {
 
     val scene = Scene(root, 600.0, 400.0)
 
-    override fun start(primaryStage: Stage) {
-        primaryStage.title = "Hello world!"
-        primaryStage.scene = scene
-        primaryStage.show()
+    override fun start(stage: Stage) {
+        stage.title = "Hello world!"
+        stage.scene = scene
+        stage.show()
     }
 
     val random = Random()

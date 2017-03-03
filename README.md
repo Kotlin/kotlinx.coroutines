@@ -2,23 +2,33 @@
 
 Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0 release. 
 
-## Modules and features
+## Modules
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core) module with core primitives to work with coroutines. 
-  * This module's functionality is covered by the [guide to kotlinx.coroutines](coroutines-guide.md). 
-* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8) module with additional libraries for JDK8 (or Android API level 24).
-* [kotlinx-coroutines-nio](kotlinx-coroutines-nio) module with extensions for asynchronous IO on JDK7+.
-* [kotlinx-coroutines-swing](kotlinx-coroutines-swing) module with `Swing` context for Swing UI applications.
-* [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx) module with `JavaFx` context for JavaFX UI applications.
-* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) module with utilities for [Reactive Streams](http://www.reactive-streams.org)
-* [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1) module with utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
-* [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2) module with utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
+Basic modules:
+
+* [kotlinx-coroutines-core](kotlinx-coroutines-core) -- core primitives to work with coroutines. 
+* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8) -- additional libraries for JDK8 (or Android API level 24).
+* [kotlinx-coroutines-nio](kotlinx-coroutines-nio) -- extensions for asynchronous IO on JDK7+.
+
+Modules that provide builders and iteration support for various reactive streams libraries:
+
+* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](http://www.reactive-streams.org)
+* [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1) -- utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
+* [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2) -- utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
+
+Modules that provide coroutine dispatchers for various single-threaded UI libraries:
+
+* [kotlinx-coroutines-android](ui/kotlinx-coroutines-android) -- `UI` context for Android applications.
+* [kotlinx-coroutines-javafx](ui/kotlinx-coroutines-javafx) -- `JavaFx` context for JavaFX UI applications.
+* [kotlinx-coroutines-swing](ui/kotlinx-coroutines-swing) -- `Swing` context for Swing UI applications.
  
-## References and documentation
+## Documentation
 
-* [Guide to kotlinx.coroutines by example](coroutines-guide.md) 
+* [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
+* [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+* [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
  
 ## Using in your projects
 

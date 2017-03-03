@@ -67,7 +67,7 @@ fun knit(markdownFileName: String) {
     val test = arrayListOf<String>()
     var testOut: PrintWriter? = null
     var lastPgk: String? = null
-    val files = mutableSetOf<String>()
+    val files = mutableSetOf<File>()
     val allApiRefs = arrayListOf<ApiRef>()
     val remainingApiRefNames = mutableSetOf<String>()
     var siteRoot: String? = null
@@ -190,8 +190,9 @@ fun knit(markdownFileName: String) {
             }
             knitRegex?.find(inLine)?.let { knitMatch ->
                 val fileName = knitMatch.groups[1]!!.value
-                require(files.add(fileName)) { "Duplicate file name: $fileName"}
-                println("Knitting $fileName ...")
+                val file = File(markdownFile.parentFile, fileName)
+                require(files.add(file)) { "Duplicate file: $file"}
+                println("Knitting $file ...")
                 val outLines = arrayListOf<String>()
                 for (include in includes) {
                     val includeMatch = include.regex.matchEntire(fileName) ?: continue
@@ -204,7 +205,6 @@ fun knit(markdownFileName: String) {
                 }
                 outLines += code
                 code.clear()
-                val file = File(fileName)
                 val oldLines = try { file.readLines() } catch (e: IOException) { emptyList<String>() }
                 if (outLines != oldLines) writeLines(file, outLines)
             }
@@ -401,7 +401,6 @@ fun loadApiIndex(
     namePrefix: String = ""
 ): Map<String, String> {
     val fileName = docsRoot + "/" + path + INDEX_MD
-    println("Reading index from $fileName")
     val visited = mutableSetOf<String>()
     val map = HashMap<String,String>()
     File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
@@ -431,7 +430,12 @@ fun processApiIndex(
     remainingApiRefNames: MutableSet<String>
 ): List<String> {
     val key = ApiIndexKey(docsRoot, pkg)
-    val map = apiIndexCache.getOrPut(key, { loadApiIndex(docsRoot, pkg, pkg) })
+    val map = apiIndexCache.getOrPut(key, {
+        print("Parsing API docs at $docsRoot: ")
+        val result = loadApiIndex(docsRoot, pkg, pkg)
+        println("${result.size} definitions")
+        result
+    })
     val indexList = arrayListOf<String>()
     val it = remainingApiRefNames.iterator()
     while (it.hasNext()) {
