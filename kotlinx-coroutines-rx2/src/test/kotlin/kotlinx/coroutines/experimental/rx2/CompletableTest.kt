@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -82,5 +81,33 @@ class CompletableTest : TestBase() {
         sub.dispose() // will cancel coroutine
         yield()
         finish(6)
+    }
+
+    @Test
+    fun testAwaitSuccess() = runBlocking<Unit> {
+        expect(1)
+        val completable = rxCompletable(context) {
+            expect(3)
+        }
+        expect(2)
+        completable.await() // shall launch coroutine
+        finish(4)
+    }
+
+    @Test
+    fun testAwaitFailure() = runBlocking<Unit> {
+        expect(1)
+        val completable = rxCompletable(context) {
+            expect(3)
+            throw RuntimeException("OK")
+        }
+        expect(2)
+        try {
+            completable.await() // shall launch coroutine and throw exception
+            expectUnreached()
+        } catch (e: RuntimeException) {
+            finish(4)
+            assertThat(e.message, IsEqual("OK"))
+        }
     }
 }

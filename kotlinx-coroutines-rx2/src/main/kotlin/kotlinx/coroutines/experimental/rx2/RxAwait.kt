@@ -36,7 +36,7 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
     subscribe(object : CompletableObserver {
         override fun onSubscribe(d: Disposable) { cont.disposeOnCompletion(d) }
         override fun onComplete() { cont.resume(Unit) }
-        override fun onError(e: Throwable) { cont.tryResumeWithException(e) }
+        override fun onError(e: Throwable) { cont.resumeWithException(e) }
     })
 }
 
