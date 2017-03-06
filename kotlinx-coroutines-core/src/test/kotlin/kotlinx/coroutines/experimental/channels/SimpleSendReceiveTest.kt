@@ -19,10 +19,12 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
+import org.hamcrest.core.IsEqual
+import org.junit.Assert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.junit.Assert.*
 
 @RunWith(Parameterized::class)
 class SimpleSendReceiveTest(
@@ -47,10 +49,17 @@ class SimpleSendReceiveTest(
             repeat(n) { channel.send(it) }
             channel.close()
         }
-        var received = 0
+        var expected = 0
         for (x in channel) {
-            assertEquals(received++, x)
+            if (kind != TestChannelKind.CONFLATED) {
+                assertThat(x, IsEqual(expected++))
+            } else {
+                assertTrue(x >= expected)
+                expected = x + 1
+            }
         }
-        assertEquals(n, received)
+        if (kind != TestChannelKind.CONFLATED) {
+            assertThat(expected, IsEqual(n))
+        }
     }
 }

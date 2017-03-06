@@ -32,6 +32,10 @@ enum class TestChannelKind {
     LINKED_LIST {
         override fun create(): Channel<Int> = LinkedListChannel<Int>()
         override fun toString(): String = "LinkedListChannel"
+    },
+    CONFLATED {
+        override fun create(): Channel<Int> = ConflatedChannel<Int>()
+        override fun toString(): String = "ConflatedChannel"
     }
     ;
 

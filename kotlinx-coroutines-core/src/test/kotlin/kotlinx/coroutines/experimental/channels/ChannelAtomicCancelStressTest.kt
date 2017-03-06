@@ -98,9 +98,11 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         println("          Missed $missedCnt ints")
         println("      Duplicated $dupCnt ints")
         failed.get()?.let { throw it }
-        assertEquals(0, missedCnt)
         assertEquals(0, dupCnt)
-        assertEquals(lastSent, lastReceived)
+        if (kind != TestChannelKind.CONFLATED) {
+            assertEquals(0, missedCnt)
+            assertEquals(lastSent, lastReceived)
+        }
     }
 
     fun launchSender() {

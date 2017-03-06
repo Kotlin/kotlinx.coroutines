@@ -146,15 +146,45 @@ public abstract class AbstractChannel<E> : Channel<E> {
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
+    protected fun sendConflated(element: E): Boolean {
+        val node = SendBuffered(element)
+        if (!queue.addLastIfPrev(node, { it !is ReceiveOrClosed<*> })) return false
+        // remove previous SendBuffered
+        val prev = node.prev
+        if (prev is SendBuffered<*>)
+            prev.remove()
+        return true
+    }
+
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
     protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
 
-    private class SendBufferedDesc<out E>(
+    private open class SendBufferedDesc<out E>(
         queue: LockFreeLinkedListHead,
         element: E
     ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
         override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
             if (affected is ReceiveOrClosed<*>) return OFFER_FAILED
             return null
+        }
+    }
+
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    protected fun describeSendConflated(element: E): AddLastDesc<*> = SendConflatedDesc(queue, element)
+
+    private class SendConflatedDesc<out E>(
+        queue: LockFreeLinkedListHead,
+        element: E
+    ) : SendBufferedDesc<E>(queue, element) {
+        override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
+            super.finishOnSuccess(affected, next)
+            // remove previous SendBuffered
+            if (affected is SendBuffered<*>)
+                affected.remove()
         }
     }
 

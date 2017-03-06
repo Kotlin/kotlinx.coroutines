@@ -81,6 +81,14 @@ class ChannelSendReceiveStressTest(
                 sendersCompleted.incrementAndGet()
             }
         }
+        // print progress
+        val progressJob = launch(context) {
+            var seconds = 0
+            while (true) {
+                delay(1000)
+                println("${++seconds}: Sent ${sentTotal.get()}, received ${receivedTotal.get()}")
+            }
+        }
         try {
             withTimeout(timeLimit) {
                 senders.forEach { it.join() }
@@ -90,6 +98,7 @@ class ChannelSendReceiveStressTest(
         } catch (e: CancellationException) {
             println("!!! Test timed out $e")
         }
+        progressJob.cancel()
         println("Tested $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         println("Completed successfully ${sendersCompleted.get()} sender coroutines")
         println("Completed successfully ${receiversCompleted.get()} receiver coroutines")
@@ -103,7 +112,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(nReceivers, receiversCompleted.get())
         assertEquals(0, dupes.get())
         assertEquals(nEvents, sentTotal.get())
-        assertEquals(nEvents, receivedTotal.get())
+        if (kind != TestChannelKind.CONFLATED) assertEquals(nEvents, receivedTotal.get())
         repeat(nReceivers) { receiveIndex ->
             assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
         }
@@ -111,8 +120,10 @@ class ChannelSendReceiveStressTest(
 
     private suspend fun doSent() {
         sentTotal.incrementAndGet()
-        while (sentTotal.get() > receivedTotal.get() + maxBuffer)
-            yield() // throttle fast senders to prevent OOM with LinkedListChannel
+        if (kind != TestChannelKind.CONFLATED) {
+            while (sentTotal.get() > receivedTotal.get() + maxBuffer)
+                yield() // throttle fast senders to prevent OOM with LinkedListChannel
+        }
     }
 
     private suspend fun doSend(senderIndex: Int) {

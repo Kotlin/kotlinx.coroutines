@@ -68,9 +68,9 @@ public typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
 @Suppress("LeakingThis")
 public open class LockFreeLinkedListNode {
     @Volatile
-    private var _next: Any = this // DoubleLinkedNode | Removed | OpDescriptor
+    private var _next: Any = this // Node | Removed | OpDescriptor
     @Volatile
-    private var _prev: Any = this // DoubleLinkedNode | Removed
+    private var _prev: Any = this // Node | Removed
     @Volatile
     private var _removedRef: Removed? = null // lazily cached removed ref to this
 
@@ -114,7 +114,7 @@ public open class LockFreeLinkedListNode {
 
     public val isRemoved: Boolean get() = next is Removed
 
-    // LINEARIZABLE.
+    // LINEARIZABLE. Returns Node | Removed
     public val next: Any get() {
         while (true) { // operation helper loop on _next
             val next = this._next
@@ -123,10 +123,12 @@ public open class LockFreeLinkedListNode {
         }
     }
 
-    // LINEARIZABLE. Note: use it on sentinel (never removed) node only
-    public val prev: Node get() {
-        while (true) {
-            val prev = this._prev as Node // this sentinel node is never removed
+    // LINEARIZABLE. Returns Node | Removed
+    public val prev: Any get() {
+        while (true) { // insert helper loop on _prev
+            val prev = this._prev
+            if (prev is Removed) return prev
+            prev as Node // otherwise, it can be only node otherwise
             if (prev.next === this) return prev
             helpInsert(prev, null)
         }
@@ -155,7 +157,7 @@ public open class LockFreeLinkedListNode {
      */
     public fun addLast(node: Node) {
         while (true) { // lock-free loop on prev.next
-            val prev = prev
+            val prev = prev as Node // sentinel node is never removed, so prev is always defined
             if (prev.addNext(node, this)) return
         }
     }
@@ -168,7 +170,7 @@ public open class LockFreeLinkedListNode {
     public inline fun addLastIf(node: Node, crossinline condition: () -> Boolean): Boolean {
         val condAdd = makeCondAddOp(node, condition)
         while (true) { // lock-free loop on prev.next
-            val prev = prev
+            val prev = prev as Node // sentinel node is never removed, so prev is always defined
             when (prev.tryCondAddNext(node, this, condAdd)) {
                 SUCCESS -> return true
                 FAILURE -> return false
@@ -178,7 +180,7 @@ public open class LockFreeLinkedListNode {
 
     public inline fun addLastIfPrev(node: Node, predicate: (Node) -> Boolean): Boolean {
         while (true) { // lock-free loop on prev.next
-            val prev = prev
+            val prev = prev as Node // sentinel node is never removed, so prev is always defined
             if (!predicate(prev)) return false
             if (prev.addNext(node, this)) return true
         }
@@ -191,7 +193,7 @@ public open class LockFreeLinkedListNode {
     ): Boolean {
         val condAdd = makeCondAddOp(node, condition)
         while (true) { // lock-free loop on prev.next
-            val prev = prev
+            val prev = prev as Node // sentinel node is never removed, so prev is always defined
             if (!predicate(prev)) return false
             when (prev.tryCondAddNext(node, this, condAdd)) {
                 SUCCESS -> return true
