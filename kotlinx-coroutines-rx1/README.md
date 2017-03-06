@@ -14,7 +14,6 @@ Suspending extension functions and suspending iteration:
 
 | **Name** | **Description**
 | -------- | ---------------
-| [Completable.await][rx.Completable.await] | Awaits for completion of the completable value 
 | [Single.await][rx.Single.await] | Awaits for completion of the single value and returns it 
 | [Observable.awaitFirst][rx.Observable.awaitFirst] | Returns the first value from the given observable
 | [Observable.awaitLast][rx.Observable.awaitFirst] | Returns the last value from the given observable
@@ -44,7 +43,6 @@ Conversion functions:
 [rxCompletable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-completable.html
 [rxSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-single.html
 [rxObservable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-observable.html
-[rx.Completable.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-completable/await.html
 [rx.Single.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-single/await.html
 [rx.Observable.awaitFirst]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html
 [rx.Observable.awaitSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-single.html

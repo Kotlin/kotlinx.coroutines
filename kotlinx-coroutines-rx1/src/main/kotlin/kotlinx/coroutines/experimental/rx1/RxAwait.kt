@@ -22,24 +22,6 @@ import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.suspendCancellableCoroutine
 import rx.*
 
-// ------------------------ Completable ------------------------
-
-/**
- * Awaits for completion of the completable value without blocking a thread and
- * returns or throws the corresponding exception if this completable had produced error.
- *
- * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException].
- */
-public suspend fun Completable.await(): Unit = suspendCancellableCoroutine { cont ->
-    subscribe(object : CompletableSubscriber {
-        override fun onSubscribe(sub: Subscription) { cont.unsubscribeOnCompletion(sub) }
-        override fun onCompleted() { cont.resume(Unit) }
-        override fun onError(error: Throwable) { cont.resumeWithException(error) }
-    })
-}
-
 // ------------------------ Single ------------------------
 
 /**
