@@ -18,6 +18,8 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
+import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 // --------------- basic coroutine builders ---------------
 
@@ -58,10 +60,28 @@ fun launch(context: CoroutineContext, start: Boolean = true, block: suspend Coro
  * different thread inside the block, and back when it completes.
  * The specified [context] is added onto the current coroutine context for the execution of the block.
  */
-public suspend fun <T> run(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T =
-    suspendCoroutine { cont ->
-        // new don't invoke `newCoroutineContext`, but consider this being the same coroutine in the new context
-        InnerCoroutine(cont.context + context, cont).also { block.startCoroutine(it, it) }
+public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
+    suspendCoroutineOrReturn sc@ { cont ->
+        val oldContext = cont.context
+        // fast path #1 if there is no change in the actual context:
+        if (context === oldContext || context is CoroutineContext.Element && oldContext[context.key] === context)
+            return@sc block.startCoroutineUninterceptedOrReturn(cont)
+        // compute new context
+        val newContext = oldContext + context
+        // fast path #2 if the result is actually the same
+        if (newContext === oldContext)
+            return@sc block.startCoroutineUninterceptedOrReturn(cont)
+        // fast path #3 if the new dispatcher is the same as the old one
+        if (newContext[ContinuationInterceptor] === oldContext[ContinuationInterceptor]) {
+            val newContinuation = RunContinuationDirect(newContext, cont)
+            return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
+        }
+        // slowest path otherwise -- use new interceptor, sync to its result via a
+        // full-blown instance of CancellableContinuation
+        val newContinuation = RunContinuationCoroutine(newContext, cont)
+        newContinuation.initCancellability()
+        block.startCoroutine(newContinuation)
+        newContinuation.getResult()
     }
 
 /**
@@ -111,12 +131,15 @@ private class LazyStandaloneCoroutine(
     }
 }
 
-private class InnerCoroutine<in T>(
+private class RunContinuationDirect<in T>(
     override val context: CoroutineContext,
     continuation: Continuation<T>
-) : Continuation<T> by continuation, CoroutineScope {
-    override val isActive: Boolean = context[Job]?.isActive ?: true
-}
+) : Continuation<T> by continuation
+
+private class RunContinuationCoroutine<in T>(
+    override val parentContext: CoroutineContext,
+    continuation: Continuation<T>
+) : CancellableContinuationImpl<T>(continuation, active = true)
 
 private class BlockingCoroutine<T>(
     override val parentContext: CoroutineContext,

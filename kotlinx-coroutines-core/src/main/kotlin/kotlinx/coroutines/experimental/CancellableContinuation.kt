@@ -179,7 +179,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun initCancellability() {
-        initParentJob(delegate.context[Job])
+        initParentJob(parentContext[Job])
     }
 
     @PublishedApi
