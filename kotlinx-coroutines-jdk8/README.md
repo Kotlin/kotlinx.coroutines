@@ -13,7 +13,7 @@ Extension functions:
 | **Name** | **Description**
 | -------- | ---------------
 | [CompletableFuture.await][java.util.concurrent.CompletableFuture.await] | Awaits for completion of the future
-| [Deferred.toCompletableFuture][kotlinx.coroutines.experimental.Deferred.toCompletableFuture] | Converts a deferred value to the future
+| [Deferred.asCompletableFuture][kotlinx.coroutines.experimental.Deferred.asCompletableFuture] | Converts a deferred value to the future
 
 # Package kotlinx.coroutines.experimental.future
 
@@ -29,5 +29,5 @@ Additional libraries for JDK8 [CompletableFuture][java.util.concurrent.Completab
 [future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html
 [java.util.concurrent.CompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html
 [java.util.concurrent.CompletableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/await.html
-[kotlinx.coroutines.experimental.Deferred.toCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/to-completable-future.html
+[kotlinx.coroutines.experimental.Deferred.asCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/as-completable-future.html
 <!--- END -->

@@ -44,11 +44,21 @@ public fun <T> future(context: CoroutineContext = CommonPool, block: suspend () 
     return future
 }
 
+
+/**
+ * Converts this deferred value to the instance of [CompletableFuture].
+ * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
+ * @suppress: **Deprecated**: Renamed to [asCompletableFuture]
+ */
+@Deprecated("Renamed to `asCompletableFuture`",
+    replaceWith = ReplaceWith("asCompletableFuture()"))
+public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
+
 /**
  * Converts this deferred value to the instance of [CompletableFuture].
  * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
  */
-public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> {
+public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     future.whenComplete { _, exception -> cancel(exception) }
     invokeOnCompletion {

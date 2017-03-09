@@ -19,7 +19,7 @@ package examples
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.future.toCompletableFuture
+import kotlinx.coroutines.experimental.future.asCompletableFuture
 import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>)  {
@@ -30,6 +30,6 @@ fun main(args: Array<String>)  {
         log("Done...")
         42
     }
-    val future = deferred.toCompletableFuture()
+    val future = deferred.asCompletableFuture()
     log("Got ${future.get()}")
 }
