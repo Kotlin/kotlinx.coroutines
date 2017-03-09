@@ -102,6 +102,7 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Selecting to send](#selecting-to-send)
   * [Selecting deferred values](#selecting-deferred-values)
   * [Switch over a channel of deferred values](#switch-over-a-channel-of-deferred-values)
+* [Further reading](#further-reading)
 
 <!--- END_TOC -->
 
@@ -2149,6 +2150,12 @@ Channel was closed
 ```
 
 <!--- TEST -->
+
+## Further reading
+
+* [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+* [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+* [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
 
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
