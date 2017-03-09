@@ -60,8 +60,6 @@ class FutureTest {
                 e.message!!
             } + "K"
         }
-
-        assertFalse(future.isDone)
         assertEquals("OK", future.get())
     }
 
