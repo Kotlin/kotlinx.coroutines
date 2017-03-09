@@ -99,10 +99,10 @@
         <module>kotlinx-coroutines-core</module>
         <module>kotlinx-coroutines-jdk8</module>
         <module>kotlinx-coroutines-nio</module>
-        <module>kotlinx-coroutines-reactive</module>
-        <module>kotlinx-coroutines-rx1</module>
-        <module>kotlinx-coroutines-rx2</module>
-        <module>kotlinx-coroutines-rx-example</module>
+        <module>reactive/kotlinx-coroutines-reactive</module>
+        <module>reactive/kotlinx-coroutines-rx1</module>
+        <module>reactive/kotlinx-coroutines-rx2</module>
+        <module>reactive/kotlinx-coroutines-rx-example</module>
         <module>ui/kotlinx-coroutines-swing</module>
         <module>ui/kotlinx-coroutines-javafx</module>
         <module>ui/kotlinx-coroutines-android</module>

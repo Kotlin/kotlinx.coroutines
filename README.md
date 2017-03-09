@@ -12,9 +12,9 @@ Basic modules:
 
 Modules that provide builders and iteration support for various reactive streams libraries:
 
-* [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](http://www.reactive-streams.org)
-* [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1) -- utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
-* [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2) -- utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
+* [kotlinx-coroutines-reactive](reactive/kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](http://www.reactive-streams.org)
+* [kotlinx-coroutines-rx1](reactive/kotlinx-coroutines-rx1) -- utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
+* [kotlinx-coroutines-rx2](reactive/kotlinx-coroutines-rx2) -- utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
 
 Modules that provide coroutine dispatchers for various single-threaded UI libraries:
 

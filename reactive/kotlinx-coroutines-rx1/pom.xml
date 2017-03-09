@@ -23,9 +23,10 @@
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
         <version>0.12</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kotlinx-coroutines-rx2</artifactId>
+    <artifactId>kotlinx-coroutines-rx1</artifactId>
     <packaging>jar</packaging>
 
     <build>
@@ -35,19 +36,13 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
+            <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
-            <version>2.0.6</version>
+            <version>1.2.6</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-reactive</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
