@@ -20,9 +20,8 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.produce
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert.*
+import org.junit.Assert.assertThat
 import org.junit.Test
-import java.io.IOException
 
 class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)
@@ -33,7 +32,7 @@ class ConvertTest : TestBase() {
         val job = launch(context) {
             expect(3)
         }
-        val completable = job.toCompletable(context)
+        val completable = job.asCompletable(context)
         completable.subscribe {
             expect(4)
         }
@@ -49,7 +48,7 @@ class ConvertTest : TestBase() {
             expect(3)
             throw RuntimeException("OK")
         }
-        val completable = job.toCompletable(context)
+        val completable = job.asCompletable(context)
         completable.subscribe {
             expect(4)
         }
@@ -64,11 +63,11 @@ class ConvertTest : TestBase() {
             delay(50)
             "OK"
         }
-        val single1 = d.toSingle(Unconfined)
+        val single1 = d.asSingle(Unconfined)
         checkSingleValue(single1) {
             assertThat(it, IsEqual("OK"))
         }
-        val single2 = d.toSingle(Unconfined)
+        val single2 = d.asSingle(Unconfined)
         checkSingleValue(single2) {
             assertThat(it, IsEqual("OK"))
         }
@@ -80,12 +79,12 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("OK")
         }
-        val single1 = d.toSingle(Unconfined)
+        val single1 = d.asSingle(Unconfined)
         checkErroneous(single1) {
             assertThat(it, IsInstanceOf(TestException::class.java))
             assertThat(it.message, IsEqual("OK"))
         }
-        val single2 = d.toSingle(Unconfined)
+        val single2 = d.asSingle(Unconfined)
         checkErroneous(single2) {
             assertThat(it, IsInstanceOf(TestException::class.java))
             assertThat(it.message, IsEqual("OK"))
@@ -100,7 +99,7 @@ class ConvertTest : TestBase() {
             delay(50)
             send("K")
         }
-        val observable = c.toObservable(Unconfined)
+        val observable = c.asObservable(Unconfined)
         checkSingleValue(observable.reduce { t1, t2 -> t1 + t2 }) {
             assertThat(it, IsEqual("OK"))
         }
@@ -114,7 +113,7 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("K")
         }
-        val observable = c.toObservable(Unconfined)
+        val observable = c.asObservable(Unconfined)
         val single = rxSingle(Unconfined) {
             var result = ""
             try {

@@ -31,8 +31,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @param context -- the coroutine context from which the resulting completable is going to be signalled
  */
-public fun Job.toCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
-    this@toCompletable.join()
+public fun Job.asCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
+    this@asCompletable.join()
 }
 
 /**
@@ -44,8 +44,8 @@ public fun Job.toCompletable(context: CoroutineContext): Completable = rxComplet
  *
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
-public fun <T> Deferred<T>.toSingle(context: CoroutineContext): Single<T> = rxSingle<T>(context) {
-    this@toSingle.await()
+public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = rxSingle<T>(context) {
+    this@asSingle.await()
 }
 
 /**
@@ -56,7 +56,28 @@ public fun <T> Deferred<T>.toSingle(context: CoroutineContext): Single<T> = rxSi
  *
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-public fun <T> ReceiveChannel<T>.toObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
-    for (t in this@toObservable)
+public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
+    for (t in this@asObservable)
         send(t)
 }
+
+/**
+ * @suppress **Deprecated**: Renamed to [asCompletable]
+ */
+@Deprecated(message = "Renamed to `asCompletable`",
+    replaceWith = ReplaceWith("asCompletable(context)"))
+public fun Job.toCompletable(context: CoroutineContext): Completable = asCompletable(context)
+
+/**
+ * @suppress **Deprecated**: Renamed to [asSingle]
+ */
+@Deprecated(message = "Renamed to `asSingle`",
+    replaceWith = ReplaceWith("asSingle(context)"))
+public fun <T> Deferred<T>.toSingle(context: CoroutineContext): Single<T> = asSingle(context)
+
+/**
+ * @suppress **Deprecated**: Renamed to [asObservable]
+ */
+@Deprecated(message = "Renamed to `asObservable`",
+    replaceWith = ReplaceWith("asObservable(context)"))
+public fun <T> ReceiveChannel<T>.toObservable(context: CoroutineContext): Observable<T> = asObservable(context)

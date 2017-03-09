@@ -28,7 +28,14 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-public fun <T> ReceiveChannel<T>.toPublisher(context: CoroutineContext): Publisher<T> = publish(context) {
-    for (t in this@toPublisher)
+public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext): Publisher<T> = publish(context) {
+    for (t in this@asPublisher)
         send(t)
 }
+
+/**
+ * @suppress **Deprecated**: Renamed to [asPublisher]
+ */
+@Deprecated(message = "Renamed to `asPublisher`",
+    replaceWith = ReplaceWith("asPublisher(context)"))
+public fun <T> ReceiveChannel<T>.toPublisher(context: CoroutineContext): Publisher<T> = asPublisher(context)

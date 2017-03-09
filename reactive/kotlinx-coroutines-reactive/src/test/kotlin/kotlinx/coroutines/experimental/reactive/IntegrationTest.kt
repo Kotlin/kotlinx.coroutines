@@ -87,7 +87,7 @@ class IntegrationTest(
         }
         checkNumbers(n, pub)
         val channel = pub.open()
-        checkNumbers(n, channel.toPublisher(ctx(context)))
+        checkNumbers(n, channel.asPublisher(ctx(context)))
         channel.close()
     }
 
