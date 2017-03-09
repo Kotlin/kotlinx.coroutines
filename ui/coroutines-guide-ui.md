@@ -264,7 +264,7 @@ fab.setOnClickListener { job.cancel() }  // cancel coroutine on click
 ## Using actors within UI context
 
 In this section we show how UI applications can use actors within their UI context make sure that 
-there is not unbounded growth in the number of launched coroutines.
+there is no unbounded growth in the number of launched coroutines.
 
 ### Extensions for coroutines
 
