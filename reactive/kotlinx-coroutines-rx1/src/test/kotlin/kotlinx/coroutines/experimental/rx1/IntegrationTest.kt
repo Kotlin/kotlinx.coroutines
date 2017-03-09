@@ -87,7 +87,7 @@ class IntegrationTest(
         }
         checkNumbers(n, observable)
         val channel = observable.open()
-        checkNumbers(n, channel.toObservable(ctx(context)))
+        checkNumbers(n, channel.asObservable(ctx(context)))
         channel.close()
     }
 
