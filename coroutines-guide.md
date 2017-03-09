@@ -2153,6 +2153,7 @@ Channel was closed
 ## Further reading
 
 * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+* [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
 

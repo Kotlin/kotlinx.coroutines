@@ -26,6 +26,7 @@ Modules that provide coroutine dispatchers for various single-threaded UI librar
 
 * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
 * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+* [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)

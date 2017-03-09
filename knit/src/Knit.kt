@@ -60,12 +60,13 @@ fun main(args: Array<String>) {
 fun knit(markdownFileName: String) {
     println("*** Reading $markdownFileName")
     val markdownFile = File(markdownFileName)
-    val toc = arrayListOf<String>()
+    val tocLines = arrayListOf<String>()
     var knitRegex: Regex? = null
     val includes = arrayListOf<Include>()
-    val code = arrayListOf<String>()
-    val test = arrayListOf<String>()
-    var testOut: PrintWriter? = null
+    val codeLines = arrayListOf<String>()
+    val testLines = arrayListOf<String>()
+    var testOut: String? = null
+    val testOutLines = arrayListOf<String>()
     var lastPgk: String? = null
     val files = mutableSetOf<File>()
     val allApiRefs = arrayListOf<ApiRef>()
@@ -98,46 +99,47 @@ fun knit(markdownFileName: String) {
                     continue@mainLoop
                 }
                 INCLUDE_DIRECTIVE -> {
-                    require(!directive.param.isEmpty()) { "$INCLUDE_DIRECTIVE directive must include regex parameter" }
-                    val include = Include(Regex(directive.param))
-                    if (directive.singleLine) {
-                        include.lines += code
-                        code.clear()
+                    if (directive.param.isEmpty()) {
+                        require(!directive.singleLine) { "$INCLUDE_DIRECTIVE directive without parameters must not be single line" }
+                        readUntilTo(DIRECTIVE_END, codeLines)
                     } else {
-                        readUntilTo(DIRECTIVE_END, include.lines)
+                        val include = Include(Regex(directive.param))
+                        if (directive.singleLine) {
+                            include.lines += codeLines
+                            codeLines.clear()
+                        } else {
+                            readUntilTo(DIRECTIVE_END, include.lines)
+                        }
+                        includes += include
                     }
-                    includes += include
                     continue@mainLoop
                 }
                 CLEAR_DIRECTIVE -> {
                     requireSingleLine(directive)
                     require(directive.param.isEmpty()) { "$CLEAR_DIRECTIVE directive must not have parameters" }
-                    code.clear()
+                    codeLines.clear()
                     continue@mainLoop
                 }
                 TEST_OUT_DIRECTIVE -> {
                     require(!directive.param.isEmpty()) { "$TEST_OUT_DIRECTIVE directive must include file name parameter" }
-                    val file = File(directive.param)
-                    file.parentFile?.mkdirs()
-                    closeTestOut(testOut)
-                    println("Writing tests to ${directive.param}")
-                    testOut = PrintWriter(file)
-                    readUntil(DIRECTIVE_END).forEach { testOut!!.println(it) }
+                    flushTestOut(markdownFile.parentFile, testOut, testOutLines)
+                    testOut = directive.param
+                    readUntil(DIRECTIVE_END).forEach { testOutLines += it }
                 }
                 TEST_DIRECTIVE -> {
                     require(lastPgk != null) { "'$PACKAGE_PREFIX' prefix was not found in emitted code"}
                     require(testOut != null) { "$TEST_OUT_DIRECTIVE directive was not specified" }
                     var predicate = directive.param
-                    if (test.isEmpty()) {
+                    if (testLines.isEmpty()) {
                         if (directive.singleLine) {
                             require(!predicate.isEmpty()) { "$TEST_OUT_DIRECTIVE must be preceded by $TEST_START block or contain test predicate"}
                         } else
-                            test += readUntil(DIRECTIVE_END)
+                            testLines += readUntil(DIRECTIVE_END)
                     } else {
                         requireSingleLine(directive)
                     }
-                    writeTest(testOut!!, lastPgk!!, test, predicate)
-                    test.clear()
+                    makeTest(testOutLines, lastPgk!!, testLines, predicate)
+                    testLines.clear()
                 }
                 SITE_ROOT_DIRECTIVE -> {
                     requireSingleLine(directive)
@@ -166,21 +168,21 @@ fun knit(markdownFileName: String) {
                 }
             }
             if (inLine.startsWith(CODE_START)) {
-                require(test.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
-                code += ""
-                readUntilTo(CODE_END, code)
+                require(testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
+                codeLines += ""
+                readUntilTo(CODE_END, codeLines)
                 continue@mainLoop
             }
             if (inLine.startsWith(TEST_START)) {
-                require(test.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
-                readUntilTo(TEST_END, test)
+                require(testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
+                readUntilTo(TEST_END, testLines)
                 continue@mainLoop
             }
             if (inLine.startsWith(SECTION_START) && markdownPart == MarkdownPart.POST_TOC) {
                 val i = inLine.indexOf(' ')
                 require(i >= 2) { "Invalid section start" }
                 val name = inLine.substring(i + 1).trim()
-                toc += "  ".repeat(i - 2) + "* [$name](#${makeSectionRef(name)})"
+                tocLines += "  ".repeat(i - 2) + "* [$name](#${makeSectionRef(name)})"
                 continue@mainLoop
             }
             for (match in API_REF_REGEX.findAll(inLine)) {
@@ -203,21 +205,18 @@ fun knit(markdownFileName: String) {
                         outLines += line
                     }
                 }
-                outLines += code
-                code.clear()
-                val oldLines = try { file.readLines() } catch (e: IOException) { emptyList<String>() }
-                if (outLines != oldLines) writeLines(file, outLines)
+                outLines += codeLines
+                codeLines.clear()
+                writeLinesIfNeeded(file, outLines)
             }
         }
     }
-    // close test output
-    closeTestOut(testOut)
     // update markdown file with toc
     val newLines = buildList<String> {
         addAll(markdown.preTocText)
-        if (!toc.isEmpty()) {
+        if (!tocLines.isEmpty()) {
             add("")
-            addAll(toc)
+            addAll(tocLines)
             add("")
         }
         addAll(markdown.postTocText)
@@ -229,9 +228,11 @@ fun knit(markdownFileName: String) {
             println("WARNING: $markdownFile: ${apiRef.line}: Broken reference to [${apiRef.name}]")
         }
     }
+    // write test output
+    flushTestOut(markdownFile.parentFile, testOut, testOutLines)
 }
 
-fun writeTest(testOut: PrintWriter, pgk: String, test: List<String>, predicate: String) {
+fun makeTest(testOutLines: MutableList<String>, pgk: String, test: List<String>, predicate: String) {
     val funName = buildString {
         var cap = true
         for (c in pgk) {
@@ -243,37 +244,35 @@ fun writeTest(testOut: PrintWriter, pgk: String, test: List<String>, predicate: 
             }
         }
     }
-    with (testOut) {
-        println()
-        println("    @Test")
-        println("    fun test$funName() {")
-        print  ("        test { $pgk.main(emptyArray()) }")
-        when (predicate) {
-            "" -> writeTestLines("verifyLines", test)
-            STARTS_WITH_PREDICATE -> writeTestLines("verifyLinesStartWith", test)
-            ARBITRARY_TIME_PREDICATE -> writeTestLines("verifyLinesArbitraryTime", test)
-            FLEXIBLE_TIME_PREDICATE -> writeTestLines("verifyLinesFlexibleTime", test)
-            FLEXIBLE_THREAD_PREDICATE -> writeTestLines("verifyLinesFlexibleThread", test)
-            LINES_START_UNORDERED_PREDICATE -> writeTestLines("verifyLinesStartUnordered", test)
-            LINES_START_PREDICATE -> writeTestLines("verifyLinesStart", test)
-            else -> {
-                println(".also { lines ->")
-                println("            check($predicate)")
-                println("        }")
-            }
+    testOutLines += ""
+    testOutLines += "    @Test"
+    testOutLines += "    fun test$funName() {"
+    val prefix = "        test { $pgk.main(emptyArray()) }"
+    when (predicate) {
+        "" -> makeTestLines(testOutLines, prefix, "verifyLines", test)
+        STARTS_WITH_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStartWith", test)
+        ARBITRARY_TIME_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesArbitraryTime", test)
+        FLEXIBLE_TIME_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesFlexibleTime", test)
+        FLEXIBLE_THREAD_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesFlexibleThread", test)
+        LINES_START_UNORDERED_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStartUnordered", test)
+        LINES_START_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStart", test)
+        else -> {
+            testOutLines += prefix +  ".also { lines ->"
+            testOutLines += "            check($predicate)"
+            testOutLines += "        }"
         }
-        println("    }")
     }
+    testOutLines += "    }"
 }
 
-private fun PrintWriter.writeTestLines(method: String, test: List<String>) {
-    println(".$method(")
+private fun makeTestLines(testOutLines: MutableList<String>, prefix: String, method: String, test: List<String>) {
+    testOutLines += "$prefix.$method("
     for ((index, testLine) in test.withIndex()) {
         val commaOpt = if (index < test.size - 1) "," else ""
         val escapedLine = testLine.replace("\"", "\\\"")
-        println("            \"$escapedLine\"$commaOpt")
+        testOutLines += "            \"$escapedLine\"$commaOpt"
     }
-    println("        )")
+    testOutLines += "        )"
 }
 
 private fun makeReplacements(line: String, match: MatchResult): String {
@@ -285,11 +284,12 @@ private fun makeReplacements(line: String, match: MatchResult): String {
     return result
 }
 
-private fun closeTestOut(testOut: PrintWriter?) {
-    if (testOut != null) {
-        testOut.println("}")
-        testOut.close()
-    }
+private fun flushTestOut(parentDir: File?, testOut: String?, testOutLines: MutableList<String>) {
+    if (testOut == null) return
+    val file = File(parentDir, testOut)
+    testOutLines += "}"
+    writeLinesIfNeeded(file, testOutLines)
+    testOutLines.clear()
 }
 
 private fun MarkdownTextReader.readUntil(marker: String): List<String> =
@@ -375,6 +375,15 @@ fun <T : LineNumberReader> File.withLineNumberReader(factory: (Reader) -> T, blo
 fun File.withMarkdownTextReader(block: MarkdownTextReader.() -> Unit): MarkdownTextReader =
     withLineNumberReader<MarkdownTextReader>(::MarkdownTextReader, block)
 
+fun writeLinesIfNeeded(file: File, outLines: List<String>) {
+    val oldLines = try {
+        file.readLines()
+    } catch (e: IOException) {
+        emptyList<String>()
+    }
+    if (outLines != oldLines) writeLines(file, outLines)
+}
+
 fun writeLines(file: File, lines: List<String>) {
     println(" Writing $file ...")
     file.parentFile?.mkdirs()
@@ -431,7 +440,7 @@ fun processApiIndex(
 ): List<String> {
     val key = ApiIndexKey(docsRoot, pkg)
     val map = apiIndexCache.getOrPut(key, {
-        print("Parsing API docs at $docsRoot: ")
+        print("Parsing API docs at $docsRoot/$pkg: ")
         val result = loadApiIndex(docsRoot, pkg, pkg)
         println("${result.size} definitions")
         result
