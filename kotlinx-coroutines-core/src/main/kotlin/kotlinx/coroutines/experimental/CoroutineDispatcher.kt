@@ -34,7 +34,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *   a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.
  * * Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * * An arbitrary [Executor][java.util.concurrent.Executor] can be converted to dispatcher with [toCoroutineDispatcher] extension function.
+ * * An arbitrary [Executor][java.util.concurrent.Executor] can be converted to dispatcher with [asCoroutineDispatcher] extension function.
  *
  * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
  */

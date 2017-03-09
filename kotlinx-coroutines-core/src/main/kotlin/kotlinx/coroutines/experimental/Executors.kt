@@ -24,8 +24,17 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
+ * @suppress **Deprecated**: Renamed to [asCoroutineDispatcher].
  */
+@Deprecated("Renamed to `asCoroutineDispatcher`",
+    replaceWith = ReplaceWith("asCoroutineDispatcher()"))
 public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
+    ExecutorCoroutineDispatcher(this)
+
+/**
+ * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
+ */
+public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcher(this)
 
 internal open class ExecutorCoroutineDispatcher(

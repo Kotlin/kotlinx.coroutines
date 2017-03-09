@@ -78,7 +78,7 @@ class ExecutorsTest {
     @Test
     fun testToExecutor() {
         val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
-        runBlocking(executor.toCoroutineDispatcher()) {
+        runBlocking(executor.asCoroutineDispatcher()) {
             checkThreadName("TestExecutor")
         }
         executor.shutdown()
