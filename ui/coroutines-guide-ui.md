@@ -638,9 +638,10 @@ when the parent job is cancelled. An example of that is shown in
 [ConflatedChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-channel/index.html
 [Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/-c-o-n-f-l-a-t-e-d.html
 [LinkedListChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html
+<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx -->
 <!--- DOCS_ROOT ui/kotlinx-coroutines-javafx/target/dokka/kotlinx-coroutines-javafx -->
 <!--- INDEX kotlinx.coroutines.experimental.javafx -->
-[JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.javafx/-java-fx/index.html
+[JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/-java-fx/index.html
 <!--- DOCS_ROOT ui/kotlinx-coroutines-android/target/dokka/kotlinx-coroutines-android -->
 <!--- INDEX kotlinx.coroutines.experimental.android -->
 <!--- END -->
