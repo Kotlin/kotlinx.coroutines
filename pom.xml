@@ -91,7 +91,7 @@
     <distributionManagement>
         <repository>
             <id>bintray</id>
-            <url>https://api.bintray.com/maven/kotlin/kotlin-eap-1.1/kotlinx.coroutines</url>
+            <url>https://api.bintray.com/maven/kotlin/kotlinx/kotlinx.coroutines</url>
         </repository>
     </distributionManagement>
 
