@@ -341,8 +341,7 @@ class GuideTest {
             "pong Ball(hits=2)",
             "ping Ball(hits=3)",
             "pong Ball(hits=4)",
-            "ping Ball(hits=5)",
-            "pong Ball(hits=6)"
+            "ping Ball(hits=5)"
         )
     }
 

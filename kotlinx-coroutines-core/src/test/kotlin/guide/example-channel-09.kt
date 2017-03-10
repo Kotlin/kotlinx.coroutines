@@ -35,7 +35,7 @@ suspend fun player(name: String, table: Channel<Ball>) {
     for (ball in table) { // receive the ball in a loop
         ball.hits++
         println("$name $ball")
-        delay(200) // wait a bit
+        delay(300) // wait a bit
         table.send(ball) // send the ball back
     }
 }

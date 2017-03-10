@@ -99,9 +99,16 @@ private fun List<String>.verifyCommonLines(expected: Array<out String>, mode: Sa
     }
 }
 
+private fun List<String>.checkEqualNumberOfLines(expected: Array<out String>) {
+    if (size > expected.size)
+        error("Expected ${expected.size} lines, but found $size. Unexpected line '${get(expected.size)}'")
+    else if (size < expected.size)
+        error("Expected ${expected.size} lines, but found $size")
+}
+
 fun List<String>.verifyLines(vararg expected: String) {
     verifyCommonLines(expected)
-    assertEquals("Number of lines", expected.size, size)
+    checkEqualNumberOfLines(expected)
 }
 
 fun List<String>.verifyLinesStartWith(vararg expected: String) {
@@ -111,17 +118,17 @@ fun List<String>.verifyLinesStartWith(vararg expected: String) {
 
 fun List<String>.verifyLinesArbitraryTime(vararg expected: String) {
     verifyCommonLines(expected, SanitizeMode.ARBITRARY_TIME)
-    assertEquals("Number of lines", expected.size, size)
+    checkEqualNumberOfLines(expected)
 }
 
 fun List<String>.verifyLinesFlexibleTime(vararg expected: String) {
     verifyCommonLines(expected, SanitizeMode.FLEXIBLE_TIME)
-    assertEquals("Number of lines", expected.size, size)
+    checkEqualNumberOfLines(expected)
 }
 
 fun List<String>.verifyLinesFlexibleThread(vararg expected: String) {
     verifyCommonLines(expected, SanitizeMode.FLEXIBLE_THREAD)
-    assertEquals("Number of lines", expected.size, size)
+    checkEqualNumberOfLines(expected)
 }
 
 fun List<String>.verifyLinesStartUnordered(vararg expected: String) {
@@ -136,5 +143,5 @@ fun List<String>.verifyLinesStart(vararg expected: String) {
         val act = sanitize(get(i), SanitizeMode.FLEXIBLE_THREAD)
         assertEquals("Line ${i + 1}", exp, act.substring(0, minOf(act.length, exp.length)))
     }
-    assertEquals("Number of lines", expected.size, size)
+    checkEqualNumberOfLines(expected)
 }
