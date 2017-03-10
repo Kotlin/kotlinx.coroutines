@@ -92,7 +92,7 @@ public suspend fun <T> ObservableSource<T>.awaitSingle(): T = awaitOne(Mode.SING
 
 // ------------------------ private ------------------------
 
-private fun CancellableContinuation<*>.disposeOnCompletion(d: Disposable) =
+internal fun CancellableContinuation<*>.disposeOnCompletion(d: Disposable) =
     invokeOnCompletion { d.dispose() }
 
 private enum class Mode(val s: String) {
