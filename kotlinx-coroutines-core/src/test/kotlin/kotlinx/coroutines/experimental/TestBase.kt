@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 open class TestBase {
     val isStressTest = System.getProperty("stressTest") != null
-    val stressTestMultiplier = if (isStressTest) 10 else 1
+    val stressTestMultiplier = if (isStressTest) 30 else 1
 
     var actionIndex = AtomicInteger()
     var finished = AtomicBoolean()
