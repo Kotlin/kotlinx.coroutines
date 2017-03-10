@@ -167,8 +167,8 @@ class GuideTest {
     }
 
     @Test
-    fun testGuideContestExample02() {
-        test { guide.contest.example02.main(emptyArray()) }.verifyLinesStart(
+    fun testGuideContextExample02() {
+        test { guide.context.example02.main(emptyArray()) }.verifyLinesStart(
             " 'Unconfined': I'm working in thread main",
             "    'context': I'm working in thread main",
             " 'Unconfined': After delay in thread kotlinx.coroutines.ScheduledExecutor",

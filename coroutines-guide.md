@@ -796,7 +796,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val jobs = arrayListOf<Job>()
     jobs += launch(Unconfined) { // not confined -- will work with main thread
         println(" 'Unconfined': I'm working in thread ${Thread.currentThread().name}")
-        delay(1000)
+        delay(500)
         println(" 'Unconfined': After delay in thread ${Thread.currentThread().name}")
     }
     jobs += launch(context) { // context of the parent, runBlocking coroutine
@@ -808,7 +808,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-contest-02.kt)
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-02.kt)
 
 Produces the output: 
  
