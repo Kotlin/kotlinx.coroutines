@@ -21,17 +21,18 @@ import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import rx.Observable
 import rx.Subscriber
 import rx.Subscription
+import java.io.Closeable
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 
 /**
  * Return type for [Observable.open] that can be used to [receive] elements from the
  * subscription and to manually [close] it.
  */
-public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T> {
+public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
     /**
      * Closes this subscription channel.
      */
-    public fun close()
+    public override fun close()
 }
 
 /**

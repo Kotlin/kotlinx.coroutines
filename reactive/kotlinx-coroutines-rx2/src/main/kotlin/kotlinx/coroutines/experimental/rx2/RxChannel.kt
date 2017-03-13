@@ -22,16 +22,17 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import java.io.Closeable
 
 /**
  * Return type for [Observable.open] that can be used to [receive] elements from the
  * subscription and to manually [close] it.
  */
-public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T> {
+public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
     /**
      * Closes this subscription channel.
      */
-    public fun close()
+    public override fun close()
 }
 
 /**
