@@ -186,7 +186,12 @@ private class RxObservableCoroutine<T>(
             if (cur == upd) return // nothing to do
             if (N_REQUESTED.compareAndSet(this, cur, upd)) {
                 // unlock the mutex when we don't have back-pressure anymore
-                if (cur == 0L) mutex.unlock()
+                if (cur == 0L) {
+                    mutex.unlock()
+                    // recheck isCompleted
+                    if (isCompleted && mutex.tryLock())
+                        doLockedSignalCompleted()
+                }
                 return
             }
         }
