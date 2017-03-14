@@ -1,5 +1,32 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.13
+
+* New `kotlinx-coroutinex-androind` module with Android `UI` context implementation 
+* Introduced `whileSelect` convenience function
+* Implemented `ConflatedChannel`  
+* Renamed various `toXXX` conversion functions to `asXXX` (old names are deprecated)
+* `run` is optimized with fast-path case and no longer has `CoroutineScope` in its block
+* Fixed dispatching logic of `withTimeout` (removed extra dispatch)
+* `EventLoop` that is used by `runBlocking` now implements Delay, giving more predictable test behavior
+* Various refactorings related to resource management and timeouts:
+  * `Job.Registration` is renamed to `DisposableHandle`
+  * `EmptyRegistration` is renamed to `NonDisposableHandle`
+  * `Job.unregisterOnCompletion` is renamed to `Job.disposeOnCompletion`
+  * `Delay.invokeOnTimeout` is introduced
+  * `withTimeout` now uses `Delay.invokeOnTimeout` when available
+* A number of improvement for reactive streams and Rx:
+  * Introduced `rxFlowable` builder for Rx 2.x
+  * `Scheduler.asCoroutineDispatcher` extension for Rx 2.x
+  * Fixed bug with sometimes missing `onComplete` in `publish`, `rxObservable`, and `rxFlowable` builders
+  * Channels that are open for reactive streams are now `Closeable`
+  * Fixed `CompletableSource.await` and added test for it
+  * Removed `rx.Completable.await` due to name conflict
+* New documentation:
+  * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+  * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
+* Code is published to JCenter repository  
+
 ## Version 0.12
 
 * Switched to Kotlin version 1.1.0 release.

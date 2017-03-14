@@ -23,7 +23,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.12</version>
+    <version>0.13</version>
     <packaging>pom</packaging>
 
     <description>Coroutines support libraries for Kotlin 1.1</description>
