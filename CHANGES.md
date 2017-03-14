@@ -2,7 +2,7 @@
 
 ## Version 0.13
 
-* New `kotlinx-coroutinex-androind` module with Android `UI` context implementation 
+* New `kotlinx-coroutinex-android` module with Android `UI` context implementation 
 * Introduced `whileSelect` convenience function
 * Implemented `ConflatedChannel`  
 * Renamed various `toXXX` conversion functions to `asXXX` (old names are deprecated)
