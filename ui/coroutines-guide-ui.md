@@ -84,7 +84,7 @@ different UI application libraries:
 * [kotlinx-coroutines-swing](kotlinx-coroutines-swing) -- `Swing` context for Swing UI applications.
 
 This guide covers all UI libraries simultaneously, because each of these modules consists of just one
-object definition that is couple of pages long. You can use any of them as an example to write the corresponding
+object definition that is a couple of pages long. You can use any of them as an example to write the corresponding
 context object for your favourite UI library, even if it is not included out of the box here.
 
 ## Table of contents
@@ -111,9 +111,9 @@ context object for your favourite UI library, even if it is not included out of 
 
 ## Setup
 
-The runnable examples in this guide are be presented for JavaFx. The advantage is that all the examples can 
+The runnable examples in this guide are presented for JavaFx. The advantage is that all the examples can 
 be directly started on any OS without the need for emulators or anything like that and they are fully self-contained
-(all code is in one file). 
+(each example is in one file). 
 There are separate notes on what changes need to be made (if any) to reproduce them on Android. 
 
 ### JavaFx
@@ -145,17 +145,17 @@ experiment with them by making changes.
 Follow the guide on [Getting Started With Android and Kotlin](https://kotlinlang.org/docs/tutorials/kotlin-android.html)
 to create Kotlin project in Android Studio. You are also encouraged to add 
 [Kotlin Android Extensions](https://kotlinlang.org/docs/tutorials/android-plugin.html)
-to you application.
+to your application.
 
 In Android Studio 2.3 you'll get an application that looks similarly to the one shown below:
 
 ![UI example for Android](ui-example-android.png)
 
-Go the `context_main.xml` of your application and assign an ID of "hello" to the text view with "Hello World!" string,
+Go to the `context_main.xml` of your application and assign an ID of "hello" to the text view with "Hello World!" string,
 so that it is available in your application as `hello` with Kotlin Android extensions. The pinkish floating
 action button is already named `fab` in the project template that gets created.
 
-In the `MainActivity.kt` of you application remove the block `fab.setOnClickListener { ... }` and instead
+In the `MainActivity.kt` of your application remove the block `fab.setOnClickListener { ... }` and instead
 add `setup(hello, fab)` invocation as the last line of `onCreate` function.
 Create a placeholder `setup` function at the end of the file. 
 That is where various code is placed in the rest of this guide:
@@ -203,7 +203,7 @@ import kotlinx.coroutines.experimental.javafx.JavaFx as UI
  
 <!--- CLEAR -->
 
-Coroutines confined to UI thread can freely update anything in UI and suspend without blocking the UI thread.
+Coroutines confined to the UI thread can freely update anything in UI and suspend without blocking the UI thread.
 For example, we can perform animations by coding them in imperative style. The following code updates the
 text with a 10 to 1 countdown twice a second, using [launch] coroutine builder:
 
@@ -231,7 +231,7 @@ while `delay` waits, because it does not block the UI thread -- it just suspends
 ### Cancel UI coroutine
 
 We can keep a reference to the [Job] object that `launch` function returns and use it to cancel
-coroutine when want to stop it. Let us cancel the coroutine when pinkish circle is clicked:
+coroutine when we want to stop it. Let us cancel the coroutine when pinkish circle is clicked:
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
@@ -286,13 +286,13 @@ fun setup(hello: Text, fab: Circle) {
 <!--- INCLUDE .*/example-ui-actor-([0-9]+).kt -->
 
 Our first implementation for `onClick` just launches a new coroutine on each mouse event and
-passes the corresponding mouse event into the block (just in case we need it):
+passes the corresponding mouse event into the supplied action (just in case we need it):
 
 ```kotlin
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     onMouseClicked = EventHandler { event ->
         launch(UI) {
-            block(event)
+            action(event)
         }
     }
 }
@@ -308,10 +308,10 @@ update the text. Try it. It does not look very good. We'll fix it later.
   on Android, so it is omitted.
 
 ```kotlin
-fun View.onClick(block: suspend () -> Unit) {
+fun View.onClick(action: suspend () -> Unit) {
     setOnClickListener { 
         launch(UI) {
-            block()
+            action()
         }
     }
 }
@@ -323,15 +323,15 @@ fun View.onClick(block: suspend () -> Unit) {
 
 We can cancel an active job before starting a new one to ensure that at most one coroutine is animating 
 the countdown. However, it is generally not the best idea. The [cancel][Job.cancel] function serves only as a signal
-to abort coroutine. Cancellation is cooperative and coroutine may, at the moment, be doing something non-cancellable
+to abort a coroutine. Cancellation is cooperative and a coroutine may, at the moment, be doing something non-cancellable
 or otherwise ignore a cancellation signal. A better solution is to use an [actor] for tasks that should
 not be performed concurrently. Let us change `onClick` extension implementation:
   
 ```kotlin
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
     val eventActor = actor<MouseEvent>(UI) {
-        for (event in channel) block(event) // pass event to block
+        for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
     onMouseClicked = EventHandler { event ->
@@ -344,7 +344,7 @@ fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
   
 The key idea that underlies an integration of an actor coroutine and a regular event handler is that 
 there is an [offer][SendChannel.offer] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
-if it is possible, or discards an element otherwise. An `offser` actually returns a `Boolean` result which we ignore here.
+if it is possible, or discards an element otherwise. An `offer` actually returns a `Boolean` result which we ignore here.
 
 Try clicking repeatedly on a circle in this version of the code. The clicks are just ignored while the countdown 
 animation is running. This happens because the actor is busy with an animation and does not receive from its channel.
@@ -355,10 +355,10 @@ the `receive` is active.
   The corresponding extension for `View` class looks like this:
 
 ```kotlin
-fun View.onClick(block: suspend () -> Unit) {
+fun View.onClick(action: suspend () -> Unit) {
     // launch one actor
     val eventActor = actor<Unit>(UI) {
-        for (event in channel) block()
+        for (event in channel) action()
     }
     // install a listener to activate this actor
     setOnClickListener { 
@@ -377,14 +377,14 @@ processing the previous one.  The [actor] coroutine builder accepts an optional 
 controls the implementation of the channel that this actor is using for its mailbox. The description of all 
 the available choices is given in documentation of the [Channel()][Channel.invoke] factory function. 
 
-Let us change to the code to use [ConflatedChannel] by passing [Channel.CONFLATED] capacity value. The 
+Let us change the code to use [ConflatedChannel] by passing [Channel.CONFLATED] capacity value. The 
 change is only to the line that creates an actor:
 
 ```kotlin
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
     val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) { // <--- Changed here
-        for (event in channel) block(event) // pass event to block
+        for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
     onMouseClicked = EventHandler { event ->
@@ -410,21 +410,21 @@ events. In this case, the animation runs as many times and the circle is clicked
 
 ## Blocking operations
 
-This section explains patterns on using UI coroutines with thread-blocking operations.
+This section explains how to use UI coroutines with thread-blocking operations.
 
 ### The problem of UI freezes 
 
-It would have been great if all APIs out there were written as suspending functions that never block an 
+It would have been great if all APIs out there were written as suspending functions that never blocks an 
 execution thread. However, it is quite often not the case. Sometimes you need to do a CPU-consuming computation
 or just need to invoke some 3rd party APIs for network access, for example, that blocks the invoker thread. 
-You can cannot do that from the UI thread nor from them UI-confined coroutine directly, because that would
+You cannot do that from the UI thread nor from the UI-confined coroutine directly, because that would
 block the UI thread and cause the freeze up of the UI.
 
 <!--- INCLUDE .*/example-ui-blocking-([0-9]+).kt
 
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) {
-        for (event in channel) block(event) // pass event to block
+        for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
         eventActor.offer(event)
@@ -457,7 +457,7 @@ fun setup(hello: Text, fab: Circle) {
             delay(100) // update the text every 100ms
         }
     }
-    // compute next fibonacci number of each click
+    // compute the next fibonacci number of each click
     var x = 1
     fab.onClick {
         result = "fib($x) = ${fib(x)}"
@@ -479,7 +479,7 @@ The fix for the blocking operations on the UI thread is quite straightforward wi
 convert our "blocking" `fib` function to a non-blocking suspending function that runs the computation in 
 the background thread by using [run] function to change its execution context to [CommonPool] of background
 threads. Notice, that `fib` function is now marked with `suspend` modifier. It does not block the coroutine that
-it is invoked from anymore, but suspends its execution when the computation in background thread is working:
+it is invoked from anymore, but suspends its execution when the computation in the background thread is working:
 
 <!--- INCLUDE .*/example-ui-blocking-0[23].kt
 
@@ -514,8 +514,8 @@ You can run this code and verify that UI is not frozen while large Fibonacci num
 However, this code computes `fib` somewhat slower, because every recursive call to `fib` goes via `run`. This is 
 not a big problem in practice, because `run` is smart enough to check that the coroutine is already running
 in the required context and avoids overhead of dispatching coroutine to a different thread again. It is an 
-overhead nonetheless, which is visible on this primitive code that does nothing else of use, but only adds integers 
-in between  invocations to `run`. For some more substantial code, the overhead of an extra `run` invocation is 
+overhead nonetheless, which is visible on this primitive code that does nothing else, but only adds integers 
+in between invocations to `run`. For some more substantial code, the overhead of an extra `run` invocation is 
 not going to be significant.
 
 Still, this particular `fib` implementation can be made to run as fast as before, but in the background thread, by renaming
@@ -532,11 +532,11 @@ fun fibBlocking(x: Int): Int =
 
 > You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-03.kt).
 
-You can now enjoy full-speed naive Fibonacci computation without blocking UI thread. All we need is `run(CommonPool)`.
+You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `run(CommonPool)`.
 
-Note, that because the `fib` function is invoked from a single actor in our code, there is at most one concurrent 
+Note, that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
-It can saturate at most on CPU core at any given time.
+It can saturate at most one CPU core.
   
 ## Lifecycle
 
@@ -546,7 +546,7 @@ This section outlines an approach to life-cycle management with coroutines.
 
 A typical UI application has a number of elements with a lifecycle. Windows, UI controls, activities, views, fragments
 and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background 
-computation, can retain reference to the corresponding UI elements for longer than it is needed, preventing garbage 
+computation, can retain references to the corresponding UI elements for longer than it is needed, preventing garbage 
 collection of the whole trees of UI objects that were already destroyed and will not be displayed anymore.
 
 The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
@@ -554,7 +554,7 @@ all the coroutines in the context of this job.
 
 For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
 needed and when its memory must be released. A natural solution is to attach an 
-instance of `Job` to an instance of `Activity`. We can create a mini-framework for that, 
+instance of a `Job` to an instance of an `Activity`. We can create a mini-framework for that, 
 by defining the following `JobHolder` interface:
 
 ```kotlin
@@ -568,7 +568,7 @@ its `onDestroy` function to cancel the corresponding job:
 
 ```kotlin
 class MainActivity : AppCompatActivity(), JobHolder {
-    override val job: Job = Job() // an instance of Job for this activity
+    override val job: Job = Job() // the instance of a Job for this activity
 
     override fun onDestroy() {
         super.onDestroy()
@@ -580,7 +580,7 @@ class MainActivity : AppCompatActivity(), JobHolder {
 ```
 
 We also need a convenient way to retrieve a job for any view in the application. This is straightforward, because
-an activity is a context of the views in it, so we can define the following `View.contextJob` extension property:
+an activity is an Android `Context` of the views in it, so we can define the following `View.contextJob` extension property:
 
 ```kotlin
 val View.contextJob: Job
@@ -590,17 +590,17 @@ val View.contextJob: Job
 Here we use [NonCancellable] implementation of the `Job` as a null-object for the case where our `contextJob`
 extension property is invoked in a context that does not have an attached job.
 
-As convenience of having a `contextJob` available is that we can simply use it to start all the coroutines
+A convenience of having a `contextJob` available is that we can simply use it to start all the coroutines
 without having to worry about explicitly maintaining a list of the coroutines we had started. 
 All the life-cycle management will be taken care of by the mechanics of parent-child relations between jobs.
  
 For example, `View.onClick` extension from the previous section can now be defined using `contextJob`:
  
 ```kotlin
-fun View.onClick(block: suspend () -> Unit) {
-    // launch one actor as a paren of the context job
+fun View.onClick(action: suspend () -> Unit) {
+    // launch one actor as a parent of the context job
     val eventActor = actor<Unit>(contextJob + UI, capacity = Channel.CONFLATED) {
-        for (event in channel) block()
+        for (event in channel) action()
     }
     // install a listener to activate this actor
     setOnClickListener {
@@ -609,10 +609,10 @@ fun View.onClick(block: suspend () -> Unit) {
 }
 ```
 
-Notice `contextJob + UI` expression that is used to start an actor in the above code. It defines a coroutine context
-for our new actor that includes the job and UI dispatcher. The coroutine that is started by this 
+Notice how `contextJob + UI` expression is used to start an actor in the above code. It defines a coroutine context
+for our new actor that includes the job and the `UI` dispatcher. The coroutine that is started by this 
 `actor(contextJob + UI)` expression is going to become a child of the job of the corresponding context. When the 
-activity is destroyed and its job is cancelled, all its children coroutines are cancelled. 
+activity is destroyed and its job is cancelled all its children coroutines are cancelled, too. 
 
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled

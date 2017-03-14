@@ -72,10 +72,10 @@ fun setup(hello: Text, fab: Circle) {
     }
 }
 
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
     val eventActor = actor<MouseEvent>(UI) {
-        for (event in channel) block(event) // pass event to block
+        for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
     onMouseClicked = EventHandler { event ->

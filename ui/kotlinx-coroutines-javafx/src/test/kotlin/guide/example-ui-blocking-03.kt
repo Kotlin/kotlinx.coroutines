@@ -62,9 +62,9 @@ class ExampleApp : Application() {
     }
 }
 
-fun Node.onClick(block: suspend (MouseEvent) -> Unit) {
+fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) {
-        for (event in channel) block(event) // pass event to block
+        for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
         eventActor.offer(event)
