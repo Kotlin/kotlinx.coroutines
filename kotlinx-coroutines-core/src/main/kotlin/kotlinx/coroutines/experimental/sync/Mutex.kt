@@ -18,7 +18,7 @@ package kotlinx.coroutines.experimental.sync
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
@@ -217,7 +217,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                         val failure = select.performAtomicTrySelect(TryLockDesc(this, owner))
                         when {
                             failure == null -> { // success
-                                block.startUndispatchedCoroutine(select.completion)
+                                block.startCoroutineUndispatched(select.completion)
                                 return
                             }
                             failure === ALREADY_SELECTED -> return // already selected -- bail out

@@ -17,7 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
@@ -617,7 +617,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             if (state !is Incomplete) {
                 // already complete -- select result
                 if (select.trySelect(idempotent = null))
-                    block.startUndispatchedCoroutine(select.completion)
+                    block.startCoroutineUndispatched(select.completion)
                 return
             }
             if (startInternal(state) == 0) {

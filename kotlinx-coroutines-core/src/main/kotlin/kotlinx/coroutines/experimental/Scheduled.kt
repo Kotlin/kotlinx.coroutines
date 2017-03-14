@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -81,7 +81,7 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
             cont.cancelFutureOnCompletion(scheduledExecutor.schedule(cont, time, unit))
         // restart block using cancellable context of this continuation,
         // however start it as undispatched coroutine, because we are already in the proper context
-        block.startUndispatchedCoroutine(cont)
+        block.startCoroutineUndispatched(cont)
         cont.getResult()
     }
 }

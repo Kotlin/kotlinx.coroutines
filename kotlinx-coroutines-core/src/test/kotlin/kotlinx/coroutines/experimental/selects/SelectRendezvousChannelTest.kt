@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.selects
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.channels.RendezvousChannel
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -324,6 +324,6 @@ class SelectRendezvousChannelTest : TestBase() {
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
         if (!trySelect(null)) return
-        block.startUndispatchedCoroutine(this)
+        block.startCoroutineUndispatched(this)
     }
 }

@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
@@ -177,7 +177,7 @@ private open class DeferredCoroutine<T>(
                     if (state is CompletedExceptionally)
                         select.resumeSelectWithException(state.exception, MODE_DIRECT)
                     else
-                        block.startUndispatchedCoroutine(state as T, select.completion)
+                        block.startCoroutineUndispatched(state as T, select.completion)
                 }
                 return
             }

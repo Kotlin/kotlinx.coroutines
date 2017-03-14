@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.selects
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.channels.ArrayChannel
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -304,6 +304,6 @@ class SelectArrayChannelTest : TestBase() {
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
         if (!trySelect(null)) return
-        block.startUndispatchedCoroutine(this)
+        block.startCoroutineUndispatched(this)
     }
 }

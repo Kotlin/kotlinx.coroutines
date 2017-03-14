@@ -18,7 +18,7 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.startUndispatchedCoroutine
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -341,7 +341,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
                     offerResult === ALREADY_SELECTED -> return
                     offerResult === OFFER_FAILED -> {} // retry
                     offerResult === OFFER_SUCCESS -> {
-                        block.startUndispatchedCoroutine(select.completion)
+                        block.startCoroutineUndispatched(select.completion)
                         return
                     }
                     offerResult is Closed<*> -> throw offerResult.sendException
@@ -531,7 +531,7 @@ public abstract class AbstractChannel<E> : Channel<E> {
                     pollResult === POLL_FAILED -> {} // retry
                     pollResult is Closed<*> -> throw pollResult.receiveException
                     else -> {
-                        block.startUndispatchedCoroutine(pollResult as E, select.completion)
+                        block.startCoroutineUndispatched(pollResult as E, select.completion)
                         return
                     }
                 }
@@ -559,14 +559,14 @@ public abstract class AbstractChannel<E> : Channel<E> {
                     pollResult is Closed<*> -> {
                         if (pollResult.closeCause == null) {
                             if (select.trySelect(idempotent = null))
-                                block.startUndispatchedCoroutine(null, select.completion)
+                                block.startCoroutineUndispatched(null, select.completion)
                             return
                         } else
                             throw pollResult.closeCause
                     }
                     else -> {
                         // selected successfully
-                        block.startUndispatchedCoroutine(pollResult as E, select.completion)
+                        block.startCoroutineUndispatched(pollResult as E, select.completion)
                         return
                     }
                 }
