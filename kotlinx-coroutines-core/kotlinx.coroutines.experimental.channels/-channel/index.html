@@ -7,7 +7,15 @@
   <title>Channel - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 
   <body>
@@ -171,12 +179,25 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <tbody>
 <tr>
 <td>
+        <p><a href="-c-o-n-f-l-a-t-e-d.html">CONFLATED</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+
+        <p>Requests conflated channel in <a href="invoke.html">Channel()</a> factory function –
+the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a></p>
       </td>
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
 
-        <p>Requests channel with unlimited capacity buffer in <a href="invoke.html">Channel()</a> factory function.</p>
+        <p>Requests channel with unlimited capacity buffer in <a href="invoke.html">Channel()</a> factory function –
+the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets created.</p>
 
       </td>
 </tr>

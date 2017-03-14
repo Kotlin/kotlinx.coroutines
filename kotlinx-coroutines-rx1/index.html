@@ -7,7 +7,15 @@
   <title>kotlinx-coroutines-rx1</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-rx1/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 
   <body>
@@ -65,10 +73,6 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="#">Completable.await</a></td>
-      <td>Awaits for completion of the completable value</td>
-    </tr>
-    <tr>
       <td><a href="#">Single.await</a></td>
       <td>Awaits for completion of the single value and returns it</td>
     </tr>
@@ -106,15 +110,15 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="#">Job.toCompletable</a></td>
+      <td><a href="#">Job.asCompletable</a></td>
       <td>Converts job to hot completable</td>
     </tr>
     <tr>
-      <td><a href="#">Deferred.toSingle</a></td>
+      <td><a href="#">Deferred.asSingle</a></td>
       <td>Converts deferred value to hot single</td>
     </tr>
     <tr>
-      <td><a href="#">ReceiveChannel.toObservable</a></td>
+      <td><a href="#">ReceiveChannel.asObservable</a></td>
       <td>Converts streaming channel to hot observable</td>
     </tr>
   </tbody>

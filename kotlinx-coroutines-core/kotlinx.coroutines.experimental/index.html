@@ -7,7 +7,15 @@
   <title>kotlinx.coroutines.experimental - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 
   <body>
@@ -124,18 +132,29 @@ It is in <a href="-job/is-active.html">active</a> state while the value is being
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Delay</span></code></div>
 
         <p>This dispatcher <em>feature</em> is implemented by <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that natively support
-non-blocking <a href="-delay/delay.html">delay</a> function.</p>
+scheduled execution of tasks.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="-empty-registration/index.html">EmptyRegistration</a></p>
+        <p><a href="-disposable-future-handle/index.html">DisposableFutureHandle</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">EmptyRegistration</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">DisposableFutureHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>No-op implementation of <a href="-job/-registration/index.html">Job.Registration</a>.</p>
+        <p>An implementation of <a href="-disposable-handle/index.html">DisposableHandle</a> that cancels the specified future on dispose.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-disposable-handle/index.html">DisposableHandle</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Registration</span></code></div>
+
+        <p>A handle to an allocated object that can be disposed to make it eligible for garbage collection.</p>
 
       </td>
 </tr>
@@ -147,8 +166,7 @@ non-blocking <a href="-delay/delay.html">delay</a> function.</p>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">EventLoop</span></code></div>
 
         <p>Implemented by <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that have event loop inside and can
-be asked to process next event from their event queue. It is used by <a href="run-blocking.html">runBlocking</a> to
-continue processing events when invoked from the event dispatch thread.</p>
+be asked to process next event from their event queue.</p>
 
       </td>
 </tr>
@@ -174,6 +192,17 @@ A job can be <em>cancelled</em> at any time with <a href="-job/cancel.html">canc
 
         <p>A non-cancelable job that is always <a href="-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="run.html">run</a> builder
 to prevent cancellation of code blocks that need to run without cancellation.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-non-disposable-handle/index.html">NonDisposableHandle</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonDisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+        <p>No-op implementation of <a href="-disposable-handle/index.html">DisposableHandle</a>.</p>
 
       </td>
 </tr>
@@ -220,6 +249,17 @@ mandating any specific threading policy.</p>
 
       </td>
 </tr>
+<tr>
+<td>
+        <p><a href="-empty-registration.html">EmptyRegistration</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">typealias </span><s><span class="identifier">EmptyRegistration</span></s>&nbsp;<span class="symbol">=</span>&nbsp;<a href="-non-disposable-handle/index.html"><span class="identifier">NonDisposableHandle</span></a></code></div>
+
+        <p>No-op implementation of <a href="#">Job.Registration</a>.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -258,7 +298,7 @@ mandating any specific threading policy.</p>
         <p><a href="cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Cancels a specified <a href="cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
 
@@ -275,6 +315,17 @@ mandating any specific threading policy.</p>
 This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
 immediately resumes with <a href="-cancellation-exception.html">CancellationException</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="dispose-on-completion.html">disposeOnCompletion</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">disposeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</span><span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+        <p>Disposes a specified <a href="dispose-on-completion.html#kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</a> when this job is complete.</p>
 
       </td>
 </tr>
@@ -348,7 +399,7 @@ An optional <a href="new-single-thread-context.html#kotlinx.coroutines.experimen
         <p><a href="run.html">run</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">run</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.run.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.run.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">run</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
 the result.</p>
@@ -377,17 +428,6 @@ to libraries that are written in suspending style, to be used in <code>main</cod
 
         <p>Suspend coroutine similar to <a href="#">suspendCoroutine</a>, but provide an implementation of <a href="-cancellable-continuation/index.html">CancellableContinuation</a> to
 the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws <a href="-cancellation-exception.html">CancellationException</a> if the coroutine is cancelled while suspended.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="unregister-on-completion.html">unregisterOnCompletion</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">unregisterOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</span><span class="symbol">:</span>&nbsp;<a href="-job/-registration/index.html"><span class="identifier">Registration</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-job/-registration/index.html"><span class="identifier">Registration</span></a></code></div>
-
-        <p>Unregisters a specified <a href="unregister-on-completion.html#kotlinx.coroutines.experimental$unregisterOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.Job.Registration)/registration">registration</a> when this job is complete.</p>
 
       </td>
 </tr>

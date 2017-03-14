@@ -7,7 +7,15 @@
   <title>EventLoop - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-event-loop/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-event-loop/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 
   <body>
@@ -23,10 +31,12 @@
 
 <h1 id="eventloop">EventLoop</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">EventLoop</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/EventLoop.kt#L29">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">EventLoop</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/EventLoop.kt#L34">(source)</a></div>
 
 <p>Implemented by <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that have event loop inside and can
-be asked to process next event from their event queue. It is used by <a href="../run-blocking.html">runBlocking</a> to
+be asked to process next event from their event queue.</p>
+
+<p>It may optionally implement <a href="../-delay/index.html">Delay</a> interface and support time-scheduled tasks. It is used by <a href="../run-blocking.html">runBlocking</a> to
 continue processing events when invoked from the event dispatch thread.</p>
 
 <h3 id="functions">Functions</h3>
@@ -38,10 +48,9 @@ continue processing events when invoked from the event dispatch thread.</p>
         <p><a href="process-next-event.html">processNextEvent</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">processNextEvent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">processNextEvent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Long</span></code></div>
 
-        <p>Processes next event in this event loop and returns <code>true</code> or returns <code>false</code> if there are
-no events to process or when invoked from the wrong thread.</p>
+        <p>Processes next event in this event loop.</p>
 
       </td>
 </tr>

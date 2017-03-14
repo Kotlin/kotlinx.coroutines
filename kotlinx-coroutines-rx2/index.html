@@ -7,7 +7,15 @@
   <title>kotlinx-coroutines-rx2</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="http://localhost:4000/kotlinx.coroutines/kotlinx-coroutines-rx2/">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 
   <body>
@@ -50,6 +58,12 @@
       <td><code>Observable</code></td>
       <td><a href="#">ProducerScope</a></td>
       <td>Cold observable that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
+      <td><a href="kotlinx.coroutines.experimental.rx2/rx-flowable.html">rxFlowable</a></td>
+      <td><code>Flowable</code></td>
+      <td><a href="#">ProducerScope</a></td>
+      <td>Cold observable that starts coroutine on subscribe with <strong>backpressure</strong> support</td>
     </tr>
   </tbody>
 </table>
@@ -95,8 +109,8 @@
   </tbody>
 </table>
 
-<p>Note, that <a href="#">Flowable</a> is a subclass of <a href="http://www.reactive-streams.org">Reactive Streams</a>
-<a href="#">Publisher</a> and extensions for it are covered by
+<p>Note, that <code>Flowable</code> is a subclass of <a href="http://www.reactive-streams.org">Reactive Streams</a>
+<code>Publisher</code> and extensions for it are covered by
 <a href="../kotlinx-coroutines-reactive">kotlinx-coroutines-reactive</a> module.</p>
 
 <p>Conversion functions:</p>
@@ -110,16 +124,20 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="#">Job.toCompletable</a></td>
+      <td><a href="#">Job.asCompletable</a></td>
       <td>Converts job to hot completable</td>
     </tr>
     <tr>
-      <td><a href="#">Deferred.toSingle</a></td>
+      <td><a href="#">Deferred.asSingle</a></td>
       <td>Converts deferred value to hot single</td>
     </tr>
     <tr>
-      <td><a href="#">ReceiveChannel.toObservable</a></td>
+      <td><a href="#">ReceiveChannel.asObservable</a></td>
       <td>Converts streaming channel to hot observable</td>
+    </tr>
+    <tr>
+      <td><a href="#">Scheduler.asCoroutineDispatcher</a></td>
+      <td>Converts scheduler to <a href="#">CoroutineDispatcher</a></td>
     </tr>
   </tbody>
 </table>
