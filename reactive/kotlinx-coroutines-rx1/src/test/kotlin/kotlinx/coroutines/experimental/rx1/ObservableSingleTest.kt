@@ -91,6 +91,18 @@ class ObservableSingleTest {
     @Test
     fun testAwaitFirst() {
         val observable = rxObservable(CommonPool) {
+            send(Observable.empty<String>().awaitFirstOrDefault("O") + "K")
+        }
+
+        checkSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
+
+    @Test
+    fun testAwaitFirstOrDefault() {
+        val observable = rxObservable(CommonPool) {
             send(Observable.just("O", "#").awaitFirst() + "K")
         }
 
