@@ -91,6 +91,20 @@ public interface Mutex {
     public fun unlock(owner: Any? = null)
 }
 
+/**
+ * Executes the given [action] under this mutex.
+ * @return the return value of the action.
+ */
+// :todo: this function needs to be make inline as soon as this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <T> Mutex.withMutex(action: suspend () -> T): T {
+    lock()
+    try {
+        return action()
+    } finally {
+        unlock()
+    }
+}
+
 internal class MutexImpl(locked: Boolean) : Mutex {
     // State is: Empty | LockedQueue | OpDescriptor
     @Volatile
