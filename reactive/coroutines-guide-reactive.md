@@ -370,7 +370,7 @@ flowable that sends five integers from 1 to 5.
 It prints a message to the output before invocation of
 suspending [send][SendChannel.send] function, so that we can study how it operates.
 
-The integers are generated in [CommonPool], but subscription is shifted 
+The integers are generated in the context of the main thread, but subscription is shifted 
 to another thread using Rx
 [observeOn](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler,%20boolean,%20int))
 operator with a buffer of size 1. 
@@ -383,9 +383,9 @@ import io.reactivex.schedulers.Schedulers
 -->
 
 ```kotlin
-fun main(args: Array<String>) {
-    // coroutine -- fast producer of elements in common pool
-    val source = rxFlowable(CommonPool) {
+fun main(args: Array<String>) = runBlocking<Unit> { 
+    // coroutine -- fast producer of elements in the context of the main thread
+    val source = rxFlowable(context) {
         for (x in 1..5) {
             println("Sending $x ...")
             send(x) // this is a suspending function
@@ -399,7 +399,7 @@ fun main(args: Array<String>) {
             println("Received $x")
             Thread.sleep(200) // 200 ms to process each item
         }
-    Thread.sleep(2000) // hold on main thread for couple of seconds
+    delay(2000) // suspend main thread for couple of seconds
 }
 ```
 
@@ -940,9 +940,9 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
 [CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/context.html
+[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
