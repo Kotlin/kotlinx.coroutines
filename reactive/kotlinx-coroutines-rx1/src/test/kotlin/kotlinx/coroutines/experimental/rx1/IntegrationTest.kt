@@ -17,7 +17,6 @@
 package kotlinx.coroutines.experimental.rx1
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.TestChannelKind
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
@@ -52,6 +51,23 @@ class IntegrationTest(
     }
 
     @Test
+    fun testEmpty(): Unit = runBlocking {
+        val pub = rxObservable<String>(ctx(context)) {
+            if (delay) delay(1)
+            // does not send anything
+        }
+        assertNSE { pub.awaitFirst() }
+        assertThat(pub.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertNSE { pub.awaitLast() }
+        assertNSE { pub.awaitSingle() }
+        var cnt = 0
+        for (t in pub) {
+            cnt++
+        }
+        assertThat(cnt, IsEqual(0))
+    }
+
+    @Test
     fun testSingle() = runBlocking<Unit> {
         val observable = rxObservable<String>(ctx(context)) {
             if (delay) delay(1)
@@ -79,12 +95,7 @@ class IntegrationTest(
         }
         assertThat(observable.awaitFirst(), IsEqual(1))
         assertThat(observable.awaitLast(), IsEqual(n))
-        try {
-            observable.awaitSingle()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
-        }
+        assertIAE { observable.awaitSingle() }
         checkNumbers(n, observable)
         val channel = observable.open()
         checkNumbers(n, channel.asObservable(ctx(context)))
@@ -97,5 +108,23 @@ class IntegrationTest(
             assertThat(t, IsEqual(++last))
         }
         assertThat(last, IsEqual(n))
+    }
+
+    inline fun assertIAE(block: () -> Unit) {
+        try {
+            block()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
+        }
+    }
+
+    inline fun assertNSE(block: () -> Unit) {
+        try {
+            block()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertThat(e, IsInstanceOf(NoSuchElementException::class.java))
+        }
     }
 }

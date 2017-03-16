@@ -16,12 +16,12 @@
 
 package kotlinx.coroutines.experimental.rx2
 
+import io.reactivex.Observable
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
-import io.reactivex.Observable
 import java.util.concurrent.TimeUnit
 
 /**
@@ -81,6 +81,28 @@ class ObservableSingleTest {
     fun testAwaitFirst() {
         val observable = rxObservable(CommonPool) {
             send(Observable.just("O", "#").awaitFirst() + "K")
+        }
+
+        checkSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAwaitFirstOrDefault() {
+        val observable = rxObservable(CommonPool) {
+            send(Observable.empty<String>().awaitFirstOrDefault("O") + "K")
+        }
+
+        checkSingleValue(observable) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAwaitFirstOrDefaultWithValues() {
+        val observable = rxObservable(CommonPool) {
+            send(Observable.just("O", "#").awaitFirstOrDefault("!") + "K")
         }
 
         checkSingleValue(observable) {

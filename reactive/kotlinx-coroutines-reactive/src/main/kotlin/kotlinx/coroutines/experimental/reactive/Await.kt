@@ -30,8 +30,20 @@ import org.reactivestreams.Subscription
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
  */
 public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
+
+/**
+ * Awaits for the first value from the given observable or the [default] value if none is emitted without blocking a
+ * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
 
 /**
  * Awaits for the last value from the given publisher without blocking a thread and
@@ -40,6 +52,8 @@ public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
  */
 public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
 
@@ -50,6 +64,9 @@ public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if publisher does not emit any value
+ * @throws IllegalArgumentException if publisher emits more than one value
  */
 public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
@@ -57,12 +74,16 @@ public suspend fun <T> Publisher<T>.awaitSingle(): T = awaitOne(Mode.SINGLE)
 
 private enum class Mode(val s: String) {
     FIRST("awaitFirst"),
+    FIRST_OR_DEFAULT("awaitFirstOrDefault"),
     LAST("awaitLast"),
     SINGLE("awaitSingle");
     override fun toString(): String = s
 }
 
-private suspend fun <T> Publisher<T>.awaitOne(mode: Mode): T = suspendCancellableCoroutine { cont ->
+private suspend fun <T> Publisher<T>.awaitOne(
+    mode: Mode,
+    default: T? = null
+): T = suspendCancellableCoroutine { cont ->
     subscribe(object : Subscriber<T> {
         private lateinit var subscription: Subscription
         private var value: T? = null
@@ -76,7 +97,7 @@ private suspend fun <T> Publisher<T>.awaitOne(mode: Mode): T = suspendCancellabl
 
         override fun onNext(t: T) {
             when (mode) {
-                Mode.FIRST -> {
+                Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     seenValue = true
                     cont.resume(t)
                     subscription.cancel()
@@ -95,13 +116,18 @@ private suspend fun <T> Publisher<T>.awaitOne(mode: Mode): T = suspendCancellabl
         }
 
         override fun onComplete() {
-            if (!seenValue) {
-                if (cont.isActive)
-                    cont.resumeWithException(NoSuchElementException("No value received via onNext for $mode"))
+            if (seenValue) {
+                if (cont.isActive) cont.resume(value as T)
                 return
             }
-            if (!cont.isActive) return // was already resumed
-            cont.resume(value as T)
+            when {
+                mode == Mode.FIRST_OR_DEFAULT -> {
+                    cont.resume(default as T)
+                }
+                cont.isActive -> {
+                    cont.resumeWithException(NoSuchElementException("No value received via onNext for $mode"))
+                }
+            }
         }
 
         override fun onError(e: Throwable) {

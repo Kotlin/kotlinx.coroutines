@@ -48,6 +48,8 @@ public suspend fun <T> Single<T>.await(): T = suspendCancellableCoroutine { cont
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if observable does not emit any value
  */
 public suspend fun <T> Observable<T>.awaitFirst(): T = first().awaitOne()
 
@@ -68,6 +70,8 @@ public suspend fun <T> Observable<T>.awaitFirstOrDefault(default: T): T = firstO
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if observable does not emit any value
  */
 public suspend fun <T> Observable<T>.awaitLast(): T = last().awaitOne()
 
@@ -78,6 +82,9 @@ public suspend fun <T> Observable<T>.awaitLast(): T = last().awaitOne()
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
+ *
+ * @throws NoSuchElementException if observable does not emit any value
+ * @throws IllegalArgumentException if publisher emits more than one value
  */
 public suspend fun <T> Observable<T>.awaitSingle(): T = single().awaitOne()
 

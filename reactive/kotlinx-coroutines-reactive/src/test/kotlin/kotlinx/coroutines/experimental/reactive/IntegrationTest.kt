@@ -17,7 +17,6 @@
 package kotlinx.coroutines.experimental.reactive
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.TestChannelKind
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
@@ -52,12 +51,30 @@ class IntegrationTest(
     }
 
     @Test
+    fun testEmpty(): Unit = runBlocking {
+        val pub = publish<String>(ctx(context)) {
+            if (delay) delay(1)
+            // does not send anything
+        }
+        assertNSE { pub.awaitFirst() }
+        assertThat(pub.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertNSE { pub.awaitLast() }
+        assertNSE { pub.awaitSingle() }
+        var cnt = 0
+        for (t in pub) {
+            cnt++
+        }
+        assertThat(cnt, IsEqual(0))
+    }
+
+    @Test
     fun testSingle() = runBlocking<Unit> {
         val pub = publish<String>(ctx(context)) {
             if (delay) delay(1)
             send("OK")
         }
         assertThat(pub.awaitFirst(), IsEqual("OK"))
+        assertThat(pub.awaitFirstOrDefault("!"), IsEqual("OK"))
         assertThat(pub.awaitLast(), IsEqual("OK"))
         assertThat(pub.awaitSingle(), IsEqual("OK"))
         var cnt = 0
@@ -78,13 +95,9 @@ class IntegrationTest(
             }
         }
         assertThat(pub.awaitFirst(), IsEqual(1))
+        assertThat(pub.awaitFirstOrDefault(0), IsEqual(1))
         assertThat(pub.awaitLast(), IsEqual(n))
-        try {
-            pub.awaitSingle()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
-        }
+        assertIAE { pub.awaitSingle() }
         checkNumbers(n, pub)
         val channel = pub.open()
         checkNumbers(n, channel.asPublisher(ctx(context)))
@@ -97,5 +110,23 @@ class IntegrationTest(
             assertThat(t, IsEqual(++last))
         }
         assertThat(last, IsEqual(n))
+    }
+
+    inline fun assertIAE(block: () -> Unit) {
+        try {
+            block()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertThat(e, IsInstanceOf(IllegalArgumentException::class.java))
+        }
+    }
+
+    inline fun assertNSE(block: () -> Unit) {
+        try {
+            block()
+            expectUnreached()
+        } catch (e: Throwable) {
+            assertThat(e, IsInstanceOf(NoSuchElementException::class.java))
+        }
     }
 }
