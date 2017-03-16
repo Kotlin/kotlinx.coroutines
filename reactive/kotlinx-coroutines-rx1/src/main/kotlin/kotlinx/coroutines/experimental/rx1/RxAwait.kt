@@ -52,6 +52,16 @@ public suspend fun <T> Single<T>.await(): T = suspendCancellableCoroutine { cont
 public suspend fun <T> Observable<T>.awaitFirst(): T = first().awaitOne()
 
 /**
+ * Awaits for the first value from the given observable or the [default] value if none is emitted without blocking a
+ * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+public suspend fun <T> Observable<T>.awaitFirstOrDefault(default: T): T = firstOrDefault(default).awaitOne()
+
+/**
  * Awaits for the last value from the given observable without blocking a thread and
  * returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
