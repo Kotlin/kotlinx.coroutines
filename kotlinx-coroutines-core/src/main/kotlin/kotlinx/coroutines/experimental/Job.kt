@@ -325,7 +325,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     private var parentHandle: DisposableHandle? = null
 
     protected companion object {
-        @JvmStatic
         private val STATE: AtomicReferenceFieldUpdater<JobSupport, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(JobSupport::class.java, Any::class.java, "_state")
 
@@ -708,11 +707,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
 
         companion object {
-            @JvmStatic
+            @JvmField
             val ACTIVE: AtomicReferenceFieldUpdater<NodeList, Any?> =
                     AtomicReferenceFieldUpdater.newUpdater(NodeList::class.java, Any::class.java, "_active")
 
-            @JvmStatic
+            @JvmField
             val ACTIVE_STATE = Symbol("ACTIVE_STATE")
         }
 

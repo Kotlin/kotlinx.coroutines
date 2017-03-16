@@ -111,32 +111,32 @@ internal class MutexImpl(locked: Boolean) : Mutex {
     private var _state: Any? = if (locked) EmptyLocked else EmptyUnlocked // shared objects while we have no waiters
 
     private companion object {
-        @JvmStatic
+        @JvmField
         val STATE: AtomicReferenceFieldUpdater<MutexImpl, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(MutexImpl::class.java, Any::class.java, "_state")
 
-        @JvmStatic
+        @JvmField
         val LOCK_FAIL = Symbol("LOCK_FAIL")
 
-        @JvmStatic
+        @JvmField
         val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
 
-        @JvmStatic
+        @JvmField
         val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
 
-        @JvmStatic
+        @JvmField
         val SELECT_SUCCESS = Symbol("SELECT_SUCCESS")
 
-        @JvmStatic
+        @JvmField
         val LOCKED = Symbol("LOCKED")
 
-        @JvmStatic
+        @JvmField
         val UNLOCKED = Symbol("UNLOCKED")
 
-        @JvmStatic
+        @JvmField
         val EmptyLocked = Empty(LOCKED)
 
-        @JvmStatic
+        @JvmField
         val EmptyUnlocked = Empty(UNLOCKED)
 
     }

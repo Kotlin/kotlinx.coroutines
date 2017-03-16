@@ -580,35 +580,30 @@ public abstract class AbstractChannel<E> : Channel<E> {
         private const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 
         /** @suppress **This is unstable API and it is subject to change.** */
-        @JvmStatic
+        @JvmField
         val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
 
         /** @suppress **This is unstable API and it is subject to change.** */
-        @JvmStatic
+        @JvmField
         val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
 
         /** @suppress **This is unstable API and it is subject to change.** */
-        @JvmStatic
+        @JvmField
         val POLL_FAILED: Any = Symbol("POLL_FAILED")
 
         /** @suppress **This is unstable API and it is subject to change.** */
-        @JvmStatic
+        @JvmField
         val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
 
-        @JvmStatic
         private val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
 
-        @JvmStatic
         private val NULL_VALUE: Any = Symbol("NULL_VALUE")
 
-        @JvmStatic
         private val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
 
-        @JvmStatic
         private val SEND_RESUMED = Symbol("SEND_RESUMED")
 
         /** @suppress **This is unstable API and it is subject to change.** */
-        @JvmStatic
         fun isClosed(result: Any?): Boolean = result is Closed<*>
     }
 

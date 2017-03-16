@@ -75,13 +75,13 @@ public open class LockFreeLinkedListNode {
     private var _removedRef: Removed? = null // lazily cached removed ref to this
 
     private companion object {
-        @JvmStatic
+        @JvmField
         val NEXT: AtomicReferenceFieldUpdater<Node, Any> =
                 AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Any::class.java, "_next")
-        @JvmStatic
+        @JvmField
         val PREV: AtomicReferenceFieldUpdater<Node, Any> =
                 AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Any::class.java, "_prev")
-        @JvmStatic
+        @JvmField
         val REMOVED_REF: AtomicReferenceFieldUpdater<Node, Removed?> =
             AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Removed::class.java, "_removedRef")
     }

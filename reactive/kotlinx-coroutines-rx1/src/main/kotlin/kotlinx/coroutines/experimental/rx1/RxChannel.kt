@@ -68,7 +68,7 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
     var balance = 0 // request balance from cancelled receivers
 
     private companion object {
-        @JvmStatic
+        @JvmField
         val BALANCE: AtomicIntegerFieldUpdater<SubscriptionChannel<*>> =
             AtomicIntegerFieldUpdater.newUpdater(SubscriptionChannel::class.java, "balance")
     }

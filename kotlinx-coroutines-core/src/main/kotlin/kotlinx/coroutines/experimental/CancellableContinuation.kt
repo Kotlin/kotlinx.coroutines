@@ -166,7 +166,7 @@ internal open class CancellableContinuationImpl<in T>(
         get() = delegate.context
 
     protected companion object {
-        @JvmStatic
+        @JvmField
         val DECISION: AtomicIntegerFieldUpdater<CancellableContinuationImpl<*>> =
                 AtomicIntegerFieldUpdater.newUpdater(CancellableContinuationImpl::class.java, "decision")
 

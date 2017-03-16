@@ -70,7 +70,6 @@ private class PublisherCoroutine<T>(
     private var nRequested: Long = 0 // < 0 when closed (CLOSED or SIGNALLED)
 
     companion object {
-        @JvmStatic
         private val N_REQUESTED = AtomicLongFieldUpdater
                 .newUpdater(PublisherCoroutine::class.java, "nRequested")
 

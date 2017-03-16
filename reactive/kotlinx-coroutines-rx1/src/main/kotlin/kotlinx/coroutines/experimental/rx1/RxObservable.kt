@@ -16,10 +16,13 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.AbstractCoroutine
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.handleCoroutineException
+import kotlinx.coroutines.experimental.newCoroutineContext
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.sync.Mutex
 import rx.Observable
@@ -69,7 +72,6 @@ private class RxObservableCoroutine<T>(
     private var nRequested: Long = 0 // < 0 when closed (CLOSED or SIGNALLED)
 
     companion object {
-        @JvmStatic
         private val N_REQUESTED = AtomicLongFieldUpdater
                 .newUpdater(RxObservableCoroutine::class.java, "nRequested")
 

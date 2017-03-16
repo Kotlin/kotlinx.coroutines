@@ -29,7 +29,6 @@ import kotlinx.coroutines.experimental.newCoroutineContext
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.sync.Mutex
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -71,7 +70,6 @@ private class RxObservableCoroutine<T>(
     private var signal: Int = OPEN
 
     companion object {
-        @JvmStatic
         private val SIGNAL = AtomicIntegerFieldUpdater
             .newUpdater(RxObservableCoroutine::class.java, "signal")
 

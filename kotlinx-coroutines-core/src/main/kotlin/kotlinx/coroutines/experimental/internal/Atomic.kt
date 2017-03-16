@@ -48,11 +48,9 @@ public abstract class AtomicOp : OpDescriptor() {
     private var _consensus: Any? = UNDECIDED
 
     companion object {
-        @JvmStatic
         private val CONSENSUS: AtomicReferenceFieldUpdater<AtomicOp, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(AtomicOp::class.java, Any::class.java, "_consensus")
 
-        @JvmStatic
         private val UNDECIDED: Any = Symbol("UNDECIDED")
     }
 
