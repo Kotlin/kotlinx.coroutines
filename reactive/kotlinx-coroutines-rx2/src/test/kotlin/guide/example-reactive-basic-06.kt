@@ -21,9 +21,9 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.rxFlowable
 import io.reactivex.schedulers.Schedulers
 
-fun main(args: Array<String>) {
-    // coroutine -- fast producer of elements in common pool
-    val source = rxFlowable(CommonPool) {
+fun main(args: Array<String>) = runBlocking<Unit> { 
+    // coroutine -- fast producer of elements in the context of the main thread
+    val source = rxFlowable(context) {
         for (x in 1..5) {
             println("Sending $x ...")
             send(x) // this is a suspending function
@@ -37,5 +37,5 @@ fun main(args: Array<String>) {
             println("Received $x")
             Thread.sleep(200) // 200 ms to process each item
         }
-    Thread.sleep(2000) // hold on main thread for couple of seconds
+    delay(2000) // suspend main thread for couple of seconds
 }
