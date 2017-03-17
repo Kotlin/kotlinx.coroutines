@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-// This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.channel.example03
+package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.channels.produce
-import kotlinx.coroutines.experimental.runBlocking
-
-fun produceSquares() = produce<Int>(CommonPool) {
-    for (x in 1..5) send(x * x)
-}
-
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val squares = produceSquares()
-    squares.consumeEach { println(it) }
-    println("Done!")
+/**
+ * Performs the given [action] on each received element.
+ */
+// :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <E> ReceiveChannel<E>.consumeEach(action: suspend (E) -> Unit) {
+    for (element in this) action(element)
 }

@@ -17,14 +17,20 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example03
 
-import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import io.reactivex.Flowable
+import kotlinx.coroutines.experimental.reactive.open
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val source = Flowable.range(1, 3) // Rx 2.x operator to produce a range of integers
-    // iterate over the source once
-    for (x in source) println("First pass $x")
-    // iterate over the source again
-    for (x in source) println("Second pass $x")
+    val source = Flowable.range(1, 5) // a range of five numbers
+        .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doFinally { println("Finally") }         // ... into what's going on
+    var cnt = 0 
+    source.open().use { channel -> // open channel to the source
+        for (x in channel) { // iterate over the channel to receive elements from it
+            println(x)
+            if (++cnt >= 3) break // break when 3 elements are printed
+        }
+        // `use` will close the channel when this block of code is complete
+    }
 }

@@ -17,17 +17,20 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example03
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.open
+import kotlinx.coroutines.experimental.reactive.publish
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.selects.whileSelect
 import org.reactivestreams.Publisher
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlinx.coroutines.experimental.selects.whileSelect
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    this@takeUntil.open().use { thisChannel -> // open channel to Publisher<T>
-        other.open().use { otherChannel ->     // open channel to Publisher<U>
+    this@takeUntil.open().use { thisChannel ->           // explicitly open channel to Publisher<T>
+        other.open().use { otherChannel ->               // explicitly open channel to Publisher<U>
             whileSelect {
-                otherChannel.onReceive { false } // bail out on any received element from `other`
+                otherChannel.onReceive { false }         // bail out on any received element from `other`
                 thisChannel.onReceive { send(it); true } // resend element from this channel and continue
             }
         }
@@ -42,7 +45,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(context, 200, 1, 10) // numbers with 200ms interval
-    val stop = rangeWithInterval(context, 500, 1, 10) // the first one after 500ms
-    for (x in slowNums.takeUntil(context, stop)) println(x) // let's test it
+    val slowNums = rangeWithInterval(context, 200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(context, 500, 1, 10)             // the first one after 500ms
+    slowNums.takeUntil(context, stop).consumeEach { println(it) } // let's test it
 }

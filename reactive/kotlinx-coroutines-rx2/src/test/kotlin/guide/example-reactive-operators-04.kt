@@ -17,15 +17,18 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example04
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.publish
+import kotlinx.coroutines.experimental.runBlocking
 import org.reactivestreams.Publisher
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
-  for (pub in this@merge) {      // for each publisher received on the source channel
-      launch(this.context) {     // launch a child coroutine
-          for (x in pub) send(x) // resend all element from this publisher
+  consumeEach { pub ->                 // for each publisher received on the source channel
+      launch(this.context) {           // launch a child coroutine
+          pub.consumeEach { send(it) } // resend all element from this publisher
       }
   }
 }
@@ -45,5 +48,5 @@ fun testPub(context: CoroutineContext) = publish<Publisher<Int>>(context) {
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    for (x in testPub(context).merge(context)) println(x) // print the whole stream
+    testPub(context).merge(context).consumeEach { println(it) } // print the whole stream
 }

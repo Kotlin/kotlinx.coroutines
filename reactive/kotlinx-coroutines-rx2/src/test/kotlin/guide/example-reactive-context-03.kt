@@ -17,10 +17,11 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.context.example03
 
-import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import io.reactivex.Flowable
 import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.reactive.publish
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
@@ -33,8 +34,6 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 fun main(args: Array<String>) {
     Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
-        .subscribe { x ->
-            println("$x on thread ${Thread.currentThread().name}")
-        }
+        .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }

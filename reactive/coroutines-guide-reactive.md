@@ -103,25 +103,23 @@ import kotlinx.coroutines.experimental.channels.*
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // create a channel that produces numbers from 1 to 6 with 200ms delays between them
+    // create a channel that produces numbers from 1 to 3 with 200ms delays between them
     val source = produce<Int>(context) {
         println("Begin") // mark the beginning of this coroutine in output
-        for (x in 1..6) {
+        for (x in 1..3) {
             delay(200) // wait for 200ms
             send(x) // send number x to the channel
         }
     }
-    // print the first 3 elements from this channel
-    println("First three:")
-    var cnt = 0
-    for (x in source) { // iterate over the source to receive elements from it
-        println(x)
-        if (++cnt >= 3) break // break when 3 elements are printed
+    // print elements from the source
+    println("Elements:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
-    // print the remaining elements from this source
-    println("Remaining:")
-    for (x in source) { 
-        println(x)
+    // print elements from the source AGAIN
+    println("Again:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
 }
 ```
@@ -131,21 +129,22 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 This code produces the following output: 
 
 ```text
-First three:
+Elements:
 Begin
 1
 2
 3
-Remaining:
-4
-5
-6
+Again:
 ```
 
 <!--- TEST -->
 
-Notice, how "Begin" line was printed just once, because [publish] _coroutine builder_, when it is executed,
-launches one coroutine to produce a stream of elements.
+Notice, how "Begin" line was printed just once, because [produce] _coroutine builder_, when it is executed,
+launches one coroutine to produce a stream of elements. All the produced elements are consumed 
+with [ReceiveChannel.consumeEach][consumeEach] 
+extension function. There is no way to receive the elements from this
+channel again. The channel is closed when the producer coroutine is over and the attempt to receive 
+from it again cannot receive anything.
 
 Let us rewrite this code using [publish] coroutine builder from `kotlinx-coroutines-reactive` module
 instead of [produce] from `kotlinx-coroutines-core` module. The code stays the same, 
@@ -160,26 +159,24 @@ import kotlinx.coroutines.experimental.reactive.*
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // create a channel that produces numbers from 1 to 6 with 200ms delays between them
+    // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
     val source = publish<Int>(context) {  
     //           ^^^^^^^  <---  Difference from the previous examples is here
         println("Begin") // mark the beginning of this coroutine in output
-        for (x in 1..6) {
+        for (x in 1..3) {
             delay(200) // wait for 200ms
             send(x) // send number x to the channel
         }
     }
-    // print the first 3 elements from this channel
-    println("First three:")
-    var cnt = 0
-    for (x in source) { // iterate over the source to receive elements from it
-        println(x)
-        if (++cnt >= 3) break // break when 3 elements are printed
+    // print elements from the source
+    println("Elements:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
-    // print the remaining elements from this source
-    println("Remaining:")
-    for (x in source) { 
-        println(x)
+    // print elements from the source AGAIN
+    println("Again:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
 }
 ```
@@ -189,19 +186,16 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 Now the output of this code changes to:
 
 ```text
-First three:
+Elements:
 Begin
 1
 2
 3
-Remaining:
+Again:
 Begin
 1
 2
 3
-4
-5
-6
 ```
 
 <!--- TEST -->
@@ -212,44 +206,11 @@ elements is produced. It becomes the actual stream of elements on _subscription_
 a different stream of elements, depending on how the corresponding implementation of `Publisher` works.
 
 The [publish] coroutine builder, that is used in the above example, launches a fresh coroutine on each subscription.
-An iteration over an instance of `Publisher` with `for (x in source)` statement 
-opens the channel to this publisher, creating a fresh subscription.
-We have two `for (x in source)` statements in this code and that is why we see "Begin" printed twice. 
+Every [Publisher.consumeEach][org.reactivestreams.Publisher.consumeEach] invocation creates a fresh subscription.
+We have two of them in this code and that is why we see "Begin" printed twice. 
 
 In Rx lingo this is called a _cold_ publisher. Many standard Rx operators produce cold streams, too. We can iterate
-over them from a coroutine, and every iteration produces the same stream of elements as the following
-example shows:
-
-<!--- INCLUDE
-import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
--->
-
-```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val source = Flowable.range(1, 3) // Rx 2.x operator to produce a range of integers
-    // iterate over the source once
-    for (x in source) println("First pass $x")
-    // iterate over the source again
-    for (x in source) println("Second pass $x")
-}
-```
-
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-03.kt)
-
-The output is:
-
-```text
-First pass 1
-First pass 2
-First pass 3
-Second pass 1
-Second pass 2
-Second pass 3
-```
-
-<!--- TEST -->
+over them from a coroutine, and every subscription produces the same stream of elements.
 
 > Note, that we can replicate the same behaviour that we saw with channels by using Rx 
 [publish](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#publish()) 
@@ -258,22 +219,10 @@ method with it.
 
 ### Subscription and cancellation
 
-An example in the previous section contains this snippet:
-
-```kotlin
-var cnt = 0
-for (x in source) { // iterate over the source to receive elements from it
-    println(x)
-    if (++cnt >= 3) break // break when 3 elements are printed
-}
-```
-
-<!--- CLEAR -->
-
-It is perfectly fine code for receiving the first three elements from a channel, but it should not be generally used
-with a `Publisher` or with a similar reactive stream. When `source` is a `Publisher`, the
-`for (x in source)` statement is a shortcut for `for (x in source.open())`. Let us take a closer look at 
-what [Publisher.open][org.reactivestreams.Publisher.open] does and how it can be used:
+An example in the previous section uses `source.consumeEach { ... }` snippet to open a subscription 
+and receive all the elements from it. If we need more control on how what to do with 
+the elements that are being received from the channel, we can use [Publisher.open][org.reactivestreams.Publisher.open]
+as shown in the following example:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -287,16 +236,17 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
-    val channel = source.open() // open channel to the source
-    for (x in channel) { // iterate over the channel to receive elements from it
-        println(x)
-        if (++cnt >= 3) break // break when 3 elements are printed
+    source.open().use { channel -> // open channel to the source
+        for (x in channel) { // iterate over the channel to receive elements from it
+            println(x)
+            if (++cnt >= 3) break // break when 3 elements are printed
+        }
+        // `use` will close the channel when this block of code is complete
     }
-    channel.close() // close the channel
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-03.kt)
 
 It produces the following output:
  
@@ -310,13 +260,16 @@ Finally
 
 <!--- TEST -->
  
-Using an explicit `open` we can [close][SubscriptionReceiveChannel.close] the corresponding 
-subscription and unsubscribe from the source. The installed 
+With an explicit `open` we should [close][SubscriptionReceiveChannel.close] the corresponding 
+subscription to unsubscribe from the source. However, instead of invoking `close` explicitly, 
+this code relies on [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
+function from Kotlin's standard library.
+The installed 
 [doFinally](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
-listener prints "Finally" to confirm that this is actually what is happening.
+listener prints "Finally" to confirm that the subscription is actually being closed.
  
 We do not need to use an explicit `close` if iteration is performed over all the items that are emitted 
-by the publisher:
+by the publisher, because it is being closed automatically by `consumeEach`:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -330,11 +283,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doFinally { println("Finally") }         // ... into what's going on
     // iterate over the source fully
-    for (x in source) println(x)
+    source.consumeEach { println(it) }
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-05.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-04.kt)
 
 We get the following output:
 
@@ -352,7 +305,7 @@ Finally
 
 Notice, how "Finally" is printed before the last element "5". It happens because our `main` function in this
 example is a coroutine that we start with [runBlocking] coroutine builder.
-Our main coroutine receives on the channel using `for (x in source)` statement.
+Our main coroutine receives on the channel using `source.consumeEach { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
 When the last item is emitted by `Flowable.range(1, 5)` it
 _resumes_ the main coroutine, which gets dispatched onto the main thread to print this
@@ -403,7 +356,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-06.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-05.kt)
 
 The output of this code nicely illustrates how backpressure works with coroutines:
 
@@ -470,7 +423,7 @@ It is straightforward to use from a coroutine:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    for (x in range(CommonPool, 1, 5)) println(x)
+    range(CommonPool, 1, 5).consumeEach { println(it) }
 }
 ```
 
@@ -505,13 +458,14 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 ```kotlin
 fun <T, R> Publisher<T>.fusedFilterMap(
-    context: CoroutineContext,      // the context to execute this coroutine in
-    predicate: (T) -> Boolean,      // the filter predicate
-    mapper: (T) -> R                // the mapper function
+    context: CoroutineContext,   // the context to execute this coroutine in
+    predicate: (T) -> Boolean,   // the filter predicate
+    mapper: (T) -> R             // the mapper function
 ) = publish<R>(context) {
-    for (x in this@fusedFilterMap)  // iterate of the source stream 
-        if (predicate(x))           // filter part
-            send(mapper(x))         // map part
+    consumeEach {                // consume the source stream 
+        if (predicate(it))       // filter part
+            send(mapper(it))     // map part
+    }        
 }
 ```
 
@@ -527,9 +481,9 @@ fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(cont
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-   val result = range(context, 1, 5)
+   range(context, 1, 5)
        .fusedFilterMap(context, { it % 2 == 0}, { "$it is even" })
-   for (x in result) println(x) // print all strings from result
+       .consumeEach { println(it) } // print all the resulting strings
 }
 ```
 
@@ -563,10 +517,10 @@ import kotlinx.coroutines.experimental.selects.whileSelect
 
 ```kotlin
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    this@takeUntil.open().use { thisChannel -> // open channel to Publisher<T>
-        other.open().use { otherChannel ->     // open channel to Publisher<U>
+    this@takeUntil.open().use { thisChannel ->           // explicitly open channel to Publisher<T>
+        other.open().use { otherChannel ->               // explicitly open channel to Publisher<U>
             whileSelect {
-                otherChannel.onReceive { false } // bail out on any received element from `other`
+                otherChannel.onReceive { false }         // bail out on any received element from `other`
                 thisChannel.onReceive { send(it); true } // resend element from this channel and continue
             }
         }
@@ -597,9 +551,9 @@ The following code shows how `takeUntil` works:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(context, 200, 1, 10) // numbers with 200ms interval
-    val stop = rangeWithInterval(context, 500, 1, 10) // the first one after 500ms
-    for (x in slowNums.takeUntil(context, stop)) println(x) // let's test it
+    val slowNums = rangeWithInterval(context, 200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(context, 500, 1, 10)             // the first one after 500ms
+    slowNums.takeUntil(context, stop).consumeEach { println(it) } // let's test it
 }
 ```
 
@@ -631,9 +585,9 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 ```kotlin
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
-  for (pub in this@merge) {      // for each publisher received on the source channel
-      launch(this.context) {     // launch a child coroutine
-          for (x in pub) send(x) // resend all element from this publisher
+  consumeEach { pub ->                 // for each publisher received on the source channel
+      launch(this.context) {           // launch a child coroutine
+          pub.consumeEach { send(it) } // resend all element from this publisher
       }
   }
 }
@@ -671,7 +625,7 @@ The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    for (x in testPub(context).merge(context)) println(x) // print the whole stream
+    testPub(context).merge(context).consumeEach { println(it) } // print the whole stream
 }
 ```
 
@@ -718,9 +672,8 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main(args: Array<String>) {
-    rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3).subscribe { x ->
-        println("$x on thread ${Thread.currentThread().name}")
-    }
+    rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
+        .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }
 ```
@@ -762,9 +715,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 
 fun main(args: Array<String>) {
     Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
-        .subscribe { x ->
-            println("$x on thread ${Thread.currentThread().name}")
-        }
+        .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }
 ```
@@ -815,9 +766,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 fun main(args: Array<String>) {
     Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
-        .subscribe { x ->
-            println("$x on thread ${Thread.currentThread().name}")
-        }
+        .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }
 ```
@@ -857,8 +806,8 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    for (x in rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3))
-        println("$x on thread ${Thread.currentThread().name}")
+    rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
+        .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
 }
 ```
 
@@ -903,8 +852,8 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
-        for (x in rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3))
-            println("$x on thread ${Thread.currentThread().name}")
+        rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
+            .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
     }
     job.join() // wait for our coroutine to complete
 }
@@ -925,7 +874,7 @@ like our initial example using Rx `subscribe` operator.
 
 Note, that [Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
-and makes it harder to reason about asynchonity of the code that is using it. 
+and makes it harder to reason about asynchronicity of the code that is using it. 
 
 If a coroutine sends an element to a channel, then the thread that invoked the 
 [send][SendChannel.send] may start executing the code of a coroutine with [Unconfined] dispatcher.
@@ -949,6 +898,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
+[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
@@ -958,6 +908,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- DOCS_ROOT reactive/kotlinx-coroutines-reactive/target/dokka/kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.experimental.reactive -->
 [publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/publish.html
+[org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/consume-each.html
 [org.reactivestreams.Publisher.open]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open.html
 [SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/-subscription-receive-channel/close.html
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2 -->

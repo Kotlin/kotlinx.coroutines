@@ -17,7 +17,8 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.context.example01
 
-import io.reactivex.*
+import io.reactivex.Flowable
+import io.reactivex.Scheduler
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
@@ -29,8 +30,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main(args: Array<String>) {
-    rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3).subscribe { x ->
-        println("$x on thread ${Thread.currentThread().name}")
-    }
+    rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
+        .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }

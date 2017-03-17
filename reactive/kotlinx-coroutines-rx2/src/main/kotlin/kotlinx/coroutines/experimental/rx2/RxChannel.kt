@@ -25,7 +25,7 @@ import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import java.io.Closeable
 
 /**
- * Return type for [Observable.open] that can be used to [receive] elements from the
+ * Return type for [ObservableSource.open] that can be used to [receive] elements from the
  * subscription and to manually [close] it.
  */
 public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
@@ -36,7 +36,7 @@ public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeabl
 }
 
 /**
- * Subscribes to this [Observable] and returns a channel to receive elements emitted by it.
+ * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
  */
 public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
@@ -50,7 +50,22 @@ public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
  * This is a shortcut for `open().iterator()`. See [open] if you need an ability to manually
  * unsubscribe from the observable.
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message =
+"This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
+    "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
+    "Use `source.consumeEach { x -> ... }`.")
 public operator fun <T> ObservableSource<T>.iterator() = open().iterator()
+
+/**
+ * Subscribes to this [ObservableSource] and performs the specified action for each received element.
+ */
+// :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <T> ObservableSource<T>.consumeEach(action: suspend (T) -> Unit) {
+    open().use { channel ->
+        for (x in channel) action(x)
+    }
+}
 
 private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionReceiveChannel<T>, Observer<T> {
     @Volatile

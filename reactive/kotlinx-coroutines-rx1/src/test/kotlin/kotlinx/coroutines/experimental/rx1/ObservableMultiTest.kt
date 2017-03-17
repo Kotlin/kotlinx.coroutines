@@ -63,8 +63,7 @@ class ObservableMultiTest : TestBase() {
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
         val observable = rxObservable(Unconfined) {
-            for (x in Observable.range(0, n))
-                send(x)
+            Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
             assertEquals((0..n - 1).toList(), list)
@@ -75,8 +74,7 @@ class ObservableMultiTest : TestBase() {
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
         val observable = rxObservable(CommonPool) {
-            for (x in Observable.range(0, n))
-                send(x)
+            Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
             assertEquals((0..n - 1).toList(), list)

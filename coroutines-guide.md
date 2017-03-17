@@ -1190,7 +1190,8 @@ This is a part of _producer-consumer_ pattern that is often found in concurrent 
 You could abstract such a producer into a function that takes channel as its parameter, but this goes contrary
 to common sense that results must be returned from functions. 
 
-There is a convenience coroutine builder named [produce] that makes it easy to do it right:
+There is a convenience coroutine builder named [produce] that makes it easy to do it right on producer side,
+and an extension function [consumeEach], that can replace a `for` loop on the consumer side:
 
 ```kotlin
 fun produceSquares() = produce<Int>(CommonPool) {
@@ -1199,7 +1200,7 @@ fun produceSquares() = produce<Int>(CommonPool) {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val squares = produceSquares()
-    for (y in squares) println(y)
+    squares.consumeEach { println(it) }
     println("Done!")
 }
 ```
@@ -1363,8 +1364,8 @@ received number:
 
 ```kotlin
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) {
-    for (x in channel) {
-        println("Processor #$id received $x")
+    channel.consumeEach {
+        println("Processor #$id received $it")
     }    
 }
 ```
@@ -1988,10 +1989,10 @@ Consumer is going to be quite slow, taking 250 ms to process each number:
 fun main(args: Array<String>) = runBlocking<Unit> {
     val side = Channel<Int>() // allocate side channel
     launch(context) { // this is a very fast consumer for the side channel
-        for (num in side) println("Side channel has $num")
+        side.consumeEach { println("Side channel has $it") }
     }
-    for (num in produceNumbers(side)) {
-        println("Consuming $num")
+    produceNumbers(side).consumeEach { 
+        println("Consuming $it")
         delay(250) // let us digest the consumed number properly, do not hurry
     }
     println("Done consuming")
@@ -2193,6 +2194,7 @@ Channel was closed
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
+[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/invoke.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->

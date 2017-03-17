@@ -17,29 +17,29 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example02
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.publish
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // create a channel that produces numbers from 1 to 6 with 200ms delays between them
+    // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
     val source = publish<Int>(context) {  
     //           ^^^^^^^  <---  Difference from the previous examples is here
         println("Begin") // mark the beginning of this coroutine in output
-        for (x in 1..6) {
+        for (x in 1..3) {
             delay(200) // wait for 200ms
             send(x) // send number x to the channel
         }
     }
-    // print the first 3 elements from this channel
-    println("First three:")
-    var cnt = 0
-    for (x in source) { // iterate over the source to receive elements from it
-        println(x)
-        if (++cnt >= 3) break // break when 3 elements are printed
+    // print elements from the source
+    println("Elements:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
-    // print the remaining elements from this source
-    println("Remaining:")
-    for (x in source) { 
-        println(x)
+    // print elements from the source AGAIN
+    println("Again:")
+    source.consumeEach { // consume elements from it
+        println(it)
     }
 }

@@ -17,8 +17,10 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example01
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.publish
+import kotlinx.coroutines.experimental.runBlocking
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
@@ -26,5 +28,5 @@ fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(cont
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    for (x in range(CommonPool, 1, 5)) println(x)
+    range(CommonPool, 1, 5).consumeEach { println(it) }
 }

@@ -43,8 +43,8 @@ class PublisherMultiTest : TestBase() {
             jobs.forEach { it.join() }
         }
         val resultSet = mutableSetOf<Int>()
-        for (t in observable) {
-            assertTrue(resultSet.add(t))
+        observable.consumeEach {
+            assertTrue(resultSet.add(it))
         }
         assertThat(resultSet.size, IsEqual(n))
     }

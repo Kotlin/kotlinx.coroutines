@@ -39,7 +39,7 @@ class PublisherCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    for (x in range(CommonPool, 1, count)) {
+                    range(CommonPool, 1, count).consumeEach { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

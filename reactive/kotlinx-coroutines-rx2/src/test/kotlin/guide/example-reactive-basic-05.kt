@@ -17,14 +17,26 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example05
 
-import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.rx2.rxFlowable
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val source = Flowable.range(1, 5) // a range of five numbers
-        .doOnSubscribe { println("OnSubscribe") } // provide some insight
-        .doFinally { println("Finally") }         // ... into what's going on
-    // iterate over the source fully
-    for (x in source) println(x)
+fun main(args: Array<String>) = runBlocking<Unit> { 
+    // coroutine -- fast producer of elements in the context of the main thread
+    val source = rxFlowable(context) {
+        for (x in 1..5) {
+            println("Sending $x ...")
+            send(x) // this is a suspending function
+        }
+    }
+    // subscribe on another thread with a slow subscriber using Rx
+    source
+        .observeOn(Schedulers.io(), false, 1) // specify buffer size of 1 item
+        .doOnComplete { println("Complete") }
+        .subscribe { x ->
+            println("Received $x")
+            Thread.sleep(200) // 200 ms to process each item
+        }
+    delay(2000) // suspend main thread for couple of seconds
 }

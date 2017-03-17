@@ -52,16 +52,16 @@ class IntegrationTest(
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val pub = rxObservable<String>(ctx(context)) {
+        val observable = rxObservable<String>(ctx(context)) {
             if (delay) delay(1)
             // does not send anything
         }
-        assertNSE { pub.awaitFirst() }
-        assertThat(pub.awaitFirstOrDefault("OK"), IsEqual("OK"))
-        assertNSE { pub.awaitLast() }
-        assertNSE { pub.awaitSingle() }
+        assertNSE { observable.awaitFirst() }
+        assertThat(observable.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertNSE { observable.awaitLast() }
+        assertNSE { observable.awaitSingle() }
         var cnt = 0
-        for (t in pub) {
+        observable.consumeEach {
             cnt++
         }
         assertThat(cnt, IsEqual(0))
@@ -77,8 +77,8 @@ class IntegrationTest(
         assertThat(observable.awaitLast(), IsEqual("OK"))
         assertThat(observable.awaitSingle(), IsEqual("OK"))
         var cnt = 0
-        for (t in observable) {
-            assertThat(t, IsEqual("OK"))
+        observable.consumeEach {
+            assertThat(it, IsEqual("OK"))
             cnt++
         }
         assertThat(cnt, IsEqual(1))
@@ -104,8 +104,8 @@ class IntegrationTest(
 
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {
         var last = 0
-        for (t in observable) {
-            assertThat(t, IsEqual(++last))
+        observable.consumeEach {
+            assertThat(it, IsEqual(++last))
         }
         assertThat(last, IsEqual(n))
     }

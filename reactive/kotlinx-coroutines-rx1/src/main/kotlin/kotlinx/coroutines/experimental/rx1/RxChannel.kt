@@ -53,7 +53,22 @@ public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> {
  * This is a shortcut for `open().iterator()`. See [open] if you need an ability to manually
  * unsubscribe from the observable.
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(message =
+"This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
+    "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
+    "Use `source.consumeEach { x -> ... }`.")
 public operator fun <T> Observable<T>.iterator() = open().iterator()
+
+/**
+ * Subscribes to this [Observable] and performs the specified action for each received element.
+ */
+// :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <T> Observable<T>.consumeEach(action: suspend (T) -> Unit) {
+    open().use { channel ->
+        for (x in channel) action(x)
+    }
+}
 
 private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionReceiveChannel<T> {
     @JvmField

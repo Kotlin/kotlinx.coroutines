@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental.rx1
+package kotlinx.coroutines.experimental.rx2
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.rx2.iterator
-import kotlinx.coroutines.experimental.rx2.rxObservable
 import kotlinx.coroutines.experimental.withTimeout
 import org.junit.Test
 import java.util.*
@@ -41,7 +39,7 @@ class ObservableCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    for (x in range(CommonPool, 1, count)) {
+                    range(CommonPool, 1, count).consumeEach { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

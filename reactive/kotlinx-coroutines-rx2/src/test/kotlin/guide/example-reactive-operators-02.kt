@@ -17,19 +17,21 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example02
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.publish
+import kotlinx.coroutines.experimental.runBlocking
 import org.reactivestreams.Publisher
 import kotlin.coroutines.experimental.CoroutineContext
 
 fun <T, R> Publisher<T>.fusedFilterMap(
-    context: CoroutineContext,      // the context to execute this coroutine in
-    predicate: (T) -> Boolean,      // the filter predicate
-    mapper: (T) -> R                // the mapper function
+    context: CoroutineContext,   // the context to execute this coroutine in
+    predicate: (T) -> Boolean,   // the filter predicate
+    mapper: (T) -> R             // the mapper function
 ) = publish<R>(context) {
-    for (x in this@fusedFilterMap)  // iterate of the source stream 
-        if (predicate(x))           // filter part
-            send(mapper(x))         // map part
+    consumeEach {                // consume the source stream 
+        if (predicate(it))       // filter part
+            send(mapper(it))     // map part
+    }        
 }
 
 fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
@@ -37,7 +39,7 @@ fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(cont
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-   val result = range(context, 1, 5)
+   range(context, 1, 5)
        .fusedFilterMap(context, { it % 2 == 0}, { "$it is even" })
-   for (x in result) println(x) // print all strings from result
+       .consumeEach { println(it) } // print all the resulting strings
 }

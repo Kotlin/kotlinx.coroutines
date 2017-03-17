@@ -152,8 +152,7 @@ class ObservableSingleTest {
     fun testObservableIteration() {
         val observable = rxObservable(CommonPool) {
             var result = ""
-            for (x in Observable.just("O", "K"))
-                result += x
+            Observable.just("O", "K").consumeEach { result += it }
             send(result)
         }
 
@@ -166,8 +165,7 @@ class ObservableSingleTest {
     fun testObservableIterationFailure() {
         val observable = rxObservable(CommonPool) {
             try {
-                for (x in Observable.error<String>(RuntimeException("OK")))
-                    fail("Should not be here")
+                Observable.error<String>(RuntimeException("OK")).consumeEach { fail("Should not be here") }
                 send("Fail")
             } catch (e: RuntimeException) {
                 send(e.message!!)

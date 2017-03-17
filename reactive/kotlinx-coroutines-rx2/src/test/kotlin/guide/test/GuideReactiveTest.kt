@@ -8,52 +8,34 @@ class GuideReactiveTest {
     @Test
     fun testGuideReactiveBasicExample01() {
         test { guide.reactive.basic.example01.main(emptyArray()) }.verifyLines(
-            "First three:",
+            "Elements:",
             "Begin",
             "1",
             "2",
             "3",
-            "Remaining:",
-            "4",
-            "5",
-            "6"
+            "Again:"
         )
     }
 
     @Test
     fun testGuideReactiveBasicExample02() {
         test { guide.reactive.basic.example02.main(emptyArray()) }.verifyLines(
-            "First three:",
+            "Elements:",
             "Begin",
             "1",
             "2",
             "3",
-            "Remaining:",
+            "Again:",
             "Begin",
             "1",
             "2",
-            "3",
-            "4",
-            "5",
-            "6"
+            "3"
         )
     }
 
     @Test
     fun testGuideReactiveBasicExample03() {
         test { guide.reactive.basic.example03.main(emptyArray()) }.verifyLines(
-            "First pass 1",
-            "First pass 2",
-            "First pass 3",
-            "Second pass 1",
-            "Second pass 2",
-            "Second pass 3"
-        )
-    }
-
-    @Test
-    fun testGuideReactiveBasicExample04() {
-        test { guide.reactive.basic.example04.main(emptyArray()) }.verifyLines(
             "OnSubscribe",
             "1",
             "2",
@@ -63,8 +45,8 @@ class GuideReactiveTest {
     }
 
     @Test
-    fun testGuideReactiveBasicExample05() {
-        test { guide.reactive.basic.example05.main(emptyArray()) }.verifyLines(
+    fun testGuideReactiveBasicExample04() {
+        test { guide.reactive.basic.example04.main(emptyArray()) }.verifyLines(
             "OnSubscribe",
             "1",
             "2",
@@ -76,8 +58,8 @@ class GuideReactiveTest {
     }
 
     @Test
-    fun testGuideReactiveBasicExample06() {
-        test { guide.reactive.basic.example06.main(emptyArray()) }.verifyLines(
+    fun testGuideReactiveBasicExample05() {
+        test { guide.reactive.basic.example05.main(emptyArray()) }.verifyLines(
             "Sending 1 ...",
             "Sending 2 ...",
             "Received 1",

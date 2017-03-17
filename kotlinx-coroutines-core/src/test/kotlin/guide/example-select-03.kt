@@ -17,9 +17,15 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.select.example03
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.produce
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.selects.select
 
 fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
     for (num in 1..10) { // produce 10 numbers from 1 to 10
@@ -34,10 +40,10 @@ fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
 fun main(args: Array<String>) = runBlocking<Unit> {
     val side = Channel<Int>() // allocate side channel
     launch(context) { // this is a very fast consumer for the side channel
-        for (num in side) println("Side channel has $num")
+        side.consumeEach { println("Side channel has $it") }
     }
-    for (num in produceNumbers(side)) {
-        println("Consuming $num")
+    produceNumbers(side).consumeEach { 
+        println("Consuming $it")
         delay(250) // let us digest the consumed number properly, do not hurry
     }
     println("Done consuming")
