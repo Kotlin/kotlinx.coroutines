@@ -1,6 +1,6 @@
 # kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap-1.1/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines/_latestVersion)
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.0 release. 
+Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1 release. 
 
 ## Modules
 
@@ -36,7 +36,7 @@ Modules that provide coroutine dispatchers for various single-threaded UI librar
 > Note that these libraries are experimental and are subject to change.
 
 The libraries are available via [JCenter](https://bintray.com/bintray/jcenter).
-These libraries require kotlin compiler version to be at least `1.1.0` and 
+These libraries require kotlin compiler version `1.1.x` and 
 require kotlin runtime of the same version as a dependency.
 
 ### Maven
@@ -64,7 +64,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.0</kotlin.version>
+    <kotlin.version>1.1.1</kotlin.version>
 </properties>
 ```
 
@@ -88,6 +88,6 @@ And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.0'
+    ext.kotlin_version = '1.1.1'
 }
 ```
