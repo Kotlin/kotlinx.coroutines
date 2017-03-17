@@ -17,10 +17,8 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example02
 
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.reactive.consumeEach
-import kotlinx.coroutines.experimental.reactive.publish
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them

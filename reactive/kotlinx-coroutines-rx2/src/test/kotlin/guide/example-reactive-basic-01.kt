@@ -17,10 +17,8 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example01
 
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.channels.produce
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them

@@ -17,14 +17,11 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example03
 
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.reactive.consumeEach
-import kotlinx.coroutines.experimental.reactive.open
-import kotlinx.coroutines.experimental.reactive.publish
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.selects.whileSelect
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
 import org.reactivestreams.Publisher
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.selects.whileSelect
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
     this@takeUntil.open().use { thisChannel ->           // explicitly open channel to Publisher<T>

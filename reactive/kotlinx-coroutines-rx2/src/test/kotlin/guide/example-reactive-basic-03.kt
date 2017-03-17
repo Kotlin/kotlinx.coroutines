@@ -17,9 +17,9 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example03
 
-import io.reactivex.Flowable
-import kotlinx.coroutines.experimental.reactive.open
-import kotlinx.coroutines.experimental.runBlocking
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
