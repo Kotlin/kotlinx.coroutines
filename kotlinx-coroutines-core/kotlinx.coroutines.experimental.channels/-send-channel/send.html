@@ -31,11 +31,16 @@
 
 <h1 id="send">send</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L61">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L66">(source)</a></div>
 
 <p>Adds <a href="send.html#kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="is-full.html">isFull</a>,
 or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
 It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+<p>Note, that closing a channel <em>after</em> this function had suspended does not cause this suspended send invocation
+to abort, because closing a channel is conceptually like sending a special “close token” over this channel.
+All elements that are sent over the channel are delivered in first-in first-out order. The element that
+is being sent will get delivered to receivers before a close token.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this
 function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.

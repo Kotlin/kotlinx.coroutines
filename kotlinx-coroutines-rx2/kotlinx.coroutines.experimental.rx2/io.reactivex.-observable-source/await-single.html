@@ -31,7 +31,7 @@
 
 <h1 id="awaitsingle">awaitSingle</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-rx2/src/main/kotlin/kotlinx/coroutines/experimental/rx2/RxAwait.kt#L91">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitSingle</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-rx2/src/main/kotlin/kotlinx/coroutines/experimental/rx2/RxAwait.kt#L108">(source)</a></div>
 
 <p>Awaits for the single value from the given observable without blocking a thread.
 Returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
@@ -40,6 +40,11 @@ Returns the resulting value or throws the corresponding exception if this observ
 If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
 immediately resumes with <a href="#">CancellationException</a>.</p>
 
+<h3 id="exceptions">Exceptions</h3>
+
+<p><code>NoSuchElementException</code> - if observable does not emit any value</p>
+
+<p><code>IllegalArgumentException</code> - if observable emits more than one value</p>
 
       </div>
     </main>

@@ -47,6 +47,18 @@ Returns the resulting value or throws the corresponding exception if this observ
 </tr>
 <tr>
 <td>
+        <p><a href="await-first-or-default.html">awaitFirstOrDefault</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrDefault</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$awaitFirstOrDefault(io.reactivex.ObservableSource((kotlinx.coroutines.experimental.rx2.awaitFirstOrDefault.T)), kotlinx.coroutines.experimental.rx2.awaitFirstOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+
+        <p>Awaits for the first value from the given observable or the <a href="await-first-or-default.html#kotlinx.coroutines.experimental.rx2$awaitFirstOrDefault(io.reactivex.ObservableSource((kotlinx.coroutines.experimental.rx2.awaitFirstOrDefault.T)), kotlinx.coroutines.experimental.rx2.awaitFirstOrDefault.T)/default">default</a> value if none is emitted without blocking a
+thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="await-last.html">awaitLast</a></p>
       </td>
 <td>
@@ -71,10 +83,21 @@ Returns the resulting value or throws the corresponding exception if this observ
 </tr>
 <tr>
 <td>
+        <p><a href="consume-each.html">consumeEach</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$consumeEach(io.reactivex.ObservableSource((kotlinx.coroutines.experimental.rx2.consumeEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.rx2.consumeEach.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">T</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Subscribes to this <a href="#">ObservableSource</a> and performs the specified action for each received element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="iterator.html">iterator</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><s><span class="identifier">iterator</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">ChannelIterator</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
         <p>Subscribes to this <a href="#">Observable</a> and returns an iterator to receive elements emitted by it.</p>
 
@@ -87,7 +110,7 @@ Returns the resulting value or throws the corresponding exception if this observ
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">ObservableSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Subscribes to this <a href="#">Observable</a> and returns a channel to receive elements emitted by it.</p>
+        <p>Subscribes to this <a href="#">ObservableSource</a> and returns a channel to receive elements emitted by it.</p>
 
       </td>
 </tr>

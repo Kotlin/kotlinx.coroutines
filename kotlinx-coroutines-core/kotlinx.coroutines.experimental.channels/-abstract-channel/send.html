@@ -37,6 +37,11 @@
 or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
 It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
+<p>Note, that closing a channel <em>after</em> this function had suspended does not cause this suspended send invocation
+to abort, because closing a channel is conceptually like sending a special “close token” over this channel.
+All elements that are sent over the channel are delivered in first-in first-out order. The element that
+is being sent will get delivered to receivers before a close token.</p>
+
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this
 function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.
 Cancellation of suspended send is <em>atomic</em> – when this function

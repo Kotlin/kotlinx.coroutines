@@ -137,7 +137,7 @@ Repeated invocations of this function have no effect and always produce <code>fa
 
         <p>Closes this channel with an optional exceptional <a href="../-send-channel/close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special close token of this channel. Immediately after invocation of this function
+Conceptually, its sends a special “close token” over this channel. Immediately after invocation of this function
 <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
 on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
 are received.</p>

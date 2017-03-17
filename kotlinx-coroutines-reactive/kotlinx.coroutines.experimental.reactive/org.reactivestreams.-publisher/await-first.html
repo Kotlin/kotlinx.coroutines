@@ -31,7 +31,7 @@
 
 <h1 id="awaitfirst">awaitFirst</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-reactive/src/main/kotlin/kotlinx/coroutines/experimental/reactive/Await.kt#L34">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Publisher</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirst</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-reactive/src/main/kotlin/kotlinx/coroutines/experimental/reactive/Await.kt#L36">(source)</a></div>
 
 <p>Awaits for the first value from the given publisher without blocking a thread and
 returns the resulting value or throws the corresponding exception if this publisher had produced error.</p>
@@ -40,6 +40,9 @@ returns the resulting value or throws the corresponding exception if this publis
 If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
 immediately resumes with <a href="#">CancellationException</a>.</p>
 
+<h3 id="exceptions">Exceptions</h3>
+
+<p><code>NoSuchElementException</code> - if publisher does not emit any value</p>
 
       </div>
     </main>
