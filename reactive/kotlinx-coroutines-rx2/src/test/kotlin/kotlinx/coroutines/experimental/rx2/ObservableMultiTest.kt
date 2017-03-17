@@ -90,7 +90,7 @@ class ObservableMultiTest : TestBase() {
         val single = rxSingle(CommonPool) {
             var result = ""
             try {
-                observable.forEach { result += it }
+                observable.consumeEach { result += it }
             } catch(e: IOException) {
                 result += e.message
             }
