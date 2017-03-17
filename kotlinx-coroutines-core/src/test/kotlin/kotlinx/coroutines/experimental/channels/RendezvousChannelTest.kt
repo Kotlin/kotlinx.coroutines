@@ -20,6 +20,8 @@ import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
+import org.hamcrest.core.IsEqual
+import org.hamcrest.core.IsNull
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -245,6 +247,34 @@ class RendezvousChannelTest : TestBase() {
             }
         }
         finish(10)
+    }
+
+    @Test
+    fun testSuspendSendOnClosedChannel() = runBlocking<Unit> {
+        val q = RendezvousChannel<Int>()
+        expect(1)
+        launch(context) {
+            expect(4)
+            q.send(42) // suspend
+            expect(11)
+        }
+        expect(2)
+        launch(context) {
+            expect(5)
+            q.close()
+            expect(6)
+        }
+        expect(3)
+        yield() // to sender
+        expect(7)
+        yield() // try to resume sender (it will not resume despite the close!)
+        expect(8)
+        assertThat(q.receiveOrNull(), IsEqual(42))
+        expect(9)
+        assertThat(q.receiveOrNull(), IsNull())
+        expect(10)
+        yield() // to sender, it was resumed!
+        finish(12)
     }
 
     class BadClass {

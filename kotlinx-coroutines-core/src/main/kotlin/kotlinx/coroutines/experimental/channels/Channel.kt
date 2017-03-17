@@ -47,6 +47,11 @@ public interface SendChannel<in E> {
      * or throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
      * It throws the original [close] cause exception if the channel has _failed_.
      *
+     * Note, that closing a channel _after_ this function had suspended does not cause this suspended send invocation
+     * to abort, because closing a channel is conceptually like sending a special "close token" over this channel.
+     * All elements that are sent over the channel are delivered in first-in first-out order. The element that
+     * is being sent will get delivered to receivers before a close token.
+     *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      * Cancellation of suspended send is *atomic* -- when this function
@@ -77,7 +82,7 @@ public interface SendChannel<in E> {
     /**
      * Closes this channel with an optional exceptional [cause].
      * This is an idempotent operation -- repeated invocations of this function have no effect and return `false`.
-     * Conceptually, its sends a special close token of this channel. Immediately after invocation of this function
+     * Conceptually, its sends a special "close token" over this channel. Immediately after invocation of this function
      * [isClosedForSend] starts returning `true`. However, [isClosedForReceive][ReceiveChannel.isClosedForReceive]
      * on the side of [ReceiveChannel] starts returning `true` only after all previously sent elements
      * are received.
