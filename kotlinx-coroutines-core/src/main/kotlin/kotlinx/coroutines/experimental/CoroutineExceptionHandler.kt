@@ -44,7 +44,7 @@ fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
 }
 
 /**
- * An optional element on the coroutine context to handler uncaught exceptions.
+ * An optional element on the coroutine context to handle uncaught exceptions.
  * See [handleCoroutineException].
  */
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
@@ -55,7 +55,7 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
 
     /**
      * Handles uncaught [exception] in the given [context]. It is invoked
-     * only when everything else fails. See [handleCoroutineException].
+     * if coroutine has an uncaught exception. See [handleCoroutineException].
      */
     public fun handleException(context: CoroutineContext, exception: Throwable)
 }
