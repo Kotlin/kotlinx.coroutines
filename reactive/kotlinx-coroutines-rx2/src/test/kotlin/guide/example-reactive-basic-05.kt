@@ -17,10 +17,9 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example05
 
-import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.rxFlowable
+import io.reactivex.schedulers.Schedulers
 
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
@@ -36,7 +35,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnComplete { println("Complete") }
         .subscribe { x ->
             println("Received $x")
-            Thread.sleep(200) // 200 ms to process each item
+            Thread.sleep(300) // 300 ms to process each item
         }
     delay(2000) // suspend main thread for couple of seconds
 }

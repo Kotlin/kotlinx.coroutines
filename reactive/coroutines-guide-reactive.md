@@ -350,7 +350,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnComplete { println("Complete") }
         .subscribe { x ->
             println("Received $x")
-            Thread.sleep(200) // 200 ms to process each item
+            Thread.sleep(300) // 300 ms to process each item
         }
     delay(2000) // suspend main thread for couple of seconds
 }
