@@ -1,5 +1,19 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.14
+ 
+* Switched to Kotlin version 1.1.1 (can still be used with 1.1.0)
+* Introduced `consumeEach` helper function for channels and reactive streams, Rx 1.x, and Rx 2.x
+  * It ensures that streams are unsubscribed from on any exception
+  * Iteration with `for` loop on reactive streams is **deprecated**
+  * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md) is updated virtually
+    all over the place to reflect these important changes
+* Implemented `awaitFirstOrDefault` extension for reactive streams, Rx 1.x, and Rx 2.x
+* Added `Mutex.withMutex` helper function
+* `kotlinx-coroutines-android` module has `provided` dependency on of Android APIs to 
+  eliminate warnings when using it in android project
+
+
 ## Version 0.13
 
 * New `kotlinx-coroutinex-android` module with Android `UI` context implementation 
