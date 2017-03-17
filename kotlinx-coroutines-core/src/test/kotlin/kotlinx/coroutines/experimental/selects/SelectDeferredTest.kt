@@ -112,7 +112,7 @@ class SelectDeferredTest : TestBase() {
         }
         expect(2)
         val res = select<String> {
-            d1.onAwait { v1 ->
+            d1.onAwait {
                 expectUnreached()
                 "FAIL"
             }

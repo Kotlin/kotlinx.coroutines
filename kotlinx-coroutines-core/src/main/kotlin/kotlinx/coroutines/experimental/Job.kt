@@ -175,6 +175,7 @@ public interface Job : CoroutineContext.Element {
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
  */
+@Suppress("DEPRECATION") // todo: remove when Job.Registration is removed
 public interface DisposableHandle : Job.Registration {
     /**
      * Disposes the corresponding object, making it eligible for garbage collection.

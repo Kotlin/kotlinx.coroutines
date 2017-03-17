@@ -160,7 +160,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         val channel = RendezvousChannel<String>()
         select<Unit> {
-            channel.onReceive { v ->
+            channel.onReceive {
                 expectUnreached()
             }
             default {
@@ -207,7 +207,7 @@ class SelectRendezvousChannelTest : TestBase() {
         channel.close()
         finish(2)
         select<Unit> {
-            channel.onReceive { v ->
+            channel.onReceive {
                 expectUnreached()
             }
         }
@@ -225,7 +225,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         expect(2)
         select<Unit> {
-            channel.onReceive { v ->
+            channel.onReceive {
                 expectUnreached()
             }
         }
@@ -253,7 +253,7 @@ class SelectRendezvousChannelTest : TestBase() {
         expect(1)
         repeat(n) { i ->
             select {
-                channel.onReceive { v -> expectUnreached() }
+                channel.onReceive { expectUnreached() }
                 default { expect(i + 2) }
             }
         }

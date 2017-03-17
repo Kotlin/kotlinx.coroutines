@@ -16,13 +16,13 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.MutexImpl
 import kotlinx.coroutines.experimental.yield
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

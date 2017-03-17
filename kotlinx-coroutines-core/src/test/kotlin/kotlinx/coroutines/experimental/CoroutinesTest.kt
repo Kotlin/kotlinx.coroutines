@@ -115,9 +115,9 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelNestedImplicit() = runBlocking {
         expect(1)
-        val j1 = launch(context) {
+        launch(context) {
             expect(3)
-            val j2 = launch(context) {
+            launch(context) {
                 expect(6)
                 yield() // parent finishes earlier, does not wait for us
                 expectUnreached()

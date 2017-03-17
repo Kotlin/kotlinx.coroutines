@@ -113,8 +113,7 @@ class ConvertTest : TestBase() {
         val single = rxSingle(Unconfined) {
             var result = ""
             try {
-                for (x in observable)
-                    result += x
+                observable.consumeEach { result += it }
             } catch(e: Throwable) {
                 check(e is TestException)
                 result += e.message

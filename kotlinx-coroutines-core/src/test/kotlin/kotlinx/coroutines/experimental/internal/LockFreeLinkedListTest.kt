@@ -97,9 +97,13 @@ class LockFreeLinkedListTest {
         single(n3.describeRemove()!!)
         assertContents(list, 1, 2, 4)
         assertTrue(n3.describeRemove() == null)
-        single(list.describeRemoveFirst()!!)
+        single(list.describeRemoveFirst())
         assertContents(list, 2, 4)
         assertTrue(n1.describeRemove() == null)
+        assertTrue(n2.remove())
+        assertContents(list, 4)
+        assertTrue(n4.remove())
+        assertContents(list)
     }
 
     private fun single(part: AtomicDesc) {

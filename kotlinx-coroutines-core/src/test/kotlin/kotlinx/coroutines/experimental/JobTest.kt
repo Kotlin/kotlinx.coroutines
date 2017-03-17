@@ -69,10 +69,10 @@ class JobTest : TestBase() {
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
         for (i in 0 until n) {
-            var registration: Job.Registration? = null
+            var registration: DisposableHandle? = null
             registration = job.invokeOnCompletion {
                 fireCount[i]++
-                registration!!.unregister()
+                registration!!.dispose()
             }
         }
         check(job.isActive)
@@ -92,10 +92,10 @@ class JobTest : TestBase() {
         val job = Job()
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
-        val registrations = Array<Job.Registration>(n) { i -> job.invokeOnCompletion { fireCount[i]++ } }
+        val registrations = Array<DisposableHandle>(n) { i -> job.invokeOnCompletion { fireCount[i]++ } }
         check(job.isActive)
         fun unreg(i: Int) = i % 4 <= 1
-        for (i in 0 until n) if (unreg(i)) registrations[i].unregister()
+        for (i in 0 until n) if (unreg(i)) registrations[i].dispose()
         for (i in 0 until n) assertEquals(0, fireCount[i])
         job.cancel()
         check(!job.isActive)
@@ -125,7 +125,7 @@ class JobTest : TestBase() {
         val job = Job()
         val n = 10_000_000 * stressTestMultiplier
         var fireCount = 0
-        for (i in 0 until n) job.invokeOnCompletion { fireCount++ }.unregister()
+        for (i in 0 until n) job.invokeOnCompletion { fireCount++ }.dispose()
     }
     
     @Test
