@@ -33,7 +33,7 @@
 
 <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineExceptionHandler.kt#L50">(source)</a></div>
 
-<p>An optional element on the coroutine context to handler uncaught exceptions.
+<p>An optional element on the coroutine context to handle uncaught exceptions.
 See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
 
 <h3 id="functions">Functions</h3>
@@ -48,7 +48,7 @@ See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">handleException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
 
         <p>Handles uncaught <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</a> in the given <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</a>. It is invoked
-only when everything else fails. See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+if coroutine has an uncaught exception. See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
 
       </td>
 </tr>
