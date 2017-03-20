@@ -91,7 +91,7 @@ suspend fun AsynchronousServerSocketChannel.aAccept() = suspendCancellableCorout
 }
 
 /**
- * Performs [AsynchronousServerSocketChannel.connect] without blocking a thread and resumes when asynchronous operation completes.
+ * Performs [AsynchronousSocketChannel.connect] without blocking a thread and resumes when asynchronous operation completes.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
@@ -104,7 +104,7 @@ suspend fun AsynchronousSocketChannel.aConnect(
 }
 
 /**
- * Performs [AsynchronousServerSocketChannel.read] without blocking a thread and resumes when asynchronous operation completes.
+ * Performs [AsynchronousSocketChannel.read] without blocking a thread and resumes when asynchronous operation completes.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
@@ -119,7 +119,7 @@ suspend fun AsynchronousSocketChannel.aRead(
 }
 
 /**
- * Performs [AsynchronousServerSocketChannel.write] without blocking a thread and resumes when asynchronous operation completes.
+ * Performs [AsynchronousSocketChannel.write] without blocking a thread and resumes when asynchronous operation completes.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
