@@ -31,11 +31,24 @@
     <version>0.14</version>
     <packaging>jar</packaging>
 
+    <properties>
+        <jmh.version>1.18</jmh.version>
+        <javac.target>1.8</javac.target>
+        <jmh.generator>default</jmh.generator>
+        <uberjar.name>benchmarks</uberjar.name>
+        <akka.version>2.0.2</akka.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
             <version>${jmh.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor</artifactId>
+            <version>${akka.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
@@ -50,12 +63,13 @@
         </dependency>
     </dependencies>
 
-    <properties>
-        <jmh.version>1.18</jmh.version>
-        <javac.target>1.8</javac.target>
-        <jmh.generator>default</jmh.generator>
-        <uberjar.name>benchmarks</uberjar.name>
-    </properties>
+    <repositories>
+        <repository>
+            <id>typesafe</id>
+            <name>Typesafe Repository</name>
+            <url>http://repo.typesafe.com/typesafe/releases/</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
