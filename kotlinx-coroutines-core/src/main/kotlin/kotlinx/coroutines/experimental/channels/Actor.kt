@@ -26,7 +26,7 @@ import kotlin.coroutines.experimental.startCoroutine
 /**
  * Scope for [actor] coroutine builder.
  */
-public interface ActorScope<out E> : CoroutineScope, ReceiveChannel<E> {
+public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
     /**
      * A reference to the mailbox channel that this coroutine [receives][receive] messages from.
      * It is provided for convenience, so that the code in the coroutine can refer
@@ -34,7 +34,7 @@ public interface ActorScope<out E> : CoroutineScope, ReceiveChannel<E> {
      * All the [ReceiveChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
-    val channel: ReceiveChannel<E>
+    val channel: Channel<E>
 }
 
 /**
