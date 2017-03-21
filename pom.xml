@@ -107,6 +107,7 @@
         <module>ui/kotlinx-coroutines-javafx</module>
         <module>ui/kotlinx-coroutines-android</module>
         <module>site</module>
+        <module>benchmarks</module>
     </modules>
 
     <dependencies>
