@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.rx2
 
+import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
 
@@ -49,6 +50,26 @@ fun checkErroneous(
 ) {
     try {
         single.blockingGet()
+        error("Should have failed")
+    } catch (e: Throwable) {
+        checker(e)
+    }
+}
+
+fun <T> checkMaybeValue(
+        maybe: Maybe<T>,
+        checker: (T?) -> Unit
+) {
+    val maybeValue = maybe.toFlowable().blockingIterable().firstOrNull()
+    checker(maybeValue)
+}
+
+fun checkErroneous(
+    maybe: Maybe<*>,
+    checker: (Throwable) -> Unit
+) {
+    try {
+        (maybe as Maybe<Any>).blockingGet()
         error("Should have failed")
     } catch (e: Throwable) {
         checker(e)

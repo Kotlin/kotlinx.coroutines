@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.rx2
 
+import io.reactivex.MaybeObserver
+import io.reactivex.MaybeSource
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.Observer
@@ -25,7 +27,7 @@ import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import java.io.Closeable
 
 /**
- * Return type for [ObservableSource.open] that can be used to [receive] elements from the
+ * Return type for [ObservableSource.open] and [MaybeSource.open] that can be used to [receive] elements from the
  * subscription and to manually [close] it.
  */
 public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
@@ -33,6 +35,15 @@ public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeabl
      * Closes this subscription channel.
      */
     public override fun close()
+}
+
+/**
+ * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
+ */
+public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>()
+    subscribe(channel)
+    return channel
 }
 
 /**
@@ -58,6 +69,16 @@ public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
 public operator fun <T> ObservableSource<T>.iterator() = open().iterator()
 
 /**
+ * Subscribes to this [MaybeSource] and performs the specified action for each received element.
+ */
+// :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <T> MaybeSource<T>.consumeEach(action: suspend (T) -> Unit) {
+    open().use { channel ->
+        for (x in channel) action(x)
+    }
+}
+
+/**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
@@ -67,7 +88,7 @@ public suspend fun <T> ObservableSource<T>.consumeEach(action: suspend (T) -> Un
     }
 }
 
-private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionReceiveChannel<T>, Observer<T> {
+private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionReceiveChannel<T>, Observer<T>, MaybeObserver<T> {
     @Volatile
     var subscription: Disposable? = null
 
@@ -84,6 +105,10 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
     // Observer overrider
     override fun onSubscribe(sub: Disposable) {
         subscription = sub
+    }
+
+    override fun onSuccess(t: T) {
+        offer(t)
     }
 
     override fun onNext(t: T) {

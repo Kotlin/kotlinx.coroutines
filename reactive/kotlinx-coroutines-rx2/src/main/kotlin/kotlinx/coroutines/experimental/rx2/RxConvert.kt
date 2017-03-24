@@ -17,14 +17,12 @@
 package kotlinx.coroutines.experimental.rx2
 
 import io.reactivex.Completable
+import io.reactivex.Maybe
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.launch
 import io.reactivex.Observable
 import io.reactivex.Single
-import io.reactivex.functions.Cancellable
-import org.reactivestreams.Subscription
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -38,6 +36,19 @@ import kotlin.coroutines.experimental.CoroutineContext
  */
 public fun Job.asCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
     this@asCompletable.join()
+}
+
+/**
+ * Converts this deferred value to the hot reactive maybe that signals
+ * [onComplete][MaybeEmitter.onComplete], [onSuccess][MaybeEmitter.onSuccess] or [onError][MaybeEmitter.onError].
+ *
+ * Every subscriber gets the same completion value.
+ * Unsubscribing from the resulting maybe **does not** affect the original deferred value in any way.
+ *
+ * @param context -- the coroutine context from which the resulting maybe is going to be signalled
+ */
+public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMaybe<T>(context) {
+    this@asMaybe.await()
 }
 
 /**
