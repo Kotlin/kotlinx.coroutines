@@ -74,7 +74,7 @@ Add Bintray JCenter repository:
 
 ```groovy
 repositories {
-    `maven { url "https://kotlin.bintray.com/kotlinx/" }` 
+    maven { url "https://kotlin.bintray.com/kotlinx/" }
 }
 ```
 
