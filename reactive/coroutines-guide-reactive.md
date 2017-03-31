@@ -201,7 +201,7 @@ Begin
 <!--- TEST -->
 
 This example highlights the key difference between a reactive stream and a channel. A reactive stream is a higher-order
-functional concept. While the channel _is_ a stream of elements, the reactive stream defines a receipe on how the stream of 
+functional concept. While the channel _is_ a stream of elements, the reactive stream defines a recipe on how the stream of 
 elements is produced. It becomes the actual stream of elements on _subscription_. Each subscriber may receive the same or
 a different stream of elements, depending on how the corresponding implementation of `Publisher` works.
 
