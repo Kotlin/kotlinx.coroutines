@@ -24,11 +24,10 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
-        <version>0.14</version>
+        <version>0.15-SNAPSHOT</version>
     </parent>
 
     <artifactId>benchmarks</artifactId>
-    <version>0.14</version>
     <packaging>jar</packaging>
 
     <properties>
