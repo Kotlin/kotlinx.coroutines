@@ -26,7 +26,7 @@ import kotlin.coroutines.experimental.startCoroutine
 /**
  * Scope for [produce] coroutine builder.
  */
-public interface ProducerScope<E> : CoroutineScope, SendChannel<E> {
+public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
     /**
      * A reference to the channel that this coroutine [sends][send] elements to.
      * It is provided for convenience, so that the code in the coroutine can refer
@@ -34,7 +34,7 @@ public interface ProducerScope<E> : CoroutineScope, SendChannel<E> {
      * All the [SendChannel] functions on this interface delegate to
      * the channel instance returned by this function.
      */
-    val channel: Channel<E>
+    val channel: SendChannel<E>
 }
 
 /**
