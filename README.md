@@ -1,4 +1,4 @@
-# kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlin-eap-1.1/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlin-eap-1.1/kotlinx.coroutines/_latestVersion)
+# kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/_latestVersion)
 
 Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1 release. 
 
@@ -35,7 +35,9 @@ Modules that provide coroutine dispatchers for various single-threaded UI librar
 
 > Note that these libraries are experimental and are subject to change.
 
-The libraries are available via [JCenter](https://bintray.com/bintray/jcenter).
+The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository
+and also linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines).
+
 These libraries require kotlin compiler version `1.1.x` and 
 require kotlin runtime of the same version as a dependency.
 
