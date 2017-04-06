@@ -45,7 +45,7 @@ import kotlin.coroutines.experimental.startCoroutine
  *
  * Usually, a job is created in _active_ state (it is created and started), so its only visible
  * states are _active_ and _completed_. However, coroutine builders that provide an optional `start` parameter
- * create a coroutine in _new_ state when this parameter is set to `false`. Such a job can
+ * create a coroutine in _new_ state when this parameter is set to [CoroutineStart.LAZY]. Such a job can
  * be made _active_ by invoking [start] or [join].
  *
  * A job in the coroutine [context][CoroutineScope.context] represents the coroutine itself.

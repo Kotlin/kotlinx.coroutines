@@ -652,7 +652,7 @@ Note, that concurrency with coroutines is always explicit.
 
 ### Lazily started async
 
-There is a laziness option to [async] with `start = false` parameter. 
+There is a laziness option to [async] with [CoroutineStart.LAZY] parameter. 
 It starts coroutine only when its result is needed by some 
 [await][Deferred.await] or if a [start][Job.start] function 
 is invoked. Run the following example that differs from the previous one only by this option:
@@ -660,8 +660,8 @@ is invoked. Run the following example that differs from the previous one only by
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
-        val one = async(CommonPool, start = false) { doSomethingUsefulOne() }
-        val two = async(CommonPool, start = false) { doSomethingUsefulTwo() }
+        val one = async(CommonPool, CoroutineStart.LAZY) { doSomethingUsefulOne() }
+        val two = async(CommonPool, CoroutineStart.LAZY) { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
@@ -2174,6 +2174,7 @@ Channel was closed
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
+[CoroutineStart.LAZY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-l-a-z-y.html
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/start.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html

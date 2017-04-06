@@ -23,7 +23,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testSimple(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(3)
             42
         }
@@ -39,7 +39,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testLazyDeferAndYield(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             expect(4)
@@ -57,7 +57,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testLazyDeferAndYield2(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(7)
             42
         }
@@ -84,7 +84,7 @@ class AsyncLazyTest : TestBase() {
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             finish(3)
             throw IOException()
         }
@@ -96,7 +96,7 @@ class AsyncLazyTest : TestBase() {
     @Test(expected = IOException::class)
     fun testLazyDeferAndYieldException(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             finish(4)
@@ -110,7 +110,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testCatchException(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(3)
             throw IOException()
         }
@@ -128,7 +128,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testStart(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(4)
             42
         }
@@ -148,7 +148,7 @@ class AsyncLazyTest : TestBase() {
     @Test(expected = CancellationException::class)
     fun testCancelBeforeStart(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expectUnreached()
             42
         }
@@ -166,7 +166,7 @@ class AsyncLazyTest : TestBase() {
     @Test(expected = CancellationException::class)
     fun testCancelWhileComputing(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = false) {
+        val d = async(context, CoroutineStart.LAZY) {
             expect(4)
             yield() // yield to main, that is going to cancel us
             expectUnreached()

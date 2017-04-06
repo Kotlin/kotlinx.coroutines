@@ -66,6 +66,10 @@ public abstract class CoroutineDispatcher :
      * While, C# approach seems to be more efficient, it ends up with recommendations like
      * "use `yield` if you need to ....". This is error-prone. JS-style approach is more consistent
      * and does not require programmers to think about whether they need to yield or not.
+     *
+     * However, coroutine builders like [launch] and [async] accept an optional [CoroutineStart]
+     * parameter that allows one to optionally choose C#-style [CoroutineStart.UNDISPATCHED] behaviour
+     * whenever it is needed for efficiency.
      */
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 

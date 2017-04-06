@@ -70,7 +70,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteLazy() = runBlocking<Unit> {
         expect(1)
-        val d1 = async<Int>(context, start = false) {
+        val d1 = async(context, CoroutineStart.LAZY) {
             expect(5)
             42
         }

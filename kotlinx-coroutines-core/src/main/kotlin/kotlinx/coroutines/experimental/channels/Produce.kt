@@ -110,4 +110,4 @@ public fun <E> buildChannel(
     produce(context, capacity, block)
 
 private class ProducerCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
-    ChannelCoroutine<E>(parentContext, channel), ProducerScope<E>, ProducerJob<E>
+    ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E>

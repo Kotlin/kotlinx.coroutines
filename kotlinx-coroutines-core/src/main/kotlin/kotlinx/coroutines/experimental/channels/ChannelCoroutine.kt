@@ -23,8 +23,9 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 internal open class ChannelCoroutine<E>(
     override val parentContext: CoroutineContext,
-    val channel: Channel<E>
-) : AbstractCoroutine<Unit>(active = true), Channel<E> by channel {
+    open val channel: Channel<E>,
+    active: Boolean
+) : AbstractCoroutine<Unit>(active), Channel<E> by channel {
     override fun afterCompletion(state: Any?, mode: Int) {
         val cause = (state as? JobSupport.CompletedExceptionally)?.cause
         if (!channel.close(cause) && cause != null)

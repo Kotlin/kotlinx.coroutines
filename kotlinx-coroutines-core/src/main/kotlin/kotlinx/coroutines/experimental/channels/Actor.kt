@@ -16,10 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.newCoroutineContext
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -65,6 +63,12 @@ public interface ActorJob<in E> : Job, SendChannel<E> {
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
+ * By default, the coroutine is immediately started.
+ * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
+ * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
+ * and will be started implicitly on the first invocation of [join][Job.join] or on a first message
+ * [sent][SendChannel.send] to this coroutine's mailbox channel.
+ *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
  *
@@ -72,19 +76,55 @@ public interface ActorJob<in E> : Job, SendChannel<E> {
  *
  * @param context context of the coroutine
  * @param capacity capacity of the channel's buffer (no buffer by default)
+ * @param start coroutine start option
  * @param block the coroutine code
  */
 public fun <E> actor(
     context: CoroutineContext,
     capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend ActorScope<E>.() -> Unit
 ): ActorJob<E> {
+    val newContext = newCoroutineContext(context)
     val channel = Channel<E>(capacity)
-    return ActorCoroutine(newCoroutineContext(context), channel).apply {
-        initParentJob(context[Job])
+    val coroutine = if (start.isLazy)
+        LazyActorCoroutine(newContext, channel, block) else
+        ActorCoroutine(newContext, channel, active = true)
+    coroutine.initParentJob(context[Job])
+    start(block, coroutine, coroutine)
+    return coroutine
+}
+
+private open class ActorCoroutine<E>(
+    parentContext: CoroutineContext,
+    channel: Channel<E>,
+    active: Boolean
+) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E>
+
+private class LazyActorCoroutine<E>(
+    parentContext: CoroutineContext,
+    channel: Channel<E>,
+    private val block: suspend ActorScope<E>.() -> Unit
+) : ActorCoroutine<E>(parentContext, channel, active = false) {
+    override val channel: Channel<E> get() = this
+
+    override fun onStart() {
         block.startCoroutine(this, this)
+    }
+
+    suspend override fun send(element: E) {
+        start()
+        return super.send(element)
+    }
+
+    override fun offer(element: E): Boolean {
+        start()
+        return super.offer(element)
+    }
+
+    override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
+        start()
+        return super.registerSelectSend(select, element, block)
     }
 }
 
-private class ActorCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
-    ChannelCoroutine<E>(parentContext, channel), ActorScope<E>, ActorJob<E>

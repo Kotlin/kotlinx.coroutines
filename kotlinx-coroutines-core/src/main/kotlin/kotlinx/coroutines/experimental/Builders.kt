@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
@@ -32,7 +33,8 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
- * An optional [start] parameter can be set to `false` to start coroutine _lazily_. When `start = false`,
+ * By default, the coroutine is immediately started.
+ * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
  * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
  * and will be started implicitly on the first invocation of [join][Job.join].
  *
@@ -41,16 +43,32 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * the context of another coroutine, then any uncaught exception leads to the cancellation of parent coroutine.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+
+ * @param context context of the coroutine
+ * @param start coroutine start option
+ * @param block the coroutine code
  */
-fun launch(context: CoroutineContext, start: Boolean = true, block: suspend CoroutineScope.() -> Unit): Job {
+public fun launch(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
+): Job {
     val newContext = newCoroutineContext(context)
-    val coroutine = if (start)
-        StandaloneCoroutine(newContext, active = true) else
-        LazyStandaloneCoroutine(newContext, block)
+    val coroutine = if (start.isLazy)
+        LazyStandaloneCoroutine(newContext, block) else
+        StandaloneCoroutine(newContext, active = true)
     coroutine.initParentJob(context[Job])
-    if (start) block.startCoroutine(coroutine, coroutine)
+    start(block, coroutine, coroutine)
     return coroutine
 }
+
+/**
+ * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
+ */
+@Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
+    replaceWith = ReplaceWith("launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
+public fun launch(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> Unit): Job =
+    launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns

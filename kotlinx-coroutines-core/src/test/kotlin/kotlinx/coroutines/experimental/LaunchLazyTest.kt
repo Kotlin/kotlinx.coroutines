@@ -22,7 +22,7 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testLaunchAndYieldJoin() = runBlocking {
         expect(1)
-        val job = launch(context, start = false) {
+        val job = launch(context, CoroutineStart.LAZY) {
             expect(4)
             yield() // does nothing -- main waits
             expect(5)
@@ -39,7 +39,7 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testStart() = runBlocking {
         expect(1)
-        val job = launch(context, start = false) {
+        val job = launch(context, CoroutineStart.LAZY) {
             expect(5)
             yield() // yields back to main
             expect(7)

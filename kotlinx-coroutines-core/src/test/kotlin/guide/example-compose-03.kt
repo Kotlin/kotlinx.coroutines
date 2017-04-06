@@ -32,8 +32,8 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
-        val one = async(CommonPool, start = false) { doSomethingUsefulOne() }
-        val two = async(CommonPool, start = false) { doSomethingUsefulTwo() }
+        val one = async(CommonPool, CoroutineStart.LAZY) { doSomethingUsefulOne() }
+        val two = async(CommonPool, CoroutineStart.LAZY) { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")

@@ -41,7 +41,7 @@ import kotlin.coroutines.experimental.startCoroutine
  * Usually, a deferred value is created in _active_ state (it is created and started), so its only visible
  * states are _active_ and _completed_ (_resolved_, _failed_, or _cancelled_) state.
  * However, [async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
- * when this parameter is set to `false`.
+ * when this parameter is set to [CoroutineStart.LAZY].
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  */
 public interface Deferred<out T> : Job {
@@ -105,29 +105,43 @@ public interface Deferred<out T> : Job {
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
- * An optional [start] parameter can be set to `false` to start coroutine _lazily_. When `start = false`,
+ * By default, the coroutine is immediately started.
+ * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,,
  * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
  * function and will be started implicitly on the first invocation of [join][Job.join] or [await][Deferred.await].
  *
- * By default, the coroutine is immediately started. Set an optional [start] parameters to `false`
- * to create coroutine without starting it. In this case it will be _lazy_ and will start
+ * @param context context of the coroutine
+ * @param start coroutine start option
+ * @param block the coroutine code
  */
-public fun <T> async(context: CoroutineContext, start: Boolean = true, block: suspend CoroutineScope.() -> T) : Deferred<T> {
+public fun <T> async(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> {
     val newContext = newCoroutineContext(context)
-    val coroutine = if (start)
-        DeferredCoroutine<T>(newContext, active = true) else
-        LazyDeferredCoroutine(newContext, block)
+    val coroutine = if (start.isLazy)
+        LazyDeferredCoroutine(newContext, block) else
+        DeferredCoroutine<T>(newContext, active = true)
     coroutine.initParentJob(context[Job])
-    if (start) block.startCoroutine(coroutine, coroutine)
+    start(block, coroutine, coroutine)
     return coroutine
 }
+
+/**
+ * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
+ */
+@Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
+    replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
+public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
+    async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)
 
 /**
  * @suppress **Deprecated**: `defer` was renamed to `async`.
  */
 @Deprecated(message = "`defer` was renamed to `async`", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("async(context, block = block)"))
-public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T) : Deferred<T> =
+public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T): Deferred<T> =
     async(context, block = block)
 
 private open class DeferredCoroutine<T>(

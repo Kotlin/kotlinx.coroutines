@@ -64,7 +64,7 @@ class SelectJobTest : TestBase() {
     @Test
     fun testSelectLazy() = runBlocking<Unit> {
         expect(1)
-        val job = launch(context, start = false) {
+        val job = launch(context, CoroutineStart.LAZY) {
             expect(2)
         }
         val res = select<String> {
