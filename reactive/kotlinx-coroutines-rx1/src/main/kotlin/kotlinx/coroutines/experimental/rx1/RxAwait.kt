@@ -34,7 +34,7 @@ import rx.*
 public suspend fun Completable.awaitCompleted(): Unit = suspendCancellableCoroutine { cont ->
     subscribe(object : CompletableSubscriber {
         override fun onSubscribe(s: Subscription) { cont.unsubscribeOnCompletion(s) }
-        override fun onCompleted() { cont.resume(kotlin.Unit) }
+        override fun onCompleted() { cont.resume(Unit) }
         override fun onError(e: Throwable) { cont.resumeWithException(e) }
     })
 }
