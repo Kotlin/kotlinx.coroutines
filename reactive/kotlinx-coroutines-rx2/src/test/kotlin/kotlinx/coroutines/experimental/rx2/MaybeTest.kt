@@ -30,6 +30,7 @@ import kotlinx.coroutines.experimental.yield
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert
+import org.junit.Assert.assertNull
 import java.util.concurrent.TimeUnit
 
 class MaybeTest : TestBase() {
@@ -124,6 +125,11 @@ class MaybeTest : TestBase() {
     @Test
     fun testMaybeAwait() = runBlocking {
         assertEquals("OK", Maybe.just("O").await() + "K")
+    }
+
+    @Test
+    fun testMaybeAwaitForNull() = runBlocking {
+        assertNull(Maybe.empty<String>().await())
     }
 
     @Test
