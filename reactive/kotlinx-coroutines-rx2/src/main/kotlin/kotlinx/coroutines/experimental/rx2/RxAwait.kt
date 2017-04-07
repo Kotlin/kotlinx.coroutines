@@ -40,6 +40,38 @@ public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine
     })
 }
 
+// ------------------------ MaybeSource ------------------------
+
+/**
+ * Awaits for completion of the maybe without blocking a thread.
+ * Returns the resulting value, null if no value was produced or throws the corresponding exception if this
+ * maybe had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+@Suppress("UNCHECKED_CAST")
+public suspend fun <T> MaybeSource<T>.await(): T? = (this as MaybeSource<T?>).awaitOrDefault(null)
+
+/**
+ * Awaits for completion of the maybe without blocking a thread.
+ * Returns the resulting value, [default] if no value was produced or throws the corresponding exception if this
+ * maybe had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
+    subscribe(object : MaybeObserver<T> {
+        override fun onSubscribe(d: Disposable) { cont.disposeOnCompletion(d) }
+        override fun onComplete() { cont.resume(default) }
+        override fun onSuccess(t: T) { cont.resume(t) }
+        override fun onError(error: Throwable) { cont.resumeWithException(error) }
+    })
+}
+
 // ------------------------ SingleSource ------------------------
 
 /**

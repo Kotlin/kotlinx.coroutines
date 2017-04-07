@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.rx2
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.produce
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ConvertTest : TestBase() {
@@ -53,6 +54,50 @@ class ConvertTest : TestBase() {
         expect(2)
         yield()
         finish(5)
+    }
+
+    @Test
+    fun testToMaybe() {
+        val d = async(CommonPool) {
+            delay(50)
+            "OK"
+        }
+        val maybe1 = d.asMaybe(Unconfined)
+        checkMaybeValue(maybe1) {
+            assertEquals("OK", it)
+        }
+        val maybe2 = d.asMaybe(Unconfined)
+        checkMaybeValue(maybe2) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testToMaybeEmpty() {
+        val d = async(CommonPool) {
+            delay(50)
+            null
+        }
+        val maybe1 = d.asMaybe(Unconfined)
+        checkMaybeValue(maybe1, ::assertNull)
+        val maybe2 = d.asMaybe(Unconfined)
+        checkMaybeValue(maybe2, ::assertNull)
+    }
+
+    @Test
+    fun testToMaybeFail() {
+        val d = async(CommonPool) {
+            delay(50)
+            throw TestException("OK")
+        }
+        val maybe1 = d.asMaybe(Unconfined)
+        checkErroneous(maybe1) {
+            check(it is TestException && it.message == "OK") { "$it" }
+        }
+        val maybe2 = d.asMaybe(Unconfined)
+        checkErroneous(maybe2) {
+            check(it is TestException && it.message == "OK") { "$it" }
+        }
     }
 
     @Test
