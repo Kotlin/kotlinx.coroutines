@@ -83,4 +83,32 @@ class CompletableTest : TestBase() {
         yield()
         finish(7)
     }
+
+    @Test
+    fun testAwaitSuccess() = runBlocking<Unit> {
+        expect(1)
+        val completable = rxCompletable(context) {
+            expect(3)
+        }
+        expect(2)
+        completable.awaitCompleted() // shall launch coroutine
+        finish(4)
+    }
+
+    @Test
+    fun testAwaitFailure() = runBlocking<Unit> {
+        expect(1)
+        val completable = rxCompletable(context) {
+            expect(3)
+            throw RuntimeException("OK")
+        }
+        expect(2)
+        try {
+            completable.awaitCompleted() // shall launch coroutine and throw exception
+            expectUnreached()
+        } catch (e: RuntimeException) {
+            finish(4)
+            assertThat(e.message, IsEqual("OK"))
+        }
+    }
 }
