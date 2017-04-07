@@ -82,4 +82,6 @@ object CommonPool : CoroutineDispatcher() {
         }
         usePrivatePool = false
     }
+
+    override fun toString(): String = "CommonPool"
 }

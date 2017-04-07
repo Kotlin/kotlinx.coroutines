@@ -128,8 +128,6 @@ internal class EventLoopImpl(
         }
     }
 
-    override fun toString(): String = "EventLoopImpl@${Integer.toHexString(System.identityHashCode(this))}"
-
     private fun scheduleQueued(queuedTask: QueuedTask): Boolean {
         if (parentJob == null) {
             queue.addLast(queuedTask)

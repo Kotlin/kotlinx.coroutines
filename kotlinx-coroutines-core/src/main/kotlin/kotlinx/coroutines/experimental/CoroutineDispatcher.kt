@@ -91,6 +91,11 @@ public abstract class CoroutineDispatcher :
             "The dispatcher to the right of `+` just replaces the dispatcher the left of `+`.",
             level = DeprecationLevel.ERROR)
     public operator fun plus(other: CoroutineDispatcher) = other
+
+    // for nicer debugging
+    override fun toString(): String =
+        "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"
+
 }
 
 internal class DispatchedContinuation<in T>(
