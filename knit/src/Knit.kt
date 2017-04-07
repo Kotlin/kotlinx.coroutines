@@ -168,13 +168,13 @@ fun knit(markdownFileName: String) {
                 }
             }
             if (inLine.startsWith(CODE_START)) {
-                require(testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
+                require(testOut == null || testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
                 codeLines += ""
                 readUntilTo(CODE_END, codeLines)
                 continue@mainLoop
             }
             if (inLine.startsWith(TEST_START)) {
-                require(testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
+                require(testOut == null || testLines.isEmpty()) { "Previous test was not emitted with $TEST_DIRECTIVE" }
                 readUntilTo(TEST_END, testLines)
                 continue@mainLoop
             }

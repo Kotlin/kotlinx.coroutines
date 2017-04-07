@@ -104,8 +104,9 @@ context object for your favourite UI library, even if it is not included out of 
 * [Blocking operations](#blocking-operations)
   * [The problem of UI freezes](#the-problem-of-ui-freezes)
   * [Blocking operations](#blocking-operations)
-* [Lifecycle](#lifecycle)
-  * [Using coroutine parent-child hierarchy](#using-coroutine-parent-child-hierarchy)
+* [Advanced topics](#advanced-topics)
+  * [Lifecycle and coroutine parent-child hierarchy](#lifecycle-and-coroutine-parent-child-hierarchy)
+  * [Starting coroutine in UI event handlers without dispatch](#starting-coroutine-in-ui-event-handlers-without-dispatch)
 
 <!--- END_TOC -->
 
@@ -538,11 +539,11 @@ Note, that because the `fib` function is invoked from the single actor in our co
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
 It can saturate at most one CPU core.
   
-## Lifecycle
+## Advanced topics
 
-This section outlines an approach to life-cycle management with coroutines. 
+This section covers various advanced topics. 
  
-### Using coroutine parent-child hierarchy
+### Lifecycle and coroutine parent-child hierarchy
 
 A typical UI application has a number of elements with a lifecycle. Windows, UI controls, activities, views, fragments
 and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background 
@@ -618,6 +619,80 @@ Parent-child relation between jobs forms a hierarchy. A coroutine that performs 
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
 when the parent job is cancelled. An example of that is shown in 
 ["Children of a coroutine"](../coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
+
+### Starting coroutine in UI event handlers without dispatch
+
+Let us write the following code in `setup` to visualize the order of execution when coroutine is launched
+from the UI thread:
+
+<!--- CLEAR -->
+
+```kotlin
+fun setup(hello: Text, fab: Circle) {
+    fab.onMouseClicked = EventHandler {
+        println("Before launch")
+        launch(UI) { 
+            println("Inside coroutine")
+            delay(100)
+            println("After delay")
+        } 
+        println("After launch")
+    }
+}
+```
+ 
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-01.kt).
+
+When we start this code and click on a pinkish circle, the following messages are printed to the console:
+ 
+```text
+Before launch
+After launch
+Inside coroutine
+After delay
+```
+
+As you can see, execution immediately continues after [launch], while the coroutine gets posted onto UI thread
+for execution later. All UI dispatchers in `kotlinx.coroutines` are implemented this way. Why so? 
+
+Basically, the choice here is between "JS-style" asynchronous approach (async actions
+are always postponed to be executed later in the even dispatch thread) and "C#-style" approach
+(async actions are executed in the invoker thread until the first suspension point).
+While, C# approach seems to be more efficient, it ends up with recommendations like
+"use `yield` if you need to ....". This is error-prone. JS-style approach is more consistent
+and does not require programmers to think about whether they need to yield or not.
+
+However, in this particular case when coroutine is started from an event handler and there is no other code around it,
+this extra dispatch does indeed add an extra overhead without bringing any additional value. 
+In this case an optional [CoroutineStart] parameter to [launch], [async] and [actor] coroutine builders 
+can be used for performance optimization. 
+Setting it to the value of [CoroutineStart.UNDISPATCHED] has the effect of starting to execute
+coroutine immediately until its first suspension point as the following example shows:
+
+```kotlin
+fun setup(hello: Text, fab: Circle) {
+    fab.onMouseClicked = EventHandler {
+        println("Before launch")
+        launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
+            println("Inside coroutine")
+            delay(100)                            // <--- And this is where coroutine suspends      
+            println("After delay")
+        }
+        println("After launch")
+    }
+}
+```
+ 
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-02.kt).
+
+It prints the following messages on click, confirming that code in the coroutine starts to execute immediately:
+
+```text
+Before launch
+Inside coroutine
+After launch
+After delay
+```
   
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
@@ -629,6 +704,9 @@ when the parent job is cancelled. An example of that is shown in
 [run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
+[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
+[CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/offer.html
