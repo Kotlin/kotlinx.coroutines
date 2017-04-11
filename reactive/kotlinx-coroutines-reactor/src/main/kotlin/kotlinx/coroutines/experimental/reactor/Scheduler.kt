@@ -32,6 +32,8 @@ open class SchedulerCoroutineDispatcher(private val scheduler: Scheduler) : Coro
     }
 
     override fun toString(): String = scheduler.toString()
+    override fun equals(other: Any?): Boolean = other is SchedulerCoroutineDispatcher && other.scheduler === scheduler
+    override fun hashCode(): Int = System.identityHashCode(scheduler)
 }
 
 /**

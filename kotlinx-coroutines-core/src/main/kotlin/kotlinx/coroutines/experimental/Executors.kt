@@ -37,7 +37,7 @@ public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcher(this)
 
-internal open class ExecutorCoroutineDispatcher(
+private class ExecutorCoroutineDispatcher(
     private val executor: Executor
 ) : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
@@ -55,6 +55,10 @@ internal open class ExecutorCoroutineDispatcher(
             scheduledExecutor.schedule(block, time, unit)
         return DisposableFutureHandle(timeout)
     }
+
+    override fun toString(): String = executor.toString()
+    override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcher && other.executor === executor
+    override fun hashCode(): Int = System.identityHashCode(executor)
 }
 
 // --- reusing these classes in other places ---

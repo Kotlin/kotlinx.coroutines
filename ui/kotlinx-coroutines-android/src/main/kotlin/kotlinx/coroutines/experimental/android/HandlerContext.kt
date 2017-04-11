@@ -18,10 +18,7 @@ package kotlinx.coroutines.experimental.android
 
 import android.os.Handler
 import android.os.Looper
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Delay
-import kotlinx.coroutines.experimental.DisposableHandle
+import kotlinx.coroutines.experimental.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -64,4 +61,6 @@ public class HandlerContext(
     }
 
     override fun toString() = name ?: handler.toString()
+    override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
+    override fun hashCode(): Int = System.identityHashCode(handler)
 }

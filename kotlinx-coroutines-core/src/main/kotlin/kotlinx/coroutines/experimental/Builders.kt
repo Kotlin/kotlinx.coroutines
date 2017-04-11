@@ -89,8 +89,9 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
         // fast path #2 if the result is actually the same
         if (newContext === oldContext)
             return@sc block.startCoroutineUninterceptedOrReturn(cont)
-        // fast path #3 if the new dispatcher is the same as the old one
-        if (newContext[ContinuationInterceptor] === oldContext[ContinuationInterceptor]) {
+        // fast path #3 if the new dispatcher is the same as the old one.
+        // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
+        if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
             val newContinuation = RunContinuationDirect(newContext, cont)
             return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
         }
