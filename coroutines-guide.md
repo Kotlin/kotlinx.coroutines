@@ -40,7 +40,7 @@ Kotlin, as a language, provides only minimal low-level APIs in its standard libr
 libraries to utilize coroutines. Unlike many other languages with similar capabilities, `async` and `await`
 are not keywords in Kotlin and are not even part of its standard library.
 
-`kotlinx.coroutines` in one such rich library. It contains a number of high-level 
+`kotlinx.coroutines` is one such rich library. It contains a number of high-level 
 coroutine-enabled primitives that this guide covers, including `async` and `await`. 
 You need to add a dependency on `kotlinx-coroutines-core` module as explained 
 [here](README.md#using-in-your-projects) to use primitives from this guide in your projects.
