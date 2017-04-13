@@ -406,7 +406,7 @@ event streams by updating their UI based on the most recently received update. A
 
 You can experiment with `capacity` parameter in the above line to see how it affects the behaviour of the code.
 Setting `capacity = Channel.UNLIMITED` creates a coroutine with [LinkedListChannel] mailbox that buffers all 
-events. In this case, the animation runs as many times and the circle is clicked.
+events. In this case, the animation runs as many times as the circle is clicked.
 
 ## Blocking operations
 
