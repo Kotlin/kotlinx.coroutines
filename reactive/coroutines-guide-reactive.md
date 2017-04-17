@@ -63,6 +63,7 @@ directory of the project.
   * [Basics of iteration](#basics-of-iteration)
   * [Subscription and cancellation](#subscription-and-cancellation)
   * [Backpressure](#backpressure)
+  * [Rx Subject vs BroadcastChannel](#rx-subject-vs-broadcastchannel)
 * [Operators](#operators)
   * [Range](#range)
   * [Fused filter-map hybrid](#fused-filter-map-hybrid)
@@ -379,6 +380,159 @@ Complete
 
 We see here how producer coroutine puts the first element in the buffer and is suspended while trying to send another 
 one. Only after consumer receives the first item, the sender resumes to produce more.
+
+
+### Rx Subject vs BroadcastChannel
+ 
+RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subject) which is an object that
+effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
+[BroadcastChannel]. There is a variety of subjects in Rx with 
+[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being the
+most useful one to manage state:
+
+<!--- INCLUDE
+import io.reactivex.subjects.BehaviorSubject
+-->
+
+```kotlin
+fun main(args: Array<String>) {
+    val subject = BehaviorSubject.create<String>()
+    subject.onNext("one")
+    subject.onNext("two") // updates the state of BehaviorSubject, "one" value is lost
+    // now subscribe to this subject and print everything
+    subject.subscribe(System.out::println)
+    subject.onNext("three")
+    subject.onNext("four")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-06.kt)
+
+This code prints the current state of the subject on subscription and all its further updates:
+
+
+```text
+two
+three
+four
+```
+
+<!--- TEST -->
+
+You can subscribe to subjects from a coroutine just as with any other reactive stream:
+   
+<!--- INCLUDE 
+import io.reactivex.subjects.BehaviorSubject
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.rx2.consumeEach
+-->   
+   
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val subject = BehaviorSubject.create<String>()
+    subject.onNext("one")
+    subject.onNext("two")
+    // now launch a coroutine to print everything
+    launch(context) { // use the context of the main thread for a coroutine
+        subject.consumeEach { println(it) }
+    }
+    subject.onNext("three")
+    subject.onNext("four")
+}
+```   
+
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-07.kt)
+
+The result is different, though:
+
+```text
+four
+```
+
+<!--- TEST -->
+
+It prints only the value value, because the coroutine is working in the main thread, which is busy updating the
+subject value. Only when the main thread completes, the subscribing coroutine has a change to print anything. By that
+time, the subject had already updated its value to "four".
+
+The coroutines in the main thread are scheduled cooperatively. There is a [yield] function to explicitly relinquish
+the control of the thread to other coroutines. We can add it to the last example:
+
+<!--- INCLUDE
+import io.reactivex.subjects.BehaviorSubject
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.rx2.consumeEach
+import kotlinx.coroutines.experimental.yield
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val subject = BehaviorSubject.create<String>()
+    subject.onNext("one")
+    subject.onNext("two")
+    // now launch a coroutine to print everything
+    launch(context) { // use the context of the main thread for a coroutine
+        subject.consumeEach { println(it) }
+    }
+    subject.onNext("three")
+    yield() // yield the main thread to the launched coroutine <--- HERE
+    subject.onNext("four")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-08.kt)
+
+Now coroutine has a chance to process (print) the "three" state of the subject, too:
+
+```text
+three
+four
+```
+
+<!--- TEST -->
+
+This is quite the desired behavior for any kind of state-holding variable that needs to processed to update UI or
+other linked state, for example. There is no reason to react to back-to-back updates of the state. 
+Only the most recent state is relevant.
+
+The corresponding behavior in coroutines world is implemented by [ValueBroadcastChannel] that provides the same logic
+on top of coroutine channels directly, without going through the bridge to the reactive streams:
+
+<!--- INCLUDE
+import kotlinx.coroutines.experimental.channels.ValueBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.yield
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val broadcast = ValueBroadcastChannel<String>()
+    broadcast.offer("one")
+    broadcast.offer("two")
+    // now launch a coroutine to print everything
+    launch(context) { // use the context of the main thread for a coroutine
+        broadcast.consumeEach { println(it) }
+    }
+    broadcast.offer("three")
+    yield() // yield the main thread to the launched coroutine
+    broadcast.offer("four")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-09.kt)
+
+It produces the same output as the version based on `BehaviorSubject`:
+
+```text
+three
+four
+```
+
+<!--- TEST -->
 
 ## Operators
 
@@ -890,6 +1044,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
 [CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
@@ -901,7 +1056,10 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html
+[SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
+[BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
+[ValueBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-value-broadcast-channel/index.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html
@@ -911,7 +1069,6 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/publish.html
 [org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/consume-each.html
 [org.reactivestreams.Publisher.open]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open.html
-[SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/-subscription-receive-channel/close.html
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2 -->
 <!--- DOCS_ROOT reactive/kotlinx-coroutines-rx2/target/dokka/kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.experimental.rx2 -->

@@ -17,27 +17,15 @@
 package kotlinx.coroutines.experimental.rx1
 
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import rx.Observable
 import rx.Subscriber
 import rx.Subscription
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 
 /**
- * Return type for [Observable.open] that can be used to [receive] elements from the
- * subscription and to manually [close] it.
- */
-public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
-    /**
-     * Closes this subscription channel.
-     */
-    public override fun close()
-}
-
-/**
- * Subscribes to this [Observable] and returns a channel to receive elements emitted by it
- * that can be [closed][SubscriptionReceiveChannel.close] when no longer needed.
+ * Subscribes to this [Observable] and returns a channel to receive elements emitted by it.
+ * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this observable.
  */
 public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()

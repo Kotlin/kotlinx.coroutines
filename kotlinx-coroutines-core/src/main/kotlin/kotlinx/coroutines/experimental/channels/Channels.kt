@@ -16,10 +16,22 @@
 
 package kotlinx.coroutines.experimental.channels
 
+internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
+
 /**
- * Performs the given [action] on each received element.
+ * Performs the given [action] for each received element.
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <E> ReceiveChannel<E>.consumeEach(action: suspend (E) -> Unit) {
     for (element in this) action(element)
+}
+
+/**
+ * Subscribes to this [BroadcastChannel] and performs the specified action for each received element.
+ */
+// :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <E> BroadcastChannel<E>.consumeEach(action: suspend (E) -> Unit) {
+    open().use { channel ->
+        for (x in channel) action(x)
+    }
 }

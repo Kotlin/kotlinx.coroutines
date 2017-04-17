@@ -24,21 +24,12 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import java.io.Closeable
 
 /**
- * Return type for [ObservableSource.open] and [MaybeSource.open] that can be used to [receive] elements from the
- * subscription and to manually [close] it.
- */
-public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
-    /**
-     * Closes this subscription channel.
-     */
-    public override fun close()
-}
-
-/**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
+ * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this source.
  */
 public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
@@ -48,6 +39,7 @@ public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> {
 
 /**
  * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
+ * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this source.
  */
 public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()

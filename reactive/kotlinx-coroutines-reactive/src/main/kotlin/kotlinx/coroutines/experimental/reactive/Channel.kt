@@ -17,26 +17,15 @@
 package kotlinx.coroutines.experimental.reactive
 
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 
 /**
- * Return type for [Publisher.open] that can be used to [receive] elements from the
- * subscription and to manually [close] it.
- */
-public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
-    /**
-     * Closes this subscription channel.
-     */
-    public override fun close()
-}
-
-/**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
+ * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this publisher.
  */
 public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()

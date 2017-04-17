@@ -222,6 +222,8 @@ public interface ChannelIterator<out E> {
  * Channel is a non-blocking primitive for communication between sender using [SendChannel] and receiver using [ReceiveChannel].
  * Conceptually, a channel is similar to [BlockingQueue][java.util.concurrent.BlockingQueue],
  * but it has suspending operations instead of blocking ones and it can be closed.
+ *
+ * See [Channel()][Channel.invoke] factory function for the description of available channel implementations.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
@@ -244,10 +246,10 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Creates a channel with specified buffer capacity (or without a buffer by default).
          *
          * The resulting channel type depends on the specified [capacity] parameter:
-         * * when `capacity` is 0 -- creates [RendezvousChannel];
-         * * when `capacity` is [UNLIMITED] -- creates [LinkedListChannel];
-         * * when `capacity` is [CONFLATED] -- creates [ConflatedChannel];
-         * * otherwise -- creates [ArrayChannel].
+         * * when `capacity` is 0 -- creates [RendezvousChannel] without a buffer;
+         * * when `capacity` is [UNLIMITED] -- creates [LinkedListChannel] with buffer of unlimited size;
+         * * when `capacity` is [CONFLATED] -- creates [ConflatedChannel] that conflates back-to-back sends;
+         * * otherwise -- creates [ArrayChannel] with a buffer of the specified `capacity`.
          */
         public operator fun <E> invoke(capacity: Int = 0): Channel<E> {
             return when (capacity) {

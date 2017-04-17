@@ -37,6 +37,19 @@ class AsyncTest : TestBase() {
         finish(5)
     }
 
+    @Test
+    fun testUndispatched(): Unit = runBlocking {
+        expect(1)
+        val d = async(context, start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            42
+        }
+        expect(3)
+        check(!d.isActive)
+        check(d.await() == 42)
+        finish(4)
+    }
+
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)

@@ -49,6 +49,21 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
+    fun testLaunchUndispatched() = runBlocking {
+        expect(1)
+        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            yield()
+            expect(4)
+        }
+        expect(3)
+        check(job.isActive && !job.isCompleted)
+        job.join()
+        check(!job.isActive && job.isCompleted)
+        finish(5)
+    }
+
+    @Test
     fun testNested() = runBlocking {
         expect(1)
         val j1 = launch(context) {

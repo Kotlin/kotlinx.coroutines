@@ -577,8 +577,6 @@ public abstract class AbstractChannel<E> : Channel<E> {
     // ------ protected ------
 
     protected companion object {
-        private const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
-
         /** @suppress **This is unstable API and it is subject to change.** */
         @JvmField
         val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
@@ -754,19 +752,8 @@ public abstract class AbstractChannel<E> : Channel<E> {
     protected class Closed<in E>(
         @JvmField val closeCause: Throwable?
     ) : LockFreeLinkedListNode(), Send, ReceiveOrClosed<E> {
-        @Volatile
-        private var _sendException: Throwable? = null
-
-        val sendException: Throwable get() = _sendException ?:
-            (closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE))
-                    .also { _sendException = it }
-
-        @Volatile
-        private var _receiveException: Throwable? = null
-
-        val receiveException: Throwable get() = _receiveException ?:
-            (closeCause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE))
-                    .also { _receiveException = it }
+        val sendException: Throwable get() = closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)
+        val receiveException: Throwable get() = closeCause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
 
         override val offerResult get() = this
         override val pollResult get() = this

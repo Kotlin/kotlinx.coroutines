@@ -75,6 +75,38 @@ class GuideReactiveTest {
     }
 
     @Test
+    fun testGuideReactiveBasicExample06() {
+        test { guide.reactive.basic.example06.main(emptyArray()) }.verifyLines(
+            "two",
+            "three",
+            "four"
+        )
+    }
+
+    @Test
+    fun testGuideReactiveBasicExample07() {
+        test { guide.reactive.basic.example07.main(emptyArray()) }.verifyLines(
+            "four"
+        )
+    }
+
+    @Test
+    fun testGuideReactiveBasicExample08() {
+        test { guide.reactive.basic.example08.main(emptyArray()) }.verifyLines(
+            "three",
+            "four"
+        )
+    }
+
+    @Test
+    fun testGuideReactiveBasicExample09() {
+        test { guide.reactive.basic.example09.main(emptyArray()) }.verifyLines(
+            "three",
+            "four"
+        )
+    }
+
+    @Test
     fun testGuideReactiveOperatorsExample01() {
         test { guide.reactive.operators.example01.main(emptyArray()) }.verifyLines(
             "1",
