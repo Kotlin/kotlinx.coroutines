@@ -32,6 +32,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         broadcast.consumeEach { println(it) }
     }
     broadcast.offer("three")
-    yield() // yield main thread to the launched coroutine
+    yield() // yield the main thread to the launched coroutine
     broadcast.offer("four")
 }

@@ -60,16 +60,12 @@ class GuideReactiveTest {
     @Test
     fun testGuideReactiveBasicExample05() {
         test { guide.reactive.basic.example05.main(emptyArray()) }.verifyLines(
-            "Sending 1 ...",
-            "Sending 2 ...",
-            "Received 1",
-            "Sending 3 ...",
-            "Received 2",
-            "Sending 4 ...",
-            "Received 3",
-            "Sending 5 ...",
-            "Received 4",
-            "Received 5",
+            "Sent 1",
+            "Processed 1",
+            "Sent 2",
+            "Processed 2",
+            "Sent 3",
+            "Processed 3",
             "Complete"
         )
     }

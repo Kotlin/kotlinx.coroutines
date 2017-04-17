@@ -321,7 +321,7 @@ _suspend_ and they provide a natural answer to handling backpressure.
 In Rx Java 2.x a backpressure-capable class is called 
 [Flowable](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html).
 In the following example we use [rxFlowable] coroutine builder from `kotlinx-coroutines-rx2` module to define a 
-flowable that sends five integers from 1 to 5. 
+flowable that sends three integers from 1 to 3. 
 It prints a message to the output before invocation of
 suspending [send][SendChannel.send] function, so that we can study how it operates.
 
@@ -329,7 +329,7 @@ The integers are generated in the context of the main thread, but subscription i
 to another thread using Rx
 [observeOn](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#observeOn(io.reactivex.Scheduler,%20boolean,%20int))
 operator with a buffer of size 1. 
-The subscriber is slow. It takes 200 ms to process each item, which is simulated using `Thread.sleep`.
+The subscriber is slow. It takes 500 ms to process each item, which is simulated using `Thread.sleep`.
 
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
@@ -341,9 +341,9 @@ import io.reactivex.schedulers.Schedulers
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
     val source = rxFlowable(context) {
-        for (x in 1..5) {
-            println("Sending $x ...")
+        for (x in 1..3) {
             send(x) // this is a suspending function
+            println("Sent $x") // print after successfully sent item
         }
     }
     // subscribe on another thread with a slow subscriber using Rx
@@ -351,10 +351,10 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .observeOn(Schedulers.io(), false, 1) // specify buffer size of 1 item
         .doOnComplete { println("Complete") }
         .subscribe { x ->
-            println("Received $x")
-            Thread.sleep(300) // 300 ms to process each item
+            Thread.sleep(500) // 500ms to process each item
+            println("Processed $x")
         }
-    delay(2000) // suspend main thread for couple of seconds
+    delay(2000) // suspend the main thread for a few seconds
 }
 ```
 
@@ -363,23 +363,19 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 The output of this code nicely illustrates how backpressure works with coroutines:
 
 ```text
-Sending 1 ...
-Sending 2 ...
-Received 1
-Sending 3 ...
-Received 2
-Sending 4 ...
-Received 3
-Sending 5 ...
-Received 4
-Received 5
+Sent 1
+Processed 1
+Sent 2
+Processed 2
+Sent 3
+Processed 3
 Complete
 ```
 
 <!--- TEST -->
 
 We see here how producer coroutine puts the first element in the buffer and is suspended while trying to send another 
-one. Only after consumer receives the first item, the sender resumes to produce more.
+one. Only after consumer processes the first item, producer sends the second one and resumes, etc.
 
 
 ### Rx Subject vs BroadcastChannel

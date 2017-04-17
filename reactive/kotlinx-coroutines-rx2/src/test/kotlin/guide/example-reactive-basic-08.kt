@@ -32,6 +32,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
-    yield() // yield main thread to the launched coroutine <--- HERE
+    yield() // yield the main thread to the launched coroutine <--- HERE
     subject.onNext("four")
 }
