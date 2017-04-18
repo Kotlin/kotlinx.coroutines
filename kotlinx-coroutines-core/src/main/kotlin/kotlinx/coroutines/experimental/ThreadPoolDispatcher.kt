@@ -46,19 +46,20 @@ fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null):
 }
 
 internal class PoolThread(
-    val dispatcher: ThreadPoolDispatcher, // for debugging & tests
+    @JvmField val dispatcher: ThreadPoolDispatcher, // for debugging & tests
     target: Runnable, name: String
 ) : Thread(target, name) {
     init { isDaemon = true }
 }
 
 internal class ThreadPoolDispatcher(
-        nThreads: Int,
-        name: String,
-        val job: Job
-) : CoroutineDispatcher(), Delay {
-    val threadNo = AtomicInteger()
-    val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
+    private val nThreads: Int,
+    private val name: String,
+    job: Job
+) : ExecutorCoroutineDispatcherBase() {
+    private val threadNo = AtomicInteger()
+
+    override val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
         PoolThread(this, target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
     }
 
@@ -66,13 +67,5 @@ internal class ThreadPoolDispatcher(
         job.invokeOnCompletion { executor.shutdown() }
     }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
-
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timeout = executor.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit)
-        continuation.cancelFutureOnCompletion(timeout)
-    }
-
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        DisposableFutureHandle(executor.schedule(block, time, unit))
+    override fun toString(): String = "ThreadPoolDispatcher[$nThreads, $name]"
 }

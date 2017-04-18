@@ -37,39 +37,30 @@ public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcher(this)
 
-private class ExecutorCoroutineDispatcher(
-    private val executor: Executor
-) : CoroutineDispatcher(), Delay {
+private class ExecutorCoroutineDispatcher(override val executor: Executor) : ExecutorCoroutineDispatcherBase()
+
+internal abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
+    abstract val executor: Executor
+
     override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timeout = if (executor is ScheduledExecutorService)
-            executor.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) else
-            scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
+        val timeout = (executor as? ScheduledExecutorService)
+            ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit)
+            ?: scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
         continuation.cancelFutureOnCompletion(timeout)
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val timeout = if (executor is ScheduledExecutorService)
-            executor.schedule(block, time, unit) else
-            scheduledExecutor.schedule(block, time, unit)
+        val timeout = (executor as? ScheduledExecutorService)
+            ?.schedule(block, time, unit)
+            ?: scheduledExecutor.schedule(block, time, unit)
         return DisposableFutureHandle(timeout)
     }
 
     override fun toString(): String = executor.toString()
-    override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcher && other.executor === executor
+    override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcherBase && other.executor === executor
     override fun hashCode(): Int = System.identityHashCode(executor)
-}
-
-// --- reusing these classes in other places ---
-
-internal class ResumeUndispatchedRunnable(
-    private val dispatcher: CoroutineDispatcher,
-    private val continuation: CancellableContinuation<Unit>
-) : Runnable {
-    override fun run() {
-        with(continuation) { dispatcher.resumeUndispatched(Unit) }
-    }
 }
 
 internal class ResumeRunnable(
@@ -77,5 +68,14 @@ internal class ResumeRunnable(
 ) : Runnable {
     override fun run() {
         continuation.resume(Unit)
+    }
+}
+
+private class ResumeUndispatchedRunnable(
+    private val dispatcher: CoroutineDispatcher,
+    private val continuation: CancellableContinuation<Unit>
+) : Runnable {
+    override fun run() {
+        with(continuation) { dispatcher.resumeUndispatched(Unit) }
     }
 }
