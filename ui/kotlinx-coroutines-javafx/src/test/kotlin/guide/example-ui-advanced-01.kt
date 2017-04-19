@@ -65,11 +65,11 @@ class ExampleApp : Application() {
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        launch(UI) {
+        launch(UI) { 
             println("Inside coroutine")
             delay(100)
             println("After delay")
-        }
+        } 
         println("After launch")
     }
 }
