@@ -92,10 +92,23 @@ public interface Mutex {
 }
 
 /**
- * Executes the given [action] under this mutex.
+ * Executes the given [action] under this mutex's lock.
  * @return the return value of the action.
  */
 // :todo: this function needs to be make inline as soon as this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
+public suspend fun <T> Mutex.withLock(action: suspend () -> T): T {
+    lock()
+    try {
+        return action()
+    } finally {
+        unlock()
+    }
+}
+
+/**
+ * @suppress: **Deprecated**: Use [withLock]
+ */
+@Deprecated("Use `withLock`", replaceWith = ReplaceWith("withLock(action)"))
 public suspend fun <T> Mutex.withMutex(action: suspend () -> T): T {
     lock()
     try {

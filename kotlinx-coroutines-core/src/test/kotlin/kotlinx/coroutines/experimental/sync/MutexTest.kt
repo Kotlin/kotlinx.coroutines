@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.sync
 
+import guide.sync.example06.mutex
 import kotlinx.coroutines.experimental.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -58,6 +59,16 @@ class MutexTest : TestBase() {
         assertFalse(mutex.tryLock())
         assertTrue(mutex.isLocked)
         mutex.unlock()
+        assertFalse(mutex.isLocked)
+    }
+
+    @Test
+    fun withLockTest() = runBlocking {
+        val mutex = Mutex()
+        assertFalse(mutex.isLocked)
+        mutex.withLock {
+            assertTrue(mutex.isLocked)
+        }
         assertFalse(mutex.isLocked)
     }
 
