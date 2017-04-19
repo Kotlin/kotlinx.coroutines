@@ -17,6 +17,8 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
+import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -66,8 +68,13 @@ internal fun scheduledExecutorShutdownNowAndRelease() {
  * Runs a given suspending block of code inside a coroutine with a specified timeout and throws
  * [CancellationException] if timeout was exceeded.
  *
+ * Note, that timeout can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
  * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
  * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ *
+ * @param time timeout time
+ * @param unit timeout unit (milliseconds by default)
  */
 public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T {
     require(time >= 0) { "Timeout time $time cannot be negative" }

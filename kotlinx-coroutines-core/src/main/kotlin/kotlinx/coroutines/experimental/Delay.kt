@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.ContinuationInterceptor
@@ -73,6 +75,8 @@ public interface Delay {
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
  * immediately resumes with [CancellationException].
+ *
+ * Note, that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * This function delegates to [Delay.scheduleResumeAfterDelay] if the context [CoroutineDispatcher]
  * implements [Delay] interface, otherwise it resumes using a built-in single-threaded scheduled executor service.

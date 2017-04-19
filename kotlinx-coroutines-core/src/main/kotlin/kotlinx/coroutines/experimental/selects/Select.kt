@@ -22,11 +22,14 @@ import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.internal.AtomicDesc
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
+import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.sync.Mutex
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Scope for [select] invocation.
@@ -76,6 +79,14 @@ public interface SelectBuilder<in R> {
      *        is already locked with the same token (same identity), this clause throws [IllegalStateException].
      */
     public fun Mutex.onLock(owner: Any? = null, block: suspend () -> R)
+
+    /**
+     * Clause that selects the given [block] after a specified timeout passes.
+     *
+     * @param time timeout time
+     * @param unit timeout unit (milliseconds by default)
+     */
+    public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R)
 }
 
 /**
@@ -145,6 +156,7 @@ public interface SelectInstance<in R> {
  * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][SelectBuilder.onReceive]             | [poll][ReceiveChannel.poll]
  * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][SelectBuilder.onReceiveOrNull] | [poll][ReceiveChannel.poll]
  * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][SelectBuilder.onLock]                   | [tryLock][Mutex.tryLock]
+ * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
@@ -238,6 +250,25 @@ internal class SelectBuilderImpl<in R>(
 
     override fun Mutex.onLock(owner: Any?, block: suspend () -> R) {
         registerSelectLock(this@SelectBuilderImpl, owner, block)
+    }
+
+    override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {
+        require(time >= 0) { "Timeout time $time cannot be negative" }
+        if (time == 0L) {
+            if (trySelect(idempotent = null))
+                block.startCoroutineUndispatched(completion)
+            return
+        }
+        val action = Runnable {
+            // todo: we could have replaced startCoroutine with startCoroutineUndispatched
+            // But we need a way to know that Delay.invokeOnTimeout had used the right thread
+            if (trySelect(idempotent = null))
+                block.startCoroutine(completion)
+        }
+        val delay = context[ContinuationInterceptor] as? Delay
+        if (delay != null)
+            disposeOnSelect(delay.invokeOnTimeout(time, unit, action)) else
+            cancelFutureOnCompletion(scheduledExecutor.schedule(action, time, unit))
     }
 
     override fun disposeOnSelect(handle: DisposableHandle) {

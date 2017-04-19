@@ -48,6 +48,7 @@ Top-level suspending functions:
 | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [receive][kotlinx.coroutines.experimental.channels.ReceiveChannel.receive]             | [onReceive][kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive]             | [poll][kotlinx.coroutines.experimental.channels.ReceiveChannel.poll]
 | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.experimental.channels.ReceiveChannel.receiveOrNull] | [onReceiveOrNull][kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull] | [poll][kotlinx.coroutines.experimental.channels.ReceiveChannel.poll]
 | [Mutex][kotlinx.coroutines.experimental.sync.Mutex]          | [lock][kotlinx.coroutines.experimental.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.experimental.selects.SelectBuilder.onLock]                   | [tryLock][kotlinx.coroutines.experimental.sync.Mutex.tryLock]
+| none            | [delay]                                        | [onTimeout][kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]                   | none
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
 helper function. [NonCancellable] job object is provided to suppress cancellation with 
