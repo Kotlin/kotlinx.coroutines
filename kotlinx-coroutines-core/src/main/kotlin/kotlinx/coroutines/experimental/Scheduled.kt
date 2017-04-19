@@ -65,10 +65,15 @@ internal fun scheduledExecutorShutdownNowAndRelease() {
 }
 
 /**
- * Runs a given suspending block of code inside a coroutine with a specified timeout and throws
+ * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
  * [CancellationException] if timeout was exceeded.
  *
- * Note, that timeout can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ * The code that is executing inside the [block] is cancelled on timeout and throws [CancellationException]
+ * exception inside of it, too. However, even the code in the block suppresses the exception,
+ * this `withTimeout` function invocation still throws [CancellationException].
+ *
+ * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
+ * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
  * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
@@ -81,7 +86,7 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
     if (time <= 0L) throw CancellationException("Timed out immediately")
     return suspendCoroutineOrReturn sc@ { delegate: Continuation<T> ->
         // schedule cancellation of this continuation on time
-        val cont = TimeoutContinuation(time, unit, delegate)
+        val cont = TimeoutExceptionContinuation(time, unit, delegate)
         val delay = cont.context[ContinuationInterceptor] as? Delay
         if (delay != null)
             cont.disposeOnCompletion(delay.invokeOnTimeout(time, unit, cont)) else
@@ -93,11 +98,53 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
     }
 }
 
-private class TimeoutContinuation<T>(
+/**
+ * Runs a given suspending block of code inside a coroutine with a specified timeout and returns
+ * `null` if timeout was exceeded.
+ *
+ * The code that is executing inside the [block] is cancelled on timeout and throws [CancellationException]
+ * exception inside of it. However, even the code in the block does not catch the cancellation exception,
+ * this `withTimeoutOrNull` function invocation still returns `null` on timeout.
+ *
+ * The sibling function that throws exception on timeout is [withTimeout].
+ * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
+ * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ *
+ * @param time timeout time
+ * @param unit timeout unit (milliseconds by default)
+ */
+public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T? {
+    require(time >= 0) { "Timeout time $time cannot be negative" }
+    if (time <= 0L) return null
+    return suspendCoroutineOrReturn sc@ { delegate: Continuation<T?> ->
+        // schedule cancellation of this continuation on time
+        val cont = TimeoutNullContinuation<T>(delegate)
+        val delay = cont.context[ContinuationInterceptor] as? Delay
+        if (delay != null)
+            cont.disposeOnCompletion(delay.invokeOnTimeout(time, unit, cont)) else
+            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(cont, time, unit))
+        // restart block using cancellable context of this continuation,
+        // however start it as undispatched coroutine, because we are already in the proper context
+        block.startCoroutineUndispatched(cont)
+        cont.getResult()
+    }
+}
+
+private class TimeoutExceptionContinuation<in T>(
     private val time: Long,
     private val unit: TimeUnit,
     delegate: Continuation<T>
 ) : CancellableContinuationImpl<T>(delegate, active = true), Runnable {
-    override fun defaultResumeMode(): Int = MODE_DIRECT
+    override val defaultResumeMode get() = MODE_DIRECT
     override fun run() { cancel(CancellationException("Timed out waiting for $time $unit")) }
+}
+
+private class TimeoutNullContinuation<in T>(
+    delegate: Continuation<T?>
+) : CancellableContinuationImpl<T?>(delegate, active = true), Runnable {
+    override val defaultResumeMode get() = MODE_DIRECT
+    override val ignoreRepeatedResume: Boolean get() = true
+    override fun run() { resume(null, mode = 0) /* dispatch resume */ }
 }

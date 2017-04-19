@@ -17,12 +17,13 @@
 package kotlinx.coroutines.experimental
 
 import org.hamcrest.core.IsEqual
+import org.hamcrest.core.IsNull
 import org.junit.Assert.assertThat
 import org.junit.Test
 
-class WithTimeoutTest : TestBase() {
+class WithTimeoutOrNullTest : TestBase() {
     /**
-     * Tests property dispatching of `withTimeout` blocks
+     * Tests property dispatching of `withTimeoutOrNull` blocks
      */
     @Test
     fun testDispatch() = runBlocking {
@@ -34,7 +35,7 @@ class WithTimeoutTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeout(1000) {
+        val result = withTimeoutOrNull(1000) {
             expect(3)
             yield() // yield only now
             expect(5)
@@ -49,12 +50,15 @@ class WithTimeoutTest : TestBase() {
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
-    @Test(expected = CancellationException::class)
+    @Test
     fun testYieldBlockingWithTimeout() = runBlocking {
-        withTimeout(100) {
+        expect(1)
+        val result = withTimeoutOrNull(100) {
             while (true) {
                 yield()
             }
         }
+        assertThat(result, IsNull())
+        finish(2)
     }
 }

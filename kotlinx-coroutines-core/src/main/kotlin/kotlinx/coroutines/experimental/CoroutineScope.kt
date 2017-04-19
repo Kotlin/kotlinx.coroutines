@@ -67,9 +67,11 @@ public abstract class AbstractCoroutine<in T>(
 
     protected open fun createContext() = parentContext + this
 
-    protected open fun defaultResumeMode(): Int = MODE_DISPATCHED
+    protected open val defaultResumeMode: Int get() = MODE_DISPATCHED
 
-    final override fun resume(value: T) = resume(value, defaultResumeMode())
+    protected open val ignoreRepeatedResume: Boolean get() = false
+
+    final override fun resume(value: T) = resume(value, defaultResumeMode)
 
     protected fun resume(value: T, mode: Int) {
         while (true) { // lock-free loop on state
@@ -77,12 +79,17 @@ public abstract class AbstractCoroutine<in T>(
             when (state) {
                 is Incomplete -> if (updateState(state, value, mode)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
-                else -> throw IllegalStateException("Already resumed, but got value $value")
+                else -> {
+                    if (ignoreRepeatedResume) {
+                        return
+                    } else
+                        throw IllegalStateException("Already resumed, but got value $value")
+                }
             }
         }
     }
 
-    final override fun resumeWithException(exception: Throwable) = resumeWithException(exception, defaultResumeMode())
+    final override fun resumeWithException(exception: Throwable) = resumeWithException(exception, defaultResumeMode)
 
     protected fun resumeWithException(exception: Throwable, mode: Int) {
         while (true) { // lock-free loop on state
@@ -96,7 +103,13 @@ public abstract class AbstractCoroutine<in T>(
                     if (exception != state.exception) handleCoroutineException(context, exception)
                     return
                 }
-                else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)
+                else -> {
+                    if (ignoreRepeatedResume) {
+                        handleCoroutineException(context, exception)
+                        return
+                    } else
+                        throw IllegalStateException("Already resumed, but got exception $exception", exception)
+                }
             }
         }
     }

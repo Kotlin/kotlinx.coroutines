@@ -31,12 +31,13 @@ Synchronization primitives for coroutines:
 
 Top-level suspending functions:
 
-| **Name**      | **Description**
-| ------------- | ---------------
-| [delay]       | Non-blocking sleep
-| [yield]       | Yields thread in single-threaded dispatchers
-| [run]         | Switches to a different context
-| [withTimeout] | Set execution time-limit (deadline)
+| **Name**            | **Description**
+| ------------------- | ---------------
+| [delay]             | Non-blocking sleep
+| [yield]             | Yields thread in single-threaded dispatchers
+| [run]               | Switches to a different context
+| [withTimeout]       | Set execution time-limit with exception on timeout 
+| [withTimeoutOrNull] | Set execution time-limit will null result on timeout
 
 [Select][kotlinx.coroutines.experimental.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
@@ -93,6 +94,7 @@ Select expression to perform multiple suspending operations simultaneously until
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
+[withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [Job.isCompleted]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/is-completed.html
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
@@ -126,4 +128,5 @@ Select expression to perform multiple suspending operations simultaneously until
 [kotlinx.coroutines.experimental.selects.SelectBuilder.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-receive.html
 [kotlinx.coroutines.experimental.selects.SelectBuilder.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-receive-or-null.html
 [kotlinx.coroutines.experimental.selects.SelectBuilder.onLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-lock.html
+[kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html
 <!--- END -->

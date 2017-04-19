@@ -216,7 +216,7 @@ internal class SelectBuilderImpl<in R>(
             cancel(cause)
     }
 
-    override fun defaultResumeMode(): Int = MODE_DIRECT // all resumes through completion are dispatched directly
+    override val defaultResumeMode get() = MODE_DIRECT // all resumes through completion are dispatched directly
 
     override val completion: Continuation<R> get() {
         check(isSelected) { "Must be selected first" }

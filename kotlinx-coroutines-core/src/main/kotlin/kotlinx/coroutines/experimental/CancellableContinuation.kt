@@ -229,7 +229,7 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token, state, defaultResumeMode())
+        completeUpdateState(token, state, defaultResumeMode)
     }
 
     override fun afterCompletion(state: Any?, mode: Int) {
