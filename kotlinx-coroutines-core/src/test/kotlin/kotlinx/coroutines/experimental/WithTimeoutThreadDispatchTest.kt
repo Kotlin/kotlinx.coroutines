@@ -23,6 +23,7 @@ import org.junit.Test
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
 
 class WithTimeoutThreadDispatchTest : TestBase() {
@@ -51,14 +52,22 @@ class WithTimeoutThreadDispatchTest : TestBase() {
 
     @Test
     fun testCancellationDispatchCustomNoDelay() {
+        // it also checks that there is at most once scheduled request in flight (no spurious concurrency)
+        var error: String? = null
         checkCancellationDispatch {
             executor = Executors.newSingleThreadExecutor(it)
+            val scheduled = AtomicInteger(0)
             object : CoroutineDispatcher() {
                 override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    executor!!.execute(block)
+                    if (scheduled.incrementAndGet() > 1) error = "Two requests are scheduled concurrently"
+                    executor!!.execute {
+                        scheduled.decrementAndGet()
+                        block.run()
+                    }
                 }
             }
         }
+        error?.let { error(it) }
     }
 
     private fun checkCancellationDispatch(factory: (ThreadFactory) -> CoroutineDispatcher) = runBlocking {
@@ -77,15 +86,15 @@ class WithTimeoutThreadDispatchTest : TestBase() {
                     } catch (e: CancellationException) {
                         expect(4)
                         Assert.assertThat(Thread.currentThread(), IsEqual(thread))
+                        throw e // rethrow
                     }
-                    expect(5)
                 }
             } catch (e: CancellationException) {
-                expect(6)
+                expect(5)
                 Assert.assertThat(Thread.currentThread(), IsEqual(thread))
             }
-            expect(7)
+            expect(6)
         }
-        finish(8)
+        finish(7)
     }
 }

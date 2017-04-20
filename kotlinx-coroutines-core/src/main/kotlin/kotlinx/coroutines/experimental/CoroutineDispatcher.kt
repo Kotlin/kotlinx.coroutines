@@ -153,3 +153,13 @@ internal class DispatchedContinuation<in T>(
         })
     }
 }
+
+internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {
+    is DispatchedContinuation -> continuation.resume(value)
+    else -> resume(value)
+}
+
+internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable) = when (this) {
+    is DispatchedContinuation -> continuation.resumeWithException(exception)
+    else -> resumeWithException(exception)
+}

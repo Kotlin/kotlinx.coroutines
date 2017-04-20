@@ -353,7 +353,10 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     internal open fun onParentCompletion(cause: Throwable?) {
-        cancel()
+        // if parent was completed with CancellationException then use it as the cause of our cancellation, too.
+        // however, we shall not use application specific exceptions here. So if parent crashes due to IOException,
+        // we cannot and should not cancel the child with IOException
+        cancel(cause as? CancellationException)
     }
 
     /**

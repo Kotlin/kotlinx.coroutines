@@ -19,10 +19,11 @@ package kotlinx.coroutines.experimental
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.assertThat
 import org.junit.Test
+import java.io.IOException
 
 class WithTimeoutTest : TestBase() {
     /**
-     * Tests property dispatching of `withTimeout` blocks
+     * Tests proper dispatching of `withTimeout` blocks
      */
     @Test
     fun testDispatch() = runBlocking {
@@ -44,6 +45,55 @@ class WithTimeoutTest : TestBase() {
         expect(6)
         yield() // back to launch
         finish(8)
+    }
+
+
+    @Test
+    fun testExceptionOnTimeout() = runBlocking<Unit> {
+        expect(1)
+        try {
+            withTimeout(100) {
+                expect(2)
+                delay(1000)
+                expectUnreached()
+                "OK"
+            }
+        } catch (e: CancellationException) {
+            assertThat(e.message, IsEqual("Timed out waiting for 100 MILLISECONDS"))
+            finish(3)
+        }
+    }
+
+    @Test
+    fun testSuppressException() = runBlocking {
+        expect(1)
+        val result = withTimeout(100) {
+            expect(2)
+            try {
+                delay(1000)
+            } catch (e: CancellationException) {
+                expect(3)
+            }
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(4)
+    }
+
+    @Test(expected = IOException::class)
+    fun testReplaceException() = runBlocking {
+        expect(1)
+        withTimeout(100) {
+            expect(2)
+            try {
+                delay(1000)
+            } catch (e: CancellationException) {
+                finish(3)
+                throw IOException(e)
+            }
+            "OK"
+        }
+        expectUnreached()
     }
 
     /**

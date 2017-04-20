@@ -241,12 +241,7 @@ internal open class CancellableContinuationImpl<in T>(
             when (mode) {
                 MODE_DISPATCHED -> delegate.resumeWithException(exception)
                 MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWithException(exception)
-                MODE_DIRECT -> {
-                    if (delegate is DispatchedContinuation)
-                        delegate.continuation.resumeWithException(exception)
-                    else
-                        delegate.resumeWithException(exception)
-                }
+                MODE_DIRECT -> delegate.resumeDirectWithException(exception)
                 else -> error("Invalid mode $mode")
             }
         } else {
@@ -254,12 +249,7 @@ internal open class CancellableContinuationImpl<in T>(
             when (mode) {
                 MODE_DISPATCHED -> delegate.resume(value)
                 MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatched(value)
-                MODE_DIRECT -> {
-                    if (delegate is DispatchedContinuation)
-                        delegate.continuation.resume(value)
-                    else
-                        delegate.resume(value)
-                }
+                MODE_DIRECT -> delegate.resumeDirect(value)
                 else -> error("Invalid mode $mode")
             }
         }

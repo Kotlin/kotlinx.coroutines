@@ -20,6 +20,7 @@ import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNull
 import org.junit.Assert.assertThat
 import org.junit.Test
+import java.io.IOException
 
 class WithTimeoutOrNullTest : TestBase() {
     /**
@@ -45,6 +46,51 @@ class WithTimeoutOrNullTest : TestBase() {
         expect(6)
         yield() // back to launch
         finish(8)
+    }
+
+    @Test
+    fun testNullOnTimeout() = runBlocking {
+        expect(1)
+        val result = withTimeoutOrNull(100) {
+            expect(2)
+            delay(1000)
+            expectUnreached()
+            "OK"
+        }
+        assertThat(result, IsNull())
+        finish(3)
+    }
+
+    @Test
+    fun testSuppressException() = runBlocking {
+        expect(1)
+        val result = withTimeoutOrNull(100) {
+            expect(2)
+            try {
+                delay(1000)
+            } catch (e: CancellationException) {
+                expect(3)
+            }
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(4)
+    }
+
+    @Test(expected = IOException::class)
+    fun testReplaceException() = runBlocking {
+        expect(1)
+        withTimeoutOrNull(100) {
+            expect(2)
+            try {
+                delay(1000)
+            } catch (e: CancellationException) {
+                finish(3)
+                throw IOException(e)
+            }
+            "OK"
+        }
+        expectUnreached()
     }
 
     /**

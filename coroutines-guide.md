@@ -542,12 +542,13 @@ It produces the following output:
 I'm sleeping 0 ...
 I'm sleeping 1 ...
 I'm sleeping 2 ...
-Exception in thread "main" java.util.concurrent.CancellationException: Timed out waiting for 1300 MILLISECONDS
+Exception in thread "main" kotlinx.coroutines.experimental.TimeoutException: Timed out waiting for 1300 MILLISECONDS
 ```
 
 <!--- TEST STARTS_WITH -->
 
-We have not seen the [CancellationException] stack trace printed on the console before. That is because
+The `TimeoutException` that is thrown by [withTimeout] is a private subclass of [CancellationException].
+We have not seen its stack trace printed on the console before. That is because
 inside a cancelled coroutine `CancellationException` is considered to be a normal reason for coroutine completion. 
 However, in this example we have used `withTimeout` right inside the `main` function. 
 
