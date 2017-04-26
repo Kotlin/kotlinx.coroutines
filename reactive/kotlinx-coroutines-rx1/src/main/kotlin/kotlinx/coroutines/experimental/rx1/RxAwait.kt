@@ -116,6 +116,6 @@ private suspend fun <T> Observable<T>.awaitOne(): T = suspendCancellableCoroutin
     }))
 }
 
-private fun <T> CancellableContinuation<T>.unsubscribeOnCompletion(sub: Subscription) {
+internal fun <T> CancellableContinuation<T>.unsubscribeOnCompletion(sub: Subscription) {
     invokeOnCompletion { sub.unsubscribe() }
 }
