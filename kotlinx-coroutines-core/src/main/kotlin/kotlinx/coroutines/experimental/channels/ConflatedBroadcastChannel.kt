@@ -24,10 +24,11 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 /**
- * Broadcasts the most recently sent value (aka [value]) to all [open] subscribers.
+ * Broadcasts the most recently sent element (aka [value]) to all [open] subscribers.
  *
  * Back-to-send sent elements are _conflated_ -- only the the most recently sent value is received,
  * while previously sent elements **are lost**.
+ * Every subscriber immediately receives the most recently sent element.
  * Sender to this broadcast channel never suspends and [offer] always returns `true`.
  *
  * A secondary constructor can be used to create an instance of this class that already holds a value.
@@ -36,12 +37,12 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
  * [opening][open] and [closing][SubscriptionReceiveChannel.close] subscription takes O(N) time, where N is the
  * number of subscribers.
  */
-public class ValueBroadcastChannel<E>() : BroadcastChannel<E> {
+public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.
      *
      * It is as a shortcut to creating an instance with a default constructor and
-     * immediately sending a value: `ValueBroadcastChannel().apply { offer(value) }`.
+     * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
      */
     constructor(value: E) : this() {
         state = State<E>(value, null)
@@ -56,12 +57,12 @@ public class ValueBroadcastChannel<E>() : BroadcastChannel<E> {
 
     private companion object {
         @JvmField
-        val STATE: AtomicReferenceFieldUpdater<ValueBroadcastChannel<*>, Any> = AtomicReferenceFieldUpdater.
-            newUpdater(ValueBroadcastChannel::class.java, Any::class.java, "state")
+        val STATE: AtomicReferenceFieldUpdater<ConflatedBroadcastChannel<*>, Any> = AtomicReferenceFieldUpdater.
+            newUpdater(ConflatedBroadcastChannel::class.java, Any::class.java, "state")
 
         @JvmField
-        val UPDATING: AtomicIntegerFieldUpdater<ValueBroadcastChannel<*>> = AtomicIntegerFieldUpdater.
-            newUpdater(ValueBroadcastChannel::class.java, "updating")
+        val UPDATING: AtomicIntegerFieldUpdater<ConflatedBroadcastChannel<*>> = AtomicIntegerFieldUpdater.
+            newUpdater(ConflatedBroadcastChannel::class.java, "updating")
 
         @JvmField
         val CLOSED = Closed(null)
@@ -257,7 +258,7 @@ public class ValueBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     private class Subscriber<E>(
-        private val broadcastChannel: ValueBroadcastChannel<E>
+        private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), SubscriptionReceiveChannel<E> {
         override fun close() {
             if (close(cause = null))

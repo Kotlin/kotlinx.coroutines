@@ -23,11 +23,11 @@ import org.hamcrest.core.IsNull
 import org.junit.Assert.*
 import org.junit.Test
 
-class ValueBroadcastChannelTest : TestBase() {
+class ConflatedBroadcastChannelTest : TestBase() {
     @Test
     fun testBasicScenario() = runBlocking {
         expect(1)
-        val broadcast = ValueBroadcastChannel<String>()
+        val broadcast = ConflatedBroadcastChannel<String>()
         assertThat(exceptionFrom { broadcast.value }, IsInstanceOf(IllegalStateException::class.java))
         assertThat(broadcast.valueOrNull, IsNull())
         launch(context, CoroutineStart.UNDISPATCHED) {
@@ -88,7 +88,7 @@ class ValueBroadcastChannelTest : TestBase() {
     @Test
     fun testInitialValueAndReceiveClosed() = runBlocking {
         expect(1)
-        val broadcast = ValueBroadcastChannel<Int>(1)
+        val broadcast = ConflatedBroadcastChannel<Int>(1)
         assertThat(broadcast.value, IsEqual(1))
         assertThat(broadcast.valueOrNull, IsEqual(1))
         launch(context, CoroutineStart.UNDISPATCHED) {

@@ -17,14 +17,14 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example09
 
-import kotlinx.coroutines.experimental.channels.ValueBroadcastChannel
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val broadcast = ValueBroadcastChannel<String>()
+    val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")
     // now launch a coroutine to print everything

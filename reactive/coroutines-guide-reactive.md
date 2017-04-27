@@ -493,11 +493,11 @@ This is quite the desired behavior for any kind of state-holding variable that n
 other linked state, for example. There is no reason to react to back-to-back updates of the state. 
 Only the most recent state is relevant.
 
-The corresponding behavior in coroutines world is implemented by [ValueBroadcastChannel] that provides the same logic
+The corresponding behavior in coroutines world is implemented by [ConflatedBroadcastChannel] that provides the same logic
 on top of coroutine channels directly, without going through the bridge to the reactive streams:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.channels.ValueBroadcastChannel
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
@@ -506,7 +506,7 @@ import kotlinx.coroutines.experimental.yield
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val broadcast = ValueBroadcastChannel<String>()
+    val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")
     // now launch a coroutine to print everything
@@ -1055,7 +1055,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
-[ValueBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-value-broadcast-channel/index.html
+[ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html
