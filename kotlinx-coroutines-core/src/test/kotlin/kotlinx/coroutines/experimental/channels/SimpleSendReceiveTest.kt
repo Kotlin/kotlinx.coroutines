@@ -29,14 +29,17 @@ import org.junit.runners.Parameterized
 @RunWith(Parameterized::class)
 class SimpleSendReceiveTest(
     val kind: TestChannelKind,
-    val n: Int
+    val n: Int,
+    val concurrent: Boolean
 ) {
     companion object {
-        @Parameterized.Parameters(name = "{0}, n={1}")
+        @Parameterized.Parameters(name = "{0}, n={1}, concurrent={2}")
         @JvmStatic
         fun params(): Collection<Array<Any>> = TestChannelKind.values().flatMap { kind ->
-            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000).map { n ->
-                arrayOf<Any>(kind, n)
+            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000).flatMap { n ->
+                listOf(false, true).map { concurrent ->
+                    arrayOf<Any>(kind, n, concurrent)
+                }
             }
         }
     }
@@ -45,20 +48,23 @@ class SimpleSendReceiveTest(
 
     @Test
     fun testSimpleSendReceive() = runBlocking {
-        launch(CommonPool) {
+        val ctx = if (concurrent) CommonPool else context
+        launch(ctx) {
             repeat(n) { channel.send(it) }
             channel.close()
         }
         var expected = 0
         for (x in channel) {
-            if (kind != TestChannelKind.CONFLATED) {
+            if (!kind.isConflated) {
                 assertThat(x, IsEqual(expected++))
             } else {
                 assertTrue(x >= expected)
                 expected = x + 1
             }
         }
-        if (kind != TestChannelKind.CONFLATED) {
+        if (kind.isConflated) {
+            if (n > 0) assertTrue(expected > 0)
+        } else {
             assertThat(expected, IsEqual(n))
         }
     }

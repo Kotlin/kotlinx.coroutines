@@ -99,7 +99,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         println("      Duplicated $dupCnt ints")
         failed.get()?.let { throw it }
         assertEquals(0, dupCnt)
-        if (kind != TestChannelKind.CONFLATED) {
+        if (!kind.isConflated) {
             assertEquals(0, missedCnt)
             assertEquals(lastSent, lastReceived)
         }

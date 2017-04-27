@@ -384,7 +384,7 @@ RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subje
 effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
 [BroadcastChannel]. There is a variety of subjects in Rx with 
 [BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being the
-most useful one to manage state:
+the one used to manage state:
 
 <!--- INCLUDE
 import io.reactivex.subjects.BehaviorSubject
@@ -527,6 +527,12 @@ It produces the same output as the version based on `BehaviorSubject`:
 three
 four
 ```
+
+Another implementation of [BroadcastChannel] is [ArrayBroadcastChannel]. It delivers every event to every
+subscriber since the moment the corresponding subscription is open. It corresponds to 
+[PublishSubject][http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html] in Rx.
+The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
+that can be sent before the sender is suspended waiting for receiver to receive those elements.
 
 <!--- TEST -->
 
@@ -1056,6 +1062,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
 [ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html
+[ArrayBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-array-broadcast-channel/index.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html

@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.selects.SelectInstance
+
 enum class TestChannelKind {
     RENDEZVOUS {
         override fun create(): Channel<Int> = RendezvousChannel<Int>()
@@ -36,8 +38,40 @@ enum class TestChannelKind {
     CONFLATED {
         override fun create(): Channel<Int> = ConflatedChannel<Int>()
         override fun toString(): String = "ConflatedChannel"
+        override val isConflated: Boolean get() = true
+    },
+    ARRAY_BROADCAST_1 {
+        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(1))
+        override fun toString(): String = "ArrayBroadcastChannel(1)"
+    },
+    ARRAY_BROADCAST_10 {
+        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(10))
+        override fun toString(): String = "ArrayBroadcastChannel(10)"
+    },
+    CONFLATED_BROADCAST {
+        override fun create(): Channel<Int> = ChannelViaBroadcast(ConflatedBroadcastChannel<Int>())
+        override fun toString(): String = "ConflatedBroadcastChannel"
+        override val isConflated: Boolean get() = true
     }
     ;
 
     abstract fun create(): Channel<Int>
+    open val isConflated: Boolean get() = false
+}
+
+private class ChannelViaBroadcast<E>(
+    private val broadcast: BroadcastChannel<E>
+): Channel<E>, SendChannel<E> by broadcast {
+    val sub = broadcast.open()
+
+    override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
+    override val isEmpty: Boolean get() = sub.isEmpty
+    suspend override fun receive(): E = sub.receive()
+    suspend override fun receiveOrNull(): E? = sub.receiveOrNull()
+    override fun poll(): E? = sub.poll()
+    override fun iterator(): ChannelIterator<E> = sub.iterator()
+    override fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) =
+        sub.registerSelectReceive(select, block)
+    override fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) =
+        sub.registerSelectReceiveOrNull(select, block)
 }

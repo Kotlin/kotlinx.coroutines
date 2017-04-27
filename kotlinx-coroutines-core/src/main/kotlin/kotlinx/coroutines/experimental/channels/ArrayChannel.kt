@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.ALREADY_SELECTED
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Channel with array buffer of a fixed [capacity].
@@ -43,12 +44,6 @@ public open class ArrayChannel<E>(
     @Volatile
     private var size: Int = 0
 
-    private inline fun <T> locked(block: () -> T): T {
-        lock.lock()
-        return try { block() }
-        finally { lock.unlock() }
-    }
-
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
     protected final override val isBufferEmpty: Boolean get() = size == 0
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -58,7 +53,7 @@ public open class ArrayChannel<E>(
     protected override fun offerInternal(element: E): Any {
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
-        locked {
+        lock.withLock {
             val size = this.size
             closedForSend?.let { return it }
             if (size < capacity) {
@@ -75,7 +70,7 @@ public open class ArrayChannel<E>(
                         token = receive!!.tryResumeReceive(element, idempotent = null)
                         if (token != null) {
                             this.size = size // restore size
-                            return@locked
+                            return@withLock
                         }
                     }
                 }
@@ -90,11 +85,11 @@ public open class ArrayChannel<E>(
         return receive!!.offerResult
     }
 
-    // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`.
+    // result is `ALREADY_SELECTED | OFFER_SUCCESS | OFFER_FAILED | Closed`
     protected override fun offerSelectInternal(element: E, select: SelectInstance<*>): Any {
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
-        locked {
+        lock.withLock {
             val size = this.size
             closedForSend?.let { return it }
             if (size < capacity) {
@@ -111,7 +106,7 @@ public open class ArrayChannel<E>(
                                 receive = offerOp.result
                                 token = offerOp.resumeToken
                                 check(token != null)
-                                return@locked
+                                return@withLock
                             }
                             failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
                             failure === ALREADY_SELECTED || failure is Closed<*> -> {
@@ -123,7 +118,7 @@ public open class ArrayChannel<E>(
                     }
                 }
                 // let's try to select sending this element to buffer
-                if (!select.trySelect(null)) {
+                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     return ALREADY_SELECTED
                 }
@@ -143,9 +138,9 @@ public open class ArrayChannel<E>(
         var send: Send? = null
         var token: Any? = null
         var result: Any? = null
-        locked {
+        lock.withLock {
             val size = this.size
-            if (size == 0) return closedForSend ?: POLL_FAILED
+            if (size == 0) return closedForSend ?: POLL_FAILED // when nothing can be read from buffer
             // size > 0: not empty -- retrieve element
             result = buffer[head]
             buffer[head] = null
@@ -162,7 +157,7 @@ public open class ArrayChannel<E>(
                     }
                 }
             }
-            if (replacement !== POLL_FAILED && !isClosed(replacement)) {
+            if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
                 buffer[(head + size) % capacity] = replacement
             }
@@ -179,7 +174,7 @@ public open class ArrayChannel<E>(
         var send: Send? = null
         var token: Any? = null
         var result: Any? = null
-        locked {
+        lock.withLock {
             val size = this.size
             if (size == 0) return closedForSend ?: POLL_FAILED
             // size > 0: not empty -- retrieve element
@@ -216,12 +211,12 @@ public open class ArrayChannel<E>(
                     }
                 }
             }
-            if (replacement !== POLL_FAILED && !isClosed(replacement)) {
+            if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
                 this.size = size // restore size
                 buffer[(head + size) % capacity] = replacement
             } else {
                 // failed to poll or is already closed --> let's try to select receiving this element from buffer
-                if (!select.trySelect(null)) {
+                if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
                     this.size = size // restore size
                     buffer[head] = result // restore head
                     return ALREADY_SELECTED

@@ -46,7 +46,7 @@ class ChannelSendReceiveStressTest(
     val timeLimit = 30_000L * stressTestMultiplier // 30 sec
     val nEvents = 1_000_000 * stressTestMultiplier
 
-    val maxBuffer = 10_000 // artifical limit for LinkedListChannel
+    val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
     val channel = kind.create()
     val sendersCompleted = AtomicInteger()
@@ -112,7 +112,7 @@ class ChannelSendReceiveStressTest(
         assertEquals(nReceivers, receiversCompleted.get())
         assertEquals(0, dupes.get())
         assertEquals(nEvents, sentTotal.get())
-        if (kind != TestChannelKind.CONFLATED) assertEquals(nEvents, receivedTotal.get())
+        if (!kind.isConflated) assertEquals(nEvents, receivedTotal.get())
         repeat(nReceivers) { receiveIndex ->
             assertTrue("Each receiver should have received something", receivedBy[receiveIndex] > 0)
         }
@@ -120,7 +120,7 @@ class ChannelSendReceiveStressTest(
 
     private suspend fun doSent() {
         sentTotal.incrementAndGet()
-        if (kind != TestChannelKind.CONFLATED) {
+        if (!kind.isConflated) {
             while (sentTotal.get() > receivedTotal.get() + maxBuffer)
                 yield() // throttle fast senders to prevent OOM with LinkedListChannel
         }
