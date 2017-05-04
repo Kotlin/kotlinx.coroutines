@@ -124,12 +124,36 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 <tbody>
 <tr>
 <td>
+        <p><a href="../-abstract-send-channel/index.html">AbstractSendChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Abstract send channel. It is a base class for all send channel implementations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../-actor-job/index.html">ActorJob</a></p>
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Return type for <a href="../actor.html">actor</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-broadcast-channel/index.html">BroadcastChannel</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
+that subscribe for the elements using <a href="../-broadcast-channel/open.html">open</a> function and unsubscribe using <a href="../-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
+function.</p>
 
       </td>
 </tr>

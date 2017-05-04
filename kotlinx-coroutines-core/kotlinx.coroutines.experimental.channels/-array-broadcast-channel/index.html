@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ArrayBroadcastChannel - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-array-broadcast-channel/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental.channels</a> / <a href=".">ArrayBroadcastChannel</a></div>
+
+<h1 id="arraybroadcastchannel">ArrayBroadcastChannel</h1>
+
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L37">(source)</a></div>
+
+<p>Broadcast channel with array buffer of a fixed <a href="capacity.html">capacity</a>.
+Sender suspends only when buffer is fully due to one of the receives not being late and
+receiver suspends only when buffer is empty.</p>
+
+<p>Note, that elements that are sent to the broadcast channel while there are no <a href="open.html">open</a> subscribers are immediately
+lost.</p>
+
+<p>This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
+The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
+The lists of suspended senders or receivers are lock-free.</p>
+
+<h3 id="constructors">Constructors</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="-init-.html">&lt;init&gt;</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$&lt;init&gt;(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span><span class="symbol">)</span></code></div>
+
+        <p>Broadcast channel with array buffer of a fixed <a href="-init-.html#kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$&lt;init&gt;(kotlin.Int)/capacity">capacity</a>.
+Sender suspends only when buffer is fully due to one of the receives not being late and
+receiver suspends only when buffer is empty.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="capacity.html">capacity</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">capacity</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+
+        <p>Buffer capacity.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inherited-properties">Inherited Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-abstract-send-channel/close.html">close</a> and thus
+the <a href="../-abstract-send-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
+is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
+an element to a failed channel throw the original <a href="../-abstract-send-channel/close.html">close</a> cause exception.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../-abstract-send-channel/is-full.html">isFull</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-abstract-send-channel/send.html">send</a> attempt will suspend.
+This function returns <code>false</code> for <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="close.html">close</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Closes this channel with an optional exceptional <a href="close.html#kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$close(kotlin.Throwable)/cause">cause</a>.
+This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
+Conceptually, its sends a special “close token” over this channel. Immediately after invocation of this function
+<a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
+on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
+are received.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="open.html">open</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Subscribes to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and returns a channel to receive elements from it.
+The resulting channel shall be <a href="../-subscription-receive-channel/close.html">closed</a> to unsubscribe from this
+broadcast channel.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="inherited-functions">Inherited Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../-abstract-send-channel/after-close.html">afterClose</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Invoked after successful <a href="../-abstract-send-channel/close.html">close</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../consume-each.html">consumeEach</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.BroadcastChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Subscribes to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and performs the specified action for each received element.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

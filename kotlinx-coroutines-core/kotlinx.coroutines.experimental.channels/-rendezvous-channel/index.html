@@ -80,20 +80,6 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
-        <p><a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-abstract-channel/close.html">close</a> and thus
-the <a href="../-abstract-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
-an element to a failed channel throw the original <a href="../-abstract-channel/close.html">close</a> cause exception.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../-abstract-channel/is-empty.html">isEmpty</a></p>
       </td>
 <td>
@@ -104,18 +90,6 @@ This function returns <code>false</code> for <a href="../-abstract-channel/is-cl
 
       </td>
 </tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/is-full.html">isFull</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-abstract-channel/send.html">send</a> attempt will suspend.
-This function returns <code>false</code> for <a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
-
-      </td>
-</tr>
 </tbody>
 </table>
 
@@ -123,33 +97,6 @@ This function returns <code>false</code> for <a href="../-abstract-channel/is-cl
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/after-close.html">afterClose</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
-
-        <p>Invoked after successful <a href="../-abstract-channel/close.html">close</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../-abstract-channel/close.html">close</a></p>
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
-
-        <p>Closes this channel with an optional exceptional <a href="../-abstract-channel/close.html#kotlinx.coroutines.experimental.channels.AbstractChannel$close(kotlin.Throwable)/cause">cause</a>.
-This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special “close token” over this channel. Immediately after invocation of this function
-<a href="../-abstract-channel/is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
-on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
-are received.</p>
-
-      </td>
-</tr>
 <tr>
 <td>
         <p><a href="../-abstract-channel/iterator.html">iterator</a></p>
@@ -239,7 +186,7 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
 
-        <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> on each received element.</p>
+        <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 
       </td>
 </tr>

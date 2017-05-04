@@ -31,7 +31,7 @@
 
 <h1 id="isdispatchneeded">isDispatchNeeded</h1>
 
-<div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineDispatcher.kt#L70">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineDispatcher.kt#L74">(source)</a></div>
 
 <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
 The default behaviour for most dispatchers is to return <code>true</code>.</p>
@@ -58,6 +58,10 @@ are always postponed to be executed later in the even dispatch thread) and “C#
 While, C# approach seems to be more efficient, it ends up with recommendations like
 “use <code>yield</code> if you need to ….”. This is error-prone. JS-style approach is more consistent
 and does not require programmers to think about whether they need to yield or not.</p>
+
+<p>However, coroutine builders like <a href="../launch.html">launch</a> and <a href="../async.html">async</a> accept an optional <a href="../-coroutine-start/index.html">CoroutineStart</a>
+parameter that allows one to optionally choose C#-style <a href="../-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html">CoroutineStart.UNDISPATCHED</a> behaviour
+whenever it is needed for efficiency.</p>
 
 
       </div>

@@ -39,7 +39,17 @@
       </td>
 <td>
 
-        <p>Abstract channel. It is a base class for all channel implementations.</p>
+        <p>Abstract send/receive channel. It is a base class for all channel implementations.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-send-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractSendChannel</a></p>
+      </td>
+<td>
+
+        <p>Abstract send channel. It is a base class for all send channel implementations.</p>
 
       </td>
 </tr>
@@ -65,12 +75,36 @@
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-array-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel</a></p>
+      </td>
+<td>
+
+        <p>Broadcast channel with array buffer of a fixed <a href="../kotlinx.coroutines.experimental.channels/-array-broadcast-channel/capacity.html">capacity</a>.
+Sender suspends only when buffer is fully due to one of the receives not being late and
+receiver suspends only when buffer is empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-array-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayChannel</a></p>
       </td>
 <td>
 
         <p>Channel with array buffer of a fixed <a href="../kotlinx.coroutines.experimental.channels/-array-channel/capacity.html">capacity</a>.
 Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.BroadcastChannel</a></p>
+      </td>
+<td>
+
+        <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
+that subscribe for the elements using <a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/open.html">open</a> function and unsubscribe using <a href="../kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
+function.</p>
 
       </td>
 </tr>
@@ -168,6 +202,16 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel</a></p>
+      </td>
+<td>
+
+        <p>Broadcasts the most recently sent element (aka <a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/value.html">value</a>) to all <a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/open.html">open</a> subscribers.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-conflated-channel/index.html">kotlinx.coroutines.experimental.channels.ConflatedChannel</a></p>
       </td>
 <td>
@@ -220,6 +264,18 @@ See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newC
 
         <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
 to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> and its cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-start/index.html">kotlinx.coroutines.experimental.CoroutineStart</a></p>
+      </td>
+<td>
+
+        <p>Defines start option for coroutines builders.
+It is used in <code>start</code> parameter of <a href="../kotlinx.coroutines.experimental/launch.html">launch</a>, <a href="../kotlinx.coroutines.experimental/async.html">async</a>, and <a href="../kotlinx.coroutines.experimental.channels/actor.html">actor</a>
+coroutine builder functions.</p>
 
       </td>
 </tr>
@@ -408,6 +464,17 @@ until another coroutine invokes <a href="../kotlinx.coroutines.experimental.chan
 <td>
 
         <p>Sender’s interface to <a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">Channel</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-subscription-receive-channel/index.html">kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel</a></p>
+      </td>
+<td>
+
+        <p>Return type for <a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/open.html">BroadcastChannel.open</a> that can be used to <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">receive</a> elements from the
+open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html">close</a> it to unsubscribe.</p>
 
       </td>
 </tr>

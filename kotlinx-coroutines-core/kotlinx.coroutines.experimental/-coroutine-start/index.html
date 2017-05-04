@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoroutineStart - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href=".">CoroutineStart</a></div>
+
+<h1 id="coroutinestart">CoroutineStart</h1>
+
+<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L28">(source)</a></div>
+
+<p>Defines start option for coroutines builders.
+It is used in <code>start</code> parameter of <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and <a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a>
+coroutine builder functions.</p>
+
+<h3 id="enum-values">Enum Values</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="-d-e-f-a-u-l-t.html">DEFAULT</a></p>
+      </td>
+<td>
+
+        <p>Default – schedules coroutine for execution according to its context.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-l-a-z-y.html">LAZY</a></p>
+      </td>
+<td>
+
+        <p>Starts coroutine lazily, only when it is needed.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a></p>
+      </td>
+<td>
+
+        <p>Immediately executes coroutine until its first suspension point <em>in the current thread</em> as if it the
+coroutine was started using <a href="../-unconfined/index.html">Unconfined</a> dispatcher. However, when coroutine is resumed from suspension
+it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="is-lazy.html">isLazy</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isLazy</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+
+        <p>Returns <code>true</code> when <a href="-l-a-z-y.html">LAZY</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="invoke.html">invoke</a></p>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="identifier">R</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/receiver">receiver</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/completion">completion</span><span class="symbol">:</span>&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+
+        <p>Starts the corresponding block as a coroutine with this coroutine start strategy.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

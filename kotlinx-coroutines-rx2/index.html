@@ -48,6 +48,12 @@
       <td>Cold completable that starts coroutine on subscribe</td>
     </tr>
     <tr>
+      <td><a href="kotlinx.coroutines.experimental.rx2/rx-maybe.html">rxMaybe</a></td>
+      <td><code>Maybe</code></td>
+      <td><a href="#">CoroutineScope</a></td>
+      <td>Cold maybe that starts coroutine on subscribe</td>
+    </tr>
+    <tr>
       <td><a href="kotlinx.coroutines.experimental.rx2/rx-single.html">rxSingle</a></td>
       <td><code>Single</code></td>
       <td><a href="#">CoroutineScope</a></td>
@@ -81,6 +87,18 @@
     <tr>
       <td><a href="#">CompletableSource.await</a></td>
       <td>Awaits for completion of the completable value</td>
+    </tr>
+    <tr>
+      <td><a href="#">MaybeSource.await</a></td>
+      <td>Awaits for the value of the maybe and returns it or null</td>
+    </tr>
+    <tr>
+      <td><a href="#">MaybeSource.awaitOrDefault</a></td>
+      <td>Awaits for the value of the maybe and returns it or default</td>
+    </tr>
+    <tr>
+      <td><a href="#">MaybeSource.open</a></td>
+      <td>Subscribes to maybe and returns <a href="#">ReceiveChannel</a></td>
     </tr>
     <tr>
       <td><a href="#">SingleSource.await</a></td>

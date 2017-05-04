@@ -121,12 +121,12 @@ the lock still suspends the invoker.</p>
 <tbody>
 <tr>
 <td>
-        <p><a href="../with-mutex.html">withMutex</a></p>
+        <p><a href="../with-lock.html">withLock</a></p>
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Mutex</span><span class="symbol">.</span><span class="identifier">withMutex</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync$withMutex(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withMutex.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Mutex</span><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Executes the given <a href="../with-mutex.html#kotlinx.coroutines.experimental.sync$withMutex(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withMutex.T)))/action">action</a> under this mutex.</p>
+        <p>Executes the given <a href="../with-lock.html#kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
 
       </td>
 </tr>
