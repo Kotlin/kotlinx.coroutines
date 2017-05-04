@@ -30,8 +30,8 @@
   * Introduced `withTimeoutOrNull` function.
   * Implemented `onTimeout` clause for `select` expressions.
   * Fixed spurious concurrency inside `withTimeout` blocks on their cancellation. 
-  * Changed the behavior of `withTimeout` when `CancellationException` is suppressed inside the block. The
-    invocation of `withTimeout` now always returns the result of the execution of its inner block.
+  * Changed behavior of `withTimeout` when `CancellationException` is suppressed inside the block. 
+    Invocation of `withTimeout` now always returns the result of execution of its inner block.
 * The `channel` property in `ActorScope` is promoted to a wider `Channel` type, so that an actor
   can have an easy access to its own inbox send channel.
 * Renamed `Mutex.withMutex` to `Mutex.withLock`, old name is deprecated.  
