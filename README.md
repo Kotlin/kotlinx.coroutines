@@ -59,7 +59,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.15-SNAPSHOT</version>
+    <version>0.15</version>
 </dependency>
 ```
 
@@ -67,7 +67,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.1</kotlin.version>
+    <kotlin.version>1.1.2</kotlin.version>
 </properties>
 ```
 
@@ -84,13 +84,13 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.15-SNAPSHOT'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.15'
 ```
 
 And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.1'
+    ext.kotlin_version = '1.1.2'
 }
 ```

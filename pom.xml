@@ -39,6 +39,28 @@
         </license>
     </licenses>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.1.2</kotlin.version>
+        <dokka.version>0.9.14</dokka.version>
+        <junit.version>4.12</junit.version>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+    </properties>
+
+    <prerequisites>
+        <maven>3.0.2</maven>
+    </prerequisites>
+
+    <developers>
+        <developer>
+            <id>JetBrains</id>
+            <name>JetBrains Team</name>
+            <organization>JetBrains</organization>
+            <organizationUrl>http://www.jetbrains.com</organizationUrl>
+        </developer>
+    </developers>
+
     <scm>
         <url>https://github.com/Kotlin/kotlinx.coroutines</url>
         <connection>scm:git:https://github.com/Kotlin/kotlinx.coroutines.git</connection>
@@ -65,28 +87,6 @@
             <url>http://dl.bintray.com/kotlin/dokka</url>
         </pluginRepository>
     </pluginRepositories>
-
-    <developers>
-        <developer>
-            <id>JetBrains</id>
-            <name>JetBrains Team</name>
-            <organization>JetBrains</organization>
-            <organizationUrl>http://www.jetbrains.com</organizationUrl>
-        </developer>
-    </developers>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.1.1</kotlin.version>
-        <dokka.version>0.9.14</dokka.version>
-        <junit.version>4.12</junit.version>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-    </properties>
-
-    <prerequisites>
-        <maven>3.0.2</maven>
-    </prerequisites>
 
     <distributionManagement>
         <repository>

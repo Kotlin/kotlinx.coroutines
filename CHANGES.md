@@ -1,45 +1,81 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.15
+
+* Switched to Kotlin version 1.1.2 (can still be used with 1.1.0).
+* `CoroutineStart` enum is introduced for `launch`/`async`/`actor` builders:
+  * The usage of `luanch(context, start = false)` is deprecated and is replaced with 
+    `launch(context, CoroutineStart.LAZY)`
+  * `CoroutineStart.UNDISPATCHED` is introduced to start coroutine execution immediately in the invoker thread,
+     so that `async(context, CoroutineStart.UNDISPATCHED)` is similar to the behavior of C# `async`.
+  * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md) mentions the use of it to optimize
+    the start of coroutines from UI threads.
+* Introduced `BroadcastChannel` interface in `kotlinx-coroutines-core` module:
+  * It extends `SendChannel` interface and provides `open` function to create subscriptions.
+  * Subscriptions are represented with `SubscriptionReceiveChannel` interface. 
+  * The corresponding `SubscriptionReceiveChannel` interfaces are removed from [reactive](reactive) implementation
+     modules. They use an interface defined in `kotlinx-coroutines-core` module.
+  * `ConflatedBroadcastChannel` implementation is provided for state-observation-like use-cases, where a coroutine or a
+     regular code (in UI, for example) updates the state that subscriber coroutines shall react to.
+  * `ArrayBroadcastChannel` implementation is provided for event-bus-like use-cases, where a sequence of events shall
+     be received by multiple subscribers without any omissions.
+  * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md) includes 
+    "Rx Subject vs BroadcastChannel" section.
+* Pull requests from Konrad Kamiński are merged into reactive stream implementations:
+  * Support for Project Reactor `Mono` and `Flux`. 
+    See [`kotlinx-coroutines-reactor`](reactive/kotlinx-coroutines-reactor) module.
+  * Implemented Rx1 `Completable.awaitCompleted`.
+  * Added support for Rx2 `Maybe`.
+* Better timeout support:  
+  * Introduced `withTimeoutOrNull` function.
+  * Implemented `onTimeout` clause for `select` expressions.
+  * Fixed spurious concurrency inside `withTimeout` blocks on their cancellation. 
+  * Changed the behavior of `withTimeout` when `CancellationException` is suppressed inside the block. The
+    invocation of `withTimeout` now always returns the result of the execution of its inner block.
+* The `channel` property in `ActorScope` is promoted to a wider `Channel` type, so that an actor
+  can have an easy access to its own inbox send channel.
+* Renamed `Mutex.withMutex` to `Mutex.withLock`, old name is deprecated.  
+
 ## Version 0.14
  
-* Switched to Kotlin version 1.1.1 (can still be used with 1.1.0)
-* Introduced `consumeEach` helper function for channels and reactive streams, Rx 1.x, and Rx 2.x
-  * It ensures that streams are unsubscribed from on any exception
-  * Iteration with `for` loop on reactive streams is **deprecated**
+* Switched to Kotlin version 1.1.1 (can still be used with 1.1.0).
+* Introduced `consumeEach` helper function for channels and reactive streams, Rx 1.x, and Rx 2.x.
+  * It ensures that streams are unsubscribed from on any exception.
+  * Iteration with `for` loop on reactive streams is **deprecated**.
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md) is updated virtually
-    all over the place to reflect these important changes
-* Implemented `awaitFirstOrDefault` extension for reactive streams, Rx 1.x, and Rx 2.x
-* Added `Mutex.withMutex` helper function
+    all over the place to reflect these important changes.
+* Implemented `awaitFirstOrDefault` extension for reactive streams, Rx 1.x, and Rx 2.x.
+* Added `Mutex.withMutex` helper function.
 * `kotlinx-coroutines-android` module has `provided` dependency on of Android APIs to 
-  eliminate warnings when using it in android project
+  eliminate warnings when using it in android project.
 
 
 ## Version 0.13
 
-* New `kotlinx-coroutinex-android` module with Android `UI` context implementation 
-* Introduced `whileSelect` convenience function
-* Implemented `ConflatedChannel`  
-* Renamed various `toXXX` conversion functions to `asXXX` (old names are deprecated)
-* `run` is optimized with fast-path case and no longer has `CoroutineScope` in its block
-* Fixed dispatching logic of `withTimeout` (removed extra dispatch)
-* `EventLoop` that is used by `runBlocking` now implements Delay, giving more predictable test behavior
+* New `kotlinx-coroutinex-android` module with Android `UI` context implementation. 
+* Introduced `whileSelect` convenience function.
+* Implemented `ConflatedChannel`.  
+* Renamed various `toXXX` conversion functions to `asXXX` (old names are deprecated).
+* `run` is optimized with fast-path case and no longer has `CoroutineScope` in its block.
+* Fixed dispatching logic of `withTimeout` (removed extra dispatch).
+* `EventLoop` that is used by `runBlocking` now implements Delay, giving more predictable test behavior.
 * Various refactorings related to resource management and timeouts:
-  * `Job.Registration` is renamed to `DisposableHandle`
-  * `EmptyRegistration` is renamed to `NonDisposableHandle`
-  * `Job.unregisterOnCompletion` is renamed to `Job.disposeOnCompletion`
-  * `Delay.invokeOnTimeout` is introduced
-  * `withTimeout` now uses `Delay.invokeOnTimeout` when available
+  * `Job.Registration` is renamed to `DisposableHandle`.
+  * `EmptyRegistration` is renamed to `NonDisposableHandle`.
+  * `Job.unregisterOnCompletion` is renamed to `Job.disposeOnCompletion`.
+  * `Delay.invokeOnTimeout` is introduced.
+  * `withTimeout` now uses `Delay.invokeOnTimeout` when available.
 * A number of improvement for reactive streams and Rx:
-  * Introduced `rxFlowable` builder for Rx 2.x
-  * `Scheduler.asCoroutineDispatcher` extension for Rx 2.x
-  * Fixed bug with sometimes missing `onComplete` in `publish`, `rxObservable`, and `rxFlowable` builders
-  * Channels that are open for reactive streams are now `Closeable`
-  * Fixed `CompletableSource.await` and added test for it
-  * Removed `rx.Completable.await` due to name conflict
+  * Introduced `rxFlowable` builder for Rx 2.x.
+  * `Scheduler.asCoroutineDispatcher` extension for Rx 2.x.
+  * Fixed bug with sometimes missing `onComplete` in `publish`, `rxObservable`, and `rxFlowable` builders.
+  * Channels that are open for reactive streams are now `Closeable`.
+  * Fixed `CompletableSource.await` and added test for it.
+  * Removed `rx.Completable.await` due to name conflict.
 * New documentation:
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
-* Code is published to JCenter repository  
+* Code is published to JCenter repository.
 
 ## Version 0.12
 
