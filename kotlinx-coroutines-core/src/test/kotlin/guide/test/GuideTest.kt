@@ -354,6 +354,14 @@ class GuideTest {
     }
 
     @Test
+    fun testGuideSyncExample01b() {
+        test { guide.sync.example01b.main(emptyArray()) }.verifyLinesStart(
+            "Completed 1000000 actions in",
+            "Counter ="
+        )
+    }
+
+    @Test
     fun testGuideSyncExample02() {
         test { guide.sync.example02.main(emptyArray()) }.verifyLinesStart(
             "Completed 1000000 actions in",

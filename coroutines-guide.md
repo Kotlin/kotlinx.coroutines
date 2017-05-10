@@ -1,4 +1,4 @@
-<!--- INCLUDE .*/example-([a-z]+)-([0-9]+)\.kt 
+<!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
 /*
  * Copyright 2016-2017 JetBrains s.r.o.
  *
@@ -1549,7 +1549,7 @@ but others are unique.
 Let us launch a thousand coroutines all doing the same action thousand times (for a total of a million executions). 
 We'll also measure their completion time for further comparisons:
 
-<!--- INCLUDE .*/example-sync-([0-9]+).kt
+<!--- INCLUDE .*/example-sync-([0-9a-z]+).kt
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
 -->
@@ -1582,7 +1582,7 @@ suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
 }
 ```
 
-<!--- INCLUDE .*/example-sync-([0-9]+).kt -->
+<!--- INCLUDE .*/example-sync-([0-9a-z]+).kt -->
 
 We start with a very simple action that increments a shared mutable variable using 
 multi-threaded [CommonPool] context. 
@@ -1607,6 +1607,29 @@ Counter =
 
 What does it print at the end? It is highly unlikely to ever print "Counter = 1000000", because a thousand coroutines 
 increment the `counter` concurrently from multiple threads without any synchronization.
+
+> Note: if you have an old system with 2 or fewer CPUs, then you _will_ consistently see 1000000, because
+`CommonPool` is running in only one thread in this case. To reproduce the problem you'll need to make the
+following change:
+
+```kotlin
+val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define context with two threads
+var counter = 0
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    massiveRun(mtContext) { // use it instead of CommonPool in this sample and below 
+        counter++
+    }
+    println("Counter = $counter")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-01b.kt)
+
+<!--- TEST LINES_START
+Completed 1000000 actions in
+Counter =
+-->
 
 ### Volatiles are of no help
 
