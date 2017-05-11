@@ -19,7 +19,6 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Scope for [actor] coroutine builder.
@@ -109,7 +108,7 @@ private class LazyActorCoroutine<E>(
     override val channel: Channel<E> get() = this
 
     override fun onStart() {
-        block.startCoroutine(this, this)
+        block.startCoroutineCancellable(this, this)
     }
 
     suspend override fun send(element: E) {

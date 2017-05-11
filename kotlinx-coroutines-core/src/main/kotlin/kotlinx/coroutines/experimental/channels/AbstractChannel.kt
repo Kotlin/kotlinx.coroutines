@@ -170,7 +170,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
     }
 
-    private suspend fun sendSuspend(element: E): Unit = suspendCancellableCoroutine(true) sc@ { cont ->
+    private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
         val send = SendElement(element, cont)
         loop@ while (true) {
             if (enqueueSend(send)) {
@@ -425,7 +425,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun receiveSuspend(): E = suspendCancellableCoroutine(true) sc@ { cont ->
+    private suspend fun receiveSuspend(): E = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
         val receive = ReceiveElement(cont as CancellableContinuation<E?>, nullOnClose = false)
         while (true) {
             if (enqueueReceive(receive)) {
@@ -473,7 +473,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun receiveOrNullSuspend(): E? = suspendCancellableCoroutine(true) sc@ { cont ->
+    private suspend fun receiveOrNullSuspend(): E? = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
         val receive = ReceiveElement(cont, nullOnClose = true)
         while (true) {
             if (enqueueReceive(receive)) {
@@ -662,7 +662,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
             return true
         }
 
-        private suspend fun hasNextSuspend(): Boolean = suspendCancellableCoroutine(true) sc@ { cont ->
+        private suspend fun hasNextSuspend(): Boolean = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
             val receive = ReceiveHasNext(this, cont)
             while (true) {
                 if (channel.enqueueReceive(receive)) {
@@ -772,8 +772,11 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
             if (select.trySelect(idempotent = null)) {
                 if (closed.closeCause == null && nullOnClose) {
                     block.startCoroutine(null, select.completion)
-                } else
-                    select.resumeSelectWithException(closed.receiveException, MODE_DISPATCHED)
+                } else {
+                    // we are dispatching coroutine to process channel close on receive, which is an atomically
+                    // cancellable suspending function, so use an atomic (non-cancellable) resume mode
+                    select.resumeSelectWithException(closed.receiveException, MODE_ATOMIC_DEFAULT)
+                }
             }
         }
 

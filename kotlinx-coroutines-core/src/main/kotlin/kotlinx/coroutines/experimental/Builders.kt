@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
@@ -146,7 +145,7 @@ private class LazyStandaloneCoroutine(
     private val block: suspend CoroutineScope.() -> Unit
 ) : StandaloneCoroutine(parentContext, active = false) {
     override fun onStart() {
-        block.startCoroutine(this, this)
+        block.startCoroutineCancellable(this, this)
     }
 }
 
@@ -158,7 +157,7 @@ private class RunContinuationDirect<in T>(
 private class RunContinuationCoroutine<in T>(
     override val parentContext: CoroutineContext,
     continuation: Continuation<T>
-) : CancellableContinuationImpl<T>(continuation, active = true)
+) : CancellableContinuationImpl<T>(continuation, defaultResumeMode = MODE_CANCELLABLE, active = true)
 
 private class BlockingCoroutine<T>(
     override val parentContext: CoroutineContext,

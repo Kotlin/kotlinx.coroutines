@@ -16,8 +16,11 @@
 
 package kotlinx.coroutines.experimental.intrinsics
 
+import kotlinx.coroutines.experimental.resumeCancellable
 import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.experimental.createCoroutine
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
@@ -26,7 +29,7 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * @suppress **This is unstable API and it is subject to change.**
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-internal fun <R> (suspend () -> R).startCoroutineUndispatched(completion: Continuation<R>) {
+internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
     val value = try {
         startCoroutineUninterceptedOrReturn(completion)
     } catch (e: Throwable) {
@@ -34,7 +37,7 @@ internal fun <R> (suspend () -> R).startCoroutineUndispatched(completion: Contin
         return
     }
     if (value !== COROUTINE_SUSPENDED)
-        completion.resume(value as R)
+        completion.resume(value as T)
 }
 
 /**
@@ -43,13 +46,13 @@ internal fun <R> (suspend () -> R).startCoroutineUndispatched(completion: Contin
  * @suppress **This is unstable API and it is subject to change.**
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-internal fun <E, R> (suspend (E) -> R).startCoroutineUndispatched(element: E, completion: Continuation<R>) {
+internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     val value = try {
-        startCoroutineUninterceptedOrReturn(element, completion)
+        startCoroutineUninterceptedOrReturn(receiver, completion)
     } catch (e: Throwable) {
         completion.resumeWithException(e)
         return
     }
     if (value !== COROUTINE_SUSPENDED)
-        completion.resume(value as R)
+        completion.resume(value as T)
 }

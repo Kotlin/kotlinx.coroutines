@@ -25,7 +25,7 @@ class RunTest : TestBase() {
     fun testSameContextNoSuspend() = runBlocking<Unit> {
         expect(1)
         launch(context) { // make sure there is not early dispatch here
-            finish(5)
+            expectUnreached() // will terminate before it has a chance to start
         }
         expect(2)
         val result = run(context) { // same context!
@@ -33,7 +33,7 @@ class RunTest : TestBase() {
             "OK"
         }
         assertThat(result, IsEqual("OK"))
-        expect(4)
+        finish(4)
     }
 
     @Test
@@ -57,7 +57,7 @@ class RunTest : TestBase() {
     fun testCancelWithJobNoSuspend() = runBlocking<Unit> {
         expect(1)
         launch(context) { // make sure there is not early dispatch to here
-            finish(6)
+            expectUnreached() // will terminate before it has a chance to start
         }
         expect(2)
         val job = Job()
@@ -73,7 +73,7 @@ class RunTest : TestBase() {
             "OK"
         }
         assertThat(result, IsEqual("OK"))
-        expect(5)
+        finish(5)
     }
 
     @Test

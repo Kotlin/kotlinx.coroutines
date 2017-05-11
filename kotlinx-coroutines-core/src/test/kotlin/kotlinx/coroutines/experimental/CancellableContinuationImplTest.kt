@@ -34,7 +34,7 @@ class CancellableContinuationImplTest {
             }
             override fun resumeWithException(exception: Throwable) { error("Should not happen") }
         }
-        val c = CancellableContinuationImpl<String>(delegate, false)
+        val c = CancellableContinuationImpl<String>(delegate, defaultResumeMode = MODE_CANCELLABLE, active = false)
         check(!c.isSelected)
         check(!c.isActive)
         check(c.trySelect("SELECT"))
@@ -76,7 +76,7 @@ class CancellableContinuationImplTest {
                 resumed = true
             }
         }
-        val c = CancellableContinuationImpl<String>(delegate, false)
+        val c = CancellableContinuationImpl<String>(delegate, defaultResumeMode = MODE_CANCELLABLE, active = false)
         check(!c.isSelected)
         check(!c.isActive)
         check(c.trySelect("SELECT"))

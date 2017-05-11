@@ -25,7 +25,7 @@ class SelectJobTest : TestBase() {
     fun testSelectCompleted() = runBlocking<Unit> {
         expect(1)
         launch(context) { // makes sure we don't yield to it earlier
-            finish(4)
+            expectUnreached() // will terminate before it has a chance to start
         }
         val job = Job()
         job.cancel()
@@ -34,7 +34,7 @@ class SelectJobTest : TestBase() {
                 expect(2)
             }
         }
-        expect(3)
+        finish(3)
     }
 
     @Test

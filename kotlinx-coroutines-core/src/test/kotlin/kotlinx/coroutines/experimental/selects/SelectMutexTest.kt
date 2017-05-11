@@ -32,7 +32,7 @@ class SelectMutexTest : TestBase() {
         val mutex = Mutex()
         expect(1)
         launch(context) { // ensure that it is not scheduled earlier than needed
-            finish(4)
+            expectUnreached() // will terminate before it has a chance to start
         }
         val res = select<String> {
             mutex.onLock {
@@ -42,7 +42,7 @@ class SelectMutexTest : TestBase() {
             }
         }
         assertEquals("OK", res)
-        expect(3)
+        finish(3)
     }
 
     @Test

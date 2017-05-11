@@ -206,10 +206,11 @@ private open class DeferredCoroutine<T>(
     @Suppress("UNCHECKED_CAST")
     internal fun <R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R, state: Any? = this.state) {
         if (select.trySelect(idempotent = null)) {
+            // Note: await is non-atomic (can be cancelled while dispatched)
             if (state is CompletedExceptionally)
-                select.resumeSelectWithException(state.exception, MODE_DISPATCHED)
+                select.resumeSelectWithException(state.exception, MODE_CANCELLABLE)
             else
-                block.startCoroutine(state as T, select.completion)
+                block.startCoroutineCancellable(state as T, select.completion)
         }
     }
 
@@ -236,6 +237,6 @@ private class LazyDeferredCoroutine<T>(
     private val block: suspend CoroutineScope.() -> T
 ) : DeferredCoroutine<T>(parentContext, active = false) {
     override fun onStart() {
-        block.startCoroutine(this, this)
+        block.startCoroutineCancellable(this, this)
     }
 }

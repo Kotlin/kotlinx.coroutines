@@ -102,6 +102,28 @@ public abstract class CoroutineDispatcher :
 
 }
 
+// named class for ease of debugging, better stack-traces and optimize the number of anonymous classes
+internal class DispatchTask<in T>(
+    private val dispatched: DispatchedContinuation<T>,
+    private val value: Any?, // T | Throwable
+    private val exception: Boolean,
+    private val cancellable: Boolean
+) : Runnable {
+    @Suppress("UNCHECKED_CAST")
+    override fun run() {
+        val job = if (cancellable) dispatched.context[Job] else null
+        when {
+            job != null && job.isCompleted ->
+                dispatched.resumeUndispatchedWithException(job.getCompletionException())
+            exception -> dispatched.resumeUndispatchedWithException(value as Throwable)
+            else -> dispatched.resumeUndispatched(value as T)
+        }
+    }
+
+    override fun toString(): String =
+        "DispatchTask[$value, cancellable=$cancellable, $dispatched]"
+}
+
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
@@ -109,11 +131,35 @@ internal class DispatchedContinuation<in T>(
     override fun resume(value: T) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, Runnable {
-                resumeUndispatched(value)
-            })
+            dispatcher.dispatch(context, DispatchTask(this, value, exception = false, cancellable = false))
         else
             resumeUndispatched(value)
+    }
+
+    override fun resumeWithException(exception: Throwable) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, DispatchTask(this, exception, exception = true, cancellable = false))
+        else
+            resumeUndispatchedWithException(exception)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    inline fun resumeCancellable(value: T) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, DispatchTask(this, value, exception = false, cancellable = true))
+        else
+            resumeUndispatched(value)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    inline fun resumeCancellableWithException(exception: Throwable) {
+        val context = continuation.context
+        if (dispatcher.isDispatchNeeded(context))
+            dispatcher.dispatch(context, DispatchTask(this, exception, exception = true, cancellable = true))
+        else
+            resumeUndispatchedWithException(exception)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
@@ -121,16 +167,6 @@ internal class DispatchedContinuation<in T>(
         withCoroutineContext(context) {
             continuation.resume(value)
         }
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, Runnable {
-                resumeUndispatchedWithException(exception)
-            })
-        else
-            resumeUndispatchedWithException(exception)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
@@ -152,6 +188,18 @@ internal class DispatchedContinuation<in T>(
             }
         })
     }
+
+    override fun toString(): String = "DispatchedContinuation[$dispatcher, $continuation]"
+}
+
+internal fun <T> Continuation<T>.resumeCancellable(value: T) = when (this) {
+    is DispatchedContinuation -> resumeCancellable(value)
+    else -> resume(value)
+}
+
+internal fun <T> Continuation<T>.resumeCancellableWithException(exception: Throwable) = when (this) {
+    is DispatchedContinuation -> resumeCancellableWithException(exception)
+    else -> resumeWithException(exception)
 }
 
 internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {

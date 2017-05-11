@@ -62,8 +62,12 @@ public interface Mutex {
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
-     * Cancellation of suspended lock invocation is *atomic* -- when this function
+     *
+     * *Cancellation of suspended lock invocation is atomic* -- when this function
      * throws [CancellationException] it means that the mutex was not locked.
+     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+     * continue to execute even after it was cancelled from the same thread in the case when this lock operation
+     * was already resumed and the continuation was posted for execution to the thread's queue.
      *
      * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -198,7 +202,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         return lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutine<Unit>(holdCancellability = true) sc@ { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutine<Unit>(holdCancellability = true) sc@ { cont ->
         val waiter = LockCont(owner, cont)
         while (true) { // lock-free loop on state
             val state = this._state
@@ -220,7 +224,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                     check(curOwner !== owner) { "Already locked by $owner" }
                     if (state.addLastIf(waiter, { this._state === state })) {
                         // added to waiter list!
-                        cont.initCancellability()
+                        cont.initCancellability() // make it properly cancellable
                         cont.removeOnCancel(waiter)
                         return@sc
                     }

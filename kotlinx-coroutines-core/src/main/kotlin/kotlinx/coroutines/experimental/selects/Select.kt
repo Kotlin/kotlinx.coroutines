@@ -160,8 +160,14 @@ public interface SelectInstance<in R> {
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
- * Cancellation of suspended select is *atomic* -- when this function
- * throws [CancellationException] it means that no clause was selected.
+ *
+ * Atomicity of cancellation depends on the clause: [onSend][SelectBuilder.onSend], [onReceive][SelectBuilder.onReceive],
+ * [onReceiveOrNull][SelectBuilder.onReceiveOrNull], and [onLock][SelectBuilder.onLock] clauses are
+ * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
+ * their respective operations.
+ * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+ * continue to execute even after it was cancelled from the same thread in the case when this select operation
+ * was already resumed on atomically cancellable clause and the continuation was posted for execution to the thread's queue.
  *
  * Note, that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
@@ -185,7 +191,9 @@ public inline suspend fun <R> select(crossinline builder: SelectBuilder<R>.() ->
 @PublishedApi
 internal class SelectBuilderImpl<in R>(
     delegate: Continuation<R>
-) : CancellableContinuationImpl<R>(delegate, active = false), SelectBuilder<R>, SelectInstance<R> {
+) : CancellableContinuationImpl<R>(delegate, defaultResumeMode = MODE_DIRECT, active = false),
+    SelectBuilder<R>, SelectInstance<R>
+{
     @PublishedApi
     internal fun handleBuilderException(e: Throwable) {
         if (trySelect(idempotent = null)) {
@@ -213,10 +221,8 @@ internal class SelectBuilderImpl<in R>(
            points.
          */
         if (trySelect(null))
-            cancel(cause)
+            super.onParentCompletion(cause)
     }
-
-    override val defaultResumeMode get() = MODE_DIRECT // all resumes through completion are dispatched directly
 
     override val completion: Continuation<R> get() {
         check(isSelected) { "Must be selected first" }
@@ -263,7 +269,7 @@ internal class SelectBuilderImpl<in R>(
             // todo: we could have replaced startCoroutine with startCoroutineUndispatched
             // But we need a way to know that Delay.invokeOnTimeout had used the right thread
             if (trySelect(idempotent = null))
-                block.startCoroutine(completion)
+                block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
         val delay = context[ContinuationInterceptor] as? Delay
         if (delay != null)

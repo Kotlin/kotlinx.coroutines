@@ -67,7 +67,7 @@ public abstract class AbstractCoroutine<in T>(
 
     protected open fun createContext() = parentContext + this
 
-    protected open val defaultResumeMode: Int get() = MODE_DISPATCHED
+    protected open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
 
     protected open val ignoreRepeatedResume: Boolean get() = false
 

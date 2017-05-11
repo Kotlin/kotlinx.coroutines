@@ -20,8 +20,10 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.createCoroutine
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.intrinsics.createCoroutineUnchecked
 import kotlin.coroutines.experimental.suspendCoroutine
 
 // --------------- cancellable continuations ---------------
@@ -111,23 +113,43 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
 }
 
 /**
- * Suspend coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
+ * Suspends coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
  * the [block]. This function throws [CancellationException] if the coroutine is cancelled while suspended.
  *
  * If [holdCancellability] optional parameter is `true`, then the coroutine is suspended, but it is not
  * cancellable until [CancellableContinuation.initCancellability] is invoked.
+ *
+ * See [suspendAtomicCancellableCoroutine] for suspending functions that need *atomic cancellation*.
  */
 public inline suspend fun <T> suspendCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, active = true)
+        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_CANCELLABLE, active = true)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
     }
 
+/**
+ * Suspends coroutine similar to [suspendCancellableCoroutine], but with *atomic cancellation*.
+ *
+ * When suspended function throws [CancellationException] it means that the continuation was not resumed.
+ * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+ * continue to execute even after it was cancelled from the same thread in the case when the continuation
+ * was already resumed and was posted for execution to the thread's queue.
+ */
+public inline suspend fun <T> suspendAtomicCancellableCoroutine(
+    holdCancellability: Boolean = false,
+    crossinline block: (CancellableContinuation<T>) -> Unit
+): T =
+    suspendCoroutineOrReturn { cont ->
+        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_ATOMIC_DEFAULT, active = true)
+        if (!holdCancellability) cancellable.initCancellability()
+        block(cancellable)
+        cancellable.getResult()
+    }
 
 /**
  * Removes a given node on cancellation.
@@ -149,14 +171,16 @@ private class RemoveOnCancel(
     override fun toString() = "RemoveOnCancel[$node]"
 }
 
-internal const val MODE_DISPATCHED = 0
-internal const val MODE_UNDISPATCHED = 1
-internal const val MODE_DIRECT = 2
+@PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
+@PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
+@PublishedApi internal const val MODE_DIRECT = 2         // when the context is right just invoke the delegate continuation direct
+@PublishedApi internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
 
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
     @JvmField
     protected val delegate: Continuation<T>,
+    override val defaultResumeMode: Int,
     active: Boolean
 ) : AbstractCoroutine<T>(active), CancellableContinuation<T> {
     @Volatile
@@ -239,17 +263,19 @@ internal open class CancellableContinuationImpl<in T>(
         if (state is CompletedExceptionally) {
             val exception = state.exception
             when (mode) {
-                MODE_DISPATCHED -> delegate.resumeWithException(exception)
-                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWithException(exception)
+                MODE_ATOMIC_DEFAULT -> delegate.resumeWithException(exception)
+                MODE_CANCELLABLE -> delegate.resumeCancellableWithException(exception)
                 MODE_DIRECT -> delegate.resumeDirectWithException(exception)
+                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWithException(exception)
                 else -> error("Invalid mode $mode")
             }
         } else {
             val value = getSuccessfulResult<T>(state)
             when (mode) {
-                MODE_DISPATCHED -> delegate.resume(value)
-                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatched(value)
+                MODE_ATOMIC_DEFAULT -> delegate.resume(value)
+                MODE_CANCELLABLE -> delegate.resumeCancellable(value)
                 MODE_DIRECT -> delegate.resumeDirect(value)
+                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatched(value)
                 else -> error("Invalid mode $mode")
             }
         }

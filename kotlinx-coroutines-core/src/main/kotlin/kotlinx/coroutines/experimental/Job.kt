@@ -352,7 +352,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         if (isCompleted) newRegistration.dispose()
     }
 
-    internal open fun onParentCompletion(cause: Throwable?) {
+    /**
+     * Invoked at most once on parent completion.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    protected open fun onParentCompletion(cause: Throwable?) {
         // if parent was completed with CancellationException then use it as the cause of our cancellation, too.
         // however, we shall not use application specific exceptions here. So if parent crashes due to IOException,
         // we cannot and should not cancel the child with IOException
@@ -657,7 +661,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     final override fun cancel(cause: Throwable?): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state as? Incomplete ?: return false // quit if already complete
-            if (updateState(state, Cancelled(state.idempotentStart, cause), mode = 0)) return true
+            // we are dispatching coroutine to process its cancellation exception, so there is no need for
+            // an extra check for Job status in MODE_CANCELLABLE
+            if (updateState(state, Cancelled(state.idempotentStart, cause), mode = MODE_ATOMIC_DEFAULT)) return true
         }
     }
 
@@ -670,6 +676,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     /**
      * Override for post-completion actions that need to do something with the state.
+     * @param mode completion mode.
      */
     protected open fun afterCompletion(state: Any?, mode: Int) {}
 
@@ -766,6 +773,14 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         idempotentStart: Any?,
         cause: Throwable?
     ) : CompletedExceptionally(idempotentStart, cause)
+
+    private class ParentOnCompletion(
+        parentJob: Job,
+        private val subordinateJob: JobSupport
+    ) : JobNode<Job>(parentJob) {
+        override fun invoke(reason: Throwable?) { subordinateJob.onParentCompletion(reason) }
+        override fun toString(): String = "ParentOnCompletion[$subordinateJob]"
+    }
 }
 
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
@@ -791,7 +806,7 @@ internal abstract class JobNode<out J : Job>(
 
 private class InvokeOnCompletion(
     job: Job,
-    @JvmField val handler: CompletionHandler
+    private val handler: CompletionHandler
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = handler.invoke(reason)
     override fun toString() = "InvokeOnCompletion[${handler::class.java.name}@${Integer.toHexString(System.identityHashCode(handler))}]"
@@ -799,7 +814,7 @@ private class InvokeOnCompletion(
 
 private class ResumeOnCompletion(
     job: Job,
-    @JvmField val continuation: Continuation<Unit>
+    private val continuation: Continuation<Unit>
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) = continuation.resume(Unit)
     override fun toString() = "ResumeOnCompletion[$continuation]"
@@ -807,23 +822,15 @@ private class ResumeOnCompletion(
 
 internal class DisposeOnCompletion(
     job: Job,
-    @JvmField val handle: DisposableHandle
+    private val handle: DisposableHandle
 ) : JobNode<Job>(job) {
     override fun invoke(reason: Throwable?) = handle.dispose()
     override fun toString(): String = "DisposeOnCompletion[$handle]"
 }
 
-private class ParentOnCompletion(
-    parentJob: Job,
-    @JvmField val subordinateJob: JobSupport
-) : JobNode<Job>(parentJob) {
-    override fun invoke(reason: Throwable?) { subordinateJob.onParentCompletion(reason) }
-    override fun toString(): String = "ParentOnCompletion[$subordinateJob]"
-}
-
 private class CancelFutureOnCompletion(
     job: Job,
-    @JvmField val future: Future<*>
+    private val future: Future<*>
 ) : JobNode<Job>(job)  {
     override fun invoke(reason: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
@@ -840,7 +847,7 @@ private class SelectJoinOnCompletion<R>(
 ) : JobNode<JobSupport>(job) {
     override fun invoke(reason: Throwable?) {
         if (select.trySelect(idempotent = null))
-            block.startCoroutine(select.completion)
+            block.startCoroutineCancellable(select.completion)
     }
     override fun toString(): String = "SelectJoinOnCompletion[$select]"
 }
