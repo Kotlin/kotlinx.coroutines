@@ -243,22 +243,22 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
         public const val CONFLATED = -1
 
         /**
-         * Creates a channel with specified buffer capacity (or without a buffer by default).
+         * Creates a channel with the specified buffer capacity (or without a buffer by default).
          *
          * The resulting channel type depends on the specified [capacity] parameter:
-         * * when `capacity` is 0 -- creates [RendezvousChannel] without a buffer;
+         * * when `capacity` is 0 (default) -- creates [RendezvousChannel] without a buffer;
          * * when `capacity` is [UNLIMITED] -- creates [LinkedListChannel] with buffer of unlimited size;
          * * when `capacity` is [CONFLATED] -- creates [ConflatedChannel] that conflates back-to-back sends;
-         * * otherwise -- creates [ArrayChannel] with a buffer of the specified `capacity`.
+         * * when `capacity` is positive, but less than [UNLIMITED] -- creates [ArrayChannel] with a buffer of the specified `capacity`;
+         * * otherwise -- throws [IllegalArgumentException].
          */
-        public operator fun <E> invoke(capacity: Int = 0): Channel<E> {
-            return when (capacity) {
+        public operator fun <E> invoke(capacity: Int = 0): Channel<E> =
+            when (capacity) {
                 0 -> RendezvousChannel()
                 UNLIMITED -> LinkedListChannel()
                 CONFLATED -> ConflatedChannel()
                 else -> ArrayChannel(capacity)
             }
-        }
     }
 }
 

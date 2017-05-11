@@ -41,7 +41,7 @@ class ArrayBroadcastChannel<E>(
     val capacity: Int
 ) : AbstractSendChannel<E>(), BroadcastChannel<E> {
     init {
-        check(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
+        require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }
 
     private val bufferLock = ReentrantLock()

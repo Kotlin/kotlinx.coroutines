@@ -16,14 +16,40 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
 import java.io.Closeable
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
  * that subscribe for the elements using [open] function and unsubscribe using [SubscriptionReceiveChannel.close]
  * function.
+ *
+ * See [BroadcastChannel()][BroadcastChannel.invoke] factory function for the description of available
+ * broadcast channel implementations.
  */
 public interface BroadcastChannel<E> : SendChannel<E> {
+    /**
+     * Factory for broadcast channels.
+     */
+    public companion object Factory {
+        /**
+         * Creates a broadcast channel with the specified buffer capacity.
+         *
+         * The resulting channel type depends on the specified [capacity] parameter:
+         * * when `capacity` positive, but less than [UNLIMITED] -- creates [ArrayBroadcastChannel];
+         * * when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
+         * * otherwise -- throws [IllegalArgumentException].
+         */
+        public operator fun <E> invoke(capacity: Int): BroadcastChannel<E> =
+            when (capacity) {
+                0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")
+                UNLIMITED -> throw IllegalArgumentException("Unsupported UNLIMITED capacity for BroadcastChannel")
+                CONFLATED -> ConflatedBroadcastChannel()
+                else -> ArrayBroadcastChannel(capacity)
+            }
+    }
+
     /**
      * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.
      * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this

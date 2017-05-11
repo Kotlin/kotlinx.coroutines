@@ -35,7 +35,7 @@ public open class ArrayChannel<E>(
     val capacity: Int
 ) : AbstractChannel<E>() {
     init {
-        check(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
+        require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }
 
     private val lock = ReentrantLock()
