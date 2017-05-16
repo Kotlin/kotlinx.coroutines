@@ -24,10 +24,16 @@ import kotlin.coroutines.experimental.startCoroutine
  * Defines start option for coroutines builders.
  * It is used in `start` parameter of [launch], [async], and [actor][kotlinx.coroutines.experimental.channels.actor]
  * coroutine builder functions.
+ *
+ * The summary of coroutine start options is:
+ * * [DEFAULT] -- immediately schedules coroutine for execution according to its context;
+ * * [LAZY] -- starts coroutine lazily, only when it is needed;
+ * * [ATOMIC] -- atomically (non-cancellably) schedules coroutine for execution according to its context;
+ * * [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
  */
 public enum class CoroutineStart {
     /**
-     * Default -- schedules coroutine for execution according to its context.
+     * Default -- immediately schedules coroutine for execution according to its context.
      *
      * If the [CoroutineDispatcher] of the coroutine context returns `true` from [CoroutineDispatcher.isDispatchNeeded]
      * function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
@@ -56,8 +62,8 @@ public enum class CoroutineStart {
     LAZY,
 
     /**
-     * Atomically schedules coroutines for execution according to its context. This is similar to [DEFAULT],
-     * but the coroutine cannot be cancelled before it starts executing.
+     * Atomically (non-cancellably) schedules coroutine for execution according to its context.
+     * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
@@ -72,7 +78,7 @@ public enum class CoroutineStart {
     UNDISPATCHED;
 
     /**
-     * Starts the corresponding block as a coroutine with this coroutine start strategy.
+     * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
      *
      * * [DEFAULT] uses [startCoroutineCancellable].
      * * [ATOMIC] uses [startCoroutine].
