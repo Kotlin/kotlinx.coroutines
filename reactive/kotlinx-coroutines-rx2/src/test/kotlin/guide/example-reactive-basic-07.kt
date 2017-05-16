@@ -18,6 +18,7 @@
 package guide.reactive.basic.example07
 
 import io.reactivex.subjects.BehaviorSubject
+import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.rx2.consumeEach
@@ -27,7 +28,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print everything
-    launch(context) { // use the context of the main thread for a coroutine
+    launch(Unconfined) { // launch coroutine in unconfined context
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")

@@ -27,11 +27,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")
-    // now launch a coroutine to print everything
+    // now launch a coroutine to print the most recent update
     launch(context) { // use the context of the main thread for a coroutine
         broadcast.consumeEach { println(it) }
     }
     broadcast.offer("three")
-    yield() // yield the main thread to the launched coroutine
     broadcast.offer("four")
+    yield() // yield the main thread to the launched coroutine
 }

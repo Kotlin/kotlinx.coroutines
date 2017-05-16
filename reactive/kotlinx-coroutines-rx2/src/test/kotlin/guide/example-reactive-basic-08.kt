@@ -27,11 +27,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")
-    // now launch a coroutine to print everything
+    // now launch a coroutine to print the most recent update
     launch(context) { // use the context of the main thread for a coroutine
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
-    yield() // yield the main thread to the launched coroutine <--- HERE
     subject.onNext("four")
+    yield() // yield the main thread to the launched coroutine <--- HERE
 }

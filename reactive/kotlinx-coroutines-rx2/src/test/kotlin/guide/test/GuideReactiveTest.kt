@@ -82,6 +82,8 @@ class GuideReactiveTest {
     @Test
     fun testGuideReactiveBasicExample07() {
         test { guide.reactive.basic.example07.main(emptyArray()) }.verifyLines(
+            "two",
+            "three",
             "four"
         )
     }
@@ -89,7 +91,6 @@ class GuideReactiveTest {
     @Test
     fun testGuideReactiveBasicExample08() {
         test { guide.reactive.basic.example08.main(emptyArray()) }.verifyLines(
-            "three",
             "four"
         )
     }
@@ -97,7 +98,6 @@ class GuideReactiveTest {
     @Test
     fun testGuideReactiveBasicExample09() {
         test { guide.reactive.basic.example09.main(emptyArray()) }.verifyLines(
-            "three",
             "four"
         )
     }

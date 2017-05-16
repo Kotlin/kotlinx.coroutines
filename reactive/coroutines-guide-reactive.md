@@ -419,6 +419,7 @@ You can subscribe to subjects from a coroutine just as with any other reactive s
    
 <!--- INCLUDE 
 import io.reactivex.subjects.BehaviorSubject
+import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.rx2.consumeEach
@@ -430,7 +431,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print everything
-    launch(context) { // use the context of the main thread for a coroutine
+    launch(Unconfined) { // launch coroutine in unconfined context
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
@@ -440,20 +441,26 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-07.kt)
 
-The result is different, though:
+The result the same:
 
 ```text
+two
+three
 four
 ```
 
 <!--- TEST -->
 
-It prints only the value value, because the coroutine is working in the main thread, which is busy updating the
-subject value. Only when the main thread completes, the subscribing coroutine has a change to print anything. By that
-time, the subject had already updated its value to "four".
+Here we use [Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
+It basically means that the launched coroutine is going to be immediately executed in the same thread that 
+is emitting elements. Contexts are covered in more details in a [separate section](#coroutine-context).
 
-The coroutines in the main thread are scheduled cooperatively. There is a [yield] function to explicitly relinquish
-the control of the thread to other coroutines. We can add it to the last example:
+The advantage of coroutines is that it is easy to get conflation behavior for single-threaded UI updates. 
+A typical UI application does not need to react to every state change. Only the most recent state is relevant.
+A sequence of back-to-back updates to the application state needs to get reflected in UI only once, 
+as soon as the UI thread is free. For the following example we are going to simulate this by launching 
+consuming coroutine in the context of the main thread and use [yield] function to simulate a break in the 
+sequence of updates and to release the main thread:
 
 <!--- INCLUDE
 import io.reactivex.subjects.BehaviorSubject
@@ -468,33 +475,29 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")
-    // now launch a coroutine to print everything
+    // now launch a coroutine to print the most recent update
     launch(context) { // use the context of the main thread for a coroutine
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
-    yield() // yield the main thread to the launched coroutine <--- HERE
     subject.onNext("four")
+    yield() // yield the main thread to the launched coroutine <--- HERE
 }
 ```
 
 > You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-08.kt)
 
-Now coroutine has a chance to process (print) the "three" state of the subject, too:
+Now coroutine process (prints) only the most recent update:
 
 ```text
-three
 four
 ```
 
 <!--- TEST -->
 
-This is quite the desired behavior for any kind of state-holding variable that needs to processed to update UI or
-other linked state, for example. There is no reason to react to back-to-back updates of the state. 
-Only the most recent state is relevant.
-
-The corresponding behavior in coroutines world is implemented by [ConflatedBroadcastChannel] that provides the same logic
-on top of coroutine channels directly, without going through the bridge to the reactive streams:
+The corresponding behavior in a pure coroutines world is implemented by [ConflatedBroadcastChannel] 
+that provides the same logic on top of coroutine channels directly, 
+without going through the bridge to the reactive streams:
 
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -509,32 +512,31 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")
-    // now launch a coroutine to print everything
+    // now launch a coroutine to print the most recent update
     launch(context) { // use the context of the main thread for a coroutine
         broadcast.consumeEach { println(it) }
     }
     broadcast.offer("three")
-    yield() // yield the main thread to the launched coroutine
     broadcast.offer("four")
+    yield() // yield the main thread to the launched coroutine
 }
 ```
 
 > You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-09.kt)
 
-It produces the same output as the version based on `BehaviorSubject`:
+It produces the same output as the previous example based on `BehaviorSubject`:
 
 ```text
-three
 four
 ```
+
+<!--- TEST -->
 
 Another implementation of [BroadcastChannel] is [ArrayBroadcastChannel]. It delivers every event to every
 subscriber since the moment the corresponding subscription is open. It corresponds to 
 [PublishSubject][http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html] in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
 that can be sent before the sender is suspended waiting for receiver to receive those elements.
-
-<!--- TEST -->
 
 ## Operators
 
@@ -1046,11 +1048,11 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
+[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
 [CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
-[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
