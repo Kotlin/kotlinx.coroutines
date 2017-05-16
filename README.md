@@ -4,11 +4,9 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 ## Modules
 
-Basic modules:
+Core module:
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core) -- core primitives to work with coroutines. 
-* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8) -- additional libraries for JDK8 (or Android API level 24).
-* [kotlinx-coroutines-nio](kotlinx-coroutines-nio) -- extensions for asynchronous IO on JDK7+.
+* [kotlinx-coroutines-core](kotlinx-coroutines-core) -- core primitives to work with coroutines.
 
 Modules that provide builders and iteration support for various reactive streams libraries:
 
@@ -22,7 +20,12 @@ Modules that provide coroutine dispatchers for various single-threaded UI librar
 * [kotlinx-coroutines-android](ui/kotlinx-coroutines-android) -- `UI` context for Android applications.
 * [kotlinx-coroutines-javafx](ui/kotlinx-coroutines-javafx) -- `JavaFx` context for JavaFX UI applications.
 * [kotlinx-coroutines-swing](ui/kotlinx-coroutines-swing) -- `Swing` context for Swing UI applications.
+
+Modules that provide integration with various asynchronous callback- and future-based libraries:
  
+* [kotlinx-coroutines-jdk8](integration/kotlinx-coroutines-jdk8) -- extensions for JDK8 `CompletableFuture` (Android API level 24).
+* [kotlinx-coroutines-nio](integration/kotlinx-coroutines-nio) -- extensions for asynchronous IO on JDK7+ (Android O Preview).
+
 ## Documentation
 
 * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)

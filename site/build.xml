@@ -19,8 +19,8 @@
         <copy todir="target">
             <fileset dir="docs"/>
             <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
-            <fileset dir="../kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
-            <fileset dir="../kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
+            <fileset dir="../integration/kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
+            <fileset dir="../integration/kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-reactive/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-rx1/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-rx2/target/dokka" includes="**/*.md"/>
