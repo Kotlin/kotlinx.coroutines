@@ -19,9 +19,9 @@ package kotlinx.coroutines.experimental.future
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.function.BiConsumer
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
 import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
@@ -29,21 +29,45 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * This coroutine builder uses [CommonPool] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
- * If the [context] for the new coroutine is explicitly specified, then it must include [CoroutineDispatcher] element.
+ * If the [context] for the new coroutine is explicitly specified and does not include a coroutine interceptor,
+ * then [CoroutineDispatcher] element.
  * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
  * The specified context is added to the context of the parent running coroutine (if any) inside which this function
  * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
  *
+ * By default, the coroutine is immediately scheduled for execution.
+ * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
+ * A value of [CoroutineStart.LAZY] is not supported
+ * (since `ListenableFuture` framework does not provide the corresponding capability) and
+ * produces [IllegalArgumentException].
+ *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ *
+ * @param context context of the coroutine
+ * @param start coroutine start option
+ * @param block the coroutine code
  */
-public fun <T> future(context: CoroutineContext = CommonPool, block: suspend () -> T): CompletableFuture<T> {
+public fun <T> future(
+    context: CoroutineContext = CommonPool,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): CompletableFuture<T> {
+    require(!start.isLazy) { "$start start is not supported" }
     val newContext = newCoroutineContext(CommonPool + context)
     val job = Job(newContext[Job])
     val future = CompletableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
     future.whenComplete { _, exception -> job.cancel(exception) }
-    block.startCoroutine(future)
+    start(block, receiver=future, completion=future)
     return future
+}
+
+private class CompletableFutureCoroutine<T>(
+    override val context: CoroutineContext
+) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
+    override val isActive: Boolean get() = context[Job]!!.isActive
+    override fun resume(value: T) { complete(value) }
+    override fun resumeWithException(exception: Throwable) { completeExceptionally(exception) }
 }
 
 /**
@@ -70,12 +94,7 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
  * Use `CompletableFuture.await()` for cancellation support.
  */
 public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: Continuation<T> ->
-    whenComplete { result, exception ->
-        if (exception == null) // the stage has been completed normally
-            cont.resume(result)
-        else // the stage has completed with an exception
-            cont.resumeWithException(exception)
-    }
+    whenComplete(ContinuationConsumer(cont))
 }
 
 /**
@@ -83,7 +102,7 @@ public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: 
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
- * cancels the `CompletableFuture` and immediately resumes with [CancellationException] .
+ * stops waiting for the future and immediately resumes with [CancellationException].
  */
 public suspend fun <T> CompletableFuture<T>.await(): T {
     if (isDone) { // fast path when CompletableFuture is already done (does not suspend)
@@ -99,21 +118,25 @@ public suspend fun <T> CompletableFuture<T>.await(): T {
     }
     // slow path -- suspend
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-        val completionFuture = whenComplete { result, exception ->
-            if (exception == null) // the future has been completed normally
-                cont.resume(result)
-            else // the future has completed with an exception
-                cont.resumeWithException(exception)
+        val consumer = ContinuationConsumer(cont)
+        val completionFuture = whenComplete(consumer)
+        cont.invokeOnCompletion {
+            completionFuture.cancel(false) // cancel future
+            consumer.cont = null // shall clear reference to continuation, because CompletableFuture continues to keep it
         }
-        cont.cancelFutureOnCompletion(completionFuture)
     }
 }
 
-private class CompletableFutureCoroutine<T>(
-    override val context: CoroutineContext
-) : CompletableFuture<T>(), Continuation<T> {
-    override fun resume(value: T) { complete(value) }
-    override fun resumeWithException(exception: Throwable) { completeExceptionally(exception) }
+private class ContinuationConsumer<T>(
+    @JvmField var cont: Continuation<T>?
+) : BiConsumer<T?, Throwable?> {
+    override fun accept(result: T?, exception: Throwable?) {
+        val cont = this.cont ?: return // atomically read current value unless null, benign data race when it is set to null
+        if (exception == null) // the future has been completed normally
+            cont.resume(result as T)
+        else // the future has completed with an exception
+            cont.resumeWithException(exception)
+    }
 }
 
 // --------------------------------------- DEPRECATED APIs ---------------------------------------
@@ -128,3 +151,9 @@ private class CompletableFutureCoroutine<T>(
 @Deprecated("Renamed to `asCompletableFuture`",
     replaceWith = ReplaceWith("asCompletableFuture()"))
 public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
+
+@Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
+public fun <T> future(
+    context: CoroutineContext = CommonPool,
+    block: suspend () -> T
+): CompletableFuture<T> = future(context=context) { block() }
