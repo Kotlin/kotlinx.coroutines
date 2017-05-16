@@ -22,8 +22,6 @@ import kotlin.coroutines.experimental.intrinsics.createCoroutineUnchecked
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
- *
- * @suppress **This is unstable API and it is subject to change.**
  */
 internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) =
     createCoroutineUnchecked(completion).resumeCancellable(Unit)
@@ -31,8 +29,6 @@ internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continu
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
- *
- * @suppress **This is unstable API and it is subject to change.**
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
     createCoroutineUnchecked(receiver, completion).resumeCancellable(Unit)
