@@ -4,27 +4,19 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 ## Modules
 
-Core module:
-
-* [kotlinx-coroutines-core](kotlinx-coroutines-core) -- core primitives to work with coroutines.
-
-Modules that provide builders and iteration support for various reactive streams libraries:
-
-* [kotlinx-coroutines-reactive](reactive/kotlinx-coroutines-reactive) -- utilities for [Reactive Streams](http://www.reactive-streams.org)
-* [kotlinx-coroutines-reactor](reactive/kotlinx-coroutines-reactor) -- utilities for [Reactor](https://projectreactor.io)
-* [kotlinx-coroutines-rx1](reactive/kotlinx-coroutines-rx1) -- utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)
-* [kotlinx-coroutines-rx2](reactive/kotlinx-coroutines-rx2) -- utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava)
-
-Modules that provide coroutine dispatchers for various single-threaded UI libraries:
-
-* [kotlinx-coroutines-android](ui/kotlinx-coroutines-android) -- `UI` context for Android applications.
-* [kotlinx-coroutines-javafx](ui/kotlinx-coroutines-javafx) -- `JavaFx` context for JavaFX UI applications.
-* [kotlinx-coroutines-swing](ui/kotlinx-coroutines-swing) -- `Swing` context for Swing UI applications.
-
-Modules that provide integration with various asynchronous callback- and future-based libraries:
- 
-* [kotlinx-coroutines-jdk8](integration/kotlinx-coroutines-jdk8) -- extensions for JDK8 `CompletableFuture` (Android API level 24).
-* [kotlinx-coroutines-nio](integration/kotlinx-coroutines-nio) -- extensions for asynchronous IO on JDK7+ (Android O Preview).
+* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) -- core primitives to work with coroutines:
+  * `launch`, `async`, `produce`, `actor`, etc coroutine builders;
+  * `Job` and `Deferred` light-weight future with cancellation support;
+  * `CommonPool` and other coroutine contexts;
+  * `Channel` and `Mutex` communication and synchronization primitives;
+  * `delay`, `yield`, etc top-level suspending functions;
+  * `select` expression support and more.
+* [reactive](reactive/README.md) -- modules that provide builders and iteration support for various reactive streams libraries:
+  * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
+* [ui](ui/README.md) -- modules that provide coroutine dispatchers for various single-threaded UI libraries:
+  * Android, JavaFx, and Swing.
+* [integration](integration/README.md) -- modules that provide integration with various asynchronous callback- and future-based libraries.
+  * `CompletableFuture` and synchronous networking/IO.
 
 ## Documentation
 
