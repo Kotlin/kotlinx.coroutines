@@ -18,9 +18,11 @@ package kotlinx.coroutines.experimental.future
 
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
  * Starts new coroutine and returns its results an an implementation of [CompletableFuture].
@@ -44,16 +46,6 @@ public fun <T> future(context: CoroutineContext = CommonPool, block: suspend () 
     return future
 }
 
-
-/**
- * Converts this deferred value to the instance of [CompletableFuture].
- * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
- * @suppress: **Deprecated**: Renamed to [asCompletableFuture]
- */
-@Deprecated("Renamed to `asCompletableFuture`",
-    replaceWith = ReplaceWith("asCompletableFuture()"))
-public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
-
 /**
  * Converts this deferred value to the instance of [CompletableFuture].
  * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
@@ -72,15 +64,30 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
 }
 
 /**
+ * Awaits for completion of the completion stage without blocking a thread.
+ *
+ * This suspending function is not cancellable, because there is no way to cancel a `CompletionStage`.
+ * Use `CompletableFuture.await()` for cancellation support.
+ */
+public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: Continuation<T> ->
+    whenComplete { result, exception ->
+        if (exception == null) // the stage has been completed normally
+            cont.resume(result)
+        else // the stage has completed with an exception
+            cont.resumeWithException(exception)
+    }
+}
+
+/**
  * Awaits for completion of the future without blocking a thread.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException] .
+ * cancels the `CompletableFuture` and immediately resumes with [CancellationException] .
  */
 public suspend fun <T> CompletableFuture<T>.await(): T {
-    if (isDone) {
-        // then only way to get unwrapped exception from the CompletableFuture...
+    if (isDone) { // fast path when CompletableFuture is already done (does not suspend)
+        // then only way to get unwrapped exception from the CompletableFuture is via whenComplete anyway
         var result: T? = null
         var exception: Throwable? = null
         whenComplete { r, e ->
@@ -90,6 +97,7 @@ public suspend fun <T> CompletableFuture<T>.await(): T {
         if (exception != null) throw exception!!
         return result as T
     }
+    // slow path -- suspend
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val completionFuture = whenComplete { result, exception ->
             if (exception == null) // the future has been completed normally
@@ -98,7 +106,6 @@ public suspend fun <T> CompletableFuture<T>.await(): T {
                 cont.resumeWithException(exception)
         }
         cont.cancelFutureOnCompletion(completionFuture)
-        Unit
     }
 }
 
@@ -108,3 +115,16 @@ private class CompletableFutureCoroutine<T>(
     override fun resume(value: T) { complete(value) }
     override fun resumeWithException(exception: Throwable) { completeExceptionally(exception) }
 }
+
+// --------------------------------------- DEPRECATED APIs ---------------------------------------
+// We keep it only for backwards compatibility with old versions of this integration library.
+// Do not copy when using this file an example for other integration.
+
+/**
+ * Converts this deferred value to the instance of [CompletableFuture].
+ * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
+ * @suppress: **Deprecated**: Renamed to [asCompletableFuture]
+ */
+@Deprecated("Renamed to `asCompletableFuture`",
+    replaceWith = ReplaceWith("asCompletableFuture()"))
+public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()

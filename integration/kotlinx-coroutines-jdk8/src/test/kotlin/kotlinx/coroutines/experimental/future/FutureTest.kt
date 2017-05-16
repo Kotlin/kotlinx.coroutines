@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
 import org.junit.Assert.*
+import java.util.concurrent.CompletionStage
 
 class FutureTest {
     @Test
@@ -32,27 +33,51 @@ class FutureTest {
                 "O"
             }.await() + "K"
         }
-
         assertEquals("OK", future.get())
     }
 
     @Test
-    fun testWaitForCompletion() {
+    fun testWaitForFuture() {
         val toAwait = CompletableFuture<String>()
         val future = future {
             toAwait.await() + "K"
         }
-
         assertFalse(future.isDone)
         toAwait.complete("O")
-
         assertEquals("OK", future.get())
     }
 
     @Test
-    fun testDoneFutureCompletedExceptionally() {
+    fun testWaitForCompletionStage() {
+        val completable = CompletableFuture<String>()
+        val toAwait: CompletionStage<String> = completable
+        val future = future {
+            toAwait.await() + "K"
+        }
+        assertFalse(future.isDone)
+        completable.complete("O")
+        assertEquals("OK", future.get())
+    }
+
+    @Test
+    fun testDoneFutureExceptionally() {
         val toAwait = CompletableFuture<String>()
         toAwait.completeExceptionally(RuntimeException("O"))
+        val future = future<String> {
+            try {
+                toAwait.await()
+            } catch (e: RuntimeException) {
+                e.message!!
+            } + "K"
+        }
+        assertEquals("OK", future.get())
+    }
+
+    @Test
+    fun testDoneCompletionStageExceptionally() {
+        val completable = CompletableFuture<String>()
+        val toAwait: CompletionStage<String> = completable
+        completable.completeExceptionally(RuntimeException("O"))
         val future = future<String> {
             try {
                 toAwait.await()
@@ -73,10 +98,24 @@ class FutureTest {
                 e.message!!
             } + "K"
         }
-
         assertFalse(future.isDone)
         toAwait.completeExceptionally(RuntimeException("O"))
+        assertEquals("OK", future.get())
+    }
 
+    @Test
+    fun testAwaitedCompletionStageCompletedExceptionally() {
+        val completable = CompletableFuture<String>()
+        val toAwait: CompletionStage<String> = completable
+        val future = future<String> {
+            try {
+                toAwait.await()
+            } catch (e: RuntimeException) {
+                e.message!!
+            } + "K"
+        }
+        assertFalse(future.isDone)
+        completable.completeExceptionally(RuntimeException("O"))
         assertEquals("OK", future.get())
     }
 
@@ -88,7 +127,6 @@ class FutureTest {
             }
             CompletableFuture.supplyAsync { "fail" }.await()
         }
-
         try {
             future.get()
             fail("'get' should've throw an exception")
@@ -101,32 +139,26 @@ class FutureTest {
     @Test
     fun testContinuationWrapped() {
         val depth = AtomicInteger()
-
         val future = future(wrapContinuation {
             depth.andIncrement
             it()
             depth.andDecrement
         }) {
             assertEquals("Part before first suspension must be wrapped", 1, depth.get())
-
             val result =
                     CompletableFuture.supplyAsync {
                         while (depth.get() > 0) ;
                         assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                         "OK"
                     }.await()
-
             assertEquals("Part after first suspension should be wrapped", 1, depth.get())
-
             CompletableFuture.supplyAsync {
                 while (depth.get() > 0) ;
                 assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                 "ignored"
             }.await()
-
             result
         }
-
         assertEquals("OK", future.get())
     }
 
