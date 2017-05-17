@@ -31,6 +31,26 @@
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>${dokka.version}</version>
+                <configuration>
+                    <externalDocumentationLinks combine.children="append">
+                        <link>
+                            <url>${core.docs.url}</url>
+                            <packageListUrl>file:///${project.parent.basedir}/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</packageListUrl>
+                        </link>
+                        <link>
+                            <url>https://google.github.io/guava/releases/18.0/api/docs/</url>
+                        </link>
+                    </externalDocumentationLinks>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>

@@ -35,15 +35,6 @@
             </resource>
         </resources>
         <plugins>
-            <!-- skip dokka for this module -->
-            <plugin>
-                <groupId>org.jetbrains.dokka</groupId>
-                <artifactId>dokka-maven-plugin</artifactId>
-                <version>${dokka.version}</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
             <!-- do not deploy this module -->
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>

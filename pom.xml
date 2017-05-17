@@ -46,6 +46,7 @@
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
+        <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
     </properties>
 
     <prerequisites>
@@ -195,6 +196,7 @@
                     </includes>
                     <outputFormat>kotlin-website</outputFormat>
                     <jdkVersion>8</jdkVersion>
+                    <skip>true</skip> <!-- children override -->
                 </configuration>
             </plugin>
             <plugin>
