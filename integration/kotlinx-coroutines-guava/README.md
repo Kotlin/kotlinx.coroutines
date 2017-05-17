@@ -48,12 +48,10 @@ that makes it especially bad choice for coroutine-based Kotlin code.
 
 Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained).
 
-<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core -->
-<!--- DOCS_ROOT kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core -->
+<!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-<!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava -->
-<!--- DOCS_ROOT integration/kotlinx-coroutines-guava/target/dokka/kotlinx-coroutines-guava -->
+<!--- MODULE kotlinx-coroutines-guava -->
 <!--- INDEX kotlinx.coroutines.experimental.guava -->
 [future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/future.html
 [com.google.common.util.concurrent.ListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/index.html

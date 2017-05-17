@@ -14,7 +14,24 @@
  * limitations under the License.
  */
 
-import java.io.*
+import java.io.File
+import java.io.IOException
+import java.io.LineNumberReader
+import java.io.Reader
+import java.util.*
+import kotlin.properties.Delegates
+
+// --- props in knit.properties
+
+val knitProperties = ClassLoader.getSystemClassLoader()
+    .getResource("knit.properties").openStream().use { Properties().apply { load(it) } }
+
+val siteRoot = knitProperties.getProperty("site.root")!!
+val moduleRoots = knitProperties.getProperty("module.roots").split(" ")
+val moduleMarker = knitProperties.getProperty("module.marker")!!
+val moduleDocs = knitProperties.getProperty("module.docs")!!
+
+// --- markdown syntax
 
 const val DIRECTIVE_START = "<!--- "
 const val DIRECTIVE_END = "-->"
@@ -27,8 +44,7 @@ const val TEST_DIRECTIVE = "TEST"
 
 const val TEST_OUT_DIRECTIVE = "TEST_OUT"
 
-const val SITE_ROOT_DIRECTIVE = "SITE_ROOT"
-const val DOCS_ROOT_DIRECTIVE = "DOCS_ROOT"
+const val MODULE_DIRECTIVE = "MODULE"
 const val INDEX_DIRECTIVE = "INDEX"
 
 const val CODE_START = "```kotlin"
@@ -54,10 +70,12 @@ fun main(args: Array<String>) {
         println("Usage: Knit <markdown-files>")
         return
     }
-    args.forEach(::knit)
+    args.forEach {
+        if (!knit(it)) System.exit(1) // abort on first error with error exit code
+    }
 }
 
-fun knit(markdownFileName: String) {
+fun knit(markdownFileName: String): Boolean {
     println("*** Reading $markdownFileName")
     val markdownFile = File(markdownFileName)
     val tocLines = arrayListOf<String>()
@@ -71,8 +89,8 @@ fun knit(markdownFileName: String) {
     val files = mutableSetOf<File>()
     val allApiRefs = arrayListOf<ApiRef>()
     val remainingApiRefNames = mutableSetOf<String>()
-    var siteRoot: String? = null
-    var docsRoot: String? = null
+    var moduleName: String by Delegates.notNull()
+    var docsRoot: String by Delegates.notNull()
     // read markdown file
     var putBackLine: String? = null
     val markdown = markdownFile.withMarkdownTextReader {
@@ -129,7 +147,7 @@ fun knit(markdownFileName: String) {
                 TEST_DIRECTIVE -> {
                     require(lastPgk != null) { "'$PACKAGE_PREFIX' prefix was not found in emitted code"}
                     require(testOut != null) { "$TEST_OUT_DIRECTIVE directive was not specified" }
-                    var predicate = directive.param
+                    val predicate = directive.param
                     if (testLines.isEmpty()) {
                         if (directive.singleLine) {
                             require(!predicate.isEmpty()) { "$TEST_OUT_DIRECTIVE must be preceded by $TEST_START block or contain test predicate"}
@@ -141,19 +159,15 @@ fun knit(markdownFileName: String) {
                     makeTest(testOutLines, lastPgk!!, testLines, predicate)
                     testLines.clear()
                 }
-                SITE_ROOT_DIRECTIVE -> {
+                MODULE_DIRECTIVE -> {
                     requireSingleLine(directive)
-                    siteRoot = directive.param
-                }
-                DOCS_ROOT_DIRECTIVE -> {
-                    requireSingleLine(directive)
-                    docsRoot = directive.param
+                    moduleName = directive.param
+                    docsRoot = findModuleRootDir(moduleName) + "/" + moduleDocs + "/" + moduleName
                 }
                 INDEX_DIRECTIVE -> {
                     requireSingleLine(directive)
-                    require(siteRoot != null) { "$SITE_ROOT_DIRECTIVE must be specified" }
-                    require(docsRoot != null) { "$DOCS_ROOT_DIRECTIVE must be specified" }
-                    val indexLines = processApiIndex(siteRoot!!, docsRoot!!, directive.param, remainingApiRefNames)
+                    val indexLines = processApiIndex(siteRoot + "/" + moduleName, docsRoot, directive.param, remainingApiRefNames)
+                        ?: throw IllegalArgumentException("Failed to load index for ${directive.param}")
                     skip = true
                     while (true) {
                         val skipLine = readLine() ?: break@mainLoop
@@ -210,7 +224,7 @@ fun knit(markdownFileName: String) {
                 writeLinesIfNeeded(file, outLines)
             }
         }
-    }
+    } ?: return false // false when failed
     // update markdown file with toc
     val newLines = buildList<String> {
         addAll(markdown.preTocText)
@@ -230,6 +244,7 @@ fun knit(markdownFileName: String) {
     }
     // write test output
     flushTestOut(markdownFile.parentFile, testOut, testOutLines)
+    return true
 }
 
 fun makeTest(testOutLines: MutableList<String>, pgk: String, test: List<String>, predicate: String) {
@@ -360,19 +375,20 @@ class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
     }
 }
 
-fun <T : LineNumberReader> File.withLineNumberReader(factory: (Reader) -> T, block: T.() -> Unit): T {
+fun <T : LineNumberReader> File.withLineNumberReader(factory: (Reader) -> T, block: T.() -> Unit): T? {
     val reader = factory(reader())
     reader.use {
         try {
             it.block()
-        } catch (e: IllegalArgumentException) {
+        } catch (e: Exception) {
             println("ERROR: ${this@withLineNumberReader}: ${it.lineNumber}: ${e.message}")
+            return null
         }
     }
     return reader
 }
 
-fun File.withMarkdownTextReader(block: MarkdownTextReader.() -> Unit): MarkdownTextReader =
+fun File.withMarkdownTextReader(block: MarkdownTextReader.() -> Unit): MarkdownTextReader? =
     withLineNumberReader<MarkdownTextReader>(::MarkdownTextReader, block)
 
 fun writeLinesIfNeeded(file: File, outLines: List<String>) {
@@ -392,6 +408,12 @@ fun writeLines(file: File, lines: List<String>) {
     }
 }
 
+fun findModuleRootDir(name: String): String =
+    moduleRoots
+        .map { it + "/" + name }
+        .firstOrNull { File(it + "/" + moduleMarker).exists() }
+        ?: throw IllegalArgumentException("Module $name is not found in any of the module root dirs")
+
 data class ApiIndexKey(
     val docsRoot: String,
     val pkg: String
@@ -408,7 +430,7 @@ fun loadApiIndex(
     path: String,
     pkg: String,
     namePrefix: String = ""
-): Map<String, String> {
+): Map<String, String>? {
     val fileName = docsRoot + "/" + path + INDEX_MD
     val visited = mutableSetOf<String>()
     val map = HashMap<String,String>()
@@ -425,10 +447,11 @@ fun loadApiIndex(
                 if (visited.add(refLink)) {
                     val path2 = path + "/" + refLink.substring(0, refLink.length - INDEX_HTML.length)
                     map += loadApiIndex(docsRoot, path2, pkg, refName + ".")
+                        ?: throw IllegalArgumentException("Failed to parse ${docsRoot + "/" + path2}")
                 }
             }
         }
-    }
+    } ?: return null // return null on failure
     return map
 }
 
@@ -437,11 +460,11 @@ fun processApiIndex(
     docsRoot: String,
     pkg: String,
     remainingApiRefNames: MutableSet<String>
-): List<String> {
+): List<String>? {
     val key = ApiIndexKey(docsRoot, pkg)
     val map = apiIndexCache.getOrPut(key, {
         print("Parsing API docs at $docsRoot/$pkg: ")
-        val result = loadApiIndex(docsRoot, pkg, pkg)
+        val result = loadApiIndex(docsRoot, pkg, pkg) ?: return null // null on failure
         println("${result.size} definitions")
         result
     })
