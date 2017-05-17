@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.future
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.ExecutionException
 import java.util.function.BiConsumer
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
@@ -29,16 +30,16 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * This coroutine builder uses [CommonPool] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
- * If the [context] for the new coroutine is explicitly specified and does not include a coroutine interceptor,
- * then [CoroutineDispatcher] element.
- * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
- * The specified context is added to the context of the parent running coroutine (if any) inside which this function
- * is invoked. The [Job] of the resulting coroutine is a child of the job of the parent coroutine (if any).
+ * If the [context] for the new coroutine is omitted or is explicitly specified but does not include a
+ * coroutine interceptor, then [CommonPool] is used.
+ * See [CoroutineDispatcher] for other standard [context] implementations that are provided by `kotlinx.coroutines`.
+ * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * A value of [CoroutineStart.LAZY] is not supported
- * (since `ListenableFuture` framework does not provide the corresponding capability) and
+ * (since `CompletableFuture` framework does not provide the corresponding capability) and
  * produces [IllegalArgumentException].
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
@@ -58,7 +59,7 @@ public fun <T> future(
     val future = CompletableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
     future.whenComplete { _, exception -> job.cancel(exception) }
-    start(block, receiver=future, completion=future)
+    start(block, receiver=future, completion=future) // use the specified start strategy
     return future
 }
 
@@ -91,7 +92,7 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
  * Awaits for completion of the completion stage without blocking a thread.
  *
  * This suspending function is not cancellable, because there is no way to cancel a `CompletionStage`.
- * Use `CompletableFuture.await()` for cancellation support.
+ * Use `CompletableFuture.await()` for cancellable wait.
  */
 public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: Continuation<T> ->
     whenComplete(ContinuationConsumer(cont))
@@ -103,35 +104,36 @@ public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: 
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
  * stops waiting for the future and immediately resumes with [CancellationException].
+ *
+ * Note, that `CompletableFuture` does not support prompt removal of installed listeners, so on cancellation of this wait
+ * a few small objects will remain in the `CompletableFuture` stack of completion actions until the future completes.
+ * However, the care is taken to clear the reference to the waiting coroutine itself, so that its memory can be
+ * released even if the future never completes.
  */
 public suspend fun <T> CompletableFuture<T>.await(): T {
-    if (isDone) { // fast path when CompletableFuture is already done (does not suspend)
-        // then only way to get unwrapped exception from the CompletableFuture is via whenComplete anyway
-        var result: T? = null
-        var exception: Throwable? = null
-        whenComplete { r, e ->
-            result = r
-            exception = e
+    // fast path when CompletableFuture is already done (does not suspend)
+    if (isDone) {
+        try {
+            return get()
+        } catch (e: ExecutionException) {
+            throw e.cause ?: e // unwrap original cause from ExecutionException
         }
-        if (exception != null) throw exception!!
-        return result as T
     }
     // slow path -- suspend
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val consumer = ContinuationConsumer(cont)
-        val completionFuture = whenComplete(consumer)
+        whenComplete(consumer)
         cont.invokeOnCompletion {
-            completionFuture.cancel(false) // cancel future
-            consumer.cont = null // shall clear reference to continuation, because CompletableFuture continues to keep it
+            consumer.cont = null // shall clear reference to continuation
         }
     }
 }
 
 private class ContinuationConsumer<T>(
-    @JvmField var cont: Continuation<T>?
+    @Volatile @JvmField var cont: Continuation<T>?
 ) : BiConsumer<T?, Throwable?> {
     override fun accept(result: T?, exception: Throwable?) {
-        val cont = this.cont ?: return // atomically read current value unless null, benign data race when it is set to null
+        val cont = this.cont ?: return // atomically read current value unless null
         if (exception == null) // the future has been completed normally
             cont.resume(result as T)
         else // the future has completed with an exception
@@ -152,6 +154,7 @@ private class ContinuationConsumer<T>(
     replaceWith = ReplaceWith("asCompletableFuture()"))
 public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
 
+@Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
 public fun <T> future(
     context: CoroutineContext = CommonPool,
