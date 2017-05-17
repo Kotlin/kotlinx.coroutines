@@ -1,10 +1,10 @@
 # Module kotlinx-coroutines-nio
 
-Extensions for asynchronous IO on JDK7+.
+Integration with asynchronous IO on JDK7+ (Android O Preview).
 
 # Package kotlinx.coroutines.experimental.nio
 
-Extensions for asynchronous IO on JDK7+.
+Integration with asynchronous IO on JDK7+ (Android O Preview).
 
 * `AsynchronousFileChannel` extensions `aLock`, `aRead`, and `aWrite`.
 * `AsynchronousServerSocketChannel` extension `aAccept`.

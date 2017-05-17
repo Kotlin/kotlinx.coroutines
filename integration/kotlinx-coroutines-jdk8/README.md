@@ -1,6 +1,6 @@
 # Module kotlinx-coroutines-jdk8
 
-Additional libraries for JDK8 (or Android API level 24).
+Integration with JDK8 [`CompletableFuture`][java.util.concurrent.CompletableFuture] (Android API level 24).
 
 Coroutine builders:
 
@@ -47,15 +47,15 @@ that makes it especially bad choice for coroutine-based Kotlin code.
 
 # Package kotlinx.coroutines.experimental.future
 
-Additional libraries for JDK8 [CompletableFuture][java.util.concurrent.CompletableFuture].
+Integration with JDK8 [`CompletableFuture`][java.util.concurrent.CompletableFuture] (Android API level 24).
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
 <!--- MODULE kotlinx-coroutines-jdk8 -->
 <!--- INDEX kotlinx.coroutines.experimental.future -->
-[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html
 [java.util.concurrent.CompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html
+[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html
 [java.util.concurrent.CompletionStage.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/await.html
 [java.util.concurrent.CompletableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/await.html
 [kotlinx.coroutines.experimental.Deferred.asCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/as-completable-future.html

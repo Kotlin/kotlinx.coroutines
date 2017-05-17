@@ -4,8 +4,8 @@ This directory contains modules that provide integration with various asynchrono
 
 ## Modules
 
-* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8/README.md) -- extensions for JDK8 `CompletableFuture` (Android API level 24).
-* [kotlinx-coroutines-nio](kotlinx-coroutines-nio/README.md) -- extensions for asynchronous IO on JDK7+ (Android O Preview).
+* [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8/README.md) -- integration with JDK8 `CompletableFuture` (Android API level 24).
+* [kotlinx-coroutines-nio](kotlinx-coroutines-nio/README.md) -- integration with asynchronous IO on JDK7+ (Android O Preview).
 * [kotlinx-coroutines-guava](kotlinx-coroutines-guava/README.md) -- integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained).
 
 ## Contributing
