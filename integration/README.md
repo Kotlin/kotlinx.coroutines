@@ -1,4 +1,4 @@
-# Coroutines for reactive streams
+# Coroutines integration
 
 This directory contains modules that provide integration with various asynchronous callback- and future-based libraries:
 
