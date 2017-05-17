@@ -154,6 +154,7 @@ private class ContinuationConsumer<T>(
     replaceWith = ReplaceWith("asCompletableFuture()"))
 public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
 
+/** @suppress **Deprecated** */
 @Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
 public fun <T> future(

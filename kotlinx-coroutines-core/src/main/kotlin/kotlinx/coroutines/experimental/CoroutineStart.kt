@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.CoroutineStart.*
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.startCoroutine
@@ -74,8 +75,30 @@ public enum class CoroutineStart {
      * Immediately executes coroutine until its first suspension point _in the current thread_ as if it the
      * coroutine was started using [Unconfined] dispatcher. However, when coroutine is resumed from suspension
      * it is dispatched according to the [CoroutineDispatcher] in its context.
+     *
+     * This is similar to [ATOMIC] in the sense that coroutine starts executing even if it was already cancelled,
+     * but the difference is that it start executing in the same thread.
+     *
+     * Cancellability of coroutine at suspension points depends on the particular implementation details of
+     * suspending functions as in [DEFAULT].
      */
     UNDISPATCHED;
+
+    /**
+     * Starts the corresponding block as a coroutine with this coroutine start strategy.
+     *
+     * * [DEFAULT] uses [startCoroutineCancellable].
+     * * [ATOMIC] uses [startCoroutine].
+     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
+     * * [LAZY] does nothing.
+     */
+    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
+        when (this) {
+            CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
+            CoroutineStart.ATOMIC -> block.startCoroutine(completion)
+            CoroutineStart.UNDISPATCHED -> block.startCoroutineUndispatched(completion)
+            CoroutineStart.LAZY -> Unit // will start lazily
+        }
 
     /**
      * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
