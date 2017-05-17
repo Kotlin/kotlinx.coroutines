@@ -8,7 +8,7 @@ It also includes likes to the documentation web site into the documents.
 ## Usage
 
 * In project root directory do:
-  * Run `mvn clean`
-  * Run `mvn compile`
-  * Run `mvn site` (or `mvn site -DskipJekyll` if you have don't Jekyll installed or don't want to rebuild web site)
+  * Run `mvn clean compile site`
+  * Add `-DskipJekyll` if you have don't Jekyll installed or don't want to actually rebuild documentation web 
+    site static pages
 * Commit updated documents and examples
