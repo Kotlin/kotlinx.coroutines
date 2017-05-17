@@ -15,18 +15,35 @@
   -->
 
 <project name="site" default="site">
-    <target name="site">
+    <target name="knit" description="Run knit tool for all markdown files">
+        <fileset dir=".." id="markdownFileSet">
+            <include name="**/*.md"/>
+            <exclude name="**/target/**"/>
+        </fileset>
+        <pathconvert property="markdownFiles" refid="markdownFileSet" pathsep=" " />
+        <java classname="KnitKt" fork="true" dir="..">
+            <classpath>
+                <pathelement location="${kotlin.stdlib}/"/>
+                <pathelement location="../knit/target/classes/"/>
+            </classpath>
+            <arg line="${markdownFiles}"/>
+        </java>
+    </target>
+
+    <target name="site" depends="knit">
         <copy todir="target">
             <fileset dir="docs"/>
             <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
-            <fileset dir="../integration/kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
-            <fileset dir="../integration/kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-reactive/target/dokka" includes="**/*.md"/>
+            <fileset dir="../reactive/kotlinx-coroutines-reactor/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-rx1/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-rx2/target/dokka" includes="**/*.md"/>
             <fileset dir="../ui/kotlinx-coroutines-android/target/dokka" includes="**/*.md"/>
             <fileset dir="../ui/kotlinx-coroutines-javafx/target/dokka" includes="**/*.md"/>
             <fileset dir="../ui/kotlinx-coroutines-swing/target/dokka" includes="**/*.md"/>
+            <fileset dir="../integration/kotlinx-coroutines-jdk8/target/dokka" includes="**/*.md"/>
+            <fileset dir="../integration/kotlinx-coroutines-nio/target/dokka" includes="**/*.md"/>
+            <fileset dir="../integration/kotlinx-coroutines-guava/target/dokka" includes="**/*.md"/>
         </copy>
         <antcall target="jekyll"/>
     </target>
@@ -40,15 +57,15 @@
         </condition>
     </target>
 
-    <target name="jekyll" depends="checkos, jekyll.windows, jekyll.unix"/>
+    <target name="jekyll" depends="checkos, jekyll.windows, jekyll.unix" unless="skipJekyll"/>
 
-    <target name="jekyll.windows" if="isWindows">
+    <target name="jekyll.windows" if="isWindows" unless="skipJekyll">
         <exec executable="jekyll.bat" dir="target">
             <arg line="build"/>
         </exec>
     </target>
 
-    <target name="jekyll.unix" if="isUnix">
+    <target name="jekyll.unix" if="isUnix" unless="skipJekyll">
         <exec executable="jekyll" dir="target">
             <arg line="build"/>
         </exec>

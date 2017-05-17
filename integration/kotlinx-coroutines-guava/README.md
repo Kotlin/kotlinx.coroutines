@@ -55,4 +55,8 @@ Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/L
 <!--- SITE_ROOT https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava -->
 <!--- DOCS_ROOT integration/kotlinx-coroutines-guava/target/dokka/kotlinx-coroutines-guava -->
 <!--- INDEX kotlinx.coroutines.experimental.guava -->
+[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/future.html
+[com.google.common.util.concurrent.ListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/index.html
+[com.google.common.util.concurrent.ListenableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/await.html
+[kotlinx.coroutines.experimental.Deferred.asListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-deferred/as-listenable-future.html
 <!--- END -->
