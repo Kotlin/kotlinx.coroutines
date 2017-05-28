@@ -220,7 +220,7 @@ the background job in any way. Much better.
 
 ### Extract function refactoring
 
-Let's extract the block of code inside `launch(CommonPool} { ... }` into a separate function. When you 
+Let's extract the block of code inside `launch(CommonPool) { ... }` into a separate function. When you 
 perform "Extract function" refactoring on this code you get a new function with `suspend` modifier.
 That is your first _suspending function_. Suspending functions can be used inside coroutines
 just like regular functions, but their additional feature is that they can, in turn, 
