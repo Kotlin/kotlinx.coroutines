@@ -42,7 +42,11 @@ public class HandlerContext(
     private val name: String? = null
 ) : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        handler.post(block)
+        if (Looper.myLooper() == handler.looper) {
+            block.run()
+        } else {
+            handler.post(block)
+        }
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
