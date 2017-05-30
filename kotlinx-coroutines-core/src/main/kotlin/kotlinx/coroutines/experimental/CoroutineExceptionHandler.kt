@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.CoroutineContext
 
 
@@ -51,7 +52,17 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Key for [CoroutineExceptionHandler] instance in the coroutine context.
      */
-    companion object Key : CoroutineContext.Key<CoroutineExceptionHandler>
+    companion object Key : CoroutineContext.Key<CoroutineExceptionHandler> {
+        /**
+         * Creates new [CoroutineExceptionHandler] instance.
+         * @param handler a function which handles exception thrown by a coroutine
+         */
+        public operator inline fun invoke(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
+            object: AbstractCoroutineContextElement(Key), CoroutineExceptionHandler {
+                override fun handleException(context: CoroutineContext, exception: Throwable) =
+                    handler.invoke(context, exception)
+            }
+    }
 
     /**
      * Handles uncaught [exception] in the given [context]. It is invoked
