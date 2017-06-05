@@ -38,8 +38,12 @@ public open class LinkedListChannel<E> : AbstractChannel<E>() {
             when {
                 result === OFFER_SUCCESS -> return OFFER_SUCCESS
                 result === OFFER_FAILED -> { // try to buffer
-                    if (sendBuffered(element))
-                        return OFFER_SUCCESS
+                    val sendResult = sendBuffered(element)
+                    when (sendResult) {
+                        null -> return OFFER_SUCCESS
+                        is Closed<*> -> return sendResult
+                    }
+                    // otherwise there was receiver in queue, retry super.offerInternal
                 }
                 result is Closed<*> -> return result
                 else -> error("Invalid offerInternal result $result")

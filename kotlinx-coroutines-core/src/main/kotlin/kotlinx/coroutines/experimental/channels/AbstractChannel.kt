@@ -98,22 +98,40 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         queue.removeFirstIfIsInstanceOfOrPeekIf<Send> { it is Closed<*> }
 
     /**
+     * Queues buffered element, returns null on success or
+     * returns node reference if it was already closed or is waiting for receive.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun sendBuffered(element: E): Boolean =
-        queue.addLastIfPrev(SendBuffered(element), { it !is ReceiveOrClosed<*> })
+    protected fun sendBuffered(element: E): ReceiveOrClosed<*>? {
+        queue.addLastIfPrev(SendBuffered(element), { prev ->
+            if (prev is ReceiveOrClosed<*>) return@sendBuffered prev
+            true
+        })
+        return null
+    }
+
+    /**
+     * Queues conflated element, returns null on success or
+     * returns node reference if it was already closed or is waiting for receive.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    protected fun sendConflated(element: E): ReceiveOrClosed<*>? {
+        val node = SendBuffered(element)
+        queue.addLastIfPrev(node, { prev ->
+            if (prev is ReceiveOrClosed<*>) return@sendConflated prev
+            true
+        })
+        conflatePreviousSendBuffered(node)
+        return null
+    }
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun sendConflated(element: E): Boolean {
-        val node = SendBuffered(element)
-        if (!queue.addLastIfPrev(node, { it !is ReceiveOrClosed<*> })) return false
-        // remove previous SendBuffered
+    protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
         val prev = node.prev
         if (prev is SendBuffered<*>)
             prev.remove()
-        return true
     }
 
     /**
@@ -173,32 +191,56 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
     private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
         val send = SendElement(element, cont)
         loop@ while (true) {
-            if (enqueueSend(send)) {
-                cont.initCancellability() // make it properly cancellable
-                cont.removeOnCancel(send)
-                return@sc
+            val enqueueResult = enqueueSend(send)
+            when (enqueueResult) {
+                null -> { // enqueued successfully
+                    cont.initCancellability() // make it properly cancellable
+                    cont.removeOnCancel(send)
+                    return@sc
+                }
+                is Closed<*> -> {
+                    cont.resumeWithException(enqueueResult.sendException)
+                    return@sc
+                }
             }
-            // hm... something is not right. try to offer
-            val result = offerInternal(element)
+            // hm... receiver is waiting or buffer is not full. try to offer
+            val offerResult = offerInternal(element)
             when {
-                result === OFFER_SUCCESS -> {
+                offerResult === OFFER_SUCCESS -> {
                     cont.resume(Unit)
                     return@sc
                 }
-                result === OFFER_FAILED -> continue@loop
-                result is Closed<*> -> {
-                    cont.resumeWithException(result.sendException)
+                offerResult === OFFER_FAILED -> continue@loop
+                offerResult is Closed<*> -> {
+                    cont.resumeWithException(offerResult.sendException)
                     return@sc
                 }
-                else -> error("offerInternal returned $result")
+                else -> error("offerInternal returned $offerResult")
             }
         }
     }
 
-    private fun enqueueSend(send: SendElement) =
-        if (isBufferAlwaysFull)
-            queue.addLastIfPrev(send, { it !is ReceiveOrClosed<*> }) else
-            queue.addLastIfPrevAndIf(send, { it !is ReceiveOrClosed<*> }, { isBufferFull })
+    /**
+     * Result is:
+     * * null -- successfully enqueued
+     * * ENQUEUE_FAILED -- buffer is not full (should not enqueue)
+     * * ReceiveOrClosed<*> -- receiver is waiting or it is closed (should not enqueue)
+     */
+    private fun enqueueSend(send: SendElement): Any? {
+        if (isBufferAlwaysFull) {
+            queue.addLastIfPrev(send, { prev ->
+                if (prev is ReceiveOrClosed<*>) return@enqueueSend prev
+                true
+            })
+        } else {
+            if (!queue.addLastIfPrevAndIf(send, { prev ->
+                if (prev is ReceiveOrClosed<*>) return@enqueueSend prev
+                true
+            }, { isBufferFull }))
+                return ENQUEUE_FAILED
+        }
+        return null
+    }
 
     public override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
@@ -207,6 +249,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             if (receive == null) {
                 // queue empty or has only senders -- try add last "Closed" item to the queue
                 if (queue.addLastIfPrev(closed, { it !is ReceiveOrClosed<*> })) {
+                    onClosed(closed)
                     afterClose(cause)
                     return true
                 }
@@ -217,6 +260,12 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             receive.resumeReceiveClosed(closed)
         }
     }
+
+    /**
+     * Invoked when [Closed] element was just added.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    protected open fun onClosed(closed: Closed<E>) {}
 
     /**
      * Invoked after successful [close].
@@ -870,8 +919,8 @@ public class Closed<in E>(
     override val pollResult get() = this
     override fun tryResumeSend(idempotent: Any?): Any? = CLOSE_RESUMED
     override fun completeResumeSend(token: Any) { check(token === CLOSE_RESUMED) }
-    override fun tryResumeReceive(value: E, idempotent: Any?): Any? = throw sendException
-    override fun completeResumeReceive(token: Any) = throw sendException
+    override fun tryResumeReceive(value: E, idempotent: Any?): Any? = CLOSE_RESUMED
+    override fun completeResumeReceive(token: Any) { check(token === CLOSE_RESUMED) }
     override fun toString(): String = "Closed[$closeCause]"
 }
 

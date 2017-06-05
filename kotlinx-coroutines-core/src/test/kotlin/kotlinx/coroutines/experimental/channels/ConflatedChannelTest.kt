@@ -38,6 +38,22 @@ class ConflatedChannelTest : TestBase() {
     }
 
     @Test
+    fun testConflatedSend() = runBlocking<Unit> {
+        val q = ConflatedChannel<Int>()
+        q.send(1)
+        q.send(2) // shall conflated previously sent
+        assertThat(q.receiveOrNull(), IsEqual(2))
+    }
+
+    @Test
+    fun testConflatedClose() = runBlocking<Unit> {
+        val q = ConflatedChannel<Int>()
+        q.send(1)
+        q.close() // shall conflate sent item and become closed
+        assertThat(q.receiveOrNull(), IsNull())
+    }
+
+    @Test
     fun testConflationSendReceive() = runBlocking<Unit> {
         val q = ConflatedChannel<Int>()
         expect(1)
