@@ -62,9 +62,7 @@ class SimpleSendReceiveTest(
                 expected = x + 1
             }
         }
-        if (kind.isConflated) {
-            if (n > 0) assertTrue(expected > 0)
-        } else {
+        if (!kind.isConflated) {
             assertThat(expected, IsEqual(n))
         }
     }
