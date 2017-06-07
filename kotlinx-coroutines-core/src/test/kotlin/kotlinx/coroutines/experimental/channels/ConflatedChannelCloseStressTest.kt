@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import junit.framework.Assert.assertTrue
 import junit.framework.Assert.fail
 import kotlinx.coroutines.experimental.*
+import org.junit.After
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -33,11 +34,16 @@ class ConflatedChannelCloseStressTest : TestBase() {
     val closed = AtomicInteger()
     val received = AtomicInteger()
 
+    val pool = newFixedThreadPoolContext(nSenders + 2, "TestStressClose")
+
+    @After
+    fun tearDown() { pool[Job]!!.cancel() }
+
     @Test
     fun testStressClose() = runBlocking<Unit> {
         val senderJobs = List(nSenders) { Job() }
         val senders = List(nSenders) { senderId ->
-            launch(CommonPool) {
+            launch(pool) {
                 var x = senderId
                 try {
                     while (isActive) {
@@ -55,7 +61,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
             }
         }
         val closerJob = Job()
-        val closer = launch(CommonPool) {
+        val closer = launch(pool) {
             try {
                 while (isActive) {
                     flipChannel()
@@ -66,7 +72,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 closerJob.cancel()
             }
         }
-        val receiver = async(CommonPool) {
+        val receiver = async(pool) {
             while (isActive) {
                 curChannel.get().receiveOrNull()
                 received.incrementAndGet()
