@@ -248,7 +248,10 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             val receive = takeFirstReceiveOrPeekClosed()
             if (receive == null) {
                 // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(closed, { it !is ReceiveOrClosed<*> })) {
+                if (queue.addLastIfPrev(closed, { prev ->
+                    if (prev is Closed<*>) return false // already closed
+                    prev !is ReceiveOrClosed<*> // only add close if no waiting receive
+                })) {
                     onClosed(closed)
                     afterClose(cause)
                     return true
