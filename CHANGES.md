@@ -22,7 +22,7 @@
   send/close/close of channels that lead to hanging send, offer or close operations. 
   Thanks to @chrisly42 and @cy6erGn0m for finding them.
 * #67 Fixed `withTimeoutOrNull` which was returning `null` on timeout of inner or outer `withTimeout` blocks.
-  Thanks to @regschlom for finding the problem.
+  Thanks to @gregschlom for finding the problem.
 * Fixed a bug where `Job` fails to dispose a handler when it is the only handler by @uchuhimo
 
 ## Version 0.15
