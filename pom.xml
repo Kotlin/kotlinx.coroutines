@@ -42,7 +42,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.1.2</kotlin.version>
-        <dokka.version>0.9.14</dokka.version>
+        <dokka.version>0.9.15-eap-1</dokka.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
@@ -70,17 +70,17 @@
 
     <repositories>
         <repository>
-            <id>bintray</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
+            <id>bintray-kotlin-eap</id>
+            <name>bintray-kotlin-eap</name>
+            <url>http://dl.bintray.com/kotlin/kotlin-eap</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>bintray</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.1</url>
+            <id>bintray-kotlin-eap</id>
+            <name>bintray-kotlin-eap</name>
+            <url>http://dl.bintray.com/kotlin/kotlin-eap</url>
         </pluginRepository>
         <pluginRepository>
             <id>bintray-kotlin-dokka</id>
