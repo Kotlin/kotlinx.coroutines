@@ -1,5 +1,30 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.16
+
+* Coroutines that are scheduled for execution are cancellable by default now
+  * `suspendAtomicCancellableCoroutine` function is introduced for funs like
+    `send`/`receive`/`receiveOrNull` that require atomic cancellation
+    (they cannot be cancelled after decision was made)
+  * Coroutines started with default mode using
+    `async`/`launch`/`actor` builders can be cancelled before their execution starts
+  * `CoroutineStart.ATOMIC` is introduced as a start mode to specify that
+    coroutine cannot be cancelled before its execution starts
+  * `run` function is also cancellable in the same way and accepts an optional
+    `CoroutineStart` parameter to change this default.
+* `BroadcastChannel` factory function is introduced
+* `CorouiteExceptionHandler` factory function is introduced by @konrad-kaminski
+* [`integration`](integration) directory is introduced for all 3rd party integration projects
+  * It has [contribution guidelines](integration/README.md#contributing) and contributions from community are welcome
+  * Support for Guava `ListenableFuture` in the new [`kotlinx-coroutines-guava`](integration/kotlinx-coroutines-guava) module
+  * Rx1 Scheduler support by @konrad-kaminski
+* #66 Fixed a number of `Channel` and `BroadcastChannel` implementation bugs related to concurrent 
+  send/close/close of channels that lead to hanging send, offer or close operations. 
+  Thanks to @chrisly42 and @cy6erGn0m for finding them.
+* #67 Fixed `withTimeoutOrNull` which was returning `null` on timeout of inner or outer `withTimeout` blocks.
+  Thanks to @regschlom for finding the problem.
+* Fixed a bug where `Job` fails to dispose a handler when it is the only handler by @uchuhimo
+
 ## Version 0.15
 
 * Switched to Kotlin version 1.1.2 (can still be used with 1.1.0).
@@ -48,7 +73,6 @@
 * Added `Mutex.withMutex` helper function.
 * `kotlinx-coroutines-android` module has `provided` dependency on of Android APIs to 
   eliminate warnings when using it in android project.
-
 
 ## Version 0.13
 

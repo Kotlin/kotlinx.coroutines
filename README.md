@@ -16,7 +16,7 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 * [ui](ui/README.md) -- modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFx, and Swing.
 * [integration](integration/README.md) -- modules that provide integration with various asynchronous callback- and future-based libraries.
-  * `CompletableFuture` and synchronous networking/IO.
+  * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and synchronous networking/IO.
 
 ## Documentation
 
