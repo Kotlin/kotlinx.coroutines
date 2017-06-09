@@ -642,7 +642,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             when (state) {
                 // SINGE/SINGLE+ state -- one completion handler
                 is JobNode<*> -> {
-                    if (state !== this) return // a different job node --> we were already removed
+                    if (state !== node) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
                     if (STATE.compareAndSet(this, state, EmptyActive)) return
                 }
