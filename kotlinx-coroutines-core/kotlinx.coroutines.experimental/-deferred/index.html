@@ -100,10 +100,12 @@ Such a deferred can be be made <em>active</em> by invoking <a href="../-job/star
 <tbody>
 <tr>
 <td>
+
         <p><a href="is-cancelled.html">isCancelled</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if computation of this deferred value was <a href="../-job/cancel.html">cancelled</a>.</p>
 
@@ -111,10 +113,12 @@ Such a deferred can be be made <em>active</em> by invoking <a href="../-job/star
 </tr>
 <tr>
 <td>
+
         <p><a href="is-completed-exceptionally.html">isCompletedExceptionally</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompletedExceptionally</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompletedExceptionally</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if computation of this deferred value has <em>completed exceptionally</em> – it had
 either <em>failed</em> with exception during computation or was <a href="../-job/cancel.html">cancelled</a>.</p>
@@ -130,10 +134,12 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-job/is-active.html">isActive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this job is active.</p>
 
@@ -141,10 +147,12 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 </tr>
 <tr>
 <td>
+
         <p><a href="../-job/is-completed.html">isCompleted</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this job has completed for any reason.</p>
 
@@ -159,7 +167,9 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 <tbody>
 <tr>
 <td>
+
         <p><a href="await.html">await</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
@@ -171,12 +181,14 @@ returning the resulting value or throwing the corresponding exception if the def
 </tr>
 <tr>
 <td>
+
         <p><a href="get-completed.html">getCompleted</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Returns <em>completed</em> result or throws <a href="#">IllegalStateException</a> if this deferred value has not
+        <p>Returns <em>completed</em> result or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not
 <a href="../-job/is-completed.html">completed</a> yet. It throws the corresponding exception if this deferred has
 <a href="is-completed-exceptionally.html">completed exceptionally</a>.</p>
 
@@ -191,10 +203,12 @@ returning the resulting value or throwing the corresponding exception if the def
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-job/cancel.html">cancel</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancel this activity with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
 cancelled as a result of this invocation and <code>false</code> otherwise
@@ -205,21 +219,25 @@ Repeated invocations of this function have no effect and always produce <code>fa
 </tr>
 <tr>
 <td>
+
         <p><a href="../-job/get-completion-exception.html">getCompletionException</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Throwable</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a></code></div>
 
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../-job/cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> yet.</p>
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> yet.</p>
 
       </td>
 </tr>
 <tr>
 <td>
+
         <p><a href="../-job/invoke-on-completion.html">invokeOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -233,10 +251,12 @@ job is complete. Note, that <a href="../-job/cancel.html">cancellation</a> is al
 </tr>
 <tr>
 <td>
+
         <p><a href="../-job/join.html">join</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason. This function also <a href="../-job/start.html">starts</a> the corresponding coroutine
@@ -246,10 +266,12 @@ if the <a href="../-job/index.html">Job</a> was still in <em>new</em> state.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../-job/start.html">start</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Starts coroutine related to this job (if any) if it was not started yet.
 The result <code>true</code> if this invocation actually started coroutine or <code>false</code>
@@ -266,7 +288,9 @@ if it was already started or completed.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -277,7 +301,9 @@ if it was already started or completed.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../dispose-on-completion.html">disposeOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">disposeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</span><span class="symbol">:</span>&nbsp;<a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>

@@ -41,7 +41,9 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="-init-.html">&lt;init&gt;</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="identifier">AbstractSendChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
@@ -59,10 +61,12 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="is-closed-for-send.html">isClosedForSend</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="close.html">close</a> and thus
 the <a href="send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
@@ -73,10 +77,12 @@ an element to a failed channel throw the original <a href="close.html">close</a>
 </tr>
 <tr>
 <td>
+
         <p><a href="is-full.html">isFull</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="is-closed-for-send.html">isClosedForSend</a> channel.</p>
@@ -92,10 +98,12 @@ This function returns <code>false</code> for <a href="is-closed-for-send.html">i
 <tbody>
 <tr>
 <td>
+
         <p><a href="after-close.html">afterClose</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Invoked after successful <a href="close.html">close</a>.</p>
 
@@ -103,10 +111,12 @@ This function returns <code>false</code> for <a href="is-closed-for-send.html">i
 </tr>
 <tr>
 <td>
+
         <p><a href="close.html">close</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel with an optional exceptional <a href="close.html#kotlinx.coroutines.experimental.channels.AbstractSendChannel$close(kotlin.Throwable)/cause">cause</a>.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
@@ -119,10 +129,12 @@ are received.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="offer.html">offer</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Adds <a href="offer.html#kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</a> into this queue if it is possible to do so immediately without violating capacity restrictions
 and returns <code>true</code>. Otherwise, it returns <code>false</code> immediately
@@ -133,10 +145,12 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 </tr>
 <tr>
 <td>
+
         <p><a href="send.html">send</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$send(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$send(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Adds <a href="send.html#kotlinx.coroutines.experimental.channels.AbstractSendChannel$send(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="is-full.html">isFull</a>,
 or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
@@ -153,7 +167,9 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/index.html">AbstractChannel</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -164,7 +180,9 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
 </tr>
 <tr>
 <td>
+
         <p><a href="../-array-broadcast-channel/index.html">ArrayBroadcastChannel</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>

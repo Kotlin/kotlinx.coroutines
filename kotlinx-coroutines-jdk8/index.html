@@ -27,7 +27,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <p>Additional libraries for JDK8 (or Android API level 24).</p>
+        <p>Integration with JDK8 <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html"><code>CompletableFuture</code></a> (Android API level 24).</p>
 
 <p>Coroutine builders:</p>
 
@@ -42,9 +42,9 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="kotlinx.coroutines.experimental.future/future.html">future</a></td>
-      <td><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a></td>
-      <td><a href="#">CoroutineScope</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/future.html">future</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html">CompletableFuture</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
       <td>Returns a single value with the future result</td>
     </tr>
   </tbody>
@@ -61,15 +61,48 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="#">CompletableFuture.await</a></td>
-      <td>Awaits for completion of the future</td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/await.html">CompletionStage.await</a></td>
+      <td>Awaits for completion of the completion stage (non-cancellable)</td>
     </tr>
     <tr>
-      <td><a href="#">Deferred.asCompletableFuture</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/await.html">CompletableFuture.await</a></td>
+      <td>Awaits for completion of the future (cancellable)</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/as-completable-future.html">Deferred.asCompletableFuture</a></td>
       <td>Converts a deferred value to the future</td>
     </tr>
   </tbody>
 </table>
+
+<h2 id="example">Example</h2>
+
+<p>Given the following functions defined in some Java API:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">CompletableFuture</span><span class="o">&lt;</span><span class="n">Image</span><span class="o">&gt;</span> <span class="nf">loadImageAsync</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">);</span> <span class="c1">// starts async image loading</span>
+<span class="kd">public</span> <span class="n">Image</span> <span class="nf">combineImages</span><span class="o">(</span><span class="n">Image</span> <span class="n">image1</span><span class="o">,</span> <span class="n">Image</span> <span class="n">image2</span><span class="o">);</span> <span class="c1">// synchronously combines two images using some algorithm</span>
+</code></pre>
+</div>
+
+<p>We can consume this API from Kotlin coroutine to load two images and combine then asynchronously. 
+The resulting function returns <code>CompletableFuture&lt;Image&gt;</code> for ease of use back from Java.</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="k">fun</span> <span class="nf">combineImagesAsync</span><span class="p">(</span><span class="n">name1</span><span class="p">:</span> <span class="n">String</span><span class="p">,</span> <span class="n">name2</span><span class="p">:</span> <span class="n">String</span><span class="p">):</span> <span class="n">CompletableFuture</span><span class="p">&lt;</span><span class="n">Image</span><span class="p">&gt;</span> <span class="p">=</span> <span class="n">future</span> <span class="p">{</span>
+    <span class="kd">val</span> <span class="py">future1</span> <span class="p">=</span> <span class="n">loadImageAsync</span><span class="p">(</span><span class="n">name1</span><span class="p">)</span> <span class="c1">// start loading first image
+</span>    <span class="kd">val</span> <span class="py">future2</span> <span class="p">=</span> <span class="n">loadImageAsync</span><span class="p">(</span><span class="n">name2</span><span class="p">)</span> <span class="c1">// start loading second image
+</span>    <span class="n">combineImages</span><span class="p">(</span><span class="n">future1</span><span class="p">.</span><span class="n">await</span><span class="p">(),</span> <span class="n">future2</span><span class="p">.</span><span class="n">await</span><span class="p">())</span> <span class="c1">// wait for both, combine, and return result
+</span><span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Note, that this module should be used only for integration with existing Java APIs based on <code>CompletableFuture</code>. 
+Writing pure-Kotlin code that uses <code>CompletableFuture</code> is highly not recommended, since the resulting APIs based
+on the futures are quite error-prone. See the discussion on 
+<a href="https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md#asynchronous-programming-styles">Asynchronous Programming Styles</a>
+for details on general problems pertaining to any future-based API and keep in mind that <code>CompletableFuture</code> exposes
+a <em>blocking</em> method 
+<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#get--">get</a> 
+that makes it especially bad choice for coroutine-based Kotlin code.</p>
 
 <h3 id="packages">Packages</h3>
 
@@ -77,11 +110,13 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="kotlinx.coroutines.experimental.future/index.html">kotlinx.coroutines.experimental.future</a></p>
+
       </td>
 <td>
 
-        <p>Additional libraries for JDK8 <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a>.</p>
+        <p>Integration with JDK8 <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completable-future/index.html"><code>CompletableFuture</code></a> (Android API level 24).</p>
 
       </td>
 </tr>

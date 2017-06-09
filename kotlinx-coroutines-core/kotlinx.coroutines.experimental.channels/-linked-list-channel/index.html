@@ -44,7 +44,9 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
 <tbody>
 <tr>
 <td>
+
         <p><a href="-init-.html">&lt;init&gt;</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="identifier">LinkedListChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
@@ -63,10 +65,12 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
 side and all previously sent items were already received, so that the <a href="../-abstract-channel/receive.html">receive</a> attempt
@@ -78,10 +82,12 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/is-empty.html">isEmpty</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-abstract-channel/receive.html">receive</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
@@ -97,7 +103,9 @@ This function returns <code>false</code> for <a href="../-abstract-channel/is-cl
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/iterator.html">iterator</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -110,10 +118,12 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/on-cancelled-receive.html">onCancelledReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancelledReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancelledReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Invoked when enqueued receiver was successfully cancelled.</p>
 
@@ -121,10 +131,12 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/on-enqueued-receive.html">onEnqueuedReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onEnqueuedReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onEnqueuedReceive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Invoked when receiver is successfully enqueued to the queue of waiting receivers.</p>
 
@@ -132,7 +144,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/poll.html">poll</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -145,7 +159,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/receive.html">receive</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
@@ -159,7 +175,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/receive-or-null.html">receiveOrNull</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -179,10 +197,12 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <tbody>
 <tr>
 <td>
+
         <p><a href="../consume-each.html">consumeEach</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 

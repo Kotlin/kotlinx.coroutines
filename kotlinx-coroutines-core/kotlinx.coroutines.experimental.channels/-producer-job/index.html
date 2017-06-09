@@ -41,7 +41,9 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="channel.html">channel</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">channel</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -61,10 +63,12 @@ the channel instance returned by this function.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/is-active.html">isActive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this job is active.</p>
 
@@ -72,10 +76,12 @@ the channel instance returned by this function.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
 side and all previously sent items were already received, so that the <a href="../-receive-channel/receive.html">receive</a> attempt
@@ -87,10 +93,12 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">isCompleted</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this job has completed for any reason.</p>
 
@@ -98,10 +106,12 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-receive-channel/receive.html">receive</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
@@ -117,10 +127,12 @@ This function returns <code>false</code> for <a href="../-receive-channel/is-clo
 <tbody>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancel this activity with an optional cancellation <a href="../../kotlinx.coroutines.experimental/-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
 cancelled as a result of this invocation and <code>false</code> otherwise
@@ -131,21 +143,25 @@ Repeated invocations of this function have no effect and always produce <code>fa
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/get-completion-exception.html">getCompletionException</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Throwable</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a></code></div>
 
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> cause or an instance of <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">completed</a> yet.</p>
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">completed</a> yet.</p>
 
       </td>
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/invoke-on-completion.html">invokeOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -159,7 +175,9 @@ job is complete. Note, that <a href="../../kotlinx.coroutines.experimental/-job/
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/iterator.html">iterator</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -172,10 +190,12 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/join.html">join</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason. This function also <a href="../../kotlinx.coroutines.experimental/-job/start.html">starts</a> the corresponding coroutine
@@ -185,7 +205,9 @@ if the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> w
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/poll.html">poll</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -198,7 +220,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive.html">receive</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
@@ -212,7 +236,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -225,10 +251,12 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-job/start.html">start</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">start</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Starts coroutine related to this job (if any) if it was not started yet.
 The result <code>true</code> if this invocation actually started coroutine or <code>false</code>
@@ -245,7 +273,9 @@ if it was already started or completed.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -256,10 +286,12 @@ if it was already started or completed.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../consume-each.html">consumeEach</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 
@@ -267,7 +299,9 @@ if it was already started or completed.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/dispose-on-completion.html">disposeOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">disposeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>

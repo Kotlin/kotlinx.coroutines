@@ -33,13 +33,35 @@
 
 <p>Utilities for <a href="https://github.com/ReactiveX/RxJava/tree/1.x">RxJava 1.x</a>.</p>
 
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-scheduler-coroutine-dispatcher/index.html">SchedulerCoroutineDispatcher</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">SchedulerCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
+
+        <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Scheduler.html">Scheduler</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
 
 <table class="api-docs-table">
 <tbody>
 <tr>
 <td>
+
         <p><a href="kotlinx.coroutines.experimental.-deferred/index.html">kotlinx.coroutines.experimental.Deferred</a></p>
+
       </td>
 <td>
 
@@ -47,7 +69,9 @@
 </tr>
 <tr>
 <td>
+
         <p><a href="kotlinx.coroutines.experimental.-job/index.html">kotlinx.coroutines.experimental.Job</a></p>
+
       </td>
 <td>
 
@@ -55,7 +79,9 @@
 </tr>
 <tr>
 <td>
+
         <p><a href="kotlinx.coroutines.experimental.channels.-receive-channel/index.html">kotlinx.coroutines.experimental.channels.ReceiveChannel</a></p>
+
       </td>
 <td>
 
@@ -63,7 +89,9 @@
 </tr>
 <tr>
 <td>
+
         <p><a href="rx.-completable/index.html">rx.Completable</a></p>
+
       </td>
 <td>
 
@@ -71,7 +99,9 @@
 </tr>
 <tr>
 <td>
+
         <p><a href="rx.-observable/index.html">rx.Observable</a></p>
+
       </td>
 <td>
 
@@ -79,7 +109,19 @@
 </tr>
 <tr>
 <td>
+
+        <p><a href="rx.-scheduler/index.html">rx.Scheduler</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="rx.-single/index.html">rx.Single</a></p>
+
       </td>
 <td>
 
@@ -94,12 +136,14 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="rx-completable.html">rxCompletable</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">rxCompletable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="identifier">CoroutineScope</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Completable</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">rxCompletable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Completable.html"><span class="identifier">Completable</span></a></code></div>
 
-        <p>Creates cold <a href="#">Completable</a> that runs a given <a href="rx-completable.html#kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</a> in a coroutine.
+        <p>Creates cold <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Completable.html">Completable</a> that runs a given <a href="rx-completable.html#kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</a> in a coroutine.
 Every time the returned completable is subscribed, it starts a new coroutine in the specified <a href="rx-completable.html#kotlinx.coroutines.experimental.rx1$rxCompletable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</a>.
 Unsubscribing cancels running coroutine.</p>
 
@@ -107,12 +151,14 @@ Unsubscribing cancels running coroutine.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="rx-observable.html">rxObservable</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxObservable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Observable</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxObservable</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates cold <a href="#">Observable</a> that runs a given <a href="rx-observable.html#kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/block">block</a> in a coroutine.
+        <p>Creates cold <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html">Observable</a> that runs a given <a href="rx-observable.html#kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/block">block</a> in a coroutine.
 Every time the returned observable is subscribed, it starts a new coroutine in the specified <a href="rx-observable.html#kotlinx.coroutines.experimental.rx1$rxObservable(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.rx1.rxObservable.T)), kotlin.Unit)))/context">context</a>.
 Coroutine emits items with <code>send</code>. Unsubscribing cancels running coroutine.</p>
 
@@ -120,12 +166,14 @@ Coroutine emits items with <code>send</code>. Unsubscribing cancels running coro
 </tr>
 <tr>
 <td>
+
         <p><a href="rx-single.html">rxSingle</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxSingle</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="identifier">CoroutineScope</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Single</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">rxSingle</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Single.html"><span class="identifier">Single</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates cold <a href="#">Single</a> that runs a given <a href="rx-single.html#kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/block">block</a> in a coroutine.
+        <p>Creates cold <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Single.html">Single</a> that runs a given <a href="rx-single.html#kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/block">block</a> in a coroutine.
 Every time the returned single is subscribed, it starts a new coroutine in the specified <a href="rx-single.html#kotlinx.coroutines.experimental.rx1$rxSingle(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.rx1.rxSingle.T)))/context">context</a>.
 Coroutine returns a single value. Unsubscribing cancels running coroutine.</p>
 

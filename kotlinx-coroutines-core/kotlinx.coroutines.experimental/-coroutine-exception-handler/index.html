@@ -31,7 +31,7 @@
 
 <h1 id="coroutineexceptionhandler">CoroutineExceptionHandler</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineExceptionHandler.kt#L50">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineExceptionHandler.kt#L51">(source)</a></div>
 
 <p>An optional element on the coroutine context to handle uncaught exceptions.
 See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
@@ -42,13 +42,35 @@ See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</
 <tbody>
 <tr>
 <td>
+
         <p><a href="handle-exception.html">handleException</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">handleException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">handleException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Handles uncaught <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</a> in the given <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</a>. It is invoked
 if coroutine has an uncaught exception. See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="companion-object-functions">Companion Object Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="invoke.html">invoke</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler.Key$invoke(kotlin.Function2((kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">CoroutineExceptionHandler</span></code></div>
+
+        <p>Creates new CoroutineExceptionHandler instance.</p>
 
       </td>
 </tr>

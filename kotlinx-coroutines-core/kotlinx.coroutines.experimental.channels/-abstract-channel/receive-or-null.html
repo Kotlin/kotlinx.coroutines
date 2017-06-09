@@ -31,7 +31,7 @@
 
 <h1 id="receiveornull">receiveOrNull</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L458">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L510">(source)</a></div>
 
 <p>Overrides <a href="../-receive-channel/receive-or-null.html">ReceiveChannel.receiveOrNull</a></p>
 
@@ -40,9 +40,13 @@ or returns <code>null</code> if the channel is <a href="is-closed-for-receive.ht
 or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
 <p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this
-function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.
-Cancellation of suspended receive is <em>atomic</em> – when this function
-throws <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> it means that the element was not retrieved from this channel.</p>
+function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
+
+<p><em>Cancellation of suspended receive is atomic</em> – when this function
+throws <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> it means that the element was not retrieved from this channel.
+As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+continue to execute even after it was cancelled from the same thread in the case when this receive operation
+was already resumed and the continuation was posted for execution to the thread’s queue.</p>
 
 <p>Note, that this function does not check for cancellation when it is not suspended.
 Use <a href="../../kotlinx.coroutines.experimental/yield.html">yield</a> or <a href="../../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>

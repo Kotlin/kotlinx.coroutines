@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx.coroutines.experimental.guava - kotlinx-coroutines-guava</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-guava</a> / <a href=".">kotlinx.coroutines.experimental.guava</a></div>
+
+<h2 id="package-kotlinxcoroutinesexperimentalguava">Package kotlinx.coroutines.experimental.guava</h2>
+
+<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="com.google.common.util.concurrent.-listenable-future/index.html">com.google.common.util.concurrent.ListenableFuture</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.experimental.-deferred/index.html">kotlinx.coroutines.experimental.Deferred</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="future.html">future</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">future</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.guava$future(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.guava.future.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CommonPool<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.guava$future(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.guava.future.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.guava$future(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.guava.future.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://google.github.io/guava/releases/18.0/api/docs/com/google/common/util/concurrent/ListenableFuture.html"><span class="identifier">ListenableFuture</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Starts new coroutine and returns its results an an implementation of <a href="https://google.github.io/guava/releases/18.0/api/docs/com/google/common/util/concurrent/ListenableFuture.html">ListenableFuture</a>.
+This coroutine builder uses <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html">CommonPool</a> context by default.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

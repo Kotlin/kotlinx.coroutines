@@ -31,11 +31,11 @@
 
 <h1 id="awaitpulse">awaitPulse</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">awaitPulse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Long</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-javafx/src/main/kotlin/kotlinx/coroutines/experimental/javafx/JavaFx.kt#L48">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">awaitPulse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-javafx/src/main/kotlin/kotlinx/coroutines/experimental/javafx/JavaFx.kt#L48">(source)</a></div>
 
 <p>Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
-If the <a href="#">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
-immediately resumes with <a href="#">CancellationException</a> .</p>
+If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
+immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> .</p>
 
 
       </div>

@@ -45,10 +45,12 @@ the lock still suspends the invoker.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="is-locked.html">isLocked</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isLocked</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isLocked</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this mutex is locked.</p>
 
@@ -63,10 +65,12 @@ the lock still suspends the invoker.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="lock.html">lock</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Locks this mutex, suspending caller while the mutex is locked.</p>
 
@@ -74,10 +78,12 @@ the lock still suspends the invoker.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="try-lock.html">tryLock</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$tryLock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">tryLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$tryLock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Tries to lock this mutex, returning <code>false</code> if this mutex is already locked.</p>
 
@@ -85,12 +91,14 @@ the lock still suspends the invoker.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="unlock.html">unlock</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unlock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$unlock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<span class="identifier">Any</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unlock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$unlock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Unlocks this mutex. Throws <a href="#">IllegalStateException</a> if invoked on a mutex that is not locked.</p>
+        <p>Unlocks this mutex. Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if invoked on a mutex that is not locked.</p>
 
       </td>
 </tr>
@@ -103,10 +111,12 @@ the lock still suspends the invoker.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="invoke.html">invoke</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex.Factory$invoke(kotlin.Boolean)/locked">locked</span><span class="symbol">:</span>&nbsp;<span class="identifier">Boolean</span>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Mutex</span></code></div>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex.Factory$invoke(kotlin.Boolean)/locked">locked</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Mutex</span></code></div>
 
         <p>Creates new Mutex instance.</p>
 
@@ -121,7 +131,9 @@ the lock still suspends the invoker.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../with-lock.html">withLock</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Mutex</span><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>

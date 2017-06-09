@@ -31,7 +31,7 @@
 
 <h1 id="actorscope">ActorScope</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Actor.kt#L27">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Actor.kt#L26">(source)</a></div>
 
 <p>Scope for <a href="../actor.html">actor</a> coroutine builder.</p>
 
@@ -41,7 +41,9 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="channel.html">channel</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">channel</span><span class="symbol">: </span><a href="../-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -63,10 +65,12 @@ the channel instance returned by this function.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Returns the context of this coroutine.</p>
 
@@ -74,10 +78,12 @@ the channel instance returned by this function.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
 
@@ -85,10 +91,12 @@ the channel instance returned by this function.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
 side and all previously sent items were already received, so that the <a href="../-receive-channel/receive.html">receive</a> attempt
@@ -100,10 +108,12 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-receive-channel/receive.html">receive</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
@@ -119,7 +129,9 @@ This function returns <code>false</code> for <a href="../-receive-channel/is-clo
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/iterator.html">iterator</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -132,7 +144,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/poll.html">poll</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -145,7 +159,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive.html">receive</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
@@ -159,7 +175,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -179,10 +197,12 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <tbody>
 <tr>
 <td>
+
         <p><a href="../consume-each.html">consumeEach</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 

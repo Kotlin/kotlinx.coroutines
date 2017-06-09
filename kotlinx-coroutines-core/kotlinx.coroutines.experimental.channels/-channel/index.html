@@ -31,7 +31,7 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L228">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L248">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
@@ -45,10 +45,12 @@ but it has suspending operations instead of blocking ones and it can be closed.<
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForReceive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> on the <a href="../-send-channel/index.html">SendChannel</a>
 side and all previously sent items were already received, so that the <a href="../-receive-channel/receive.html">receive</a> attempt
@@ -60,10 +62,12 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 </tr>
 <tr>
 <td>
+
         <p><a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-send-channel/close.html">close</a> and thus
 the <a href="../-send-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
@@ -74,10 +78,12 @@ an element to a failed channel throw the original <a href="../-send-channel/clos
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/is-empty.html">isEmpty</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is empty (contains no elements) and the <a href="../-receive-channel/receive.html">receive</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> channel.</p>
@@ -86,10 +92,12 @@ This function returns <code>false</code> for <a href="../-receive-channel/is-clo
 </tr>
 <tr>
 <td>
+
         <p><a href="../-send-channel/is-full.html">isFull</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-send-channel/send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
@@ -105,10 +113,12 @@ This function returns <code>false</code> for <a href="../-send-channel/is-closed
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-send-channel/close.html">close</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Closes this channel with an optional exceptional <a href="../-send-channel/close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
@@ -121,7 +131,9 @@ are received.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/iterator.html">iterator</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -134,7 +146,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/poll.html">poll</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -147,7 +161,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive.html">receive</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
@@ -161,7 +177,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 </tr>
 <tr>
 <td>
+
         <p><a href="../-receive-channel/receive-or-null.html">receiveOrNull</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
@@ -181,10 +199,12 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <tbody>
 <tr>
 <td>
+
         <p><a href="-c-o-n-f-l-a-t-e-d.html">CONFLATED</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
         <p>Requests conflated channel in <a href="invoke.html">Channel()</a> factory function –
 the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created.</p>
@@ -193,10 +213,12 @@ the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created
 </tr>
 <tr>
 <td>
+
         <p><a href="-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><span class="identifier">Int</span></code></div>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
         <p>Requests channel with unlimited capacity buffer in <a href="invoke.html">Channel()</a> factory function –
 the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets created.</p>
@@ -212,12 +234,14 @@ the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets crea
 <tbody>
 <tr>
 <td>
+
         <p><a href="invoke.html">invoke</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.Channel.Factory$invoke(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.Channel.Factory$invoke(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Creates a channel with specified buffer capacity (or without a buffer by default).</p>
+        <p>Creates a channel with the specified buffer capacity (or without a buffer by default).</p>
 
       </td>
 </tr>
@@ -230,10 +254,12 @@ the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets crea
 <tbody>
 <tr>
 <td>
+
         <p><a href="../consume-each.html">consumeEach</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 
@@ -248,7 +274,9 @@ the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets crea
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-abstract-channel/index.html">AbstractChannel</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>

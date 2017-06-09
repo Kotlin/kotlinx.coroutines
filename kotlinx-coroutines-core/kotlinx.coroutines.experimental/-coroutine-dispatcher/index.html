@@ -31,7 +31,7 @@
 
 <h1 id="coroutinedispatcher">CoroutineDispatcher</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">CoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">AbstractCoroutineContextElement</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">ContinuationInterceptor</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineDispatcher.kt#L41">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">CoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-abstract-coroutine-context-element/index.html"><span class="identifier">AbstractCoroutineContextElement</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html"><span class="identifier">ContinuationInterceptor</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineDispatcher.kt#L41">(source)</a></div>
 
 <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
 
@@ -58,7 +58,9 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 <tbody>
 <tr>
 <td>
+
         <p><a href="-init-.html">&lt;init&gt;</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="identifier">CoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
@@ -76,10 +78,12 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 <tbody>
 <tr>
 <td>
+
         <p><a href="dispatch.html">dispatch</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Dispatches execution of a runnable <a href="dispatch.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</a> onto another thread in the given <a href="dispatch.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</a>.</p>
 
@@ -87,10 +91,12 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 </tr>
 <tr>
 <td>
+
         <p><a href="intercept-continuation.html">interceptContinuation</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">interceptContinuation</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
         <p>Returns continuation that wraps the original <a href="intercept-continuation.html#kotlinx.coroutines.experimental.CoroutineDispatcher$interceptContinuation(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineDispatcher.interceptContinuation.T)))/continuation">continuation</a>, thus intercepting all resumptions.</p>
 
@@ -98,10 +104,12 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 </tr>
 <tr>
 <td>
+
         <p><a href="is-dispatch-needed.html">isDispatchNeeded</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if execution shall be dispatched onto another thread.
 The default behaviour for most dispatchers is to return <code>true</code>.</p>
@@ -110,10 +118,12 @@ The default behaviour for most dispatchers is to return <code>true</code>.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="to-string.html">toString</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">String</span></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
       </td>
 </tr>
@@ -126,7 +136,9 @@ The default behaviour for most dispatchers is to return <code>true</code>.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="../-common-pool/index.html">CommonPool</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineDispatcher</span></code></div>
@@ -140,7 +152,9 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 </tr>
 <tr>
 <td>
+
         <p><a href="../-unconfined/index.html">Unconfined</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">Unconfined</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineDispatcher</span></code></div>

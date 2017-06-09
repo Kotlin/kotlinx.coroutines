@@ -31,12 +31,12 @@
 
 <h1 id="getcompletionexception">getCompletionException</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Throwable</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L99">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionException</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L99">(source)</a></div>
 
 <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="#">IllegalStateException</a> when invoked for an job that has not <a href="is-completed.html">completed</a> yet.</p>
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="is-completed.html">completed</a> yet.</p>
 
 <p>The <a href="../suspend-cancellable-coroutine.html">cancellable</a> suspending functions throw this exception
 when trying to suspend in the context of this job.</p>

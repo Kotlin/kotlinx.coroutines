@@ -35,10 +35,12 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="await.html">await</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">MaybeSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span><span class="symbol">?</span></code></div>
 
         <p>Awaits for completion of the maybe without blocking a thread.
 Returns the resulting value, null if no value was produced or throws the corresponding exception if this
@@ -48,10 +50,12 @@ maybe had produced error.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="await-or-default.html">awaitOrDefault</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">MaybeSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitOrDefault</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)), kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitOrDefault</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)), kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)/default">default</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Awaits for completion of the maybe without blocking a thread.
 Returns the resulting value, <a href="await-or-default.html#kotlinx.coroutines.experimental.rx2$awaitOrDefault(io.reactivex.MaybeSource((kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)), kotlinx.coroutines.experimental.rx2.awaitOrDefault.T)/default">default</a> if no value was produced or throws the corresponding exception if this
@@ -61,24 +65,28 @@ maybe had produced error.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="consume-each.html">consumeEach</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">MaybeSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$consumeEach(io.reactivex.MaybeSource((kotlinx.coroutines.experimental.rx2.consumeEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.rx2.consumeEach.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">T</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2$consumeEach(io.reactivex.MaybeSource((kotlinx.coroutines.experimental.rx2.consumeEach.T)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.rx2.consumeEach.T, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">T</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Subscribes to this <a href="#">MaybeSource</a> and performs the specified action for each received element.</p>
+        <p>Subscribes to this <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> and performs the specified action for each received element.</p>
 
       </td>
 </tr>
 <tr>
 <td>
+
         <p><a href="open.html">open</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">MaybeSource</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">SubscriptionReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html"><span class="identifier">MaybeSource</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Subscribes to this <a href="#">MaybeSource</a> and returns a channel to receive elements emitted by it.
-The resulting channel shall be <a href="#">closed</a> to unsubscribe from this source.</p>
+        <p>Subscribes to this <a href="http://reactivex.io/RxJava/javadoc/io/reactivex/MaybeSource.html">MaybeSource</a> and returns a channel to receive elements emitted by it.
+The resulting channel shall be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html">closed</a> to unsubscribe from this source.</p>
 
       </td>
 </tr>

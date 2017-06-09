@@ -39,10 +39,12 @@
 <tbody>
 <tr>
 <td>
+
         <p><a href="-cancellable-continuation/index.html">CancellableContinuation</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">Continuation</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
 
         <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
 When <a href="-job/cancel.html">cancel</a> function is explicitly invoked, this continuation resumes with <a href="-cancellation-exception.html">CancellationException</a> or
@@ -52,7 +54,9 @@ with the specified cancel cause.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-common-pool/index.html">CommonPool</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
@@ -66,10 +70,12 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 </tr>
 <tr>
 <td>
+
         <p><a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">CoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">AbstractCoroutineContextElement</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">ContinuationInterceptor</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">CoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-abstract-coroutine-context-element/index.html"><span class="identifier">AbstractCoroutineContextElement</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html"><span class="identifier">ContinuationInterceptor</span></a></code></div>
 
         <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
 
@@ -77,10 +83,12 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 </tr>
 <tr>
 <td>
+
         <p><a href="-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code></div>
 
         <p>An optional element on the coroutine context to handle uncaught exceptions.
 See <a href="handle-coroutine-exception.html">handleCoroutineException</a>.</p>
@@ -89,10 +97,12 @@ See <a href="handle-coroutine-exception.html">handleCoroutineException</a>.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-coroutine-name/index.html">CoroutineName</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">CoroutineName</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AbstractCoroutineContextElement</span></code></div>
+        <div class="signature"><code><span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">CoroutineName</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-abstract-coroutine-context-element/index.html"><span class="identifier">AbstractCoroutineContextElement</span></a></code></div>
 
         <p>User-specified name of coroutine. This name is used in debugging mode.
 See <a href="new-coroutine-context.html">newCoroutineContext</a> for the description of coroutine debugging facilities.</p>
@@ -101,7 +111,9 @@ See <a href="new-coroutine-context.html">newCoroutineContext</a> for the descrip
 </tr>
 <tr>
 <td>
+
         <p><a href="-coroutine-scope/index.html">CoroutineScope</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code></div>
@@ -113,7 +125,9 @@ to its <a href="-coroutine-scope/context.html">context</a> and its cancellation 
 </tr>
 <tr>
 <td>
+
         <p><a href="-coroutine-start/index.html">CoroutineStart</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code></div>
@@ -126,7 +140,9 @@ coroutine builder functions.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-deferred/index.html">Deferred</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
@@ -139,7 +155,9 @@ It is in <a href="-job/is-active.html">active</a> state while the value is being
 </tr>
 <tr>
 <td>
+
         <p><a href="-delay/index.html">Delay</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Delay</span></code></div>
@@ -151,7 +169,9 @@ scheduled execution of tasks.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-disposable-future-handle/index.html">DisposableFutureHandle</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">DisposableFutureHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -162,7 +182,9 @@ scheduled execution of tasks.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-disposable-handle/index.html">DisposableHandle</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Registration</span></code></div>
@@ -173,7 +195,9 @@ scheduled execution of tasks.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-event-loop/index.html">EventLoop</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">EventLoop</span></code></div>
@@ -185,10 +209,12 @@ be asked to process next event from their event queue.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-job/index.html">Job</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Element</span></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code></div>
 
         <p>A background job. It is created with <a href="launch.html">launch</a> coroutine builder or with a
 <a href="-job/invoke.html"><code>Job()</code></a> factory function.
@@ -198,10 +224,12 @@ A job can be <em>cancelled</em> at any time with <a href="-job/cancel.html">canc
 </tr>
 <tr>
 <td>
+
         <p><a href="-non-cancellable/index.html">NonCancellable</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonCancellable</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AbstractCoroutineContextElement</span><span class="symbol">, </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonCancellable</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-abstract-coroutine-context-element/index.html"><span class="identifier">AbstractCoroutineContextElement</span></a><span class="symbol">, </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
 
         <p>A non-cancelable job that is always <a href="-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="run.html">run</a> builder
 to prevent cancellation of code blocks that need to run without cancellation.</p>
@@ -210,7 +238,9 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 </tr>
 <tr>
 <td>
+
         <p><a href="-non-disposable-handle/index.html">NonDisposableHandle</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonDisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -221,7 +251,9 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 </tr>
 <tr>
 <td>
+
         <p><a href="-unconfined/index.html">Unconfined</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">Unconfined</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
@@ -242,7 +274,9 @@ mandating any specific threading policy.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="-cancellation-exception.html">CancellationException</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html"><span class="identifier">CancellationException</span></a></code></div>
@@ -253,10 +287,12 @@ mandating any specific threading policy.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-completion-handler.html">CompletionHandler</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><span class="identifier">Throwable</span><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Handler for <a href="-job/invoke-on-completion.html">Job.invokeOnCompletion</a>.</p>
 
@@ -264,7 +300,9 @@ mandating any specific threading policy.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="-empty-registration.html">EmptyRegistration</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">typealias </span><s><span class="identifier">EmptyRegistration</span></s>&nbsp;<span class="symbol">=</span>&nbsp;<a href="-non-disposable-handle/index.html"><span class="identifier">NonDisposableHandle</span></a></code></div>
@@ -282,7 +320,9 @@ mandating any specific threading policy.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="java.util.concurrent.-executor/index.html">java.util.concurrent.Executor</a></p>
+
       </td>
 <td>
 
@@ -297,10 +337,12 @@ mandating any specific threading policy.</p>
 <tbody>
 <tr>
 <td>
+
         <p><a href="async.html">async</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
         <p>Creates new coroutine and returns its future result as an implementation of <a href="-deferred/index.html">Deferred</a>.</p>
 
@@ -308,7 +350,9 @@ mandating any specific threading policy.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -319,10 +363,12 @@ mandating any specific threading policy.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="delay.html">delay</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$delay(kotlin.Long, java.util.concurrent.TimeUnit)/time">time</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$delay(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">delay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$delay(kotlin.Long, java.util.concurrent.TimeUnit)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$delay(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
 This suspending function is cancellable.
@@ -333,7 +379,9 @@ immediately resumes with <a href="-cancellation-exception.html">CancellationExce
 </tr>
 <tr>
 <td>
+
         <p><a href="dispose-on-completion.html">disposeOnCompletion</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">disposeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</span><span class="symbol">:</span>&nbsp;<a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
@@ -344,10 +392,12 @@ immediately resumes with <a href="-cancellation-exception.html">CancellationExce
 </tr>
 <tr>
 <td>
+
         <p><a href="handle-coroutine-exception.html">handleCoroutineException</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">handleCoroutineException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$handleCoroutineException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$handleCoroutineException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<span class="identifier">Throwable</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">handleCoroutineException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$handleCoroutineException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$handleCoroutineException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Helper function for coroutine builder implementations to handle uncaught exception in coroutines.
 It tries to handle uncaught exception in the following way:</p>
@@ -356,10 +406,12 @@ It tries to handle uncaught exception in the following way:</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="launch.html">launch</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">launch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">launch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
 
         <p>Launches new coroutine without blocking current thread and returns a reference to the coroutine as a <a href="-job/index.html">Job</a>.
 The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">cancelled</a>.</p>
@@ -368,10 +420,12 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 </tr>
 <tr>
 <td>
+
         <p><a href="new-coroutine-context.html">newCoroutineContext</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newCoroutineContext(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newCoroutineContext(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Creates context for the new coroutine with optional support for debugging facilities (when turned on).</p>
 
@@ -379,10 +433,12 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 </tr>
 <tr>
 <td>
+
         <p><a href="new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newFixedThreadPoolContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/nThreads">nThreads</span><span class="symbol">:</span>&nbsp;<span class="identifier">Int</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/name">name</span><span class="symbol">:</span>&nbsp;<span class="identifier">String</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newFixedThreadPoolContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/nThreads">nThreads</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newFixedThreadPoolContext(kotlin.Int, kotlin.String, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Creates new coroutine execution context with the fixed-size thread-pool and built-in <a href="yield.html">yield</a> and <a href="delay.html">delay</a> support.
 All continuations are dispatched immediately when invoked inside the threads of this context.
@@ -394,10 +450,12 @@ An optional <a href="new-fixed-thread-pool-context.html#kotlinx.coroutines.exper
 </tr>
 <tr>
 <td>
+
         <p><a href="new-single-thread-context.html">newSingleThreadContext</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String, kotlinx.coroutines.experimental.Job)/name">name</span><span class="symbol">:</span>&nbsp;<span class="identifier">String</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String, kotlinx.coroutines.experimental.Job)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Creates new coroutine execution context with the a single thread and built-in <a href="yield.html">yield</a> and <a href="delay.html">delay</a> support.
 All continuations are dispatched immediately when invoked inside the thread of this context.
@@ -409,10 +467,12 @@ An optional <a href="new-single-thread-context.html#kotlinx.coroutines.experimen
 </tr>
 <tr>
 <td>
+
         <p><a href="run.html">run</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">run</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">run</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$run(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.run.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
 the result.</p>
@@ -421,10 +481,12 @@ the result.</p>
 </tr>
 <tr>
 <td>
+
         <p><a href="run-blocking.html">runBlocking</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineContext</span>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Runs new coroutine and <strong>blocks</strong> current thread <em>interruptibly</em> until its completion.
 This function should not be used from coroutine. It is designed to bridge regular blocking code
@@ -434,22 +496,39 @@ to libraries that are written in suspending style, to be used in <code>main</cod
 </tr>
 <tr>
 <td>
-        <p><a href="suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a></p>
+
+        <p><a href="suspend-atomic-cancellable-coroutine.html">suspendAtomicCancellableCoroutine</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/holdCancellability">holdCancellability</span><span class="symbol">:</span>&nbsp;<span class="identifier">Boolean</span>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">Unit</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendAtomicCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendAtomicCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendAtomicCancellableCoroutine.T)), kotlin.Unit)))/holdCancellability">holdCancellability</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendAtomicCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendAtomicCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Suspend coroutine similar to <a href="#">suspendCoroutine</a>, but provide an implementation of <a href="-cancellable-continuation/index.html">CancellableContinuation</a> to
+        <p>Suspends coroutine similar to <a href="suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>, but with <em>atomic cancellation</em>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">suspendCancellableCoroutine</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/holdCancellability">holdCancellability</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+
+        <p>Suspends coroutine similar to <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/suspend-coroutine.html">suspendCoroutine</a>, but provide an implementation of <a href="-cancellable-continuation/index.html">CancellableContinuation</a> to
 the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines.experimental$suspendCancellableCoroutine(kotlin.Boolean, kotlin.Function1((kotlinx.coroutines.experimental.CancellableContinuation((kotlinx.coroutines.experimental.suspendCancellableCoroutine.T)), kotlin.Unit)))/block">block</a>. This function throws <a href="-cancellation-exception.html">CancellationException</a> if the coroutine is cancelled while suspended.</p>
 
       </td>
 </tr>
 <tr>
 <td>
+
         <p><a href="with-timeout.html">withTimeout</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/time">time</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/block">block</a> of code inside a coroutine with a specified timeout and throws
 <a href="-cancellation-exception.html">CancellationException</a> if timeout was exceeded.</p>
@@ -458,22 +537,26 @@ the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines.experimental$
 </tr>
 <tr>
 <td>
+
         <p><a href="with-timeout-or-null.html">withTimeoutOrNull</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/time">time</span><span class="symbol">:</span>&nbsp;<span class="identifier">Long</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span><span class="symbol">?</span></code></div>
 
         <p>Runs a given suspending block of code inside a coroutine with a specified timeout and returns
-<code>null</code> if timeout was exceeded.</p>
+<code>null</code> if this timeout was exceeded.</p>
 
       </td>
 </tr>
 <tr>
 <td>
+
         <p><a href="yield.html">yield</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">yield</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">yield</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Yields a thread (or thread pool) of the current coroutine dispatcher to other coroutines to run.
 If the coroutine dispatcher does not have its own thread pool (like <a href="-unconfined/index.html">Unconfined</a> dispatcher) then this

@@ -31,7 +31,7 @@
 
 <h1 id="processnextevent">processNextEvent</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">processNextEvent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Long</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/EventLoop.kt#L43">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">processNextEvent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/EventLoop.kt#L43">(source)</a></div>
 
 <p>Processes next event in this event loop.</p>
 
@@ -40,7 +40,7 @@
 <ul>
   <li><code>&lt;= 0</code> – there are potentially more events for immediate processing;</li>
   <li><code>&gt; 0</code> – a number of nanoseconds to wait for next scheduled event;</li>
-  <li><a href="#">Long.MAX_VALUE</a> – no more events, or was invoked from the wrong thread.</li>
+  <li><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/-companion/-m-a-x_-v-a-l-u-e.html">Long.MAX_VALUE</a> – no more events, or was invoked from the wrong thread.</li>
 </ul>
 
       </div>

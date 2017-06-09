@@ -42,10 +42,12 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 <tbody>
 <tr>
 <td>
+
         <p><a href="context.html">context</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><span class="identifier">CoroutineContext</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Returns the context of this coroutine.</p>
 
@@ -53,10 +55,12 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 </tr>
 <tr>
 <td>
+
         <p><a href="is-active.html">isActive</a></p>
+
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><span class="identifier">Boolean</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
 
@@ -71,7 +75,9 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 <tbody>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental.channels/-actor-scope/index.html">ActorScope</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorScope</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineScope</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
@@ -82,7 +88,9 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 </tr>
 <tr>
 <td>
+
         <p><a href="../../kotlinx.coroutines.experimental.channels/-producer-scope/index.html">ProducerScope</a></p>
+
       </td>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">CoroutineScope</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines.experimental.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>

@@ -31,13 +31,13 @@
 
 <h1 id="awaitcompleted">awaitCompleted</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">Completable</span><span class="symbol">.</span><span class="identifier">awaitCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Unit</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-rx1/src/main/kotlin/kotlinx/coroutines/experimental/rx1/RxAwait.kt#L34">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Completable.html"><span class="identifier">Completable</span></a><span class="symbol">.</span><span class="identifier">awaitCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-rx1/src/main/kotlin/kotlinx/coroutines/experimental/rx1/RxAwait.kt#L34">(source)</a></div>
 
 <p>Awaits for completion of this completable without blocking a thread.
 Returns <code>Unit</code> or throws the corresponding exception if this completable had produced error.</p>
 
-<p>This suspending function is cancellable. If the <a href="#">Job</a> of the invoking coroutine is completed while this
-suspending function is suspended, this function immediately resumes with <a href="#">CancellationException</a>.</p>
+<p>This suspending function is cancellable. If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the invoking coroutine is completed while this
+suspending function is suspended, this function immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
 
 
       </div>
