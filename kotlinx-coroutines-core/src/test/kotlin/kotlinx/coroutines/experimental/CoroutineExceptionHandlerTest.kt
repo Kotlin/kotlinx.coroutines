@@ -1,26 +1,22 @@
 package kotlinx.coroutines.experimental
 
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
-class CoroutineExceptionHandlerTest {
+class CoroutineExceptionHandlerTest : TestBase() {
     @Test
-    fun testCoroutineExceptionHandlerCreator() {
-        val latch = CountDownLatch(1)
+    fun testCoroutineExceptionHandlerCreator() = runBlocking {
+        expect(1)
         var coroutineException: Throwable? = null
-
         val handler = CoroutineExceptionHandler { _, ex ->
             coroutineException = ex
-            latch.countDown()
+            expect(3)
         }
-
-        launch(CommonPool + handler) {
+        val job = launch(CommonPool + handler) {
             throw TestException()
         }
-
-        latch.await(10, TimeUnit.SECONDS)
-
+        expect(2)
+        job.join()
+        finish(4)
         check(coroutineException is TestException)
     }
 }
