@@ -107,4 +107,35 @@ class WithTimeoutOrNullTest : TestBase() {
         assertThat(result, IsNull())
         finish(2)
     }
+
+    @Test(expected = CancellationException::class)
+    fun testInnerTimeoutTest() = runBlocking {
+        withTimeoutOrNull(200) {
+            withTimeout(100) {
+                while (true) {
+                    yield()
+                }
+            }
+            expectUnreached() // will timeout
+        }
+        expectUnreached() // will timeout
+    }
+
+    @Test
+    fun testOuterTimeoutTest() = runBlocking {
+        var counter = 0
+        val result = withTimeoutOrNull(250) {
+            while (true) {
+                val inner = withTimeoutOrNull(100) {
+                    while (true) {
+                        yield()
+                    }
+                }
+                assertThat(inner, IsNull())
+                counter++
+            }
+        }
+        assertThat(result, IsNull())
+        assertThat(counter, IsEqual(2))
+    }
 }

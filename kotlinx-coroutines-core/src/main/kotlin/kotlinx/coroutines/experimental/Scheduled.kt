@@ -72,7 +72,7 @@ internal fun scheduledExecutorShutdownNowAndRelease() {
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [CancellationException], so normally that exception,
  * if uncaught, also gets thrown by `withTimeout` as a result.
- * However, the code in the block can suppresses [CancellationException].
+ * However, the code in the block can suppress [CancellationException].
  *
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -107,19 +107,19 @@ private class TimeoutExceptionCoroutine<in T>(
     private val cont: Continuation<T>
 ) : JobSupport(active = true), Runnable, Continuation<T> {
     override val context: CoroutineContext = cont.context + this // mix in this Job into the context
-    override fun run() { cancel(TimeoutException(time, unit)) }
+    override fun run() { cancel(TimeoutException(time, unit, this)) }
     override fun resume(value: T) { cont.resumeDirect(value) }
     override fun resumeWithException(exception: Throwable) { cont.resumeDirectWithException(exception) }
 }
 
 /**
  * Runs a given suspending block of code inside a coroutine with a specified timeout and returns
- * `null` if timeout was exceeded.
+ * `null` if this timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [CancellationException]. Normally that exception,
  * if uncaught by the block, gets converted into the `null` result of `withTimeoutOrNull`.
- * However, the code in the block can suppresses [CancellationException].
+ * However, the code in the block can suppress [CancellationException].
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -158,14 +158,18 @@ private class TimeoutNullCoroutine<in T>(
     private val cont: Continuation<T?>
 ) : JobSupport(active = true), Runnable, Continuation<T> {
     override val context: CoroutineContext = cont.context + this // mix in this Job into the context
-    override fun run() { cancel(TimeoutException(time, unit)) }
+    override fun run() { cancel(TimeoutException(time, unit, this)) }
     override fun resume(value: T) { cont.resumeDirect(value) }
     override fun resumeWithException(exception: Throwable) {
         // suppress inner timeout exception and replace it with null
-        if (exception is TimeoutException)
+        if (exception is TimeoutException && exception.coroutine === this)
             cont.resumeDirect(null) else
             cont.resumeDirectWithException(exception)
     }
 }
 
-private class TimeoutException(time: Long, unit: TimeUnit) : CancellationException("Timed out waiting for $time $unit")
+private class TimeoutException(
+    time: Long,
+    unit: TimeUnit,
+    @JvmField val coroutine: Job
+) : CancellationException("Timed out waiting for $time $unit")
