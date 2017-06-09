@@ -11,7 +11,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
             coroutineException = ex
             expect(3)
         }
-        val job = launch(CommonPool + handler) {
+        val job = launch(context + handler) {
             throw TestException()
         }
         expect(2)
