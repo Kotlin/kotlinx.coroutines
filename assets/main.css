@@ -194,6 +194,10 @@ table {
 .api-docs-breadcrumbs {
   margin-bottom: 25px; }
 
+pre {
+  background-color: #efefef;
+  overflow: auto; }
+
 code {
   font-family: "Liberation Mono", Consolas, Menlo, Courier, monospace;
   font-style: normal;
