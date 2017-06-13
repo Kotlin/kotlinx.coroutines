@@ -171,6 +171,11 @@ table {
 $font-family-mono: 'Liberation Mono', Consolas, Menlo, Courier, monospace !global;
 $code-background: #efefef;
 
+pre {
+  background-color: $code-background;
+  overflow: auto;
+}
+
 code {
   font-family: $font-family-mono;
   font-style: normal;
