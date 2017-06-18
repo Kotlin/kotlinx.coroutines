@@ -920,7 +920,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-05.kt)
 
-It produces somethine like
+It produces something like
 
 ```
 My job is BlockingCoroutine{Active}@65ae6ba4
