@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
 
 // --------------- core job interfaces ---------------
 
@@ -781,6 +780,82 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         override fun invoke(reason: Throwable?) { subordinateJob.onParentCompletion(reason) }
         override fun toString(): String = "ParentOnCompletion[$subordinateJob]"
     }
+
+    /*
+     * =================================================================================================
+     * This is ready-to-use implementation for Deferred interface.
+     * However, it is not type-safe. Conceptually it just exposes the value of the underlying
+     * completed state as `Any?`
+     * =================================================================================================
+     */
+
+    public val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
+    public val isCancelled: Boolean get() = state is Cancelled
+
+    protected fun getCompletedInternal(): Any? {
+        val state = this.state
+        check(state !is Incomplete) { "This job has not completed yet" }
+        if (state is CompletedExceptionally) throw state.exception
+        return state
+    }
+
+    protected suspend fun awaitInternal(): Any? {
+        // fast-path -- check state (avoid extra object creation)
+        while(true) { // lock-free loop on state
+            val state = this.state
+            if (state !is Incomplete) {
+                // already complete -- just return result
+                if (state is CompletedExceptionally) throw state.exception
+                return state
+
+            }
+            if (startInternal(state) >= 0) break // break unless needs to retry
+        }
+        return awaitSuspend() // slow-path
+    }
+
+    private suspend fun awaitSuspend(): Any? = suspendCancellableCoroutine { cont ->
+        cont.disposeOnCompletion(invokeOnCompletion {
+            val state = this.state
+            check(state !is Incomplete)
+            if (state is CompletedExceptionally)
+                cont.resumeWithException(state.exception)
+            else
+                cont.resume(state)
+        })
+    }
+
+    protected fun <R> registerSelectAwaitInternal(select: SelectInstance<R>, block: suspend (Any?) -> R) {
+        // fast-path -- check state and select/return if needed
+        while (true) {
+            if (select.isSelected) return
+            val state = this.state
+            if (state !is Incomplete) {
+                // already complete -- select result
+                if (select.trySelect(idempotent = null)) {
+                    if (state is CompletedExceptionally)
+                        select.resumeSelectWithException(state.exception, MODE_DIRECT)
+                    else
+                        block.startCoroutineUndispatched(state, select.completion)
+                }
+                return
+            }
+            if (startInternal(state) == 0) {
+                // slow-path -- register waiter for completion
+                select.disposeOnSelect(invokeOnCompletion(SelectAwaitOnCompletion(this, select, block)))
+                return
+            }
+        }
+    }
+
+    internal fun <R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (Any?) -> R) {
+        val state = this.state
+        // Note: await is non-atomic (can be cancelled while dispatched)
+        if (state is CompletedExceptionally)
+            select.resumeSelectWithException(state.exception, MODE_CANCELLABLE)
+        else
+            block.startCoroutineCancellable(state, select.completion)
+    }
 }
 
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
@@ -850,6 +925,18 @@ private class SelectJoinOnCompletion<R>(
             block.startCoroutineCancellable(select.completion)
     }
     override fun toString(): String = "SelectJoinOnCompletion[$select]"
+}
+
+private class SelectAwaitOnCompletion<R>(
+    job: JobSupport,
+    private val select: SelectInstance<R>,
+    private val block: suspend (Any?) -> R
+) : JobNode<JobSupport>(job) {
+    override fun invoke(reason: Throwable?) {
+        if (select.trySelect(idempotent = null))
+            job.selectAwaitCompletion(select, block)
+    }
+    override fun toString(): String = "SelectAwaitOnCompletion[$select]"
 }
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {

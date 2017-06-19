@@ -20,10 +20,8 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.createCoroutine
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
-import kotlin.coroutines.experimental.intrinsics.createCoroutineUnchecked
 import kotlin.coroutines.experimental.suspendCoroutine
 
 // --------------- cancellable continuations ---------------
@@ -215,8 +213,6 @@ internal open class CancellableContinuationImpl<in T>(
         if (state is CompletedExceptionally) throw state.exception
         return getSuccessfulResult(state)
     }
-
-    override val isCancelled: Boolean get() = state is Cancelled
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
         while (true) { // lock-free loop on state
