@@ -20,7 +20,7 @@ import kotlinx.coroutines.experimental.selects.SelectInstance
 
 /**
  * Concrete implementation of [Deferred] that can be completed via public functions
- * [complete], [completeWithException], and [cancel].
+ * [complete], [completeExceptionally], and [cancel].
  *
  * Completion functions return `false` when this deferred value is already complete.
  */
@@ -57,7 +57,7 @@ public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    public fun completeWithException(exception: Throwable): Boolean {
+    public fun completeExceptionally(exception: Throwable): Boolean {
         while (true) { // lock-free loop on state
             val state = this.state // atomic read
             when (state) {

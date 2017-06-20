@@ -55,9 +55,9 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testCompleteWithException() {
         val c = CompletableDeferred<String>()
-        assertThat(c.completeWithException(TestException()), IsEqual(true))
+        assertThat(c.completeExceptionally(TestException()), IsEqual(true))
         checkCompleteTestException(c)
-        assertThat(c.completeWithException(TestException()), IsEqual(false))
+        assertThat(c.completeExceptionally(TestException()), IsEqual(false))
         checkCompleteTestException(c)
     }
 
