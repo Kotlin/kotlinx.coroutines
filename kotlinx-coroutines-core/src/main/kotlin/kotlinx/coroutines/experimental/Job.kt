@@ -16,12 +16,15 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
+import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
+import kotlinx.coroutines.experimental.internal.OpDescriptor
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
@@ -432,12 +435,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     public final override val isCompleted: Boolean get() = state !is Incomplete
 
-    // this is for `select` operator. `isSelected` state means "not new" (== was started or already completed)
-    public val isSelected: Boolean get() {
-        val state = this.state
-        return state !is Incomplete || state.isActive
-    }
-
     public final override fun start(): Boolean {
         while (true) { // lock-free loop on state
             when (startInternal(state)) {
@@ -456,102 +453,12 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                 return 1
             }
             state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                if (state.isActive) return 0
-                if (!NodeList.ACTIVE.compareAndSet(state, null, NodeList.ACTIVE_STATE)) return -1
+                if (state.active != 0) return 0
+                if (!NodeList.ACTIVE.compareAndSet(state, 0, 1)) return -1
                 onStart()
                 return 1
             }
             else -> return 0 // not a new state
-        }
-    }
-
-    // it is just like start(), but support idempotent start
-    public fun trySelect(idempotent: Any?): Boolean {
-        if (idempotent == null) return start() // non idempotent -- use plain start
-        check(idempotent !is OpDescriptor) { "cannot use OpDescriptor as idempotent marker"}
-        while (true) { // lock-free loop on state
-            val state = this.state
-            when {
-                state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
-                    // try to promote it to list in new state
-                    STATE.compareAndSet(this, state, NodeList(active = false))
-                }
-                state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                    val active = state.active
-                    if (active === idempotent) return true // was activated with the same marker --> true
-                    if (active != null) return false
-                    if (NodeList.ACTIVE.compareAndSet(state, null, idempotent)) {
-                        onStart()
-                        return true
-                    }
-                }
-                state is CompletedIdempotentStart -> { // remembers idempotent start token
-                    return state.idempotentStart === idempotent
-                }
-                else -> return false
-            }
-        }
-    }
-
-    public fun performAtomicTrySelect(desc: AtomicDesc): Any? = AtomicSelectOp(desc, true).perform(null)
-    public fun performAtomicIfNotSelected(desc: AtomicDesc): Any? = AtomicSelectOp(desc, false).perform(null)
-
-    private inner class AtomicSelectOp(
-        @JvmField val desc: AtomicDesc,
-        @JvmField val activate: Boolean
-    ) : AtomicOp () {
-        override fun prepare(): Any? = prepareIfNotSelected() ?: desc.prepare(this)
-
-        override fun complete(affected: Any?, failure: Any?) {
-            completeSelect(failure)
-            desc.complete(this, failure)
-        }
-
-        fun prepareIfNotSelected(): Any? {
-            while (true) { // lock-free loop on state
-                val state = _state
-                when {
-                    state === this@AtomicSelectOp -> return null // already in progress
-                    state is OpDescriptor -> state.perform(this@JobSupport) // help
-                    state === EmptyNew -> { // EMPTY_NEW state -- no completion handlers, new
-                        if (STATE.compareAndSet(this@JobSupport, state, this@AtomicSelectOp)) return null // success
-                    }
-                    state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                        val active = state._active
-                        when {
-                            active == null -> {
-                                if (NodeList.ACTIVE.compareAndSet(state, null, this@AtomicSelectOp)) return null // success
-                            }
-                            active === this@AtomicSelectOp -> return null // already in progress
-                            active is OpDescriptor -> active.perform(state) // help
-                            else -> return ALREADY_SELECTED // active state
-                        }
-                    }
-                    else -> return ALREADY_SELECTED // not a new state
-                }
-            }
-        }
-
-        private fun completeSelect(failure: Any?) {
-            val success = failure == null
-            val state = _state
-            when {
-                state === this -> {
-                    val update = if (success && activate) EmptyActive else EmptyNew
-                    if (STATE.compareAndSet(this@JobSupport, this, update)) {
-                        if (success) onStart()
-                    }
-                }
-                state is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                    if (state._active === this) {
-                        val update = if (success && activate) NodeList.ACTIVE_STATE else null
-                        if (NodeList.ACTIVE.compareAndSet(state, this, update)) {
-                            if (success) onStart()
-                        }
-                    }
-                }
-            }
-
         }
     }
 
@@ -622,7 +529,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- select result
-                if (select.trySelect(idempotent = null))
+                if (select.trySelect(null))
                     block.startCoroutineUndispatched(select.completion)
                 return
             }
@@ -662,7 +569,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             val state = this.state as? Incomplete ?: return false // quit if already complete
             // we are dispatching coroutine to process its cancellation exception, so there is no need for
             // an extra check for Job status in MODE_CANCELLABLE
-            if (updateState(state, Cancelled(state.idempotentStart, cause), mode = MODE_ATOMIC_DEFAULT)) return true
+            if (updateState(state, Cancelled(cause), mode = MODE_ATOMIC_DEFAULT)) return true
         }
     }
 
@@ -691,7 +598,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      */
     public interface Incomplete {
         val isActive: Boolean
-        val idempotentStart: Any? // != null if this state is a descendant of trySelect(idempotent)
     }
 
     private class NodeList(
@@ -699,30 +605,14 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     ) : LockFreeLinkedListHead(), Incomplete {
         @Volatile
         @JvmField
-        var _active: Any? = if (active) ACTIVE_STATE else null
+        var active: Int = if (active) 1 else 0
 
-        val active: Any? get() {
-            while (true) { // helper loop for atomic ops
-                val active = this._active
-                if (active !is OpDescriptor) return active
-                active.perform(this)
-            }
-        }
-
-        override val isActive: Boolean get() = active != null
-
-        override val idempotentStart: Any? get() {
-            val active = this.active
-            return if (active === ACTIVE_STATE) null else active
-        }
+        override val isActive: Boolean get() = active != 0
 
         companion object {
             @JvmField
-            val ACTIVE: AtomicReferenceFieldUpdater<NodeList, Any?> =
-                    AtomicReferenceFieldUpdater.newUpdater(NodeList::class.java, Any::class.java, "_active")
-
-            @JvmField
-            val ACTIVE_STATE = Symbol("ACTIVE_STATE")
+            val ACTIVE: AtomicIntegerFieldUpdater<NodeList> =
+                    AtomicIntegerFieldUpdater.newUpdater(NodeList::class.java, "active")
         }
 
         override fun toString(): String = buildString {
@@ -738,10 +628,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    public open class CompletedIdempotentStart(
-        @JvmField val idempotentStart: Any?
-    )
-
     /**
      * Class for a [state] of a job that had completed exceptionally, including cancellation.
      *
@@ -749,9 +635,8 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      *        if created on first get from [exception] property.
      */
     public open class CompletedExceptionally(
-        idempotentStart: Any?,
         @JvmField val cause: Throwable?
-    ) : CompletedIdempotentStart(idempotentStart) {
+    ) {
         @Volatile
         private var _exception: Throwable? = cause // materialize CancellationException on first need
 
@@ -769,9 +654,8 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      * A specific subclass of [CompletedExceptionally] for cancelled jobs.
      */
     public class Cancelled(
-        idempotentStart: Any?,
         cause: Throwable?
-    ) : CompletedExceptionally(idempotentStart, cause)
+    ) : CompletedExceptionally(cause)
 
     private class ParentOnCompletion(
         parentJob: Job,
@@ -832,9 +716,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- select result
-                if (select.trySelect(idempotent = null)) {
+                if (select.trySelect(null)) {
                     if (state is CompletedExceptionally)
-                        select.resumeSelectWithException(state.exception, MODE_DIRECT)
+                        select.resumeSelectCancellableWithException(state.exception)
                     else
                         block.startCoroutineUndispatched(state, select.completion)
                 }
@@ -852,19 +736,16 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
         if (state is CompletedExceptionally)
-            select.resumeSelectWithException(state.exception, MODE_CANCELLABLE)
+            select.resumeSelectCancellableWithException(state.exception)
         else
             block.startCoroutineCancellable(state, select.completion)
     }
 }
 
-internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
-
 private val EmptyNew = Empty(false)
 private val EmptyActive = Empty(true)
 
 private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
-    override val idempotentStart: Any? get() = null
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
@@ -872,7 +753,6 @@ internal abstract class JobNode<out J : Job>(
     @JvmField val job: J
 ) : LockFreeLinkedListNode(), DisposableHandle, CompletionHandler, JobSupport.Incomplete {
     final override val isActive: Boolean get() = true
-    final override val idempotentStart: Any? get() = null
     // if unregister is called on this instance, then Job was an instance of JobSupport that added this node it itself
     // directly without wrapping
     final override fun dispose() = (job as JobSupport).removeNode(this)
@@ -921,7 +801,7 @@ private class SelectJoinOnCompletion<R>(
     private val block: suspend () -> R
 ) : JobNode<JobSupport>(job) {
     override fun invoke(reason: Throwable?) {
-        if (select.trySelect(idempotent = null))
+        if (select.trySelect(null))
             block.startCoroutineCancellable(select.completion)
     }
     override fun toString(): String = "SelectJoinOnCompletion[$select]"
@@ -933,7 +813,7 @@ private class SelectAwaitOnCompletion<R>(
     private val block: suspend (Any?) -> R
 ) : JobNode<JobSupport>(job) {
     override fun invoke(reason: Throwable?) {
-        if (select.trySelect(idempotent = null))
+        if (select.trySelect(null))
             job.selectAwaitCompletion(select, block)
     }
     override fun toString(): String = "SelectAwaitOnCompletion[$select]"

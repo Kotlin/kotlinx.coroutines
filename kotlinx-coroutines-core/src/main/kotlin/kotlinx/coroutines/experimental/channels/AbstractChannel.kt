@@ -16,10 +16,14 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CancellableContinuation
+import kotlinx.coroutines.experimental.DisposableHandle
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
+import kotlinx.coroutines.experimental.removeOnCancel
+import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
 import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.suspendAtomicCancellableCoroutine
 import kotlin.coroutines.experimental.startCoroutine
 
 /**
@@ -579,7 +583,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
         @Suppress("UNCHECKED_CAST")
         override fun validatePrepared(node: Send): Boolean {
-            val token = node.tryResumeSend(this) ?: return false
+            val token = node.tryResumeSend(idempotent = this) ?: return false
             resumeToken = token
             pollResult = node.pollResult as E
             return true
@@ -656,7 +660,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                     pollResult === POLL_FAILED -> {} // retry
                     pollResult is Closed<*> -> {
                         if (pollResult.closeCause == null) {
-                            if (select.trySelect(idempotent = null))
+                            if (select.trySelect(null))
                                 block.startCoroutineUndispatched(null, select.completion)
                             return
                         } else
@@ -821,13 +825,14 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
-            if (select.trySelect(idempotent = null)) {
+            if (select.trySelect(null)) {
                 if (closed.closeCause == null && nullOnClose) {
                     block.startCoroutine(null, select.completion)
                 } else {
-                    // we are dispatching coroutine to process channel close on receive, which is an atomically
-                    // cancellable suspending function, so use an atomic (non-cancellable) resume mode
-                    select.resumeSelectWithException(closed.receiveException, MODE_ATOMIC_DEFAULT)
+                    // even though we are dispatching coroutine to process channel close on receive,
+                    // which is an atomically cancellable suspending function,
+                    // close is a final state, so we can use a cancellable resume mode
+                    select.resumeSelectCancellableWithException(closed.receiveException)
                 }
             }
         }

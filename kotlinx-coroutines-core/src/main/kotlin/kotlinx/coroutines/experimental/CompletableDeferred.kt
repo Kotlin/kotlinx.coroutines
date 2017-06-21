@@ -63,7 +63,7 @@ public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
             when (state) {
                 is Incomplete -> {
                     // actually, we don't care about the mode here at all, so just use a default
-                    if (updateState(state, CompletedExceptionally(null, exception), mode = MODE_ATOMIC_DEFAULT))
+                    if (updateState(state, CompletedExceptionally(exception), mode = MODE_ATOMIC_DEFAULT))
                         return true
                 }
                 else -> return false

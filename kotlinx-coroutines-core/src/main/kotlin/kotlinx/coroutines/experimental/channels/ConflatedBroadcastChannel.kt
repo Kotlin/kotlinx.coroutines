@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.MODE_DIRECT
 import kotlinx.coroutines.experimental.internal.Symbol
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectInstance
@@ -249,9 +248,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     }
 
     override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
-        if (!select.trySelect(idempotent = null)) return
+        if (!select.trySelect(null)) return
         offerInternal(element)?.let {
-            select.resumeSelectWithException(it.sendException, MODE_DIRECT)
+            select.resumeSelectCancellableWithException(it.sendException)
             return
         }
         block.startCoroutineUndispatched(select.completion)

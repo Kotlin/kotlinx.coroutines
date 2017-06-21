@@ -66,7 +66,7 @@ internal class UnbiasedSelectBuilderImpl<in R>(cont: Continuation<R>) : SelectBu
                 instance.handleBuilderException(e)
             }
         }
-        return instance.initSelectResult()
+        return instance.getResult()
     }
 
     override fun Job.onJoin(block: suspend () -> R) {

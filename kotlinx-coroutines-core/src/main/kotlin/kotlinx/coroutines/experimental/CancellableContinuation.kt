@@ -219,9 +219,8 @@ internal open class CancellableContinuationImpl<in T>(
             val state = this.state // atomic read
             when (state) {
                 is Incomplete -> {
-                    val idempotentStart = state.idempotentStart
-                    val update: Any? = if (idempotent == null && idempotentStart == null) value else
-                        CompletedIdempotentResult(idempotentStart, idempotent, value, state)
+                    val update: Any? = if (idempotent == null) value else
+                        CompletedIdempotentResult(idempotent, value, state)
                     if (tryUpdateState(state, update)) return state
                 }
                 is CompletedIdempotentResult -> {
@@ -241,7 +240,7 @@ internal open class CancellableContinuationImpl<in T>(
             val state = this.state // atomic read
             when (state) {
                 is Incomplete -> {
-                    if (tryUpdateState(state, CompletedExceptionally(state.idempotentStart, exception))) return state
+                    if (tryUpdateState(state, CompletedExceptionally(exception))) return state
                 }
                 else -> return null // cannot resume -- not active anymore
             }
@@ -290,11 +289,10 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     private class CompletedIdempotentResult(
-        idempotentStart: Any?,
         @JvmField val idempotentResume: Any?,
         @JvmField val result: Any?,
         @JvmField val token: Incomplete
-    ) : CompletedIdempotentStart(idempotentStart) {
+    ) {
         override fun toString(): String = "CompletedIdempotentResult[$result]"
     }
 }
