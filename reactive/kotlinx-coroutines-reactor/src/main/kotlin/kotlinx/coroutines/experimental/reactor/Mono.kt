@@ -48,9 +48,9 @@ fun <T> mono(
 }
 
 private class MonoCoroutine<in T>(
-        override val parentContext: CoroutineContext,
-        private val sink: MonoSink<T>
-) : AbstractCoroutine<T>(true), Disposable {
+    parentContext: CoroutineContext,
+    private val sink: MonoSink<T>
+) : AbstractCoroutine<T>(parentContext, true), Disposable {
     var disposed = false
 
     @Suppress("UNCHECKED_CAST")

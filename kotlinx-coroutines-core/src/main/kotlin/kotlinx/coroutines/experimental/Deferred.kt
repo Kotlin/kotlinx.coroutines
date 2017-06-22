@@ -145,9 +145,9 @@ public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.()
 
 @Suppress("UNCHECKED_CAST")
 private open class DeferredCoroutine<T>(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(active), Deferred<T> {
+) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     suspend override fun await(): T = awaitInternal() as T
     override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) =

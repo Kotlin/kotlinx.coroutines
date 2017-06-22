@@ -123,7 +123,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_CANCELLABLE)
+        val cancellable = CancellableContinuationImpl(cont, resumeMode = MODE_CANCELLABLE)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
@@ -142,7 +142,7 @@ public inline suspend fun <T> suspendAtomicCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_ATOMIC_DEFAULT)
+        val cancellable = CancellableContinuationImpl(cont, resumeMode = MODE_ATOMIC_DEFAULT)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
@@ -171,12 +171,16 @@ private class RemoveOnCancel(
 @PublishedApi
 internal class CancellableContinuationImpl<in T>(
     private val delegate: Continuation<T>,
-    override val defaultResumeMode: Int
-) : AbstractCoroutineWithDecision<T>(active = true), CancellableContinuation<T> {
-    override val parentContext: CoroutineContext get() = delegate.context
+    resumeMode: Int
+) : AbstractContinuation<T>(true, resumeMode), CancellableContinuation<T> {
+    @Volatile // just in case -- we don't want an extra data race, even benign one
+    private var _context: CoroutineContext? = null // created on first need
+
+    public override val context: CoroutineContext
+        get() = _context ?: (delegate.context + this).also { _context = it }
 
     override fun initCancellability() {
-        initParentJob(parentContext[Job])
+        initParentJob(delegate.context[Job])
     }
 
     @PublishedApi
@@ -192,9 +196,9 @@ internal class CancellableContinuationImpl<in T>(
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
         if (state is CompletedExceptionally) {
-            delegate.resumeWithExceptionMode(mode, state.exception)
+            delegate.resumeWithExceptionMode(state.exception, mode)
         } else {
-            delegate.resumeMode(mode, getSuccessfulResult<T>(state))
+            delegate.resumeMode(getSuccessfulResult<T>(state), mode)
         }
     }
 
@@ -232,19 +236,19 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token, state, defaultResumeMode)
+        completeUpdateState(token, state, resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        resume(value, MODE_UNDISPATCHED)
+        resumeImpl(value, MODE_UNDISPATCHED)
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        resumeWithException(exception, MODE_UNDISPATCHED)
+        resumeWithExceptionImpl(exception, MODE_UNDISPATCHED)
     }
 }
 

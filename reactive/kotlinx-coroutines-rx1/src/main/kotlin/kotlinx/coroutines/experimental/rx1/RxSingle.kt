@@ -48,9 +48,9 @@ public fun <T> rxSingle(
 }
 
 private class RxSingleCoroutine<T>(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val subscriber: SingleSubscriber<T>
-) : AbstractCoroutine<T>(true), Subscription {
+) : AbstractCoroutine<T>(parentContext, true), Subscription {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)

@@ -48,9 +48,9 @@ public fun rxCompletable(
 }
 
 private class RxCompletableCoroutine(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
-) : AbstractCoroutine<Unit>(true), Cancellable {
+) : AbstractCoroutine<Unit>(parentContext, true), Cancellable {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
         if (subscriber.isDisposed) return

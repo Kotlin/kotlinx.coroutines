@@ -23,7 +23,7 @@ import kotlin.coroutines.experimental.Continuation
 @PublishedApi internal const val MODE_DIRECT = 2         // when the context is right just invoke the delegate continuation direct
 @PublishedApi internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
 
-fun <T> Continuation<T>.resumeMode(mode: Int, value: T) {
+fun <T> Continuation<T>.resumeMode(value: T, mode: Int) {
     when (mode) {
         MODE_ATOMIC_DEFAULT -> resume(value)
         MODE_CANCELLABLE -> resumeCancellable(value)
@@ -33,7 +33,7 @@ fun <T> Continuation<T>.resumeMode(mode: Int, value: T) {
     }
 }
 
-fun <T> Continuation<T>.resumeWithExceptionMode(mode: Int, exception: Throwable) {
+fun <T> Continuation<T>.resumeWithExceptionMode(exception: Throwable, mode: Int) {
     when (mode) {
         MODE_ATOMIC_DEFAULT -> resumeWithException(exception)
         MODE_CANCELLABLE -> resumeCancellableWithException(exception)

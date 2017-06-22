@@ -49,9 +49,9 @@ public fun <T> rxMaybe(
 }
 
 private class RxMaybeCoroutine<T>(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
-) : AbstractCoroutine<T>(true), Cancellable {
+) : AbstractCoroutine<T>(parentContext, true), Cancellable {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
         if (subscriber.isDisposed) return

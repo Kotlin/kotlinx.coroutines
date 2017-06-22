@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -54,123 +53,42 @@ public interface CoroutineScope {
  * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AbstractCoroutine<in T>(
+    private val parentContext: CoroutineContext,
     active: Boolean
 ) : JobSupport(active), Continuation<T>, CoroutineScope {
-    // context must be Ok for unsafe publishing (it is persistent),
-    // so we don't mark this _context variable as volatile, but leave potential benign race here
-    private var _context: CoroutineContext? = null // created on first need
-
     @Suppress("LeakingThis")
-    public final override val context: CoroutineContext
-        get() = _context ?: createContext().also { _context = it }
+    public final override val context: CoroutineContext = parentContext + this
 
-    protected abstract val parentContext: CoroutineContext
-
-    protected open fun createContext() = parentContext + this
-
-    protected open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
-
-    protected open val ignoreRepeatedResume: Boolean get() = false
-
-    final override fun resume(value: T) = resume(value, defaultResumeMode)
-
-    protected fun resume(value: T, mode: Int) {
+    final override fun resume(value: T) {
         while (true) { // lock-free loop on state
             val state = this.state // atomic read
             when (state) {
-                is Incomplete -> if (updateState(state, value, mode)) return
+                is Incomplete -> if (updateState(state, value, MODE_ATOMIC_DEFAULT)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
-                else -> {
-                    if (ignoreRepeatedResume) {
-                        return
-                    } else
-                        error("Already resumed, but got value $value")
-                }
+                else -> error("Already resumed, but got value $value")
             }
         }
     }
 
-    final override fun resumeWithException(exception: Throwable) = resumeWithException(exception, defaultResumeMode)
-
-    protected fun resumeWithException(exception: Throwable, mode: Int) {
+    final override fun resumeWithException(exception: Throwable) {
         while (true) { // lock-free loop on state
             val state = this.state // atomic read
             when (state) {
                 is Incomplete -> {
-                    if (updateState(state, CompletedExceptionally(exception), mode)) return
+                    if (updateState(state, CompletedExceptionally(exception), MODE_ATOMIC_DEFAULT)) return
                 }
                 is Cancelled -> {
                     // ignore resumes on cancelled continuation, but handle exception if a different one is here
                     if (exception != state.exception) handleCoroutineException(context, exception)
                     return
                 }
-                else -> {
-                    if (ignoreRepeatedResume) {
-                        handleCoroutineException(context, exception)
-                        return
-                    } else
-                        throw IllegalStateException("Already resumed, but got exception $exception", exception)
-                }
+                else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)
             }
         }
     }
 
     final override fun handleCompletionException(closeException: Throwable) {
-        handleCoroutineException(context, closeException)
+        handleCoroutineException(parentContext, closeException)
     }
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-public abstract class AbstractCoroutineWithDecision<in T>(active: Boolean) : AbstractCoroutine<T>(active) {
-    @Volatile
-    private var decision = UNDECIDED
-
-    /* decision state machine
-
-        +-----------+   trySuspend   +-----------+
-        | UNDECIDED | -------------> | SUSPENDED |
-        +-----------+                +-----------+
-              |
-              | tryResume
-              V
-        +-----------+
-        |  RESUMED  |
-        +-----------+
-
-        Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
-     */
-
-    protected companion object {
-        @JvmField
-        val DECISION: AtomicIntegerFieldUpdater<AbstractCoroutineWithDecision<*>> =
-            AtomicIntegerFieldUpdater.newUpdater(AbstractCoroutineWithDecision::class.java, "decision")
-
-        const val UNDECIDED = 0
-        const val SUSPENDED = 1
-        const val RESUMED = 2
-    }
-
-    protected fun trySuspend(): Boolean {
-        while (true) { // lock-free loop
-            val decision = this.decision // volatile read
-            when (decision) {
-                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return true
-                RESUMED -> return false
-                else -> error("Already suspended")
-            }
-        }
-    }
-
-    protected fun tryResume(): Boolean {
-        while (true) { // lock-free loop
-            val decision = this.decision // volatile read
-            when (decision) {
-                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return true
-                SUSPENDED -> return false
-                else -> error("Already resumed")
-            }
-        }
-    }
-}

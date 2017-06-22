@@ -60,9 +60,9 @@ public fun <T> rxObservable(
 }
 
 private class RxObservableCoroutine<T>(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
-) : AbstractCoroutine<Unit>(true), ProducerScope<T>, Producer, Subscription {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Producer, Subscription {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked

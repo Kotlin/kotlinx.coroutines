@@ -20,7 +20,9 @@ import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.newCoroutineContext
-import rx.*
+import rx.Completable
+import rx.CompletableSubscriber
+import rx.Subscription
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -46,9 +48,9 @@ public fun rxCompletable(
 }
 
 private class RxCompletableCoroutine(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val subscriber: CompletableSubscriber
-) : AbstractCoroutine<Unit>(true), Subscription {
+) : AbstractCoroutine<Unit>(parentContext, true), Subscription {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)

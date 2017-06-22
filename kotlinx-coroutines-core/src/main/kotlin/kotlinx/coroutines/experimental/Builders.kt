@@ -107,15 +107,15 @@ public suspend fun <T> run(
         val newContinuation = RunContinuationDirect(newContext, cont)
         return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
     }
-    // slowest path otherwise -- use new interceptor, sync to its result via a full-blown instance of RunCoroutine
+    // slowest path otherwise -- use new interceptor, sync to its result via a full-blown instance of RunCompletion
     require(!start.isLazy) { "$start start is not supported" }
-    val coroutine = RunCoroutine(
+    val completion = RunCompletion(
+        context = newContext,
         delegate = cont,
-        parentContext = newContext,
-        defaultResumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE)
-    coroutine.initParentJob(newContext[Job]) // attach to job
-    start(block, coroutine)
-    coroutine.getResult()
+        resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE)
+    completion.initParentJob(newContext[Job]) // attach to job
+    start(block, completion)
+    completion.getResult()
 }
 
 /** @suppress **Deprecated** */
@@ -153,9 +153,9 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 // --------------- implementation ---------------
 
 private open class StandaloneCoroutine(
-    override val parentContext: CoroutineContext,
+    private val parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<Unit>(active) {
+) : AbstractCoroutine<Unit>(parentContext, active) {
     override fun afterCompletion(state: Any?, mode: Int) {
         // note the use of the parent's job context below!
         if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.exception)
@@ -177,11 +177,11 @@ private class RunContinuationDirect<in T>(
 ) : Continuation<T> by continuation
 
 @Suppress("UNCHECKED_CAST")
-private class RunCoroutine<in T>(
+private class RunCompletion<in T>(
+    override val context: CoroutineContext,
     private val delegate: Continuation<T>,
-    override val parentContext: CoroutineContext,
-    override val defaultResumeMode: Int
-) : AbstractCoroutineWithDecision<T>(active = true) {
+    resumeMode: Int
+) : AbstractContinuation<T>(true, resumeMode) {
     @PublishedApi
     internal fun getResult(): Any? {
         if (trySuspend()) return COROUTINE_SUSPENDED
@@ -195,17 +195,17 @@ private class RunCoroutine<in T>(
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
         if (state is CompletedExceptionally)
-            delegate.resumeWithExceptionMode(mode, state.exception)
+            delegate.resumeWithExceptionMode(state.exception, mode)
         else
-            delegate.resumeMode(mode, state as T)
+            delegate.resumeMode(state as T, mode)
     }
 }
 
 private class BlockingCoroutine<T>(
-    override val parentContext: CoroutineContext,
+    parentContext: CoroutineContext,
     private val blockedThread: Thread,
     private val privateEventLoop: Boolean
-) : AbstractCoroutine<T>(active = true) {
+) : AbstractCoroutine<T>(parentContext, true) {
     val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
 
     init {
