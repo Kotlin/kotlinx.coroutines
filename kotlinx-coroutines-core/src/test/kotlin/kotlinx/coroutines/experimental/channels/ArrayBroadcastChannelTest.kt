@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNull
-import org.junit.Assert.*
+import org.junit.Assert.assertThat
 import org.junit.Test
 
 class ArrayBroadcastChannelTest : TestBase() {
@@ -111,5 +111,25 @@ class ArrayBroadcastChannelTest : TestBase() {
         assertThat(sub.receiveOrNull(), IsNull())
         assertThat(sub.isClosedForReceive, IsEqual(true))
         finish(7)
+    }
+
+    @Test
+    fun testForgetUnsubscribed() = runBlocking {
+        expect(1)
+        val broadcast = ArrayBroadcastChannel<Int>(1)
+        broadcast.send(1)
+        broadcast.send(2)
+        broadcast.send(3)
+        expect(2) // should not suspend anywhere above
+        val sub = broadcast.open()
+        launch(context, CoroutineStart.UNDISPATCHED) {
+            expect(3)
+            assertThat(sub.receive(), IsEqual(4)) // suspends
+            expect(5)
+        }
+        expect(4)
+        broadcast.send(4) // sends
+        yield()
+        finish(6)
     }
 }

@@ -24,7 +24,7 @@ import kotlin.concurrent.withLock
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].
- * Sender suspends only when buffer is fully due to one of the receives not being late and
+ * Sender suspends only when buffer is full due to one of the receives being slow to consume and
  * receiver suspends only when buffer is empty.
  *
  * Note, that elements that are sent to the broadcast channel while there are no [open] subscribers are immediately
@@ -128,11 +128,13 @@ class ArrayBroadcastChannel<E>(
 
     private fun checkSubOffers() {
         var updated = false
+        var hasSubs = false
         @Suppress("LoopToCallChain") // must invoke `checkOffer` on every sub
         for (sub in subs) {
+            hasSubs = true
             if (sub.checkOffer()) updated = true
         }
-        if (updated)
+        if (updated || !hasSubs)
             updateHead()
     }
 
