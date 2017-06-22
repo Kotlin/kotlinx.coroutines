@@ -16,41 +16,49 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.MaybeObserver
-import io.reactivex.MaybeSource
-import io.reactivex.Observable
-import io.reactivex.ObservableSource
-import io.reactivex.Observer
+import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import java.io.Closeable
 
 /**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this source.
  */
-public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> {
+public fun <T> MaybeSource<T>.openSubscription(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
+
+/**
+ * @suppress **Deprecated**: Renamed to [openSubscription]
+ */
+@Deprecated(message = "Renamed to `openSubscription`",
+    replaceWith = ReplaceWith("openSubscription()"))
+public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> = openSubscription()
 
 /**
  * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this source.
  */
-public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
+public fun <T> ObservableSource<T>.openSubscription(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
 
 /**
+ * @suppress **Deprecated**: Renamed to [openSubscription]
+ */
+@Deprecated(message = "Renamed to `openSubscription`",
+    replaceWith = ReplaceWith("openSubscription()"))
+public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> = openSubscription()
+
+/**
  * Subscribes to this [Observable] and returns an iterator to receive elements emitted by it.
  *
- * This is a shortcut for `open().iterator()`. See [open] if you need an ability to manually
+ * This is a shortcut for `open().iterator()`. See [openSubscription] if you need an ability to manually
  * unsubscribe from the observable.
  */
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -58,14 +66,14 @@ public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> {
 "This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
     "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
     "Use `source.consumeEach { x -> ... }`.")
-public operator fun <T> ObservableSource<T>.iterator() = open().iterator()
+public operator fun <T> ObservableSource<T>.iterator() = openSubscription().iterator()
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <T> MaybeSource<T>.consumeEach(action: suspend (T) -> Unit) {
-    open().use { channel ->
+    openSubscription().use { channel ->
         for (x in channel) action(x)
     }
 }
@@ -75,7 +83,7 @@ public suspend fun <T> MaybeSource<T>.consumeEach(action: suspend (T) -> Unit) {
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <T> ObservableSource<T>.consumeEach(action: suspend (T) -> Unit) {
-    open().use { channel ->
+    openSubscription().use { channel ->
         for (x in channel) action(x)
     }
 }

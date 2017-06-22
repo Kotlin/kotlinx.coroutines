@@ -223,7 +223,7 @@ method with it.
 
 An example in the previous section uses `source.consumeEach { ... }` snippet to open a subscription 
 and receive all the elements from it. If we need more control on how what to do with 
-the elements that are being received from the channel, we can use [Publisher.open][org.reactivestreams.Publisher.open]
+the elements that are being received from the channel, we can use [Publisher.openSubscription][org.reactivestreams.Publisher.openSubscription]
 as shown in the following example:
 
 <!--- INCLUDE
@@ -238,7 +238,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
-    source.open().use { channel -> // open channel to the source
+    source.openSubscription().use { channel -> // open channel to the source
         for (x in channel) { // iterate over the channel to receive elements from it
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
@@ -262,7 +262,7 @@ Finally
 
 <!--- TEST -->
  
-With an explicit `open` we should [close][SubscriptionReceiveChannel.close] the corresponding 
+With an explicit `openSubscription` we should [close][SubscriptionReceiveChannel.close] the corresponding 
 subscription to unsubscribe from the source. However, instead of invoking `close` explicitly, 
 this code relies on [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
 function from Kotlin's standard library.
@@ -676,11 +676,11 @@ import kotlinx.coroutines.experimental.selects.whileSelect
 
 ```kotlin
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    this@takeUntil.open().use { thisChannel ->           // explicitly open channel to Publisher<T>
-        other.open().use { otherChannel ->               // explicitly open channel to Publisher<U>
+    this@takeUntil.openSubscription().use { thisChannel -> // explicitly open channel to Publisher<T>
+        other.openSubscription().use { otherChannel ->     // explicitly open channel to Publisher<U>
             whileSelect {
-                otherChannel.onReceive { false }         // bail out on any received element from `other`
-                thisChannel.onReceive { send(it); true } // resend element from this channel and continue
+                otherChannel.onReceive { false }          // bail out on any received element from `other`
+                thisChannel.onReceive { send(it); true }  // resend element from this channel and continue
             }
         }
     }
@@ -1071,7 +1071,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- INDEX kotlinx.coroutines.experimental.reactive -->
 [publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/publish.html
 [org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/consume-each.html
-[org.reactivestreams.Publisher.open]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open.html
+[org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open-subscription.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.experimental.rx2 -->
 [rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.experimental.rx2/rx-flowable.html

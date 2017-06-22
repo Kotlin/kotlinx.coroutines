@@ -97,7 +97,7 @@ class IntegrationTest(
         assertThat(observable.awaitLast(), IsEqual(n))
         assertIAE { observable.awaitSingle() }
         checkNumbers(n, observable)
-        val channel = observable.open()
+        val channel = observable.openSubscription()
         checkNumbers(n, channel.asObservable(ctx(context)))
         channel.close()
     }

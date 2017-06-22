@@ -31,7 +31,7 @@ public suspend fun <E> ReceiveChannel<E>.consumeEach(action: suspend (E) -> Unit
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <E> BroadcastChannel<E>.consumeEach(action: suspend (E) -> Unit) {
-    open().use { channel ->
+    openSubscription().use { channel ->
         for (x in channel) action(x)
     }
 }

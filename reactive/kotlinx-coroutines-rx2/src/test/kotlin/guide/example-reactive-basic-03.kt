@@ -26,7 +26,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
-    source.open().use { channel -> // open channel to the source
+    source.openSubscription().use { channel -> // open channel to the source
         for (x in channel) { // iterate over the channel to receive elements from it
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed

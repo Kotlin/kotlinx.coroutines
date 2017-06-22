@@ -22,7 +22,7 @@ import java.io.Closeable
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
- * that subscribe for the elements using [open] function and unsubscribe using [SubscriptionReceiveChannel.close]
+ * that subscribe for the elements using [openSubscription] function and unsubscribe using [SubscriptionReceiveChannel.close]
  * function.
  *
  * See [BroadcastChannel()][BroadcastChannel.invoke] factory function for the description of available
@@ -55,11 +55,18 @@ public interface BroadcastChannel<E> : SendChannel<E> {
      * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this
      * broadcast channel.
      */
-    public fun open(): SubscriptionReceiveChannel<E>
+    public fun openSubscription(): SubscriptionReceiveChannel<E>
+
+    /**
+     * @suppress **Deprecated**: Renamed to [openSubscription]
+     */
+    @Deprecated(message = "Renamed to `openSubscription`",
+        replaceWith = ReplaceWith("openSubscription()"))
+    public fun open(): SubscriptionReceiveChannel<E> = openSubscription()
 }
 
 /**
- * Return type for [BroadcastChannel.open] that can be used to [receive] elements from the
+ * Return type for [BroadcastChannel.openSubscription] that can be used to [receive] elements from the
  * open subscription and to [close] it to unsubscribe.
  */
 public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {

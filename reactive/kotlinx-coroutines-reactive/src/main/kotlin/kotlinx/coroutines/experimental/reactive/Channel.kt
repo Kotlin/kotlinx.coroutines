@@ -27,16 +27,23 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this publisher.
  */
-public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> {
+public fun <T> Publisher<T>.openSubscription(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
 
 /**
+ * @suppress **Deprecated**: Renamed to [openSubscription]
+ */
+@Deprecated(message = "Renamed to `openSubscription`",
+    replaceWith = ReplaceWith("openSubscription()"))
+public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> = openSubscription()
+
+/**
  * Subscribes to this [Publisher] and returns an iterator to receive elements emitted by it.
  *
- * This is a shortcut for `open().iterator()`. See [open] if you need an ability to manually
+ * This is a shortcut for `open().iterator()`. See [openSubscription] if you need an ability to manually
  * unsubscribe from the observable.
  */
 
@@ -45,14 +52,14 @@ public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> {
     "This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
     "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
     "Use `source.consumeEach { x -> ... }`.")
-public operator fun <T> Publisher<T>.iterator() = open().iterator()
+public operator fun <T> Publisher<T>.iterator() = openSubscription().iterator()
 
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <T> Publisher<T>.consumeEach(action: suspend (T) -> Unit) {
-    open().use { channel ->
+    openSubscription().use { channel ->
         for (x in channel) action(x)
     }
 }

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
  * Subscribes to this [Observable] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this observable.
  */
-public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> {
+public fun <T> Observable<T>.openSubscription(): SubscriptionReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     val subscription = subscribe(channel.subscriber)
     channel.subscription = subscription
@@ -36,9 +36,16 @@ public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> {
 }
 
 /**
+ * @suppress **Deprecated**: Renamed to [openSubscription]
+ */
+@Deprecated(message = "Renamed to `openSubscription`",
+    replaceWith = ReplaceWith("openSubscription()"))
+public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> = openSubscription()
+
+/**
  * Subscribes to this [Observable] and returns an iterator to receive elements emitted by it.
  *
- * This is a shortcut for `open().iterator()`. See [open] if you need an ability to manually
+ * This is a shortcut for `open().iterator()`. See [openSubscription] if you need an ability to manually
  * unsubscribe from the observable.
  */
 @Suppress("DeprecatedCallableAddReplaceWith")
@@ -46,14 +53,14 @@ public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> {
 "This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
     "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
     "Use `source.consumeEach { x -> ... }`.")
-public operator fun <T> Observable<T>.iterator() = open().iterator()
+public operator fun <T> Observable<T>.iterator() = openSubscription().iterator()
 
 /**
  * Subscribes to this [Observable] and performs the specified action for each received element.
  */
 // :todo: make it inline when this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
 public suspend fun <T> Observable<T>.consumeEach(action: suspend (T) -> Unit) {
-    open().use { channel ->
+    openSubscription().use { channel ->
         for (x in channel) action(x)
     }
 }

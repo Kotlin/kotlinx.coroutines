@@ -27,7 +27,7 @@ import kotlin.concurrent.withLock
  * Sender suspends only when buffer is full due to one of the receives being slow to consume and
  * receiver suspends only when buffer is empty.
  *
- * Note, that elements that are sent to the broadcast channel while there are no [open] subscribers are immediately
+ * Note, that elements that are sent to the broadcast channel while there are no [openSubscription] subscribers are immediately
  * lost.
  *
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
@@ -61,7 +61,7 @@ class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    override fun open(): SubscriptionReceiveChannel<E> {
+    override fun openSubscription(): SubscriptionReceiveChannel<E> {
         val sub = Subscriber(this, head)
         subs.add(sub)
         // between creating and adding of subscription into the list the buffer head could have been bumped past it,

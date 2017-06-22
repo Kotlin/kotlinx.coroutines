@@ -97,7 +97,7 @@ class IntegrationTest(
         assertThat(pub.awaitLast(), IsEqual(n))
         assertIAE { pub.awaitSingle() }
         checkNumbers(n, pub)
-        val channel = pub.open()
+        val channel = pub.openSubscription()
         checkNumbers(n, channel.asPublisher(ctx(context)))
         channel.close()
     }

@@ -62,7 +62,7 @@ enum class TestChannelKind {
 private class ChannelViaBroadcast<E>(
     private val broadcast: BroadcastChannel<E>
 ): Channel<E>, SendChannel<E> by broadcast {
-    val sub = broadcast.open()
+    val sub = broadcast.openSubscription()
 
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
     override val isEmpty: Boolean get() = sub.isEmpty
