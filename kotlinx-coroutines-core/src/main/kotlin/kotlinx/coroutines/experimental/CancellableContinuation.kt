@@ -17,7 +17,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
@@ -124,7 +123,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_CANCELLABLE, active = true)
+        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_CANCELLABLE)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
@@ -143,7 +142,7 @@ public inline suspend fun <T> suspendAtomicCancellableCoroutine(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_ATOMIC_DEFAULT, active = true)
+        val cancellable = CancellableContinuationImpl(cont, defaultResumeMode = MODE_ATOMIC_DEFAULT)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
@@ -169,36 +168,12 @@ private class RemoveOnCancel(
     override fun toString() = "RemoveOnCancel[$node]"
 }
 
-@PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
-@PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
-@PublishedApi internal const val MODE_DIRECT = 2         // when the context is right just invoke the delegate continuation direct
-@PublishedApi internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
-
 @PublishedApi
-internal open class CancellableContinuationImpl<in T>(
-    @JvmField
-    protected val delegate: Continuation<T>,
-    override val defaultResumeMode: Int,
-    active: Boolean
-) : AbstractCoroutine<T>(active), CancellableContinuation<T> {
-    @Volatile
-    private var decision = UNDECIDED
-
-    override val parentContext: CoroutineContext
-        get() = delegate.context
-
-    protected companion object {
-        @JvmField
-        val DECISION: AtomicIntegerFieldUpdater<CancellableContinuationImpl<*>> =
-                AtomicIntegerFieldUpdater.newUpdater(CancellableContinuationImpl::class.java, "decision")
-
-        const val UNDECIDED = 0
-        const val SUSPENDED = 1
-        const val RESUMED = 2
-
-        @Suppress("UNCHECKED_CAST")
-        fun <T> getSuccessfulResult(state: Any?): T = if (state is CompletedIdempotentResult) state.result as T else state as T
-    }
+internal class CancellableContinuationImpl<in T>(
+    private val delegate: Continuation<T>,
+    override val defaultResumeMode: Int
+) : AbstractCoroutineWithDecision<T>(active = true), CancellableContinuation<T> {
+    override val parentContext: CoroutineContext get() = delegate.context
 
     override fun initCancellability() {
         initParentJob(parentContext[Job])
@@ -206,12 +181,21 @@ internal open class CancellableContinuationImpl<in T>(
 
     @PublishedApi
     internal fun getResult(): Any? {
-        val decision = this.decision // volatile read
-        if (decision == UNDECIDED && DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return COROUTINE_SUSPENDED
-        // otherwise, afterCompletion was already invoked, and the result is in the state
+        if (trySuspend()) return COROUTINE_SUSPENDED
+        // otherwise, afterCompletion was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
         if (state is CompletedExceptionally) throw state.exception
         return getSuccessfulResult(state)
+    }
+
+    override fun afterCompletion(state: Any?, mode: Int) {
+        if (tryResume()) return // completed before getResult invocation -- bail out
+        // otherwise, getResult has already commenced, i.e. completed later or in other thread
+        if (state is CompletedExceptionally) {
+            delegate.resumeWithExceptionMode(mode, state.exception)
+        } else {
+            delegate.resumeMode(mode, getSuccessfulResult<T>(state))
+        }
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
@@ -251,31 +235,6 @@ internal open class CancellableContinuationImpl<in T>(
         completeUpdateState(token, state, defaultResumeMode)
     }
 
-    override fun afterCompletion(state: Any?, mode: Int) {
-        val decision = this.decision // volatile read
-        if (decision == UNDECIDED && DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return // will get result in getResult
-        // otherwise, getResult has already commenced, i.e. it was resumed later or in other thread
-        if (state is CompletedExceptionally) {
-            val exception = state.exception
-            when (mode) {
-                MODE_ATOMIC_DEFAULT -> delegate.resumeWithException(exception)
-                MODE_CANCELLABLE -> delegate.resumeCancellableWithException(exception)
-                MODE_DIRECT -> delegate.resumeDirectWithException(exception)
-                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatchedWithException(exception)
-                else -> error("Invalid mode $mode")
-            }
-        } else {
-            val value = getSuccessfulResult<T>(state)
-            when (mode) {
-                MODE_ATOMIC_DEFAULT -> delegate.resume(value)
-                MODE_CANCELLABLE -> delegate.resumeCancellable(value)
-                MODE_DIRECT -> delegate.resumeDirect(value)
-                MODE_UNDISPATCHED -> (delegate as DispatchedContinuation).resumeUndispatched(value)
-                else -> error("Invalid mode $mode")
-            }
-        }
-    }
-
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
@@ -287,12 +246,16 @@ internal open class CancellableContinuationImpl<in T>(
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
         resumeWithException(exception, MODE_UNDISPATCHED)
     }
-
-    private class CompletedIdempotentResult(
-        @JvmField val idempotentResume: Any?,
-        @JvmField val result: Any?,
-        @JvmField val token: Incomplete
-    ) {
-        override fun toString(): String = "CompletedIdempotentResult[$result]"
-    }
 }
+
+private class CompletedIdempotentResult(
+    @JvmField val idempotentResume: Any?,
+    @JvmField val result: Any?,
+    @JvmField val token: JobSupport.Incomplete
+) {
+    override fun toString(): String = "CompletedIdempotentResult[$result]"
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun <T> getSuccessfulResult(state: Any?): T =
+    if (state is CompletedIdempotentResult) state.result as T else state as T

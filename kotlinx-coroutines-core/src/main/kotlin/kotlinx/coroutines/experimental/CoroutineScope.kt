@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -83,7 +84,7 @@ public abstract class AbstractCoroutine<in T>(
                     if (ignoreRepeatedResume) {
                         return
                     } else
-                        throw IllegalStateException("Already resumed, but got value $value")
+                        error("Already resumed, but got value $value")
                 }
             }
         }
@@ -117,11 +118,59 @@ public abstract class AbstractCoroutine<in T>(
     final override fun handleCompletionException(closeException: Throwable) {
         handleCoroutineException(context, closeException)
     }
+}
 
-    // for nicer debugging
-    override fun toString(): String {
-        val state = this.state
-        val result = if (state is Incomplete) "" else "[$state]"
-        return "${this::class.java.simpleName}{${stateToString(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public abstract class AbstractCoroutineWithDecision<in T>(active: Boolean) : AbstractCoroutine<T>(active) {
+    @Volatile
+    private var decision = UNDECIDED
+
+    /* decision state machine
+
+        +-----------+   trySuspend   +-----------+
+        | UNDECIDED | -------------> | SUSPENDED |
+        +-----------+                +-----------+
+              |
+              | tryResume
+              V
+        +-----------+
+        |  RESUMED  |
+        +-----------+
+
+        Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
+     */
+
+    protected companion object {
+        @JvmField
+        val DECISION: AtomicIntegerFieldUpdater<AbstractCoroutineWithDecision<*>> =
+            AtomicIntegerFieldUpdater.newUpdater(AbstractCoroutineWithDecision::class.java, "decision")
+
+        const val UNDECIDED = 0
+        const val SUSPENDED = 1
+        const val RESUMED = 2
+    }
+
+    protected fun trySuspend(): Boolean {
+        while (true) { // lock-free loop
+            val decision = this.decision // volatile read
+            when (decision) {
+                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return true
+                RESUMED -> return false
+                else -> error("Already suspended")
+            }
+        }
+    }
+
+    protected fun tryResume(): Boolean {
+        while (true) { // lock-free loop
+            val decision = this.decision // volatile read
+            when (decision) {
+                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return true
+                SUSPENDED -> return false
+                else -> error("Already resumed")
+            }
+        }
     }
 }

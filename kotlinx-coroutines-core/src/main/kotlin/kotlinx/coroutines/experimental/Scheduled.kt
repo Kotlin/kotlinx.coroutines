@@ -88,24 +88,25 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
     if (time <= 0L) throw CancellationException("Timed out immediately")
     return suspendCoroutineOrReturn { cont: Continuation<T> ->
         val context = cont.context
-        val coroutine = TimeoutExceptionCoroutine(time, unit, cont)
+        val completion = TimeoutCompletion(time, unit, cont)
         val delay = context[ContinuationInterceptor] as? Delay
         // schedule cancellation of this coroutine on time
         if (delay != null)
-            coroutine.disposeOnCompletion(delay.invokeOnTimeout(time, unit, coroutine)) else
-            coroutine.cancelFutureOnCompletion(scheduledExecutor.schedule(coroutine, time, unit))
-        coroutine.initParentJob(context[Job])
+            completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
+            completion.cancelFutureOnCompletion(scheduledExecutor.schedule(completion, time, unit))
+        completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context
-        block.startCoroutineUninterceptedOrReturn(coroutine)
+        block.startCoroutineUninterceptedOrReturn(completion)
     }
 }
 
-private class TimeoutExceptionCoroutine<in T>(
+private open class TimeoutCompletion<U, in T: U>(
     private val time: Long,
     private val unit: TimeUnit,
-    private val cont: Continuation<T>
+    @JvmField protected val cont: Continuation<U>
 ) : JobSupport(active = true), Runnable, Continuation<T> {
+    @Suppress("LeakingThis")
     override val context: CoroutineContext = cont.context + this // mix in this Job into the context
     override fun run() { cancel(TimeoutException(time, unit, this)) }
     override fun resume(value: T) { cont.resumeDirect(value) }
@@ -135,31 +136,28 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
     if (time <= 0L) return null
     return suspendCoroutineOrReturn { cont: Continuation<T?> ->
         val context = cont.context
-        val coroutine = TimeoutNullCoroutine(time, unit, cont)
+        val completion = TimeoutOrNullCompletion(time, unit, cont)
         val delay = context[ContinuationInterceptor] as? Delay
         // schedule cancellation of this coroutine on time
         if (delay != null)
-            coroutine.disposeOnCompletion(delay.invokeOnTimeout(time, unit, coroutine)) else
-            coroutine.cancelFutureOnCompletion(scheduledExecutor.schedule(coroutine, time, unit))
-        coroutine.initParentJob(context[Job])
+            completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
+            completion.cancelFutureOnCompletion(scheduledExecutor.schedule(completion, time, unit))
+        completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context
         try {
-            block.startCoroutineUninterceptedOrReturn(coroutine)
+            block.startCoroutineUninterceptedOrReturn(completion)
         } catch (e: TimeoutException) {
             null // replace inner timeout exception with null result
         }
     }
 }
 
-private class TimeoutNullCoroutine<in T>(
-    private val time: Long,
-    private val unit: TimeUnit,
-    private val cont: Continuation<T?>
-) : JobSupport(active = true), Runnable, Continuation<T> {
-    override val context: CoroutineContext = cont.context + this // mix in this Job into the context
-    override fun run() { cancel(TimeoutException(time, unit, this)) }
-    override fun resume(value: T) { cont.resumeDirect(value) }
+private class TimeoutOrNullCompletion<T>(
+    time: Long,
+    unit: TimeUnit,
+    cont: Continuation<T?>
+) : TimeoutCompletion<T?, T>(time, unit, cont) {
     override fun resumeWithException(exception: Throwable) {
         // suppress inner timeout exception and replace it with null
         if (exception is TimeoutException && exception.coroutine === this)

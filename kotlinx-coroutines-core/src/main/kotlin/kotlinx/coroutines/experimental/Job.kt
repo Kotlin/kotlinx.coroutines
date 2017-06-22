@@ -591,7 +591,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     ?: InvokeOnCompletion(this, handler)
 
     // for nicer debugging
-    override fun toString(): String = "${this::class.java.simpleName}{${stateToString(state)}}@${Integer.toHexString(System.identityHashCode(this))}"
+    override fun toString(): String {
+        val state = this.state
+        val result = if (state is Incomplete) "" else "[$state]"
+        return "${this::class.java.simpleName}{${stateToString(state)}}$result@${Integer.toHexString(System.identityHashCode(this))}"
+    }
 
     /**
      * Interface for incomplete [state] of a job.
