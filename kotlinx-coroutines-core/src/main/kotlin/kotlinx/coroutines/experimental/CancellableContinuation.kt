@@ -27,10 +27,10 @@ import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
  * Cancellable continuation. Its job is _completed_ when it is resumed or cancelled.
- * When [cancel] function is explicitly invoked, this continuation resumes with [CancellationException] or
+ * When [cancel] function is explicitly invoked, this continuation immediately resumes with [CancellationException] or
  * with the specified cancel cause.
  *
- * Cancellable continuation has three states:
+ * Cancellable continuation has three states (as subset of [Job] states):
  *
  * | **State**                           | [isActive] | [isCompleted] | [isCancelled] |
  * | ----------------------------------- | ---------- | ------------- | ------------- |
@@ -41,6 +41,9 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * Invocation of [cancel] transitions this continuation from _active_ to _cancelled_ state, while
  * invocation of [resume] or [resumeWithException] transitions it from _active_ to _resumed_ state.
  *
+ * A [cancelled][isCancelled] continuation implies that it is [completed][isCompleted], so
+ * [invokeOnCancellation] and [invokeOnCompletion] have the same effect.
+ *
  * Invocation of [resume] or [resumeWithException] in _resumed_ state produces [IllegalStateException]
  * but is ignored in _cancelled_ state.
  */
@@ -50,7 +53,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    public val isCancelled: Boolean
+    public override val isCancelled: Boolean
 
     /**
      * Tries to resume this continuation with a given value and returns non-null object token if it was successful,
@@ -111,7 +114,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
 
 /**
  * Suspends coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
- * the [block]. This function throws [CancellationException] if the coroutine is cancelled while suspended.
+ * the [block]. This function throws [CancellationException] if the coroutine is cancelled or completed while suspended.
  *
  * If [holdCancellability] optional parameter is `true`, then the coroutine is suspended, but it is not
  * cancellable until [CancellableContinuation.initCancellability] is invoked.

@@ -28,7 +28,7 @@ import org.reactivestreams.Subscription
  * returns the resulting value or throws the corresponding exception if this publisher had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if publisher does not emit any value
@@ -40,7 +40,7 @@ public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
  * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
 public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
@@ -50,7 +50,7 @@ public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOn
  * returns the resulting value or throws the corresponding exception if this publisher had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if publisher does not emit any value
@@ -62,7 +62,7 @@ public suspend fun <T> Publisher<T>.awaitLast(): T = awaitOne(Mode.LAST)
  * returns the resulting value or throws the corresponding exception if this publisher had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if publisher does not emit any value

@@ -61,7 +61,7 @@ public interface Mutex {
     /**
      * Locks this mutex, suspending caller while the mutex is locked.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended lock invocation is atomic* -- when this function
@@ -283,7 +283,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         @JvmField val owner: Any?
     ) : AtomicDesc() {
         // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
-        private inner class PrepareOp(private val op: AtomicOp) : OpDescriptor() {
+        private inner class PrepareOp(private val op: AtomicOp<*>) : OpDescriptor() {
             override fun perform(affected: Any?): Any? {
                 val update: Any = if (op.isDecided) EmptyUnlocked else op // restore if was already decided
                 STATE.compareAndSet(affected as MutexImpl, this, update)
@@ -291,13 +291,13 @@ internal class MutexImpl(locked: Boolean) : Mutex {
             }
         }
 
-        override fun prepare(op: AtomicOp): Any? {
+        override fun prepare(op: AtomicOp<*>): Any? {
             val prepare = PrepareOp(op)
             if (!STATE.compareAndSet(mutex, EmptyUnlocked, prepare)) return LOCK_FAIL
             return prepare.perform(mutex)
         }
 
-        override fun complete(op: AtomicOp, failure: Any?) {
+        override fun complete(op: AtomicOp<*>, failure: Any?) {
             val update = if (failure != null) EmptyUnlocked else {
                 if (owner == null) EmptyLocked else Empty(owner)
             }

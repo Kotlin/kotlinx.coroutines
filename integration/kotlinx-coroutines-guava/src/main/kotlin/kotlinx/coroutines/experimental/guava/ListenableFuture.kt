@@ -95,7 +95,7 @@ private class DeferredListenableFuture<T>(
  * Awaits for completion of the future without blocking a thread.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the future and immediately resumes with [CancellationException].
  *
  * Note, that `ListenableFuture` does not support removal of installed listeners, so on cancellation of this wait

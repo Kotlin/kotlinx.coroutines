@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -43,52 +42,3 @@ public interface CoroutineScope {
      */
     public val context: CoroutineContext
 }
-
-/**
- * Abstract class to simplify writing of coroutine completion objects that
- * implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
- * It stores the result of continuation in the state of the job.
- *
- * @param active when `true` coroutine is created in _active_ state, when `false` in _new_ state. See [Job] for details.
- * @suppress **This is unstable API and it is subject to change.**
- */
-public abstract class AbstractCoroutine<in T>(
-    private val parentContext: CoroutineContext,
-    active: Boolean
-) : JobSupport(active), Continuation<T>, CoroutineScope {
-    @Suppress("LeakingThis")
-    public final override val context: CoroutineContext = parentContext + this
-
-    final override fun resume(value: T) {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
-            when (state) {
-                is Incomplete -> if (updateState(state, value, MODE_ATOMIC_DEFAULT)) return
-                is Cancelled -> return // ignore resumes on cancelled continuation
-                else -> error("Already resumed, but got value $value")
-            }
-        }
-    }
-
-    final override fun resumeWithException(exception: Throwable) {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
-            when (state) {
-                is Incomplete -> {
-                    if (updateState(state, CompletedExceptionally(exception), MODE_ATOMIC_DEFAULT)) return
-                }
-                is Cancelled -> {
-                    // ignore resumes on cancelled continuation, but handle exception if a different one is here
-                    if (exception != state.exception) handleCoroutineException(context, exception)
-                    return
-                }
-                else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)
-            }
-        }
-    }
-
-    final override fun handleCompletionException(closeException: Throwable) {
-        handleCoroutineException(parentContext, closeException)
-    }
-}
-

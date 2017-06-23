@@ -23,24 +23,56 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Deferred value is a non-blocking cancellable future.
- * It is created with [async] coroutine builder.
+ *
+ * It is created with [async] coroutine builder or via constructor of [CompletableDeferred] class.
  * It is in [active][isActive] state while the value is being computed.
  *
- * Deferred value has four or five possible states.
+ * Deferred value has the following states:
  *
- * | **State**                        | [isActive] | [isCompleted] | [isCompletedExceptionally] | [isCancelled] |
- * | -------------------------------- | ---------- | ------------- | -------------------------- | ------------- |
- * | _New_ (optional initial state)   | `false`    | `false`       | `false`                    | `false`       |
- * | _Active_ (default initial state) | `true`     | `false`       | `false`                    | `false`       |
- * | _Resolved_  (final state)        | `false`    | `true`        | `false`                    | `false`       |
- * | _Failed_    (final state)        | `false`    | `true`        | `true`                     | `false`       |
- * | _Cancelled_ (final state)        | `false`    | `true`        | `true`                     | `true`        |
+ * | **State**                               | [isActive] | [isCompleted] | [isCompletedExceptionally] | [isCancelled] |
+ * | --------------------------------------- | ---------- | ------------- | -------------------------- | ------------- |
+ * | _New_ (optional initial state)          | `false`    | `false`       | `false`                    | `false`       |
+ * | _Active_ (default initial state)        | `true`     | `false`       | `false`                    | `false`       |
+ * | _Cancelling_ (optional transient state) | `false`    | `false`       | `false`                    | `true`        |
+ * | _Cancelled_ (final state)               | `false`    | `true`        | `true`                     | `true`        |
+ * | _Resolved_  (final state)               | `false`    | `true`        | `false`                    | `false`       |
+ * | _Failed_    (final state)               | `false`    | `true`        | `true`                     | `false`       |
  *
- * Usually, a deferred value is created in _active_ state (it is created and started), so its only visible
- * states are _active_ and _completed_ (_resolved_, _failed_, or _cancelled_) state.
+ * Usually, a deferred value is created in _active_ state (it is created and started).
  * However, [async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
  * when this parameter is set to [CoroutineStart.LAZY].
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
+ *
+ * A deferred can be _cancelled_ at any time with [cancel] function that forces it to transition to
+ * _cancelling_ state immediately. A simple implementation of deferred -- [CompletableDeferred],
+ * that is not backed by a coroutine, does not have a _cancelling_ state, but becomes _cancelled_
+ * on [cancel] immediately. Coroutines, on the other hand, become _cancelled_ only when they finish
+ * executing their code.
+ *
+ * ```
+ *    +-----+       start      +--------+   complete   +-----------+
+ *    | New | ---------------> | Active | ---------+-> | Resolved  |
+ *    +-----+                  +--------+          |   |(completed)|
+ *       |                         |               |   +-----------+
+ *       | cancel                  | cancel        |
+ *       V                         V               |   +-----------+
+ *  +-----------+   finish   +------------+        +-> |  Failed   |
+ *  | Cancelled | <--------- | Cancelling |            |(completed)|
+ *  |(completed)|            +------------+            +-----------+
+ *  +-----------+
+ * ```
+ *
+ * A deferred value is a [Job]. A job in the coroutine [context][CoroutineScope.context] of [async] builder
+ * represents the coroutine itself.
+ * A deferred value is active while the coroutine is working and cancellation aborts the coroutine when
+ * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
+ * or the cancellation cause inside the coroutine.
+ *
+ * A deferred value can have a _parent_ job. A deferred value with a parent is cancelled when its parent is
+ * cancelled or completes.
+ *
+ * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * be safely invoked from concurrent coroutines without external synchronization.
  */
 public interface Deferred<out T> : Job {
     /**
@@ -52,18 +84,11 @@ public interface Deferred<out T> : Job {
     val isCompletedExceptionally: Boolean
 
     /**
-     * Returns `true` if computation of this deferred value was [cancelled][cancel].
-     *
-     * It implies that [isActive] is `false`, [isCompleted] is `true`, and [isCompletedExceptionally] is `true`.
-     */
-    val isCancelled: Boolean
-
-    /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
      * returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.
      *
      * This suspending function is cancellable.
-     * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+     * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
      *
      * This function can be used in [select] invocation with [onAwait][SelectBuilder.onAwait] clause.

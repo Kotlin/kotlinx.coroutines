@@ -33,7 +33,7 @@ public interface Delay {
     /**
      * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
      * This suspending function is cancellable.
-     * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
+     * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
      */
     suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
@@ -73,7 +73,7 @@ public interface Delay {
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is suspended, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * Note, that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.

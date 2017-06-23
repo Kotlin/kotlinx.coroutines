@@ -86,8 +86,8 @@ class LockFreeLinkedListAtomicStressTest : TestBase() {
                             val node2 = IntNode(-threadId - 1)
                             val add1 = list1.describeAddLast(node1)
                             val add2 = list2.describeAddLast(node2)
-                            val op = object : AtomicOp() {
-                                override fun prepare(): Any? = add1.prepare(this) ?: add2.prepare(this)
+                            val op = object : AtomicOp<Any?>() {
+                                override fun prepare(affected: Any?): Any? = add1.prepare(this) ?: add2.prepare(this)
                                 override fun complete(affected: Any?, failure: Any?) {
                                     add1.complete(this, failure)
                                     add2.complete(this, failure)
@@ -115,8 +115,8 @@ class LockFreeLinkedListAtomicStressTest : TestBase() {
                     val list2 = lists[idx2]
                     val remove1 = list1.describeRemoveFirst()
                     val remove2 = list2.describeRemoveFirst()
-                    val op = object : AtomicOp() {
-                        override fun prepare(): Any? = remove1.prepare(this) ?: remove2.prepare(this)
+                    val op = object : AtomicOp<Any?>() {
+                        override fun prepare(affected: Any?): Any? = remove1.prepare(this) ?: remove2.prepare(this)
                         override fun complete(affected: Any?, failure: Any?) {
                             remove1.complete(this, failure)
                             remove2.complete(this, failure)

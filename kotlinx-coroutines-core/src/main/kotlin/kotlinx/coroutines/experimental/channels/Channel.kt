@@ -52,7 +52,7 @@ public interface SendChannel<in E> {
      * All elements that are sent over the channel are delivered in first-in first-out order. The element that
      * is being sent will get delivered to receivers before a close token.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended send is atomic* -- when this function
@@ -123,7 +123,7 @@ public interface ReceiveChannel<out E> {
      * If the channel was closed because of the exception, it is called a _failed_ channel and this function
      * throws the original [close][SendChannel.close] cause exception.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended receive is atomic* -- when this function
@@ -145,7 +145,7 @@ public interface ReceiveChannel<out E> {
      * or returns `null` if the channel is [closed][isClosedForReceive] _normally_,
      * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended receive is atomic* -- when this function
@@ -203,7 +203,7 @@ public interface ChannelIterator<out E> {
      * This function retrieves and removes the element from this channel for the subsequent invocation
      * of [next].
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended receive is atomic* -- when this function
@@ -223,7 +223,7 @@ public interface ChannelIterator<out E> {
      * [isClosedForReceive][ReceiveChannel.isClosedForReceive].
      * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
-     * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
      * *Cancellation of suspended receive is atomic* -- when this function

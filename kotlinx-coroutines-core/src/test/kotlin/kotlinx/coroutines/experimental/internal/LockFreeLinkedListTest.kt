@@ -69,8 +69,8 @@ class LockFreeLinkedListTest {
         assertFalse(n2.isRemoved)
         val remove1Desc = n1.describeRemove()!!
         val remove2Desc = n2.describeRemove()!!
-        val operation = object : AtomicOp() {
-            override fun prepare(): Any? = remove1Desc.prepare(this) ?: remove2Desc.prepare(this)
+        val operation = object : AtomicOp<Any?>() {
+            override fun prepare(affected: Any?): Any? = remove1Desc.prepare(this) ?: remove2Desc.prepare(this)
             override fun complete(affected: Any?, failure: Any?) {
                 remove1Desc.complete(this, failure)
                 remove2Desc.complete(this, failure)
@@ -107,8 +107,8 @@ class LockFreeLinkedListTest {
     }
 
     private fun single(part: AtomicDesc) {
-        val operation = object : AtomicOp() {
-            override fun prepare(): Any? = part.prepare(this)
+        val operation = object : AtomicOp<Any?>() {
+            override fun prepare(affected: Any?): Any? = part.prepare(this)
             override fun complete(affected: Any?, failure: Any?) = part.complete(this, failure)
         }
         assertTrue(operation.perform(null) == null)

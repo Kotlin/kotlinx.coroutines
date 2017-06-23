@@ -38,8 +38,7 @@ public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
      * Repeated invocations of this function have no effect and always produce `false`.
      */
     public fun complete(value: T): Boolean {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
+        lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     // actually, we don't care about the mode here at all, so just use a default
@@ -58,8 +57,7 @@ public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
      * Repeated invocations of this function have no effect and always produce `false`.
      */
     public fun completeExceptionally(exception: Throwable): Boolean {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
+        lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     // actually, we don't care about the mode here at all, so just use a default

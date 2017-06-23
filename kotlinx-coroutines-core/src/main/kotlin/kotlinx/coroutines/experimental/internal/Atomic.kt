@@ -43,12 +43,12 @@ public abstract class OpDescriptor {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-public abstract class AtomicOp : OpDescriptor() {
+public abstract class AtomicOp<in T> : OpDescriptor() {
     @Volatile
     private var _consensus: Any? = UNDECIDED
 
     companion object {
-        private val CONSENSUS: AtomicReferenceFieldUpdater<AtomicOp, Any?> =
+        private val CONSENSUS: AtomicReferenceFieldUpdater<AtomicOp<*>, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(AtomicOp::class.java, Any::class.java, "_consensus")
 
         private val UNDECIDED: Any = Symbol("UNDECIDED")
@@ -63,17 +63,18 @@ public abstract class AtomicOp : OpDescriptor() {
 
     private fun decide(decision: Any?): Any? = if (tryDecide(decision)) decision else _consensus
 
-    abstract fun prepare(): Any? // `null` if Ok, or failure reason
+    abstract fun prepare(affected: T): Any? // `null` if Ok, or failure reason
 
-    abstract fun complete(affected: Any?, failure: Any?) // failure != null if failed to prepare op
+    abstract fun complete(affected: T, failure: Any?) // failure != null if failed to prepare op
 
     // returns `null` on success
+    @Suppress("UNCHECKED_CAST")
     final override fun perform(affected: Any?): Any? {
         // make decision on status
         var decision = this._consensus
         if (decision === UNDECIDED)
-            decision = decide(prepare())
-        complete(affected, decision)
+            decision = decide(prepare(affected as T))
+        complete(affected as T, decision)
         return decision
     }
 }
@@ -84,6 +85,6 @@ public abstract class AtomicOp : OpDescriptor() {
  * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AtomicDesc {
-    abstract fun prepare(op: AtomicOp): Any? // returns `null` if prepared successfully
-    abstract fun complete(op: AtomicOp, failure: Any?) // decision == null if success
+    abstract fun prepare(op: AtomicOp<*>): Any? // returns `null` if prepared successfully
+    abstract fun complete(op: AtomicOp<*>, failure: Any?) // decision == null if success
 }

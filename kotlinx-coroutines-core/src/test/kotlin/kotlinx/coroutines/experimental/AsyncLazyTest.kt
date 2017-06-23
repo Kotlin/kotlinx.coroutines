@@ -173,16 +173,17 @@ class AsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
+        check(!d.isActive && !d.isCompleted && !d.isCancelled)
         check(d.start())
-        check(d.isActive && !d.isCompleted)
+        check(d.isActive && !d.isCompleted && !d.isCancelled)
         expect(3)
         yield() // yield to d
         expect(5)
-        check(d.isActive && !d.isCompleted)
+        check(d.isActive && !d.isCompleted && !d.isCancelled)
         check(d.cancel())
-        check(!d.isActive && d.isCancelled && d.isCompletedExceptionally && d.isCancelled)
+        check(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // cancelling !
         check(!d.cancel())
+        check(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // still cancelling
         finish(6)
         check(d.await() == 42) // await shall throw CancellationException
         expectUnreached()

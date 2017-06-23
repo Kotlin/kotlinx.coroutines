@@ -187,4 +187,30 @@ class CoroutinesTest : TestBase() {
         yield()
         expectUnreached() // because of exception in child
     }
+
+    @Test
+    fun testJoinWithFinally() = runBlocking {
+        expect(1)
+        val job = launch(context) {
+            expect(3)
+            try {
+                yield() // to main, will cancel us
+            } finally {
+                expect(7) // join is waiting
+            }
+        }
+        expect(2)
+        yield() // to job
+        expect(4)
+        check(job.isActive && !job.isCompleted && !job.isCancelled)
+        check(job.cancel())  // cancels job
+        expect(5) // still here
+        check(!job.isActive && !job.isCompleted && job.isCancelled)
+        check(!job.cancel()) // second attempt returns false
+        expect(6) // we're still here
+        job.join() // join the job, let job complete its "finally" section
+        expect(8)
+        check(!job.isActive && job.isCompleted && job.isCancelled)
+        finish(9)
+    }
 }

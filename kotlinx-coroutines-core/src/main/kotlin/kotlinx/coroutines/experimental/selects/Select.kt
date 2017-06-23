@@ -159,7 +159,7 @@ public interface SelectInstance<in R> {
  * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][SelectBuilder.onLock]                   | [tryLock][Mutex.tryLock]
  * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
  *
- * This suspending function is cancellable. If the [Job] of the current coroutine is completed while this
+ * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
  *
  * Atomicity of cancellation depends on the clause: [onSend][SelectBuilder.onSend], [onReceive][SelectBuilder.onReceive],
@@ -285,7 +285,7 @@ internal class SelectBuilderImpl<in R>(
 
     private fun initCancellability() {
         val parent = context[Job] ?: return
-        val newRegistration = parent.invokeOnCompletion { cause ->
+        val newRegistration = parent.invokeOnCancellation { cause ->
             if (trySelect(null))
                 resumeSelectCancellableWithException(cause ?: CancellationException("Select was cancelled"))
         }
@@ -359,8 +359,8 @@ internal class SelectBuilderImpl<in R>(
     private inner class AtomicSelectOp(
         @JvmField val desc: AtomicDesc,
         @JvmField val select: Boolean
-    ) : AtomicOp() {
-        override fun prepare(): Any? = prepareIfNotSelected() ?: desc.prepare(this)
+    ) : AtomicOp<Any?>() {
+        override fun prepare(affected: Any?): Any? = prepareIfNotSelected() ?: desc.prepare(this)
 
         override fun complete(affected: Any?, failure: Any?) {
             completeSelect(failure)

@@ -24,13 +24,13 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * If the coroutine dispatcher does not have its own thread pool (like [Unconfined] dispatcher) then this
  * function does nothing, but checks if the coroutine [Job] was completed.
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed when this suspending function is invoked or while
+ * If the [Job] of the current coroutine is cancelled or completed when this suspending function is invoked or while
  * this function is waiting for dispatching, it resumes with [CancellationException].
  */
 suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
     val context = cont.context
     val job = context[Job]
-    if (job != null && job.isCompleted) throw job.getCompletionException()
+    if (job != null && job.isCancelledOrCompleted) throw job.getCompletionException()
     if (cont !is DispatchedContinuation<Unit>) return@sc Unit
     if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
     cont.dispatchYield(job, Unit)

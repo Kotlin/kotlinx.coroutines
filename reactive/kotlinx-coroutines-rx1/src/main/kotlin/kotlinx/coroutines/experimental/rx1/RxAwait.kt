@@ -28,7 +28,7 @@ import rx.*
  * Awaits for completion of this completable without blocking a thread.
  * Returns `Unit` or throws the corresponding exception if this completable had produced error.
  *
- * This suspending function is cancellable. If the [Job] of the invoking coroutine is completed while this
+ * This suspending function is cancellable. If the [Job] of the invoking coroutine is cancelled or completed while this
  * suspending function is suspended, this function immediately resumes with [CancellationException].
  */
 public suspend fun Completable.awaitCompleted(): Unit = suspendCancellableCoroutine { cont ->
@@ -46,7 +46,7 @@ public suspend fun Completable.awaitCompleted(): Unit = suspendCancellableCorout
  * returns the resulting value or throws the corresponding exception if this single had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
 public suspend fun <T> Single<T>.await(): T = suspendCancellableCoroutine { cont ->
@@ -63,7 +63,7 @@ public suspend fun <T> Single<T>.await(): T = suspendCancellableCoroutine { cont
  * returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if observable does not emit any value
@@ -75,7 +75,7 @@ public suspend fun <T> Observable<T>.awaitFirst(): T = first().awaitOne()
  * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  */
 public suspend fun <T> Observable<T>.awaitFirstOrDefault(default: T): T = firstOrDefault(default).awaitOne()
@@ -85,7 +85,7 @@ public suspend fun <T> Observable<T>.awaitFirstOrDefault(default: T): T = firstO
  * returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if observable does not emit any value
@@ -97,7 +97,7 @@ public suspend fun <T> Observable<T>.awaitLast(): T = last().awaitOne()
  * returns the resulting value or throws the corresponding exception if this observable had produced error.
  *
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * immediately resumes with [CancellationException].
  *
  * @throws NoSuchElementException if observable does not emit any value

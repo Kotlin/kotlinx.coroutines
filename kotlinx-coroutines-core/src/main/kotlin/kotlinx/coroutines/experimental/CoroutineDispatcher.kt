@@ -113,7 +113,7 @@ internal class DispatchTask<in T>(
     override fun run() {
         val job = if (cancellable) dispatched.context[Job] else null
         when {
-            job != null && job.isCompleted ->
+            job != null && job.isCancelledOrCompleted ->
                 dispatched.resumeUndispatchedWithException(job.getCompletionException())
             exception -> dispatched.resumeUndispatchedWithException(value as Throwable)
             else -> dispatched.resumeUndispatched(value as T)
@@ -181,7 +181,7 @@ internal class DispatchedContinuation<in T>(
         val context = continuation.context
         dispatcher.dispatch(context, Runnable {
             withCoroutineContext(context) {
-                if (job != null && job.isCompleted)
+                if (job != null && job.isCancelledOrCompleted)
                     continuation.resumeWithException(job.getCompletionException())
                 else
                     continuation.resume(value)

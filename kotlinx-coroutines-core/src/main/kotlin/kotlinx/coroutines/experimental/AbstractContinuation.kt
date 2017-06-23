@@ -55,7 +55,7 @@ internal abstract class AbstractContinuation<in T>(
     }
 
     protected fun trySuspend(): Boolean {
-        while (true) { // lock-free loop
+        while (true) { // lock-free loop on decision
             val decision = this.decision // volatile read
             when (decision) {
                 UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return true
@@ -66,7 +66,7 @@ internal abstract class AbstractContinuation<in T>(
     }
 
     protected fun tryResume(): Boolean {
-        while (true) { // lock-free loop
+        while (true) { // lock-free loop on decision
             val decision = this.decision // volatile read
             when (decision) {
                 UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return true
@@ -79,8 +79,7 @@ internal abstract class AbstractContinuation<in T>(
     override fun resume(value: T) = resumeImpl(value, resumeMode)
 
     protected fun resumeImpl(value: T, resumeMode: Int) {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
+        lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> if (updateState(state, value, resumeMode)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
@@ -92,8 +91,7 @@ internal abstract class AbstractContinuation<in T>(
     override fun resumeWithException(exception: Throwable) = resumeWithExceptionImpl(exception, resumeMode)
 
     protected fun resumeWithExceptionImpl(exception: Throwable, resumeMode: Int) {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
+        lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     if (updateState(state, CompletedExceptionally(exception), resumeMode)) return
@@ -108,7 +106,7 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    override fun handleCompletionException(closeException: Throwable) {
-        handleCoroutineException(context, closeException)
+    override fun handleException(exception: Throwable) {
+        handleCoroutineException(context, exception)
     }
 }
