@@ -1019,7 +1019,7 @@ Automatically assigned ids are good when coroutines log often and you just need 
 coming from the same coroutine. However, when coroutine is tied to the processing of a specific request
 or doing some specific background task, it is better to name it explicitly for debugging purposes.
 [CoroutineName] serves the same function as a thread name. It'll get displayed in the thread name that
-is executing this coroutine when debugging more is turned on.
+is executing this coroutine when debugging mode is turned on.
 
 The following example demonstrates this concept:
 
