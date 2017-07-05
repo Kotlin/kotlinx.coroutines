@@ -129,7 +129,7 @@ public open class LockFreeLinkedListNode {
             if (prev is Removed) return prev
             prev as Node // otherwise, it can be only node otherwise
             if (prev.next === this) return prev
-            helpInsert(prev, null)
+            correctPrev(prev, null)
         }
     }
 
@@ -314,7 +314,7 @@ public open class LockFreeLinkedListNode {
                     continue
                 }
                 // linked improperly -- help insert
-                queue.helpInsert(prev, op)
+                queue.correctPrev(prev, op)
             }
         }
 
@@ -468,7 +468,7 @@ public open class LockFreeLinkedListNode {
             if (PREV.compareAndSet(next, nextPrev, this)) {
                 if (this.next is Removed) {
                     // already removed
-                    next.helpInsert(nextPrev as Node, null)
+                    next.correctPrev(nextPrev as Node, null)
                 }
                 return
             }
@@ -477,7 +477,7 @@ public open class LockFreeLinkedListNode {
 
     private fun finishRemove(next: Node) {
         helpDelete()
-        next.helpInsert(_prev.unwrap(), null)
+        next.correctPrev(_prev.unwrap(), null)
     }
 
     private fun markPrev(): Node {
@@ -528,7 +528,7 @@ public open class LockFreeLinkedListNode {
     }
 
     // fixes prev links from this node
-    private fun helpInsert(_prev: Node, op: OpDescriptor?) {
+    private fun correctPrev(_prev: Node, op: OpDescriptor?) {
         var prev: Node = _prev
         var last: Node? = null // will be set so that last.next === prev
         while (true) {
