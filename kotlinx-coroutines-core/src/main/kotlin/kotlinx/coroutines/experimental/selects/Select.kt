@@ -360,7 +360,15 @@ internal class SelectBuilderImpl<in R>(
         @JvmField val desc: AtomicDesc,
         @JvmField val select: Boolean
     ) : AtomicOp<Any?>() {
-        override fun prepare(affected: Any?): Any? = prepareIfNotSelected() ?: desc.prepare(this)
+        override fun prepare(affected: Any?): Any? {
+            // only originator of operation makes preparation move of installing descriptor into this selector's state
+            // helpers should never do it, or risk ruining progress when they come late
+            if (affected == null) {
+                // we are originator (affected reference is not null if helping)
+                prepareIfNotSelected()?.let { return it }
+            }
+            return desc.prepare(this)
+        }
 
         override fun complete(affected: Any?, failure: Any?) {
             completeSelect(failure)
