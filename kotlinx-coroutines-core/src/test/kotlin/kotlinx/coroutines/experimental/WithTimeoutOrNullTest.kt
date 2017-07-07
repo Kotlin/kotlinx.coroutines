@@ -122,20 +122,26 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testOuterTimeoutTest() = runBlocking {
-        var counter = 0
-        val result = withTimeoutOrNull(250) {
-            while (true) {
-                val inner = withTimeoutOrNull(100) {
+    fun testOuterTimeoutTest() {
+        // stress test this particular case 1000 times
+        val nTimes = if (isStressTest) 1000 else 1
+        repeat(nTimes) {
+            runBlocking {
+                var counter = 0
+                val result = withTimeoutOrNull(250) {
                     while (true) {
-                        yield()
+                        val inner = withTimeoutOrNull(100) {
+                            while (true) {
+                                yield()
+                            }
+                        }
+                        assertThat(inner, IsNull())
+                        counter++
                     }
                 }
-                assertThat(inner, IsNull())
-                counter++
+                assertThat(result, IsNull())
+                assertThat(counter, IsEqual(2))
             }
         }
-        assertThat(result, IsNull())
-        assertThat(counter, IsEqual(2))
     }
 }
