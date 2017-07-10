@@ -33,6 +33,6 @@ suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
     if (job != null && job.isCancelledOrCompleted) throw job.getCompletionException()
     if (cont !is DispatchedContinuation<Unit>) return@sc Unit
     if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
-    cont.dispatchYield(job, Unit)
+    cont.dispatchYield(Unit)
     COROUTINE_SUSPENDED
 }

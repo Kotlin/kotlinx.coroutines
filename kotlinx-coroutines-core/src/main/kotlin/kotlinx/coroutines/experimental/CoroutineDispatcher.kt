@@ -104,24 +104,26 @@ public abstract class CoroutineDispatcher :
 
 // named class for ease of debugging, better stack-traces and optimize the number of anonymous classes
 internal class DispatchTask<in T>(
-    private val dispatched: DispatchedContinuation<T>,
+    private val continuation: Continuation<T>,
     private val value: Any?, // T | Throwable
     private val exception: Boolean,
     private val cancellable: Boolean
 ) : Runnable {
     @Suppress("UNCHECKED_CAST")
     override fun run() {
-        val job = if (cancellable) dispatched.context[Job] else null
-        when {
-            job != null && job.isCancelledOrCompleted ->
-                dispatched.resumeUndispatchedWithException(job.getCompletionException())
-            exception -> dispatched.resumeUndispatchedWithException(value as Throwable)
-            else -> dispatched.resumeUndispatched(value as T)
+        val context = continuation.context
+        val job = if (cancellable) context[Job] else null
+        withCoroutineContext(context) {
+            when {
+                job != null && job.isCancelledOrCompleted -> continuation.resumeWithException(job.getCompletionException())
+                exception -> continuation.resumeWithException(value as Throwable)
+                else -> continuation.resume(value as T)
+            }
         }
     }
 
     override fun toString(): String =
-        "DispatchTask[$value, cancellable=$cancellable, $dispatched]"
+        "DispatchTask[$value, cancellable=$cancellable, $continuation]"
 }
 
 internal class DispatchedContinuation<in T>(
@@ -131,7 +133,7 @@ internal class DispatchedContinuation<in T>(
     override fun resume(value: T) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(this, value, exception = false, cancellable = false))
+            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = false))
         else
             resumeUndispatched(value)
     }
@@ -139,7 +141,7 @@ internal class DispatchedContinuation<in T>(
     override fun resumeWithException(exception: Throwable) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(this, exception, exception = true, cancellable = false))
+            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = false))
         else
             resumeUndispatchedWithException(exception)
     }
@@ -148,7 +150,7 @@ internal class DispatchedContinuation<in T>(
     inline fun resumeCancellable(value: T) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(this, value, exception = false, cancellable = true))
+            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = true))
         else
             resumeUndispatched(value)
     }
@@ -157,7 +159,7 @@ internal class DispatchedContinuation<in T>(
     inline fun resumeCancellableWithException(exception: Throwable) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(this, exception, exception = true, cancellable = true))
+            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = true))
         else
             resumeUndispatchedWithException(exception)
     }
@@ -177,16 +179,9 @@ internal class DispatchedContinuation<in T>(
     }
 
     // used by "yield" implementation
-    internal fun dispatchYield(job: Job?, value: T) {
+    internal fun dispatchYield(value: T) {
         val context = continuation.context
-        dispatcher.dispatch(context, Runnable {
-            withCoroutineContext(context) {
-                if (job != null && job.isCancelledOrCompleted)
-                    continuation.resumeWithException(job.getCompletionException())
-                else
-                    continuation.resume(value)
-            }
-        })
+        dispatcher.dispatch(context, DispatchTask(continuation, value,false, true))
     }
 
     override fun toString(): String = "DispatchedContinuation[$dispatcher, $continuation]"
