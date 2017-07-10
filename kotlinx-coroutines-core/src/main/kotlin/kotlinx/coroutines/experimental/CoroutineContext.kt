@@ -23,7 +23,8 @@ import kotlin.coroutines.experimental.CoroutineContext
 private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
 private val DEBUG = run {
-    val value = System.getProperty(DEBUG_PROPERTY_NAME)
+    val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
+        catch (e: SecurityException) { null }
     when (value) {
         "auto", null -> CoroutineId::class.java.desiredAssertionStatus()
         "on", "" -> true
