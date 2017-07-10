@@ -148,7 +148,8 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
         try {
             block.startCoroutineUninterceptedOrReturn(completion)
         } catch (e: TimeoutException) {
-            null // replace inner timeout exception with null result
+            // replace inner timeout exception on our coroutine with null result
+            if (e.coroutine == completion) null else throw e
         }
     }
 }

@@ -154,6 +154,7 @@ internal class EventLoopImpl(
         private val block: Runnable
     ) : QueuedTask() {
         override fun invoke() { block.run() }
+        override fun toString(): String = block.toString()
     }
 
     private abstract inner class DelayedTask(
@@ -176,6 +177,8 @@ internal class EventLoopImpl(
         }
 
         open fun cancel() {}
+
+        override fun toString(): String = "Delayed[nanos=$nanoTime,seq=$sequence]"
     }
 
     private inner class DelayedResumeTask(
@@ -197,5 +200,6 @@ internal class EventLoopImpl(
         private val block: Runnable
     ) : DelayedTask(time, timeUnit) {
         override fun invoke() { block.run() }
+        override fun toString(): String = super.toString() + block.toString()
     }
 }
