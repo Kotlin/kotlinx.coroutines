@@ -534,7 +534,7 @@ four
 
 Another implementation of [BroadcastChannel] is [ArrayBroadcastChannel]. It delivers every event to every
 subscriber since the moment the corresponding subscription is open. It corresponds to 
-[PublishSubject][http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html] in Rx.
+[PublishSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
 that can be sent before the sender is suspended waiting for receiver to receive those elements.
 
