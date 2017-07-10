@@ -441,7 +441,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-07.kt)
 
-The result the same:
+The result is the same:
 
 ```text
 two
