@@ -223,7 +223,7 @@ private class BlockingCoroutine<T>(
             if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
             val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
             // note: process next even may look unpark flag, so check !isActive before parking
-            if (!isActive) break
+            if (isCompleted) break
             LockSupport.parkNanos(this, parkNanos)
         }
         // process queued events (that could have been added after last processNextEvent and before cancel
