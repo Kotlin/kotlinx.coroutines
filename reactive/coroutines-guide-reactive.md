@@ -383,7 +383,7 @@ one. Only after consumer processes the first item, producer sends the second one
 RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subject) which is an object that
 effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
 [BroadcastChannel]. There is a variety of subjects in Rx with 
-[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being the
+[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being
 the one used to manage state:
 
 <!--- INCLUDE
