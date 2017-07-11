@@ -33,6 +33,22 @@
         <kotlin.compiler.jdkHome>${env.JDK_16}</kotlin.compiler.jdkHome>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>bintray-devexperts</id>
+            <url>https://dl.bintray.com/devexperts/Maven/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.devexperts.lincheck</groupId>
+            <artifactId>core</artifactId>
+            <version>1.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
