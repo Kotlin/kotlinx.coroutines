@@ -114,6 +114,7 @@ public suspend fun <T> ListenableFuture<T>.await(): T = suspendCancellableCorout
 private class ContinuationCallback<T>(
     @Volatile @JvmField var cont: Continuation<T>?
 ) : FutureCallback<T> {
+    @Suppress("UNCHECKED_CAST")
     override fun onSuccess(result: T?) { cont?.resume(result as T) }
     override fun onFailure(t: Throwable) { cont?.resumeWithException(t) }
 }
