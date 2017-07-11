@@ -29,6 +29,7 @@
     <packaging>jar</packaging>
 
     <properties>
+        <!-- makes sure core is portable to lowest common denominator -->
         <kotlin.compiler.jdkHome>${env.JDK_16}</kotlin.compiler.jdkHome>
     </properties>
 
@@ -39,11 +40,19 @@
         <plugins>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <forkMode>once</forkMode>
-                    <jvm>${env.JDK_16}/bin/java</jvm>
-                    <argLine>-ea -Xmx1g -Xms1g</argLine>
-                </configuration>
+                <executions>
+                    <!-- fork tests under jdk 1.6 as an additional execution -->
+                    <execution>
+                        <id>jdk16-test</id>
+                        <phase>test</phase>
+                        <goals><goal>test</goal></goals>
+                        <configuration>
+                            <forkMode>once</forkMode>
+                            <jvm>${env.JDK_16}/bin/java</jvm>
+                            <argLine>-ea -Xmx1g -Xms1g</argLine>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
