@@ -920,7 +920,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-context-05.kt)
 
-It produces somethine like
+It produces something like
 
 ```
 My job is BlockingCoroutine{Active}@65ae6ba4
@@ -1019,7 +1019,7 @@ Automatically assigned ids are good when coroutines log often and you just need 
 coming from the same coroutine. However, when coroutine is tied to the processing of a specific request
 or doing some specific background task, it is better to name it explicitly for debugging purposes.
 [CoroutineName] serves the same function as a thread name. It'll get displayed in the thread name that
-is executing this coroutine when debugging more is turned on.
+is executing this coroutine when debugging mode is turned on.
 
 The following example demonstrates this concept:
 

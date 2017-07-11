@@ -383,7 +383,7 @@ one. Only after consumer processes the first item, producer sends the second one
 RxJava has a concept of [Subject](https://github.com/ReactiveX/RxJava/wiki/Subject) which is an object that
 effectively broadcasts elements to all its subscribers. The matching concept in coroutines world is called a 
 [BroadcastChannel]. There is a variety of subjects in Rx with 
-[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being the
+[BehaviorSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/BehaviorSubject.html) being
 the one used to manage state:
 
 <!--- INCLUDE
@@ -441,7 +441,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-07.kt)
 
-The result the same:
+The result is the same:
 
 ```text
 two
@@ -534,7 +534,7 @@ four
 
 Another implementation of [BroadcastChannel] is [ArrayBroadcastChannel]. It delivers every event to every
 subscriber since the moment the corresponding subscription is open. It corresponds to 
-[PublishSubject][http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html] in Rx.
+[PublishSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
 that can be sent before the sender is suspended waiting for receiver to receive those elements.
 
