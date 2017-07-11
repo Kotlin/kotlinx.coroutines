@@ -136,7 +136,9 @@ class WithTimeoutOrNullTest : TestBase() {
             }
         }
         assertThat(result, IsNull())
-        assertThat(counter, IsEqual(2))
+        // under load counter may be equal to 1, so the check is lenient here
+        println("Executed: $counter times")
+        check(counter in 1..2)
     }
 
     @Test
