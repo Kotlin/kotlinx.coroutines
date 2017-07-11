@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
@@ -42,19 +43,25 @@ private class ExecutorCoroutineDispatcher(override val executor: Executor) : Exe
 internal abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
     abstract val executor: Executor
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) = executor.execute(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        try { executor.execute(block) }
+        catch (e: RejectedExecutionException) { defaultExecutor.execute(block) }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timeout = (executor as? ScheduledExecutorService)
-            ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit)
-            ?: scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit)
+        val timeout =
+            try { (executor as? ScheduledExecutorService)
+                ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) }
+            catch (e: RejectedExecutionException) { null }
+                ?: defaultExecutor.schedule(ResumeRunnable(continuation), time, unit)
         continuation.cancelFutureOnCompletion(timeout)
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val timeout = (executor as? ScheduledExecutorService)
-            ?.schedule(block, time, unit)
-            ?: scheduledExecutor.schedule(block, time, unit)
+        val timeout =
+            try { (executor as? ScheduledExecutorService)
+                ?.schedule(block, time, unit) }
+            catch (e: RejectedExecutionException) { null }
+                ?: defaultExecutor.schedule(block, time, unit)
         return DisposableFutureHandle(timeout)
     }
 

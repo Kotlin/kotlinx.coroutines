@@ -440,7 +440,7 @@ internal class SelectBuilderImpl<in R>(
         val delay = context[ContinuationInterceptor] as? Delay
         if (delay != null)
             disposeOnSelect(delay.invokeOnTimeout(time, unit, action)) else
-            disposeOnSelect(DisposableFutureHandle(scheduledExecutor.schedule(action, time, unit)))
+            disposeOnSelect(DisposableFutureHandle(defaultExecutor.schedule(action, time, unit)))
     }
 
     private class DisposeNode(

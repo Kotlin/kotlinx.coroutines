@@ -83,7 +83,8 @@ internal class EventLoopImpl(
             // todo: we should unpark only when this task became first in the queue
             unpark()
         } else {
-            block.run() // otherwise run it right here (as if Unconfined)
+            // otherwise submit to a default executor
+            defaultExecutor.execute(block)
         }
     }
 
@@ -92,7 +93,8 @@ internal class EventLoopImpl(
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
         } else {
-            scheduledExecutor.schedule(ResumeRunnable(continuation), time, unit) // otherwise reschedule to other time pool
+            // otherwise schedule to a default executor
+            defaultExecutor.schedule(ResumeRunnable(continuation), time, unit)
         }
     }
 
@@ -103,7 +105,8 @@ internal class EventLoopImpl(
             unpark()
             return delayedTask
         }
-        return DisposableFutureHandle(scheduledExecutor.schedule(block, time, unit))
+        // otherwise schedule to a default executor
+        return DisposableFutureHandle(defaultExecutor.schedule(block, time, unit))
     }
 
     override fun processNextEvent(): Long {
@@ -129,19 +132,14 @@ internal class EventLoopImpl(
 
     fun shutdown() {
         assert(!isActive)
+        assert(Thread.currentThread() === thread)
         // complete processing of all queued tasks
-        while (true) {
-            val queuedTask = (queue.removeFirstOrNull() ?: break) as QueuedTask
-            queuedTask.run()
-        }
-        // reschedule or execute delayed tasks
+        while (processNextEvent() <= 0) { /* spin */ }
+        // reschedule the rest of delayed tasks
+        val now = System.nanoTime()
         while (true) {
             val delayedTask = delayed.removeFirst() ?: break
-            val now = System.nanoTime()
-            if (delayedTask.timeToExecute(now))
-                delayedTask.run()
-            else
-                delayedTask.rescheduleOnShutdown(now)
+            delayedTask.rescheduleOnShutdown(now)
         }
     }
 
@@ -196,7 +194,11 @@ internal class EventLoopImpl(
         fun rescheduleOnShutdown(now: Long) = synchronized(delayed) {
             if (delayed.remove(this)) {
                 assert (scheduledAfterShutdown == null)
-                scheduledAfterShutdown = scheduledExecutor.schedule(this, nanoTime - now, TimeUnit.NANOSECONDS)
+                val remaining = nanoTime - now
+                scheduledAfterShutdown =
+                    if (remaining > 0)
+                        defaultExecutor.schedule(this, remaining, TimeUnit.NANOSECONDS)
+                    else defaultExecutor.submit(this)
             }
         }
 

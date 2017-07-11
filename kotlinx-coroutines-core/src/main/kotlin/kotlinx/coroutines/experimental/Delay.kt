@@ -67,7 +67,7 @@ public interface Delay {
      * This implementation uses a built-in single-threaded scheduled executor service.
      */
     fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        DisposableFutureHandle(scheduledExecutor.schedule(block, time, unit))
+        DisposableFutureHandle(defaultExecutor.schedule(block, time, unit))
 }
 
 /**
@@ -88,7 +88,7 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
         val delay = cont.context[ContinuationInterceptor] as? Delay
         if (delay != null)
             delay.scheduleResumeAfterDelay(time, unit, cont) else
-            cont.cancelFutureOnCompletion(scheduledExecutor.schedule(ResumeRunnable(cont), time, unit))
+            cont.cancelFutureOnCompletion(defaultExecutor.schedule(ResumeRunnable(cont), time, unit))
     }
 }
 

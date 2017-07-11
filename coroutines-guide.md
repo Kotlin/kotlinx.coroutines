@@ -816,14 +816,14 @@ Produces the output:
 ```text
  'Unconfined': I'm working in thread main
     'context': I'm working in thread main
- 'Unconfined': After delay in thread kotlinx.coroutines.ScheduledExecutor
+ 'Unconfined': After delay in thread kotlinx.coroutines.DefaultExecutor
     'context': After delay in thread main
 ```
 
 <!--- TEST LINES_START -->
  
 So, the coroutine that had inherited `context` of `runBlocking {...}` continues to execute in the `main` thread,
-while the unconfined one had resumed in the scheduler thread that [delay] function is using.
+while the unconfined one had resumed in the default executor thread that [delay] function is using.
 
 ### Debugging coroutines and threads
 

@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
@@ -62,7 +63,8 @@ object CommonPool : CoroutineDispatcher() {
         _pool ?: createPool().also { _pool = it }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        (_pool ?: getOrCreatePoolSync()).execute(block)
+        try { (_pool ?: getOrCreatePoolSync()).execute(block) }
+        catch (e: RejectedExecutionException) { defaultExecutor.execute(block) }
 
     // used for tests
     @Synchronized

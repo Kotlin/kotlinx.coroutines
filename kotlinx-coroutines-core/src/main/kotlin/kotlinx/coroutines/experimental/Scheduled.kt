@@ -18,52 +18,12 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.select
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
-
-private val KEEP_ALIVE = java.lang.Long.getLong("kotlinx.coroutines.ScheduledExecutor.keepAlive", 1000L)
-
-@Volatile
-private var _scheduledExecutor: ScheduledExecutorService? = null
-
-internal val scheduledExecutor: ScheduledExecutorService get() =
-    _scheduledExecutor ?: getOrCreateScheduledExecutorSync()
-
-@Synchronized
-private fun getOrCreateScheduledExecutorSync(): ScheduledExecutorService =
-    _scheduledExecutor ?: ScheduledThreadPoolExecutor(1) { r ->
-        Thread(r, "kotlinx.coroutines.ScheduledExecutor").apply { isDaemon = true }
-    }.apply {
-        setKeepAliveTime(KEEP_ALIVE, TimeUnit.MILLISECONDS)
-        allowCoreThreadTimeOut(true)
-        executeExistingDelayedTasksAfterShutdownPolicy = false
-        // "setRemoveOnCancelPolicy" is available only since JDK7, so try it via reflection
-        try {
-            val m = this::class.java.getMethod("setRemoveOnCancelPolicy", Boolean::class.javaPrimitiveType)
-            m.invoke(this, true)
-        } catch (ex: Throwable) { /* ignore */ }
-        _scheduledExecutor = this
-    }
-
-// used for tests
-@Synchronized
-internal fun scheduledExecutorShutdownNow() {
-    _scheduledExecutor?.shutdownNow()
-}
-
-@Synchronized
-internal fun scheduledExecutorShutdownNowAndRelease() {
-    _scheduledExecutor?.apply {
-        shutdownNow()
-        _scheduledExecutor = null
-    }
-}
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
@@ -93,7 +53,7 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
         // schedule cancellation of this coroutine on time
         if (delay != null)
             completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
-            completion.cancelFutureOnCompletion(scheduledExecutor.schedule(completion, time, unit))
+            completion.cancelFutureOnCompletion(defaultExecutor.schedule(completion, time, unit))
         completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context
@@ -141,7 +101,7 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
         // schedule cancellation of this coroutine on time
         if (delay != null)
             completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
-            completion.cancelFutureOnCompletion(scheduledExecutor.schedule(completion, time, unit))
+            completion.cancelFutureOnCompletion(defaultExecutor.schedule(completion, time, unit))
         completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context

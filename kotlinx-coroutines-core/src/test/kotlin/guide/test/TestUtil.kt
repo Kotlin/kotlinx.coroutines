@@ -42,10 +42,10 @@ fun test(block: () -> Unit): List<String> {
         // capture output
         bytes = bytesOut.toByteArray()
         // the shutdown
-        scheduledExecutorShutdownNow()
+        defaultExecutorShutdownNow()
         shutdownDispatcherPools()
         CommonPool.shutdownAndRelease(10000L) // wait at most 10 sec
-        scheduledExecutorShutdownNowAndRelease()
+        defaultExecutorShutdownNowAndRelease()
         System.setOut(oldOut)
         System.setErr(oldErr)
 
