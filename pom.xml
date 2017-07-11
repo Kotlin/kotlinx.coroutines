@@ -242,4 +242,30 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <id>kotlin-snapshot</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+
+            <properties>
+                <kotlin.version>1.1-SNAPSHOT</kotlin.version>
+            </properties>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>oss-p</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </pluginRepository>
+            </pluginRepositories>
+            <repositories>
+                <repository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 </project>
