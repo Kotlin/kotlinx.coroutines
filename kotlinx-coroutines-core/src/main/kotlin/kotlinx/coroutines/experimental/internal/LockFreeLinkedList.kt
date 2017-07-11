@@ -227,13 +227,14 @@ public open class LockFreeLinkedListNode {
     // ------ removeXXX ------
 
     /**
-     * Removes this node from the list. Returns `true` when removed successfully.
+     * Removes this node from the list. Returns `true` when removed successfully, or `false` if the node was already
+     * removed or if it was not added to any list in the first place.
      */
     public open fun remove(): Boolean {
         while (true) { // lock-free loop on next
             val next = this.next
             if (next is Removed) return false // was already removed -- don't try to help (original thread will take care)
-            check(next !== this) // sanity check -- can be true for sentinel nodes only, but they are never removed
+            if (next === this) return false // was not even added
             val removed = (next as Node).removed()
             if (NEXT.compareAndSet(this, next, removed)) {
                 // was removed successfully (linearized remove) -- fixup the list
