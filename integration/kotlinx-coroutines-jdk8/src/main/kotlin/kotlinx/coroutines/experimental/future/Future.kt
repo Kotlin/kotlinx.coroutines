@@ -132,6 +132,7 @@ public suspend fun <T> CompletableFuture<T>.await(): T {
 private class ContinuationConsumer<T>(
     @Volatile @JvmField var cont: Continuation<T>?
 ) : BiConsumer<T?, Throwable?> {
+    @Suppress("UNCHECKED_CAST")
     override fun accept(result: T?, exception: Throwable?) {
         val cont = this.cont ?: return // atomically read current value unless null
         if (exception == null) // the future has been completed normally
