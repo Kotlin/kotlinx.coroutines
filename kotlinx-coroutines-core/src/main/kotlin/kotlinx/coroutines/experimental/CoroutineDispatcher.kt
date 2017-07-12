@@ -123,7 +123,7 @@ internal class DispatchTask<in T>(
     }
 
     override fun toString(): String =
-        "DispatchTask[$value, cancellable=$cancellable, $continuation]"
+        "DispatchTask[$value, cancellable=$cancellable, ${continuation.toDebugString()}]"
 }
 
 internal class DispatchedContinuation<in T>(
@@ -184,7 +184,16 @@ internal class DispatchedContinuation<in T>(
         dispatcher.dispatch(context, DispatchTask(continuation, value,false, true))
     }
 
-    override fun toString(): String = "DispatchedContinuation[$dispatcher, $continuation]"
+    override fun toString(): String = "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
+}
+
+// **KLUDGE**: there is no reason to include continuation into debug string until the following ticket is resolved:
+// KT-18986 Debug-friendly toString implementation for CoroutineImpl
+// (the current string representation of continuation is useless and uses buggy reflection internals)
+// So, this function is a replacement that extract a usable information from continuation -> its class name, at least
+internal fun Continuation<*>.toDebugString(): String = when (this) {
+    is DispatchedContinuation -> toString()
+    else -> this::class.java.name
 }
 
 internal fun <T> Continuation<T>.resumeCancellable(value: T) = when (this) {

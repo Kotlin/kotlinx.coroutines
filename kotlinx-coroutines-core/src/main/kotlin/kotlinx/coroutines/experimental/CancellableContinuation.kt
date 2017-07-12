@@ -253,6 +253,8 @@ internal class CancellableContinuationImpl<in T>(
         check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
         resumeWithExceptionImpl(exception, MODE_UNDISPATCHED)
     }
+
+    override fun toString(): String = super.toString() + "[${delegate.toDebugString()}]"
 }
 
 private class CompletedIdempotentResult(
