@@ -67,6 +67,9 @@
                             <forkMode>once</forkMode>
                             <jvm>${env.JDK_16}/bin/java</jvm>
                             <argLine>-ea -Xmx1g -Xms1g -Djava.security.manager=kotlinx.coroutines.experimental.TestSecurityManager</argLine>
+                            <excludes>
+                                <exclude>**/*LinearizabilityTest.*</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
