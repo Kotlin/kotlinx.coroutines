@@ -169,9 +169,11 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
         override fun onNext(t: T) {
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
-                    seenValue = true
-                    cont.resume(t)
-                    subscription.dispose()
+                    if (!seenValue) {
+                        seenValue = true
+                        cont.resume(t)
+                        subscription.dispose()
+                    }
                 }
                 Mode.LAST, Mode.SINGLE -> {
                     if (mode == Mode.SINGLE && seenValue) {

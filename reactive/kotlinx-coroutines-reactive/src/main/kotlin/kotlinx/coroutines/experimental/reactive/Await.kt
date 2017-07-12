@@ -98,9 +98,11 @@ private suspend fun <T> Publisher<T>.awaitOne(
         override fun onNext(t: T) {
             when (mode) {
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
-                    seenValue = true
-                    cont.resume(t)
-                    subscription.cancel()
+                    if (!seenValue) {
+                        seenValue = true
+                        cont.resume(t)
+                        subscription.cancel()
+                    }
                 }
                 Mode.LAST, Mode.SINGLE -> {
                     if (mode == Mode.SINGLE && seenValue) {
