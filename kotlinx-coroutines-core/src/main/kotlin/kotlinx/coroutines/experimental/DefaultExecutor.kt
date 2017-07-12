@@ -50,14 +50,11 @@ private fun getOrCreateExecutorSync(): ScheduledExecutorService =
 
 // used for tests
 @Synchronized
-internal fun defaultExecutorShutdownNow() {
-    _executor?.shutdownNow()
-}
-
-@Synchronized
-internal fun defaultExecutorShutdownNowAndRelease() {
+internal fun shutdownDefaultExecutor(timeout: Long) {
     _executor?.apply {
-        shutdownNow()
+        shutdown()
+        awaitTermination(timeout, TimeUnit.MILLISECONDS)
+        shutdownNow() // ignore all remaining
         _executor = null
     }
 }

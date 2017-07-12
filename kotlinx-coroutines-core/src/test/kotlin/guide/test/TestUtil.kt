@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.util.concurrent.TimeUnit
 
 fun test(block: () -> Unit): List<String> {
     val oldOut = System.out
@@ -42,10 +43,11 @@ fun test(block: () -> Unit): List<String> {
         // capture output
         bytes = bytesOut.toByteArray()
         // the shutdown
-        defaultExecutorShutdownNow()
-        shutdownDispatcherPools()
-        CommonPool.shutdownAndRelease(10000L) // wait at most 10 sec
-        defaultExecutorShutdownNowAndRelease()
+        val timeout = 5000L // 5 sec at most to wait
+        CommonPool.shutdown(timeout)
+        shutdownDispatcherPools(timeout)
+        shutdownDefaultExecutor(timeout) // the last man standing -- kill it too
+        CommonPool.restore()
         System.setOut(oldOut)
         System.setErr(oldErr)
 
@@ -53,13 +55,17 @@ fun test(block: () -> Unit): List<String> {
     return ByteArrayInputStream(bytes).bufferedReader().readLines()
 }
 
-private fun shutdownDispatcherPools() {
+private fun shutdownDispatcherPools(timeout: Long) {
     val threads = arrayOfNulls<Thread>(Thread.activeCount())
     val n = Thread.enumerate(threads)
     for (i in 0 until n) {
         val thread = threads[i]
         if (thread is PoolThread)
-            thread.dispatcher.executor.shutdownNow()
+            thread.dispatcher.executor.apply {
+                shutdown()
+                awaitTermination(timeout, TimeUnit.MILLISECONDS)
+                shutdownNow().forEach { defaultExecutor.execute(it) }
+            }
     }
 }
 
