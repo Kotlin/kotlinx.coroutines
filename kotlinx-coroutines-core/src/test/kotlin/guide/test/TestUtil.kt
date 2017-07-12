@@ -54,7 +54,13 @@ fun test(name: String, block: () -> Unit): List<String> {
 
     }
     val lines = ByteArrayInputStream(bytes).bufferedReader().readLines()
-    lines.forEach { println(it) }
+    lines.forEach {
+        val limit = 80
+        if (it.length < limit)
+            println(it)
+        else
+            println(it.substring(0, limit) + " (${it.length} chars)")
+    }
     return lines
 }
 
