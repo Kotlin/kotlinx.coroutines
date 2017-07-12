@@ -36,7 +36,7 @@ class PublisherBackpressureTest : TestBase() {
             try {
                 send("C") // will suspend (no more requested)
             } finally {
-                expect(12)
+                expect(13)
             }
             expectUnreached()
         }
@@ -58,7 +58,7 @@ class PublisherBackpressureTest : TestBase() {
             }
 
             override fun onComplete() {
-                expect(13)
+                expect(11)
             }
 
             override fun onError(e: Throwable) {
@@ -68,8 +68,8 @@ class PublisherBackpressureTest : TestBase() {
         expect(4)
         yield() // yield to observable coroutine
         expect(10)
-        sub!!.cancel() // now unsubscribe -- shall cancel coroutine
-        expect(11)
+        sub!!.cancel() // now unsubscribe -- shall cancel coroutine & immediately signal onComplete
+        expect(12)
         yield() // shall perform finally in coroutine & report onComplete
         finish(14)
     }
