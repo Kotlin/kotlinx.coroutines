@@ -130,7 +130,7 @@ public interface Job : CoroutineContext.Element {
      * The [cancellable][suspendCancellableCoroutine] suspending functions throw this exception
      * when trying to suspend in the context of this job.
      */
-    fun getCompletionException(): Throwable
+    public fun getCompletionException(): Throwable
 
     // ------------ state update ------------
 
@@ -551,6 +551,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             else -> check(expect is Empty)
         }
         // Do overridable processing after completion handlers
+        if (expect !is Cancelling) onCancellation() // only notify when was not cancelling before
         afterCompletion(update, mode)
     }
 
@@ -609,7 +610,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      */
     protected open fun onStart() {}
 
-    final override fun getCompletionException(): Throwable {
+    public final override fun getCompletionException(): Throwable  {
         val state = this.state
         return when (state) {
             is Cancelling -> state.cancelled.exception
@@ -619,10 +620,27 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    final override fun invokeOnCancellation(handler: CompletionHandler): DisposableHandle =
+    /**
+     * Returns the cause that signals the completion of this job -- it returns the original
+     * [cancel] cause or **`null` if this job had completed
+     * normally or was cancelled without a cause**. This function throws
+     * [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
+     * [isCancelled] yet.
+     */
+    protected fun getCompletionCause(): Throwable? {
+        val state = this.state
+        return when (state) {
+            is Cancelling -> state.cancelled.cause
+            is Incomplete -> error("Job was not completed or cancelled yet")
+            is CompletedExceptionally -> state.cause
+            else -> null
+        }
+    }
+
+    public final override fun invokeOnCancellation(handler: CompletionHandler): DisposableHandle =
         installHandler(handler, onCancellation = hasCancellingState)
 
-    final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
+    public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
         installHandler(handler, onCancellation = false)
 
     private fun installHandler(handler: CompletionHandler, onCancellation: Boolean): DisposableHandle {
@@ -780,6 +798,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                         // try make it cancelling on the condition that we're still in this state
                         if (STATE.compareAndSet(this, state, Cancelling(state, Cancelled(cause)))) {
                             notifyCancellation(state, cause)
+                            onCancellation()
                             return true
                         }
                     } else {
@@ -802,6 +821,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     protected open fun handleException(exception: Throwable) {
         throw exception
     }
+
+    /**
+     * It is invoked once when job is cancelled or is completed, similarly to [invokeOnCancellation].
+     */
+    protected open fun onCancellation() {}
 
     /**
      * Override for post-completion actions that need to do something with the state.
