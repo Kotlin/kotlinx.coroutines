@@ -262,7 +262,7 @@ fun makeTest(testOutLines: MutableList<String>, pgk: String, test: List<String>,
     testOutLines += ""
     testOutLines += "    @Test"
     testOutLines += "    fun test$funName() {"
-    val prefix = "        test { $pgk.main(emptyArray()) }"
+    val prefix = "        test(\"$funName\") { $pgk.main(emptyArray()) }"
     when (predicate) {
         "" -> makeTestLines(testOutLines, prefix, "verifyLines", test)
         STARTS_WITH_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStartWith", test)

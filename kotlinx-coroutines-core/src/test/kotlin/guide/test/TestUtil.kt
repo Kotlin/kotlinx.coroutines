@@ -24,7 +24,8 @@ import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.util.concurrent.TimeUnit
 
-fun test(block: () -> Unit): List<String> {
+fun test(name: String, block: () -> Unit): List<String> {
+    println("--- Running test$name")
     val oldOut = System.out
     val oldErr = System.err
     val bytesOut = ByteArrayOutputStream()
@@ -52,7 +53,9 @@ fun test(block: () -> Unit): List<String> {
         System.setErr(oldErr)
 
     }
-    return ByteArrayInputStream(bytes).bufferedReader().readLines()
+    val lines = ByteArrayInputStream(bytes).bufferedReader().readLines()
+    lines.forEach { println(it) }
+    return lines
 }
 
 private fun shutdownDispatcherPools(timeout: Long) {
