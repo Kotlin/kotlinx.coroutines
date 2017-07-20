@@ -206,7 +206,7 @@ private class BlockingCoroutine<T>(
     private val blockedThread: Thread,
     private val privateEventLoop: Boolean
 ) : AbstractCoroutine<T>(parentContext, true) {
-    val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
+    private val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
 
     init {
         if (privateEventLoop) require(eventLoop is EventLoopImpl)
@@ -219,15 +219,17 @@ private class BlockingCoroutine<T>(
 
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
+        timeSource.registerTimeLoopThread()
         while (true) {
             if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
             val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
-            // note: process next even may look unpark flag, so check !isActive before parking
+            // note: process next even may loose unpark flag, so check if completed before parking
             if (isCompleted) break
-            LockSupport.parkNanos(this, parkNanos)
+            timeSource.parkNanos(this, parkNanos)
         }
         // process queued events (that could have been added after last processNextEvent and before cancel
         if (privateEventLoop) (eventLoop as EventLoopImpl).shutdown()
+        timeSource.unregisterTimeLoopThread()
         // now return result
         val state = this.state
         (state as? CompletedExceptionally)?.let { throw it.exception }

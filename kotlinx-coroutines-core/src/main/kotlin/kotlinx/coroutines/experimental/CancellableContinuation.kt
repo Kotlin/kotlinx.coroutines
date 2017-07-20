@@ -94,9 +94,6 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
-     *
-     * The receiver [CoroutineDispatcher] of this function be equal to the context dispatcher or
-     * [IllegalArgumentException] if thrown.
      */
     public fun CoroutineDispatcher.resumeUndispatched(value: T)
 
@@ -105,9 +102,6 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
-     *
-     * The receiver [CoroutineDispatcher] of this function be equal to the context dispatcher or
-     * [IllegalArgumentException] if thrown.
      */
     public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
 }
@@ -244,14 +238,12 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
-        check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        resumeImpl(value, MODE_UNDISPATCHED)
+        resumeImpl(value, if (dc.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
         val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
-        check(dc.dispatcher === this) { "Must be invoked from the context CoroutineDispatcher"}
-        resumeWithExceptionImpl(exception, MODE_UNDISPATCHED)
+        resumeWithExceptionImpl(exception, if (dc.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     override fun toString(): String = super.toString() + "[${delegate.toDebugString()}]"

@@ -27,7 +27,6 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
@@ -437,10 +436,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect(null))
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        val delay = context[ContinuationInterceptor] as? Delay
-        if (delay != null)
-            disposeOnSelect(delay.invokeOnTimeout(time, unit, action)) else
-            disposeOnSelect(DisposableFutureHandle(defaultExecutor.schedule(action, time, unit)))
+        disposeOnSelect(context.delay.invokeOnTimeout(time, unit, action))
     }
 
     private class DisposeNode(

@@ -354,13 +354,13 @@ example shows:
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
-        var nextPrintTime = 0L
+        var nextPrintTime = System.currentTimeMillis()
         var i = 0
         while (i < 10) { // computation loop
             val currentTime = System.currentTimeMillis()
             if (currentTime >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
-                nextPrintTime = currentTime + 500L
+                nextPrintTime += 500L
             }
         }
     }
@@ -613,7 +613,7 @@ The answer is 42
 Completed in 2017 ms
 ```
 
-<!--- TEST FLEXIBLE_TIME -->
+<!--- TEST ARBITRARY_TIME -->
 
 ### Concurrent using async
 
@@ -646,7 +646,7 @@ The answer is 42
 Completed in 1017 ms
 ```
 
-<!--- TEST FLEXIBLE_TIME -->
+<!--- TEST ARBITRARY_TIME -->
 
 This is twice as fast, because we have concurrent execution of two coroutines. 
 Note, that concurrency with coroutines is always explicit.
@@ -678,7 +678,7 @@ The answer is 42
 Completed in 2017 ms
 ```
 
-<!--- TEST FLEXIBLE_TIME -->
+<!--- TEST ARBITRARY_TIME -->
 
 So, we are back to sequential execution, because we _first_ start and await for `one`, _and then_ start and await
 for `two`. It is not the intended use-case for laziness. It is designed as a replacement for
@@ -728,7 +728,7 @@ fun main(args: Array<String>) {
 
 > You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-04.kt)
 
-<!--- TEST FLEXIBLE_TIME
+<!--- TEST ARBITRARY_TIME
 The answer is 42
 Completed in 1085 ms
 -->
@@ -1371,13 +1371,13 @@ fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) 
 }
 ```
 
-Now let us launch five processors and let them work for a second. See what happens:
+Now let us launch five processors and let them work for almost a second. See what happens:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val producer = produceNumbers()
     repeat(5) { launchProcessor(it, producer) }
-    delay(1000)
+    delay(950)
     producer.cancel() // cancel producer coroutine and thus kill them all
 }
 ```

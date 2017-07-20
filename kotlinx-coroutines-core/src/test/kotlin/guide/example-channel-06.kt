@@ -37,6 +37,6 @@ fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val producer = produceNumbers()
     repeat(5) { launchProcessor(it, producer) }
-    delay(1000)
+    delay(950)
     producer.cancel() // cancel producer coroutine and thus kill them all
 }

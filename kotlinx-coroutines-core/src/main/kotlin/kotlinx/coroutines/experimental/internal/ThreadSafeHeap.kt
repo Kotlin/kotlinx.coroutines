@@ -38,7 +38,7 @@ public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
 
     public fun peek(): T? = synchronized(this) { firstImpl() }
 
-    public fun removeFirst(): T? = synchronized(this) {
+    public fun removeFirstOrNull(): T? = synchronized(this) {
         if (size > 0) {
             removeAtImpl(0)
         } else

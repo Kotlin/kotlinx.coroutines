@@ -26,7 +26,7 @@ package guide.test
 
 import org.junit.Test
 
-class GuideReactiveTest {
+class GuideReactiveTest : ReactiveTestBase() {
 -->
 
 # Guide to reactive streams with coroutines

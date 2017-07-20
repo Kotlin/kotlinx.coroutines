@@ -50,7 +50,7 @@ class ThreadSafeHeapTest {
         val n5 = Node(5)
         h.addLast(n5)
         assertThat(h.peek(), IsEqual(n1))
-        assertThat(h.removeFirst(), IsEqual(n1))
+        assertThat(h.removeFirstOrNull(), IsEqual(n1))
         assertThat(n1.index, IsEqual(-1))
         assertThat(h.peek(), IsEqual(n2))
         h.remove(n2)
@@ -71,7 +71,7 @@ class ThreadSafeHeapTest {
         val a = IntArray(n) { r.nextInt() }
         repeat(n) { h.addLast(Node(a[it])) }
         a.sort()
-        repeat(n) { assertThat(h.removeFirst(), IsEqual(Node(a[it]))) }
+        repeat(n) { assertThat(h.removeFirstOrNull(), IsEqual(Node(a[it]))) }
         assertThat(h.peek(), IsNull())
     }
 }

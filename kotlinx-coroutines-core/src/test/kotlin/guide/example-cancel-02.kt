@@ -21,13 +21,13 @@ import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
-        var nextPrintTime = 0L
+        var nextPrintTime = System.currentTimeMillis()
         var i = 0
         while (i < 10) { // computation loop
             val currentTime = System.currentTimeMillis()
             if (currentTime >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
-                nextPrintTime = currentTime + 500L
+                nextPrintTime += 500L
             }
         }
     }

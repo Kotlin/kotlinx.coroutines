@@ -20,7 +20,6 @@ import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
@@ -49,11 +48,8 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
     return suspendCoroutineOrReturn { cont: Continuation<T> ->
         val context = cont.context
         val completion = TimeoutCompletion(time, unit, cont)
-        val delay = context[ContinuationInterceptor] as? Delay
         // schedule cancellation of this coroutine on time
-        if (delay != null)
-            completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
-            completion.cancelFutureOnCompletion(defaultExecutor.schedule(completion, time, unit))
+        completion.disposeOnCompletion(context.delay.invokeOnTimeout(time, unit, completion))
         completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context
@@ -97,11 +93,8 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
     return suspendCoroutineOrReturn { cont: Continuation<T?> ->
         val context = cont.context
         val completion = TimeoutOrNullCompletion(time, unit, cont)
-        val delay = context[ContinuationInterceptor] as? Delay
         // schedule cancellation of this coroutine on time
-        if (delay != null)
-            completion.disposeOnCompletion(delay.invokeOnTimeout(time, unit, completion)) else
-            completion.cancelFutureOnCompletion(defaultExecutor.schedule(completion, time, unit))
+        completion.disposeOnCompletion(context.delay.invokeOnTimeout(time, unit, completion))
         completion.initParentJob(context[Job])
         // restart block using new coroutine with new job,
         // however start it as undispatched coroutine, because we are already in the proper context

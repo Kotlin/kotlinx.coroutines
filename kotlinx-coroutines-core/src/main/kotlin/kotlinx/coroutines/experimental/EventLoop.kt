@@ -20,9 +20,7 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import kotlinx.coroutines.experimental.internal.ThreadSafeHeap
 import kotlinx.coroutines.experimental.internal.ThreadSafeHeapNode
-import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -65,106 +63,116 @@ public interface EventLoop {
     }
 }
 
-internal class EventLoopImpl(
-    private val thread: Thread
-) : CoroutineDispatcher(), EventLoop, Delay {
+private const val DELAYED = 0
+private const val REMOVED = 1
+private const val RESCHEDULED = 2
+
+internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     private val queue = LockFreeLinkedListHead()
     private val delayed = ThreadSafeHeap<DelayedTask>()
-    private val nextSequence = AtomicLong()
-    private var parentJob: Job? = null
 
-    fun initParentJob(coroutine: Job) {
-        require(this.parentJob == null)
-        this.parentJob = coroutine
-    }
+    protected abstract val canComplete: Boolean
+    protected abstract val isCompleted: Boolean
+    protected abstract fun unpark()
+    protected abstract fun isCorrectThread(): Boolean
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (scheduleQueued(QueuedRunnableTask(block))) {
-            // todo: we should unpark only when this task became first in the queue
-            unpark()
-        } else {
-            // otherwise submit to a default executor
-            defaultExecutor.execute(block)
+    protected val isEmpty: Boolean
+        get() = queue.isEmpty && delayed.isEmpty
+
+    private val nextTime: Long
+        get() {
+            if (!queue.isEmpty) return 0
+            val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
+            return (nextDelayedTask.nanoTime - timeSource.nanoTime()).coerceAtLeast(0)
         }
-    }
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        if (scheduleDelayed(DelayedResumeTask(time, unit, continuation))) {
-            // todo: we should unpark only when this delayed task became first in the queue
-            unpark()
-        } else {
-            // otherwise schedule to a default executor
-            defaultExecutor.schedule(ResumeRunnable(continuation), time, unit)
-        }
-    }
+    fun execute(block: Runnable) =
+        enqueue(block.toQueuedTask())
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val delayedTask = DelayedRunnableTask(time, unit, block)
-        if (scheduleDelayed(delayedTask)) {
-            // todo: we should unpark only when this delayed task became first in the queue
-            unpark()
-            return delayedTask
-        }
-        // otherwise schedule to a default executor
-        return DisposableFutureHandle(defaultExecutor.schedule(block, time, unit))
-    }
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        enqueue(block.toQueuedTask())
+
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
+        schedule(DelayedResumeTask(time, unit, continuation))
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
+        DelayedRunnableTask(time, unit, block).also { schedule(it) }
 
     override fun processNextEvent(): Long {
-        if (Thread.currentThread() !== thread) return Long.MAX_VALUE
+        if (!isCorrectThread()) return Long.MAX_VALUE
         // queue all delayed tasks that are due to be executed
         if (!delayed.isEmpty) {
-            val now = System.nanoTime()
+            val now = timeSource.nanoTime()
             while (true) {
-                val delayedTask = delayed.removeFirstIf { it.timeToExecute(now) } ?: break
-                queue.addLast(delayedTask)
+                // make sure that moving from delayed to queue removes from delayed only after it is added to queue
+                // to make sure that 'isEmpty' and `nextTime` that check both of them
+                // do not transiently report that both delayed and queue are empty during move
+                delayed.removeFirstIf {
+                    if (it.timeToExecute(now)) {
+                        queue.addLast(it)
+                        true // proceed with remove
+                    } else
+                        false
+                } ?: break // quit loop when nothing more to remove
             }
         }
         // then process one event from queue
-        (queue.removeFirstOrNull() as? QueuedTask)?.let { queuedTask ->
-            queuedTask.run()
-        }
-        if (!queue.isEmpty) return 0
-        val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
-        return (nextDelayedTask.nanoTime - System.nanoTime()).coerceAtLeast(0)
+        (queue.removeFirstOrNull() as? QueuedTask)?.run()
+        return nextTime
     }
 
-    private val isActive: Boolean get() = parentJob?.isCompleted != true
+    private fun Runnable.toQueuedTask(): QueuedTask =
+        if (this is QueuedTask && isFresh) this else QueuedRunnableTask(this)
 
-    fun shutdown() {
-        assert(!isActive)
-        assert(Thread.currentThread() === thread)
-        // complete processing of all queued tasks
-        while (processNextEvent() <= 0) { /* spin */ }
-        // reschedule the rest of delayed tasks
-        val now = System.nanoTime()
-        while (true) {
-            val delayedTask = delayed.removeFirst() ?: break
-            delayedTask.rescheduleOnShutdown(now)
-        }
+    internal fun enqueue(queuedTask: QueuedTask) {
+        if (enqueueImpl(queuedTask)) {
+            // todo: we should unpark only when this delayed task became first in the queue
+            unpark()
+        } else
+            DefaultExecutor.enqueue(queuedTask)
     }
 
-    private fun scheduleQueued(queuedTask: QueuedTask): Boolean {
-        if (parentJob == null) {
+    private fun enqueueImpl(queuedTask: QueuedTask): Boolean {
+        if (!canComplete) {
             queue.addLast(queuedTask)
             return true
         }
-        return queue.addLastIf(queuedTask) { isActive }
+        return queue.addLastIf(queuedTask) { !isCompleted }
     }
 
-    private fun scheduleDelayed(delayedTask: DelayedTask): Boolean {
-        if (parentJob == null) {
+    internal fun schedule(delayedTask: DelayedTask) {
+        if (scheduleImpl(delayedTask)) {
+            // todo: we should unpark only when this delayed task became first in the queue
+            unpark()
+        } else
+            DefaultExecutor.schedule(delayedTask)
+    }
+
+    private fun scheduleImpl(delayedTask: DelayedTask): Boolean {
+        if (!canComplete) {
             delayed.addLast(delayedTask)
             return true
         }
-        return delayed.addLastIf(delayedTask) { isActive }
+        return delayed.addLastIf(delayedTask) { !isCompleted }
     }
 
-    private fun unpark() {
-        if (Thread.currentThread() !== thread)
-            LockSupport.unpark(thread)
+    internal fun removeDelayedImpl(delayedTask: DelayedTask) {
+        delayed.remove(delayedTask)
     }
 
-    private abstract class QueuedTask : LockFreeLinkedListNode(), Runnable
+    protected fun clearAll() {
+        while (true) queue.removeFirstOrNull() ?: break
+        while (true) delayed.removeFirstOrNull() ?: break
+    }
+
+    protected fun rescheduleAllDelayed() {
+        while (true) {
+            val delayedTask = delayed.removeFirstOrNull() ?: break
+            delayedTask.rescheduleOnShutdown()
+        }
+    }
+
+    internal abstract class QueuedTask : LockFreeLinkedListNode(), Runnable
 
     private class QueuedRunnableTask(
         private val block: Runnable
@@ -173,43 +181,43 @@ internal class EventLoopImpl(
         override fun toString(): String = block.toString()
     }
 
-    private abstract inner class DelayedTask(
+    internal abstract inner class DelayedTask(
         time: Long, timeUnit: TimeUnit
     ) : QueuedTask(), Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         override var index: Int = -1
-        @JvmField val nanoTime: Long = System.nanoTime() + timeUnit.toNanos(time)
-        @JvmField val sequence: Long = nextSequence.getAndIncrement()
-        private var scheduledAfterShutdown: Future<*>? = null
+        var state = DELAYED
+        @JvmField val nanoTime: Long = timeSource.nanoTime() + timeUnit.toNanos(time)
 
         override fun compareTo(other: DelayedTask): Int {
             val dTime = nanoTime - other.nanoTime
-            if (dTime > 0) return 1
-            if (dTime < 0) return -1
-            val dSequence = sequence - other.sequence
-            return if (dSequence > 0) 1 else if (dSequence < 0) -1 else 0
+            return when {
+                dTime > 0 -> 1
+                dTime < 0 -> -1
+                else -> 0
+            }
         }
 
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
-        fun rescheduleOnShutdown(now: Long) = synchronized(delayed) {
+        fun rescheduleOnShutdown() = synchronized(delayed) {
+            if (state != DELAYED) return
             if (delayed.remove(this)) {
-                assert (scheduledAfterShutdown == null)
-                val remaining = nanoTime - now
-                scheduledAfterShutdown =
-                    if (remaining > 0)
-                        defaultExecutor.schedule(this, remaining, TimeUnit.NANOSECONDS)
-                    else defaultExecutor.submit(this)
-            }
+                state = RESCHEDULED
+                DefaultExecutor.schedule(this)
+            } else
+                state = REMOVED
         }
 
         override final fun dispose() = synchronized(delayed) {
-            if (!delayed.remove(this)) {
-                scheduledAfterShutdown?.cancel(false)
-                scheduledAfterShutdown = null
+            when (state) {
+                DELAYED -> delayed.remove(this)
+                RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
+                else -> return
             }
+            state = REMOVED
         }
 
-        override fun toString(): String = "Delayed[nanos=$nanoTime,seq=$sequence]"
+        override fun toString(): String = "Delayed[nanos=$nanoTime]"
     }
 
     private inner class DelayedResumeTask(
@@ -229,3 +237,33 @@ internal class EventLoopImpl(
         override fun toString(): String = super.toString() + block.toString()
     }
 }
+
+internal class EventLoopImpl(
+    private val thread: Thread
+) : EventLoopBase() {
+    private var parentJob: Job? = null
+
+    override val canComplete: Boolean get() = parentJob != null
+    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
+    override fun isCorrectThread(): Boolean = Thread.currentThread() === thread
+
+    fun initParentJob(coroutine: Job) {
+        require(this.parentJob == null)
+        this.parentJob = coroutine
+    }
+
+    override fun unpark() {
+        if (Thread.currentThread() !== thread)
+            timeSource.unpark(thread)
+    }
+
+    fun shutdown() {
+        assert(isCompleted)
+        assert(isCorrectThread())
+        // complete processing of all queued tasks
+        while (processNextEvent() <= 0) { /* spin */ }
+        // reschedule the rest of delayed tasks
+        rescheduleAllDelayed()
+    }
+}
+

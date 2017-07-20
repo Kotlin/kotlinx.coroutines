@@ -21,20 +21,42 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.io.PrintStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.LockSupport
 
-fun test(name: String, block: () -> Unit): List<String> {
+fun trackTask(block: Runnable) = timeSource.trackTask(block)
+
+// helper function to dump exception to stdout for ease of debugging failed tests
+private inline fun <T> outputException(name: String, block: () -> T): T =
+    try { block() }
+    catch (e: Throwable) {
+        println("--- Failed test$name")
+        e.printStackTrace(System.out)
+        throw e
+    }
+
+private const val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
+
+fun test(name: String, block: () -> Unit): List<String> = outputException(name) {
     println("--- Running test$name")
     val oldOut = System.out
     val oldErr = System.err
     val bytesOut = ByteArrayOutputStream()
-    val ps = PrintStream(bytesOut)
+    val tee = TeeOutput(bytesOut, oldOut)
+    val ps = PrintStream(tee)
     System.setErr(ps)
     System.setOut(ps)
     CommonPool.usePrivatePool()
     resetCoroutineId()
-    var bytes: ByteArray
+    // shutdown execution with old time source (in case it was working)
+    DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+    val testTimeSource = TestTimeSource(oldOut)
+    timeSource = testTimeSource
+    DefaultExecutor.ensureStarted() // should start with new time source
+    val bytes: ByteArray
     try {
         block()
     } catch (e: Throwable) {
@@ -43,25 +65,169 @@ fun test(name: String, block: () -> Unit): List<String> {
     } finally {
         // capture output
         bytes = bytesOut.toByteArray()
+        oldOut.println("--- shutting down")
         // the shutdown
-        val timeout = 5000L // 5 sec at most to wait
-        CommonPool.shutdown(timeout)
-        shutdownDispatcherPools(timeout)
-        shutdownDefaultExecutor(timeout) // the last man standing -- kill it too
+        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
+        shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
+        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
+        testTimeSource.shutdown()
+        timeSource = DefaultTimeSource // restore time source
         CommonPool.restore()
+        if (tee.flushLine()) oldOut.println()
+        oldOut.println("--- done")
         System.setOut(oldOut)
         System.setErr(oldErr)
+    }
+    return ByteArrayInputStream(bytes).bufferedReader().readLines()
+}
 
+private class TeeOutput(
+    private val bytesOut: OutputStream,
+    private val oldOut: PrintStream
+) : OutputStream() {
+    val limit = 200
+    var lineLength = 0
+
+    fun flushLine(): Boolean {
+        if (lineLength > limit)
+            oldOut.print(" ($lineLength chars in total)")
+        val result = lineLength > 0
+        lineLength = 0
+        return result
     }
-    val lines = ByteArrayInputStream(bytes).bufferedReader().readLines()
-    lines.forEach {
-        val limit = 80
-        if (it.length < limit)
-            println(it)
-        else
-            println(it.substring(0, limit) + " (${it.length} chars)")
+
+    override fun write(b: Int) {
+        bytesOut.write(b)
+        if (b == 0x0d || b == 0x0a) { // new line
+            flushLine()
+            oldOut.write(b)
+        } else {
+            lineLength++
+            if (lineLength <= limit)
+                oldOut.write(b)
+        }
     }
-    return lines
+}
+
+private val NOT_PARKED = -1L
+
+private class ThreadStatus {
+    @Volatile @JvmField
+    var parkedTill = NOT_PARKED
+    @Volatile @JvmField
+    var permit = false
+    override fun toString(): String = "parkedTill = ${TimeUnit.NANOSECONDS.toMillis(parkedTill)} ms, permit = $permit"
+}
+
+private val MAX_WAIT_NANOS = 10_000_000_000L // 10s
+private val REAL_TIME_STEP_NANOS = 200_000_000L // 200 ms
+
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+private class TestTimeSource(
+    private val log: PrintStream
+) : TimeSource {
+    private val mainThread: Thread = Thread.currentThread()
+    private var checkpointNanos: Long = System.nanoTime()
+
+    @Volatile
+    private var isShutdown = false
+
+    @Volatile
+    private var time: Long = 0
+
+    private var trackedTasks = 0
+
+    private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
+
+    override fun nanoTime(): Long = time
+
+    @Synchronized
+    override fun trackTask(block: Runnable): Runnable {
+        trackedTasks++
+        return Runnable {
+            try { block.run() }
+            finally { unTrackTask() }
+        }
+    }
+
+    @Synchronized
+    override fun unTrackTask() {
+        assert(trackedTasks > 0)
+        trackedTasks--
+    }
+
+    @Synchronized
+    override fun registerTimeLoopThread() {
+        assert(threads.putIfAbsent(Thread.currentThread(), ThreadStatus()) == null)
+    }
+
+    @Synchronized
+    override fun unregisterTimeLoopThread() {
+        assert(threads.remove(Thread.currentThread()) != null)
+        wakeupAll()
+    }
+
+    override fun parkNanos(blocker: Any, nanos: Long) {
+        if (nanos <= 0) return
+        val status = threads[Thread.currentThread()]!!
+        assert(status.parkedTill == NOT_PARKED)
+        status.parkedTill = time + nanos.coerceAtMost(MAX_WAIT_NANOS)
+        while (true) {
+            checkAdvanceTime()
+            if (isShutdown || time >= status.parkedTill || status.permit) {
+                status.parkedTill = NOT_PARKED
+                status.permit = false
+                break
+            }
+            LockSupport.parkNanos(blocker, REAL_TIME_STEP_NANOS)
+        }
+    }
+
+    override fun unpark(thread: Thread) {
+        val status = threads[thread] ?: return
+        status.permit = true
+        LockSupport.unpark(thread)
+    }
+
+    @Synchronized
+    private fun checkAdvanceTime() {
+        if (isShutdown) return
+        val realNanos = System.nanoTime()
+        if (realNanos > checkpointNanos + REAL_TIME_STEP_NANOS) {
+            checkpointNanos = realNanos
+            val minParkedTill = minParkedTill()
+            time = (time + REAL_TIME_STEP_NANOS).coerceAtMost(if (minParkedTill < 0) Long.MAX_VALUE else minParkedTill)
+            logTime("R")
+            wakeupAll()
+            return
+        }
+        if (threads[mainThread] == null) return
+        if (trackedTasks != 0) return
+        val minParkedTill = minParkedTill()
+        if (minParkedTill <= time) return
+        time = minParkedTill
+        logTime("V")
+        wakeupAll()
+    }
+
+    private fun logTime(s: String) {
+        log.println("[$s: Time = ${TimeUnit.NANOSECONDS.toMillis(time)} ms]")
+    }
+
+    private fun minParkedTill(): Long =
+        threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.min() ?: NOT_PARKED
+
+    @Synchronized
+    fun shutdown() {
+        isShutdown = true
+        wakeupAll()
+        while (!threads.isEmpty()) (this as Object).wait()
+    }
+
+    private fun wakeupAll() {
+        threads.keys.forEach { LockSupport.unpark(it) }
+        (this as Object).notifyAll()
+    }
 }
 
 private fun shutdownDispatcherPools(timeout: Long) {
@@ -73,7 +239,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
             thread.dispatcher.executor.apply {
                 shutdown()
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
-                shutdownNow().forEach { defaultExecutor.execute(it) }
+                shutdownNow().forEach { DefaultExecutor.execute(it) }
             }
     }
 }
@@ -81,7 +247,6 @@ private fun shutdownDispatcherPools(timeout: Long) {
 enum class SanitizeMode {
     NONE,
     ARBITRARY_TIME,
-    FLEXIBLE_TIME,
     FLEXIBLE_THREAD
 }
 
@@ -90,9 +255,6 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
     when (mode) {
         SanitizeMode.ARBITRARY_TIME -> {
             res = res.replace(Regex(" [0-9]+ ms"), " xxx ms")
-        }
-        SanitizeMode.FLEXIBLE_TIME -> {
-            res = res.replace(Regex("[0-9][0-9][0-9] ms"), "xxx ms")
         }
         SanitizeMode.FLEXIBLE_THREAD -> {
             res = res.replace(Regex("ForkJoinPool\\.commonPool-worker-[0-9]+"), "CommonPool")
@@ -133,11 +295,6 @@ fun List<String>.verifyLinesStartWith(vararg expected: String) {
 
 fun List<String>.verifyLinesArbitraryTime(vararg expected: String) {
     verifyCommonLines(expected, SanitizeMode.ARBITRARY_TIME)
-    checkEqualNumberOfLines(expected)
-}
-
-fun List<String>.verifyLinesFlexibleTime(vararg expected: String) {
-    verifyCommonLines(expected, SanitizeMode.FLEXIBLE_TIME)
     checkEqualNumberOfLines(expected)
 }
 

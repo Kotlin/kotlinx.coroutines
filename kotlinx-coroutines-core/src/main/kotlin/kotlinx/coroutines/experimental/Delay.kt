@@ -21,6 +21,7 @@ import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.ContinuationInterceptor
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
@@ -67,7 +68,7 @@ public interface Delay {
      * This implementation uses a built-in single-threaded scheduled executor service.
      */
     fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        DisposableFutureHandle(defaultExecutor.schedule(block, time, unit))
+        DefaultExecutor.invokeOnTimeout(time, unit, block)
 }
 
 /**
@@ -85,10 +86,7 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
     require(time >= 0) { "Delay time $time cannot be negative" }
     if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        val delay = cont.context[ContinuationInterceptor] as? Delay
-        if (delay != null)
-            delay.scheduleResumeAfterDelay(time, unit, cont) else
-            cont.cancelFutureOnCompletion(defaultExecutor.schedule(ResumeRunnable(cont), time, unit))
+        cont.context.delay.scheduleResumeAfterDelay(time, unit, cont)
     }
 }
 
@@ -101,3 +99,6 @@ public class DisposableFutureHandle(private val future: Future<*>) : DisposableH
     }
     override fun toString(): String = "DisposableFutureHandle[$future]"
 }
+
+/** Returns [Delay] implementation of the given context */
+internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: DefaultExecutor

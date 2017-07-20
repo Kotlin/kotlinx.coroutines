@@ -3,7 +3,7 @@ package guide.test
 
 import org.junit.Test
 
-class GuideReactiveTest {
+class GuideReactiveTest : ReactiveTestBase() {
 
     @Test
     fun testGuideReactiveBasicExample01() {

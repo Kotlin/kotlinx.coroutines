@@ -111,6 +111,8 @@ public open class LockFreeLinkedListNode {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
 
+    public val isFresh: Boolean get() = _next === this
+
     public val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed

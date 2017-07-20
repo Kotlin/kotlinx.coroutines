@@ -126,7 +126,7 @@ class GuideTest {
 
     @Test
     fun testGuideComposeExample01() {
-        test("GuideComposeExample01") { guide.compose.example01.main(emptyArray()) }.verifyLinesFlexibleTime(
+        test("GuideComposeExample01") { guide.compose.example01.main(emptyArray()) }.verifyLinesArbitraryTime(
             "The answer is 42",
             "Completed in 2017 ms"
         )
@@ -134,7 +134,7 @@ class GuideTest {
 
     @Test
     fun testGuideComposeExample02() {
-        test("GuideComposeExample02") { guide.compose.example02.main(emptyArray()) }.verifyLinesFlexibleTime(
+        test("GuideComposeExample02") { guide.compose.example02.main(emptyArray()) }.verifyLinesArbitraryTime(
             "The answer is 42",
             "Completed in 1017 ms"
         )
@@ -142,7 +142,7 @@ class GuideTest {
 
     @Test
     fun testGuideComposeExample03() {
-        test("GuideComposeExample03") { guide.compose.example03.main(emptyArray()) }.verifyLinesFlexibleTime(
+        test("GuideComposeExample03") { guide.compose.example03.main(emptyArray()) }.verifyLinesArbitraryTime(
             "The answer is 42",
             "Completed in 2017 ms"
         )
@@ -150,7 +150,7 @@ class GuideTest {
 
     @Test
     fun testGuideComposeExample04() {
-        test("GuideComposeExample04") { guide.compose.example04.main(emptyArray()) }.verifyLinesFlexibleTime(
+        test("GuideComposeExample04") { guide.compose.example04.main(emptyArray()) }.verifyLinesArbitraryTime(
             "The answer is 42",
             "Completed in 1085 ms"
         )
