@@ -16,9 +16,11 @@
 
 package kotlinx.coroutines.experimental.future
 
+import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -27,6 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
 
 class FutureTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("ForkJoinPool.commonPool-worker-")
+    }
+
     @Test
     fun testSimpleAwait() {
         val future = future {

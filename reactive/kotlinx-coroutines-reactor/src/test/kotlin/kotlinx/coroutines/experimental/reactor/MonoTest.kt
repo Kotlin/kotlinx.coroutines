@@ -16,18 +16,20 @@
 
 package kotlinx.coroutines.experimental.reactor
 
+import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.reactive.awaitFirst
 import kotlinx.coroutines.experimental.reactive.awaitLast
 import kotlinx.coroutines.experimental.reactive.awaitSingle
+import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
@@ -35,6 +37,11 @@ import reactor.core.publisher.Mono
  * Tests emitting single item with [mono].
  */
 class MonoTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("timer-")
+    }
+
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)

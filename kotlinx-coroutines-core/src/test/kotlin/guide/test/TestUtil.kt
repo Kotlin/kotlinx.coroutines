@@ -27,6 +27,35 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 
+private val ignoreLostThreads = mutableSetOf<String>()
+
+fun ignoreLostThreads(vararg s: String) { ignoreLostThreads += s }
+
+fun threadNames(): Set<String> {
+    val arrayOfThreads = Array<Thread?>(Thread.activeCount()) { null }
+    val n = Thread.enumerate(arrayOfThreads)
+    val names = hashSetOf<String>()
+    for (i in 0 until n)
+        names.add(arrayOfThreads[i]!!.name)
+    return names
+}
+
+fun checkTestThreads(threadNamesBefore: Set<String>) {
+    // give threads some time to shutdown
+    val waitTill = System.currentTimeMillis() + 1000L
+    var diff: List<String>
+    do {
+        val threadNamesAfter = threadNames()
+        diff = (threadNamesAfter - threadNamesBefore).filter { name ->
+            ignoreLostThreads.none { prefix -> name.startsWith(prefix) }
+        }
+        if (diff.isEmpty()) break
+    } while (System.currentTimeMillis() <= waitTill)
+    ignoreLostThreads.clear()
+    diff.forEach { println("Lost thread '$it'") }
+    check(diff.isEmpty()) { "Lost ${diff.size} threads" }
+}
+
 fun trackTask(block: Runnable) = timeSource.trackTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
@@ -53,6 +82,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
     resetCoroutineId()
     // shutdown execution with old time source (in case it was working)
     DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+    val threadNamesBefore = threadNames()
     val testTimeSource = TestTimeSource(oldOut)
     timeSource = testTimeSource
     DefaultExecutor.ensureStarted() // should start with new time source
@@ -77,6 +107,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
         oldOut.println("--- done")
         System.setOut(oldOut)
         System.setErr(oldErr)
+        checkTestThreads(threadNamesBefore)
     }
     return ByteArrayInputStream(bytes).bufferedReader().readLines()
 }

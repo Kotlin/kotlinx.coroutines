@@ -16,14 +16,24 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.*
+import guide.test.ignoreLostThreads
+import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.run
+import kotlinx.coroutines.experimental.runBlocking
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNot
 import org.junit.Assert.assertThat
+import org.junit.Before
 import org.junit.Test
 import rx.schedulers.Schedulers
 
 class SchedulerTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxIoScheduler-")
+    }
+
     @Test
     fun testIoScheduler(): Unit = runBlocking {
         expect(1)

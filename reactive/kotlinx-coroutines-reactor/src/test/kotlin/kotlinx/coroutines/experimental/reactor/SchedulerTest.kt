@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.reactor
 
+import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.run
@@ -23,10 +24,16 @@ import kotlinx.coroutines.experimental.runBlocking
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNot
 import org.junit.Assert.assertThat
+import org.junit.Before
 import org.junit.Test
 import reactor.core.scheduler.Schedulers
 
 class SchedulerTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("single-")
+    }
+
     @Test
     fun testSingleScheduler(): Unit = runBlocking {
         expect(1)

@@ -28,6 +28,11 @@ open class ReactiveTestBase {
     fun setup() {
         RxJavaPlugins.setIoSchedulerHandler(Handler)
         RxJavaPlugins.setComputationSchedulerHandler(Handler)
+        ignoreLostThreads(
+            "RxComputationThreadPool-",
+            "RxCachedThreadScheduler-",
+            "RxCachedWorkerPoolEvictor-",
+            "RxSchedulerPurge-")
     }
 
     @After

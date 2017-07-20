@@ -16,11 +16,14 @@
 
 package kotlinx.coroutines.experimental.rx1
 
+import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.hamcrest.core.IsNull
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThat
+import org.junit.Before
 import org.junit.Test
 import rx.Observable
 import rx.Single
@@ -30,6 +33,11 @@ import java.util.concurrent.TimeUnit
  * Tests emitting single item with [rxSingle].
  */
 class SingleTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationScheduler-", "RxIoScheduler-")
+    }
+
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)

@@ -16,25 +16,30 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Test
+import guide.test.ignoreLostThreads
 import io.reactivex.Observable
 import io.reactivex.Single
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert
-import java.util.concurrent.CancellationException
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 /**
  * Tests emitting single item with [rxSingle].
  */
 class SingleTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("RxComputationThreadPool-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
+    }
+
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)

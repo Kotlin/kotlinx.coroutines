@@ -18,16 +18,23 @@ package kotlinx.coroutines.experimental.guava
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
+import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ForkJoinPool
 
 class ListenableFutureTest : TestBase() {
+    @Before
+    fun setup() {
+        ignoreLostThreads("ForkJoinPool.commonPool-worker-")
+    }
+
     @Test
     fun testSimpleAwait() {
         val service = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
