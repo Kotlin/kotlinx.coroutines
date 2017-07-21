@@ -19,25 +19,50 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.selects.SelectInstance
 
 /**
- * Concrete implementation of [Deferred] that can be completed via public functions
+ * A [Deferred] that can be completed via public functions
  * [complete], [completeExceptionally], and [cancel].
  *
  * Completion functions return `false` when this deferred value is already complete.
  */
-@Suppress("UNCHECKED_CAST")
-public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
-    override fun getCompleted(): T = getCompletedInternal() as T
-    suspend override fun await(): T = awaitInternal() as T
-    override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectAwaitInternal(select, block as (suspend (Any?) -> R))
-
+public interface CompletableDeferred<T> : Job, Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    public fun complete(value: T): Boolean {
+    public fun complete(value: T): Boolean
+
+    /**
+     * Completes this deferred value exceptionally with a given [exception]. The result is `true` if this deferred was
+     * completed as a result of this invocation and `false` otherwise (if it was already completed).
+     *
+     * Repeated invocations of this function have no effect and always produce `false`.
+     */
+    public fun completeExceptionally(exception: Throwable): Boolean
+}
+
+/**
+ * Create a [CompletableDeferred] not completed
+ */
+public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl()
+
+/**
+ * Create an already completed [CompletableDeferred] with a given [value]
+ */
+public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>().apply { complete(value) }
+
+/**
+ * Concrete implementation of [CompletableDeferred].
+ */
+@Suppress("UNCHECKED_CAST")
+private class CompletableDeferredImpl<T> : JobSupport(true), CompletableDeferred<T> {
+    override fun getCompleted(): T = getCompletedInternal() as T
+    suspend override fun await(): T = awaitInternal() as T
+    override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) =
+        registerSelectAwaitInternal(select, block as (suspend (Any?) -> R))
+
+    override fun complete(value: T): Boolean {
         lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> {
@@ -50,13 +75,7 @@ public class CompletableDeferred<T> : JobSupport(true), Deferred<T> {
         }
     }
 
-    /**
-     * Completes this deferred value exceptionally with a given [exception]. The result is `true` if this deferred was
-     * completed as a result of this invocation and `false` otherwise (if it was already completed).
-     *
-     * Repeated invocations of this function have no effect and always produce `false`.
-     */
-    public fun completeExceptionally(exception: Throwable): Boolean {
+    override fun completeExceptionally(exception: Throwable): Boolean {
         lockFreeLoopOnState { state ->
             when (state) {
                 is Incomplete -> {
