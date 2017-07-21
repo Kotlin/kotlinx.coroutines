@@ -521,7 +521,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     // when Job is in Cancelling state, it can only be promoted to Cancelled state with the same cause
     // however, null cause can be replaced with more specific CancellationException (that contains stack trace)
-    protected fun coerceProposedUpdate(expect: Any, proposedUpdate: Any?): Any? =
+    private fun coerceProposedUpdate(expect: Any, proposedUpdate: Any?): Any? =
         if (expect is Cancelling && !correspondinglyCancelled(expect, proposedUpdate))
             expect.cancelled else proposedUpdate
 
@@ -596,7 +596,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     //   FALSE when not new,
     //   TRUE  when started
     //   RETRY when need to retry
-    internal fun startInternal(state: Any?): Int {
+    private fun startInternal(state: Any?): Int {
         when (state) {
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
