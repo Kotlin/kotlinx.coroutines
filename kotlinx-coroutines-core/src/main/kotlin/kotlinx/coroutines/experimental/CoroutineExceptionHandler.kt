@@ -56,12 +56,11 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
         /**
          * Creates new [CoroutineExceptionHandler] instance.
          * @param handler a function which handles exception thrown by a coroutine
+         * @suppress **Deprecated**
          */
+        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
         public operator inline fun invoke(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
-            object: AbstractCoroutineContextElement(Key), CoroutineExceptionHandler {
-                override fun handleException(context: CoroutineContext, exception: Throwable) =
-                    handler.invoke(context, exception)
-            }
+           CoroutineExceptionHandler(handler)
     }
 
     /**
@@ -70,3 +69,13 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
      */
     public fun handleException(context: CoroutineContext, exception: Throwable)
 }
+
+/**
+ * Creates new [CoroutineExceptionHandler] instance.
+ * @param handler a function which handles exception thrown by a coroutine
+ */
+public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
+    object: AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+        override fun handleException(context: CoroutineContext, exception: Throwable) =
+            handler.invoke(context, exception)
+    }
