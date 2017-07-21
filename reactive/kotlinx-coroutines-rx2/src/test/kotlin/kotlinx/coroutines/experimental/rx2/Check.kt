@@ -64,6 +64,7 @@ fun <T> checkMaybeValue(
     checker(maybeValue)
 }
 
+@Suppress("UNCHECKED_CAST")
 fun checkErroneous(
     maybe: Maybe<*>,
     checker: (Throwable) -> Unit
