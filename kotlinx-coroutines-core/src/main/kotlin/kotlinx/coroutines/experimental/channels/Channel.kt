@@ -19,6 +19,8 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
@@ -243,44 +245,56 @@ public interface ChannelIterator<out E> {
  * Conceptually, a channel is similar to [BlockingQueue][java.util.concurrent.BlockingQueue],
  * but it has suspending operations instead of blocking ones and it can be closed.
  *
- * See [Channel()][Channel.invoke] factory function for the description of available channel implementations.
+ * See `Channel(capacity)` factory function for the description of available channel implementations.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
-     * Factory for channels.
+     * Constants for channel factory function `Channel()`.
      */
     public companion object Factory {
         /**
-         * Requests channel with unlimited capacity buffer in [Channel()][invoke] factory function --
+         * Requests channel with unlimited capacity buffer in `Channel(...)` factory function --
          * the [LinkedListChannel] gets created.
          */
         public const val UNLIMITED = Int.MAX_VALUE
 
         /**
-         * Requests conflated channel in [Channel()][invoke] factory function --
+         * Requests conflated channel in `Channel(...)` factory function --
          * the [ConflatedChannel] gets created.
          */
         public const val CONFLATED = -1
 
         /**
          * Creates a channel with the specified buffer capacity (or without a buffer by default).
-         *
-         * The resulting channel type depends on the specified [capacity] parameter:
-         * * when `capacity` is 0 (default) -- creates [RendezvousChannel] without a buffer;
-         * * when `capacity` is [UNLIMITED] -- creates [LinkedListChannel] with buffer of unlimited size;
-         * * when `capacity` is [CONFLATED] -- creates [ConflatedChannel] that conflates back-to-back sends;
-         * * when `capacity` is positive, but less than [UNLIMITED] -- creates [ArrayChannel] with a buffer of the specified `capacity`;
-         * * otherwise -- throws [IllegalArgumentException].
+         * @suppress **Deprecated**
          */
-        public operator fun <E> invoke(capacity: Int = 0): Channel<E> =
-            when (capacity) {
-                0 -> RendezvousChannel()
-                UNLIMITED -> LinkedListChannel()
-                CONFLATED -> ConflatedChannel()
-                else -> ArrayChannel(capacity)
-            }
+        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
+        public operator fun <E> invoke(capacity: Int = 0): Channel<E> = Channel(capacity)
     }
 }
+
+/**
+ * Creates a channel without a buffer -- [RendezvousChannel].
+ */
+public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
+
+/**
+ * Creates a channel with the specified buffer capacity (or without a buffer by default).
+ *
+ * The resulting channel type depends on the specified [capacity] parameter:
+ * * when `capacity` is 0 -- creates [RendezvousChannel] without a buffer;
+ * * when `capacity` is [Channel.UNLIMITED] -- creates [LinkedListChannel] with buffer of unlimited size;
+ * * when `capacity` is [Channel.CONFLATED] -- creates [ConflatedChannel] that conflates back-to-back sends;
+ * * when `capacity` is positive, but less than [UNLIMITED] -- creates [ArrayChannel] with a buffer of the specified `capacity`;
+ * * otherwise -- throws [IllegalArgumentException].
+ */
+public fun <E> Channel(capacity: Int): Channel<E> =
+    when (capacity) {
+        0 -> RendezvousChannel()
+        UNLIMITED -> LinkedListChannel()
+        CONFLATED -> ConflatedChannel()
+        else -> ArrayChannel(capacity)
+    }
 
 /**
  * Indicates attempt to [send][SendChannel.send] on [isClosedForSend][SendChannel.isClosedForSend] channel

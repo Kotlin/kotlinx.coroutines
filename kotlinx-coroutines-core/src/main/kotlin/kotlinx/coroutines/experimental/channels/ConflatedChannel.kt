@@ -26,6 +26,8 @@ import kotlinx.coroutines.experimental.selects.SelectInstance
  * while previously sent elements **are lost**.
  * Sender to this channel never suspends and [offer] always returns `true`.
  *
+ * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
+ *
  * This implementation is fully lock-free.
  */
 public open class ConflatedChannel<E> : AbstractChannel<E>() {

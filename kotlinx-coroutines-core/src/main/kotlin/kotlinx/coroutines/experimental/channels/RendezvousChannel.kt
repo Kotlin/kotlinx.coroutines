@@ -21,6 +21,8 @@ package kotlinx.coroutines.experimental.channels
  * to receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
  * until another coroutine invokes [receive] and [receive] suspends until another coroutine invokes [send].
  *
+ * Use `Channel()` factory function to conveniently create an instance of rendezvous channel.
+ *
  * This implementation is fully lock-free.
  */
 public open class RendezvousChannel<E> : AbstractChannel<E>() {
