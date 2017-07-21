@@ -28,6 +28,7 @@ typealias LazyDeferred<T> = Deferred<T>
 /**
  * @suppress **Deprecated**: Replace with `async(context, start = false) { ... }`. See [async].
  */
+@Suppress("DEPRECATION")
 @Deprecated(message = "This functionality is incorporated into `async", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("async(context, start = false, block = block)"))
 public fun <T> lazyDefer(context: CoroutineContext, block: suspend CoroutineScope.() -> T) : Deferred<T> =
