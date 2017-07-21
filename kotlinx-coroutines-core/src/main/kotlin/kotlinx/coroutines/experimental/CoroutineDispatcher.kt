@@ -115,7 +115,7 @@ internal class DispatchTask<in T>(
         val job = if (cancellable) context[Job] else null
         withCoroutineContext(context) {
             when {
-                job != null && job.isCancelledOrCompleted -> continuation.resumeWithException(job.getCompletionException())
+                job != null && !job.isActive -> continuation.resumeWithException(job.getCompletionException())
                 exception -> continuation.resumeWithException(value as Throwable)
                 else -> continuation.resume(value as T)
             }

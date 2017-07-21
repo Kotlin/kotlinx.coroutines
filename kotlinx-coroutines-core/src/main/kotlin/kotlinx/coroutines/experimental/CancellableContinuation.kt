@@ -41,11 +41,23 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * Invocation of [cancel] transitions this continuation from _active_ to _cancelled_ state, while
  * invocation of [resume] or [resumeWithException] transitions it from _active_ to _resumed_ state.
  *
- * A [cancelled][isCancelled] continuation implies that it is [completed][isCompleted], so
- * [invokeOnCancellation] and [invokeOnCompletion] have the same effect.
+ * A [cancelled][isCancelled] continuation implies that it is [completed][isCompleted].
  *
  * Invocation of [resume] or [resumeWithException] in _resumed_ state produces [IllegalStateException]
  * but is ignored in _cancelled_ state.
+ *
+ * ```
+ *    +-----------+   resume    +---------+
+ *    |  Active   | ----------> | Resumed |
+ *    +-----------+             +---------+
+ *          |
+ *          | cancel
+ *          V
+ *    +-----------+
+ *    | Cancelled |
+ *    +-----------+
+ *
+ * ```
  */
 public interface CancellableContinuation<in T> : Continuation<T>, Job {
     /**

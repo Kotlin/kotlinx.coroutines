@@ -30,7 +30,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
     val context = cont.context
     val job = context[Job]
-    if (job != null && job.isCancelledOrCompleted) throw job.getCompletionException()
+    if (job != null && !job.isActive) throw job.getCompletionException()
     if (cont !is DispatchedContinuation<Unit>) return@sc Unit
     if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
     cont.dispatchYield(Unit)

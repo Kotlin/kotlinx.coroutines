@@ -116,11 +116,6 @@ public interface Job : CoroutineContext.Element {
     public val isCancelled: Boolean
 
     /**
-     * Returns `true` when this job is either [isCancelled] or [isCompleted].
-     */
-    public val isCancelledOrCompleted: Boolean
-
-    /**
      * Returns the exception that signals the completion of this job -- it returns the original
      * [cancel] cause or an instance of [CancellationException] if this job had completed
      * normally or was cancelled without a cause. This function throws
@@ -171,35 +166,40 @@ public interface Job : CoroutineContext.Element {
     // ------------ low-level state-notification ------------
 
     /**
-     * Registers handler that is **synchronously** invoked on cancellation or completion of this job.
-     * When job is already in _cancelling_ state or is complete for any reason, then the handler
-     * is immediately invoked with a job's cancellation cause or `null`. Otherwise, handler will be
-     * invoked once when this job is [cancelled][cancel] or becomes complete.
-     *
-     * Unlike [invokeOnCompletion], here the handler is immediately invoked on invocation of [cancel]
-     * even if the corresponding coroutine has not finished its execution yet.
-     *
-     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
-     * registration of this handler and release its memory if its invocation is no longer needed.
-     * There is no need to dispose the handler after completion of this job. The references to
-     * all the handlers are released when this job completes.
-     *
-     * **Note**: This function is a part of internal machinery that supports parent-child hierarchies
-     * and allows for implementation of suspending functions that wait on the Job's state.
-     * This function should not be used in general application code.
-     * Implementations of `CompletionHandler` must be fast and _lock-free_
-     */
-    public fun invokeOnCancellation(handler: CompletionHandler): DisposableHandle
-
-    /**
-     * Registers handler that is **synchronously** invoked on completion of this job.
+     * Registers handler that is **synchronously** invoked once on completion of this job.
      * When job is already complete, then the handler is immediately invoked
      * with a job's cancellation cause or `null`. Otherwise, handler will be invoked once when this
      * job is complete.
      *
-     * Unlike [invokeOnCancellation], here the handler is not invoked on invocation of [cancel] when
+     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
+     * registration of this handler and release its memory if its invocation is no longer needed.
+     * There is no need to dispose the handler after completion of this job. The references to
+     * all the handlers are released when this job completes.
+     *
+     * Note, that the handler is not invoked on invocation of [cancel] when
      * job becomes _cancelling_, but only when the corresponding coroutine had finished execution
-     * of its code and became _cancelled_.
+     * of its code and became _cancelled_. There is an overloaded version of this function
+     * with `onCancelling` parameter to receive notification on _cancelling_ state.
+     *
+     * **Note**: This function is a part of internal machinery that supports parent-child hierarchies
+     * and allows for implementation of suspending functions that wait on the Job's state.
+     * This function should not be used in general application code.
+     * Implementations of `CompletionHandler` must be fast and _lock-free_.
+     */
+    public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+
+    /**
+     * Registers handler that is **synchronously** invoked once on cancellation or completion of this job.
+     * When job is already complete, then the handler is immediately invoked
+     * with a job's cancellation cause or `null`. Otherwise, handler will be invoked once when this
+     * job is cancelled or complete.
+     *
+     * Invocation of this handler on a transition to a transient _cancelling_ state
+     * is controlled by [onCancelling] boolean parameter.
+     * The handler is invoked on invocation of [cancel] when
+     * job becomes _cancelling_ when [onCancelling] parameters is set to `true`. However,
+     * when this [Job] is not backed by a coroutine, like [CompletableDeferred] or [CancellableContinuation]
+     * (both of which do not posses a _cancelling_ state), then the value of [onCancelling] parameter is ignored.
      *
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
      * registration of this handler and release its memory if its invocation is no longer needed.
@@ -209,9 +209,9 @@ public interface Job : CoroutineContext.Element {
      * **Note**: This function is a part of internal machinery that supports parent-child hierarchies
      * and allows for implementation of suspending functions that wait on the Job's state.
      * This function should not be used in general application code.
-     * Implementations of `CompletionHandler` must be fast and _lock-free_
+     * Implementations of `CompletionHandler` must be fast and _lock-free_.
      */
-    public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+    public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 
     // ------------ unstable internal API ------------
 
@@ -272,12 +272,12 @@ public interface DisposableHandle : Job.Registration {
 }
 
 /**
- * Handler for [Job.invokeOnCompletion] and [Job.invokeOnCancellation].
+ * Handler for [Job.invokeOnCompletion].
  *
  * **Note**: This type is a part of internal machinery that supports parent-child hierarchies
  * and allows for implementation of suspending functions that wait on the Job's state.
  * This type should not be used in general application code.
- * Implementations of `CompletionHandler` must be fast and _lock-free_
+ * Implementations of `CompletionHandler` must be fast and _lock-free_.
  */
 public typealias CompletionHandler = (Throwable?) -> Unit
 
@@ -441,11 +441,17 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             parentHandle = NonDisposableHandle
             return
         }
+        parent.start() // make sure the parent is started
         // directly pass HandlerNode to parent scope to optimize one closure object (see makeNode)
-        val newRegistration = parent.invokeOnCancellation(ParentOnCancellation(parent, this))
+        val newRegistration = parent.invokeOnCompletion(ParentOnCancellation(parent), onCancelling = true)
         parentHandle = newRegistration
         // now check our state _after_ registering (see updateState order of actions)
         if (isCompleted) newRegistration.dispose()
+    }
+
+    private inner class ParentOnCancellation(parent: Job) : JobCancellationNode<Job>(parent) {
+        override fun invokeOnce(reason: Throwable?) { onParentCancellation(reason) }
+        override fun toString(): String = "ParentOnCancellation[${this@JobSupport}]"
     }
 
     /**
@@ -488,11 +494,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     public final override val isCancelled: Boolean get() {
         val state = this.state
         return state is Cancelled || state is Cancelling
-    }
-
-    public final override val isCancelledOrCompleted: Boolean get() {
-        val state = this.state
-        return state !is Incomplete || state is Cancelling
     }
 
     // ------------ state update ------------
@@ -637,20 +638,20 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    public final override fun invokeOnCancellation(handler: CompletionHandler): DisposableHandle =
-        installHandler(handler, onCancellation = hasCancellingState)
-
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
-        installHandler(handler, onCancellation = false)
+        installHandler(handler, onCancelling = false)
 
-    private fun installHandler(handler: CompletionHandler, onCancellation: Boolean): DisposableHandle {
+    public final override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
+        installHandler(handler, onCancelling = onCancelling && hasCancellingState)
+
+    private fun installHandler(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle {
         var nodeCache: JobNode<*>? = null
         lockFreeLoopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
                     if (state.isActive) {
                         // try move to SINGLE state
-                        val node = nodeCache ?: makeNode(handler, onCancellation).also { nodeCache = it }
+                        val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
                         if (STATE.compareAndSet(this, state, node)) return node
                     } else
                         promoteEmptyToNodeList(state) // that way we can add listener for non-active coroutine
@@ -659,15 +660,15 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                     promoteSingleToNodeList(state)
                 }
                 is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                    val node = nodeCache ?: makeNode(handler, onCancellation).also { nodeCache = it }
+                    val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
                     if (addLastAtomic(state, state, node)) return node
                 }
                 is Cancelling -> { // CANCELLING -- has a list of completion handlers
-                    if (onCancellation) { // installing cancellation handler on job that is being cancelled
+                    if (onCancelling) { // installing cancellation handler on job that is being cancelled
                         handler((state as? CompletedExceptionally)?.exception)
                         return NonDisposableHandle
                     }
-                    val node = nodeCache ?: makeNode(handler, onCancellation).also { nodeCache = it }
+                    val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
                     if (addLastAtomic(state, state.list, node)) return node
                 }
                 else -> { // is inactive
@@ -678,8 +679,8 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         }
     }
 
-    private fun makeNode(handler: CompletionHandler, onCancellation: Boolean): JobNode<*> =
-        if (onCancellation)
+    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> =
+        if (onCancelling)
             (handler as? JobCancellationNode<*>)?.also { require(it.job === this) }
                 ?: InvokeOnCancellation(this, handler)
         else
@@ -816,14 +817,15 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     /**
      * Override to process any exceptions that were encountered while invoking completion handlers
-     * installed via [invokeOnCancellation] or [invokeOnCompletion].
+     * installed via [invokeOnCompletion].
      */
     protected open fun handleException(exception: Throwable) {
         throw exception
     }
 
     /**
-     * It is invoked once when job is cancelled or is completed, similarly to [invokeOnCancellation].
+     * It is invoked once when job is cancelled or is completed, similarly to [invokeOnCompletion] with
+     * `onCancelling` set to `true`.
      */
     protected open fun onCancellation() {}
 
@@ -911,14 +913,6 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         cause: Throwable?
     ) : CompletedExceptionally(cause)
 
-
-    private class ParentOnCancellation(
-        parentJob: Job,
-        private val subordinateJob: JobSupport
-    ) : JobCancellationNode<Job>(parentJob) {
-        override fun invokeOnce(reason: Throwable?) { subordinateJob.onParentCancellation(reason) }
-        override fun toString(): String = "ParentOnCancellation[$subordinateJob]"
-    }
 
     /*
      * =================================================================================================

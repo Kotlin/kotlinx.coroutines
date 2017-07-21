@@ -284,13 +284,18 @@ internal class SelectBuilderImpl<in R>(
 
     private fun initCancellability() {
         val parent = context[Job] ?: return
-        val newRegistration = parent.invokeOnCancellation { cause ->
-            if (trySelect(null))
-                resumeSelectCancellableWithException(cause ?: CancellationException("Select was cancelled"))
-        }
+        val newRegistration = parent.invokeOnCompletion(SelectOnCancellation(parent), onCancelling = true)
         parentHandle = newRegistration
         // now check our state _after_ registering
         if (isSelected) newRegistration.dispose()
+    }
+
+    private inner class SelectOnCancellation(job: Job) : JobCancellationNode<Job>(job) {
+        override fun invokeOnce(reason: Throwable?) {
+            if (trySelect(null))
+                resumeSelectCancellableWithException(reason ?: CancellationException("Select was cancelled"))
+        }
+        override fun toString(): String = "SelectOnCancellation[${this@SelectBuilderImpl}]"
     }
 
     private val state: Any? get() {

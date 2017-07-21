@@ -24,7 +24,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  */
 public interface CoroutineScope {
     /**
-     * Returns `true` when this coroutine is still active (has not completed yet).
+     * Returns `true` when this coroutine is still active (has not completed and was not cancelled yet).
      *
      * Check this property in long-running computation loops to support cancellation:
      * ```
