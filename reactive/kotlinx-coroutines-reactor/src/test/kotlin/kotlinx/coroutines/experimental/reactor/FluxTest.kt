@@ -28,7 +28,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val flux = flux(context) {
+        val flux = flux(coroutineContext) {
             expect(4)
             send("OK")
         }
@@ -45,7 +45,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val flux = flux<String>(context) {
+        val flux = flux<String>(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -65,7 +65,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val flux = flux<String>(context) {
+        val flux = flux<String>(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

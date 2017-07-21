@@ -31,7 +31,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendSuccess() = runBlocking<Unit> {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -50,7 +50,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendSuccessWithDefault() = runBlocking<Unit> {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -91,7 +91,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendWait() = runBlocking<Unit> {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             assertEquals("BUF", channel.receive())
             expect(5)
@@ -158,7 +158,7 @@ class SelectArrayChannelTest : TestBase() {
         channel.send("BUF")
         expect(4)
         // make sure second send blocks (select above is over)
-        launch(context) {
+        launch(coroutineContext) {
             expect(6)
             channel.send("CHK")
             finish(10)
@@ -176,7 +176,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectReceiveWait() = runBlocking<Unit> {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             channel.send("OK")
             expect(4)
@@ -209,7 +209,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectReceiveWaitClosed() = runBlocking<Unit> {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             channel.close()
             finish(4)
@@ -258,7 +258,7 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         channel.send(42)
         expect(2)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             select<Unit> {
                 channel.onReceive { v ->
@@ -280,7 +280,7 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         channel.send(42)
         expect(2)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             select<Unit> {
                 channel.onReceive { v ->

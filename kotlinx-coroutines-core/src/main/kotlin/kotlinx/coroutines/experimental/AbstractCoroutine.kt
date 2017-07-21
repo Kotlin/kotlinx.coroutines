@@ -33,6 +33,7 @@ public abstract class AbstractCoroutine<in T>(
 ) : JobSupport(active), Continuation<T>, CoroutineScope {
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
+    public final override val coroutineContext: CoroutineContext get() = context
 
     final override val hasCancellingState: Boolean get() = true
 

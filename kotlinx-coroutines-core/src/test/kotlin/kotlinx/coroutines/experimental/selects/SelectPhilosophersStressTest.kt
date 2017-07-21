@@ -63,7 +63,7 @@ class SelectPhilosophersStressTest : TestBase() {
                 eatsCount
             }
         }
-        val debugJob = launch(context) {
+        val debugJob = launch(coroutineContext) {
             delay(3 * TEST_DURATION)
             println("Test is failing. Lock states are:")
             forks.withIndex().forEach { (id, mutex) -> println("$id: $mutex") }

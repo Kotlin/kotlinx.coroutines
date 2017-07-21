@@ -29,7 +29,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)
-        val completable = rxCompletable(context) {
+        val completable = rxCompletable(coroutineContext) {
             expect(4)
         }
         expect(2)
@@ -44,7 +44,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking<Unit> {
         expect(1)
-        val completable = rxCompletable(context) {
+        val completable = rxCompletable(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -64,7 +64,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking<Unit> {
         expect(1)
-        val completable = rxCompletable(context) {
+        val completable = rxCompletable(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -87,7 +87,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testAwaitSuccess() = runBlocking<Unit> {
         expect(1)
-        val completable = rxCompletable(context) {
+        val completable = rxCompletable(coroutineContext) {
             expect(3)
         }
         expect(2)
@@ -98,7 +98,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testAwaitFailure() = runBlocking<Unit> {
         expect(1)
-        val completable = rxCompletable(context) {
+        val completable = rxCompletable(coroutineContext) {
             expect(3)
             throw RuntimeException("OK")
         }

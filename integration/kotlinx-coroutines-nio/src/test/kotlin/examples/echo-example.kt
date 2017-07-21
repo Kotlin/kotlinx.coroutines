@@ -50,7 +50,7 @@ fun main(args: Array<String>) = runBlocking {
         }
         log("Accepted client connection from $address")
         // just start a new coroutine for each client connection
-        launch(context) {
+        launch(coroutineContext) {
             try {
                 handleClient(client)
                 log("Client connection from $address has terminated normally")

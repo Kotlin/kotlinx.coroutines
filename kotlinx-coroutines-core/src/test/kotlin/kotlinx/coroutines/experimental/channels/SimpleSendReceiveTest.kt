@@ -48,7 +48,7 @@ class SimpleSendReceiveTest(
 
     @Test
     fun testSimpleSendReceive() = runBlocking {
-        val ctx = if (concurrent) CommonPool else context
+        val ctx = if (concurrent) CommonPool else coroutineContext
         launch(ctx) {
             repeat(n) { channel.send(it) }
             channel.close()

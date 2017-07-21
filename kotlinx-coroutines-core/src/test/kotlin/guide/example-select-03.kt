@@ -33,7 +33,7 @@ fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val side = Channel<Int>() // allocate side channel
-    launch(context) { // this is a very fast consumer for the side channel
+    launch(coroutineContext) { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
     }
     produceNumbers(side).consumeEach { 

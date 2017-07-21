@@ -30,7 +30,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking<Unit> {
         expect(1)
-        val publisher = publish<Int>(context) {
+        val publisher = publish<Int>(coroutineContext) {
             expect(5)
         }
         expect(2)
@@ -48,7 +48,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicSingle() = runBlocking<Unit> {
         expect(1)
-        val publisher = publish<Int>(context) {
+        val publisher = publish<Int>(coroutineContext) {
             expect(5)
             send(42)
             expect(7)
@@ -74,7 +74,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runBlocking<Unit> {
         expect(1)
-        val publisher = publish<Int>(context) {
+        val publisher = publish<Int>(coroutineContext) {
             expect(5)
             throw RuntimeException("OK")
         }

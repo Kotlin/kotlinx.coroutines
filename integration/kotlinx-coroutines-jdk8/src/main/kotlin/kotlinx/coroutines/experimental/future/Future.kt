@@ -66,6 +66,7 @@ public fun <T> future(
 private class CompletableFutureCoroutine<T>(
     override val context: CoroutineContext
 ) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
+    override val coroutineContext: CoroutineContext get() = context
     override val isActive: Boolean get() = context[Job]!!.isActive
     override fun resume(value: T) { complete(value) }
     override fun resumeWithException(exception: Throwable) { completeExceptionally(exception) }

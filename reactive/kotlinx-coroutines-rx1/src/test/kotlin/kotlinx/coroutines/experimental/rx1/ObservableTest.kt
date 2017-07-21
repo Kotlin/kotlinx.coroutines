@@ -28,7 +28,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)
-        val observable = rxObservable(context) {
+        val observable = rxObservable(coroutineContext) {
             expect(4)
             send("OK")
         }
@@ -45,7 +45,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking<Unit> {
         expect(1)
-        val observable = rxObservable<String>(context) {
+        val observable = rxObservable<String>(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -65,7 +65,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking<Unit> {
         expect(1)
-        val observable = rxObservable<String>(context) {
+        val observable = rxObservable<String>(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

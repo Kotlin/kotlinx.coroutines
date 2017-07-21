@@ -26,11 +26,11 @@ class RunTest : TestBase() {
     @Test
     fun testSameContextNoSuspend() = runBlocking<Unit> {
         expect(1)
-        launch(context) { // make sure there is not early dispatch here
+        launch(coroutineContext) { // make sure there is not early dispatch here
             expectUnreached() // will terminate before it has a chance to start
         }
         expect(2)
-        val result = run(context) { // same context!
+        val result = run(coroutineContext) { // same context!
             expect(3) // still here
             "OK"
         }
@@ -41,11 +41,11 @@ class RunTest : TestBase() {
     @Test
     fun testSameContextWithSuspend() = runBlocking<Unit> {
         expect(1)
-        launch(context) { // make sure there is not early dispatch here
+        launch(coroutineContext) { // make sure there is not early dispatch here
             expect(4)
         }
         expect(2)
-        val result = run(context) { // same context!
+        val result = run(coroutineContext) { // same context!
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
@@ -58,12 +58,12 @@ class RunTest : TestBase() {
     @Test
     fun testCancelWithJobNoSuspend() = runBlocking<Unit> {
         expect(1)
-        launch(context) { // make sure there is not early dispatch to here
+        launch(coroutineContext) { // make sure there is not early dispatch to here
             expectUnreached() // will terminate before it has a chance to start
         }
         expect(2)
         val job = Job()
-        val result = run(context + job) { // same context + new job
+        val result = run(coroutineContext + job) { // same context + new job
             expect(3) // still here
             job.cancel() // cancel out job!
             try {
@@ -81,12 +81,12 @@ class RunTest : TestBase() {
     @Test
     fun testCancelWithJobWithSuspend() = runBlocking<Unit> {
         expect(1)
-        launch(context) { // make sure there is not early dispatch to here
+        launch(coroutineContext) { // make sure there is not early dispatch to here
             expect(4)
         }
         expect(2)
         val job = Job()
-        val result = run(context + job) { // same context + new job
+        val result = run(coroutineContext + job) { // same context + new job
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
@@ -131,7 +131,7 @@ class RunTest : TestBase() {
     fun testRunCancellableDefault() = runBlocking<Unit> {
         val job = Job()
         job.cancel() // cancel before it has a chance to run
-        run(job + wrapperDispatcher(context)) {
+        run(job + wrapperDispatcher(coroutineContext)) {
             expectUnreached() // will get cancelled
         }
     }
@@ -141,7 +141,7 @@ class RunTest : TestBase() {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
-        run(job + wrapperDispatcher(context), CoroutineStart.ATOMIC) { // but start atomically
+        run(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) { // but start atomically
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -153,7 +153,7 @@ class RunTest : TestBase() {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
-        run(job + wrapperDispatcher(context), CoroutineStart.UNDISPATCHED) { // but start atomically
+        run(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
             finish(2)
             yield() // but will cancel here
             expectUnreached()

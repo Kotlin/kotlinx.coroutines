@@ -24,7 +24,7 @@ class SelectJobTest : TestBase() {
     @Test
     fun testSelectCompleted() = runBlocking<Unit> {
         expect(1)
-        launch(context) { // makes sure we don't yield to it earlier
+        launch(coroutineContext) { // makes sure we don't yield to it earlier
             expectUnreached() // will terminate before it has a chance to start
         }
         val job = Job()
@@ -41,7 +41,7 @@ class SelectJobTest : TestBase() {
     fun testSelectIncomplete() = runBlocking<Unit> {
         expect(1)
         val job = Job()
-        launch(context) { // makes sure we don't yield to it earlier
+        launch(coroutineContext) { // makes sure we don't yield to it earlier
             expect(3)
             val res = select<String> {
                 job.onJoin {
@@ -64,7 +64,7 @@ class SelectJobTest : TestBase() {
     @Test
     fun testSelectLazy() = runBlocking<Unit> {
         expect(1)
-        val job = launch(context, CoroutineStart.LAZY) {
+        val job = launch(coroutineContext, CoroutineStart.LAZY) {
             expect(2)
         }
         val res = select<String> {

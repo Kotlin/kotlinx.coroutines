@@ -26,7 +26,7 @@ class ArrayChannelTest : TestBase() {
         val q = ArrayChannel<Int>(1)
         check(q.isEmpty && !q.isFull)
         expect(1)
-        val sender = launch(context) {
+        val sender = launch(coroutineContext) {
             expect(4)
             q.send(1) // success -- buffered
             check(!q.isEmpty && q.isFull)
@@ -35,7 +35,7 @@ class ArrayChannelTest : TestBase() {
             expect(9)
         }
         expect(2)
-        val receiver = launch(context) {
+        val receiver = launch(coroutineContext) {
             expect(6)
             check(q.receive() == 1) // does not suspend -- took from buffer
             check(!q.isEmpty && q.isFull) // waiting sender's element moved to buffer
@@ -54,11 +54,11 @@ class ArrayChannelTest : TestBase() {
     fun testStress() = runBlocking {
         val n = 100_000
         val q = ArrayChannel<Int>(1)
-        val sender = launch(context) {
+        val sender = launch(coroutineContext) {
             for (i in 1..n) q.send(i)
             expect(2)
         }
-        val receiver = launch(context) {
+        val receiver = launch(coroutineContext) {
             for (i in 1..n) check(q.receive() == i)
             expect(3)
         }
@@ -73,7 +73,7 @@ class ArrayChannelTest : TestBase() {
         val q = ArrayChannel<Int>(1)
         check(q.isEmpty && !q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(5)
             check(!q.isEmpty && !q.isFull && q.isClosedForSend && !q.isClosedForReceive)
             assertEquals(42, q.receiveOrNull())
@@ -97,7 +97,7 @@ class ArrayChannelTest : TestBase() {
     fun testClosedExceptions() = runBlocking {
         val q = ArrayChannel<Int>(1)
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             try { q.receive() }
             catch (e: ClosedReceiveChannelException) {
@@ -120,7 +120,7 @@ class ArrayChannelTest : TestBase() {
         val q = ArrayChannel<Int>(1)
         assertTrue(q.offer(1))
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             assertEquals(1, q.poll())
             expect(4)

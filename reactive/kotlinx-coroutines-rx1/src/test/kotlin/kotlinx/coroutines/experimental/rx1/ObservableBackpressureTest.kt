@@ -26,7 +26,7 @@ class ObservableBackpressureTest : TestBase() {
     @Test
     fun testCancelWhileBPSuspended() = runBlocking<Unit> {
         expect(1)
-        val observable = rxObservable(context) {
+        val observable = rxObservable(coroutineContext) {
             expect(5)
             send("A") // will not suspend, because an item was requested
             expect(7)

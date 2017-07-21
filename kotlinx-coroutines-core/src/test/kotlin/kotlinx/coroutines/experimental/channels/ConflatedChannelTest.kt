@@ -57,7 +57,7 @@ class ConflatedChannelTest : TestBase() {
     fun testConflationSendReceive() = runBlocking<Unit> {
         val q = ConflatedChannel<Int>()
         expect(1)
-        launch(context) { // receiver coroutine
+        launch(coroutineContext) { // receiver coroutine
             expect(4)
             assertThat(q.receive(), IsEqual(2))
             expect(5)

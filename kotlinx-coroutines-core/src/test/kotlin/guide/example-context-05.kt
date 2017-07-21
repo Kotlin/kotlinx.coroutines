@@ -20,5 +20,5 @@ package guide.context.example05
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    println("My job is ${context[Job]}")
+    println("My job is ${coroutineContext[Job]}")
 }

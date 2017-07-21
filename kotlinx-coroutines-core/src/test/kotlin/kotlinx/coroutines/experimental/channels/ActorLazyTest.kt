@@ -28,7 +28,7 @@ class ActorLazyTest : TestBase() {
     @Test
     fun testEmptyStart() = runBlocking<Unit> {
         expect(1)
-        val actor = actor<String>(context, start = CoroutineStart.LAZY) {
+        val actor = actor<String>(coroutineContext, start = CoroutineStart.LAZY) {
             expect(5)
         }
         assertThat(actor.isActive, IsEqual(false))
@@ -53,7 +53,7 @@ class ActorLazyTest : TestBase() {
     @Test
     fun testOne() = runBlocking<Unit> {
         expect(1)
-        val actor = actor<String>(context, start = CoroutineStart.LAZY) {
+        val actor = actor<String>(coroutineContext, start = CoroutineStart.LAZY) {
             expect(4)
             assertThat(receive(), IsEqual("OK"))
             expect(5)

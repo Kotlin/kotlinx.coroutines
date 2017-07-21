@@ -43,7 +43,7 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)
-        val single = rxSingle(context) {
+        val single = rxSingle(coroutineContext) {
             expect(4)
             "OK"
         }
@@ -60,7 +60,7 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking<Unit> {
         expect(1)
-        val single = rxSingle(context) {
+        val single = rxSingle(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -81,7 +81,7 @@ class SingleTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking<Unit> {
         expect(1)
-        val single = rxSingle(context) {
+        val single = rxSingle(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

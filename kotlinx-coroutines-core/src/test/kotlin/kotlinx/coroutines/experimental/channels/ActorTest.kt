@@ -27,7 +27,7 @@ class ActorTest : TestBase() {
     @Test
     fun testEmpty() = runBlocking<Unit> {
         expect(1)
-        val actor = actor<String>(context) {
+        val actor = actor<String>(coroutineContext) {
             expect(3)
         }
         assertThat(actor.isActive, IsEqual(true))
@@ -44,7 +44,7 @@ class ActorTest : TestBase() {
     @Test
     fun testOne() = runBlocking<Unit> {
         expect(1)
-        val actor = actor<String>(context) {
+        val actor = actor<String>(coroutineContext) {
             expect(3)
             assertThat(receive(), IsEqual("OK"))
             expect(6)

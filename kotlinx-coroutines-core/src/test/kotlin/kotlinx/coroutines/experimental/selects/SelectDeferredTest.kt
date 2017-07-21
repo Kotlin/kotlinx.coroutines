@@ -24,7 +24,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSimpleReturnsImmediately() = runBlocking<Unit> {
         expect(1)
-        val d1 = async<Int>(context) {
+        val d1 = async<Int>(coroutineContext) {
             expect(3)
             42
         }
@@ -44,11 +44,11 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSimpleWithYield() = runBlocking<Unit> {
         expect(1)
-        val d1 = async<Int>(context) {
+        val d1 = async<Int>(coroutineContext) {
             expect(3)
             42
         }
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             yield() // back to main
             expect(6)
@@ -70,11 +70,11 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteLazy() = runBlocking<Unit> {
         expect(1)
-        val d1 = async(context, CoroutineStart.LAZY) {
+        val d1 = async(coroutineContext, CoroutineStart.LAZY) {
             expect(5)
             42
         }
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             val res = select<String> {
                 d1.onAwait { v ->
@@ -98,7 +98,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectTwo() = runBlocking<Unit> {
         expect(1)
-        val d1 = async<String>(context) {
+        val d1 = async<String>(coroutineContext) {
             expect(3)
             yield() // to the other deffered
             expect(5)
@@ -106,7 +106,7 @@ class SelectDeferredTest : TestBase() {
             expect(7)
             "d1"
         }
-        val d2 = async<String>(context) {
+        val d2 = async<String>(coroutineContext) {
             expect(4)
             "d2" // returns result
         }

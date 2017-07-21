@@ -20,7 +20,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
- * to its [context] and its cancellation status via [isActive].
+ * to its [coroutineContext] and its cancellation status via [isActive].
  */
 public interface CoroutineScope {
     /**
@@ -33,12 +33,20 @@ public interface CoroutineScope {
      * }
      * ```
      *
-     * This property is a shortcut for `context[Job]!!.isActive`. See [context] and [Job].
+     * This property is a shortcut for `coroutineContext[Job]!!.isActive`. See [coroutineContext] and [Job].
      */
     public val isActive: Boolean
 
     /**
      * Returns the context of this coroutine.
+     * @suppress **Deprecated**: Renamed to [coroutineContext]
      */
+    @Deprecated("Renamed to `coroutineContext`", replaceWith = ReplaceWith("coroutineContext"))
     public val context: CoroutineContext
+
+    /**
+     * Returns the context of this coroutine.
+     */
+    @Suppress("DEPRECATION")
+    public val coroutineContext: CoroutineContext get() = context
 }

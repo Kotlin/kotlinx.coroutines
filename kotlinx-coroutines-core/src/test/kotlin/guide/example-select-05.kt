@@ -49,7 +49,7 @@ fun asyncString(str: String, time: Long) = async(CommonPool) {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val chan = Channel<Deferred<String>>() // the channel for test
-    launch(context) { // launch printing coroutine
+    launch(coroutineContext) { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
             println(s) // print each received string
     }

@@ -29,8 +29,8 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val channel = Channel<String>()
-    launch(context) { sendString(channel, "foo", 200L) }
-    launch(context) { sendString(channel, "BAR!", 500L) }
+    launch(coroutineContext) { sendString(channel, "foo", 200L) }
+    launch(coroutineContext) { sendString(channel, "BAR!", 500L) }
     repeat(6) { // receive first six
         println(channel.receive())
     }

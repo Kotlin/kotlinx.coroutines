@@ -29,7 +29,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             println("job1: I am not affected by cancellation of the request")
         }
         // and the other inherits the parent context
-        val job2 = launch(context) {
+        val job2 = launch(coroutineContext) {
             println("job2: I am a child of the request coroutine")
             delay(1000)
             println("job2: I will not execute this line if my parent request is cancelled")

@@ -128,8 +128,8 @@ open class PingPongActorBenchmark {
 
     @Benchmark
     fun pingPongCoroutineMain() = runBlocking<Unit> {
-        val pong = pongActorCoroutine(context)
-        val ping = pingActorCoroutine(context, pong)
+        val pong = pongActorCoroutine(coroutineContext)
+        val ping = pingActorCoroutine(coroutineContext, pong)
         val me = Channel<Letter>()
         ping.send(Letter(Start(), me))
         me.receive()

@@ -22,7 +22,7 @@ import kotlinx.coroutines.experimental.channels.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
-    val source = produce<Int>(context) {
+    val source = produce<Int>(coroutineContext) {
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
             delay(200) // wait for 200ms

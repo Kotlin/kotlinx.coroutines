@@ -31,10 +31,10 @@ fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) 
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    var cur = numbersFrom(context, 2)
+    var cur = numbersFrom(coroutineContext, 2)
     for (i in 1..10) {
         val prime = cur.receive()
         println(prime)
-        cur = filter(context, cur, prime)
+        cur = filter(coroutineContext, cur, prime)
     }
 }

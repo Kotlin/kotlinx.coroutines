@@ -42,7 +42,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(context, 200, 1, 10)         // numbers with 200ms interval
-    val stop = rangeWithInterval(context, 500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(context, stop).consumeEach { println(it) } // let's test it
+    val slowNums = rangeWithInterval(coroutineContext, 200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(coroutineContext, 500, 1, 10)             // the first one after 500ms
+    slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
 }

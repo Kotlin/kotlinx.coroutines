@@ -52,7 +52,7 @@ class IntegrationTest(
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val pub = publish<String>(ctx(context)) {
+        val pub = publish<String>(ctx(coroutineContext)) {
             if (delay) delay(1)
             // does not send anything
         }
@@ -67,7 +67,7 @@ class IntegrationTest(
 
     @Test
     fun testSingle() = runBlocking<Unit> {
-        val pub = publish<String>(ctx(context)) {
+        val pub = publish<String>(ctx(coroutineContext)) {
             if (delay) delay(1)
             send("OK")
         }
@@ -86,7 +86,7 @@ class IntegrationTest(
     @Test
     fun testNumbers() = runBlocking<Unit> {
         val n = 100 * stressTestMultiplier
-        val pub = publish<Int>(ctx(context)) {
+        val pub = publish<Int>(ctx(coroutineContext)) {
             for (i in 1..n) {
                 send(i)
                 if (delay) delay(1)
@@ -98,7 +98,7 @@ class IntegrationTest(
         assertIAE { pub.awaitSingle() }
         checkNumbers(n, pub)
         val channel = pub.openSubscription()
-        checkNumbers(n, channel.asPublisher(ctx(context)))
+        checkNumbers(n, channel.asPublisher(ctx(coroutineContext)))
         channel.close()
     }
 

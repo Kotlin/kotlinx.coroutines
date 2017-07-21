@@ -24,7 +24,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
   consumeEach { pub ->                 // for each publisher received on the source channel
-      launch(this.context) {           // launch a child coroutine
+      launch(coroutineContext) {       // launch a child coroutine
           pub.consumeEach { send(it) } // resend all element from this publisher
       }
   }
@@ -45,5 +45,5 @@ fun testPub(context: CoroutineContext) = publish<Publisher<Int>>(context) {
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    testPub(context).merge(context).consumeEach { println(it) } // print the whole stream
+    testPub(coroutineContext).merge(coroutineContext).consumeEach { println(it) } // print the whole stream
 }

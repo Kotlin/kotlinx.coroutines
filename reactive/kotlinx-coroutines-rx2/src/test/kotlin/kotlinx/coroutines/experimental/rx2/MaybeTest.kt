@@ -44,7 +44,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)
-        val maybe = rxMaybe(context) {
+        val maybe = rxMaybe(coroutineContext) {
             expect(4)
             "OK"
         }
@@ -61,7 +61,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking<Unit> {
         expect(1)
-        val maybe = rxMaybe(context) {
+        val maybe = rxMaybe(coroutineContext) {
             expect(4)
             null
         }
@@ -77,7 +77,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking<Unit> {
         expect(1)
-        val maybe = rxMaybe(context) {
+        val maybe = rxMaybe(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -98,7 +98,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking<Unit> {
         expect(1)
-        val maybe = rxMaybe(context) {
+        val maybe = rxMaybe(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

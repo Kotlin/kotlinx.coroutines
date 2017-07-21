@@ -29,7 +29,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testDispatch() = runBlocking {
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             yield() // back to main
             expect(7)

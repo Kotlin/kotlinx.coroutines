@@ -27,7 +27,7 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testCancellableLaunch() = runBlocking {
         expect(1)
-        val job = launch(context) {
+        val job = launch(coroutineContext) {
             expectUnreached() // will get cancelled before start
         }
         expect(2)
@@ -38,7 +38,7 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testAtomicLaunch() = runBlocking {
         expect(1)
-        val job = launch(context, start = CoroutineStart.ATOMIC) {
+        val job = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
             finish(4) // will execute even after it was cancelled
         }
         expect(2)
@@ -50,7 +50,7 @@ class AtomicCancellationTest: TestBase() {
     fun testLockAtomicCancel() = runBlocking {
         expect(1)
         val mutex = Mutex(true) // locked mutex
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             mutex.lock() // suspends
             expect(4) // should execute despite cancellation
@@ -66,7 +66,7 @@ class AtomicCancellationTest: TestBase() {
     fun testSelectLockAtomicCancel() = runBlocking {
         expect(1)
         val mutex = Mutex(true) // locked mutex
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val result = select<String> { // suspends
                 mutex.onLock {
@@ -88,7 +88,7 @@ class AtomicCancellationTest: TestBase() {
     fun testSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             channel.send(42) // suspends
             expect(4) // should execute despite cancellation
@@ -104,7 +104,7 @@ class AtomicCancellationTest: TestBase() {
     fun testSelectSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val result = select<String> { // suspends
                 channel.onSend(42) {
@@ -126,7 +126,7 @@ class AtomicCancellationTest: TestBase() {
     fun testReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertThat(channel.receive(), IsEqual(42)) // suspends
             expect(4) // should execute despite cancellation
@@ -142,7 +142,7 @@ class AtomicCancellationTest: TestBase() {
     fun testSelectReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val result = select<String> { // suspends
                 channel.onReceive {
@@ -164,18 +164,18 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testDeferredAwaitCancellable() = runBlocking {
         expect(1)
-        val deferred = async(context) { // deferred, not yet complete
+        val deferred = async(coroutineContext) { // deferred, not yet complete
             expect(4)
             "OK"
         }
         assertThat(deferred.isCompleted, IsEqual(false))
         var job: Job? = null
-        launch(context) { // will cancel job as soon as deferred completes
+        launch(coroutineContext) { // will cancel job as soon as deferred completes
             expect(5)
             assertThat(deferred.isCompleted, IsEqual(true))
             job!!.cancel()
         }
-        job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 deferred.await() // suspends
@@ -192,18 +192,18 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testSelectDeferredAwaitCancellable() = runBlocking {
         expect(1)
-        val deferred = async(context) { // deferred, not yet complete
+        val deferred = async(coroutineContext) { // deferred, not yet complete
             expect(4)
             "OK"
         }
         assertThat(deferred.isCompleted, IsEqual(false))
         var job: Job? = null
-        launch(context) { // will cancel job as soon as deferred completes
+        launch(coroutineContext) { // will cancel job as soon as deferred completes
             expect(5)
             assertThat(deferred.isCompleted, IsEqual(true))
             job!!.cancel()
         }
-        job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 select<Unit> { // suspends
@@ -222,17 +222,17 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testJobJoinCancellable() = runBlocking {
         expect(1)
-        val jobToJoin = launch(context) { // not yet complete
+        val jobToJoin = launch(coroutineContext) { // not yet complete
             expect(4)
         }
         assertThat(jobToJoin.isCompleted, IsEqual(false))
         var job: Job? = null
-        launch(context) { // will cancel job as soon as jobToJoin completes
+        launch(coroutineContext) { // will cancel job as soon as jobToJoin completes
             expect(5)
             assertThat(jobToJoin.isCompleted, IsEqual(true))
             job!!.cancel()
         }
-        job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 jobToJoin.join() // suspends
@@ -249,17 +249,17 @@ class AtomicCancellationTest: TestBase() {
     @Test
     fun testSelectJobJoinCancellable() = runBlocking {
         expect(1)
-        val jobToJoin = launch(context) { // not yet complete
+        val jobToJoin = launch(coroutineContext) { // not yet complete
             expect(4)
         }
         assertThat(jobToJoin.isCompleted, IsEqual(false))
         var job: Job? = null
-        launch(context) { // will cancel job as soon as jobToJoin completes
+        launch(coroutineContext) { // will cancel job as soon as jobToJoin completes
             expect(5)
             assertThat(jobToJoin.isCompleted, IsEqual(true))
             job!!.cancel()
         }
-        job = launch(context, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 select<Unit> { // suspends

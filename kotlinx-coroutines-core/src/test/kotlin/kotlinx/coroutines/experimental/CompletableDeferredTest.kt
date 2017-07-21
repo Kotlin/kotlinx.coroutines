@@ -110,7 +110,7 @@ class CompletableDeferredTest : TestBase() {
     fun testAwait() = runBlocking {
         expect(1)
         val c = CompletableDeferred<String>()
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertThat(c.await(), IsEqual("OK")) // suspends
             expect(5)

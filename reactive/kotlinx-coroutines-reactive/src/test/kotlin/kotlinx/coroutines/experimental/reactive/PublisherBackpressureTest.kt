@@ -27,7 +27,7 @@ class PublisherBackpressureTest : TestBase() {
     @Test
     fun testCancelWhileBPSuspended() = runBlocking<Unit> {
         expect(1)
-        val observable = publish(context) {
+        val observable = publish(coroutineContext) {
             expect(5)
             send("A") // will not suspend, because an item was requested
             expect(7)

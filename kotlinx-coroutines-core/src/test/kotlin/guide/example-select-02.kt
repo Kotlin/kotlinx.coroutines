@@ -39,10 +39,10 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // we are using the context of the main thread in this example for predictability ... 
-    val a = produce<String>(context) { 
+    val a = produce<String>(coroutineContext) {
         repeat(4) { send("Hello $it") }
     }
-    val b = produce<String>(context) { 
+    val b = produce<String>(coroutineContext) {
         repeat(4) { send("World $it") }
     }
     repeat(8) { // print first eight results

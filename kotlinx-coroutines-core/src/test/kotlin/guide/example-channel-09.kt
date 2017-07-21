@@ -24,8 +24,8 @@ data class Ball(var hits: Int)
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val table = Channel<Ball>() // a shared table
-    launch(context) { player("ping", table) }
-    launch(context) { player("pong", table) }
+    launch(coroutineContext) { player("ping", table) }
+    launch(coroutineContext) { player("pong", table) }
     table.send(Ball(0)) // serve the ball
     delay(1000) // delay 1 second
     table.receive() // game over, grab the ball

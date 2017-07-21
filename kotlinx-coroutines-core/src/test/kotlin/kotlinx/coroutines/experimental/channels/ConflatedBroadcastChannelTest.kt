@@ -30,7 +30,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         val broadcast = ConflatedBroadcastChannel<String>()
         assertThat(exceptionFrom { broadcast.value }, IsInstanceOf(IllegalStateException::class.java))
         assertThat(broadcast.valueOrNull, IsNull())
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
             assertThat(sub.poll(), IsNull())
@@ -49,7 +49,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         expect(5)
         yield() // to receiver
         expect(7)
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(8)
             val sub = broadcast.openSubscription()
             assertThat(sub.receive(), IsEqual("one")) // does not suspend
@@ -91,7 +91,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         val broadcast = ConflatedBroadcastChannel<Int>(1)
         assertThat(broadcast.value, IsEqual(1))
         assertThat(broadcast.valueOrNull, IsEqual(1))
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
             assertThat(sub.receive(), IsEqual(1))

@@ -83,7 +83,7 @@ class AsyncIOTest {
 
         val serverPort = (serverChannel.localAddress as InetSocketAddress).port
 
-        val c1 = launch(context) {
+        val c1 = launch(coroutineContext) {
             val client = serverChannel.aAccept()
             val buffer = ByteBuffer.allocate(2)
             client.aRead(buffer)
@@ -94,7 +94,7 @@ class AsyncIOTest {
             client.close()
         }
 
-        val c2 = launch(context) {
+        val c2 = launch(coroutineContext) {
             val connection =
                     AsynchronousSocketChannel.open()
             // async calls

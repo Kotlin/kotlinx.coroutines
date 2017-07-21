@@ -31,7 +31,7 @@ class SelectMutexTest : TestBase() {
     fun testSelectLock() = runBlocking<Unit> {
         val mutex = Mutex()
         expect(1)
-        launch(context) { // ensure that it is not scheduled earlier than needed
+        launch(coroutineContext) { // ensure that it is not scheduled earlier than needed
             expectUnreached() // will terminate before it has a chance to start
         }
         val res = select<String> {
@@ -49,7 +49,7 @@ class SelectMutexTest : TestBase() {
     fun testSelectLockWait() = runBlocking<Unit> {
         val mutex = Mutex(true) // locked
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             val res = select<String> { // will suspended
                 mutex.onLock {
@@ -76,7 +76,7 @@ class SelectMutexTest : TestBase() {
         val mutex = Mutex(true) as MutexImpl // locked
         expect(1)
         repeat(n) { i ->
-            val job = launch(context) {
+            val job = launch(coroutineContext) {
                 expect(i + 2)
                 select<Unit> {
                     mutex.onLock {

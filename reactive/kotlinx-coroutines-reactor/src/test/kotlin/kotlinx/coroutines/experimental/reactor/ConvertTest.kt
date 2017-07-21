@@ -38,10 +38,10 @@ class ConvertTest : TestBase() {
     @Test
     fun testJobToMonoSuccess() = runBlocking<Unit> {
         expect(1)
-        val job = launch(context) {
+        val job = launch(coroutineContext) {
             expect(3)
         }
-        val mono = job.asMono(context)
+        val mono = job.asMono(coroutineContext)
         mono.subscribe {
             expect(4)
         }
@@ -53,11 +53,11 @@ class ConvertTest : TestBase() {
     @Test
     fun testJobToMonoFail() = runBlocking<Unit> {
         expect(1)
-        val job = async(context + NonCancellable) { // don't kill parent on exception
+        val job = async(coroutineContext + NonCancellable) { // don't kill parent on exception
             expect(3)
             throw RuntimeException("OK")
         }
-        val mono = job.asMono(context)
+        val mono = job.asMono(coroutineContext)
         mono.subscribe(
                 { fail("no item should be emitted") },
                 { expect(4) }

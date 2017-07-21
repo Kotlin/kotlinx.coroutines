@@ -29,7 +29,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val broadcast = ArrayBroadcastChannel<Int>(1)
         assertThat(broadcast.isClosedForSend, IsEqual(false))
         val first = broadcast.openSubscription()
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertThat(first.receive(), IsEqual(1)) // suspends
             assertThat(first.isClosedForReceive, IsEqual(false))
@@ -47,7 +47,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         yield() // to the first receiver
         expect(6)
         val second = broadcast.openSubscription()
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(7)
             assertThat(second.receive(), IsEqual(2)) // suspends
             assertThat(second.isClosedForReceive, IsEqual(false))
@@ -73,7 +73,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
         val first = broadcast.openSubscription()
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             assertThat(first.receive(), IsEqual(1))
             expect(5)
@@ -94,7 +94,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val sub = broadcast.openSubscription()
         // launch 3 concurrent senders (one goes buffer, two other suspend)
         for (x in 1..3) {
-            launch(context, CoroutineStart.UNDISPATCHED) {
+            launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
                 expect(x + 1)
                 broadcast.send(x)
             }
@@ -122,7 +122,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         broadcast.send(3)
         expect(2) // should not suspend anywhere above
         val sub = broadcast.openSubscription()
-        launch(context, CoroutineStart.UNDISPATCHED) {
+        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(3)
             assertThat(sub.receive(), IsEqual(4)) // suspends
             expect(5)

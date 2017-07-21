@@ -123,7 +123,7 @@ private class PublisherCoroutine<T>(
         } catch (e: Throwable) {
             try {
                 if (!cancel(e))
-                    handleCoroutineException(context, e)
+                    handleCoroutineException(coroutineContext, e)
             } finally {
                 doLockedSignalCompleted()
             }
@@ -164,7 +164,7 @@ private class PublisherCoroutine<T>(
                     else
                         subscriber.onComplete()
                 } catch (e: Throwable) {
-                    handleCoroutineException(context, e)
+                    handleCoroutineException(coroutineContext, e)
                 }
             }
         } finally {

@@ -26,7 +26,7 @@ class MutexTest : TestBase() {
     fun testSimple() = runBlocking<Unit> {
         val mutex = Mutex()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             mutex.lock() // suspends
             expect(7) // now got lock

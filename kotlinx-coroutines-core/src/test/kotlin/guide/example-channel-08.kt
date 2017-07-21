@@ -22,7 +22,7 @@ import kotlinx.coroutines.experimental.channels.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val channel = Channel<Int>(4) // create buffered channel
-    launch(context) { // launch sender coroutine
+    launch(coroutineContext) { // launch sender coroutine
         repeat(10) {
             println("Sending $it") // print before sending each element
             channel.send(it) // will suspend when buffer is full

@@ -28,10 +28,10 @@ class ConvertTest : TestBase() {
     @Test
     fun testToCompletableSuccess() = runBlocking<Unit> {
         expect(1)
-        val job = launch(context) {
+        val job = launch(coroutineContext) {
             expect(3)
         }
-        val completable = job.asCompletable(context)
+        val completable = job.asCompletable(coroutineContext)
         completable.subscribe {
             expect(4)
         }
@@ -43,11 +43,11 @@ class ConvertTest : TestBase() {
     @Test
     fun testToCompletableFail() = runBlocking<Unit> {
         expect(1)
-        val job = async(context + NonCancellable) { // don't kill parent on exception
+        val job = async(coroutineContext + NonCancellable) { // don't kill parent on exception
             expect(3)
             throw RuntimeException("OK")
         }
-        val completable = job.asCompletable(context)
+        val completable = job.asCompletable(coroutineContext)
         completable.subscribe {
             expect(4)
         }

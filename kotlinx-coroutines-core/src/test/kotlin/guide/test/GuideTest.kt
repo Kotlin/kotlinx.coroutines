@@ -159,20 +159,20 @@ class GuideTest {
     @Test
     fun testGuideContextExample01() {
         test("GuideContextExample01") { guide.context.example01.main(emptyArray()) }.verifyLinesStartUnordered(
-            " 'Unconfined': I'm working in thread main",
-            " 'CommonPool': I'm working in thread ForkJoinPool.commonPool-worker-1",
-            "     'newSTC': I'm working in thread MyOwnThread",
-            "    'context': I'm working in thread main"
+            "      'Unconfined': I'm working in thread main",
+            "      'CommonPool': I'm working in thread ForkJoinPool.commonPool-worker-1",
+            "          'newSTC': I'm working in thread MyOwnThread",
+            "'coroutineContext': I'm working in thread main"
         )
     }
 
     @Test
     fun testGuideContextExample02() {
         test("GuideContextExample02") { guide.context.example02.main(emptyArray()) }.verifyLinesStart(
-            " 'Unconfined': I'm working in thread main",
-            "    'context': I'm working in thread main",
-            " 'Unconfined': After delay in thread kotlinx.coroutines.DefaultExecutor",
-            "    'context': After delay in thread main"
+            "      'Unconfined': I'm working in thread main",
+            "'coroutineContext': I'm working in thread main",
+            "      'Unconfined': After delay in thread kotlinx.coroutines.DefaultExecutor",
+            "'coroutineContext': After delay in thread main"
         )
     }
 

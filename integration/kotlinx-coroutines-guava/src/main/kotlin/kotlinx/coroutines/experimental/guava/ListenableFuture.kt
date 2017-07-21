@@ -64,6 +64,7 @@ public fun <T> future(
 private class ListenableFutureCoroutine<T>(
     override val context: CoroutineContext
 ) : AbstractFuture<T>(), Continuation<T>, CoroutineScope {
+    override val coroutineContext: CoroutineContext get() = context
     override val isActive: Boolean get() = context[Job]!!.isActive
     override fun resume(value: T) { set(value) }
     override fun resumeWithException(exception: Throwable) { setException(exception) }

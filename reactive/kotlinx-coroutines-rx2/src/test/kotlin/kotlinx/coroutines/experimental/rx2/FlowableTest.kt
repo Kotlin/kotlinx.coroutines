@@ -28,7 +28,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking<Unit> {
         expect(1)
-        val observable = rxFlowable(context) {
+        val observable = rxFlowable(coroutineContext) {
             expect(4)
             send("OK")
         }
@@ -45,7 +45,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking<Unit> {
         expect(1)
-        val observable = rxFlowable<String>(context) {
+        val observable = rxFlowable<String>(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -65,7 +65,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking<Unit> {
         expect(1)
-        val observable = rxFlowable<String>(context) {
+        val observable = rxFlowable<String>(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

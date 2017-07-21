@@ -48,8 +48,8 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val fizz = fizz(context)
-    val buzz = buzz(context)
+    val fizz = fizz(coroutineContext)
+    val buzz = buzz(coroutineContext)
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }

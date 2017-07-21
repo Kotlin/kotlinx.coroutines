@@ -168,7 +168,7 @@ class FutureTest : TestBase() {
     @Test
     fun testCompletedDeferredAsCompletableFuture() = runBlocking {
         expect(1)
-        val deferred = async(context, CoroutineStart.UNDISPATCHED) {
+        val deferred = async(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2) // completed right away
             "OK"
         }
@@ -181,7 +181,7 @@ class FutureTest : TestBase() {
     @Test
     fun testWaitForDeferredAsCompletableFuture() = runBlocking {
         expect(1)
-        val deferred = async(context) {
+        val deferred = async(coroutineContext) {
             expect(3) // will complete later
             "OK"
         }
@@ -195,7 +195,7 @@ class FutureTest : TestBase() {
     fun testCancellableAwaitFuture() = runBlocking {
         expect(1)
         val toAwait = CompletableFuture<String>()
-        val job = launch(context, CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 toAwait.await() // suspends
@@ -217,7 +217,7 @@ class FutureTest : TestBase() {
         expect(1)
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
-        val job = launch(context, CoroutineStart.UNDISPATCHED) {
+        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertThat(toAwait.await(), IsEqual("OK")) // suspends
             expect(5)

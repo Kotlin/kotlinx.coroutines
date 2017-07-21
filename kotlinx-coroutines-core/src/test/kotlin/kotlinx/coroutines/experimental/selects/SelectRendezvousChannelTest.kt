@@ -31,7 +31,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendSuccess() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -50,7 +50,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendSuccessWithDefault() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -82,7 +82,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         expect(3)
         // make sure receive blocks (select above is over)
-        launch(context) {
+        launch(coroutineContext) {
             expect(5)
             assertEquals("CHK", channel.receive())
             finish(8)
@@ -98,7 +98,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectSendWait() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             assertEquals("OK", channel.receive())
             expect(4)
@@ -116,7 +116,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveSuccess() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             channel.send("OK")
             finish(6)
@@ -136,7 +136,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveSuccessWithDefault() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(2)
             channel.send("OK")
             finish(6)
@@ -169,7 +169,7 @@ class SelectRendezvousChannelTest : TestBase() {
         }
         expect(3)
         // make sure send blocks (select above is over)
-        launch(context) {
+        launch(coroutineContext) {
             expect(5)
             channel.send("CHK")
             finish(8)
@@ -185,7 +185,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveWait() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             channel.send("OK")
             expect(4)
@@ -218,7 +218,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectReceiveWaitClosed() = runBlocking<Unit> {
         expect(1)
         val channel = RendezvousChannel<String>()
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             channel.close()
             finish(4)
@@ -265,7 +265,7 @@ class SelectRendezvousChannelTest : TestBase() {
         val c1 = RendezvousChannel<Int>()
         val c2 = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             val res = select<String> {
                 c1.onReceive { v1 ->
@@ -295,7 +295,7 @@ class SelectRendezvousChannelTest : TestBase() {
     fun testSelectWaitDispatch() = runBlocking<Unit> {
         val c = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             val res = select<String> {
                 c.onReceive { v ->

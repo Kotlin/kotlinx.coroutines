@@ -106,7 +106,7 @@ import kotlinx.coroutines.experimental.channels.*
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
-    val source = produce<Int>(context) {
+    val source = produce<Int>(coroutineContext) {
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
             delay(200) // wait for 200ms
@@ -162,7 +162,7 @@ import kotlinx.coroutines.experimental.reactive.*
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
-    val source = publish<Int>(context) {  
+    val source = publish<Int>(coroutineContext) {
     //           ^^^^^^^  <---  Difference from the previous examples is here
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
@@ -340,7 +340,7 @@ import io.reactivex.schedulers.Schedulers
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
-    val source = rxFlowable(context) {
+    val source = rxFlowable(coroutineContext) {
         for (x in 1..3) {
             send(x) // this is a suspending function
             println("Sent $x") // print after successfully sent item
@@ -476,7 +476,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print the most recent update
-    launch(context) { // use the context of the main thread for a coroutine
+    launch(coroutineContext) { // use the context of the main thread for a coroutine
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
@@ -513,7 +513,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     broadcast.offer("one")
     broadcast.offer("two")
     // now launch a coroutine to print the most recent update
-    launch(context) { // use the context of the main thread for a coroutine
+    launch(coroutineContext) { // use the context of the main thread for a coroutine
         broadcast.consumeEach { println(it) }
     }
     broadcast.offer("three")
@@ -640,8 +640,8 @@ fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(cont
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-   range(context, 1, 5)
-       .fusedFilterMap(context, { it % 2 == 0}, { "$it is even" })
+   range(coroutineContext, 1, 5)
+       .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings
 }
 ```
@@ -710,9 +710,9 @@ The following code shows how `takeUntil` works:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(context, 200, 1, 10)         // numbers with 200ms interval
-    val stop = rangeWithInterval(context, 500, 1, 10)             // the first one after 500ms
-    slowNums.takeUntil(context, stop).consumeEach { println(it) } // let's test it
+    val slowNums = rangeWithInterval(coroutineContext, 200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(coroutineContext, 500, 1, 10)             // the first one after 500ms
+    slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
 }
 ```
 
@@ -745,15 +745,15 @@ import kotlin.coroutines.experimental.CoroutineContext
 ```kotlin
 fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
   consumeEach { pub ->                 // for each publisher received on the source channel
-      launch(this.context) {           // launch a child coroutine
+      launch(coroutineContext) {       // launch a child coroutine
           pub.consumeEach { send(it) } // resend all element from this publisher
       }
   }
 }
 ```
 
-Notice, the use of `this.context` in the invocation of [launch] coroutine builder. It is used to refer
-to the [CoroutineScope.context] that is provided by [publish] builder. This way, all the coroutines that are
+Notice, the use of `coroutineContext` in the invocation of [launch] coroutine builder. It is used to refer
+to the [CoroutineScope.coroutineContext] that is provided by [publish] builder. This way, all the coroutines that are
 being launched here are [children](../coroutines-guide.md#children-of-a-coroutine) of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
 This implementation completes as soon as the original publisher completes. 
@@ -784,7 +784,7 @@ The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    testPub(context).merge(context).consumeEach { println(it) } // print the whole stream
+    testPub(coroutineContext).merge(coroutineContext).consumeEach { println(it) } // print the whole stream
 }
 ```
 
@@ -1050,7 +1050,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[CoroutineScope.context]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/context.html
+[CoroutineScope.coroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->

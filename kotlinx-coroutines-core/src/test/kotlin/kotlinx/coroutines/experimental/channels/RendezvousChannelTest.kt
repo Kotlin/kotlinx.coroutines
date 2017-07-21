@@ -31,7 +31,7 @@ class RendezvousChannelTest : TestBase() {
         val q = RendezvousChannel<Int>()
         check(q.isEmpty && q.isFull)
         expect(1)
-        val sender = launch(context) {
+        val sender = launch(coroutineContext) {
             expect(4)
             q.send(1) // suspend -- the first to come to rendezvous
             expect(7)
@@ -39,7 +39,7 @@ class RendezvousChannelTest : TestBase() {
             expect(8)
         }
         expect(2)
-        val receiver = launch(context) {
+        val receiver = launch(coroutineContext) {
             expect(5)
             check(q.receive() == 1) // does not suspend -- sender was there
             expect(6)
@@ -57,11 +57,11 @@ class RendezvousChannelTest : TestBase() {
     fun testStress() = runBlocking {
         val n = 100_000
         val q = RendezvousChannel<Int>()
-        val sender = launch(context) {
+        val sender = launch(coroutineContext) {
             for (i in 1..n) q.send(i)
             expect(2)
         }
-        val receiver = launch(context) {
+        val receiver = launch(coroutineContext) {
             for (i in 1..n) check(q.receive() == i)
             expect(3)
         }
@@ -76,7 +76,7 @@ class RendezvousChannelTest : TestBase() {
         val q = RendezvousChannel<Int>()
         check(q.isEmpty && q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             assertEquals(42, q.receiveOrNull())
             expect(4)
@@ -97,7 +97,7 @@ class RendezvousChannelTest : TestBase() {
     fun testClosedExceptions() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             try { q.receive() }
             catch (e: ClosedReceiveChannelException) {
@@ -120,7 +120,7 @@ class RendezvousChannelTest : TestBase() {
         val q = RendezvousChannel<Int>()
         assertFalse(q.offer(1))
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             assertEquals(null, q.poll())
             expect(4)
@@ -147,7 +147,7 @@ class RendezvousChannelTest : TestBase() {
     fun testIteratorClosed() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             q.close()
             expect(4)
@@ -163,7 +163,7 @@ class RendezvousChannelTest : TestBase() {
     fun testIteratorOne() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             q.send(1)
             expect(4)
@@ -182,7 +182,7 @@ class RendezvousChannelTest : TestBase() {
     fun testIteratorOneWithYield() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             q.send(1) // will suspend
             expect(6)
@@ -203,7 +203,7 @@ class RendezvousChannelTest : TestBase() {
     fun testIteratorTwo() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             q.send(1)
             expect(4)
@@ -227,7 +227,7 @@ class RendezvousChannelTest : TestBase() {
     fun testIteratorTwoWithYield() = runBlocking {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(3)
             q.send(1) // will suspend
             expect(6)
@@ -253,13 +253,13 @@ class RendezvousChannelTest : TestBase() {
     fun testSuspendSendOnClosedChannel() = runBlocking<Unit> {
         val q = RendezvousChannel<Int>()
         expect(1)
-        launch(context) {
+        launch(coroutineContext) {
             expect(4)
             q.send(42) // suspend
             expect(11)
         }
         expect(2)
-        launch(context) {
+        launch(coroutineContext) {
             expect(5)
             q.close()
             expect(6)
@@ -286,7 +286,7 @@ class RendezvousChannelTest : TestBase() {
     @Test
     fun testProduceBadClass() = runBlocking {
         val bad = BadClass()
-        val c = produce(context) {
+        val c = produce(coroutineContext) {
             expect(1)
             send(bad)
         }

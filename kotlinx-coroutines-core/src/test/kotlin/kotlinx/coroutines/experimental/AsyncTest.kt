@@ -24,7 +24,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testSimple(): Unit = runBlocking {
         expect(1)
-        val d = async(context) {
+        val d = async(coroutineContext) {
             expect(3)
             42
         }
@@ -40,7 +40,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testUndispatched(): Unit = runBlocking {
         expect(1)
-        val d = async(context, start = CoroutineStart.UNDISPATCHED) {
+        val d = async(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             42
         }
@@ -53,7 +53,7 @@ class AsyncTest : TestBase() {
     @Test(expected = IOException::class)
     fun testSimpleException(): Unit = runBlocking {
         expect(1)
-        val d = async(context) {
+        val d = async(coroutineContext) {
             finish(3)
             throw IOException()
         }
@@ -64,7 +64,7 @@ class AsyncTest : TestBase() {
     @Test(expected = IOException::class)
     fun testDeferAndYieldException(): Unit = runBlocking {
         expect(1)
-        val d = async(context) {
+        val d = async(coroutineContext) {
             expect(3)
             yield() // no effect, parent waiting
             finish(4)
@@ -77,20 +77,20 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferWithTwoWaiters() = runBlocking {
         expect(1)
-        val d = async(context) {
+        val d = async(coroutineContext) {
             expect(5)
             yield()
             expect(9)
             42
         }
         expect(2)
-        launch(context) {
+        launch(coroutineContext) {
             expect(6)
             check(d.await() == 42)
             expect(11)
         }
         expect(3)
-        launch(context) {
+        launch(coroutineContext) {
             expect(7)
             check(d.await() == 42)
             expect(12)
@@ -107,7 +107,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testAsyncWithFinally() = runBlocking {
         expect(1)
-        val d = async<String>(context) {
+        val d = async<String>(coroutineContext) {
             expect(3)
             try {
                 yield() // to main, will cancel
@@ -147,7 +147,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferBadClass() = runBlocking {
         val bad = BadClass()
-        val d = async(context) {
+        val d = async(coroutineContext) {
             expect(1)
             bad
         }

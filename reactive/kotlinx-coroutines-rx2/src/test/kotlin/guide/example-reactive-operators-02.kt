@@ -38,7 +38,7 @@ fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(cont
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-   range(context, 1, 5)
-       .fusedFilterMap(context, { it % 2 == 0}, { "$it is even" })
+   range(coroutineContext, 1, 5)
+       .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings
 }

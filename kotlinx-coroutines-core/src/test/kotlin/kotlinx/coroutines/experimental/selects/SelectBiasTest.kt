@@ -27,8 +27,8 @@ class SelectBiasTest {
 
     @Test
     fun testBiased() = runBlocking<Unit> {
-        val d0 = async(context) { 0 }
-        val d1 = async(context) { 1 }
+        val d0 = async(coroutineContext) { 0 }
+        val d1 = async(coroutineContext) { 1 }
         val counter = IntArray(2)
         repeat(n) {
             val selected = select<Int> {
@@ -43,8 +43,8 @@ class SelectBiasTest {
 
     @Test
     fun testUnbiased() = runBlocking<Unit> {
-        val d0 = async(context) { 0 }
-        val d1 = async(context) { 1 }
+        val d0 = async(coroutineContext) { 0 }
+        val d1 = async(coroutineContext) { 1 }
         val counter = IntArray(2)
         repeat(n) {
             val selected = selectUnbiased<Int> {

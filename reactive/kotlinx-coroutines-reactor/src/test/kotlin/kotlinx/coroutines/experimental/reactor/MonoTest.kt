@@ -45,7 +45,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val mono = mono(context) {
+        val mono = mono(coroutineContext) {
             expect(4)
             "OK"
         }
@@ -62,7 +62,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val mono = mono(context) {
+        val mono = mono(coroutineContext) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -82,7 +82,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking {
         expect(1)
-        val mono = mono(context) {
+        val mono = mono(coroutineContext) {
             expect(4)
             null
         }
@@ -98,7 +98,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val mono = mono(context) {
+        val mono = mono(coroutineContext) {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
