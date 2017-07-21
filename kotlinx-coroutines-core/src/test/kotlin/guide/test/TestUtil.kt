@@ -152,6 +152,7 @@ private class ThreadStatus {
 
 private val MAX_WAIT_NANOS = 10_000_000_000L // 10s
 private val REAL_TIME_STEP_NANOS = 200_000_000L // 200 ms
+private val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to better track real-time
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 private class TestTimeSource(
@@ -210,7 +211,7 @@ private class TestTimeSource(
                 status.permit = false
                 break
             }
-            LockSupport.parkNanos(blocker, REAL_TIME_STEP_NANOS)
+            LockSupport.parkNanos(blocker, REAL_PARK_NANOS)
         }
     }
 
