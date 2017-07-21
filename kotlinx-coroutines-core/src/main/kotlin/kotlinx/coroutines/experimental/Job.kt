@@ -38,7 +38,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * or completion of parent immediately cancels all its children.
  *
  * The most basic instances of [Job] are created with [launch] coroutine builder or with a
- * [`Job()`][Job.Key.invoke] factory function.  Other coroutine builders and primitives like
+ * `Job()` factory function.  Other coroutine builders and primitives like
  * [Deferred] also implement [Job] interface.
  *
  * A job has the following states:
@@ -57,7 +57,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * A job can be _cancelled_ at any time with [cancel] function that forces it to transition to
  * _cancelling_ state immediately. Simple jobs, that are not backed by a coroutine, like
- * [CompletableDeferred] and the result of [`Job()`][Job.Key.invoke] factory function, don't
+ * [CompletableDeferred] and the result of `Job()` factory function, don't
  * have a _cancelling_ state, but become _cancelled_ on [cancel] immediately.
  * Coroutines, on the other hand, become _cancelled_ only when they finish executing their code.
  *
@@ -92,8 +92,10 @@ public interface Job : CoroutineContext.Element {
         /**
          * Creates a new job object in _active_ state.
          * It is optionally a child of a [parent] job.
+         * @suppress **Deprecated**
          */
-        public operator fun invoke(parent: Job? = null): Job = JobImpl(parent)
+        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
+        public operator fun invoke(parent: Job? = null): Job = Job(parent)
     }
 
     // ------------ state query ------------
@@ -250,6 +252,12 @@ public interface Job : CoroutineContext.Element {
         public fun unregister()
     }
 }
+
+/**
+ * Creates a new job object in an _active_ state.
+ * It is optionally a child of a [parent] job.
+ */
+public fun Job(parent: Job? = null): Job = JobImpl(parent)
 
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
