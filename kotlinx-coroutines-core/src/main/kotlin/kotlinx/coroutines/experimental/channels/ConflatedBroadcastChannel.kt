@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
  * Sender to this broadcast channel never suspends and [offer] always returns `true`.
  *
  * A secondary constructor can be used to create an instance of this class that already holds a value.
+ * This channel is also created by `BroadcastChannel(Channel.CONFLATED)` factory function invocation.
  *
  * This implementation is fully lock-free. In this implementation
  * [opening][openSubscription] and [closing][SubscriptionReceiveChannel.close] subscription takes O(N) time, where N is the

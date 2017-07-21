@@ -30,6 +30,8 @@ import kotlin.concurrent.withLock
  * Note, that elements that are sent to the broadcast channel while there are no [openSubscription] subscribers are immediately
  * lost.
  *
+ * This channel is created by `BroadcastChannel(capacity)` factory function invocation.
+ *
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
  * The lists of suspended senders or receivers are lock-free.
