@@ -32,12 +32,20 @@ private val ignoreLostThreads = mutableSetOf<String>()
 fun ignoreLostThreads(vararg s: String) { ignoreLostThreads += s }
 
 fun threadNames(): Set<String> {
-    val arrayOfThreads = Array<Thread?>(Thread.activeCount()) { null }
-    val n = Thread.enumerate(arrayOfThreads)
-    val names = hashSetOf<String>()
-    for (i in 0 until n)
-        names.add(arrayOfThreads[i]!!.name)
-    return names
+    var estimate = 0
+    while (true) {
+        estimate = estimate.coerceAtLeast(Thread.activeCount() + 1)
+        val arrayOfThreads = Array<Thread?>(estimate) { null }
+        val n = Thread.enumerate(arrayOfThreads)
+        if (n >= estimate) {
+            estimate = n + 1
+            continue // retry with a better size estimate
+        }
+        val names = hashSetOf<String>()
+        for (i in 0 until n)
+            names.add(arrayOfThreads[i]!!.name)
+        return names
+    }
 }
 
 fun checkTestThreads(threadNamesBefore: Set<String>) {
