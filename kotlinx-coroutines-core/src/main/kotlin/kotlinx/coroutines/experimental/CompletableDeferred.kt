@@ -23,8 +23,35 @@ import kotlinx.coroutines.experimental.selects.SelectInstance
  * [complete], [completeExceptionally], and [cancel].
  *
  * Completion functions return `false` when this deferred value is already complete.
+ *
+ * A completable deferred value has the following states:
+ *
+ * | **State**                 | [isActive] | [isCompleted] | [isCompletedExceptionally] | [isCancelled] |
+ * | ------------------------- | ---------- | ------------- | -------------------------- | ------------- |
+ * | _Active_ (initial state)  | `true`     | `false`       | `false`                    | `false`       |
+ * | _Cancelled_ (final state) | `false`    | `true`        | `true`                     | `true`        |
+ * | _Resolved_  (final state) | `false`    | `true`        | `false`                    | `false`       |
+ * | _Failed_    (final state) | `false`    | `true`        | `true`                     | `false`       |
+ *
+ * A an instance of completable deferred can be created by `CompletableDeferred()` function in _active_ state.
+ *
+ *  ```
+ *  +--------+   complete   +-----------+
+ *  | Active | ---------+-> | Resolved  |
+ *  +--------+          |   |(completed)|
+ *       |              |   +-----------+
+ *       | cancel       |
+ *       V              |   +-----------+
+ *  +-----------+       +-> |  Failed   |
+ *  | Cancelled |           |(completed)|
+ *  |(completed)|           +-----------+
+ *  +-----------+
+ * ```
+ *
+ * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
+ * be safely invoked from concurrent coroutines without external synchronization.
  */
-public interface CompletableDeferred<T> : Job, Deferred<T> {
+public interface CompletableDeferred<T> : Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
@@ -43,12 +70,12 @@ public interface CompletableDeferred<T> : Job, Deferred<T> {
 }
 
 /**
- * Create a [CompletableDeferred] not completed
+ * Creates a [CompletableDeferred] in an _active_ state.
  */
 public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl()
 
 /**
- * Create an already completed [CompletableDeferred] with a given [value]
+ * Creates an already _completed_ [CompletableDeferred] with a given [value].
  */
 public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>().apply { complete(value) }
 
