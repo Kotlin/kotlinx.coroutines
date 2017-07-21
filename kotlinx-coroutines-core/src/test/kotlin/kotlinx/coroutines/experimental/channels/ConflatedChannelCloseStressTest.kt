@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import junit.framework.Assert.assertTrue
-import junit.framework.Assert.fail
 import kotlinx.coroutines.experimental.*
 import org.junit.After
 import org.junit.Test
@@ -99,7 +97,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
         println("Waiting for receiver...")
         try {
             receiver.await()
-            fail("Receiver should not complete normally")
+            error("Receiver should not complete normally")
         } catch (e: StopException) {
             // ok
         }
@@ -112,7 +110,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
         val oldChannel = curChannel.get()
         val newChannel = ConflatedChannel<Int>()
         curChannel.set(newChannel)
-        assertTrue(oldChannel.close())
+        check(oldChannel.close())
     }
 
     private fun printStats() {
