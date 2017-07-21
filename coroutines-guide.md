@@ -1187,6 +1187,35 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 Done!
 -->
 
+Instead of a `for` loop you can also use convenient extension functions, such as [collectList],
+[collectMap], [collectSequence] or [collectSet],
+which create a collection of elements received from `ReceiveChannel`:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val channel = Channel<Int>()
+    launch(CommonPool) {
+        for (x in 1..5) channel.send(x * x)
+        channel.close() // we're done sending
+    }
+    
+    val list = channel.collectList()
+    list.forEach { println(it) }
+    println("Done!")
+}
+```
+
+> You can get full code [here](kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-10.kt)
+
+<!--- TEST 
+1
+4
+9
+16
+25
+Done!
+-->
+
 ### Building channel producers
 
 The pattern where a coroutine is producing a sequence of elements is quite common. 
@@ -2222,6 +2251,10 @@ Channel was closed
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
+[collectList]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/collect-list.html
+[collectMap]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/collect-map.html
+[collectSequence]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/collect-sequence.html
+[collectSet]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/collect-set.html
 [Channel.invoke]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/invoke.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->

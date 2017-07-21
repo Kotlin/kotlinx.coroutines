@@ -35,3 +35,42 @@ public suspend fun <E> BroadcastChannel<E>.consumeEach(action: suspend (E) -> Un
         for (x in channel) action(x)
     }
 }
+
+/**
+ * Collects all received elements into a [List].
+ */
+public suspend fun <E> ReceiveChannel<E>.collectList(): List<E> {
+    val list = mutableListOf<E>()
+
+    consumeEach { list += it }
+
+    return list
+}
+
+/**
+ * Collects all received elements into a [Map] using specified [keyExtractor] to extract key from element.
+ */
+public suspend fun <K, E> ReceiveChannel<E>.collectMap(keyExtractor: (E) -> K): Map<K, E> {
+    val map = mutableMapOf<K, E>()
+
+    consumeEach { map += keyExtractor(it) to it }
+
+    return map
+}
+
+/**
+ * Collects all received elements into a [Sequence].
+ */
+public suspend fun <E> ReceiveChannel<E>.collectSequence(): Sequence<E> = collectList().asSequence()
+
+/**
+ * Collects all received elements into a [Set].
+ */
+public suspend fun <E> ReceiveChannel<E>.collectSet(): Set<E> {
+    val set = mutableSetOf<E>()
+
+    consumeEach { set += it }
+
+    return set
+}
+
