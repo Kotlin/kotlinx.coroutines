@@ -136,10 +136,18 @@ internal class MutexImpl(locked: Boolean) : Mutex {
     @Volatile
     private var _state: Any? = if (locked) EmptyLocked else EmptyUnlocked // shared objects while we have no waiters
 
+    // resumeNext is: RESUME_QUIESCENT | RESUME_ACTIVE | ResumeReq
+    @Volatile
+    private var resumeNext: Any = RESUME_QUIESCENT
+
     private companion object {
         @JvmField
         val STATE: AtomicReferenceFieldUpdater<MutexImpl, Any?> =
             AtomicReferenceFieldUpdater.newUpdater(MutexImpl::class.java, Any::class.java, "_state")
+
+        @JvmField
+        val RESUME_NEXT: AtomicReferenceFieldUpdater<MutexImpl, Any> =
+            AtomicReferenceFieldUpdater.newUpdater(MutexImpl::class.java, Any::class.java, "resumeNext")
 
         @JvmField
         val LOCK_FAIL = Symbol("LOCK_FAIL")
@@ -165,6 +173,11 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         @JvmField
         val EmptyUnlocked = Empty(UNLOCKED)
 
+        @JvmField
+        val RESUME_QUIESCENT = Symbol("RESUME_QUIESCENT")
+
+        @JvmField
+        val RESUME_ACTIVE = Symbol("RESUME_ACTIVE")
     }
 
     public override val isLocked: Boolean get() {
@@ -347,14 +360,60 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                         if (STATE.compareAndSet(this, state, op) && op.perform(this) == null) return
                     } else {
                         val token = (waiter as LockWaiter).tryResumeLockWaiter()
-                        if (token != null) { // successfully resumed waiter that now is holding the lock
+                        if (token != null) {
+                            // successfully resumed waiter that now is holding the lock
+                            // we must immediately transfer ownership to the next waiter, because this coroutine
+                            // might try to lock it again after unlock returns do to StackOverflow avoidance code
+                            // and its attempts to take a lock must be queued.
                             state.owner = waiter.owner ?: LOCKED
-                            waiter.completeResumeLockWaiter(token)
+                            // StackOverflow avoidance code
+                            if (startResumeNext(waiter, token)) {
+                                waiter.completeResumeLockWaiter(token)
+                                finishResumeNext()
+                            }
                             return
                         }
                     }
                 }
                 else -> error("Illegal state $state")
+            }
+        }
+    }
+
+    private class ResumeReq(
+        @JvmField val waiter: LockWaiter,
+        @JvmField val token: Any
+    )
+
+    private fun startResumeNext(waiter: LockWaiter, token: Any): Boolean {
+        while (true) { // lock-free loop on resumeNext
+            val resumeNext = this.resumeNext
+            when {
+                resumeNext === RESUME_QUIESCENT -> {
+                    // this is never concurrent, because only one thread is holding mutex and trying to resume
+                    // next waiter, so no need to CAS here
+                    this.resumeNext = RESUME_ACTIVE
+                    return true
+                }
+                resumeNext === RESUME_ACTIVE ->
+                    if (RESUME_NEXT.compareAndSet(this, resumeNext, ResumeReq(waiter, token))) return false
+                else -> error("Cannot happen")
+            }
+        }
+    }
+
+    private fun finishResumeNext() {
+        while (true) { // lock-free loop on resumeNext, also a resumption loop to fulfill requests of inner resume invokes
+            val resumeNext = this.resumeNext
+            when {
+                resumeNext === RESUME_ACTIVE ->
+                    if (RESUME_NEXT.compareAndSet(this, resumeNext, RESUME_QUIESCENT)) return
+                resumeNext is ResumeReq -> {
+                    // this is never concurrently, only one thread is finishing, so no need to CAS here
+                    this.resumeNext = RESUME_ACTIVE
+                    resumeNext.waiter.completeResumeLockWaiter(resumeNext.token)
+                }
+                else -> error("Cannot happen")
             }
         }
     }

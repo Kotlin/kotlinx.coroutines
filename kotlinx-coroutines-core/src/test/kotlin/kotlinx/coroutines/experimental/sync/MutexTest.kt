@@ -16,8 +16,8 @@
 
 package kotlinx.coroutines.experimental.sync
 
-import guide.sync.example06.mutex
 import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -90,5 +90,21 @@ class MutexTest : TestBase() {
         jobs.forEach { it.join() }
         println("Shared value = $shared")
         assertEquals(n * k, shared)
+    }
+
+    @Test
+    fun testUnconfinedStackOverflow() {
+        val waiters = 10000
+        val mutex = Mutex(true)
+        var done = 0
+        repeat(waiters) {
+            launch(Unconfined) {  // a lot of unconfined waiters
+                mutex.withLock {
+                    done++
+                }
+            }
+        }
+        mutex.unlock() // should not produce StackOverflowError
+        assertThat(done, IsEqual(waiters))
     }
 }
