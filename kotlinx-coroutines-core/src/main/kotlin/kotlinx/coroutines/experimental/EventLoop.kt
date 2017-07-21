@@ -42,26 +42,35 @@ public interface EventLoop {
      */
     public fun processNextEvent(): Long
 
+    /** @suppress **Deprecated **/
+    @Deprecated(message = "Companion object to be removed, no replacement")
     public companion object Factory {
-        /**
-         * Creates a new event loop that is bound the specified [thread] (current thread by default) and
-         * stops accepting new events when [parentJob] completes. Every continuation that is scheduled
-         * onto this event loop unparks the specified thread via [LockSupport.unpark].
-         *
-         * The main event-processing loop using the resulting `eventLoop` object should look like this:
-         * ```
-         * while (needsToBeRunning) {
-         *     if (Thread.interrupted()) break // or handle somehow
-         *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
-         * }
-         * ```
-         */
+        /** @suppress **Deprecated **/
+        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
         public operator fun invoke(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
             EventLoopImpl(thread).apply {
                 if (parentJob != null) initParentJob(parentJob)
             }
     }
 }
+
+/**
+ * Creates a new event loop that is bound the specified [thread] (current thread by default) and
+ * stops accepting new events when [parentJob] completes. Every continuation that is scheduled
+ * onto this event loop unparks the specified thread via [LockSupport.unpark].
+ *
+ * The main event-processing loop using the resulting `eventLoop` object should look like this:
+ * ```
+ * while (needsToBeRunning) {
+ *     if (Thread.interrupted()) break // or handle somehow
+ *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
+ * }
+ * ```
+ */
+public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
+    EventLoopImpl(thread).apply {
+        if (parentJob != null) initParentJob(parentJob)
+    }
 
 private const val DELAYED = 0
 private const val REMOVED = 1
