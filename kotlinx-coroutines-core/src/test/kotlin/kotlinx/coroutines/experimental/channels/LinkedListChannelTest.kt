@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import junit.framework.Assert.assertFalse
-import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
@@ -30,10 +28,10 @@ class LinkedListChannelTest : TestBase() {
     fun testBasic() = runBlocking {
         val c = LinkedListChannel<Int>()
         c.send(1)
-        assertTrue(c.offer(2))
+        check(c.offer(2))
         c.send(3)
-        assertTrue(c.close())
-        assertFalse(c.close())
+        check(c.close())
+        check(!c.close())
         assertThat(c.receive(), IsEqual(1))
         assertThat(c.poll(), IsEqual(2))
         assertThat(c.receiveOrNull(), IsEqual(3))
