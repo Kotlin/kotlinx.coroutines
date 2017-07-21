@@ -36,13 +36,15 @@ import kotlin.coroutines.experimental.startCoroutine
 public interface Mutex {
     /**
      * Factory for [Mutex] instances.
+     * @suppress **Deprecated**
      */
     public companion object Factory {
         /**
          * Creates new [Mutex] instance.
-         * @param locked initial state of the mutex.
+         * @suppress **Deprecated**
          */
-        public operator fun invoke(locked: Boolean = false) : Mutex = MutexImpl(locked)
+        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
+        public operator fun invoke(locked: Boolean = false): Mutex = Mutex(locked)
     }
 
     /**
@@ -95,6 +97,12 @@ public interface Mutex {
      */
     public fun unlock(owner: Any? = null)
 }
+
+/**
+ * Creates new [Mutex] instance.
+ * @param locked initial state of the mutex.
+ */
+public fun Mutex(locked: Boolean = false): Mutex = MutexImpl(locked)
 
 /**
  * Executes the given [action] under this mutex's lock.
