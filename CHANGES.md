@@ -1,5 +1,39 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.17
+
+* `CompletableDeferred` is introduced as a set-once event-like communication primitive (see #70).
+  * [Coroutines guide](coroutines-guide.md) uses it in a section on actors.
+  * `CompletableDeferred` is an interface with private impl (courtesy of @fvasco, see #86).
+  * It extends `Deferred` interface with `complete` and `completeExceptionally` functions.
+* `Job.join` and `Job.await` wait until a cancelled coroutine stops execution (see #64). 
+  * `Job` and `Deferred` have a new _cancelling_ state which they enter on invocation of `cancel`.
+  * `Job.invokeOnCompletion` has an additional overload with `onCancelling: Boolean` parameter to 
+    install handlers that are fired as soon as coroutine enters _cancelling_ state as opposed
+    to waiting until it _completes_.
+  * Internal `select` implementation is refactored to decouple it from `JobSupport` internal class 
+    and to optimize its state-machine.  
+  * Internal `AbstractCoroutine` class is refactored so that it is extended only by true coroutines, 
+    all of which support the new _cancelling_ state.  
+* `CoroutineScope.context` is renamed to `coroutineContext` to avoid conflicts with other usages of `context`
+  in applications (like Android context, see #75).       
+* `BroadcastChannel.open` is renamed to `openSubscription` (see #54).
+* Fixed `StackOverflowError` in a convoy of `Mutex.unlock` invokers with `Unconfined` dispatcher (see #80).
+* Fixed `SecurityException` when trying to use coroutines library with installed `SecurityManager`.
+* Fixed a bug in `withTimeoutOrNull` in case with nested timeouts when coroutine was cancelled before it was
+  ever suspended.
+* Fixed a minor problem with `awaitFirst` on reactive streams that would have resulted in spurious stack-traces printed
+  on the console when used with publishers/observables that continue to invoke `onNext` despite being cancelled/disposed 
+  (which they are technically allowed to do by specification). 
+* All factory functions for various interfaces are implemented as top-level functions
+  (affects `Job`, `Channel`, `BroadcastChannel`, `Mutex`, `EventLoop`, and `CoroutineExceptionHandler`). 
+  Previous approach of using `operator invoke` on their companion objects is deprecated. 
+* Nicer-to-use debug `toString` implementations for coroutine dispatcher tasks and continuations.  
+* A default dispatcher for `delay` is rewritten and now shares code with `EventLoopImpl` that is used by 
+  `runBlocking`. It internally supports non-default `TimeSource` so that delay-using tests can be written 
+  with "virtual time" by replacing their time source for the duration of tests (this feature is not available
+  outside of the library).
+
 ## Version 0.16
 
 * Coroutines that are scheduled for execution are cancellable by default now
@@ -13,15 +47,15 @@
   * `run` function is also cancellable in the same way and accepts an optional
     `CoroutineStart` parameter to change this default.
 * `BroadcastChannel` factory function is introduced
-* `CorouiteExceptionHandler` factory function is introduced by @konrad-kaminski
+* `CoroutineExceptionHandler` factory function is introduced by @konrad-kaminski
 * [`integration`](integration) directory is introduced for all 3rd party integration projects
   * It has [contribution guidelines](integration/README.md#contributing) and contributions from community are welcome
   * Support for Guava `ListenableFuture` in the new [`kotlinx-coroutines-guava`](integration/kotlinx-coroutines-guava) module
   * Rx1 Scheduler support by @konrad-kaminski
-* #66 Fixed a number of `Channel` and `BroadcastChannel` implementation bugs related to concurrent 
-  send/close/close of channels that lead to hanging send, offer or close operations. 
+* Fixed a number of `Channel` and `BroadcastChannel` implementation bugs related to concurrent 
+  send/close/close of channels that lead to hanging send, offer or close operations (see #66). 
   Thanks to @chrisly42 and @cy6erGn0m for finding them.
-* #67 Fixed `withTimeoutOrNull` which was returning `null` on timeout of inner or outer `withTimeout` blocks.
+* Fixed `withTimeoutOrNull` which was returning `null` on timeout of inner or outer `withTimeout` blocks (see #67).
   Thanks to @gregschlom for finding the problem.
 * Fixed a bug where `Job` fails to dispose a handler when it is the only handler by @uchuhimo
 
