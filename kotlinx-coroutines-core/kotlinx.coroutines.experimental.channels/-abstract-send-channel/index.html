@@ -31,7 +31,7 @@
 
 <h1 id="abstractsendchannel">AbstractSendChannel</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L28">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L32">(source)</a></div>
 
 <p>Abstract send channel. It is a base class for all send channel implementations.</p>
 
@@ -188,7 +188,7 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Broadcast channel with array buffer of a fixed <a href="../-array-broadcast-channel/capacity.html">capacity</a>.
-Sender suspends only when buffer is fully due to one of the receives not being late and
+Sender suspends only when buffer is full due to one of the receives being slow to consume and
 receiver suspends only when buffer is empty.</p>
 
       </td>

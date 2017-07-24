@@ -31,18 +31,58 @@
 
 <h1 id="invokeoncompletion">invokeOnCompletion</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L112">(source)</a></div>
+<div class="overload-group">
 
-<p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L200">(source)</a></div>
+
+  <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
 When job is already complete, then the handler is immediately invoked
-with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
-job is complete. Note, that <a href="cancel.html">cancellation</a> is also a form of completion.</p>
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete.</p>
 
-<p>The resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> can be used to <a href="../-disposable-handle/dispose.html">dispose</a> the
+  <p>The resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> can be used to <a href="../-disposable-handle/dispose.html">dispose</a> the
 registration of this handler and release its memory if its invocation is no longer needed.
-There is no need to dispose the handler after completion of this job. The reference to
+There is no need to dispose the handler after completion of this job. The references to
 all the handlers are released when this job completes.</p>
 
+  <p>Note, that the handler is not invoked on invocation of <a href="cancel.html">cancel</a> when
+job becomes <em>cancelling</em>, but only when the corresponding coroutine had finished execution
+of its code and became <em>cancelled</em>. There is an overloaded version of this function
+with <code>onCancelling</code> parameter to receive notification on <em>cancelling</em> state.</p>
+
+  <p><strong>Note</strong>: This function is a part of internal machinery that supports parent-child hierarchies
+and allows for implementation of suspending functions that wait on the Job’s state.
+This function should not be used in general application code.
+Implementations of <code>CompletionHandler</code> must be fast and <em>lock-free</em>.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L225">(source)</a></div>
+
+  <p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation or completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is cancelled or complete.</p>
+
+  <p>Invocation of this handler on a transition to a transient <em>cancelling</em> state
+is controlled by <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</a> boolean parameter.
+The handler is invoked on invocation of <a href="cancel.html">cancel</a> when
+job becomes <em>cancelling</em> when <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</a> parameters is set to <code>true</code>. However,
+when this <a href="index.html">Job</a> is not backed by a coroutine, like <a href="../-completable-deferred/index.html">CompletableDeferred</a> or <a href="../-cancellable-continuation/index.html">CancellableContinuation</a>
+(both of which do not posses a <em>cancelling</em> state), then the value of <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</a> parameter is ignored.</p>
+
+  <p>The resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> can be used to <a href="../-disposable-handle/dispose.html">dispose</a> the
+registration of this handler and release its memory if its invocation is no longer needed.
+There is no need to dispose the handler after completion of this job. The references to
+all the handlers are released when this job completes.</p>
+
+  <p><strong>Note</strong>: This function is a part of internal machinery that supports parent-child hierarchies
+and allows for implementation of suspending functions that wait on the Job’s state.
+This function should not be used in general application code.
+Implementations of <code>CompletionHandler</code> must be fast and <em>lock-free</em>.</p>
+
+</div>
 
       </div>
     </main>

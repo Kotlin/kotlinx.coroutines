@@ -66,11 +66,11 @@ the channel instance returned by this function.</p>
 <tr>
 <td>
 
-        <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a></p>
+        <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html">coroutineContext</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Returns the context of this coroutine.</p>
 
@@ -85,7 +85,7 @@ the channel instance returned by this function.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
+        <p>Returns <code>true</code> when this coroutine is still active (has not completed and was not cancelled yet).</p>
 
       </td>
 </tr>

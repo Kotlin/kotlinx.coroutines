@@ -70,7 +70,21 @@ the channel instance returned by this function.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this job is active.</p>
+        <p>Returns <code>true</code> when this job is active – it was already started and has not completed or cancelled yet.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental/-job/is-cancelled.html">isCancelled</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if this job was <a href="../../kotlinx.coroutines.experimental/-job/cancel.html">cancelled</a>. In the general case, it does not imply that the
+job has already <a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">completed</a> (it may still be cancelling whatever it was doing).</p>
 
       </td>
 </tr>
@@ -100,7 +114,8 @@ an element from a failed channel throw the original <a href="../-send-channel/cl
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this job has completed for any reason.</p>
+        <p>Returns <code>true</code> when this job has completed for any reason. A job that was cancelled and has
+finished its execution is also considered complete.</p>
 
       </td>
 </tr>
@@ -134,7 +149,7 @@ This function returns <code>false</code> for <a href="../-receive-channel/is-clo
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Cancel this activity with an optional cancellation <a href="../../kotlinx.coroutines.experimental/-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
+        <p>Cancel this job with an optional cancellation <a href="../../kotlinx.coroutines.experimental/-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
 cancelled as a result of this invocation and <code>false</code> otherwise
 (if it was already <em>completed</em> or if it is <a href="../../kotlinx.coroutines.experimental/-non-cancellable/index.html">NonCancellable</a>).
 Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
@@ -153,7 +168,8 @@ Repeated invocations of this function have no effect and always produce <code>fa
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> cause or an instance of <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">completed</a> yet.</p>
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../../kotlinx.coroutines.experimental/-job/is-completed.html">completed</a> nor
+<a href="../../kotlinx.coroutines.experimental/-job/is-cancelled.html">isCancelled</a> yet.</p>
 
       </td>
 </tr>
@@ -166,10 +182,17 @@ normally or was cancelled without a cause. This function throws
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+        <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
 When job is already complete, then the handler is immediately invoked
-with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
-job is complete. Note, that <a href="../../kotlinx.coroutines.experimental/-job/cancel.html">cancellation</a> is also a form of completion.</p>
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete.</p>
+
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+        <p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation or completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is cancelled or complete.</p>
 
       </td>
 </tr>

@@ -63,6 +63,19 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <tr>
 <td>
 
+        <p><a href="is-cancelled.html">isCancelled</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Always returns <code>false</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="is-completed.html">isCompleted</a></p>
 
       </td>
@@ -114,6 +127,8 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.NonCancellable$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Always returns <a href="../-non-disposable-handle/index.html">NonDisposableHandle</a>.</p>
 

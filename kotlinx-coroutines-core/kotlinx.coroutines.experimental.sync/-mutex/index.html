@@ -31,7 +31,7 @@
 
 <h1 id="mutex">Mutex</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L35">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L36">(source)</a></div>
 
 <p>Mutual exclusion for coroutines.</p>
 
@@ -99,26 +99,6 @@ the lock still suspends the invoker.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">unlock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$unlock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Unlocks this mutex. Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if invoked on a mutex that is not locked.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="companion-object-functions">Companion Object Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="invoke.html">invoke</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex.Factory$invoke(kotlin.Boolean)/locked">locked</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Mutex</span></code></div>
-
-        <p>Creates new Mutex instance.</p>
 
       </td>
 </tr>

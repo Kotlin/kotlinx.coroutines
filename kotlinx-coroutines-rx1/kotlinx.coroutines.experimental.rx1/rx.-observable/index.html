@@ -118,11 +118,11 @@ returns the resulting value or throws the corresponding exception if this observ
 <tr>
 <td>
 
-        <p><a href="open.html">open</a></p>
+        <p><a href="open-subscription.html">openSubscription</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">open</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">openSubscription</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
 
         <p>Subscribes to this <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html">Observable</a> and returns a channel to receive elements emitted by it.
 The resulting channel shall be <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html">closed</a> to unsubscribe from this observable.</p>

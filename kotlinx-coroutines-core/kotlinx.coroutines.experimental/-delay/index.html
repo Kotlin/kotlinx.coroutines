@@ -31,7 +31,7 @@
 
 <h1 id="delay">Delay</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Delay</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Delay.kt#L32">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Delay</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Delay.kt#L33">(source)</a></div>
 
 <p>This dispatcher <em>feature</em> is implemented by <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that natively support
 scheduled execution of tasks.</p>
@@ -54,7 +54,7 @@ scheduled execution of tasks.</p>
 
         <p>Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
 This suspending function is cancellable.
-If the <a href="../-job/index.html">Job</a> of the current coroutine is completed while this suspending function is suspended, this function
+If the <a href="../-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="../-cancellation-exception.html">CancellationException</a>.</p>
 
       </td>

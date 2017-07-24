@@ -36,6 +36,8 @@
 <p>Channel with array buffer of a fixed <a href="-init-.html#kotlinx.coroutines.experimental.channels.ArrayChannel$&lt;init&gt;(kotlin.Int)/capacity">capacity</a>.
 Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
 
+<p>This channel is created by <code>Channel(capacity)</code> factory function invocation.</p>
+
 <p>This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
 The lists of suspended senders or receivers are lock-free.</p>
 

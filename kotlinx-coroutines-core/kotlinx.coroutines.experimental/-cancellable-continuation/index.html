@@ -31,13 +31,13 @@
 
 <h1 id="cancellablecontinuation">CancellableContinuation</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L50">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L62">(source)</a></div>
 
 <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
-When <a href="../-job/cancel.html">cancel</a> function is explicitly invoked, this continuation resumes with <a href="../-cancellation-exception.html">CancellationException</a> or
+When <a href="../-job/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../-cancellation-exception.html">CancellationException</a> or
 with the specified cancel cause.</p>
 
-<p>Cancellable continuation has three states:</p>
+<p>Cancellable continuation has three states (as subset of <a href="../-job/index.html">Job</a> states):</p>
 
 <table>
   <thead>
@@ -73,8 +73,22 @@ with the specified cancel cause.</p>
 <p>Invocation of <a href="../-job/cancel.html">cancel</a> transitions this continuation from <em>active</em> to <em>cancelled</em> state, while
 invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/resume-with-exception.html">resumeWithException</a> transitions it from <em>active</em> to <em>resumed</em> state.</p>
 
+<p>A <a href="is-cancelled.html">cancelled</a> continuation implies that it is <a href="../-job/is-completed.html">completed</a>.</p>
+
 <p>Invocation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/resume.html">resume</a> or <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/resume-with-exception.html">resumeWithException</a> in <em>resumed</em> state produces <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a>
 but is ignored in <em>cancelled</em> state.</p>
+
+<pre>    +-----------+   resume    +---------+
+    |  Active   | ----------&gt; | Resumed |
+    +-----------+             +---------+
+          |
+          | cancel
+          V
+    +-----------+
+    | Cancelled |
+    +-----------+
+
+</pre>
 
 <h3 id="properties">Properties</h3>
 
@@ -109,7 +123,7 @@ but is ignored in <em>cancelled</em> state.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this job is active.</p>
+        <p>Returns <code>true</code> when this job is active – it was already started and has not completed or cancelled yet.</p>
 
       </td>
 </tr>
@@ -122,7 +136,8 @@ but is ignored in <em>cancelled</em> state.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCompleted</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this job has completed for any reason.</p>
+        <p>Returns <code>true</code> when this job has completed for any reason. A job that was cancelled and has
+finished its execution is also considered complete.</p>
 
       </td>
 </tr>
@@ -195,7 +210,7 @@ This function is designed to be used only by the <a href="../-coroutine-dispatch
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Cancel this activity with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
+        <p>Cancel this job with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
 cancelled as a result of this invocation and <code>false</code> otherwise
 (if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
 Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
@@ -214,7 +229,8 @@ Repeated invocations of this function have no effect and always produce <code>fa
         <p>Returns the exception that signals the completion of this job – it returns the original
 <a href="../-job/cancel.html">cancel</a> cause or an instance of <a href="../-cancellation-exception.html">CancellationException</a> if this job had completed
 normally or was cancelled without a cause. This function throws
-<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> yet.</p>
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when invoked for an job that has not <a href="../-job/is-completed.html">completed</a> nor
+<a href="../-job/is-cancelled.html">isCancelled</a> yet.</p>
 
       </td>
 </tr>
@@ -227,10 +243,17 @@ normally or was cancelled without a cause. This function throws
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>Registers handler that is <strong>synchronously</strong> invoked on completion of this job.
+        <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
 When job is already complete, then the handler is immediately invoked
-with a cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
-job is complete. Note, that <a href="../-job/cancel.html">cancellation</a> is also a form of completion.</p>
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is complete.</p>
+
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.Boolean)/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+        <p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation or completion of this job.
+When job is already complete, then the handler is immediately invoked
+with a job’s cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
+job is cancelled or complete.</p>
 
       </td>
 </tr>
@@ -294,6 +317,28 @@ if it was already started or completed.</p>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">disposeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</span><span class="symbol">:</span>&nbsp;<a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
         <p>Disposes a specified <a href="../dispose-on-completion.html#kotlinx.coroutines.experimental$disposeOnCompletion(kotlinx.coroutines.experimental.Job, kotlinx.coroutines.experimental.DisposableHandle)/handle">handle</a> when this job is complete.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-continuation/resume-mode.html">resumeMode</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">resumeMode</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$resumeMode(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.resumeMode.T)), kotlinx.coroutines.experimental.resumeMode.T, kotlin.Int)/value">value</span><span class="symbol">:</span>&nbsp;<span class="identifier">T</span><span class="symbol">, </span><span class="parameterName" id="kotlinx.coroutines.experimental$resumeMode(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.resumeMode.T)), kotlinx.coroutines.experimental.resumeMode.T, kotlin.Int)/mode">mode</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-continuation/resume-with-exception-mode.html">resumeWithExceptionMode</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">resumeWithExceptionMode</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$resumeWithExceptionMode(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.resumeWithExceptionMode.T)), kotlin.Throwable, kotlin.Int)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$resumeWithExceptionMode(kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.resumeWithExceptionMode.T)), kotlin.Throwable, kotlin.Int)/mode">mode</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
       </td>
 </tr>

@@ -99,7 +99,7 @@
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Broadcast channel with array buffer of a fixed <a href="-array-broadcast-channel/capacity.html">capacity</a>.
-Sender suspends only when buffer is fully due to one of the receives not being late and
+Sender suspends only when buffer is full due to one of the receives being slow to consume and
 receiver suspends only when buffer is empty.</p>
 
       </td>
@@ -128,7 +128,7 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
-that subscribe for the elements using <a href="-broadcast-channel/open.html">open</a> function and unsubscribe using <a href="-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
+that subscribe for the elements using <a href="-broadcast-channel/open-subscription.html">openSubscription</a> function and unsubscribe using <a href="-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
 function.</p>
 
       </td>
@@ -171,7 +171,7 @@ from concurrent coroutines.</p>
 <td>
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Broadcasts the most recently sent element (aka <a href="-conflated-broadcast-channel/value.html">value</a>) to all <a href="-conflated-broadcast-channel/open.html">open</a> subscribers.</p>
+        <p>Broadcasts the most recently sent element (aka <a href="-conflated-broadcast-channel/value.html">value</a>) to all <a href="-conflated-broadcast-channel/open-subscription.html">openSubscription</a> subscribers.</p>
 
       </td>
 </tr>
@@ -282,7 +282,7 @@ until another coroutine invokes <a href="-abstract-channel/receive.html">receive
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SubscriptionReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
 
-        <p>Return type for <a href="-broadcast-channel/open.html">BroadcastChannel.open</a> that can be used to <a href="-receive-channel/receive.html">receive</a> elements from the
+        <p>Return type for <a href="-broadcast-channel/open-subscription.html">BroadcastChannel.openSubscription</a> that can be used to <a href="-receive-channel/receive.html">receive</a> elements from the
 open subscription and to <a href="-subscription-receive-channel/close.html">close</a> it to unsubscribe.</p>
 
       </td>
@@ -331,6 +331,36 @@ exception on send attempts.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="-broadcast-channel.html">BroadcastChannel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">BroadcastChannel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$BroadcastChannel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a broadcast channel with the specified buffer capacity.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-channel.html">Channel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a channel without a buffer – <a href="-rendezvous-channel/index.html">RendezvousChannel</a>.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates a channel with the specified buffer capacity (or without a buffer by default).</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

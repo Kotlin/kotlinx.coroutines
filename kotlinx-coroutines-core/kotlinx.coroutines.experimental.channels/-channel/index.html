@@ -31,13 +31,13 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L248">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L250">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
-<p>See <a href="invoke.html">Channel()</a> factory function for the description of available channel implementations.</p>
+<p>See <code>Channel(capacity)</code> factory function for the description of available channel implementations.</p>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 
@@ -206,7 +206,7 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests conflated channel in <a href="invoke.html">Channel()</a> factory function –
+        <p>Requests conflated channel in <code>Channel(...)</code> factory function –
 the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created.</p>
 
       </td>
@@ -220,28 +220,8 @@ the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests channel with unlimited capacity buffer in <a href="invoke.html">Channel()</a> factory function –
+        <p>Requests channel with unlimited capacity buffer in <code>Channel(...)</code> factory function –
 the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets created.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="companion-object-functions">Companion Object Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="invoke.html">invoke</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.Channel.Factory$invoke(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Creates a channel with the specified buffer capacity (or without a buffer by default).</p>
 
       </td>
 </tr>

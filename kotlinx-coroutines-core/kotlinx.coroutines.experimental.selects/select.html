@@ -104,7 +104,7 @@ of the alternatives or to perform default (<code>else</code>) action if none of 
   </tbody>
 </table>
 
-<p>This suspending function is cancellable. If the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this
+<p>This suspending function is cancellable. If the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
 function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
 
 <p>Atomicity of cancellation depends on the clause: <a href="-select-builder/on-send.html">onSend</a>, <a href="-select-builder/on-receive.html">onReceive</a>,

@@ -31,13 +31,13 @@
 
 <h1 id="await">await</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L74">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L97">(source)</a></div>
 
 <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
 returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.</p>
 
 <p>This suspending function is cancellable.
-If the <a href="../-job/index.html">Job</a> of the current coroutine is completed while this suspending function is waiting, this function
+If the <a href="../-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 immediately resumes with <a href="../-cancellation-exception.html">CancellationException</a>.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="../../kotlinx.coroutines.experimental.selects/-select-builder/on-await.html">onAwait</a> clause.

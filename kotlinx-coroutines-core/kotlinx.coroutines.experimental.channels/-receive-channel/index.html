@@ -31,7 +31,7 @@
 
 <h1 id="receivechannel">ReceiveChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L104">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L106">(source)</a></div>
 
 <p>Receiver’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -215,7 +215,7 @@ but it has suspending operations instead of blocking ones and it can be closed.<
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SubscriptionReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
 
-        <p>Return type for <a href="../-broadcast-channel/open.html">BroadcastChannel.open</a> that can be used to <a href="receive.html">receive</a> elements from the
+        <p>Return type for <a href="../-broadcast-channel/open-subscription.html">BroadcastChannel.openSubscription</a> that can be used to <a href="receive.html">receive</a> elements from the
 open subscription and to <a href="../-subscription-receive-channel/close.html">close</a> it to unsubscribe.</p>
 
       </td>

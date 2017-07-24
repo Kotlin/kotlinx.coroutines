@@ -31,14 +31,14 @@
 
 <h1 id="receive">receive</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L141">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L143">(source)</a></div>
 
 <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="is-empty.html">isEmpty</a>
 or throws <a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a> if the channel <a href="is-closed-for-receive.html">isClosedForReceive</a>.
 If the channel was closed because of the exception, it is called a <em>failed</em> channel and this function
 throws the original <a href="../-send-channel/close.html">close</a> cause exception.</p>
 
-<p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is completed while this
+<p>This suspending function is cancellable. If the <a href="../../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
 function is suspended, this function immediately resumes with <a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
 
 <p><em>Cancellation of suspended receive is atomic</em> – when this function

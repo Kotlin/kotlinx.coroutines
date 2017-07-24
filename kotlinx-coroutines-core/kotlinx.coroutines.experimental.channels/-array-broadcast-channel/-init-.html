@@ -34,11 +34,13 @@
 <div class="signature"><code><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$&lt;init&gt;(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span></code></div>
 
 <p>Broadcast channel with array buffer of a fixed <a href="-init-.html#kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel$&lt;init&gt;(kotlin.Int)/capacity">capacity</a>.
-Sender suspends only when buffer is fully due to one of the receives not being late and
+Sender suspends only when buffer is full due to one of the receives being slow to consume and
 receiver suspends only when buffer is empty.</p>
 
-<p>Note, that elements that are sent to the broadcast channel while there are no <a href="open.html">open</a> subscribers are immediately
+<p>Note, that elements that are sent to the broadcast channel while there are no <a href="open-subscription.html">openSubscription</a> subscribers are immediately
 lost.</p>
+
+<p>This channel is created by <code>BroadcastChannel(capacity)</code> factory function invocation.</p>
 
 <p>This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
 The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.

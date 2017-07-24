@@ -31,9 +31,14 @@
 
 <h1 id="completionhandler">CompletionHandler</h1>
 
-<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L198">(source)</a></div>
+<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L299">(source)</a></div>
 
 <p>Handler for <a href="-job/invoke-on-completion.html">Job.invokeOnCompletion</a>.</p>
+
+<p><strong>Note</strong>: This type is a part of internal machinery that supports parent-child hierarchies
+and allows for implementation of suspending functions that wait on the Job’s state.
+This type should not be used in general application code.
+Implementations of <code>CompletionHandler</code> must be fast and <em>lock-free</em>.</p>
 
 
       </div>

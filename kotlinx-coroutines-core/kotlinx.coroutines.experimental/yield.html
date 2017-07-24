@@ -37,7 +37,7 @@
 If the coroutine dispatcher does not have its own thread pool (like <a href="-unconfined/index.html">Unconfined</a> dispatcher) then this
 function does nothing, but checks if the coroutine <a href="-job/index.html">Job</a> was completed.
 This suspending function is cancellable.
-If the <a href="-job/index.html">Job</a> of the current coroutine is completed when this suspending function is invoked or while
+If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed when this suspending function is invoked or while
 this function is waiting for dispatching, it resumes with <a href="-cancellation-exception.html">CancellationException</a>.</p>
 
 

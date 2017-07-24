@@ -31,10 +31,10 @@
 
 <h1 id="coroutinescope">CoroutineScope</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineScope.kt#L26">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineScope</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineScope.kt#L25">(source)</a></div>
 
 <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
-to its <a href="context.html">context</a> and its cancellation status via <a href="is-active.html">isActive</a>.</p>
+to its <a href="coroutine-context.html">coroutineContext</a> and its cancellation status via <a href="is-active.html">isActive</a>.</p>
 
 <h3 id="properties">Properties</h3>
 
@@ -43,11 +43,11 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 <tr>
 <td>
 
-        <p><a href="context.html">context</a></p>
+        <p><a href="coroutine-context.html">coroutineContext</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">context</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
 
         <p>Returns the context of this coroutine.</p>
 
@@ -62,7 +62,7 @@ to its <a href="context.html">context</a> and its cancellation status via <a hre
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
+        <p>Returns <code>true</code> when this coroutine is still active (has not completed and was not cancelled yet).</p>
 
       </td>
 </tr>

@@ -45,7 +45,7 @@ The running coroutine is cancelled when the its job is <a href="../kotlinx.corou
 
 <p>The <a href="actor.html#kotlinx.coroutines.experimental.channels$actor(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/context">context</a> for the new coroutine must be explicitly specified.
 See <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the standard <a href="actor.html#kotlinx.coroutines.experimental.channels$actor(kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/context">context</a> implementations that are provided by <code>kotlinx.coroutines</code>.
-The <a href="../kotlinx.coroutines.experimental/-coroutine-scope/context.html">context</a> of the parent coroutine from its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">scope</a> may be used,
+The <a href="#">context</a> of the parent coroutine from its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/index.html">scope</a> may be used,
 in which case the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the resulting coroutine is a child of the job of the parent coroutine.</p>
 
 <p>By default, the coroutine is immediately scheduled for execution.

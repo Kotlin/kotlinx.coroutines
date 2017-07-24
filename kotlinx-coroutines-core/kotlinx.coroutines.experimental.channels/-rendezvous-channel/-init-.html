@@ -37,6 +37,8 @@
 to receiver only when <a href="#">send</a> and <a href="../-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
 until another coroutine invokes <a href="../-abstract-channel/receive.html">receive</a> and <a href="../-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
 
+<p>Use <code>Channel()</code> factory function to conveniently create an instance of rendezvous channel.</p>
+
 <p>This implementation is fully lock-free.</p>
 
 

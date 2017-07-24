@@ -39,6 +39,8 @@ Back-to-send sent elements are <em>conflated</em> – only the the most recently
 while previously sent elements <strong>are lost</strong>.
 Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
 
+<p>This channel is created by <code>Channel(Channel.CONFLATED)</code> factory function invocation.</p>
+
 <p>This implementation is fully lock-free.</p>
 
 

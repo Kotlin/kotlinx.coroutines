@@ -45,17 +45,18 @@ immediately sending an element: <code>ConflatedBroadcastChannel().apply { offer(
 
   <div class="signature"><code><span class="identifier">ConflatedBroadcastChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
 
-  <p>Broadcasts the most recently sent element (aka <a href="value.html">value</a>) to all <a href="open.html">open</a> subscribers.</p>
+  <p>Broadcasts the most recently sent element (aka <a href="value.html">value</a>) to all <a href="open-subscription.html">openSubscription</a> subscribers.</p>
 
   <p>Back-to-send sent elements are <em>conflated</em> – only the the most recently sent value is received,
 while previously sent elements <strong>are lost</strong>.
 Every subscriber immediately receives the most recently sent element.
 Sender to this broadcast channel never suspends and <a href="offer.html">offer</a> always returns <code>true</code>.</p>
 
-  <p>A secondary constructor can be used to create an instance of this class that already holds a value.</p>
+  <p>A secondary constructor can be used to create an instance of this class that already holds a value.
+This channel is also created by <code>BroadcastChannel(Channel.CONFLATED)</code> factory function invocation.</p>
 
   <p>This implementation is fully lock-free. In this implementation
-<a href="open.html">opening</a> and <a href="../-subscription-receive-channel/close.html">closing</a> subscription takes O(N) time, where N is the
+<a href="open-subscription.html">opening</a> and <a href="../-subscription-receive-channel/close.html">closing</a> subscription takes O(N) time, where N is the
 number of subscribers.</p>
 
 </div>

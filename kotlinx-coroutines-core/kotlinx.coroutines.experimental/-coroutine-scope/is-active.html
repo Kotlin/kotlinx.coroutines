@@ -31,9 +31,9 @@
 
 <h1 id="isactive">isActive</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineScope.kt#L39">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineScope.kt#L38">(source)</a></div>
 
-<p>Returns <code>true</code> when this coroutine is still active (has not completed yet).</p>
+<p>Returns <code>true</code> when this coroutine is still active (has not completed and was not cancelled yet).</p>
 
 <p>Check this property in long-running computation loops to support cancellation:</p>
 
@@ -42,7 +42,7 @@
 }
 </pre>
 
-<p>This property is a shortcut for <code>context[Job]!!.isActive</code>. See <a href="context.html">context</a> and <a href="../-job/index.html">Job</a>.</p>
+<p>This property is a shortcut for <code>coroutineContext[Job]!!.isActive</code>. See <a href="coroutine-context.html">coroutineContext</a> and <a href="../-job/index.html">Job</a>.</p>
 
 
       </div>
