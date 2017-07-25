@@ -236,10 +236,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
                     }
                 }
 
-                readPosition = carryIndex(readPosition + part)
-
-                it.completeRead(part)
-                resumeWriteOp()
+                bytesRead(it, part)
                 true
             } else {
                 false
@@ -259,10 +256,8 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (part > 0) {
                 consumed += part
                 get(dst, offset, part)
-                readPosition = carryIndex(readPosition + part)
 
-                it.completeRead(part)
-                resumeWriteOp()
+                bytesRead(it, part)
                 true
             } else {
                 false
@@ -336,9 +331,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         val rc = reading {
             if (it.tryReadExact(1)) {
                 b = get()
-                readPosition = carryIndex(readPosition + 1)
-                it.completeRead(1)
-                resumeWriteOp()
+                bytesRead(it, 1)
                 true
             } else false
         }
@@ -361,9 +354,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         val rc = reading {
             if (it.tryReadExact(1)) {
                 b = get() != 0.toByte()
-                readPosition = carryIndex(readPosition + 1)
-                it.completeRead(1)
-                resumeWriteOp()
+                bytesRead(it, 1)
                 true
             } else false
         }
@@ -386,9 +377,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         val rc = reading {
             if (it.tryReadExact(1)) {
                 b = get().toShort() and 0xff
-                readPosition = carryIndex(readPosition + 1)
-                it.completeRead(1)
-                resumeWriteOp()
+                bytesRead(it, 1)
                 true
             } else false
         }
@@ -409,9 +398,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(2)) {
                 if (remaining() < 2) rollBytes(2)
                 sh = getShort()
-                readPosition = carryIndex(readPosition + 2)
-                it.completeRead(2)
-                resumeWriteOp()
+                bytesRead(it, 2)
                 true
             } else false
         }
@@ -435,9 +422,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(2)) {
                 if (remaining() < 2) rollBytes(2)
                 sh = getShort().toInt() and 0xffff
-                readPosition = carryIndex(readPosition + 2)
-                it.completeRead(2)
-                resumeWriteOp()
+                bytesRead(it, 2)
                 true
             } else false
         }
@@ -458,9 +443,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(4)) {
                 if (remaining() < 4) rollBytes(4)
                 i = getInt()
-                readPosition = carryIndex(readPosition + 4)
-                it.completeRead(4)
-                resumeWriteOp()
+                bytesRead(it, 4)
                 true
             } else false
         }
@@ -484,9 +467,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(4)) {
                 if (remaining() < 4) rollBytes(4)
                 i = getInt().toLong() and 0xffffffff
-                readPosition = carryIndex(readPosition + 4)
-                it.completeRead(4)
-                resumeWriteOp()
+                bytesRead(it, 4)
                 true
             } else false
         }
@@ -507,9 +488,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(8)) {
                 if (remaining() < 8) rollBytes(8)
                 i = getLong()
-                readPosition = carryIndex(readPosition + 8)
-                it.completeRead(8)
-                resumeWriteOp()
+                bytesRead(it, 8)
                 true
             } else false
         }
@@ -533,9 +512,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(8)) {
                 if (remaining() < 8) rollBytes(8)
                 d = getDouble()
-                readPosition = carryIndex(readPosition + 8)
-                it.completeRead(8)
-                resumeWriteOp()
+                bytesRead(it, 8)
                 true
             } else false
         }
@@ -559,9 +536,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             if (it.tryReadExact(4)) {
                 if (remaining() < 4) rollBytes(4)
                 f = getFloat()
-                readPosition = carryIndex(readPosition + 4)
-                it.completeRead(4)
-                resumeWriteOp()
+                bytesRead(it, 4)
                 true
             } else false
         }
@@ -597,6 +572,14 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
 
         writePosition = carryIndex(writePosition + n)
         c.completeWrite(n)
+    }
+
+    private fun ByteBuffer.bytesRead(c: RingBufferCapacity, n: Int) {
+        require(n >= 0)
+
+        readPosition = carryIndex(readPosition + n)
+        c.completeRead(n)
+        resumeWriteOp()
     }
 
     suspend override fun writeByte(b: Byte) {
@@ -891,12 +874,8 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         if (consumed > 0) {
             if (!c.tryReadExact(consumed)) throw IllegalStateException("Consumed more bytes than available")
 
-            readPosition = buffer.carryIndex(buffer.position())
-
+            buffer.bytesRead(c, consumed)
             buffer.prepareBuffer(readByteOrder, readPosition, c.remaining)
-
-            c.completeRead(consumed)
-            resumeWriteOp()
         }
 
         return consumed
