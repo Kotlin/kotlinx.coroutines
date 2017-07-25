@@ -1,3 +1,5 @@
+@file:Suppress("UsePropertyAccessSyntax") // for ByteBuffer.getShort/getInt/etc
+
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
@@ -6,21 +8,22 @@ import kotlinx.coroutines.experimental.io.internal.*
 import java.nio.*
 import java.nio.charset.*
 import java.util.concurrent.atomic.*
+import kotlin.experimental.*
 
-open class ByteBufferChannel internal constructor(override val autoFlush: Boolean, val pool: ObjectPool<ReadWriteBufferState.Initial>) : ByteReadChannel, ByteWriteChannel {
+class ByteBufferChannel internal constructor(override val autoFlush: Boolean, val pool: ObjectPool<ReadWriteBufferState.Initial>) : ByteReadChannel, ByteWriteChannel {
     constructor(autoFlush: Boolean = false) : this(autoFlush, DirectBufferObjectPool)
 
     @Volatile
-    protected var state: ReadWriteBufferState = ReadWriteBufferState.IdleEmpty
+    private var state: ReadWriteBufferState = ReadWriteBufferState.IdleEmpty
 
     @Volatile
-    protected var closed: ClosedElement? = null
+    private var closed: ClosedElement? = null
 
     @Volatile
-    protected var readOp: ReadElement? = null
+    private var readOp: CancellableContinuation<Boolean>? = null
 
     @Volatile
-    protected var writeOp: WriteElement? = null
+    private var writeOp: CancellableContinuation<Unit>? = null
 
     private var readPosition = 0
     private var writePosition = 0
@@ -378,8 +381,26 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
     }
 
     suspend override fun readUByte(): Short {
-        TODO()
+        var b: Short = 0
+
+        val rc = reading {
+            if (it.tryReadExact(1)) {
+                b = get().toShort() and 0xff
+                readPosition = carryIndex(readPosition + 1)
+                it.completeRead(1)
+                resumeWriteOp()
+                true
+            } else false
+        }
+
+        return if (rc) {
+            b
+        } else {
+            readUByteSuspend()
+        }
     }
+
+    private suspend fun readUByteSuspend(): Short = readByteSuspend().toShort() and 0xff
 
     suspend override fun readShort(): Short {
         var sh: Short = 0
@@ -408,8 +429,27 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
     }
 
     suspend override fun readUShort(): Int {
-        TODO()
+        var sh = 0
+
+        val rc = reading {
+            if (it.tryReadExact(2)) {
+                if (remaining() < 2) rollBytes(2)
+                sh = getShort().toInt() and 0xffff
+                readPosition = carryIndex(readPosition + 2)
+                it.completeRead(2)
+                resumeWriteOp()
+                true
+            } else false
+        }
+
+        return if (rc) {
+            sh
+        } else {
+            readUShortSuspend()
+        }
     }
+
+    private suspend fun readUShortSuspend() = readShortSuspend().toInt() and 0xffff
 
     suspend override fun readInt(): Int {
         var i = 0
@@ -432,21 +472,33 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         }
     }
 
-    private fun ByteBuffer.rollBytes(n: Int) {
-        limit(position() + n)
-        for (i in 1..n - remaining()) {
-            put(capacity() + ReservedLongIndex + i, get(i))
-        }
-    }
-
     private suspend fun readIntSuspend(): Int {
         if (!readSuspend(4)) throw ClosedReceiveChannelException("EOF while an int expected")
         return readInt()
     }
 
     suspend override fun readUInt(): Long {
-        TODO()
+        var i = 0L
+
+        val rc = reading {
+            if (it.tryReadExact(4)) {
+                if (remaining() < 4) rollBytes(4)
+                i = getInt().toLong() and 0xffffffff
+                readPosition = carryIndex(readPosition + 4)
+                it.completeRead(4)
+                resumeWriteOp()
+                true
+            } else false
+        }
+
+        return if (rc) {
+            i
+        } else {
+            readUIntSuspend()
+        }
     }
+
+    private suspend fun readUIntSuspend() = readIntSuspend().toLong() and 0xffffffff
 
     suspend override fun readLong(): Long {
         var i = 0L
@@ -524,6 +576,13 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
     private suspend fun readFloatSuspend(): Float {
         if (!readSuspend(4)) throw ClosedReceiveChannelException("EOF while an int expected")
         return readFloat()
+    }
+
+    private fun ByteBuffer.rollBytes(n: Int) {
+        limit(position() + n)
+        for (i in 1..n - remaining()) {
+            put(capacity() + ReservedLongIndex + i, get(i))
+        }
     }
 
     private fun ByteBuffer.carry() {
@@ -787,12 +846,10 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         lookAheadSuspend(visitor)
     }
 
-    private inline fun lookAheadFast(last0: Boolean, visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
-        if (state === ReadWriteBufferState.Terminated && !last0) return false
+    private inline fun lookAheadFast(last: Boolean, visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
+        if (state === ReadWriteBufferState.Terminated && !last) return false
 
         val rc = reading {
-            val last = last0
-
             do {
                 val available = state.capacity.remaining
 
@@ -832,7 +889,7 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
     private fun afterBufferVisited(buffer: ByteBuffer, c: RingBufferCapacity): Int {
         val consumed = buffer.position() - readPosition
         if (consumed > 0) {
-            if (!c.tryReadExact(consumed)) throw IllegalStateException("Consumed more bytes than availalbe")
+            if (!c.tryReadExact(consumed)) throw IllegalStateException("Consumed more bytes than available")
 
             readPosition = buffer.carryIndex(buffer.position())
 
@@ -1064,15 +1121,13 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         return (consumed1 > 0 || consumed0 > 0 || !last1)
     }
 
-    suspend override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int): Boolean {
-        return readUTF8LineToAscii(out, limit)
-    }
+    suspend override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int) = readUTF8LineToAscii(out, limit)
 
     private fun resumeWriteOp() {
         WriteOp.getAndSet(this, null)?.apply { if (closed == null) resume(Unit) else resumeWithException(closed!!.sendException) }
     }
 
-    protected fun resumeClosed(cause: Throwable?) {
+    private fun resumeClosed(cause: Throwable?) {
         ReadOp.getAndSet(this, null)?.let { c ->
             if (cause != null)
                 c.resumeWithException(cause)
@@ -1083,7 +1138,7 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         WriteOp.getAndSet(this, null)?.tryResumeWithException(cause ?: ClosedSendChannelException(null))
     }
 
-    protected tailrec suspend fun readSuspend(size: Int): Boolean {
+    private tailrec suspend fun readSuspend(size: Int): Boolean {
         if (state.capacity.remaining >= size) return true
 
         closed?.let { c ->
@@ -1119,7 +1174,7 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         }
     }
 
-    protected suspend fun writeSuspend(size: Int) {
+    private suspend fun writeSuspend(size: Int) {
         closed?.sendException?.let { throw it }
 
         while (state.capacity.capacity < size && state !== ReadWriteBufferState.IdleEmpty && closed == null) {
@@ -1173,10 +1228,7 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         pool.recycle(buffer)
     }
 
-    private inline fun updateState(block: (ReadWriteBufferState) -> ReadWriteBufferState?): Pair<ReadWriteBufferState, ReadWriteBufferState> {
-        val p = update({ state }, State, block)
-        return p
-    }
+    private inline fun updateState(block: (ReadWriteBufferState) -> ReadWriteBufferState?): Pair<ReadWriteBufferState, ReadWriteBufferState> = update({ state }, State, block)
 
     private inline fun <T : Any> update(getter: () -> T, updater: AtomicReferenceFieldUpdater<ByteBufferChannel, T>, block: (old: T) -> T?): Pair<T, T> {
         while (true) {
@@ -1197,7 +1249,7 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
         private val ClosedOp = updater(ByteBufferChannel::closed)
     }
 
-    protected class ClosedElement(val cause: Throwable?) {
+    private class ClosedElement(val cause: Throwable?) {
         val sendException: Throwable
             get() = cause ?: ClosedSendChannelException("The channel was closed")
 
@@ -1207,6 +1259,3 @@ open class ByteBufferChannel internal constructor(override val autoFlush: Boolea
     }
 
 }
-
-internal typealias ReadElement = CancellableContinuation<Boolean>
-internal typealias WriteElement = CancellableContinuation<Unit>
