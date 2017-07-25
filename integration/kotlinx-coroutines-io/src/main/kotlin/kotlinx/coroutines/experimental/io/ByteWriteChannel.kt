@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.io.internal.*
 import java.nio.*
 
 interface ByteWriteChannel {
@@ -110,6 +111,16 @@ suspend fun ByteWriteChannel.writeInt(i: Long) {
     writeInt(i.toInt())
 }
 
+suspend fun ByteWriteChannel.writeStringUtf8(s: CharSequence) {
+    val bytes = Charsets.UTF_8.encode(CharBuffer.wrap(s))
+    writeFully(bytes.array())
+}
+
+suspend fun ByteWriteChannel.writeStringUtf8(s: CharBuffer) {
+    val bytes = Charsets.UTF_8.encode(s)
+    writeFully(bytes.array())
+}
+
 suspend fun ByteWriteChannel.writeStringUtf8(s: String) {
     val bytes = Charsets.UTF_8.encode(s)
     writeFully(bytes.array())
@@ -122,6 +133,32 @@ suspend fun ByteWriteChannel.writeBoolean(b: Boolean) {
 /**
  * Writes UTF16 character
  */
-suspend fun ByteBufferChannel.writeChar(ch: Char) {
+suspend fun ByteWriteChannel.writeChar(ch: Char) {
     writeShort(ch.toInt())
+}
+
+suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
+    val o = DirectBufferObjectPool.borrow()
+    try {
+        var copied = 0L
+        val bb = o.backingBuffer
+        bb.clear()
+
+        while (true) {
+            val size = readLazy(bb)
+            if (size == -1) break
+
+            bb.flip()
+            dst.writeFully(bb)
+            copied += size
+        }
+
+        dst.close()
+        return copied
+    } catch (t: Throwable) {
+        dst.close(t)
+        throw t
+    } finally {
+        DirectBufferObjectPool.recycle(o)
+    }
 }
