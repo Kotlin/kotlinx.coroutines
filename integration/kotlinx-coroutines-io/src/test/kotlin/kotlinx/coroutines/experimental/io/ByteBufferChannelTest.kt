@@ -17,8 +17,8 @@ class ByteBufferChannelTest {
     @get:Rule
     val failures = ErrorCollector()
 
-    val Size = BufferSize - ByteBufferChannel.ReservedSize
-    val ch = ByteBufferChannel(autoFlush = false, pool = DirectBufferNoPool)
+    private val Size = BufferSize - ByteBufferChannel.ReservedSize
+    private val ch = ByteBufferChannel(autoFlush = false, pool = DirectBufferNoPool)
 
     @Test
     fun testBoolean() {
@@ -46,11 +46,11 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
     fun testUByte() {
         runBlocking {
             assertEquals(0, ch.remaining)
             ch.writeByte(255)
+            ch.flush()
             assertEquals(1, ch.remaining)
             assertEquals(255, ch.readUByte())
             assertEquals(0, ch.remaining)
@@ -90,7 +90,6 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
     fun testUShortB() {
         runBlocking {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
@@ -98,6 +97,7 @@ class ByteBufferChannelTest {
 
             assertEquals(0, ch.remaining)
             ch.writeShort(0xffff)
+            ch.flush()
             assertEquals(2, ch.remaining)
             assertEquals(0xffff, ch.readUShort())
             assertEquals(0, ch.remaining)
@@ -105,7 +105,6 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
     fun testUShortL() {
         runBlocking {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
@@ -113,6 +112,7 @@ class ByteBufferChannelTest {
 
             assertEquals(0, ch.remaining)
             ch.writeShort(0xffff)
+            ch.flush()
             assertEquals(2, ch.remaining)
             assertEquals(0xffff, ch.readUShort())
             assertEquals(0, ch.remaining)
@@ -174,7 +174,6 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
     fun testUIntB() {
         runBlocking {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
@@ -182,6 +181,7 @@ class ByteBufferChannelTest {
 
             assertEquals(0, ch.remaining)
             ch.writeInt(0xffffffffL)
+            ch.flush()
             assertEquals(4, ch.remaining)
             assertEquals(0xffffffffL, ch.readUInt())
             assertEquals(0, ch.remaining)
@@ -189,7 +189,6 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
     fun testUIntL() {
         runBlocking {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
@@ -197,6 +196,7 @@ class ByteBufferChannelTest {
 
             assertEquals(0, ch.remaining)
             ch.writeInt(0xffffffffL)
+            ch.flush()
             assertEquals(4, ch.remaining)
             assertEquals(0xffffffffL, ch.readUInt())
             assertEquals(0, ch.remaining)
