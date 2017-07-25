@@ -29,7 +29,7 @@ interface ByteReadChannel {
      * Suspends if not enough bytes available.
      */
     suspend fun readFully(dst: ByteArray, offset: Int, length: Int)
-    suspend fun readFully(dst: ByteBuffer)
+    suspend fun readFully(dst: ByteBuffer): Int
     suspend fun readFully(dst: ByteArray) = readFully(dst, 0, dst.size)
 
     /**
