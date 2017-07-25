@@ -10,8 +10,17 @@ import java.nio.charset.*
 import java.util.concurrent.atomic.*
 import kotlin.experimental.*
 
-class ByteBufferChannel internal constructor(override val autoFlush: Boolean, val pool: ObjectPool<ReadWriteBufferState.Initial>) : ByteReadChannel, ByteWriteChannel {
+class ByteBufferChannel internal constructor(override val autoFlush: Boolean, val pool: ObjectPool<ReadWriteBufferState.Initial>, private val ReservedSize: Int = Companion.ReservedSize) : ByteReadChannel, ByteWriteChannel {
     constructor(autoFlush: Boolean = false) : this(autoFlush, DirectBufferObjectPool)
+    constructor(content: ByteBuffer) : this(false, DirectBufferNoPool, 0) {
+        state = ReadWriteBufferState.Initial(content.slice(), 0).apply {
+            capacity.resetForRead()
+        }.startWriting()
+        restoreStateAfterWrite()
+        close()
+        tryTerminate()
+    }
+    constructor(content: ByteArray) : this(ByteBuffer.wrap(content))
 
     @Volatile
     private var state: ReadWriteBufferState = ReadWriteBufferState.IdleEmpty
