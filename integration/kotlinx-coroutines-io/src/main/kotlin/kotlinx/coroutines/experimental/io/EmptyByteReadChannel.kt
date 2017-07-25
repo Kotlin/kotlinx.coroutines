@@ -20,8 +20,9 @@ object EmptyByteReadChannel : ByteReadChannel {
         if (length != 0) throw ClosedReceiveChannelException("EOF")
     }
 
-    suspend override fun readFully(dst: ByteBuffer) {
+    suspend override fun readFully(dst: ByteBuffer): Int {
         if (dst.hasRemaining()) throw ClosedReceiveChannelException("EOF")
+        return 0
     }
 
     suspend override fun readLong(): Long {

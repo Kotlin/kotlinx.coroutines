@@ -286,18 +286,22 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         }
     }
 
-    suspend override fun readFully(dst: ByteBuffer) {
-        readAsMuchAsPossible(dst)
-        if (!dst.hasRemaining()) return
+    suspend override fun readFully(dst: ByteBuffer): Int {
+        val rc = readAsMuchAsPossible(dst)
+        if (!dst.hasRemaining()) return rc
 
-        return readFullySuspend(dst)
+        return readFullySuspend(dst, rc)
     }
 
-    private suspend fun readFullySuspend(dst: ByteBuffer) {
+    private suspend fun readFullySuspend(dst: ByteBuffer, rc0: Int): Int {
+        var copied = rc0
+
         while (dst.hasRemaining()) {
             if (!readSuspend(1)) throw ClosedReceiveChannelException("Unexpected EOF: expected ${dst.remaining()} more bytes")
-            readAsMuchAsPossible(dst)
+            copied += readAsMuchAsPossible(dst)
         }
+
+        return copied
     }
 
     private suspend tailrec fun readFullySuspend(dst: ByteArray, offset: Int, length: Int) {
