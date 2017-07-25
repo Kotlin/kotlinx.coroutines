@@ -20,6 +20,12 @@ class RingBufferCapacity(val totalCapacity: Int) {
         capacity = totalCapacity
     }
 
+    fun resetForRead() {
+        capacity = 0
+        pending = 0
+        remaining = totalCapacity
+    }
+
     fun tryReadExact(n: Int): Boolean {
         while (true) {
             val remaining = remaining
