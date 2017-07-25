@@ -132,6 +132,7 @@
         <module>integration/kotlinx-coroutines-nio</module>
         <module>integration/kotlinx-coroutines-guava</module>
         <module>integration/kotlinx-coroutines-quasar</module>
+        <module>integration/kotlinx-coroutines-io</module>
     </modules>
 
     <dependencies>
