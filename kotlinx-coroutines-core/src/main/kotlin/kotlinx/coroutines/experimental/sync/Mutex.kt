@@ -106,17 +106,26 @@ public fun Mutex(locked: Boolean = false): Mutex = MutexImpl(locked)
 
 /**
  * Executes the given [action] under this mutex's lock.
+ *
+ * @param owner Optional owner token for debugging.
+ *
  * @return the return value of the action.
  */
 // :todo: this function needs to be make inline as soon as this bug is fixed: https://youtrack.jetbrains.com/issue/KT-16448
-public suspend fun <T> Mutex.withLock(action: suspend () -> T): T {
-    lock()
+public suspend fun <T> Mutex.withLock(owner: Any? = null, action: suspend () -> T): T {
+    lock(owner)
     try {
         return action()
     } finally {
-        unlock()
+        unlock(owner)
     }
 }
+
+/**
+ * @suppress: **Deprecated**: Use [withLock]
+ */
+@Deprecated("Use `withLock(owner, action)", level = DeprecationLevel.HIDDEN)
+public suspend fun <T> Mutex.withLock(action: suspend () -> T): T = withLock(null, action)
 
 /**
  * @suppress: **Deprecated**: Use [withLock]
