@@ -54,7 +54,7 @@ object ByteReadPacketEmpty : ByteReadPacket {
     override fun release() {
     }
 
-    override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int) = false
+    override fun readUTF8LineTo(out: Appendable, limit: Int) = false
 
     override fun inputStream() = EmptyInputStream
 

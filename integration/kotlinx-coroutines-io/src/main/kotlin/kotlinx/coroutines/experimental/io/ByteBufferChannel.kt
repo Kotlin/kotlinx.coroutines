@@ -902,34 +902,41 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         var unicodeStarted = false
 
         val found = lookAheadFast(false) { buffer, last ->
-            while (buffer.hasRemaining()) {
-                val v = buffer.get().toInt() and 0xff
+            var eol = false
+
+            val rejected = !buffer.decodeASCII { ch ->
                 when {
-                    v == 0x0d -> {
+                    ch == '\r' -> {
                         cr = true
+                        true
                     }
-                    v == 0x0a -> {
-                        return@lookAheadFast false
+                    ch == '\n' -> {
+                        eol = true
+                        false
                     }
                     cr -> {
                         cr = false
-                        buffer.position(buffer.position() - 1)
-                        return@lookAheadFast false
+                        eol = true
+                        false
                     }
-                    v and 0x80 == 0 -> {
+                    else -> {
                         if (consumed == limit) throw BufferOverflowException()
                         consumed++
-                        out.append(v.toChar())
-                    }
-                    else -> { // unicode character
-                        buffer.position(buffer.position() - 1)
-                        unicodeStarted = true
-                        return@lookAheadFast false
+                        out.append(ch)
+                        true
                     }
                 }
             }
 
-            !last
+            if (eol) {
+                buffer.position(buffer.position() + 1)
+            }
+
+            if (rejected && buffer.hasRemaining() && !eol) {
+                unicodeStarted = true
+                false
+            } else
+                !eol && !last
         }
 
         if (found && !unicodeStarted) return true
@@ -939,84 +946,39 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
     private suspend fun readUTF8LineToUtf8(out: Appendable, limit: Int, cr0: Boolean, consumed0: Int): Boolean {
         var cr1 = cr0
         var consumed1 = 0
-        var value = 0
-        var byteCount = 0
 
         val found = lookAheadFast(false) { buffer, last ->
-            while (buffer.hasRemaining()) {
-                val v = buffer.get().toInt() and 0xff
+            var eol = false
+
+            val rc = buffer.decodeUTF8 { ch ->
                 when {
-                    v == 0x0d -> {
+                    ch == '\r' -> {
                         cr1 = true
+                        true
                     }
-                    v == 0x0a -> {
-                        return@lookAheadFast false
+                    ch == '\n' -> {
+                        eol = true
+                        false
                     }
                     cr1 -> {
                         cr1 = false
-                        buffer.position(buffer.position() - 1)
-                        return@lookAheadFast false
-                    }
-                    v and 0x80 == 0 -> {
-                        if (byteCount != 0) throw MalformedInputException(0)
-                        if (consumed1 == limit) throw BufferOverflowException()
-                        consumed1++
-                        out.append(v.toChar())
-                    }
-                    byteCount == 0 -> {
-                        // first unicode byte
-
-                        if (consumed1 == limit) {
-                            throw BufferOverflowException()
-                        }
-
-                        var mask = 0x80
-                        value = v
-
-                        for (i in 1..6) { // TODO do we support 6 bytes unicode?
-                            if (value and mask != 0) {
-                                value = value and mask.inv()
-                                mask = mask shr 1
-                                byteCount++
-                            } else {
-                                break
-                            }
-                        }
-
-                        byteCount--
+                        eol = true
+                        false
                     }
                     else -> {
-                        // trailing unicode byte
-                        value = (value shl 6) or (v and 0x7f)
-                        byteCount--
-
-                        if (byteCount == 0) {
-                            if (java.lang.Character.isBmpCodePoint(value)) {
-                                if (consumed1 == limit) throw BufferOverflowException()
-
-                                out.append(value.toChar())
-                                consumed1++
-                            } else if (!java.lang.Character.isValidCodePoint(value)) {
-                                throw IllegalArgumentException("Malformed code-point ${Integer.toHexString(value)} found")
-                            } else {
-                                if (consumed1 + 1 >= limit) throw BufferOverflowException()
-
-                                val low = java.lang.Character.lowSurrogate(value)
-                                val high = java.lang.Character.highSurrogate(value)
-
-                                out.append(high)
-                                out.append(low)
-
-                                consumed1 += 2
-                            }
-
-                            value = 0
-                        }
+                        if (consumed1 == limit) throw BufferOverflowException()
+                        consumed1++
+                        out.append(ch)
+                        true
                     }
                 }
             }
 
-            !last
+            if (eol) {
+                buffer.position(buffer.position() + 1)
+            }
+
+            rc != 0 && !eol && !last
         }
 
         if (found) return true
