@@ -136,7 +136,11 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
             when {
                 bs.isEmpty() -> ByteReadPacketEmpty
                 bs.size == 1 -> ByteReadPacketSingle((bs.first as ByteBuffer).also { it.flip() }, pool)
-                else -> ByteReadPacketImpl(bs as ArrayDeque<ByteBuffer>, pool)
+                else -> ByteReadPacketImpl((bs as ArrayDeque<ByteBuffer>).also {
+                    for (b in bs) {
+                        b.flip()
+                    }
+                }, pool)
             }
         } else {
             ByteReadPacketSingle((bs as ByteBuffer).also { it.flip() }, pool)

@@ -5,6 +5,7 @@ package kotlinx.coroutines.experimental.io.packet
 import kotlinx.coroutines.experimental.io.internal.*
 import java.io.*
 import java.nio.*
+import java.nio.charset.*
 import java.util.*
 
 internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, private val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
@@ -19,7 +20,7 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
             buffer.get(dst, offset + copied, size)
             copied += size
 
-            if (copied == length) return copied
+            copied < length
         }
 
         return if (rc) copied else -1
@@ -39,7 +40,7 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
                 }
             }
 
-            if (!dst.hasRemaining()) return copied
+            dst.hasRemaining()
         }
 
         return if (rc) copied else -1
@@ -58,48 +59,86 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
 
     override fun readLong(): Long {
         var v = 0L
-        val rc = reading(8) { v = it.getLong() }
+        val rc = reading(8) { v = it.getLong(); false }
         if (!rc) throw EOFException("Couldn't read long from empty packet")
         return v
     }
 
     override fun readInt(): Int {
         var v = 0
-        val rc = reading(4) { v = it.getInt() }
+        val rc = reading(4) { v = it.getInt(); false }
         if (!rc) throw EOFException("Couldn't read int from empty packet")
         return v
     }
 
     override fun readShort(): Short {
         var v: Short = 0
-        val rc = reading(2) { v = it.getShort() }
+        val rc = reading(2) { v = it.getShort(); false }
         if (!rc) throw EOFException("Couldn't read short from empty packet")
         return v
     }
 
     override fun readByte(): Byte {
         var v: Byte = 0
-        val rc = reading(1) { v = it.get() }
+        val rc = reading(1) { v = it.get(); false }
         if (!rc) throw EOFException("Couldn't read byte from empty packet")
         return v
     }
 
     override fun readDouble(): Double {
         var v = 0.0
-        val rc = reading(8) { v = it.getDouble() }
+        val rc = reading(8) { v = it.getDouble(); false }
         if (!rc) throw EOFException("Couldn't read double from empty packet")
         return v
     }
 
     override fun readFloat(): Float {
         var v = 0.0f
-        val rc = reading(4) { v = it.getFloat() }
+        val rc = reading(4) { v = it.getFloat(); false }
         if (!rc) throw EOFException("Couldn't read float from empty packet")
         return v
     }
 
-    override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int): Boolean {
-        TODO()
+    override fun readUTF8LineTo(out: Appendable, limit: Int): Boolean {
+        var decoded = 0
+        var size = 1
+        var cr = false
+        var end = false
+
+        val rc = reading(size) { bb ->
+            size = bb.decodeUTF8 { ch ->
+                when (ch) {
+                    '\r' -> {
+                        if (cr) {
+                            end = true
+                            return@decodeUTF8 false
+                        }
+                        cr = true
+                        true
+                    }
+                    '\n' -> {
+                        return true
+                    }
+                    else -> {
+                        if (cr) {
+                            end = true
+                            return@decodeUTF8 false
+                        }
+
+                        if (decoded == limit) throw BufferOverflowException()
+                        decoded++
+                        out.append(ch)
+                        true
+                    }
+                }
+            }
+
+            !end && size == 0
+        }
+
+        if (!rc && size != 0) throw MalformedInputException(0)
+
+        return rc
     }
 
     override fun skip(n: Int): Int {
@@ -109,6 +148,8 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
             val m = minOf(n - skipped, it.remaining())
             it.position(it.position() + m)
             skipped += m
+
+            skipped < n
         }
 
         return skipped
@@ -122,7 +163,7 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
         return object : InputStream() {
             override fun read(): Int {
                 var v: Byte = 0
-                val rc = reading(1) { v = it.get() }
+                val rc = reading(1) { v = it.get(); true }
                 return if (rc) v.toInt() and 0xff else -1
             }
 
@@ -142,43 +183,53 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
         }
     }
 
-    private inline fun reading(size: Int, block: (ByteBuffer) -> Unit): Boolean {
+    private inline fun reading(size: Int, block: (ByteBuffer) -> Boolean): Boolean {
+        if (packets.isEmpty()) return false
+
         var visited = false
+        var buffer = packets.peekFirst()
+        var stop = false
 
-        while (packets.isNotEmpty()) {
-            val buffer = packets.peekFirst()
-
+        while (!stop) {
             if (buffer.hasRemaining()) {
                 if (buffer.remaining() < size) {
-                    if (packets.size == 1) {
-                        return false
-                    }
-
-                    packets.removeFirst()
-
-                    val extraBytes = size - buffer.remaining()
-                    val next = packets.peekFirst()
-
-                    buffer.compact()
-                    repeat(extraBytes) {
-                        buffer.put(next.get())
-                    }
-                    buffer.flip()
-
-                    packets.addFirst(buffer)
+                    if (!tryStealBytesFromNextBuffer(size, buffer)) return false
                 }
 
                 visited = true
-                block(buffer)
+                stop = !block(buffer)
             }
 
             if (!buffer.hasRemaining()) {
                 packets.removeFirst()
                 recycle(buffer)
+
+                if (packets.isEmpty()) break
+                buffer = packets.peekFirst()
             }
         }
 
         return visited
+    }
+
+    private fun tryStealBytesFromNextBuffer(size: Int, buffer: ByteBuffer): Boolean {
+        if (packets.size == 1) {
+            return false
+        }
+
+        packets.removeFirst()
+
+        val extraBytes = size - buffer.remaining()
+        val next = packets.peekFirst()
+
+        buffer.compact()
+        repeat(extraBytes) {
+            buffer.put(next.get())
+        }
+        buffer.flip()
+
+        packets.addFirst(buffer)
+        return true
     }
 
     private fun recycle(buffer: ByteBuffer) {
