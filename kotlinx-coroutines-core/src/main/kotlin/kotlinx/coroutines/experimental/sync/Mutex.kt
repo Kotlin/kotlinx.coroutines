@@ -91,6 +91,13 @@ public interface Mutex {
     public fun <R> registerSelectLock(select: SelectInstance<R>, owner: Any?, block: suspend () -> R)
 
     /**
+     * Checks mutex locked by owner
+     *
+     * @return `true` on mutex lock by owner, `false` if not locker or it is locked by different owner
+     */
+    public fun holdsLock(owner: Any): Boolean
+
+        /**
      * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
@@ -324,6 +331,15 @@ internal class MutexImpl(locked: Boolean) : Mutex {
             return super.onPrepare(affected, next)
         }
     }
+
+    public override fun holdsLock(owner: Any) =
+            _state.value.let { state ->
+                when (state) {
+                    is Empty -> state.locked === owner
+                    is LockedQueue -> state.owner === owner
+                    else -> false
+                }
+            }
 
     public override fun unlock(owner: Any?) {
         _state.loop { state ->
