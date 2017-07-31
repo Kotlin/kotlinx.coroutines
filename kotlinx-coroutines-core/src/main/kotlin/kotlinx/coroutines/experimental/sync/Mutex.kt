@@ -100,6 +100,8 @@ public interface Mutex {
 
 /**
  * Creates new [Mutex] instance.
+ * The mutex created is fair: lock is granted in first come, first served order.
+ *
  * @param locked initial state of the mutex.
  */
 public fun Mutex(locked: Boolean = false): Mutex = MutexImpl(locked)
