@@ -144,6 +144,24 @@ class AsyncTest : TestBase() {
         override fun toString(): String = error("toString")
     }
 
+
+    @Test
+    fun blockingAsync() = runBlocking {
+        val d = blockingAsync { 42 }
+        check(d.await() == 42)
+    }
+
+    @Test
+    fun blockingAsyncLazy() = runBlocking {
+        val d = blockingAsync(start = CoroutineStart.LAZY) { 42 }
+        check(d.await() == 42)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun blockingAsyncUndispatched() = runBlocking {
+        blockingAsync(start = CoroutineStart.UNDISPATCHED) { 42 }
+    }
+
     @Test
     fun testDeferBadClass() = runBlocking {
         val bad = BadClass()

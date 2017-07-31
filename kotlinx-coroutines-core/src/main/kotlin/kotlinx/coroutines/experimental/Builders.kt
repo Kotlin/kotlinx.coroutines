@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.concurrent.Executor
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
@@ -23,6 +24,24 @@ import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrRe
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 // --------------- basic coroutine builders ---------------
+
+/**
+ * Suspend current coroutine and execute the [block] blocking code in [executor].
+ * The current coroutine is resumed after [block] execution.
+ *
+ * @param executor the executor for blocking code
+ * @param block the blocking code
+ */
+suspend fun <T> blocking(executor: Executor = DefaultBlockingExecutor, block: () -> T) =
+        suspendCoroutine<T> { cont ->
+            executor.execute {
+                try {
+                    cont.resume(block())
+                } catch (t: Throwable) {
+                    cont.resumeWithException(t)
+                }
+            }
+        }
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
