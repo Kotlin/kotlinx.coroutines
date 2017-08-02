@@ -17,13 +17,10 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.sync.example07
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
+import kotlinx.coroutines.experimental.channels.*
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch
