@@ -43,7 +43,7 @@ fun <T> mono(
     val newContext = newCoroutineContext(context)
     val coroutine = MonoCoroutine(newContext, sink)
     coroutine.initParentJob(context[Job])
-    sink.setCancellation(coroutine)
+    sink.onDispose(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
 
