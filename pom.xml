@@ -112,6 +112,7 @@
         <module>integration/kotlinx-coroutines-jdk8</module>
         <module>integration/kotlinx-coroutines-nio</module>
         <module>integration/kotlinx-coroutines-guava</module>
+        <module>integration/kotlinx-coroutines-quasar</module>
     </modules>
 
     <dependencies>

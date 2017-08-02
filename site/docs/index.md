@@ -21,3 +21,4 @@ Library support for Kotlin coroutines. This reference is a companion to
 [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8)         | Integration with JDK8 `CompletableFuture` (Android API level 24)
 [kotlinx-coroutines-nio](kotlinx-coroutines-nio)           | Integration with asynchronous IO on JDK7+ (Android O Preview)
 [kotlinx-coroutines-guava](kotlinx-coroutines-guava)       | Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained)
+[kotlinx-coroutines-quasar](kotlinx-coroutines-quasar)     | Integration with [Quasar](http://docs.paralleluniverse.co/quasar/)
