@@ -6,7 +6,7 @@
   * [Coroutines guide](coroutines-guide.md) uses it in a section on actors.
   * `CompletableDeferred` is an interface with private impl (courtesy of @fvasco, see #86).
   * It extends `Deferred` interface with `complete` and `completeExceptionally` functions.
-* `Job.join` and `Job.await` wait until a cancelled coroutine stops execution (see #64). 
+* `Job.join` and `Deferred.await` wait until a cancelled coroutine stops execution (see #64). 
   * `Job` and `Deferred` have a new _cancelling_ state which they enter on invocation of `cancel`.
   * `Job.invokeOnCompletion` has an additional overload with `onCancelling: Boolean` parameter to 
     install handlers that are fired as soon as coroutine enters _cancelling_ state as opposed
