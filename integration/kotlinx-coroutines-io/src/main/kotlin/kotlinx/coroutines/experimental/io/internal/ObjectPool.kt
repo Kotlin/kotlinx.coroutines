@@ -1,12 +1,22 @@
 package kotlinx.coroutines.experimental.io.internal
 
 import kotlinx.coroutines.experimental.io.ByteBufferChannel.Companion.ReservedSize
+import sun.nio.ch.*
 import java.nio.*
 import java.util.concurrent.atomic.*
 
 internal const val BufferSize = 4096
+
+internal val DirectBufferPool: ObjectPool<ByteBuffer> = ObjectPoolImpl(2048, {
+    ByteBuffer.allocateDirect(BufferSize)
+})
+
 internal val DirectBufferObjectPool: ObjectPool<ReadWriteBufferState.Initial> = ObjectPoolImpl(1024, {
-    ReadWriteBufferState.Initial(ByteBuffer.allocateDirect(BufferSize), ReservedSize)
+    ReadWriteBufferState.Initial(DirectBufferPool.borrow().also { it.clear() }, ReservedSize)
+}, {
+    if (it.backingBuffer.capacity() == BufferSize) {
+        DirectBufferPool.recycle(it.backingBuffer)
+    }
 })
 
 internal val DirectBufferNoPool: ObjectPool<ReadWriteBufferState.Initial> = NoPool({

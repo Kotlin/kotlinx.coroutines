@@ -9,6 +9,8 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, private val
     override val remaining: Int
         get() = buffer?.remaining() ?: 0
 
+    internal fun steal(): ByteBuffer = buffer ?: throw IllegalStateException("EOF")
+
     override fun readLazy(dst: ByteArray, offset: Int, length: Int): Int {
         var copied = 0
 

@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
 import org.junit.*
 import org.junit.rules.*
 import java.nio.*
@@ -589,5 +590,45 @@ class ByteBufferChannelTest {
                 dst.fill(0)
             }
         }
+    }
+
+    @Test
+    fun testPacket() = runBlocking {
+        val packet = buildPacket {
+            writeInt(0xffee)
+            writeUtf8String("Hello")
+        }
+
+        ch.writeInt(packet.remaining)
+        ch.writePacket(packet)
+
+        ch.flush()
+
+        val size = ch.readInt()
+        val readed = ch.readPacket(size)
+
+        assertEquals(0xffee, readed.readInt())
+        assertEquals("Hello", readed.readUTF8Line())
+    }
+
+    @Test
+    fun testBigPacket() = runBlocking {
+        launch(CommonPool + CoroutineName("writer")) {
+            val packet = buildPacket {
+                writeInt(0xffee)
+                writeUtf8String(".".repeat(8192))
+            }
+
+            ch.writeInt(packet.remaining)
+            ch.writePacket(packet)
+
+            ch.flush()
+        }
+
+        val size = ch.readInt()
+        val readed = ch.readPacket(size)
+
+        assertEquals(0xffee, readed.readInt())
+        assertEquals(".".repeat(8192), readed.readUTF8Line())
     }
 }

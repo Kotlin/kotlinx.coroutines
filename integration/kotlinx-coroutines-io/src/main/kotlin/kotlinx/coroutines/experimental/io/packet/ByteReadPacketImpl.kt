@@ -12,6 +12,8 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, p
     override val remaining: Int
         get() = packets.sumBy { it.remaining() }
 
+    internal fun steal(): ByteBuffer = packets.pollFirst() ?: throw IllegalStateException("EOF")
+
     override fun readLazy(dst: ByteArray, offset: Int, length: Int): Int {
         var copied = 0
 
