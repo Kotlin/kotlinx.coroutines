@@ -1,6 +1,7 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.*
 
 interface ByteWriteChannel {
@@ -42,6 +43,10 @@ interface ByteWriteChannel {
 
     suspend fun writeFully(src: ByteArray) = writeFully(src, 0, src.size)
 
+    /**
+     * Writes a [packet] fully or fails if channel get closed before the whole packet has been written
+     */
+    suspend fun writePacket(packet: ByteReadPacket)
     /**
      * Writes long number and suspends until written.
      * Crashes if channel get closed while writing.

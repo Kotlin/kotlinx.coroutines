@@ -5,6 +5,8 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
+import sun.nio.ch.*
 import java.nio.*
 import java.nio.charset.*
 import java.util.concurrent.atomic.*
@@ -336,6 +338,38 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
     private suspend fun readLazySuspend(dst: ByteBuffer): Int {
         if (!readSuspend(1)) return -1
         return readLazy(dst)
+    }
+
+    suspend override fun readPacket(size: Int): ByteReadPacket {
+        closed?.cause?.let { throw it }
+
+        if (size == 0) return ByteReadPacketEmpty
+
+        val builder = ByteWritePacketImpl(DirectBufferPool)
+        val buffer = DirectBufferPool.borrow()
+
+        try {
+            var remaining = size
+            while (remaining > 0) {
+                buffer.clear()
+                if (buffer.remaining() > remaining) {
+                    buffer.limit(remaining)
+                }
+
+                val rc = readFully(buffer)
+                buffer.flip()
+                builder.writeFully(buffer)
+
+                remaining -= rc
+            }
+
+            return builder.build()
+        } catch (t: Throwable) {
+            builder.release()
+            throw t
+        } finally {
+            DirectBufferPool.recycle(buffer)
+        }
     }
 
     suspend override fun readByte(): Byte {
@@ -829,6 +863,45 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             writeSuspend(1)
             val size = writeAsMuchAsPossible(src, offset, length)
             if (size > 0) return size
+        }
+    }
+
+    suspend override fun writePacket(packet: ByteReadPacket) {
+        closed?.sendException?.let { throw it }
+
+        when (packet) {
+            is ByteReadPacketEmpty -> return
+            is ByteReadPacketSingle -> {
+                val buffer = packet.steal()
+                try {
+                    writeFully(buffer)
+                } finally {
+                    DirectBufferPool.recycle(buffer)
+                }
+            }
+            is ByteReadPacketImpl -> {
+                while (packet.remaining > 0) {
+                    val buffer = packet.steal()
+                    try {
+                        writeFully(buffer)
+                    } finally {
+                        DirectBufferPool.recycle(buffer)
+                    }
+                }
+            }
+            else -> {
+                val buffer = DirectBufferPool.borrow()
+                try {
+                    while (packet.remaining > 0) {
+                        buffer.clear()
+                        packet.readFully(buffer)
+                        buffer.flip()
+                        writeFully(buffer)
+                    }
+                } finally {
+                    DirectBufferPool.recycle(buffer)
+                }
+            }
         }
     }
 

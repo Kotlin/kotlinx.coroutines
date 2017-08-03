@@ -1,6 +1,7 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.*
 
 object EmptyByteReadChannel : ByteReadChannel {
@@ -14,6 +15,11 @@ object EmptyByteReadChannel : ByteReadChannel {
 
     suspend override fun readLazy(dst: ByteBuffer): Int {
         return -1
+    }
+
+    suspend override fun readPacket(size: Int): ByteReadPacket {
+        if (size != 0) throw ClosedReceiveChannelException("EOF")
+        return ByteReadPacketEmpty
     }
 
     suspend override fun readFully(dst: ByteArray, offset: Int, length: Int) {

@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.*
 
 interface ByteReadChannel {
@@ -31,6 +32,12 @@ interface ByteReadChannel {
     suspend fun readFully(dst: ByteArray, offset: Int, length: Int)
     suspend fun readFully(dst: ByteBuffer): Int
     suspend fun readFully(dst: ByteArray) = readFully(dst, 0, dst.size)
+
+    /**
+     * Reads the specified amount of bytes and makes a byte packet from them. Fails if channel has been closed
+     * and not enough bytes available.
+     */
+    suspend fun readPacket(size: Int): ByteReadPacket
 
     /**
      * Reads a long number (suspending if not enough bytes available) or fails if channel has been closed
