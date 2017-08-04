@@ -39,7 +39,7 @@ import reactor.core.publisher.Mono
 class MonoTest : TestBase() {
     @Before
     fun setup() {
-        ignoreLostThreads("timer-")
+        ignoreLostThreads("timer-", "parallel-")
     }
 
     @Test
