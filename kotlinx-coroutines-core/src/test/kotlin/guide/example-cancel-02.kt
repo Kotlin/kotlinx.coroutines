@@ -20,12 +20,13 @@ package guide.cancel.example02
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
+    val startTime = System.currentTimeMillis()
     val job = launch(CommonPool) {
-        var nextPrintTime = System.currentTimeMillis()
+        var nextPrintTime = startTime
         var i = 0
-        while (i < 10) { // computation loop
-            val currentTime = System.currentTimeMillis()
-            if (currentTime >= nextPrintTime) {
+        while (i < 10) { // computation loop, just wastes CPU
+            // print a message twice a second
+            if (System.currentTimeMillis() >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
                 nextPrintTime += 500L
             }
