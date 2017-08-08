@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io.internal
 
-class RingBufferCapacity(val totalCapacity: Int) {
+internal class RingBufferCapacity(private val totalCapacity: Int) {
     @Volatile
     var remaining = 0
         private set

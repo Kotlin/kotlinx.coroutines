@@ -1,149 +1,144 @@
 package kotlinx.coroutines.experimental.io.internal
 
-import kotlinx.coroutines.experimental.io.ByteBufferChannel.Companion.ReservedSize
-import sun.nio.ch.*
-import java.nio.*
-import java.util.concurrent.atomic.*
+import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicReferenceArray
 
-internal const val BufferSize = 4096
+internal interface ObjectPool<T : Any> {
+    val capacity: Int
+    fun borrow(): T
+    fun recycle(instance: T) // can only recycle what was borrowed before
+    fun dispose()
+}
 
-internal val DirectBufferPool: ObjectPool<ByteBuffer> = ObjectPoolImpl(2048, {
-    ByteBuffer.allocateDirect(BufferSize)
-})
+internal val BUFFER_SIZE = getIOIntProperty("BufferSize", 4096)
+private val BUFFER_POOL_SIZE = getIOIntProperty("BufferPoolSize", 2048)
+private val BUFFER_OBJECT_POOL_SIZE = getIOIntProperty("BufferObjectPoolSize", 1024)
 
-internal val DirectBufferObjectPool: ObjectPool<ReadWriteBufferState.Initial> = ObjectPoolImpl(1024, {
-    ReadWriteBufferState.Initial(DirectBufferPool.borrow().also { it.clear() }, ReservedSize)
-}, {
-    if (it.backingBuffer.capacity() == BufferSize) {
-        DirectBufferPool.recycle(it.backingBuffer)
+// ------------- standard shared pool objects -------------
+
+internal val BufferPool: ObjectPool<ByteBuffer> =
+    object : ObjectPoolImpl<ByteBuffer>(BUFFER_POOL_SIZE) {
+        override fun produceInstance(): ByteBuffer =
+            ByteBuffer.allocateDirect(BUFFER_SIZE)
+        override fun clearInstance(instance: ByteBuffer): ByteBuffer =
+            instance.also { it.clear() }
+        override fun validateInstance(instance: ByteBuffer) {
+            require(instance.capacity() == BUFFER_SIZE)
+        }
     }
-})
 
-internal val DirectBufferNoPool: ObjectPool<ReadWriteBufferState.Initial> = NoPool({
-    ReadWriteBufferState.Initial(ByteBuffer.allocateDirect(BufferSize), ReservedSize)
-})
+internal val BufferObjectPool: ObjectPool<ReadWriteBufferState.Initial> =
+    object: ObjectPoolImpl<ReadWriteBufferState.Initial>(BUFFER_OBJECT_POOL_SIZE) {
+        override fun produceInstance() =
+            ReadWriteBufferState.Initial(BufferPool.borrow())
+        override fun disposeInstance(instance: ReadWriteBufferState.Initial) {
+            BufferPool.recycle(instance.backingBuffer)
+        }
+    }
 
-internal class ObjectPoolImpl<T : Any>(override val capacity: Int, private val producer: () -> T, private val disposer: (T) -> Unit = {}) : ObjectPool<T> {
+internal val BufferObjectNoPool: ObjectPool<ReadWriteBufferState.Initial> =
+    object : NoPoolImpl<ReadWriteBufferState.Initial>() {
+        override fun borrow(): ReadWriteBufferState.Initial =
+            ReadWriteBufferState.Initial(ByteBuffer.allocateDirect(BUFFER_SIZE))
+    }
+
+// ------------- ObjectPoolImpl -------------
+
+private const val MULTIPLIER = 4
+private const val PROBE_COUNT = 8 // number of attepts to find a slot
+private const val MAGIC = 2654435769.toInt() // fractional part of golden ratio
+private const val MAX_CAPACITY = Int.MAX_VALUE / MULTIPLIER
+
+internal abstract class ObjectPoolImpl<T : Any>(final override val capacity: Int) : ObjectPool<T> {
     init {
         require(capacity > 0) { "capacity should be positive but it is $capacity" }
-        require(capacity <= MaxCapacity) { "capacity should be less or equal to $MaxCapacity but it is $capacity"}
+        require(capacity <= MAX_CAPACITY) { "capacity should be less or equal to $MAX_CAPACITY but it is $capacity"}
     }
+
+    protected abstract fun produceInstance(): T // factory
+    protected open fun clearInstance(instance: T) = instance // optional cleaning of poped items
+    protected open fun validateInstance(instance: T) {} // optional validation for recycled items
+    protected open fun disposeInstance(instance: T) {} // optional destruction of unpoolable items
 
     @Volatile
     private var top: Long = 0L
 
-    // zero index is reserved for both
-    private val instances = AtomicReferenceArray<T?>(capacity * Multiplier)
-    private val next = IntArray(capacity * Multiplier)
-    private val arraySize = capacity * Multiplier
+    // closest power of 2 that is equal or larger than capacity * MULTIPLIER
+    private val maxIndex = Integer.highestOneBit(capacity * MULTIPLIER - 1) * 2
+    private val shift = Integer.numberOfLeadingZeros(maxIndex) + 1 // for hash function
 
-    override fun borrow(): T {
-        return tryPop() ?: producer()
-    }
+    // zero index is reserved for both
+    private val instances = AtomicReferenceArray<T?>(maxIndex + 1)
+    private val next = IntArray(maxIndex + 1)
+
+    override fun borrow(): T =
+        tryPop()?.let { clearInstance(it) } ?: produceInstance()
 
     override fun recycle(instance: T) {
-        if (!push(instance)) {
-            disposer(instance)
-        }
+        validateInstance(instance)
+        if (!tryPush(instance)) disposeInstance(instance)
     }
 
     override fun dispose() {
         while (true) {
             val instance = tryPop() ?: return
-            disposer(instance)
+            disposeInstance(instance)
         }
     }
 
-    private fun push(instance: T): Boolean {
-        val base = (Math.abs(System.identityHashCode(instance) * Magic) % arraySize).coerceAtLeast(1)
-
-        for (i in 0..Multiplier2Minus1) {
-            val index = ((base + i) % arraySize).coerceAtLeast(1)
+    private fun tryPush(instance: T): Boolean {
+        var index = ((System.identityHashCode(instance) * MAGIC) ushr shift) + 1
+        repeat (PROBE_COUNT) {
             if (instances.compareAndSet(index, null, instance)) {
                 pushTop(index)
                 return true
             }
+            if (--index == 0) index = maxIndex
         }
-
         return false
     }
 
     private fun tryPop(): T? {
         val index = popTop()
-        if (index == 0) {
-            return null
-        }
-
-        return instances.getAndSet(index, null)
+        return if (index == 0) null else instances.getAndSet(index, null)
     }
 
     private fun pushTop(index: Int) {
         require(index > 0)
-
-        while (true) {
-            val oldTop = top
-            val topVersion = (oldTop shr 32 and 0xffffffffL) + 1L
-            val topIndex = (oldTop and 0xffffffffL).toInt()
-
+        while (true) { // lock-free loop on top
+            val top = this.top // volatile read
+            val topVersion = (top shr 32 and 0xffffffffL) + 1L
+            val topIndex = (top and 0xffffffffL).toInt()
             val newTop = topVersion shl 32 or index.toLong()
             next[index] = topIndex
-
-            if (Top.compareAndSet(this, oldTop, newTop)) {
-                return
-            }
+            if (Top.compareAndSet(this, top, newTop)) return
         }
     }
 
     private fun popTop(): Int {
-        while (true) {
-            val t = top
-
-            if (t == 0L) return 0
-
-            val newVersion = (t shr 32 and 0xffffffffL) + 1L
-            val topIndex = (t and 0xffffffffL).toInt()
-
+        while (true) { // lock-free loop on top
+            val top = this.top // volatile read
+            if (top == 0L) return 0
+            val newVersion = (top shr 32 and 0xffffffffL) + 1L
+            val topIndex = (top and 0xffffffffL).toInt()
             if (topIndex == 0) return 0
-
             val next = next[topIndex]
-
             val newTop = newVersion shl 32 or next.toLong()
-
-            if (Top.compareAndSet(this, t, newTop)) {
-                return topIndex
-            }
+            if (Top.compareAndSet(this, top, newTop)) return topIndex
         }
     }
 
     companion object {
-        private const val Multiplier = 4
-        private const val Multiplier2Minus1 = Multiplier * 2 - 1
-        private const val Magic = 3
-
-        const val MaxCapacity = Int.MAX_VALUE / Multiplier
-
+        // todo: replace with atomicfu, remove companion object
         private val Top = longUpdater(ObjectPoolImpl<*>::top)
     }
 }
 
-internal interface ObjectPool<T : Any> {
-    val capacity: Int
+// ------------- NoPoolImpl -------------
 
-    fun borrow(): T
-    fun recycle(instance: T)
-    fun dispose()
-}
-
-internal class NoPool<T : Any>(val producer : () -> T) : ObjectPool<T> {
+internal abstract class NoPoolImpl<T : Any> : ObjectPool<T> {
     override val capacity: Int get() = 0
-
-    override fun borrow(): T {
-        return producer()
-    }
-
-    override fun recycle(instance: T) {
-    }
-
-    override fun dispose() {
-    }
+    override abstract fun borrow(): T
+    override fun recycle(instance: T) {}
+    override fun dispose() {}
 }

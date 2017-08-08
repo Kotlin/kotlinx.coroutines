@@ -1,11 +1,15 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.io.internal.*
-import org.junit.*
-import java.nio.*
-import java.util.concurrent.*
-import kotlin.test.*
+import kotlinx.coroutines.experimental.io.internal.ObjectPool
+import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
+import kotlinx.coroutines.experimental.runBlocking
+import org.junit.After
+import org.junit.Test
+import java.nio.ByteBuffer
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class PooledBufferTest {
     private val allocated = CopyOnWriteArrayList<ByteBuffer>()
@@ -14,7 +18,7 @@ class PooledBufferTest {
         override val capacity: Int get() = 0
 
         override fun borrow(): ReadWriteBufferState.Initial {
-            val buffer = ReadWriteBufferState.Initial(ByteBuffer.allocate(4096), ByteBufferChannel.ReservedSize)
+            val buffer = ReadWriteBufferState.Initial(ByteBuffer.allocate(4096))
             allocated.add(buffer.backingBuffer)
             return buffer
         }

@@ -1,8 +1,9 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.internal.*
-import kotlinx.coroutines.experimental.io.packet.*
-import java.nio.*
+import kotlinx.coroutines.experimental.io.internal.BufferObjectPool
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
 
 interface ByteWriteChannel {
     /**
@@ -143,7 +144,7 @@ suspend fun ByteWriteChannel.writeChar(ch: Char) {
 }
 
 suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
-    val o = DirectBufferObjectPool.borrow()
+    val o = BufferObjectPool.borrow()
     try {
         var copied = 0L
         val bb = o.backingBuffer
@@ -164,6 +165,6 @@ suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
         dst.close(t)
         throw t
     } finally {
-        DirectBufferObjectPool.recycle(o)
+        BufferObjectPool.recycle(o)
     }
 }

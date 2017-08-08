@@ -1,15 +1,26 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.io.internal.*
-import kotlinx.coroutines.experimental.io.packet.*
-import org.junit.*
-import org.junit.rules.*
-import java.nio.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineName
+import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
+import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
+import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
+import kotlinx.coroutines.experimental.io.packet.buildPacket
+import kotlinx.coroutines.experimental.io.packet.readUTF8Line
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ErrorCollector
+import org.junit.rules.Timeout
+import java.nio.ByteBuffer
 import java.util.*
-import java.util.concurrent.*
-import kotlin.test.*
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class ByteBufferChannelTest {
     @get:Rule
@@ -18,8 +29,8 @@ class ByteBufferChannelTest {
     @get:Rule
     val failures = ErrorCollector()
 
-    private val Size = BufferSize - ByteBufferChannel.ReservedSize
-    private val ch = ByteBufferChannel(autoFlush = false, pool = DirectBufferNoPool)
+    private val Size = BUFFER_SIZE - RESERVED_SIZE
+    private val ch = ByteBufferChannel(autoFlush = false, pool = BufferObjectNoPool)
 
     @Test
     fun testBoolean() {

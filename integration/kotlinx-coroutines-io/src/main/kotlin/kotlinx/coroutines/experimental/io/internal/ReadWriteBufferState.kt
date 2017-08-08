@@ -1,97 +1,91 @@
 package kotlinx.coroutines.experimental.io.internal
 
-import java.nio.*
+import java.nio.ByteBuffer
 
-sealed class ReadWriteBufferState {
-    abstract val backingBuffer: ByteBuffer
-    abstract val capacity: RingBufferCapacity
+// this is MAGICAL constant that is tied to the code ByteBufferChannel (that is how much it needs extra)
+internal const val RESERVED_SIZE = 8
 
+internal val EmptyByteBuffer: ByteBuffer = ByteBuffer.allocate(0)
+internal val ClosedByteBuffer: ByteBuffer = ByteBuffer.allocate(0)
+
+internal sealed class ReadWriteBufferState(
+    val backingBuffer: ByteBuffer,
+    val capacity: RingBufferCapacity
+) {
     open val idle: Boolean get() = false
+    open val readBuffer: ByteBuffer get() = error("read buffer is not available in state $this")
+    open val writeBuffer: ByteBuffer get() = error("write buffer is not available in state $this")
 
-    open val readBuffer: ByteBuffer get() = throw IllegalStateException("read buffer is not available in state $this")
-    open val writeBuffer: ByteBuffer get() = throw IllegalStateException("write buffer is not available in state $this")
+    internal open fun startReading(): ReadWriteBufferState = error("Reading is not available in state $this")
+    internal open fun startWriting(): ReadWriteBufferState = error("Writing is not available in state $this")
+    internal open fun stopReading(): ReadWriteBufferState = error("Unable to stop reading in state $this")
+    internal open fun stopWriting(): ReadWriteBufferState = error("Unable to stop writing in state $this")
 
-    internal open fun startReading(): ReadWriteBufferState = throw IllegalStateException("Reading is not available in state $this")
-    internal open fun startWriting(): ReadWriteBufferState = throw IllegalStateException("Writing is not available in state $this")
-
-    internal open fun stopReading(): ReadWriteBufferState = throw IllegalStateException("Unable to stop reading in state $this")
-    internal open fun stopWriting(): ReadWriteBufferState = throw IllegalStateException("Unable to stop writing in state $this")
-
-    object IdleEmpty : ReadWriteBufferState() {
-        override val backingBuffer: ByteBuffer get() = Empty
+    object IdleEmpty : ReadWriteBufferState(EmptyByteBuffer, RingBufferCapacity.Empty) {
         override val idle: Boolean get() = true
-
         override fun toString() = "IDLE(empty)"
-        override val capacity: RingBufferCapacity get() = RingBufferCapacity.Empty
     }
 
-    class Initial(override val backingBuffer: ByteBuffer, reservedSize: Int) : ReadWriteBufferState() {
-        override val writeBuffer: ByteBuffer = backingBuffer.slice()
-        override val readBuffer: ByteBuffer = writeBuffer.duplicate()
-        override val capacity = RingBufferCapacity(backingBuffer.capacity() - reservedSize)
-
-        private val readingState = Reading(backingBuffer, readBuffer, { concurrent }, { idleState }, capacity)
-        private val writingState = Writing(backingBuffer, writeBuffer, { concurrent }, { idleState }, capacity)
-
-        private val concurrent: ConcurrentReadingAndWriting = ConcurrentReadingAndWriting(backingBuffer, readBuffer, writeBuffer, { writingState }, { readingState }, capacity)
-        private val idleState: IdleNonEmpty = IdleNonEmpty(backingBuffer, readingState, writingState, this, capacity)
-
+    class Initial(
+        backingBuffer: ByteBuffer,
+        reservedSize: Int = RESERVED_SIZE
+    ) : ReadWriteBufferState(backingBuffer, RingBufferCapacity(backingBuffer.capacity() - reservedSize)) {
+        init {
+            require(backingBuffer.position() == 0)
+            require(backingBuffer.limit() == backingBuffer.capacity())
+        }
+        override val writeBuffer: ByteBuffer = backingBuffer.duplicate() // defensive copy of buffer's state
+        override val readBuffer: ByteBuffer = backingBuffer.duplicate() // must have a separate buffer state here
+        // all other possible states
+        internal val idleState = IdleNonEmpty(this)
+        internal val readingState = Reading(this)
+        internal val writingState = Writing(this)
+        internal val readingWritingState = ReadingWriting(this)
+        // state transitions
         override fun startReading() = readingState
         override fun startWriting() = writingState
-
         override val idle: Boolean get() = error("Not available for initial state")
-
         override fun toString() = "Initial"
     }
 
-    class IdleNonEmpty internal constructor(override val backingBuffer: ByteBuffer, private val reading: ReadWriteBufferState, private val writing: ReadWriteBufferState, internal val initial: Initial, override val capacity: RingBufferCapacity) : ReadWriteBufferState() {
-        override fun startReading() = reading
-        override fun startWriting() = writing
+    class IdleNonEmpty internal constructor(
+        val initial: Initial // public here, so can release initial state when idle
+    ) : ReadWriteBufferState(initial.backingBuffer, initial.capacity) {
+        override fun startReading() = initial.readingState
+        override fun startWriting() = initial.writingState
         override val idle: Boolean get() = true
-
         override fun toString() = "IDLE(with buffer)"
     }
 
-    class Reading internal constructor(override val backingBuffer: ByteBuffer, override val readBuffer: ByteBuffer, private val withWriting: () -> ConcurrentReadingAndWriting, private val withoutReading: () -> IdleNonEmpty, override val capacity: RingBufferCapacity) : ReadWriteBufferState() {
-        override fun startWriting() = withWriting()
-        override fun stopReading() = withoutReading()
-
-        override fun startReading() = throw IllegalStateException("Read operation is already in progress")
-
+    class Reading internal constructor(
+        private val initial: Initial
+    ) : ReadWriteBufferState(initial.backingBuffer, initial.capacity) {
+        override val readBuffer: ByteBuffer get() = initial.readBuffer
+        override fun startWriting() = initial.readingWritingState
+        override fun stopReading() = initial.idleState
         override fun toString() = "Reading"
     }
 
-    class Writing internal constructor(override val backingBuffer: ByteBuffer, override val writeBuffer: ByteBuffer, private val withReading: () -> ConcurrentReadingAndWriting, val withoutWriting: () -> IdleNonEmpty, override val capacity: RingBufferCapacity) : ReadWriteBufferState() {
-        override fun startReading() = withReading()
-        override fun stopWriting() = withoutWriting()
-
-        override fun startWriting() = throw IllegalStateException("Write operation is already in progress")
-
+    class Writing internal constructor(
+        private val initial: Initial
+    ) : ReadWriteBufferState(initial.backingBuffer, initial.capacity) {
+        override val writeBuffer: ByteBuffer get() = initial.writeBuffer
+        override fun startReading() = initial.readingWritingState
+        override fun stopWriting() = initial.idleState
         override fun toString() = "Writing"
     }
 
-    class ConcurrentReadingAndWriting internal constructor(override val backingBuffer: ByteBuffer, override val readBuffer: ByteBuffer, override val writeBuffer: ByteBuffer, private val _stopReading: () -> Writing, private val _stopWriting: () -> Reading, override val capacity: RingBufferCapacity) : ReadWriteBufferState() {
-        override fun stopReading() = _stopReading()
-        override fun stopWriting() = _stopWriting()
-
-        override fun startReading() = throw IllegalStateException("Read operation is already in progress")
-        override fun startWriting() = throw IllegalStateException("Write operation is already in progress")
-
+    class ReadingWriting internal constructor(
+        private val initial: Initial
+    ) : ReadWriteBufferState(initial.backingBuffer, initial.capacity) {
+        override val readBuffer: ByteBuffer get() = initial.readBuffer
+        override val writeBuffer: ByteBuffer get() = initial.writeBuffer
+        override fun stopReading() = initial.writingState
+        override fun stopWriting() = initial.readingState
         override fun toString() = "Reading+Writing"
     }
 
-    object Terminated : ReadWriteBufferState() {
-        override val backingBuffer: ByteBuffer
-            get() = Closed
-
-        override val capacity: RingBufferCapacity
-            get() = RingBufferCapacity.Empty
-
+    object Terminated : ReadWriteBufferState(ClosedByteBuffer, RingBufferCapacity.Empty) {
         override fun toString() = "Terminated"
-    }
-
-    companion object {
-        val Empty: ByteBuffer = ByteBuffer.allocate(0)
-        val Closed: ByteBuffer = ByteBuffer.allocate(0)
     }
 }

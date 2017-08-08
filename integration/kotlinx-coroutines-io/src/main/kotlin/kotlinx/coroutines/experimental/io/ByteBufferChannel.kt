@@ -2,19 +2,24 @@
 
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.CancellableContinuation
+import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
-import sun.nio.ch.*
-import java.nio.*
-import java.nio.charset.*
-import java.util.concurrent.atomic.*
-import kotlin.experimental.*
+import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import java.nio.BufferOverflowException
+import java.nio.ByteBuffer
+import java.nio.charset.MalformedInputException
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlin.experimental.and
 
-class ByteBufferChannel internal constructor(override val autoFlush: Boolean, val pool: ObjectPool<ReadWriteBufferState.Initial>, private val ReservedSize: Int = Companion.ReservedSize) : ByteReadChannel, ByteWriteChannel {
-    constructor(autoFlush: Boolean = false) : this(autoFlush, DirectBufferObjectPool)
-    constructor(content: ByteBuffer) : this(false, DirectBufferNoPool, 0) {
+class ByteBufferChannel internal constructor(
+    override val autoFlush: Boolean = false,
+    private val pool: ObjectPool<ReadWriteBufferState.Initial> = BufferObjectPool,
+    private val reservedSize: Int = RESERVED_SIZE
+) : ByteReadChannel, ByteWriteChannel {
+    constructor(content: ByteBuffer) : this(false, BufferObjectNoPool, 0) {
         state = ReadWriteBufferState.Initial(content.slice(), 0).apply {
             capacity.resetForRead()
         }.startWriting()
@@ -77,7 +82,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         require(position >= 0)
         require(available >= 0)
 
-        val bufferLimit = capacity() - ReservedSize
+        val bufferLimit = capacity() - reservedSize
         val virtualLimit = position + available
 
         order(order.forNio)
@@ -195,7 +200,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         }
     }
 
-    private fun ByteBuffer.carryIndex(idx: Int) = if (idx >= capacity() - ReservedSize) idx - (capacity() - ReservedSize) else idx
+    private fun ByteBuffer.carryIndex(idx: Int) = if (idx >= capacity() - reservedSize) idx - (capacity() - reservedSize) else idx
 
     private inline fun writing(block: ByteBuffer.(RingBufferCapacity) -> Unit) {
         val buffer = setupStateForWrite()
@@ -345,8 +350,8 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
 
         if (size == 0) return ByteReadPacketEmpty
 
-        val builder = ByteWritePacketImpl(DirectBufferPool)
-        val buffer = DirectBufferPool.borrow()
+        val builder = ByteWritePacketImpl(BufferPool)
+        val buffer = BufferPool.borrow()
 
         try {
             var remaining = size
@@ -368,7 +373,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
             builder.release()
             throw t
         } finally {
-            DirectBufferPool.recycle(buffer)
+            BufferPool.recycle(buffer)
         }
     }
 
@@ -608,7 +613,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
     }
 
     private fun ByteBuffer.carry() {
-        val base = capacity() - ReservedSize
+        val base = capacity() - reservedSize
         for (i in base until position()) {
             put(i - base, get(i))
         }
@@ -876,7 +881,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
                 try {
                     writeFully(buffer)
                 } finally {
-                    DirectBufferPool.recycle(buffer)
+                    BufferPool.recycle(buffer)
                 }
             }
             is ByteReadPacketImpl -> {
@@ -885,12 +890,12 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
                     try {
                         writeFully(buffer)
                     } finally {
-                        DirectBufferPool.recycle(buffer)
+                        BufferPool.recycle(buffer)
                     }
                 }
             }
             else -> {
-                val buffer = DirectBufferPool.borrow()
+                val buffer = BufferPool.borrow()
                 try {
                     while (packet.remaining > 0) {
                         buffer.clear()
@@ -899,7 +904,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
                         writeFully(buffer)
                     }
                 } finally {
-                    DirectBufferPool.recycle(buffer)
+                    BufferPool.recycle(buffer)
                 }
             }
         }
@@ -937,7 +942,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
         }
 
         if (!rc && closed != null) {
-            visitor(ReadWriteBufferState.Empty, true)
+            visitor(EmptyByteBuffer, true)
         }
 
         return rc
@@ -1266,7 +1271,7 @@ class ByteBufferChannel internal constructor(override val autoFlush: Boolean, va
     }
 
     companion object {
-        internal const val ReservedSize = 8
+
         private const val ReservedLongIndex = -8
 
         private val State = updater(ByteBufferChannel::state)
