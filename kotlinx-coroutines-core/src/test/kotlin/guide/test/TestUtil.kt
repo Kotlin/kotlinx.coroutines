@@ -43,9 +43,15 @@ fun threadNames(): Set<String> {
         }
         val names = hashSetOf<String>()
         for (i in 0 until n)
-            names.add(arrayOfThreads[i]!!.name)
+            names.add(sanitizeThreadName(arrayOfThreads[i]!!.name))
         return names
     }
+}
+
+// remove coroutine names from thread in case we have lost threads with coroutines running in them
+private fun sanitizeThreadName(name: String): String {
+    val i = name.indexOf(" @")
+    return if (i < 0) name else name.substring(0, i)
 }
 
 fun checkTestThreads(threadNamesBefore: Set<String>) {
