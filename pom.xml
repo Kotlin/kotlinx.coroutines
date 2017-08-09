@@ -224,6 +224,7 @@
                                     <message>Always define plugin versions!</message>
                                     <banLatest>true</banLatest>
                                     <banRelease>true</banRelease>
+                                    <banSnapshots>false</banSnapshots>
                                 </requirePluginVersions>
                             </rules>
                         </configuration>
