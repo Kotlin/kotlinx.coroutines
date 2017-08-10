@@ -16,7 +16,8 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -67,27 +68,12 @@ public typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
  */
 @Suppress("LeakingThis")
 public open class LockFreeLinkedListNode {
-    @Volatile
-    private var _next: Any = this // Node | Removed | OpDescriptor
-    @Volatile
-    private var _prev: Any = this // Node | Removed
-    @Volatile
-    private var _removedRef: Removed? = null // lazily cached removed ref to this
-
-    private companion object {
-        @JvmField
-        val NEXT: AtomicReferenceFieldUpdater<Node, Any> =
-                AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Any::class.java, "_next")
-        @JvmField
-        val PREV: AtomicReferenceFieldUpdater<Node, Any> =
-                AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Any::class.java, "_prev")
-        @JvmField
-        val REMOVED_REF: AtomicReferenceFieldUpdater<Node, Removed?> =
-            AtomicReferenceFieldUpdater.newUpdater(Node::class.java, Removed::class.java, "_removedRef")
-    }
+    private val _next = atomic<Any>(this) // Node | Removed | OpDescriptor
+    private val _prev = atomic<Any>(this) // Node | Removed
+    private val _removedRef = atomic<Removed?>(null) // lazily cached removed ref to this
 
     private fun removed(): Removed =
-        _removedRef ?: Removed(this).also { REMOVED_REF.lazySet(this, it) }
+        _removedRef.value ?: Removed(this).also { _removedRef.lazySet(it) }
 
     @PublishedApi
     internal abstract class CondAddOp(
@@ -98,7 +84,7 @@ public open class LockFreeLinkedListNode {
         override fun complete(affected: Node, failure: Any?) {
             val success = failure == null
             val update = if (success) newNode else oldNext
-            if (NEXT.compareAndSet(affected, this, update)) {
+            if (update != null && affected._next.compareAndSet( this, update)) {
                 // only the thread the makes this update actually finishes add operation
                 if (success) newNode.finishAdd(oldNext!!)
             }
@@ -111,14 +97,13 @@ public open class LockFreeLinkedListNode {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
 
-    public val isFresh: Boolean get() = _next === this
+    public val isFresh: Boolean get() = _next.value === this
 
     public val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
     public val next: Any get() {
-        while (true) { // operation helper loop on _next
-            val next = this._next
+        _next.loop { next ->
             if (next !is OpDescriptor) return next
             next.perform(this)
         }
@@ -126,10 +111,9 @@ public open class LockFreeLinkedListNode {
 
     // LINEARIZABLE. Returns Node | Removed
     public val prev: Any get() {
-        while (true) { // insert helper loop on _prev
-            val prev = this._prev
+        _prev.loop { prev ->
             if (prev is Removed) return prev
-            prev as Node // otherwise, it can be only node otherwise
+            prev as Node // otherwise, it can be only node
             if (prev.next === this) return prev
             correctPrev(prev, null)
         }
@@ -138,12 +122,12 @@ public open class LockFreeLinkedListNode {
     // ------ addOneIfEmpty ------
 
     public fun addOneIfEmpty(node: Node): Boolean {
-        PREV.lazySet(node, this)
-        NEXT.lazySet(node, this)
+        node._prev.lazySet(this)
+        node._next.lazySet(this)
         while (true) {
             val next = next
             if (next !== this) return false // this is not an empty list!
-            if (NEXT.compareAndSet(this, this, node)) {
+            if (_next.compareAndSet(this, node)) {
                 // added successfully (linearized add) -- fixup the list
                 node.finishAdd(this)
                 return true
@@ -207,9 +191,9 @@ public open class LockFreeLinkedListNode {
 
     @PublishedApi
     internal fun addNext(node: Node, next: Node): Boolean {
-        PREV.lazySet(node, this)
-        NEXT.lazySet(node, next)
-        if (!NEXT.compareAndSet(this, next, node)) return false
+        node._prev.lazySet(this)
+        node._next.lazySet(next)
+        if (!_next.compareAndSet(next, node)) return false
         // added successfully (linearized add) -- fixup the list
         node.finishAdd(next)
         return true
@@ -218,10 +202,10 @@ public open class LockFreeLinkedListNode {
     // returns UNDECIDED, SUCCESS or FAILURE
     @PublishedApi
     internal fun tryCondAddNext(node: Node, next: Node, condAdd: CondAddOp): Int {
-        PREV.lazySet(node, this)
-        NEXT.lazySet(node, next)
+        node._prev.lazySet(this)
+        node._next.lazySet(next)
         condAdd.oldNext = next
-        if (!NEXT.compareAndSet(this, next, condAdd)) return UNDECIDED
+        if (!_next.compareAndSet(next, condAdd)) return UNDECIDED
         // added operation successfully (linearized) -- complete it & fixup the list
         return if (condAdd.perform(this) == null) SUCCESS else FAILURE
     }
@@ -238,7 +222,7 @@ public open class LockFreeLinkedListNode {
             if (next is Removed) return false // was already removed -- don't try to help (original thread will take care)
             if (next === this) return false // was not even added
             val removed = (next as Node).removed()
-            if (NEXT.compareAndSet(this, next, removed)) {
+            if (_next.compareAndSet(next, removed)) {
                 // was removed successfully (linearized remove) -- fixup the list
                 finishRemove(next)
                 return true
@@ -249,12 +233,16 @@ public open class LockFreeLinkedListNode {
     public open fun describeRemove() : AtomicDesc? {
         if (isRemoved) return null // fast path if was already removed
         return object : AbstractAtomicDesc() {
+            private val _originalNext = atomic<Node?>(null)
             override val affectedNode: Node? get() = this@LockFreeLinkedListNode
-            override var originalNext: Node? = null
+            override val originalNext get() = _originalNext.value
             override fun failure(affected: Node, next: Any): Any? =
                 if (next is Removed) ALREADY_REMOVED else null
             override fun onPrepare(affected: Node, next: Node): Any? {
-                originalNext = next
+                // Note: onPrepare must use CAS to make sure the stale invocation is not
+                // going to overwrite the previous decision on successful preparation.
+                // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
+                _originalNext.compareAndSet(null, next)
                 return null // always success
             }
             override fun updatedNext(affected: Node, next: Node) = next.removed()
@@ -303,13 +291,13 @@ public open class LockFreeLinkedListNode {
     ) : AbstractAtomicDesc() {
         init {
             // require freshly allocated node here
-            check(node._next === node && node._prev === node)
+            check(node._next.value === node && node._prev.value === node)
         }
 
         final override fun takeAffectedNode(op: OpDescriptor): Node {
             while (true) {
-                val prev = queue._prev as Node // this sentinel node is never removed
-                val next = prev._next
+                val prev = queue._prev.value as Node // this sentinel node is never removed
+                val next = prev._next.value
                 if (next === queue) return prev // all is good -> linked properly
                 if (next === op) return prev // all is good -> our operation descriptor is already there
                 if (next is OpDescriptor) { // some other operation descriptor -> help & retry
@@ -317,25 +305,31 @@ public open class LockFreeLinkedListNode {
                     continue
                 }
                 // linked improperly -- help insert
-                queue.correctPrev(prev, op)
+                val affected = queue.correctPrev(prev, op)
+                // we can find node which this operation is already affecting while trying to correct prev
+                if (affected != null) return affected
             }
         }
 
-        final override var affectedNode: Node? = null
+        private val _affectedNode = atomic<Node?>(null)
+        final override val affectedNode: Node? get() = _affectedNode.value
         final override val originalNext: Node? get() = queue
 
         override fun retry(affected: Node, next: Any): Boolean = next !== queue
 
         override fun onPrepare(affected: Node, next: Node): Any? {
-            affectedNode = affected
+            // Note: onPrepare must use CAS to make sure the stale invocation is not
+            // going to overwrite the previous decision on successful preparation.
+            // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
+            _affectedNode.compareAndSet(null, affected)
             return null // always success
         }
 
         override fun updatedNext(affected: Node, next: Node): Any {
             // it is invoked only on successfully completion of operation, but this invocation can be stale,
             // so we must use CAS to set both prev & next pointers
-            PREV.compareAndSet(node, node, affected)
-            NEXT.compareAndSet(node, node, queue)
+            node._prev.compareAndSet(node, affected)
+            node._next.compareAndSet(node, queue)
             return node
         }
 
@@ -347,12 +341,15 @@ public open class LockFreeLinkedListNode {
     public open class RemoveFirstDesc<T>(
         @JvmField val queue: Node
     ) : AbstractAtomicDesc() {
+        private val _affectedNode = atomic<Node?>(null)
+        private val _originalNext = atomic<Node?>(null)
+
         @Suppress("UNCHECKED_CAST")
         public val result: T get() = affectedNode!! as T
 
         final override fun takeAffectedNode(op: OpDescriptor): Node = queue.next as Node
-        final override var affectedNode: Node? = null
-        final override var originalNext: Node? = null
+        final override val affectedNode: Node? get() = _affectedNode.value
+        final override val originalNext: Node? get() = _originalNext.value
 
         // check node predicates here, must signal failure if affect is not of type T
         protected override fun failure(affected: Node, next: Any): Any? =
@@ -371,8 +368,11 @@ public open class LockFreeLinkedListNode {
         final override fun onPrepare(affected: Node, next: Node): Any? {
             check(affected !is LockFreeLinkedListHead)
             if (!validatePrepared(affected as T)) return REMOVE_PREPARED
-            affectedNode = affected
-            originalNext = next
+            // Note: onPrepare must use CAS to make sure the stale invocation is not
+            // going to overwrite the previous decision on successful preparation.
+            // Result of CAS is irrelevant, but we must ensure that it is set when invoker completes
+            _affectedNode.compareAndSet(null, affected)
+            _originalNext.compareAndSet(null, next)
             return null // ok
         }
 
@@ -404,21 +404,19 @@ public open class LockFreeLinkedListNode {
                     if (decision === REMOVE_PREPARED) {
                         // remove element on failure
                         val removed = next.removed()
-                        if (NEXT.compareAndSet(affected, this, removed)) {
+                        if (affected._next.compareAndSet(this, removed)) {
                             affected.helpDelete()
                         }
                     } else {
                         // some other failure -- mark as decided
                         op.tryDecide(decision)
                         // undo preparations
-                        NEXT.compareAndSet(affected, this, next)
+                        affected._next.compareAndSet(this, next)
                     }
                     return decision
                 }
-                check(desc.affectedNode === affected)
-                check(desc.originalNext === next)
                 val update: Any = if (op.isDecided) next else op // restore if decision was already reached
-                NEXT.compareAndSet(affected, this, update)
+                affected._next.compareAndSet(this, update)
                 return null // ok
             }
         }
@@ -428,10 +426,10 @@ public open class LockFreeLinkedListNode {
             while (true) { // lock free loop on next
                 val affected = takeAffectedNode(op)
                 // read its original next pointer first
-                val next = affected._next
+                val next = affected._next.value
                 // then see if already reached consensus on overall operation
-                if (op.isDecided) return null // already decided -- go to next desc
                 if (next === op) return null // already in process of operation -- all is good
+                if (op.isDecided) return null // already decided this operation -- go to next desc
                 if (next is OpDescriptor) {
                     // some other operation is in process -- help it
                     next.perform(affected)
@@ -442,7 +440,7 @@ public open class LockFreeLinkedListNode {
                 if (failure != null) return failure // signal failure
                 if (retry(affected, next)) continue // retry operation
                 val prepareOp = PrepareOp(next as Node, op as AtomicOp<Node>, this)
-                if (NEXT.compareAndSet(affected, next, prepareOp)) {
+                if (affected._next.compareAndSet(next, prepareOp)) {
                     // prepared -- complete preparations
                     val prepFail = prepareOp.perform(affected)
                     if (prepFail === REMOVE_PREPARED) continue // retry
@@ -454,9 +452,9 @@ public open class LockFreeLinkedListNode {
         final override fun complete(op: AtomicOp<*>, failure: Any?) {
             val success = failure == null
             val affectedNode = affectedNode ?: run { check(!success); return }
-            val originalNext = this.originalNext ?: run { check(!success); return }
+            val originalNext = originalNext ?: run { check(!success); return }
             val update = if (success) updatedNext(affectedNode, originalNext) else originalNext
-            if (NEXT.compareAndSet(affectedNode, op, update)) {
+            if (affectedNode._next.compareAndSet(op, update)) {
                 if (success) finishOnSuccess(affectedNode, originalNext)
             }
         }
@@ -465,10 +463,9 @@ public open class LockFreeLinkedListNode {
     // ------ other helpers ------
 
     private fun finishAdd(next: Node) {
-        while (true) {
-            val nextPrev = next._prev
+        next._prev.loop { nextPrev ->
             if (nextPrev is Removed || this.next !== next) return // next was removed, remover fixes up links
-            if (PREV.compareAndSet(next, nextPrev, this)) {
+            if (next._prev.compareAndSet(nextPrev, this)) {
                 if (this.next is Removed) {
                     // already removed
                     next.correctPrev(nextPrev as Node, null)
@@ -480,14 +477,14 @@ public open class LockFreeLinkedListNode {
 
     private fun finishRemove(next: Node) {
         helpDelete()
-        next.correctPrev(_prev.unwrap(), null)
+        next.correctPrev(_prev.value.unwrap(), null)
     }
 
     private fun markPrev(): Node {
-        while (true) { // lock-free loop on prev
-            val prev = this._prev
+        _prev.loop { prev ->
             if (prev is Removed) return prev.ref
-            if (PREV.compareAndSet(this, prev, (prev as Node).removed())) return prev
+            val removedPrev = (prev as Node).removed()
+            if (_prev.compareAndSet(prev, removedPrev)) return prev
         }
     }
 
@@ -496,7 +493,7 @@ public open class LockFreeLinkedListNode {
     internal fun helpDelete() {
         var last: Node? = null // will set to the node left of prev when found
         var prev: Node = markPrev()
-        var next: Node = (this._next as Removed).ref
+        var next: Node = (this._next.value as Removed).ref
         while (true) {
             // move to the right until first non-removed node
             val nextNext = next.next
@@ -510,11 +507,11 @@ public open class LockFreeLinkedListNode {
             if (prevNext is Removed) {
                 if (last != null) {
                     prev.markPrev()
-                    NEXT.compareAndSet(last, prev, prevNext.ref)
+                    last._next.compareAndSet(prev, prevNext.ref)
                     prev = last
                     last = null
                 } else {
-                    prev = prev._prev.unwrap()
+                    prev = prev._prev.value.unwrap()
                 }
                 continue
             }
@@ -526,18 +523,20 @@ public open class LockFreeLinkedListNode {
                 continue
             }
             // Now prev & next are Ok
-            if (NEXT.compareAndSet(prev, this, next)) return // success!
+            if (prev._next.compareAndSet(this, next)) return // success!
         }
     }
 
     // fixes prev links from this node
-    private fun correctPrev(_prev: Node, op: OpDescriptor?) {
+    // returns affected node by this operation when this op is in progress (and nothing can be corrected)
+    // returns null otherwise (prev was corrected)
+    private fun correctPrev(_prev: Node, op: OpDescriptor?): Node? {
         var prev: Node = _prev
         var last: Node? = null // will be set so that last.next === prev
         while (true) {
             // move the the left until first non-removed node
-            val prevNext = prev._next
-            if (prevNext === op) return // part of the same op -- don't recurse
+            val prevNext = prev._next.value
+            if (prevNext === op) return prev // part of the same op -- don't recurse, didn't correct prev
             if (prevNext is OpDescriptor) { // help & retry
                 prevNext.perform(prev)
                 continue
@@ -545,32 +544,32 @@ public open class LockFreeLinkedListNode {
             if (prevNext is Removed) {
                 if (last !== null) {
                     prev.markPrev()
-                    NEXT.compareAndSet(last, prev, prevNext.ref)
+                    last._next.compareAndSet(prev, prevNext.ref)
                     prev = last
                     last = null
                 } else {
-                    prev = prev._prev.unwrap()
+                    prev = prev._prev.value.unwrap()
                 }
                 continue
             }
-            val oldPrev = this._prev
-            if (oldPrev is Removed) return // this node was removed, too -- its remover will take care
+            val oldPrev = this._prev.value
+            if (oldPrev is Removed) return null // this node was removed, too -- its remover will take care
             if (prevNext !== this) {
                 // need to fixup next
                 last = prev
                 prev = prevNext as Node
                 continue
             }
-            if (oldPrev === prev) return // it is already linked as needed
-            if (PREV.compareAndSet(this, oldPrev, prev)) {
-                if (prev._prev !is Removed) return // finish only if prev was not concurrently removed
+            if (oldPrev === prev) return null // it is already linked as needed
+            if (this._prev.compareAndSet(oldPrev, prev)) {
+                if (prev._prev.value !is Removed) return null // finish only if prev was not concurrently removed
             }
         }
     }
 
     internal fun validateNode(prev: Node, next: Node) {
-        check(prev === this._prev)
-        check(next === this._next)
+        check(prev === this._prev.value)
+        check(next === this._next.value)
     }
 
     override fun toString(): String = "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"

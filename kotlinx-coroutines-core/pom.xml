@@ -47,14 +47,55 @@
             <version>1.8.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>atomicfu</artifactId>
+            <version>${atomicfu.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
-
         <plugins>
+            <!-- compile Kotlin files to staging directory -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <output>${project.build.directory}/classes-atomicfu</output>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- transform classes with AtomicFU plugin -->
+            <plugin>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>atomicfu-maven-plugin</artifactId>
+                <version>${atomicfu.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <input>${project.build.directory}/classes-atomicfu</input>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- additional configuration for tests -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <executions>
@@ -62,14 +103,32 @@
                     <execution>
                         <id>jdk16-test</id>
                         <phase>test</phase>
-                        <goals><goal>test</goal></goals>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
                         <configuration>
                             <forkMode>once</forkMode>
                             <jvm>${env.JDK_16}/bin/java</jvm>
                             <argLine>-ea -Xmx1g -Xms1g -Djava.security.manager=kotlinx.coroutines.experimental.TestSecurityManager</argLine>
                             <excludes>
                                 <exclude>**/*LinearizabilityTest.*</exclude>
+                                <exclude>**/*LFTest.java</exclude>
                             </excludes>
+                        </configuration>
+                    </execution>
+                    <!-- test lock-freedom on un-processed files -->
+                    <execution>
+                        <id>lockfreedom-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <forkMode>once</forkMode>
+                            <classesDirectory>${project.build.directory}/classes-atomicfu</classesDirectory>
+                            <includes>
+                                <include>**/*LFTest.java</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>
