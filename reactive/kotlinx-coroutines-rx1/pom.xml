@@ -34,41 +34,6 @@
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
 
         <plugins>
-            <!-- compile Kotlin files to staging directory -->
-            <plugin>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-maven-plugin</artifactId>
-                <version>${kotlin.version}</version>
-                <executions>
-                    <execution>
-                        <id>compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <output>${project.build.directory}/classes-atomicfu</output>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- transform classes with AtomicFU plugin -->
-            <plugin>
-                <groupId>org.jetbrains.kotlinx</groupId>
-                <artifactId>atomicfu-maven-plugin</artifactId>
-                <version>${atomicfu.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <verbose>true</verbose>
-                            <input>${project.build.directory}/classes-atomicfu</input>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- documentation -->
             <plugin>
                 <groupId>org.jetbrains.dokka</groupId>
@@ -108,12 +73,6 @@
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>atomicfu</artifactId>
-            <version>${atomicfu.version}</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
