@@ -56,7 +56,7 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
                         list.addLast(node)
-                        burnTime(rnd)
+                        randomSpinWaitIntermission()
                         tryRemove(node)
                     }
                     1 -> {
@@ -64,7 +64,7 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
                         assertTrue(list.addLastIf(node, { true }))
-                        burnTime(rnd)
+                        randomSpinWaitIntermission()
                         tryRemove(node)
                     }
                     2 -> {
@@ -72,7 +72,6 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
                         assertFalse(list.addLastIf(node, { false }))
-                        burnTime(rnd)
                     }
                     3 -> {
                         // add two atomically
@@ -95,8 +94,9 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                             }
                         }
                         assertTrue(op.perform(null) == null)
-                        burnTime(rnd)
+                        randomSpinWaitIntermission()
                         tryRemove(node1)
+                        randomSpinWaitIntermission()
                         tryRemove(node2)
                     }
                     else -> error("Cannot happen")
@@ -139,17 +139,6 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
         assertTrue(undone.get() > 0)
         assertTrue(missed.get() > 0)
         lists.forEach { it.validate() }
-    }
-
-    private val sink = IntArray(1024)
-
-    private fun burnTime(rnd: Random) {
-        if (rnd.nextInt(100) < 95) return // be quick, no wait 95% of time
-        do {
-            val x = rnd.nextInt(100)
-            val i = rnd.nextInt(sink.size)
-            repeat(x) { sink[i] += it }
-        } while (x >= 90)
     }
 
     private fun tryRemove(node: IntNode) {
