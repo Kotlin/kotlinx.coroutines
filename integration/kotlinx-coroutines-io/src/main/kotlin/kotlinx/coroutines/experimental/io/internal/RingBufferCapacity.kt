@@ -1,82 +1,77 @@
 package kotlinx.coroutines.experimental.io.internal
 
 internal class RingBufferCapacity(private val totalCapacity: Int) {
-    @Volatile
-    var remaining = 0
-        private set
+    @Volatile @JvmField
+    var availableForRead = 0
 
-    @Volatile
-    var capacity = totalCapacity
-        private set
+    @Volatile @JvmField
+    var availableForWrite = totalCapacity
 
-    @Volatile
-    var pending = 0
-        private set
+    @Volatile @JvmField
+    var pendingToFlush = 0
 
     // concurrent unsafe!
-    fun reset() {
-        remaining = 0
-        pending = 0
-        capacity = totalCapacity
+    fun resetForWrite() {
+        availableForRead = 0
+        availableForWrite = totalCapacity
+        pendingToFlush = 0
     }
 
     fun resetForRead() {
-        capacity = 0
-        pending = 0
-        remaining = totalCapacity
+        availableForRead = totalCapacity
+        availableForWrite = 0
+        pendingToFlush = 0
     }
 
     fun tryReadExact(n: Int): Boolean {
         while (true) {
-            val remaining = remaining
+            val remaining = availableForRead
             if (remaining < n) return false
-            if (Remaining.compareAndSet(this, remaining, remaining - n)) return true
+            if (AvailableForRead.compareAndSet(this, remaining, remaining - n)) return true
         }
     }
 
     fun tryReadAtMost(n: Int): Int {
         while (true) {
-            val remaining = remaining
+            val remaining = availableForRead
             val delta = minOf(n, remaining)
             if (delta == 0) return 0
-            if (Remaining.compareAndSet(this, remaining, remaining - delta)) return delta
+            if (AvailableForRead.compareAndSet(this, remaining, remaining - delta)) return delta
         }
     }
 
     fun tryWriteExact(n: Int): Boolean {
         while (true) {
-            val remaining = capacity
+            val remaining = availableForWrite
             if (remaining < n) return false
-            if (Capacity.compareAndSet(this, remaining, remaining - n)) return true
+            if (AvailableForWrite.compareAndSet(this, remaining, remaining - n)) return true
         }
     }
 
     fun tryWriteAtMost(n: Int): Int {
         while (true) {
-            val remaining = capacity
+            val remaining = availableForWrite
             val delta = minOf(n, remaining)
             if (delta == 0) return 0
-            if (Capacity.compareAndSet(this, remaining, remaining - delta)) return delta
+            if (AvailableForWrite.compareAndSet(this, remaining, remaining - delta)) return delta
         }
     }
 
     fun completeRead(n: Int) {
         while (true) {
-            val capacity = capacity
-            val newValue = capacity + n
-
-            require(newValue <= totalCapacity) { "Completed read overflow: $capacity + $n = $newValue > $totalCapacity" }
-            if (Capacity.compareAndSet(this, capacity, newValue)) break
+            val remaining = availableForWrite
+            val update = remaining + n
+            require(update <= totalCapacity) { "Completed read overflow: $remaining + $n = $update > $totalCapacity" }
+            if (AvailableForWrite.compareAndSet(this, remaining, update)) break
         }
     }
 
     fun completeWrite(n: Int) {
         while (true) {
-            val pending = pending
-            val newPending = pending + n
-
-            require(newPending <= totalCapacity) { "Complete write overflow: $pending + $n > $totalCapacity" }
-            if (Pending.compareAndSet(this, pending, newPending)) break
+            val pending = pendingToFlush
+            val update = pending + n
+            require(update <= totalCapacity) { "Complete write overflow: $pending + $n > $totalCapacity" }
+            if (PendingToFlush.compareAndSet(this, pending, update)) break
         }
     }
 
@@ -84,34 +79,31 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
      * @return true if there are bytes available for read after flush
      */
     fun flush(): Boolean {
-        val pending = Pending.getAndSet(this, 0)
-
+        val pending = PendingToFlush.getAndSet(this, 0)
         while (true) {
-            val remaining = remaining
-            val newRemaining = remaining + pending
-
-            if (remaining == newRemaining || Remaining.compareAndSet(this, remaining, newRemaining)) {
-                return newRemaining > 0
+            val remaining = availableForRead
+            val update = remaining + pending
+            if (remaining == update || AvailableForRead.compareAndSet(this, remaining, update)) {
+                return update > 0
             }
         }
     }
 
     fun tryLockForRelease(): Boolean {
         while (true) {
-            val capacity = capacity
-            if (pending > 0 || remaining > 0 || capacity != totalCapacity) return false
-            if (Capacity.compareAndSet(this, capacity, 0)) return true
+            val remaining = availableForWrite
+            if (pendingToFlush > 0 || availableForRead > 0 || remaining != totalCapacity) return false
+            if (AvailableForWrite.compareAndSet(this, remaining, 0)) return true
         }
     }
 
-    fun isEmpty(): Boolean = capacity == totalCapacity
-    fun isFull(): Boolean = capacity == 0
+    fun isEmpty(): Boolean = availableForWrite == totalCapacity
+    fun isFull(): Boolean = availableForWrite == 0
 
     companion object {
-        val Empty = RingBufferCapacity(0)
-
-        private val Remaining = intUpdater(RingBufferCapacity::remaining)
-        private val Capacity = intUpdater(RingBufferCapacity::capacity)
-        private val Pending = intUpdater(RingBufferCapacity::pending)
+        // todo: replace with atomicfu, remove companion object
+        private val AvailableForRead = intUpdater(RingBufferCapacity::availableForRead)
+        private val AvailableForWrite = intUpdater(RingBufferCapacity::availableForWrite)
+        private val PendingToFlush = intUpdater(RingBufferCapacity::pendingToFlush)
     }
 }

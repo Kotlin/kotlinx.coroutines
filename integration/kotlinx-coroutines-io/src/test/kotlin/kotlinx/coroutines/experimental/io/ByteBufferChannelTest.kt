@@ -48,24 +48,12 @@ class ByteBufferChannelTest {
     @Test
     fun testByte() {
         runBlocking {
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeByte(-1)
             ch.flush()
-            assertEquals(1, ch.remaining)
+            assertEquals(1, ch.availableForRead)
             assertEquals(-1, ch.readByte())
-            assertEquals(0, ch.remaining)
-        }
-    }
-
-    @Test
-    fun testUByte() {
-        runBlocking {
-            assertEquals(0, ch.remaining)
-            ch.writeByte(255)
-            ch.flush()
-            assertEquals(1, ch.remaining)
-            assertEquals(255, ch.readUByte())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -75,13 +63,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeShort(-1)
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.flush()
-            assertEquals(2, ch.remaining)
+            assertEquals(2, ch.availableForRead)
             assertEquals(-1, ch.readShort())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -91,43 +79,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeShort(-1)
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.flush()
-            assertEquals(2, ch.remaining)
+            assertEquals(2, ch.availableForRead)
             assertEquals(-1, ch.readShort())
-            assertEquals(0, ch.remaining)
-        }
-    }
-
-    @Test
-    fun testUShortB() {
-        runBlocking {
-            ch.readByteOrder = ByteOrder.BIG_ENDIAN
-            ch.writeByteOrder = ByteOrder.BIG_ENDIAN
-
-            assertEquals(0, ch.remaining)
-            ch.writeShort(0xffff)
-            ch.flush()
-            assertEquals(2, ch.remaining)
-            assertEquals(0xffff, ch.readUShort())
-            assertEquals(0, ch.remaining)
-        }
-    }
-
-    @Test
-    fun testUShortL() {
-        runBlocking {
-            ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
-            ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
-
-            assertEquals(0, ch.remaining)
-            ch.writeShort(0xffff)
-            ch.flush()
-            assertEquals(2, ch.remaining)
-            assertEquals(0xffff, ch.readUShort())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -147,7 +105,7 @@ class ByteBufferChannelTest {
 
             ch.flush()
 
-            while (ch.remaining > 2) {
+            while (ch.availableForRead > 2) {
                 ch.readShort()
             }
 
@@ -161,12 +119,12 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeInt(-1)
             ch.flush()
-            assertEquals(4, ch.remaining)
+            assertEquals(4, ch.availableForRead)
             assertEquals(-1, ch.readInt())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -176,42 +134,12 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeInt(-1)
             ch.flush()
-            assertEquals(4, ch.remaining)
+            assertEquals(4, ch.availableForRead)
             assertEquals(-1, ch.readInt())
-            assertEquals(0, ch.remaining)
-        }
-    }
-
-    @Test
-    fun testUIntB() {
-        runBlocking {
-            ch.readByteOrder = ByteOrder.BIG_ENDIAN
-            ch.writeByteOrder = ByteOrder.BIG_ENDIAN
-
-            assertEquals(0, ch.remaining)
-            ch.writeInt(0xffffffffL)
-            ch.flush()
-            assertEquals(4, ch.remaining)
-            assertEquals(0xffffffffL, ch.readUInt())
-            assertEquals(0, ch.remaining)
-        }
-    }
-
-    @Test
-    fun testUIntL() {
-        runBlocking {
-            ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
-            ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
-
-            assertEquals(0, ch.remaining)
-            ch.writeInt(0xffffffffL)
-            ch.flush()
-            assertEquals(4, ch.remaining)
-            assertEquals(0xffffffffL, ch.readUInt())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -237,7 +165,7 @@ class ByteBufferChannelTest {
 
                 ch.flush()
 
-                while (ch.remaining > 4) {
+                while (ch.availableForRead > 4) {
                     ch.readInt()
                 }
 
@@ -252,12 +180,12 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeLong(Long.MIN_VALUE)
             ch.flush()
-            assertEquals(8, ch.remaining)
+            assertEquals(8, ch.availableForRead)
             assertEquals(Long.MIN_VALUE, ch.readLong())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -267,12 +195,12 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeLong(Long.MIN_VALUE)
             ch.flush()
-            assertEquals(8, ch.remaining)
+            assertEquals(8, ch.availableForRead)
             assertEquals(Long.MIN_VALUE, ch.readLong())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -296,7 +224,7 @@ class ByteBufferChannelTest {
                 ch.writeLong(0x1234567812345678L)
                 ch.flush()
 
-                while (ch.remaining > 8) {
+                while (ch.availableForRead > 8) {
                     ch.readLong()
                 }
 
@@ -311,13 +239,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeDouble(1.05)
             ch.flush()
 
-            assertEquals(8, ch.remaining)
+            assertEquals(8, ch.availableForRead)
             assertEquals(1.05, ch.readDouble())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -327,13 +255,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeDouble(1.05)
             ch.flush()
 
-            assertEquals(8, ch.remaining)
+            assertEquals(8, ch.availableForRead)
             assertEquals(1.05, ch.readDouble())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -343,13 +271,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeFloat(1.05f)
             ch.flush()
 
-            assertEquals(4, ch.remaining)
+            assertEquals(4, ch.availableForRead)
             assertEquals(1.05f, ch.readFloat())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -359,13 +287,13 @@ class ByteBufferChannelTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
             ch.writeFloat(1.05f)
             ch.flush()
 
-            assertEquals(4, ch.remaining)
+            assertEquals(4, ch.availableForRead)
             assertEquals(1.05f, ch.readFloat())
-            assertEquals(0, ch.remaining)
+            assertEquals(0, ch.availableForRead)
         }
     }
 
@@ -381,7 +309,7 @@ class ByteBufferChannelTest {
                 for (readOrder in byteOrders) {
                     ch.readByteOrder = readOrder
 
-                    assertEquals(0, ch.remaining)
+                    assertEquals(0, ch.availableForRead)
                     ch.writeShort(0x001f)
                     ch.flush()
                     if (writeOrder == readOrder)
@@ -389,7 +317,7 @@ class ByteBufferChannelTest {
                     else
                         assertEquals(0x1f00, ch.readShort())
 
-                    assertEquals(0, ch.remaining)
+                    assertEquals(0, ch.availableForRead)
                     ch.writeShort(0x001f)
                     ch.flush()
                     if (writeOrder == readOrder)
@@ -397,7 +325,7 @@ class ByteBufferChannelTest {
                     else
                         assertEquals(0x1f00, ch.readShort())
 
-                    assertEquals(0, ch.remaining)
+                    assertEquals(0, ch.availableForRead)
                     ch.writeInt(0x1f)
                     ch.flush()
                     if (writeOrder == readOrder)
@@ -405,7 +333,7 @@ class ByteBufferChannelTest {
                     else
                         assertEquals(0x1f000000, ch.readInt())
 
-                    assertEquals(0, ch.remaining)
+                    assertEquals(0, ch.availableForRead)
                     ch.writeInt(0x1fL)
                     ch.flush()
                     if (writeOrder == readOrder)
@@ -413,7 +341,7 @@ class ByteBufferChannelTest {
                     else
                         assertEquals(0x1f000000, ch.readInt())
 
-                    assertEquals(0, ch.remaining)
+                    assertEquals(0, ch.availableForRead)
                     ch.writeLong(0x1f)
                     ch.flush()
                     if (writeOrder == readOrder)
@@ -455,7 +383,7 @@ class ByteBufferChannelTest {
 
             ch.writeFully(bytes)
             ch.flush()
-            assertEquals(5, ch.remaining)
+            assertEquals(5, ch.availableForRead)
             ch.readFully(dst)
             assertTrue { dst.contentEquals(bytes) }
 
@@ -465,7 +393,7 @@ class ByteBufferChannelTest {
             val dst2 = ByteArray(4)
             ch.readFully(dst2)
 
-            assertEquals(1, ch.remaining)
+            assertEquals(1, ch.availableForRead)
             assertEquals(5, ch.readByte())
 
             ch.close()
@@ -486,7 +414,7 @@ class ByteBufferChannelTest {
 
             ch.writeFully(ByteBuffer.wrap(bytes))
             ch.flush()
-            assertEquals(5, ch.remaining)
+            assertEquals(5, ch.availableForRead)
             ch.readFully(ByteBuffer.wrap(dst))
             assertTrue { dst.contentEquals(bytes) }
 
@@ -496,7 +424,7 @@ class ByteBufferChannelTest {
             val dst2 = ByteArray(4)
             ch.readFully(ByteBuffer.wrap(dst2))
 
-            assertEquals(1, ch.remaining)
+            assertEquals(1, ch.availableForRead)
             assertEquals(5, ch.readByte())
 
             ch.close()
@@ -514,17 +442,17 @@ class ByteBufferChannelTest {
         runBlocking {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
 
-            assertEquals(5, ch.writeLazy(bytes))
+            assertEquals(5, ch.writeAvailable(bytes))
             ch.flush()
-            assertEquals(5, ch.readLazy(ByteArray(100)))
+            assertEquals(5, ch.readAvailable(ByteArray(100)))
 
             repeat(Size / bytes.size) {
-                assertNotEquals(0, ch.writeLazy(bytes))
+                assertNotEquals(0, ch.writeAvailable(bytes))
                 ch.flush()
             }
 
-            ch.readLazy(ByteArray(ch.remaining - 1))
-            assertEquals(1, ch.readLazy(ByteArray(100)))
+            ch.readAvailable(ByteArray(ch.availableForRead - 1))
+            assertEquals(1, ch.readAvailable(ByteArray(100)))
 
             ch.close()
         }
@@ -535,17 +463,17 @@ class ByteBufferChannelTest {
         runBlocking {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
 
-            assertEquals(5, ch.writeLazy(ByteBuffer.wrap(bytes)))
+            assertEquals(5, ch.writeAvailable(ByteBuffer.wrap(bytes)))
             ch.flush()
-            assertEquals(5, ch.readLazy(ByteBuffer.allocate(100)))
+            assertEquals(5, ch.readAvailable(ByteBuffer.allocate(100)))
 
             repeat(Size / bytes.size) {
-                assertNotEquals(0, ch.writeLazy(ByteBuffer.wrap(bytes)))
+                assertNotEquals(0, ch.writeAvailable(ByteBuffer.wrap(bytes)))
                 ch.flush()
             }
 
-            ch.readLazy(ByteArray(ch.remaining - 1))
-            assertEquals(1, ch.readLazy(ByteBuffer.allocate(100)))
+            ch.readAvailable(ByteArray(ch.availableForRead - 1))
+            assertEquals(1, ch.readAvailable(ByteBuffer.allocate(100)))
 
             ch.close()
         }

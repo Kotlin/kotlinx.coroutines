@@ -1,12 +1,14 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import org.junit.*
-import org.junit.rules.*
-import java.nio.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.Timeout
 import java.util.*
-import java.util.concurrent.*
-import kotlin.test.*
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.fail
 
 class StringsTest {
     @get:Rule
@@ -112,7 +114,7 @@ class StringsTest {
             while (rem > 0) {
                 val s = rnd.nextInt(arr.size).coerceIn(1, rem)
                 arr.fill(0)
-                val rc = channel.readLazy(arr, 0, s)
+                val rc = channel.readAvailable(arr, 0, s)
 
                 if (rc == -1) fail("EOF")
 

@@ -6,11 +6,11 @@ import java.nio.ByteBuffer
 internal const val RESERVED_SIZE = 8
 
 internal val EmptyByteBuffer: ByteBuffer = ByteBuffer.allocate(0)
-internal val ClosedByteBuffer: ByteBuffer = ByteBuffer.allocate(0)
+internal val EmptyCapacity = RingBufferCapacity(0)
 
 internal sealed class ReadWriteBufferState(
-    val backingBuffer: ByteBuffer,
-    val capacity: RingBufferCapacity
+    @JvmField val backingBuffer: ByteBuffer,
+    @JvmField val capacity: RingBufferCapacity
 ) {
     open val idle: Boolean get() = false
     open val readBuffer: ByteBuffer get() = error("read buffer is not available in state $this")
@@ -21,7 +21,7 @@ internal sealed class ReadWriteBufferState(
     internal open fun stopReading(): ReadWriteBufferState = error("Unable to stop reading in state $this")
     internal open fun stopWriting(): ReadWriteBufferState = error("Unable to stop writing in state $this")
 
-    object IdleEmpty : ReadWriteBufferState(EmptyByteBuffer, RingBufferCapacity.Empty) {
+    object IdleEmpty : ReadWriteBufferState(EmptyByteBuffer, EmptyCapacity) {
         override val idle: Boolean get() = true
         override fun toString() = "IDLE(empty)"
     }
@@ -85,7 +85,7 @@ internal sealed class ReadWriteBufferState(
         override fun toString() = "Reading+Writing"
     }
 
-    object Terminated : ReadWriteBufferState(ClosedByteBuffer, RingBufferCapacity.Empty) {
+    object Terminated : ReadWriteBufferState(EmptyByteBuffer, EmptyCapacity) {
         override fun toString() = "Terminated"
     }
 }

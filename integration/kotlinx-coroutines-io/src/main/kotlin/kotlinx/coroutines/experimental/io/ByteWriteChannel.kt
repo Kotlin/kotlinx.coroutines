@@ -1,48 +1,55 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.internal.BufferObjectPool
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
+import java.util.concurrent.CancellationException
 
-interface ByteWriteChannel {
+/**
+ * Channel for asynchronous writing of sequences of bytes.
+ * This is a **single-writer channel**.
+ *
+ * Operations on this channel cannot be invoked concurrently, unless explicitly specified otherwise
+ * in description. Exceptions are [close] and [flush].
+ */
+public interface ByteWriteChannel {
     /**
-     * `true` if channel flushes automatically all pending bytes after every writeN function call.
-     * If `false` then flush only happens at manual [flush] invocation or when the internal buffer is full.
+     * Returns number of bytes that can be written without suspension. Write operations do no suspend and return
+     * immediately when this number is at least the number of bytes requested for write.
      */
-    val autoFlush: Boolean
+    public val availableForWrite: Int
 
     /**
-     * `true` is channel has been closed so attempting to write to the channel will cause an exception
+     * Returns `true` is channel has been closed and attempting to write to the channel will cause an exception.
      */
-    val isClosedForSend: Boolean
+    public val isClosedForWrite: Boolean
 
     /**
-     * Byte order to be used for [writeShort], [writeInt], [writeLong], [writeFloat] and [writeDouble] operations.
+     * Returns `true` if channel flushes automatically all pending bytes after every write function call.
+     * If `false` then flush only happens at manual [flush] invocation or when the buffer is full.
      */
-    var writeByteOrder: ByteOrder
+    public val autoFlush: Boolean
+
+    /**
+     * Byte order that is used for multi-byte write operations
+     * (such as [writeShort], [writeInt], [writeLong], [writeFloat], and [writeDouble]).
+     */
+    public var writeByteOrder: ByteOrder
 
     /**
      * Writes as much as possible and only suspends if buffer is full
      */
-    suspend fun writeLazy(src: ByteArray, offset: Int, length: Int): Int
-
-    suspend fun writeLazy(src: ByteBuffer): Int
-
-    /**
-     * Writes as much as possible and only suspends if buffer is full
-     */
-    suspend fun writeLazy(src: ByteArray) = writeLazy(src, 0, src.size)
+    suspend fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int
+    suspend fun writeAvailable(src: ByteArray) = writeAvailable(src, 0, src.size)
+    suspend fun writeAvailable(src: ByteBuffer): Int
 
     /**
      * Writes all [src] bytes and suspends until all bytes written. Causes flush if buffer filled up or when [autoFlush]
      * Crashes if channel get closed while writing.
      */
     suspend fun writeFully(src: ByteArray, offset: Int, length: Int)
-
-    suspend fun writeFully(src: ByteBuffer)
-
     suspend fun writeFully(src: ByteArray) = writeFully(src, 0, src.size)
+    suspend fun writeFully(src: ByteBuffer)
 
     /**
      * Writes a [packet] fully or fails if channel get closed before the whole packet has been written
@@ -85,24 +92,28 @@ interface ByteWriteChannel {
     suspend fun writeFloat(f: Float)
 
     /**
-     * closes channel with specified [cause]. If no cause specified then then channel will be closed "normally":
-     * all subsequent write operations will fail with
-     * [kotlinx.coroutines.experimental.channels.ClosedSendChannelException] or with specified [cause]
-     * all subsequent read operations will fail with [cause] if not null
-     * if no cause provided then subsequent read operations may complete successfully or fail if end of stream
-     * reached unexpectedly.
-     * Flushes all pending write bytes (via [flush] function).
-     * May be called at any time in any thread.
-     * Closes the channel and returns `true` at first invocation
-     * and does nothing returning `false` for all subsequent invocations ([cause] will be ignored in this case)
+     * Closes this channel with an optional exceptional [cause].
+     * It flushes all pending write bytes (via [flush]).
+     * This is an idempotent operation -- repeated invocations of this function have no effect and return `false`.
+     *
+     * A channel that was closed without a [cause], is considered to be _closed normally_.
+     * A channel that was closed with non-null [cause] is called a _failed channel_. Attempts to read or
+     * write on a failed channel throw this cause exception.
+     *
+     * After invocation of this operation [isClosedForWrite] starts returning `true` and
+     * all subsequent write operations throw [ClosedWriteChannelException] or the specified [cause].
+     * However, [isClosedForRead][ByteReadChannel.isClosedForRead] on the side of [ByteReadChannel]
+     * starts returning `true` only after all written bytes have been read.
      */
-    fun close(cause: Throwable? = null): Boolean
+    public fun close(cause: Throwable? = null): Boolean
 
     /**
-     * Flushes all pending write bytes making them available for read. Could be invoked in any thread at any time.
-     * Does nothing if invoked after channel has been closed.
+     * Flushes all pending write bytes making them available for read.
+     *
+     * This function is thread-safe and can be invoked in any thread at any time.
+     * It does nothing when invoked on a closed channel.
      */
-    fun flush()
+    public fun flush()
 }
 
 suspend fun ByteWriteChannel.writeShort(s: Int) {
@@ -143,28 +154,4 @@ suspend fun ByteWriteChannel.writeChar(ch: Char) {
     writeShort(ch.toInt())
 }
 
-suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
-    val o = BufferObjectPool.borrow()
-    try {
-        var copied = 0L
-        val bb = o.backingBuffer
-        bb.clear()
-
-        while (true) {
-            val size = readLazy(bb)
-            if (size == -1) break
-
-            bb.flip()
-            dst.writeFully(bb)
-            copied += size
-        }
-
-        dst.close()
-        return copied
-    } catch (t: Throwable) {
-        dst.close(t)
-        throw t
-    } finally {
-        BufferObjectPool.recycle(o)
-    }
-}
+class ClosedWriteChannelException(message: String?) : CancellationException(message)
