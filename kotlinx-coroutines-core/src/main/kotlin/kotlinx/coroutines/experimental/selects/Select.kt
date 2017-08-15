@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.selects
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
@@ -25,7 +27,6 @@ import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.sync.Mutex
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
@@ -193,12 +194,10 @@ internal class SelectBuilderImpl<in R>(
     private val delegate: Continuation<R>
 ) : LockFreeLinkedListHead(), SelectBuilder<R>, SelectInstance<R>, Continuation<R> {
     // selection state is "this" (list of nodes) initially and is replaced by idempotent marker (or null) when selected
-    @Volatile
-    private var _state: Any? = this
+    private val _state = atomic<Any?>(this)
 
     // this is basically our own SafeContinuation
-    @Volatile
-    private var result: Any? = UNDECIDED
+    private val _result = atomic<Any?>(UNDECIDED)
 
     // cancellability support
     @Volatile
@@ -220,24 +219,16 @@ internal class SelectBuilderImpl<in R>(
               +-------------------+
      */
 
-    companion object {
-        private val STATE: AtomicReferenceFieldUpdater<SelectBuilderImpl<*>, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(SelectBuilderImpl::class.java, Any::class.java, "_state")
-        private val RESULT: AtomicReferenceFieldUpdater<SelectBuilderImpl<*>, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(SelectBuilderImpl::class.java, Any::class.java, "result")
-    }
-
     override val context: CoroutineContext get() = delegate.context
 
     override val completion: Continuation<R> get() = this
 
     private inline fun doResume(value: () -> Any?, block: () -> Unit) {
         check(isSelected) { "Must be selected first" }
-        while (true) { // lock-free loop
-            val result = this.result // atomic read
+        _result.loop { result ->
             when {
-                result === UNDECIDED -> if (RESULT.compareAndSet(this, UNDECIDED, value())) return
-                result === COROUTINE_SUSPENDED -> if (RESULT.compareAndSet(this, COROUTINE_SUSPENDED, RESUMED)) {
+                result === UNDECIDED -> if (_result.compareAndSet(UNDECIDED, value())) return
+                result === COROUTINE_SUSPENDED -> if (_result.compareAndSet(COROUTINE_SUSPENDED, RESUMED)) {
                     block()
                     return
                 }
@@ -270,10 +261,10 @@ internal class SelectBuilderImpl<in R>(
     @PublishedApi
     internal fun getResult(): Any? {
         if (!isSelected) initCancellability()
-        var result = this.result // atomic read
+        var result = _result.value // atomic read
         if (result === UNDECIDED) {
-            if (RESULT.compareAndSet(this, UNDECIDED, COROUTINE_SUSPENDED)) return COROUTINE_SUSPENDED
-            result = this.result // reread volatile var
+            if (_result.compareAndSet(UNDECIDED, COROUTINE_SUSPENDED)) return COROUTINE_SUSPENDED
+            result = _result.value // reread volatile var
         }
         when {
             result === RESUMED -> throw IllegalStateException("Already resumed")
@@ -299,8 +290,7 @@ internal class SelectBuilderImpl<in R>(
     }
 
     private val state: Any? get() {
-        while (true) { // lock-free helping loop
-            val state = _state
+        _state.loop { state ->
             if (state !is OpDescriptor) return state
             state.perform(this)
         }
@@ -344,7 +334,7 @@ internal class SelectBuilderImpl<in R>(
             val state = this.state
             when {
                 state === this -> {
-                    if (STATE.compareAndSet(this, this, idempotent)) {
+                    if (_state.compareAndSet(this, idempotent)) {
                         doAfterSelect()
                         return true
                     }
@@ -380,13 +370,12 @@ internal class SelectBuilderImpl<in R>(
         }
 
         fun prepareIfNotSelected(): Any? {
-            while (true) { // lock-free loop on state
-                val state = _state
+            _state.loop { state ->
                 when {
                     state === this@AtomicSelectOp -> return null // already in progress
                     state is OpDescriptor -> state.perform(this@SelectBuilderImpl) // help
                     state === this@SelectBuilderImpl -> {
-                        if (STATE.compareAndSet(this@SelectBuilderImpl, this@SelectBuilderImpl, this@AtomicSelectOp))
+                        if (_state.compareAndSet(this@SelectBuilderImpl, this@AtomicSelectOp))
                             return null // success
                     }
                     else -> return ALREADY_SELECTED
@@ -397,7 +386,7 @@ internal class SelectBuilderImpl<in R>(
         private fun completeSelect(failure: Any?) {
             val selectSuccess = select && failure == null
             val update = if (selectSuccess) null else this@SelectBuilderImpl
-            if (STATE.compareAndSet(this@SelectBuilderImpl, this@AtomicSelectOp, update)) {
+            if (_state.compareAndSet(this@AtomicSelectOp, update)) {
                 if (selectSuccess)
                     doAfterSelect()
             }

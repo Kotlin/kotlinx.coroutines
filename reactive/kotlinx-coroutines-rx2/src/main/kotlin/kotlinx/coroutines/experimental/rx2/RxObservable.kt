@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.rx2
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.functions.Cancellable
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
@@ -28,7 +29,6 @@ import kotlinx.coroutines.experimental.handleCoroutineException
 import kotlinx.coroutines.experimental.newCoroutineContext
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.sync.Mutex
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -57,6 +57,11 @@ public fun <T> rxObservable(
     block.startCoroutine(coroutine, coroutine)
 }
 
+private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
+private const val OPEN = 0        // open channel, still working
+private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet
+private const val SIGNALLED = -2  // already signalled subscriber onCompleted/onError
+
 private class RxObservableCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
@@ -66,18 +71,7 @@ private class RxObservableCoroutine<T>(
     // Mutex is locked when while subscriber.onXXX is being invoked
     private val mutex = Mutex()
 
-    @Volatile
-    private var signal: Int = OPEN
-
-    companion object {
-        private val SIGNAL = AtomicIntegerFieldUpdater
-            .newUpdater(RxObservableCoroutine::class.java, "signal")
-
-        private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
-        private const val OPEN = 0        // open channel, still working
-        private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet
-        private const val SIGNALLED = -2  // already signalled subscriber onCompleted/onError
-    }
+    private val _signal = atomic(OPEN)
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
@@ -144,8 +138,8 @@ private class RxObservableCoroutine<T>(
     // assert: mutex.isLocked()
     private fun doLockedSignalCompleted() {
         try {
-            if (signal >= CLOSED) {
-                signal = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
+            if (_signal.value >= CLOSED) {
+                _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
                 try {
                     if (cause != null)
@@ -162,7 +156,7 @@ private class RxObservableCoroutine<T>(
     }
 
     override fun onCancellation() {
-        if (!SIGNAL.compareAndSet(this, OPEN, CLOSED)) return // abort, other thread invoked doLockedSignalCompleted
+        if (!_signal.compareAndSet(OPEN, CLOSED)) return // abort, other thread invoked doLockedSignalCompleted
         if (mutex.tryLock()) // if we can acquire the lock
             doLockedSignalCompleted()
     }

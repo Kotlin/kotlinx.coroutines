@@ -90,7 +90,7 @@ private class CompletableDeferredImpl<T> : JobSupport(true), CompletableDeferred
         registerSelectAwaitInternal(select, block as (suspend (Any?) -> R))
 
     override fun complete(value: T): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     // actually, we don't care about the mode here at all, so just use a default
@@ -103,7 +103,7 @@ private class CompletableDeferredImpl<T> : JobSupport(true), CompletableDeferred
     }
 
     override fun completeExceptionally(exception: Throwable): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     // actually, we don't care about the mode here at all, so just use a default

@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlinx.atomicfu.atomic
 
 /**
  * The most abstract operation that can be in process. Other threads observing an instance of this
@@ -32,10 +32,12 @@ public abstract class OpDescriptor {
     abstract fun perform(affected: Any?): Any?
 }
 
+private val NO_DECISION: Any = Symbol("NO_DECISION")
+
 /**
  * Descriptor for multi-word atomic operation.
  * Based on paper
- * ["A Practical Multi-Word Compare-and-Swap Operation"](http://www.cl.cam.ac.uk/research/srg/netos/papers/2002-casn.pdf)
+ * ["A Practical Multi-Word Compare-and-Swap Operation"](http://www.cl.cam.ac.uk/research/srgnetos/papers/2002-casn.pdf)
  * by Timothy L. Harris, Keir Fraser and Ian A. Pratt.
  *
  * Note: parts of atomic operation must be globally ordered. Otherwise, this implementation will produce
@@ -44,24 +46,16 @@ public abstract class OpDescriptor {
  * @suppress **This is unstable API and it is subject to change.**
  */
 public abstract class AtomicOp<in T> : OpDescriptor() {
-    @Volatile
-    private var _consensus: Any? = UNDECIDED
+    private val _consensus = atomic<Any?>(NO_DECISION)
 
-    companion object {
-        private val CONSENSUS: AtomicReferenceFieldUpdater<AtomicOp<*>, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(AtomicOp::class.java, Any::class.java, "_consensus")
-
-        private val UNDECIDED: Any = Symbol("UNDECIDED")
-    }
-
-    val isDecided: Boolean get() = _consensus !== UNDECIDED
+    val isDecided: Boolean get() = _consensus.value !== NO_DECISION
 
     fun tryDecide(decision: Any?): Boolean {
-        check(decision !== UNDECIDED)
-        return CONSENSUS.compareAndSet(this, UNDECIDED, decision)
+        check(decision !== NO_DECISION)
+        return _consensus.compareAndSet(NO_DECISION, decision)
     }
 
-    private fun decide(decision: Any?): Any? = if (tryDecide(decision)) decision else _consensus
+    private fun decide(decision: Any?): Any? = if (tryDecide(decision)) decision else _consensus.value
 
     abstract fun prepare(affected: T): Any? // `null` if Ok, or failure reason
 
@@ -71,8 +65,8 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
     @Suppress("UNCHECKED_CAST")
     final override fun perform(affected: Any?): Any? {
         // make decision on status
-        var decision = this._consensus
-        if (decision === UNDECIDED)
+        var decision = this._consensus.value
+        if (decision === NO_DECISION)
             decision = decide(prepare(affected as T))
         complete(affected as T, decision)
         return decision

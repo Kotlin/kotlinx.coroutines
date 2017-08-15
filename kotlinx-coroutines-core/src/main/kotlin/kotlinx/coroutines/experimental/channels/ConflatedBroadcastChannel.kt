@@ -16,11 +16,11 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.internal.Symbol
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectInstance
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -45,25 +45,13 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * immediately sending an element: `ConflatedBroadcastChannel().apply { offer(value) }`.
      */
     constructor(value: E) : this() {
-        state = State<E>(value, null)
+        _state.lazySet(State<E>(value, null))
     }
 
-    @Suppress("UNCHECKED_CAST")
-    @Volatile
-    private var state: Any = INITIAL_STATE // State | Closed
-
-    @Volatile
-    private var updating = 0
+    private val _state = atomic<Any>(INITIAL_STATE) // State | Closed
+    private val _updating = atomic(0)
 
     private companion object {
-        @JvmField
-        val STATE: AtomicReferenceFieldUpdater<ConflatedBroadcastChannel<*>, Any> = AtomicReferenceFieldUpdater.
-            newUpdater(ConflatedBroadcastChannel::class.java, Any::class.java, "state")
-
-        @JvmField
-        val UPDATING: AtomicIntegerFieldUpdater<ConflatedBroadcastChannel<*>> = AtomicIntegerFieldUpdater.
-            newUpdater(ConflatedBroadcastChannel::class.java, "updating")
-
         @JvmField
         val CLOSED = Closed(null)
 
@@ -93,14 +81,15 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     @Suppress("UNCHECKED_CAST")
     public val value: E get() {
-        val state = this.state
-        when (state) {
-            is Closed -> throw state.valueException
-            is State<*> -> {
-                if (state.value === UNDEFINED) throw IllegalStateException("No value")
-                return state.value as E
+        _state.loop { state ->
+            when (state) {
+                is Closed -> throw state.valueException
+                is State<*> -> {
+                    if (state.value === UNDEFINED) throw IllegalStateException("No value")
+                    return state.value as E
+                }
+                else -> error("Invalid state $state")
             }
-            else -> error("Invalid state $state")
         }
     }
 
@@ -110,7 +99,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      */
     @Suppress("UNCHECKED_CAST")
     public val valueOrNull: E? get() {
-        val state = this.state
+        val state = _state.value
         when (state) {
             is Closed -> return null
             is State<*> -> {
@@ -121,14 +110,13 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
     }
 
-    override val isClosedForSend: Boolean get() = state is Closed
+    override val isClosedForSend: Boolean get() = _state.value is Closed
     override val isFull: Boolean get() = false
 
     @Suppress("UNCHECKED_CAST")
     override fun openSubscription(): SubscriptionReceiveChannel<E> {
         val subscriber = Subscriber<E>(this)
-        while (true) { // lock-free loop on state
-            val state = this.state
+        _state.loop { state ->
             when (state) {
                 is Closed -> {
                     subscriber.close(state.closeCause)
@@ -138,7 +126,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                     if (state.value !== UNDEFINED)
                         subscriber.offerInternal(state.value as E)
                     val update = State(state.value, addSubscriber((state as State<E>).subscribers, subscriber))
-                    if (STATE.compareAndSet(this, state, update))
+                    if (_state.compareAndSet(state, update))
                         return subscriber
                 }
                 else -> error("Invalid state $state")
@@ -148,13 +136,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     @Suppress("UNCHECKED_CAST")
     private fun closeSubscriber(subscriber: Subscriber<E>) {
-        while (true) { // lock-free loop on state
-            val state = this.state
+        _state.loop { state ->
             when (state) {
                 is Closed -> return
                 is State<*> -> {
                     val update = State(state.value, removeSubscriber((state as State<E>).subscribers!!, subscriber))
-                    if (STATE.compareAndSet(this, state, update))
+                    if (_state.compareAndSet(state, update))
                         return
                 }
                 else -> error("Invalid state $state")
@@ -181,13 +168,12 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     @Suppress("UNCHECKED_CAST")
     override fun close(cause: Throwable?): Boolean {
-        while (true) { // lock-free loop on state
-            val state = this.state
+        _state.loop { state ->
             when (state) {
                 is Closed -> return false
                 is State<*> -> {
                     val update = if (cause == null) CLOSED else Closed(cause)
-                    if (STATE.compareAndSet(this, state, update)) {
+                    if (_state.compareAndSet(state, update)) {
                         (state as State<E>).subscribers?.forEach { it.close(cause) }
                         return true
                     }
@@ -224,15 +210,14 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private fun offerInternal(element: E): Closed? {
         // If some other thread is updating the state in its offer operation we assume that our offer had linearized
         // before that offer (we lost) and that offer overwrote us and conflated our offer.
-        if (!UPDATING.compareAndSet(this, 0, 1)) return null
+        if (!_updating.compareAndSet(0, 1)) return null
         try {
-            while (true) { // lock-free loop on state
-                val state = this.state
+            _state.loop { state ->
                 when (state) {
                     is Closed -> return state
                     is State<*> -> {
                         val update = State(element, (state as State<E>).subscribers)
-                        if (STATE.compareAndSet(this, state, update)) {
+                        if (_state.compareAndSet(state, update)) {
                             // Note: Using offerInternal here to ignore the case when this subscriber was
                             // already concurrently closed (assume the close had conflated our offer for this
                             // particular subscriber).
@@ -244,7 +229,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                 }
             }
         } finally {
-            updating = 0 // reset the updating flag to zero even when something goes wrong
+            _updating.value = 0 // reset the updating flag to zero even when something goes wrong
         }
     }
 

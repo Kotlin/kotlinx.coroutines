@@ -38,7 +38,7 @@ public abstract class AbstractCoroutine<in T>(
     final override val hasCancellingState: Boolean get() = true
 
     final override fun resume(value: T) {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> if (updateState(state, value, MODE_ATOMIC_DEFAULT)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
@@ -48,14 +48,14 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     final override fun resumeWithException(exception: Throwable) {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     if (updateState(state, CompletedExceptionally(exception), MODE_ATOMIC_DEFAULT)) return
                 }
                 is Cancelled -> {
                     // ignore resumes on cancelled continuation, but handle exception if a different one is here
-                    if (exception != state.exception) handleCoroutineException(context, exception)
+                    if (exception !== state.exception) handleCoroutineException(context, exception)
                     return
                 }
                 else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)

@@ -16,8 +16,14 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlin.coroutines.experimental.Continuation
+
+
+private const val UNDECIDED = 0
+private const val SUSPENDED = 1
+private const val RESUMED = 2
 
 /**
  * @suppress **This is unstable API and it is subject to change.**
@@ -26,8 +32,7 @@ internal abstract class AbstractContinuation<in T>(
     active: Boolean,
     @JvmField protected val resumeMode: Int
 ) : JobSupport(active), Continuation<T> {
-    @Volatile
-    private var decision = UNDECIDED
+    private val _decision = atomic(UNDECIDED)
 
     /* decision state machine
 
@@ -44,21 +49,10 @@ internal abstract class AbstractContinuation<in T>(
         Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
      */
 
-    protected companion object {
-        @JvmField
-        val DECISION: AtomicIntegerFieldUpdater<AbstractContinuation<*>> =
-            AtomicIntegerFieldUpdater.newUpdater(AbstractContinuation::class.java, "decision")
-
-        const val UNDECIDED = 0
-        const val SUSPENDED = 1
-        const val RESUMED = 2
-    }
-
     protected fun trySuspend(): Boolean {
-        while (true) { // lock-free loop on decision
-            val decision = this.decision // volatile read
+        _decision.loop { decision ->
             when (decision) {
-                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, SUSPENDED)) return true
+                UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, SUSPENDED)) return true
                 RESUMED -> return false
                 else -> error("Already suspended")
             }
@@ -66,10 +60,9 @@ internal abstract class AbstractContinuation<in T>(
     }
 
     protected fun tryResume(): Boolean {
-        while (true) { // lock-free loop on decision
-            val decision = this.decision // volatile read
+        _decision.loop { decision ->
             when (decision) {
-                UNDECIDED -> if (DECISION.compareAndSet(this, UNDECIDED, RESUMED)) return true
+                UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, RESUMED)) return true
                 SUSPENDED -> return false
                 else -> error("Already resumed")
             }
@@ -79,7 +72,7 @@ internal abstract class AbstractContinuation<in T>(
     override fun resume(value: T) = resumeImpl(value, resumeMode)
 
     protected fun resumeImpl(value: T, resumeMode: Int) {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> if (updateState(state, value, resumeMode)) return
                 is Cancelled -> return // ignore resumes on cancelled continuation
@@ -91,7 +84,7 @@ internal abstract class AbstractContinuation<in T>(
     override fun resumeWithException(exception: Throwable) = resumeWithExceptionImpl(exception, resumeMode)
 
     protected fun resumeWithExceptionImpl(exception: Throwable, resumeMode: Int) {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Incomplete -> {
                     if (updateState(state, CompletedExceptionally(exception), resumeMode)) return

@@ -16,12 +16,13 @@
 
 package kotlinx.coroutines.experimental.reactive
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
@@ -69,26 +70,17 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
     @JvmField
     var subscription: Subscription? = null
 
-    @Volatile
-    @JvmField
     // request balance from cancelled receivers, balance is negative if we have receivers, but no subscription yet
-    var balance = 0
-
-    private companion object {
-        @JvmField
-        val BALANCE: AtomicIntegerFieldUpdater<SubscriptionChannel<*>> =
-            AtomicIntegerFieldUpdater.newUpdater(SubscriptionChannel::class.java, "balance")
-    }
+    val _balance = atomic(0)
 
     // AbstractChannel overrides
     override fun onEnqueuedReceive() {
-        loop@ while (true) { // lock-free loop on balance
-            val balance = this.balance
+        _balance.loop { balance ->
             val subscription = this.subscription
             if (subscription != null) {
                 if (balance < 0) { // receivers came before we had subscription
                     // try to fixup by making request
-                    if (!BALANCE.compareAndSet(this, balance, 0)) continue@loop
+                    if (!_balance.compareAndSet(balance, 0)) return@loop // continue looping
                     subscription.request(-balance.toLong())
                     return
                 }
@@ -97,12 +89,12 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
                     return
                 }
             }
-            if (BALANCE.compareAndSet(this, balance, balance - 1)) return
+            if (_balance.compareAndSet(balance, balance - 1)) return
         }
     }
 
     override fun onCancelledReceive() {
-        BALANCE.incrementAndGet(this)
+        _balance.incrementAndGet()
     }
 
     override fun afterClose(cause: Throwable?) {
@@ -122,11 +114,11 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
                 s.cancel()
                 return
             }
-            val balance = this.balance
+            val balance = _balance.value
             if (balance >= 0) return // ok -- normal story
             // otherwise, receivers came before we had subscription
             // try to fixup by making request
-            if (!BALANCE.compareAndSet(this, balance, 0)) continue
+            if (!_balance.compareAndSet(balance, 0)) continue
             s.request(-balance.toLong())
             return
         }

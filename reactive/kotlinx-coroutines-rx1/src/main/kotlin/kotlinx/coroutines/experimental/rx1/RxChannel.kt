@@ -16,12 +16,13 @@
 
 package kotlinx.coroutines.experimental.rx1
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import rx.Observable
 import rx.Subscriber
 import rx.Subscription
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 
 /**
  * Subscribes to this [Observable] and returns a channel to receive elements emitted by it.
@@ -73,30 +74,21 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
     @JvmField
     var subscription: Subscription? = null
 
-    @Volatile
-    @JvmField
-    var balance = 0 // request balance from cancelled receivers
-
-    private companion object {
-        @JvmField
-        val BALANCE: AtomicIntegerFieldUpdater<SubscriptionChannel<*>> =
-            AtomicIntegerFieldUpdater.newUpdater(SubscriptionChannel::class.java, "balance")
-    }
+    val _balance = atomic(0) // request balance from cancelled receivers
 
     // AbstractChannel overrides
     override fun onEnqueuedReceive() {
-        while (true) { // lock-free loop on balance
-            val balance = this.balance
+        _balance.loop { balance ->
             if (balance == 0) {
                 subscriber.requestOne()
                 return
             }
-            if (BALANCE.compareAndSet(this, balance, balance - 1)) return
+            if (_balance.compareAndSet(balance, balance - 1)) return
         }
     }
 
     override fun onCancelledReceive() {
-        BALANCE.incrementAndGet(this)
+        _balance.incrementAndGet()
     }
 
     override fun afterClose(cause: Throwable?) {

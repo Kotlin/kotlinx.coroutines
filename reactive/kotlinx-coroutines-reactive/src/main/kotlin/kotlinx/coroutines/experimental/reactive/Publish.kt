@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.reactive
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
@@ -28,7 +29,6 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
-import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -57,6 +57,10 @@ public fun <T> publish(
     block.startCoroutine(coroutine, coroutine)
 }
 
+private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
+private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
+private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
+
 private class PublisherCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
@@ -66,18 +70,7 @@ private class PublisherCoroutine<T>(
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex = Mutex(locked = true)
 
-    @Volatile
-    private var nRequested: Long = 0 // < 0 when closed (CLOSED or SIGNALLED)
-
-    companion object {
-        private val N_REQUESTED = AtomicLongFieldUpdater
-                .newUpdater(PublisherCoroutine::class.java, "nRequested")
-
-        private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
-
-        private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
-        private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
-    }
+    private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
@@ -131,11 +124,11 @@ private class PublisherCoroutine<T>(
         }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
-            val cur = nRequested
+            val cur = _nRequested.value
             if (cur < 0) break // closed from inside onNext => unlock
             if (cur == Long.MAX_VALUE) break // no back-pressure => unlock
             val upd = cur - 1
-            if (N_REQUESTED.compareAndSet(this, cur, upd)) {
+            if (_nRequested.compareAndSet(cur, upd)) {
                 if (upd == 0L) return // return to keep locked due to back-pressure
                 break // unlock if upd > 0
             }
@@ -155,8 +148,8 @@ private class PublisherCoroutine<T>(
     // assert: mutex.isLocked()
     private fun doLockedSignalCompleted() {
         try {
-            if (nRequested >= CLOSED) {
-                nRequested = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
+            if (_nRequested.value >= CLOSED) {
+                _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
                 try {
                     if (cause != null)
@@ -178,13 +171,13 @@ private class PublisherCoroutine<T>(
             return
         }
         while (true) { // lock-free loop for nRequested
-            val cur = nRequested
+            val cur = _nRequested.value
             if (cur < 0) return // already closed for send, ignore requests
             var upd = cur + n
             if (upd < 0 || n == Long.MAX_VALUE)
                 upd = Long.MAX_VALUE
             if (cur == upd) return // nothing to do
-            if (N_REQUESTED.compareAndSet(this, cur, upd)) {
+            if (_nRequested.compareAndSet(cur, upd)) {
                 // unlock the mutex when we don't have back-pressure anymore
                 if (cur == 0L) {
                     mutex.unlock()
@@ -199,10 +192,10 @@ private class PublisherCoroutine<T>(
 
     override fun onCancellation() {
         while (true) { // lock-free loop for nRequested
-            val cur = nRequested
+            val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
             check(cur >= 0) // no other thread could have marked it as CLOSED, because onCancellation is invoked once
-            if (!N_REQUESTED.compareAndSet(this, cur, CLOSED)) continue // retry on failed CAS
+            if (!_nRequested.compareAndSet(cur, CLOSED)) continue // retry on failed CAS
             // Ok -- marked as CLOSED, now can unlock the mutex if it was locked due to backpressure
             if (cur == 0L) {
                 doLockedSignalCompleted()

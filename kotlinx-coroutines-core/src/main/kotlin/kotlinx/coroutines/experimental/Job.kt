@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import kotlinx.coroutines.experimental.internal.OpDescriptor
@@ -24,8 +26,6 @@ import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
@@ -430,21 +430,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
            FINAL_C (Cancelled) state on cancellation/completion
      */
 
-    @Volatile
-    private var _state: Any? = if (active) EmptyActive else EmptyNew // shared objects while we have no listeners
+    // Note: use shared objects while we have no listeners
+    private val _state = atomic<Any?>(if (active) EmptyActive else EmptyNew)
 
     @Volatile
     private var parentHandle: DisposableHandle? = null
-
-    protected companion object {
-        private val STATE: AtomicReferenceFieldUpdater<JobSupport, Any?> =
-            AtomicReferenceFieldUpdater.newUpdater(JobSupport::class.java, Any::class.java, "_state")
-
-        fun stateToString(state: Any?): String =
-                if (state is Incomplete)
-                    if (state.isActive) "Active" else "New"
-                else "Completed"
-    }
 
     // ------------ initialization ------------
 
@@ -488,14 +478,13 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      * Returns current state of this job.
      */
     protected val state: Any? get() {
-        while (true) { // helper loop on state (complete in-progress atomic operations)
-            val state = _state
+        _state.loop { state -> // helper loop on state (complete in-progress atomic operations)
             if (state !is OpDescriptor) return state
             state.perform(this)
         }
     }
 
-    protected inline fun lockFreeLoopOnState(block: (Any?) -> Unit): Nothing {
+    protected inline fun loopOnState(block: (Any?) -> Unit): Nothing {
         while (true) {
             block(state)
         }
@@ -545,7 +534,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
      */
     protected fun tryUpdateState(expect: Any, update: Any?): Boolean  {
         require(expect is Incomplete && update !is Incomplete) // only incomplete -> completed transition is allowed
-        if (!STATE.compareAndSet(this, expect, update)) return false
+        if (!_state.compareAndSet(expect, update)) return false
         // Unregister from parent job
         parentHandle?.dispose() // volatile read parentHandle _after_ state was updated
         return true // continues in completeUpdateState
@@ -593,7 +582,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         notifyHandlers<JobCancellationNode<*>>(list, cause)
 
     public final override fun start(): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (startInternal(state)) {
                 FALSE -> return false
                 TRUE -> return true
@@ -609,13 +598,13 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         when (state) {
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
-                if (!STATE.compareAndSet(this, state, EmptyActive)) return RETRY
+                if (!_state.compareAndSet(state, EmptyActive)) return RETRY
                 onStart()
                 return TRUE
             }
             is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                if (state.active != 0) return FALSE
-                if (!NodeList.ACTIVE.compareAndSet(state, 0, 1)) return RETRY
+                if (state._active.value != 0) return FALSE
+                if (!state._active.compareAndSet(0, 1)) return RETRY
                 onStart()
                 return TRUE
             }
@@ -663,13 +652,13 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     private fun installHandler(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle {
         var nodeCache: JobNode<*>? = null
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
                     if (state.isActive) {
                         // try move to SINGLE state
                         val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
-                        if (STATE.compareAndSet(this, state, node)) return node
+                        if (_state.compareAndSet(state, node)) return node
                     } else
                         promoteEmptyToNodeList(state) // that way we can add listener for non-active coroutine
                 }
@@ -710,7 +699,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     private fun promoteEmptyToNodeList(state: Empty) {
         // try to promote it to list in new state
-        STATE.compareAndSet(this, state, NodeList(state.isActive))
+        _state.compareAndSet(state, NodeList(state.isActive))
     }
 
     private fun promoteSingleToNodeList(state: JobNode<*>) {
@@ -719,7 +708,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
         val list = state.next // either NodeList or somebody else won the race, updated state
         // just attempt converting it to list if state is still the same, then we'll continue lock-free loop
-        STATE.compareAndSet(this, state, list)
+        _state.compareAndSet(state, list)
     }
 
     final override suspend fun join() {
@@ -728,7 +717,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     }
 
     private fun joinInternal(): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             if (state !is Incomplete) return false // not active anymore (complete) -- no need to wait
             if (startInternal(state) >= 0) return true // wait unless need to retry
         }
@@ -740,7 +729,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     override fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R) {
         // fast-path -- check state and select/return if needed
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             if (select.isSelected) return
             if (state !is Incomplete) {
                 // already complete -- select result
@@ -758,12 +747,12 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     internal fun removeNode(node: JobNode<*>) {
         // remove logic depends on the state of the job
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is JobNode<*> -> { // SINGE/SINGLE+ state -- one completion handler
                     if (state !== node) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
-                    if (STATE.compareAndSet(this, state, EmptyActive)) return
+                    if (_state.compareAndSet(state, EmptyActive)) return
                 }
                 is NodeList, is Cancelling -> { // LIST or CANCELLING -- a list of completion handlers
                     // remove node from the list
@@ -789,7 +778,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     // transitions to Cancelled state
     private fun makeCancelled(cause: Throwable?): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             if (state !is Incomplete) return false // quit if already complete
             if (updateStateCancelled(state, cause)) return true
         }
@@ -797,7 +786,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     // transitions to Cancelling state
     private fun makeCancelling(cause: Throwable?): Boolean {
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
                     if (state.isActive) {
@@ -814,7 +803,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
                 is NodeList -> { // LIST -- a list of completion handlers (either new or active)
                     if (state.isActive) {
                         // try make it cancelling on the condition that we're still in this state
-                        if (STATE.compareAndSet(this, state, Cancelling(state, Cancelled(cause)))) {
+                        if (_state.compareAndSet(state, Cancelling(state, Cancelled(cause)))) {
                             notifyCancellation(state, cause)
                             onCancellation()
                             return true
@@ -876,17 +865,9 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
     private class NodeList(
         active: Boolean
     ) : LockFreeLinkedListHead(), Incomplete {
-        @Volatile
-        @JvmField
-        var active: Int = if (active) 1 else 0
+        val _active = atomic(if (active) 1 else 0)
 
-        override val isActive: Boolean get() = active != 0
-
-        companion object {
-            @JvmField
-            val ACTIVE: AtomicIntegerFieldUpdater<NodeList> =
-                    AtomicIntegerFieldUpdater.newUpdater(NodeList::class.java, "active")
-        }
+        override val isActive: Boolean get() = _active.value != 0
 
         override fun toString(): String = buildString {
             append("List")
@@ -976,7 +957,7 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
 
     protected fun <R> registerSelectAwaitInternal(select: SelectInstance<R>, block: suspend (Any?) -> R) {
         // fast-path -- check state and select/return if needed
-        lockFreeLoopOnState { state ->
+        loopOnState { state ->
             if (select.isSelected) return
             if (state !is Incomplete) {
                 // already complete -- select result
@@ -1005,6 +986,11 @@ public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(
             block.startCoroutineCancellable(state, select.completion)
     }
 }
+
+internal fun stateToString(state: Any?): String =
+    if (state is JobSupport.Incomplete)
+        if (state.isActive) "Active" else "New"
+    else "Completed"
 
 private const val RETRY = -1
 private const val FALSE = 0
@@ -1095,16 +1081,10 @@ private class SelectAwaitOnCompletion<R>(
 
 internal abstract class JobCancellationNode<out J : Job>(job: J) : JobNode<J>(job) {
     // shall be invoked at most once, so here is an additional flag
-    @Volatile
-    private var invoked: Int = 0
-
-    private companion object {
-        private val INVOKED: AtomicIntegerFieldUpdater<JobCancellationNode<*>> = AtomicIntegerFieldUpdater
-            .newUpdater<JobCancellationNode<*>>(JobCancellationNode::class.java, "invoked")
-    }
+    private val _invoked = atomic(0)
 
     final override fun invoke(reason: Throwable?) {
-        if (INVOKED.compareAndSet(this, 0, 1)) invokeOnce(reason)
+        if (_invoked.compareAndSet(0, 1)) invokeOnce(reason)
     }
 
     abstract fun invokeOnce(reason: Throwable?)
