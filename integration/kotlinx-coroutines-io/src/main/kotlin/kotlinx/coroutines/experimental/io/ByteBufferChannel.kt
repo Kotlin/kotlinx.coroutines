@@ -85,7 +85,7 @@ class ByteBufferChannel internal constructor(
         val bufferLimit = capacity() - reservedSize
         val virtualLimit = position + available
 
-        order(order.forNio)
+        order(order)
         limit(virtualLimit.coerceAtMost(bufferLimit))
         position(position)
     }
@@ -1249,8 +1249,8 @@ class ByteBufferChannel internal constructor(
     private fun newBuffer(): ReadWriteBufferState.Initial {
         val result = pool.borrow()
 
-        result.readBuffer.order(readByteOrder.forNio)
-        result.writeBuffer.order(writeByteOrder.forNio)
+        result.readBuffer.order(readByteOrder)
+        result.writeBuffer.order(writeByteOrder)
         result.capacity.reset()
 
         return result

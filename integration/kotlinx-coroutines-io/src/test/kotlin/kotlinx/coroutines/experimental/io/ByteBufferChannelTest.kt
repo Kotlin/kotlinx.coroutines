@@ -369,13 +369,16 @@ class ByteBufferChannelTest {
         }
     }
 
+
+
     @Test
     fun testEndianMix() {
+        val byteOrders = listOf(ByteOrder.BIG_ENDIAN, ByteOrder.LITTLE_ENDIAN)
         runBlocking {
-            for (writeOrder in ByteOrder.values()) {
+            for (writeOrder in byteOrders) {
                 ch.writeByteOrder = writeOrder
 
-                for (readOrder in ByteOrder.values()) {
+                for (readOrder in byteOrders) {
                     ch.readByteOrder = readOrder
 
                     assertEquals(0, ch.remaining)

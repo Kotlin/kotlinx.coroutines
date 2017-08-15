@@ -1,6 +1,5 @@
 package kotlinx.coroutines.experimental.io.internal
 
-import kotlinx.coroutines.experimental.io.ByteOrder
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
@@ -8,12 +7,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import kotlin.reflect.KProperty1
 
 internal fun ByteBuffer.isEmpty() = !hasRemaining()
-
-internal val ByteOrder.forNio: java.nio.ByteOrder
-    get() = when (this) {
-        ByteOrder.BIG_ENDIAN -> java.nio.ByteOrder.BIG_ENDIAN
-        ByteOrder.LITTLE_ENDIAN -> java.nio.ByteOrder.LITTLE_ENDIAN
-    }
 
 internal inline fun <reified Owner : Any> longUpdater(p: KProperty1<Owner, Long>): AtomicLongFieldUpdater<Owner> {
     return AtomicLongFieldUpdater.newUpdater(Owner::class.java, p.name)
