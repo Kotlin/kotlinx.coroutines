@@ -33,7 +33,7 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
 
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
 
-    private val TEST_DURATION_SEC = 5 * stressTestMultiplier
+    private val TEST_DURATION_SEC = 50 * stressTestMultiplier
 
     val nLists = 4
     val nAdderThreads = 4
@@ -55,23 +55,23 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                     0 -> {
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
-                        list.addLast(node)
+                        addLastOp(list, node)
                         randomSpinWaitIntermission()
-                        tryRemove(node)
+                        tryRemoveOp(node)
                     }
                     1 -> {
                         // just to test conditional add
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
-                        assertTrue(list.addLastIf(node, { true }))
+                        addLastIfTrueOp(list, node)
                         randomSpinWaitIntermission()
-                        tryRemove(node)
+                        tryRemoveOp(node)
                     }
                     2 -> {
                         // just to test failed conditional add and burn some time
                         val list = lists[rnd.nextInt(nLists)]
                         val node = IntNode(threadId)
-                        assertFalse(list.addLastIf(node, { false }))
+                        addLastIfFalseOp(list, node)
                     }
                     3 -> {
                         // add two atomically
@@ -82,22 +82,11 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                         val list2 = lists[idx2]
                         val node1 = IntNode(threadId)
                         val node2 = IntNode(-threadId - 1)
-                        val add1 = list1.describeAddLast(node1)
-                        val add2 = list2.describeAddLast(node2)
-                        val op = object : AtomicOp<Any?>() {
-                            override fun prepare(affected: Any?): Any? =
-                                add1.prepare(this) ?:
-                                add2.prepare(this)
-                            override fun complete(affected: Any?, failure: Any?) {
-                                add1.complete(this, failure)
-                                add2.complete(this, failure)
-                            }
-                        }
-                        assertTrue(op.perform(null) == null)
+                        addTwoOp(list1, node1, list2, node2)
                         randomSpinWaitIntermission()
-                        tryRemove(node1)
+                        tryRemoveOp(node1)
                         randomSpinWaitIntermission()
-                        tryRemove(node2)
+                        tryRemoveOp(node2)
                     }
                     else -> error("Cannot happen")
                 }
@@ -111,19 +100,7 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
                 check(idx1 < idx2) // that is our global order
                 val list1 = lists[idx1]
                 val list2 = lists[idx2]
-                val remove1 = list1.describeRemoveFirst()
-                val remove2 = list2.describeRemoveFirst()
-                val op = object : AtomicOp<Any?>() {
-                    override fun prepare(affected: Any?): Any? =
-                        remove1.prepare(this) ?:
-                        remove2.prepare(this)
-                    override fun complete(affected: Any?, failure: Any?) {
-                        remove1.complete(this, failure)
-                        remove2.complete(this, failure)
-                    }
-                }
-                val success = op.perform(null) == null
-                if (success) removed.addAndGet(2)
+                removeTwoOp(list1, list2)
             }
         }
         env.performTest(TEST_DURATION_SEC) {
@@ -141,10 +118,56 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
         lists.forEach { it.validate() }
     }
 
-    private fun tryRemove(node: IntNode) {
+    private fun addLastOp(list: LockFreeLinkedListHead, node: IntNode) {
+        list.addLast(node)
+    }
+
+    private fun addLastIfTrueOp(list: LockFreeLinkedListHead, node: IntNode) {
+        assertTrue(list.addLastIf(node, { true }))
+    }
+
+    private fun addLastIfFalseOp(list: LockFreeLinkedListHead, node: IntNode) {
+        assertFalse(list.addLastIf(node, { false }))
+    }
+
+    private fun addTwoOp(list1: LockFreeLinkedListHead, node1: IntNode, list2: LockFreeLinkedListHead, node2: IntNode) {
+        val add1 = list1.describeAddLast(node1)
+        val add2 = list2.describeAddLast(node2)
+        val op = object : AtomicOp<Any?>() {
+            override fun prepare(affected: Any?): Any? =
+                add1.prepare(this) ?:
+                    add2.prepare(this)
+
+            override fun complete(affected: Any?, failure: Any?) {
+                add1.complete(this, failure)
+                add2.complete(this, failure)
+            }
+        }
+        assertTrue(op.perform(null) == null)
+    }
+
+    private fun tryRemoveOp(node: IntNode) {
         if (node.remove())
             undone.incrementAndGet()
         else
             missed.incrementAndGet()
     }
+
+    private fun removeTwoOp(list1: LockFreeLinkedListHead, list2: LockFreeLinkedListHead) {
+        val remove1 = list1.describeRemoveFirst()
+        val remove2 = list2.describeRemoveFirst()
+        val op = object : AtomicOp<Any?>() {
+            override fun prepare(affected: Any?): Any? =
+                remove1.prepare(this) ?:
+                    remove2.prepare(this)
+
+            override fun complete(affected: Any?, failure: Any?) {
+                remove1.complete(this, failure)
+                remove2.complete(this, failure)
+            }
+        }
+        val success = op.perform(null) == null
+        if (success) removed.addAndGet(2)
+    }
+
 }
