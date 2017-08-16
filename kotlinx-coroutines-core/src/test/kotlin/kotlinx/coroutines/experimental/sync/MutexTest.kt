@@ -107,4 +107,37 @@ class MutexTest : TestBase() {
         mutex.unlock() // should not produce StackOverflowError
         assertThat(done, IsEqual(waiters))
     }
+
+    @Test
+    fun holdLock() = runBlocking {
+        val mutex = Mutex()
+        val firstOwner = Any()
+        val secondOwner = Any()
+
+        // no lock
+        assertFalse(mutex.holdsLock(firstOwner))
+        assertFalse(mutex.holdsLock(secondOwner))
+
+        // owner firstOwner
+        mutex.lock(firstOwner)
+        val secondLockJob = launch(CommonPool) {
+            mutex.lock(secondOwner)
+        }
+
+        assertTrue(mutex.holdsLock(firstOwner))
+        assertFalse(mutex.holdsLock(secondOwner))
+
+        // owner secondOwner
+        mutex.unlock(firstOwner)
+        secondLockJob.join()
+
+        assertFalse(mutex.holdsLock(firstOwner))
+        assertTrue(mutex.holdsLock(secondOwner))
+
+        mutex.unlock(secondOwner)
+
+        // no lock
+        assertFalse(mutex.holdsLock(firstOwner))
+        assertFalse(mutex.holdsLock(secondOwner))
+    }
 }
