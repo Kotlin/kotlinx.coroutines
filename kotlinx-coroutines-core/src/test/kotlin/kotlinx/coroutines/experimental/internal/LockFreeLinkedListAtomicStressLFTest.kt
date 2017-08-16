@@ -33,7 +33,7 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
 
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
 
-    private val TEST_DURATION_SEC = 50 * stressTestMultiplier
+    private val TEST_DURATION_SEC = 5 * stressTestMultiplier
 
     val nLists = 4
     val nAdderThreads = 4
