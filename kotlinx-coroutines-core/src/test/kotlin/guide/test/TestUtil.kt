@@ -27,11 +27,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 
+private const val WAIT_LOST_THREADS = 10_000L // 10s
 private val ignoreLostThreads = mutableSetOf<String>()
 
 fun ignoreLostThreads(vararg s: String) { ignoreLostThreads += s }
 
-fun threadNames(): Set<String> {
+fun currentThreads(): Set<Thread> {
     var estimate = 0
     while (true) {
         estimate = estimate.coerceAtLeast(Thread.activeCount() + 1)
@@ -41,33 +42,37 @@ fun threadNames(): Set<String> {
             estimate = n + 1
             continue // retry with a better size estimate
         }
-        val names = hashSetOf<String>()
+        val threads = hashSetOf<Thread>()
         for (i in 0 until n)
-            names.add(sanitizeThreadName(arrayOfThreads[i]!!.name))
-        return names
+            threads.add(arrayOfThreads[i]!!)
+        return threads
     }
 }
 
-// remove coroutine names from thread in case we have lost threads with coroutines running in them
-private fun sanitizeThreadName(name: String): String {
-    val i = name.indexOf(" @")
-    return if (i < 0) name else name.substring(0, i)
-}
-
-fun checkTestThreads(threadNamesBefore: Set<String>) {
+fun checkTestThreads(threadsBefore: Set<Thread>) {
     // give threads some time to shutdown
-    val waitTill = System.currentTimeMillis() + 1000L
-    var diff: List<String>
+    val waitTill = System.currentTimeMillis() + WAIT_LOST_THREADS
+    var diff: List<Thread>
     do {
-        val threadNamesAfter = threadNames()
-        diff = (threadNamesAfter - threadNamesBefore).filter { name ->
-            ignoreLostThreads.none { prefix -> name.startsWith(prefix) }
+        val threadsAfter = currentThreads()
+        diff = (threadsAfter - threadsBefore).filter { thread ->
+            ignoreLostThreads.none { prefix -> thread.name.startsWith(prefix) }
         }
         if (diff.isEmpty()) break
     } while (System.currentTimeMillis() <= waitTill)
     ignoreLostThreads.clear()
-    diff.forEach { println("Lost thread '$it'") }
-    check(diff.isEmpty()) { "Lost ${diff.size} threads" }
+    if (diff.isEmpty()) return
+    val message = "Lost threads ${diff.map { it.name }}"
+    println("!!! $message")
+    println("=== Dumping lost thread stack traces")
+    diff.forEach { thread ->
+        println("Thread \"${thread.name}\" ${thread.state}")
+        val trace = thread.stackTrace
+        for (t in trace) println("\tat ${t.className}.${t.methodName}(${t.fileName}:${t.lineNumber})")
+        println()
+    }
+    println("===")
+    error(message)
 }
 
 fun trackTask(block: Runnable) = timeSource.trackTask(block)
@@ -96,7 +101,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
     resetCoroutineId()
     // shutdown execution with old time source (in case it was working)
     DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
-    val threadNamesBefore = threadNames()
+    val threadsBefore = currentThreads()
     val testTimeSource = TestTimeSource(oldOut)
     timeSource = testTimeSource
     DefaultExecutor.ensureStarted() // should start with new time source
@@ -121,7 +126,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
         oldOut.println("--- done")
         System.setOut(oldOut)
         System.setErr(oldErr)
-        checkTestThreads(threadNamesBefore)
+        checkTestThreads(threadsBefore)
     }
     return ByteArrayInputStream(bytes).bufferedReader().readLines()
 }

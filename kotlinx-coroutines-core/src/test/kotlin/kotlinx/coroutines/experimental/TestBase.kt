@@ -17,7 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import guide.test.checkTestThreads
-import guide.test.threadNames
+import guide.test.currentThreads
 import org.junit.After
 import org.junit.Before
 import java.util.concurrent.atomic.AtomicBoolean
@@ -99,13 +99,13 @@ open class TestBase {
         check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
     }
 
-    private lateinit var threadNamesBefore: Set<String>
-    private val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
+    private lateinit var threadsBefore: Set<Thread>
+    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
 
     @Before
     fun before() {
         CommonPool.usePrivatePool()
-        threadNamesBefore = threadNames()
+        threadsBefore = currentThreads()
     }
 
     @After
@@ -114,6 +114,6 @@ open class TestBase {
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
         CommonPool.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
-        checkTestThreads(threadNamesBefore)
+        checkTestThreads(threadsBefore)
     }
 }
