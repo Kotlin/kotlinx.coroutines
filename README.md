@@ -1,6 +1,7 @@
 # kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/_latestVersion)
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1.4 release. 
+Library support for Kotlin coroutines. 
+This is a companion version for Kotlin 1.1.4 release (this is the minimal required Kotlin runtime version). 
 
 ## Modules
 
