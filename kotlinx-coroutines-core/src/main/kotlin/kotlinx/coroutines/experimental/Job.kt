@@ -26,7 +26,6 @@ import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -376,7 +375,9 @@ public object NonDisposableHandle : DisposableHandle {
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public open class JobSupport(active: Boolean) : AbstractCoroutineContextElement(Job), Job {
+public open class JobSupport(active: Boolean) : Job {
+    override val key: CoroutineContext.Key<*> get() = Job
+
     /*
        === Internal states ===
 
