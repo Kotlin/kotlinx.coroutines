@@ -898,7 +898,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
 
     protected open val hasCancellingState: Boolean get() = false
 
-    public final override fun cancel(cause: Throwable?): Boolean =
+    public override fun cancel(cause: Throwable?): Boolean =
         if (hasCancellingState)
             makeCancelling(cause) else
             makeCancelled(cause)

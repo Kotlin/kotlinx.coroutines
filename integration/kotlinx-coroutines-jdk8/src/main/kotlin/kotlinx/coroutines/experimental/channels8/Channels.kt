@@ -17,7 +17,6 @@
 package kotlinx.coroutines.experimental.channels8
 
 import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.ProducerJob
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.channels.produce
@@ -33,7 +32,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 /**
  * Creates a [ProducerJob] to read all element of the [Stream].
  */
-public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = CommonPool): ProducerJob<E> = produce(context) {
+public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = CommonPool): ReceiveChannel<E> = produce(context) {
     for (element in this@asReceiveChannel)
         send(element)
 }

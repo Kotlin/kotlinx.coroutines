@@ -17,18 +17,22 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.AbstractCoroutine
-import kotlinx.coroutines.experimental.JobSupport
 import kotlinx.coroutines.experimental.handleCoroutineException
 import kotlin.coroutines.experimental.CoroutineContext
 
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
-    open val channel: Channel<E>,
+    channel: Channel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by channel {
-    override fun afterCompletion(state: Any?, mode: Int) {
-        val cause = (state as? JobSupport.CompletedExceptionally)?.cause
-        if (!channel.close(cause) && cause != null)
+    val channel: Channel<E>
+        get() = this
+
+    override fun onCancellation(exceptionally: CompletedExceptionally?) {
+        val cause = exceptionally?.cause
+        if (!close(cause) && cause != null)
             handleCoroutineException(context, cause)
     }
+
+    override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
 }

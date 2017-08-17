@@ -8,8 +8,8 @@ Coroutine builder functions:
 | ------------- | ------------- | ---------------- | ---------------
 | [launch]      | [Job]         | [CoroutineScope] | Launches coroutine that does not have any result 
 | [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
-| [produce][kotlinx.coroutines.experimental.channels.produce]     | [ProducerJob][kotlinx.coroutines.experimental.channels.ProducerJob] | [ProducerScope][kotlinx.coroutines.experimental.channels.ProducerScope]  | Produces a stream of elements
-| [actor][kotlinx.coroutines.experimental.channels.actor]     | [ActorJob][kotlinx.coroutines.experimental.channels.ActorJob] | [ActorScope][kotlinx.coroutines.experimental.channels.ActorScope]  | Processes a stream of messages
+| [produce][kotlinx.coroutines.experimental.channels.produce]     | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.experimental.channels.ProducerScope]  | Produces a stream of elements
+| [actor][kotlinx.coroutines.experimental.channels.actor]     | [SendChannel][kotlinx.coroutines.experimental.channels.SendChannel] | [ActorScope][kotlinx.coroutines.experimental.channels.ActorScope]  | Processes a stream of messages
 | [runBlocking] | `T`           | [CoroutineScope] | Blocks the thread while the coroutine runs
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:

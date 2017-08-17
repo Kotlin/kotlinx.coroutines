@@ -16,10 +16,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CoroutineStart
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.assertThat
 import org.junit.Test
@@ -31,14 +28,15 @@ class ActorLazyTest : TestBase() {
         val actor = actor<String>(coroutineContext, start = CoroutineStart.LAZY) {
             expect(5)
         }
+        actor as Job // type assertion
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(2)
         yield() // to actor code --> nothing happens (not started!)
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(3)
         // start actor explicitly
         actor.start()
@@ -46,7 +44,7 @@ class ActorLazyTest : TestBase() {
         yield() // to started actor
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(true))
-        assertThat(actor.channel.isClosedForSend, IsEqual(true))
+        assertThat(actor.isClosedForSend, IsEqual(true))
         finish(6)
     }
 
@@ -58,20 +56,21 @@ class ActorLazyTest : TestBase() {
             assertThat(receive(), IsEqual("OK"))
             expect(5)
         }
+        actor as Job // type assertion
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(2)
         yield() // to actor code --> nothing happens (not started!)
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(3)
         // send message to actor --> should start it
         actor.send("OK")
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(true))
-        assertThat(actor.channel.isClosedForSend, IsEqual(true))
+        assertThat(actor.isClosedForSend, IsEqual(true))
         finish(6)
     }
 }

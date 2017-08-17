@@ -249,10 +249,10 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), SubscriptionReceiveChannel<E> {
-        override fun close() {
-            if (close(cause = null))
-                broadcastChannel.closeSubscriber(this)
-        }
+        override fun cancel(cause: Throwable?): Boolean =
+            close(cause).also { closed ->
+                if (closed) broadcastChannel.closeSubscriber(this)
+            }
 
         public override fun offerInternal(element: E): Any = super.offerInternal(element)
     }

@@ -37,14 +37,11 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
 }
 
 /**
- * Return type for [actor] coroutine builder.
+ * @suppress **Deprecated**: Use `SendChannel`.
  */
-public interface ActorJob<in E> : Job, SendChannel<E> {
-    /**
-     * A reference to the mailbox channel that this coroutine is receiving messages from.
-     * All the [SendChannel] functions on this interface delegate to
-     * the channel instance returned by this function.
-     */
+@Deprecated(message = "Use `SendChannel`", replaceWith = ReplaceWith("SendChannel"))
+interface ActorJob<in E> : SendChannel<E> {
+    @Deprecated(message = "Use SendChannel itself")
     val channel: SendChannel<E>
 }
 
@@ -87,7 +84,7 @@ public fun <E> actor(
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend ActorScope<E>.() -> Unit
-): ActorJob<E> {
+): SendChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = Channel<E>(capacity)
     val coroutine = if (start.isLazy)
@@ -109,8 +106,6 @@ private class LazyActorCoroutine<E>(
     channel: Channel<E>,
     private val block: suspend ActorScope<E>.() -> Unit
 ) : ActorCoroutine<E>(parentContext, channel, active = false), SelectClause2<E, SendChannel<E>> {
-    override val channel: Channel<E> get() = this
-
     override fun onStart() {
         block.startCoroutineCancellable(this, this)
     }

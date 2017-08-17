@@ -49,7 +49,7 @@ class ProduceTest : TestBase() {
             try {
                 send(2) // will get cancelled
             } catch (e: Throwable) {
-                expect(6)
+                finish(7)
                 check(e is JobCancellationException && e.job == coroutineContext[Job])
                 throw e
             }
@@ -61,6 +61,6 @@ class ProduceTest : TestBase() {
         c.cancel()
         expect(5)
         check(c.receiveOrNull() == null)
-        finish(7)
+        expect(6)
     }
 }
