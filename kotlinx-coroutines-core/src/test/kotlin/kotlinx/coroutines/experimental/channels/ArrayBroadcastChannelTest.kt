@@ -132,4 +132,38 @@ class ArrayBroadcastChannelTest : TestBase() {
         yield()
         finish(6)
     }
+
+    @Test
+    fun testReceiveFullAfterClose() = runBlocking<Unit> {
+        val channel = BroadcastChannel<Int>(10)
+        val sub = channel.openSubscription()
+        // generate into buffer & close
+        for (x in 1..5) channel.send(x)
+        channel.close()
+        // make sure all of them are consumed
+        check(!sub.isClosedForReceive)
+        for (x in 1..5) check(sub.receive() == x)
+        check(sub.receiveOrNull() == null)
+        check(sub.isClosedForReceive)
+    }
+
+    @Test
+    fun testCloseSubDuringIteration() = runBlocking<Unit> {
+        val channel = BroadcastChannel<Int>(1)
+        // launch generator (for later) in this context
+        launch(coroutineContext) {
+            for (x in 1..5) channel.send(x)
+            channel.close()
+        }
+        // start consuming
+        val sub = channel.openSubscription()
+        var expected = 0
+        sub.consumeEach {
+            check(it == ++expected)
+            if (it == 2) {
+                sub.close()
+            }
+        }
+        check(expected == 2)
+    }
 }

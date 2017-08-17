@@ -338,13 +338,20 @@ class ArrayBroadcastChannel<E>(
             val subHead = this.subHead // guarded read (can be non-volatile read)
             // note: from the broadcastChannel we must read closed token first, then read its tail
             // because it is Ok if tail moves in between the reads (we make decision based on tail first)
-            val closed = broadcastChannel.closedForReceive // unguarded volatile read
+            val closedBroadcast = broadcastChannel.closedForReceive // unguarded volatile read
             val tail = broadcastChannel.tail // unguarded volatile read
             if (subHead >= tail) {
                 // no elements to poll from the queue -- check if closed
-                return closed ?: POLL_FAILED // must retest `needsToCheckOfferWithoutLock` outside of the lock
+                return closedBroadcast ?: POLL_FAILED // must retest `needsToCheckOfferWithoutLock` outside of the lock
             }
-            return broadcastChannel.elementAt(subHead)
+            // Get tentative result. This result may be wrong (completely invalid value, including null),
+            // because this subscription might get closed, moving channel's head past this subscription's head.
+            val result = broadcastChannel.elementAt(subHead)
+            // now check if this subscription was closed
+            val closedSub = this.closedForReceive
+            if (closedSub != null) return closedSub
+            // we know the subscription was not closed, so this tentative result is Ok to return
+            return result
         }
     }
 }
