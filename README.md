@@ -21,9 +21,12 @@ This is a companion version for Kotlin 1.1.4 release (this is the minimal requir
 
 ## Documentation
 
-* [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
-* [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
-* [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
+* [Introduction to Kotlin Coroutines](https://vimeo.com/222499934) video
+  (Roman Elizarov at GeekOut 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-kotlin-coroutines))
+* Guides and manuals: 
+  * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
+  * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+  * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
