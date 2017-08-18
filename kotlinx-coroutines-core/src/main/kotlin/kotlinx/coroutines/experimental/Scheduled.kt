@@ -26,12 +26,12 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
- * [CancellationException] if timeout was exceeded.
+ * [TimeoutException] if timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [CancellationException], so normally that exception,
+ * cancellable suspending function inside the block throws [TimeoutException], so normally that exception,
  * if uncaught, also gets thrown by `withTimeout` as a result.
- * However, the code in the block can suppress [CancellationException].
+ * However, the code in the block can suppress [TimeoutException].
  *
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -74,9 +74,9 @@ private open class TimeoutCompletion<U, in T: U>(
  * `null` if this timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [CancellationException]. Normally that exception,
+ * cancellable suspending function inside the block throws [TimeoutException]. Normally that exception,
  * if uncaught by the block, gets converted into the `null` result of `withTimeoutOrNull`.
- * However, the code in the block can suppress [CancellationException].
+ * However, the code in the block can suppress [TimeoutException].
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -120,8 +120,21 @@ private class TimeoutOrNullCompletion<T>(
     }
 }
 
-private class TimeoutException(
+/**
+ * This exception is thrown by [withTimeout] to indicate timeout.
+ */
+public class TimeoutException internal constructor(
+    message: String,
+    @JvmField internal val coroutine: Job?
+) : CancellationException(message) {
+    /**
+     * Creates timeout exception with a given message.
+     */
+    public constructor(message: String) : this(message, null)
+}
+
+private fun TimeoutException(
     time: Long,
     unit: TimeUnit,
-    @JvmField val coroutine: Job
-) : CancellationException("Timed out waiting for $time $unit")
+    coroutine: Job
+) : TimeoutException = TimeoutException("Timed out waiting for $time $unit", coroutine)
