@@ -280,6 +280,26 @@ mandating any specific threading policy.</p>
 </tbody>
 </table>
 
+<h3 id="exceptions">Exceptions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-timeout-exception/index.html">TimeoutException</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-cancellation-exception.html"><span class="identifier">CancellationException</span></a></code></div>
+
+        <p>This exception is thrown by <a href="with-timeout.html">withTimeout</a> to indicate timeout.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="type-aliases">Type Aliases</h3>
 
 <table class="api-docs-table">
@@ -612,7 +632,7 @@ the <a href="suspend-cancellable-coroutine.html#kotlinx.coroutines.experimental$
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
         <p>Runs a given suspending <a href="with-timeout.html#kotlinx.coroutines.experimental$withTimeout(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeout.T)))/block">block</a> of code inside a coroutine with a specified timeout and throws
-<a href="-cancellation-exception.html">CancellationException</a> if timeout was exceeded.</p>
+<a href="-timeout-exception/index.html">TimeoutException</a> if timeout was exceeded.</p>
 
       </td>
 </tr>

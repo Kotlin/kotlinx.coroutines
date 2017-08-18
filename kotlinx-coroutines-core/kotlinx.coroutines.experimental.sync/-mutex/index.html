@@ -31,7 +31,7 @@
 
 <h1 id="mutex">Mutex</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L36">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L37">(source)</a></div>
 
 <p>Mutual exclusion for coroutines.</p>
 
@@ -63,6 +63,19 @@ the lock still suspends the invoker.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="holds-lock.html">holdsLock</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">holdsLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$holdsLock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Checks mutex locked by owner</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -116,9 +129,9 @@ the lock still suspends the invoker.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Mutex</span><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">Mutex</span><span class="symbol">.</span><span class="identifier">withLock</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.experimental.sync.withLock.T)))/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span></code></div>
 
-        <p>Executes the given <a href="../with-lock.html#kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
+        <p>Executes the given <a href="../with-lock.html#kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
 
       </td>
 </tr>

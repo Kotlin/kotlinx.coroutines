@@ -37,9 +37,9 @@
 <code>null</code> if this timeout was exceeded.</p>
 
 <p>The code that is executing inside the <a href="with-timeout-or-null.html#kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</a> is cancelled on timeout and the active or next invocation of
-cancellable suspending function inside the block throws <a href="-cancellation-exception.html">CancellationException</a>. Normally that exception,
+cancellable suspending function inside the block throws <a href="-timeout-exception/index.html">TimeoutException</a>. Normally that exception,
 if uncaught by the block, gets converted into the <code>null</code> result of <code>withTimeoutOrNull</code>.
-However, the code in the block can suppress <a href="-cancellation-exception.html">CancellationException</a>.</p>
+However, the code in the block can suppress <a href="-timeout-exception/index.html">TimeoutException</a>.</p>
 
 <p>The sibling function that throws exception on timeout is <a href="with-timeout.html">withTimeout</a>.
 Note, that timeout action can be specified for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
