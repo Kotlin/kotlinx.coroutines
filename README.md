@@ -55,7 +55,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.17</version>
+    <version>0.18</version>
 </dependency>
 ```
 
@@ -80,7 +80,7 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.17'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 ```
 
 And make sure that you use the right Kotlin version:
