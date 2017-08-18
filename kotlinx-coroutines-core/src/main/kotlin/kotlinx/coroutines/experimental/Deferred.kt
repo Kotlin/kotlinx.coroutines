@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
+import java.util.concurrent.Executor
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -159,6 +160,21 @@ public fun <T> async(
     replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
 public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
     async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)
+
+/**
+ * Execute the blocking code [block] in the [executor] without blocking current coroutine.
+ * [start] policy is same as [async] method, but [CoroutineStart.UNDISPATCHED] is an invalid option
+ *
+ * @param executor the executor for blocking code
+ * @param start start option, [CoroutineStart.UNDISPATCHED] is invalid
+ * @param block the blocking code
+ */
+public fun <T> blockingAsync(executor: Executor = DefaultBlockingExecutor,
+                             start: CoroutineStart = CoroutineStart.DEFAULT,
+                             block: () -> T): Deferred<T> {
+    require(start != CoroutineStart.UNDISPATCHED) { "Start blocking code undispatched is not supported" }
+    return async(executor.asCoroutineDispatcher(), start) { block() }
+}
 
 /**
  * @suppress **Deprecated**: `defer` was renamed to `async`.
