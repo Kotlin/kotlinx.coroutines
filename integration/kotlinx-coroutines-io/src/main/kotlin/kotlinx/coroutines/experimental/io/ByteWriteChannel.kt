@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
@@ -129,18 +129,24 @@ suspend fun ByteWriteChannel.writeInt(i: Long) {
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharSequence) {
-    val bytes = Charsets.UTF_8.encode(CharBuffer.wrap(s))
-    writeFully(bytes.array())
+    val packet = buildPacket {
+        writeStringUtf8(s)
+    }
+    writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharBuffer) {
-    val bytes = Charsets.UTF_8.encode(s)
-    writeFully(bytes.array())
+    val packet = buildPacket {
+        writeStringUtf8(s)
+    }
+    writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: String) {
-    val bytes = Charsets.UTF_8.encode(s)
-    writeFully(bytes.array())
+    val packet = buildPacket {
+        writeStringUtf8(s)
+    }
+    writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeBoolean(b: Boolean) {

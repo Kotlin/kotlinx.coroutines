@@ -1,26 +1,16 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CoroutineName
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
-import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
-import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
-import kotlinx.coroutines.experimental.io.packet.buildPacket
-import kotlinx.coroutines.experimental.io.packet.readUTF8Line
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ErrorCollector
-import org.junit.rules.Timeout
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
+import org.junit.*
+import org.junit.rules.*
+import java.nio.*
 import java.nio.ByteBuffer
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import java.util.concurrent.*
+import kotlin.test.*
 
 class ByteBufferChannelTest {
     @get:Rule
@@ -538,7 +528,7 @@ class ByteBufferChannelTest {
     fun testPacket() = runBlocking {
         val packet = buildPacket {
             writeInt(0xffee)
-            writeUtf8String("Hello")
+            writeStringUtf8("Hello")
         }
 
         ch.writeInt(packet.remaining)
@@ -558,7 +548,7 @@ class ByteBufferChannelTest {
         launch(CommonPool + CoroutineName("writer")) {
             val packet = buildPacket {
                 writeInt(0xffee)
-                writeUtf8String(".".repeat(8192))
+                writeStringUtf8(".".repeat(8192))
             }
 
             ch.writeInt(packet.remaining)
@@ -572,5 +562,43 @@ class ByteBufferChannelTest {
 
         assertEquals(0xffee, readed.readInt())
         assertEquals(".".repeat(8192), readed.readUTF8Line())
+    }
+
+    @Test
+    fun testWriteString() = runBlocking {
+        ch.writeStringUtf8("abc")
+        ch.close()
+
+        assertEquals("abc", ch.readASCIILine())
+    }
+
+    @Test
+    fun testWriteCharSequence() = runBlocking {
+        ch.writeStringUtf8("abc" as CharSequence)
+        ch.close()
+
+        assertEquals("abc", ch.readASCIILine())
+    }
+
+    @Test
+    fun testWriteCharBuffer() = runBlocking {
+        val cb = CharBuffer.allocate(6)
+
+        for (i in 0 until cb.remaining()) {
+            cb.put(i, ' ')
+        }
+
+        cb.position(2)
+        cb.put(2, 'a')
+        cb.put(3, 'b')
+        cb.put(4, 'c')
+        cb.limit(5)
+
+        assertEquals("abc", cb.slice().toString())
+
+        ch.writeStringUtf8(cb)
+        ch.close()
+
+        assertEquals("abc", ch.readASCIILine())
     }
 }

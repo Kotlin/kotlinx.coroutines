@@ -15,7 +15,9 @@ interface ByteWritePacket : Appendable {
     fun writeDouble(d: Double)
     fun writeFloat(f: Float)
 
-    fun writeUtf8String(s: String)
+    fun writeStringUtf8(s: String)
+    fun writeStringUtf8(cb: CharBuffer)
+    fun writeStringUtf8(cs: CharSequence)
 
     fun release()
     fun build(): ByteReadPacket

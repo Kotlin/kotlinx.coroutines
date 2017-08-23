@@ -95,8 +95,16 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         return this
     }
 
-    override fun writeUtf8String(s: String) {
+    override fun writeStringUtf8(s: String) {
         append(s, 0, s.length)
+    }
+
+    override fun writeStringUtf8(cs: CharSequence) {
+        append(cs, 0, cs.length)
+    }
+
+    override fun writeStringUtf8(cb: CharBuffer) {
+        append(cb, 0, cb.remaining())
     }
 
     @Suppress("NOTHING_TO_INLINE")
