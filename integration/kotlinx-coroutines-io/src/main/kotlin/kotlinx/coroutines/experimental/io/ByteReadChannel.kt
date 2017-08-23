@@ -110,9 +110,9 @@ suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
     try {
         var copied = 0L
         val bb = o.backingBuffer
-        bb.clear()
 
         while (true) {
+            bb.clear()
             val size = readAvailable(bb)
             if (size == -1) break
 
