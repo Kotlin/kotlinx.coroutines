@@ -307,23 +307,29 @@ internal class ByteBufferChannel(
     suspend override fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int {
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
-        return if (consumed > 0) consumed
-        else readLazySuspend(dst, offset, length)
+        return when {
+            consumed == 0 && closed != null -> -1
+            consumed > 0 || length == 0 -> consumed
+            else -> readAvailableSuspend(dst, offset, length)
+        }
     }
 
     suspend override fun readAvailable(dst: ByteBuffer): Int {
         val consumed = readAsMuchAsPossible(dst)
-        if (consumed > 0) return consumed
 
-        return readLazySuspend(dst)
+        return when {
+            consumed == 0 && closed != null -> -1
+            consumed > 0 || !dst.hasRemaining() -> consumed
+            else -> readAvailableSuspend(dst)
+        }
     }
 
-    private suspend fun readLazySuspend(dst: ByteArray, offset: Int, length: Int): Int {
+    private suspend fun readAvailableSuspend(dst: ByteArray, offset: Int, length: Int): Int {
         if (!readSuspend(1)) return -1
         return readAvailable(dst, offset, length)
     }
 
-    private suspend fun readLazySuspend(dst: ByteBuffer): Int {
+    private suspend fun readAvailableSuspend(dst: ByteBuffer): Int {
         if (!readSuspend(1)) return -1
         return readAvailable(dst)
     }
