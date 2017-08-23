@@ -187,7 +187,7 @@ internal class ByteBufferChannel(
         }
         WriteOp.getAndSet(this, null)?.resumeWithException(closed.sendException)
         ReadOp.getAndSet(this, null)?.apply {
-            if (closed?.cause != null) resumeWithException(closed!!.cause!!) else resume(false)
+            if (closed.cause != null) resumeWithException(closed.cause) else resume(false)
         }
     }
 
@@ -905,9 +905,10 @@ internal class ByteBufferChannel(
         var cr = false
         var consumed = 0
         var unicodeStarted = false
+        var eol = false
 
-        val found = lookAheadFast(false) { buffer, last ->
-            var eol = false
+        lookAheadFast(false) { buffer, last ->
+            var forceConsume = false
 
             val rejected = !buffer.decodeASCII { ch ->
                 when {
@@ -917,6 +918,7 @@ internal class ByteBufferChannel(
                     }
                     ch == '\n' -> {
                         eol = true
+                        forceConsume = true
                         false
                     }
                     cr -> {
@@ -933,7 +935,11 @@ internal class ByteBufferChannel(
                 }
             }
 
-            if (eol) {
+            if (cr && last) {
+                eol = true
+            }
+
+            if (eol && forceConsume) {
                 buffer.position(buffer.position() + 1)
             }
 
@@ -944,16 +950,17 @@ internal class ByteBufferChannel(
                 !eol && !last
         }
 
-        if (found && !unicodeStarted) return true
+        if (eol && !unicodeStarted) return true
         return readUTF8LineToUtf8(out, limit - consumed, cr, consumed)
     }
 
     private suspend fun readUTF8LineToUtf8(out: Appendable, limit: Int, cr0: Boolean, consumed0: Int): Boolean {
         var cr1 = cr0
         var consumed1 = 0
+        var eol = false
 
-        val found = lookAheadFast(false) { buffer, last ->
-            var eol = false
+        lookAheadFast(false) { buffer, last ->
+            var forceConsume = false
 
             val rc = buffer.decodeUTF8 { ch ->
                 when {
@@ -963,6 +970,7 @@ internal class ByteBufferChannel(
                     }
                     ch == '\n' -> {
                         eol = true
+                        forceConsume = true
                         false
                     }
                     cr1 -> {
@@ -979,14 +987,18 @@ internal class ByteBufferChannel(
                 }
             }
 
-            if (eol) {
+            if (cr1 && last) {
+                eol = true
+            }
+
+            if (eol && forceConsume) {
                 buffer.position(buffer.position() + 1)
             }
 
             rc != 0 && !eol && !last
         }
 
-        if (found) return true
+        if (eol) return true
 
         return readUTF8LineToUtf8Suspend(out, limit, cr1, consumed1 + consumed0)
     }
@@ -994,90 +1006,59 @@ internal class ByteBufferChannel(
     private suspend fun readUTF8LineToUtf8Suspend(out: Appendable, limit: Int, cr0: Boolean, consumed0: Int): Boolean {
         var cr1 = cr0
         var consumed1 = 0
-        var value = 0
-        var byteCount = 0
-        var last1 = false
+        var eol = false
+        var wrap = 0
 
         lookAheadSuspend { buffer, last ->
-            last1 = last
+            var forceConsume = false
 
-            while (buffer.hasRemaining()) {
-                val v = buffer.get().toInt() and 0xff
+            val rc = buffer.decodeUTF8 { ch ->
                 when {
-                    v == 0x0d -> {
+                    ch == '\r' -> {
                         cr1 = true
+                        true
                     }
-                    v == 0x0a -> {
-                        return@lookAheadSuspend false
+                    ch == '\n' -> {
+                        eol = true
+                        forceConsume = true
+                        false
                     }
                     cr1 -> {
                         cr1 = false
-                        buffer.position(buffer.position() - 1)
-                        return@lookAheadSuspend false
-                    }
-                    v and 0x80 == 0 -> {
-                        if (byteCount != 0) throw MalformedInputException(0)
-                        if (consumed1 == limit) throw BufferOverflowException()
-                        consumed1++
-                        out.append(v.toChar())
-                    }
-                    byteCount == 0 -> {
-                        // first unicode byte
-
-                        if (consumed1 == limit) {
-                            throw BufferOverflowException()
-                        }
-
-                        var mask = 0x80
-                        value = v
-
-                        for (i in 1..6) { // TODO do we support 6 bytes unicode?
-                            if (value and mask != 0) {
-                                value = value and mask.inv()
-                                mask = mask shr 1
-                                byteCount++
-                            } else {
-                                break
-                            }
-                        }
-
-                        byteCount--
+                        eol = true
+                        false
                     }
                     else -> {
-                        // trailing unicode byte
-                        value = (value shl 6) or (v and 0x7f)
-                        byteCount--
-
-                        if (byteCount == 0) {
-                            if (java.lang.Character.isBmpCodePoint(value)) {
-                                if (consumed1 == limit) throw BufferOverflowException()
-
-                                out.append(value.toChar())
-                                consumed1++
-                            } else if (!java.lang.Character.isValidCodePoint(value)) {
-                                throw IllegalArgumentException("Malformed code-point ${Integer.toHexString(value)} found")
-                            } else {
-                                if (consumed1 + 1 >= limit) throw BufferOverflowException()
-
-                                val low = java.lang.Character.lowSurrogate(value)
-                                val high = java.lang.Character.highSurrogate(value)
-
-                                out.append(high)
-                                out.append(low)
-
-                                consumed1 += 2
-                            }
-
-                            value = 0
-                        }
+                        if (consumed1 == limit) throw BufferOverflowException()
+                        consumed1++
+                        out.append(ch)
+                        true
                     }
                 }
             }
 
-            !last
+            if (cr1 && last) {
+                eol = true
+            }
+
+            if (eol && forceConsume) {
+                buffer.position(buffer.position() + 1)
+            }
+
+            wrap = maxOf(0, rc)
+
+            wrap == 0 && !eol && !last
         }
 
-        return (consumed1 > 0 || consumed0 > 0 || !last1)
+        if (wrap != 0) {
+            if (!readSuspend(wrap)) {
+
+            }
+
+            return readUTF8LineToUtf8Suspend(out, limit, cr1, consumed1)
+        }
+
+        return (consumed1 > 0 || consumed0 > 0 || eol)
     }
 
     suspend override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int) = readUTF8LineToAscii(out, limit)

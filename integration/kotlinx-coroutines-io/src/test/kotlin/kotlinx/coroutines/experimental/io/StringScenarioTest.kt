@@ -2,9 +2,14 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
+import org.junit.rules.*
+import java.util.concurrent.*
 import kotlin.test.*
 
 class StringScenarioTest : TestBase() {
+    @get:Rule
+    val timeout = Timeout(10L, TimeUnit.SECONDS)
+
     private val ch = ByteBufferChannel(autoFlush = true)
 
     @Test

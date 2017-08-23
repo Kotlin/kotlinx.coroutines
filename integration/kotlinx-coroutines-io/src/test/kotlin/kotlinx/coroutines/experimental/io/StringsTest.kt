@@ -1,14 +1,11 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.Timeout
+import org.junit.*
+import org.junit.rules.*
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.fail
+import java.util.concurrent.*
+import kotlin.test.*
 
 class StringsTest {
     @get:Rule
@@ -23,6 +20,77 @@ class StringsTest {
             channel.close()
             assertEquals("Hello, World!", channel.readASCIILine())
         }
+    }
+
+    @Test
+    fun testReadLines1() {
+        testReadLine("\r", "", "")
+    }
+
+    @Test
+    fun testReadLinesCases() {
+        testReadLine("abc", "abc", "")
+        testReadLine("", null, "")
+
+        testReadLine("\n", "", "")
+        testReadLine("\r", "", "")
+        testReadLine("\r\n", "", "")
+        testReadLine("1\n", "1", "")
+        testReadLine("1\r", "1", "")
+        testReadLine("1\r\n", "1", "")
+
+        testReadLine("\n2", "", "2")
+        testReadLine("\r2", "", "2")
+        testReadLine("\r\n2", "", "2")
+        testReadLine("1\n2", "1", "2")
+        testReadLine("1\r2", "1", "2")
+        testReadLine("1\r\n2", "1", "2")
+
+        // unicode
+        testReadLine("\u0440\n", "\u0440", "")
+        testReadLine("\u0440\n1", "\u0440", "1")
+        testReadLine("\u0440\r", "\u0440", "")
+        testReadLine("\u0440\r2", "\u0440", "2")
+    }
+
+    private fun testReadLine(source: String, expectedLine: String?, expectedRemaining: String) {
+        val content = source.toByteArray(Charsets.UTF_8)
+
+        // no splitting
+        runBlocking {
+            val ch = ByteReadChannel(content)
+//            testReadLine(ch, expectedLine, expectedRemaining)
+        }
+
+        // split
+        for (splitAt in 0 until content.size) {
+            val ch = ByteChannel(true)
+            runBlocking {
+                launch(coroutineContext) {
+                    ch.writeFully(content, 0, splitAt)
+                    yield()
+                    ch.writeFully(content, splitAt, content.size - splitAt)
+                    ch.close()
+                }
+
+                testReadLine(ch, expectedLine, expectedRemaining)
+            }
+        }
+    }
+
+    private suspend fun testReadLine(ch: ByteReadChannel, expectedLine: String?, expectedRemaining: String) {
+        val line = ch.readUTF8Line()
+        assertEquals(expectedLine, line)
+
+        val buffer = ByteBuffer.allocate(8192)
+        val rc = ch.readAvailable(buffer)
+
+        if (expectedRemaining.isNotEmpty()) {
+            assertNotEquals(-1, rc, "Unexpected EOF. Expected >= 0")
+        }
+
+        buffer.flip()
+        assertEquals(expectedRemaining, Charsets.UTF_8.decode(buffer).toString())
     }
 
     @Test

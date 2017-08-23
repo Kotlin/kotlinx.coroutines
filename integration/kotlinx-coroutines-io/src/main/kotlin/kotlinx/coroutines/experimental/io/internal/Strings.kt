@@ -25,6 +25,7 @@ internal inline fun ByteBuffer.decodeASCII(consumer: (Char) -> Boolean): Boolean
  * If a consumer returned false then a character will be pushed back (including all surrogates will be pushed back as well)
  * and [decodeUTF8] returns 0
  * @return number of bytes required to decode incomplete utf8 character or 0 if all bytes were processed
+ * or -1 if consumer rejected loop
  */
 internal inline fun ByteBuffer.decodeUTF8(consumer: (Char) -> Boolean): Int {
     var byteCount = 0
