@@ -63,7 +63,7 @@ internal class ByteBufferChannel(
         val newClosed = if (cause == null) ClosedElement.EmptyCause else ClosedElement(cause)
         if (!Closed.compareAndSet(this, null, newClosed)) return false
         flush()
-        if (state.capacity.isEmpty()) tryTerminate()
+        if (state.capacity.isEmpty() || cause != null) tryTerminate()
         resumeClosed(cause)
         return true
     }
@@ -179,12 +179,25 @@ internal class ByteBufferChannel(
 
     private fun tryTerminate() {
         val closed = closed ?: return
+        var toRelease: ReadWriteBufferState.Initial? = null
+
         updateState { state ->
             when {
                 state === ReadWriteBufferState.IdleEmpty -> ReadWriteBufferState.Terminated
+                closed.cause != null && state is ReadWriteBufferState.IdleNonEmpty -> {
+                    toRelease = state.initial
+                    ReadWriteBufferState.Terminated
+                }
                 else -> return
             }
         }
+
+        toRelease?.let { buffer ->
+            if (state === ReadWriteBufferState.Terminated) {
+                releaseBuffer(buffer)
+            }
+        }
+
         WriteOp.getAndSet(this, null)?.resumeWithException(closed.sendException)
         ReadOp.getAndSet(this, null)?.apply {
             if (closed.cause != null) resumeWithException(closed.cause) else resume(false)

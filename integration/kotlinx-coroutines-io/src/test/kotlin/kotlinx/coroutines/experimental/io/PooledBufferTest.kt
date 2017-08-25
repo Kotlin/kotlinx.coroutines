@@ -5,6 +5,7 @@ import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.After
 import org.junit.Test
+import java.io.*
 import java.nio.ByteBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.assertEquals
@@ -79,6 +80,16 @@ class PooledBufferTest {
     fun testCloseOnly() {
         runBlocking {
             channel.close()
+            assertEquals(0, allocated.size)
+        }
+    }
+
+    @Test
+    fun testCloseWithEerror() {
+        runBlocking {
+            channel.writeFully("OK".toByteArray())
+            assertEquals(1, allocated.size)
+            channel.close(IOException())
             assertEquals(0, allocated.size)
         }
     }
