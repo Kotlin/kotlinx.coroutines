@@ -2,15 +2,12 @@
 
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
-import java.nio.BufferOverflowException
-import java.nio.charset.MalformedInputException
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import java.nio.*
+import java.util.concurrent.atomic.*
 
 // implementation for ByteChannel
 internal class ByteBufferChannel(
@@ -812,7 +809,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writePacket(packet: ByteReadPacket) {
-        closed?.sendException?.let { throw it }
+        closed?.sendException?.let { packet.release(); throw it }
 
         when (packet) {
             is ByteReadPacketEmpty -> return
@@ -821,17 +818,21 @@ internal class ByteBufferChannel(
                 try {
                     writeFully(buffer)
                 } finally {
-                    BufferPool.recycle(buffer)
+                    packet.pool.recycle(buffer)
                 }
             }
             is ByteReadPacketImpl -> {
-                while (packet.remaining > 0) {
-                    val buffer = packet.steal()
-                    try {
-                        writeFully(buffer)
-                    } finally {
-                        BufferPool.recycle(buffer)
+                try {
+                    while (packet.remaining > 0) {
+                        val buffer = packet.steal()
+                        try {
+                            writeFully(buffer)
+                        } finally {
+                            packet.pool.recycle(buffer)
+                        }
                     }
+                } finally {
+                    packet.release()
                 }
             }
             else -> {
@@ -839,12 +840,13 @@ internal class ByteBufferChannel(
                 try {
                     while (packet.remaining > 0) {
                         buffer.clear()
-                        packet.readFully(buffer)
+                        packet.readLazy(buffer)
                         buffer.flip()
                         writeFully(buffer)
                     }
                 } finally {
                     BufferPool.recycle(buffer)
+                    packet.release()
                 }
             }
         }

@@ -5,11 +5,11 @@ import java.io.*
 import java.nio.*
 import java.nio.charset.*
 
-internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, private val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
+internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
         get() = buffer?.remaining() ?: 0
 
-    internal fun steal(): ByteBuffer = buffer ?: throw IllegalStateException("EOF")
+    internal fun steal(): ByteBuffer = buffer?.also { buffer = null } ?: throw IllegalStateException("EOF")
 
     override fun readLazy(dst: ByteArray, offset: Int, length: Int): Int {
         var copied = 0
