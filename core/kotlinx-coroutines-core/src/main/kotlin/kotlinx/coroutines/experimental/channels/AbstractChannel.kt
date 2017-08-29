@@ -22,6 +22,8 @@ import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.removeOnCancel
 import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
+import kotlinx.coroutines.experimental.selects.SelectClause1
+import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.suspendAtomicCancellableCoroutine
 import kotlin.coroutines.experimental.startCoroutine
@@ -134,8 +136,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      */
     protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
         val prev = node.prev
-        if (prev is SendBuffered<*>)
-            prev.remove()
+        (prev as? SendBuffered<*>)?.remove()
     }
 
     /**
@@ -165,8 +166,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
             super.finishOnSuccess(affected, next)
             // remove previous SendBuffered
-            if (affected is SendBuffered<*>)
-                affected.remove()
+            (affected as? SendBuffered<*>)?.remove()
         }
     }
 
@@ -315,11 +315,11 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
     }
 
-    private inner class TryEnqueueSendDesc<E, R>(
+    private inner class TryEnqueueSendDesc<R>(
         element: E,
         select: SelectInstance<R>,
-        block: suspend () -> R
-    ) : AddLastDesc<SendSelect<R>>(queue, SendSelect(element, select, block)) {
+        block: suspend (SendChannel<E>) -> R
+    ) : AddLastDesc<SendSelect<E, R>>(queue, SendSelect(element, this@AbstractSendChannel, select, block)) {
         override fun failure(affected: LockFreeLinkedListNode, next: Any): Any? {
             if (affected is ReceiveOrClosed<*>) {
                 return affected as? Closed<*> ?: ENQUEUE_FAILED
@@ -339,7 +339,14 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
     }
 
-    override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
+    final override val onSend: SelectClause2<E, SendChannel<E>>
+        get() = object : SelectClause2<E, SendChannel<E>> {
+            override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
+                registerSelectSend(select, param, block)
+            }
+        }
+
+    private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
         while (true) {
             if (select.isSelected) return
             if (isFull) {
@@ -357,7 +364,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                     offerResult === ALREADY_SELECTED -> return
                     offerResult === OFFER_FAILED -> {} // retry
                     offerResult === OFFER_SUCCESS -> {
-                        block.startCoroutineUndispatched(select.completion)
+                        block.startCoroutineUndispatched(receiver = this, completion = select.completion)
                         return
                     }
                     offerResult is Closed<*> -> throw offerResult.sendException
@@ -369,17 +376,18 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     // ------ private ------
 
-    private class SendSelect<R>(
+    private class SendSelect<E, R>(
         override val pollResult: Any?,
+        @JvmField val channel: SendChannel<E>,
         @JvmField val select: SelectInstance<R>,
-        @JvmField val block: suspend () -> R
+        @JvmField val block: suspend (SendChannel<E>) -> R
     ) : LockFreeLinkedListNode(), Send, DisposableHandle {
         override fun tryResumeSend(idempotent: Any?): Any? =
             if (select.trySelect(idempotent)) SELECT_STARTED else null
 
         override fun completeResumeSend(token: Any) {
             check(token === SELECT_STARTED)
-            block.startCoroutine(select.completion)
+            block.startCoroutine(receiver = channel, completion = select.completion)
         }
 
         fun disposeOnSelect() {
@@ -390,7 +398,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             remove()
         }
 
-        override fun toString(): String = "SendSelect($pollResult)[$select]"
+        override fun toString(): String = "SendSelect($pollResult)[$channel, $select]"
     }
 
     private class SendBuffered<out E>(
@@ -614,8 +622,15 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         }
     }
 
+    final override val onReceive: SelectClause1<E>
+        get() = object : SelectClause1<E> {
+            override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E) -> R) {
+                registerSelectReceive(select, block)
+            }
+        }
+
     @Suppress("UNCHECKED_CAST")
-    override fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) {
+    private fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) {
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {
@@ -641,8 +656,15 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         }
     }
 
+    final override val onReceiveOrNull: SelectClause1<E?>
+        get() = object : SelectClause1<E?> {
+            override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (E?) -> R) {
+                registerSelectReceiveOrNull(select, block)
+            }
+        }
+
     @Suppress("UNCHECKED_CAST")
-    override fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) {
+    private fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) {
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {

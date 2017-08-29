@@ -19,8 +19,6 @@ package kotlinx.coroutines.experimental.selects
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.internal.*
@@ -37,49 +35,25 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  */
 public interface SelectBuilder<in R> {
     /**
-     * Clause for [Job.join] suspending function that selects the given [block] when the job is complete.
-     * This clause never fails, even if the job completes exceptionally.
+     * Registers clause in this [select] expression without additional parameters that does not select any value.
      */
-    public fun Job.onJoin(block: suspend () -> R)
+    public operator fun SelectClause0.invoke(block: suspend () -> R)
 
     /**
-     * Clause for [Deferred.await] suspending function that selects the given [block] with the deferred value is
-     * resolved. The [select] invocation fails if the deferred value completes exceptionally (either fails or
-     * it cancelled).
+     * Registers clause in this [select] expression without additional parameters that selects value of type [Q].
      */
-    public fun <T> Deferred<T>.onAwait(block: suspend (T) -> R)
+    public operator fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R)
 
     /**
-     * Clause for [SendChannel.send] suspending function that selects the given [block] when the [element] is sent to
-     * the channel. The [select] invocation fails with [ClosedSendChannelException] if the channel
-     * [isClosedForSend][SendChannel.isClosedForSend] _normally_ or with the original
-     * [close][SendChannel.close] cause exception if the channel has _failed_.
+     * Registers clause in this [select] expression with additional parameter of type [P] that selects value of type [Q].
      */
-    public fun <E> SendChannel<E>.onSend(element: E, block: suspend () -> R)
+    public operator fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R)
 
     /**
-     * Clause for [ReceiveChannel.receive] suspending function that selects the given [block] with the element that
-     * is received from the channel. The [select] invocation fails with [ClosedReceiveChannelException] if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] _normally_ or with the original
-     * [close][SendChannel.close] cause exception if the channel has _failed_.
+     * Registers clause in this [select] expression with additional parameter nullable parameter of type [P]
+     * with the `null` value for this parameter that selects value of type [Q].
      */
-    public fun <E> ReceiveChannel<E>.onReceive(block: suspend (E) -> R)
-
-    /**
-     * Clause for [ReceiveChannel.receiveOrNull] suspending function that selects the given [block] with the element that
-     * is received from the channel or selects the given [block] with `null` if if the channel
-     * [isClosedForReceive][ReceiveChannel.isClosedForReceive] _normally_. The [select] invocation fails with
-     * the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     */
-    public fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R)
-
-    /**
-     * Clause for [Mutex.lock] suspending function that selects the given [block] when the mutex is locked.
-     *
-     * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
-     *        is already locked with the same token (same identity), this clause throws [IllegalStateException].
-     */
-    public fun Mutex.onLock(owner: Any? = null, block: suspend () -> R)
+    public operator fun <P, Q> SelectClause2<P?, Q>.invoke(block: suspend (Q) -> R) = invoke(null, block)
 
     /**
      * Clause that selects the given [block] after a specified timeout passes.
@@ -88,6 +62,63 @@ public interface SelectBuilder<in R> {
      * @param unit timeout unit (milliseconds by default)
      */
     public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R)
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun Job.onJoin(block: suspend () -> R) { onJoin(block) }
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun <T> Deferred<T>.onAwait(block: suspend (T) -> R) { onAwait(block) }
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun Mutex.onLock(owner: Any? = null, block: suspend () -> R) { onLock { block() } }
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun <E> SendChannel<E>.onSend(element: E, block: suspend () -> R) { onSend(element) { block() } }
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun <E> ReceiveChannel<E>.onReceive(block: suspend (E) -> R) { onReceive(block) }
+
+    /** @suppress **Deprecated: for binary compatibility only **/
+    @Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+    public fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R) { onReceiveOrNull(block) }
+}
+
+/**
+ * Clause for [select] expression without additional parameters that does not select any value.
+ */
+public interface SelectClause0 {
+    /**
+     * Registers this clause with the specified [select] instance and [block] of code.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R)
+}
+
+/**
+ * Clause for [select] expression without additional parameters that selects value of type [Q].
+ */
+public interface SelectClause1<out Q> {
+    /**
+     * Registers this clause with the specified [select] instance and [block] of code.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (Q) -> R)
+}
+
+/**
+ * Clause for [select] expression with additional parameter of type [P] that selects value of type [Q].
+ */
+public interface SelectClause2<in P, out Q> {
+    /**
+     * Registers this clause with the specified [select] instance and [block] of code.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
 }
 
 /**
@@ -120,15 +151,18 @@ public interface SelectInstance<in R> {
     /**
      * Returns completion continuation of this select instance.
      * This select instance must be _selected_ first.
-     * All resumption through this instance happen _directly_ (as if `mode` is [MODE_DIRECT]).
+     * All resumption through this instance happen _directly_ without going through dispatcher ([MODE_DIRECT]).
      */
     public val completion: Continuation<R>
 
     /**
-     * Resumes this instance with [MODE_CANCELLABLE].
+     * Resumes this instance in a cancellable way ([MODE_CANCELLABLE]).
      */
     public fun resumeSelectCancellableWithException(exception: Throwable)
 
+    /**
+     * Disposes the specified handle when this instance is selected.
+     */
     public fun disposeOnSelect(handle: DisposableHandle)
 }
 
@@ -393,28 +427,16 @@ internal class SelectBuilderImpl<in R>(
         }
     }
 
-    override fun Job.onJoin(block: suspend () -> R) {
-        registerSelectJoin(this@SelectBuilderImpl, block)
+    override fun SelectClause0.invoke(block: suspend () -> R) {
+        registerSelectClause0(this@SelectBuilderImpl, block)
     }
 
-    override fun <T> Deferred<T>.onAwait(block: suspend (T) -> R) {
-        registerSelectAwait(this@SelectBuilderImpl, block)
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
+        registerSelectClause1(this@SelectBuilderImpl, block)
     }
 
-    override fun <E> SendChannel<E>.onSend(element: E, block: suspend () -> R) {
-        registerSelectSend(this@SelectBuilderImpl, element, block)
-    }
-
-    override fun <E> ReceiveChannel<E>.onReceive(block: suspend (E) -> R) {
-        registerSelectReceive(this@SelectBuilderImpl, block)
-    }
-
-    override fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R) {
-        registerSelectReceiveOrNull(this@SelectBuilderImpl, block)
-    }
-
-    override fun Mutex.onLock(owner: Any?, block: suspend () -> R) {
-        registerSelectLock(this@SelectBuilderImpl, owner, block)
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
+        registerSelectClause2(this@SelectBuilderImpl, param, block)
     }
 
     override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {

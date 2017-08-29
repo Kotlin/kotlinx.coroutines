@@ -17,7 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.NonCancellable.isActive
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.SelectClause0
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 
 /**
@@ -49,13 +49,8 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         throw UnsupportedOperationException("This job is always active")
     }
 
-    /**
-     * Always throws [UnsupportedOperationException].
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    override fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R)  {
-        throw UnsupportedOperationException("This job is always active")
-    }
+    override val onJoin: SelectClause0
+        get() = throw UnsupportedOperationException("This job is always active")
 
     /** Always throws [IllegalStateException]. */
     override fun getCompletionException(): CancellationException = throw IllegalStateException("This job is always active")

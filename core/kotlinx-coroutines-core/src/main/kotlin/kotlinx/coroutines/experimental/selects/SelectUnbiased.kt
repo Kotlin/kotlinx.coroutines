@@ -16,11 +16,6 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.sync.Mutex
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
@@ -69,28 +64,16 @@ internal class UnbiasedSelectBuilderImpl<in R>(cont: Continuation<R>) : SelectBu
         return instance.getResult()
     }
 
-    override fun Job.onJoin(block: suspend () -> R) {
-        clauses += { registerSelectJoin(instance, block) }
+    override fun SelectClause0.invoke(block: suspend () -> R) {
+        clauses += { registerSelectClause0(instance, block) }
     }
 
-    override fun <T> Deferred<T>.onAwait(block: suspend (T) -> R) {
-        clauses += { registerSelectAwait(instance, block) }
+    override fun <Q> SelectClause1<Q>.invoke(block: suspend (Q) -> R) {
+        clauses += { registerSelectClause1(instance, block) }
     }
 
-    override fun <E> SendChannel<E>.onSend(element: E, block: suspend () -> R) {
-        clauses += { registerSelectSend(instance, element, block) }
-    }
-
-    override fun <E> ReceiveChannel<E>.onReceive(block: suspend (E) -> R) {
-        clauses += { registerSelectReceive(instance, block) }
-    }
-
-    override fun <E> ReceiveChannel<E>.onReceiveOrNull(block: suspend (E?) -> R) {
-        clauses += { registerSelectReceiveOrNull(instance, block) }
-    }
-
-    override fun Mutex.onLock(owner: Any?, block: suspend () -> R) {
-        clauses += { registerSelectLock(instance, owner, block) }
+    override fun <P, Q> SelectClause2<P, Q>.invoke(param: P, block: suspend (Q) -> R) {
+        clauses += { registerSelectClause2(instance, param, block) }
     }
 
     override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {

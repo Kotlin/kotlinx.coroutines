@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -105,7 +106,7 @@ private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     private val block: suspend ActorScope<E>.() -> Unit
-) : ActorCoroutine<E>(parentContext, channel, active = false) {
+) : ActorCoroutine<E>(parentContext, channel, active = false), SelectClause2<E, SendChannel<E>> {
     override val channel: Channel<E> get() = this
 
     override fun onStart() {
@@ -122,9 +123,13 @@ private class LazyActorCoroutine<E>(
         return super.offer(element)
     }
 
-    override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
+    override val onSend: SelectClause2<E, SendChannel<E>>
+        get() = this
+
+    // registerSelectSend
+    override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
         start()
-        return super.registerSelectSend(select, element, block)
+        super.onSend.registerSelectClause2(select, param, block)
     }
 }
 

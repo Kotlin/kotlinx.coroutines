@@ -22,7 +22,8 @@ import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import kotlinx.coroutines.experimental.internal.OpDescriptor
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.SelectClause0
+import kotlinx.coroutines.experimental.selects.SelectClause1
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
@@ -168,10 +169,16 @@ public interface Job : CoroutineContext.Element {
      * This suspending function is cancellable. If the [Job] of the invoking coroutine is cancelled or completed while this
      * suspending function is suspended, this function immediately resumes with [CancellationException].
      *
-     * This function can be used in [select] invocation with [onJoin][SelectBuilder.onJoin] clause.
+     * This function can be used in [select] invocation with [onJoin] clause.
      * Use [isCompleted] to check for completion of this job without waiting.
      */
     public suspend fun join()
+
+    /**
+     * Clause for [select] expression of [join] suspending function that selects when the job is complete.
+     * This clause never fails, even if the job completes exceptionally.
+     */
+    public val onJoin: SelectClause0
 
     // ------------ low-level state-notification ------------
 
@@ -224,12 +231,6 @@ public interface Job : CoroutineContext.Element {
     public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 
     // ------------ unstable internal API ------------
-
-    /**
-     * Registers [onJoin][SelectBuilder.onJoin] select clause.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    public fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R)
 
     /**
      * @suppress **Error**: Operator '+' on two Job objects is meaningless.
@@ -375,7 +376,7 @@ public object NonDisposableHandle : DisposableHandle {
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public open class JobSupport(active: Boolean) : Job {
+public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause1<Any?> {
     override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -728,7 +729,11 @@ public open class JobSupport(active: Boolean) : Job {
         cont.disposeOnCompletion(invokeOnCompletion(ResumeOnCompletion(this, cont)))
     }
 
-    override fun <R> registerSelectJoin(select: SelectInstance<R>, block: suspend () -> R) {
+    final override val onJoin: SelectClause0
+        get() = this
+
+    // registerSelectJoin
+    final override fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R) {
         // fast-path -- check state and select/return if needed
         loopOnState { state ->
             if (select.isSelected) return
@@ -956,7 +961,8 @@ public open class JobSupport(active: Boolean) : Job {
         })
     }
 
-    protected fun <R> registerSelectAwaitInternal(select: SelectInstance<R>, block: suspend (Any?) -> R) {
+    // registerSelectAwaitInternal
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (Any?) -> R) {
         // fast-path -- check state and select/return if needed
         loopOnState { state ->
             if (select.isSelected) return

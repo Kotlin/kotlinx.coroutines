@@ -16,8 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectBuilder
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.SelectClause1
 import kotlinx.coroutines.experimental.selects.select
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -91,16 +90,17 @@ public interface Deferred<out T> : Job {
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
      *
-     * This function can be used in [select] invocation with [onAwait][SelectBuilder.onAwait] clause.
+     * This function can be used in [select] invocation with [onAwait] clause.
      * Use [isCompleted] to check for completion of this deferred value without waiting.
      */
     public suspend fun await(): T
 
     /**
-     * Registers [onAwait][SelectBuilder.onAwait] select clause.
-     * @suppress **This is unstable API and it is subject to change.**
+     * Clause for [select] expression of [await] suspending function that selects with the deferred value when it is
+     * resolved. The [select] invocation fails if the deferred value completes exceptionally (either fails or
+     * it cancelled).
      */
-    public fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R)
+    public val onAwait: SelectClause1<T>
 
     /**
      * Returns *completed* result or throws [IllegalStateException] if this deferred value has not
@@ -175,8 +175,8 @@ private open class DeferredCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     suspend override fun await(): T = awaitInternal() as T
-    override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectAwaitInternal(select, block as (suspend (Any?) -> R))
+    override val onAwait: SelectClause1<T>
+        get() = this as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(

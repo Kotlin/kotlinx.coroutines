@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.SelectClause1
 
 enum class TestChannelKind {
     RENDEZVOUS {
@@ -70,8 +70,8 @@ private class ChannelViaBroadcast<E>(
     suspend override fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    override fun <R> registerSelectReceive(select: SelectInstance<R>, block: suspend (E) -> R) =
-        sub.registerSelectReceive(select, block)
-    override fun <R> registerSelectReceiveOrNull(select: SelectInstance<R>, block: suspend (E?) -> R) =
-        sub.registerSelectReceiveOrNull(select, block)
+    override val onReceive: SelectClause1<E>
+        get() = sub.onReceive
+    override val onReceiveOrNull: SelectClause1<E?>
+        get() = sub.onReceiveOrNull
 }

@@ -22,7 +22,7 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectBuilder
+import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import kotlin.coroutines.experimental.startCoroutine
@@ -76,7 +76,7 @@ public interface Mutex {
      * Note, that this function does not check for cancellation when it is not suspended.
      * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
      *
-     * This function can be used in [select] invocation with [onLock][SelectBuilder.onLock] clause.
+     * This function can be used in [select] invocation with [onLock] clause.
      * Use [tryLock] to try acquire lock without waiting.
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
@@ -85,10 +85,11 @@ public interface Mutex {
     public suspend fun lock(owner: Any? = null)
 
     /**
-     * Registers [onLock][SelectBuilder.onLock] select clause.
-     * @suppress **This is unstable API and it is subject to change.**
+     * Clause for [select] expression of [lock] suspending function that selects when the mutex is locked.
+     * Additional parameter for the clause in the `owner` (see [lock]) and when the clause is selected
+     * the reference to this mutex is passed into the corresponding block.
      */
-    public fun <R> registerSelectLock(select: SelectInstance<R>, owner: Any?, block: suspend () -> R)
+    public val onLock: SelectClause2<Any?, Mutex>
 
     /**
      * Checks mutex locked by owner
@@ -169,7 +170,7 @@ private class Empty(
     override fun toString(): String = "Empty[$locked]"
 }
 
-internal class MutexImpl(locked: Boolean) : Mutex {
+internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // State is: Empty | LockedQueue | OpDescriptor
     // shared objects while we have no waiters
     private val _state = atomic<Any?>(if (locked) EmptyLocked else EmptyUnlocked)
@@ -251,7 +252,12 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         }
     }
 
-    override fun <R> registerSelectLock(select: SelectInstance<R>, owner: Any?, block: suspend () -> R) {
+    override val onLock: SelectClause2<Any?, Mutex>
+        get() = this
+
+    // registerSelectLock
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun <R> registerSelectClause2(select: SelectInstance<R>, owner: Any?, block: suspend (Mutex) -> R) {
         while (true) { // lock-free loop on state
             if (select.isSelected) return
             val state = _state.value
@@ -264,7 +270,7 @@ internal class MutexImpl(locked: Boolean) : Mutex {
                         val failure = select.performAtomicTrySelect(TryLockDesc(this, owner))
                         when {
                             failure == null -> { // success
-                                block.startCoroutineUndispatched(select.completion)
+                                block.startCoroutineUndispatched(receiver = this, completion = select.completion)
                                 return
                             }
                             failure === ALREADY_SELECTED -> return // already selected -- bail out
@@ -325,8 +331,8 @@ internal class MutexImpl(locked: Boolean) : Mutex {
         owner: Any?,
         queue: LockedQueue,
         select: SelectInstance<R>,
-        block: suspend () -> R
-    ) : AddLastDesc<LockSelect<R>>(queue, LockSelect(owner, select, block)) {
+        block: suspend (Mutex) -> R
+    ) : AddLastDesc<LockSelect<R>>(queue, LockSelect(owner, mutex, select, block)) {
         override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
             if (mutex._state.value !== queue) return ENQUEUE_FAIL
             return super.onPrepare(affected, next)
@@ -455,15 +461,16 @@ internal class MutexImpl(locked: Boolean) : Mutex {
 
     private class LockSelect<R>(
         owner: Any?,
+        @JvmField val mutex: Mutex,
         @JvmField val select: SelectInstance<R>,
-        @JvmField val block: suspend () -> R
+        @JvmField val block: suspend (Mutex) -> R
     ) : LockWaiter(owner) {
         override fun tryResumeLockWaiter(): Any? = if (select.trySelect(null)) SELECT_SUCCESS else null
         override fun completeResumeLockWaiter(token: Any) {
             check(token === SELECT_SUCCESS)
-            block.startCoroutine(select.completion)
+            block.startCoroutine(receiver = mutex, completion = select.completion)
         }
-        override fun toString(): String = "LockSelect[$owner, $select]"
+        override fun toString(): String = "LockSelect[$owner, $mutex, $select]"
     }
 
     // atomic unlock operation that checks that waiters queue is empty

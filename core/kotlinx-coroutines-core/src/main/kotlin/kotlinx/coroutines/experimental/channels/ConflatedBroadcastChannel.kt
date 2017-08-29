@@ -20,6 +20,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
 import kotlinx.coroutines.experimental.internal.Symbol
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
+import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 
 /**
@@ -233,13 +234,20 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         }
     }
 
-    override fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend () -> R) {
+    override val onSend: SelectClause2<E, SendChannel<E>>
+        get() = object : SelectClause2<E, SendChannel<E>> {
+            override fun <R> registerSelectClause2(select: SelectInstance<R>, param: E, block: suspend (SendChannel<E>) -> R) {
+                registerSelectSend(select, param, block)
+            }
+        }
+
+    private fun <R> registerSelectSend(select: SelectInstance<R>, element: E, block: suspend (SendChannel<E>) -> R) {
         if (!select.trySelect(null)) return
         offerInternal(element)?.let {
             select.resumeSelectCancellableWithException(it.sendException)
             return
         }
-        block.startCoroutineUndispatched(select.completion)
+        block.startCoroutineUndispatched(receiver = this, completion = select.completion)
     }
 
     private class Subscriber<E>(

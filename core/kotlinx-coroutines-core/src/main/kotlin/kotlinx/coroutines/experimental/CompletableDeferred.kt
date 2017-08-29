@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.SelectClause1
 
 /**
  * A [Deferred] that can be completed via public functions
@@ -86,8 +86,8 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
 private class CompletableDeferredImpl<T> : JobSupport(true), CompletableDeferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     suspend override fun await(): T = awaitInternal() as T
-    override fun <R> registerSelectAwait(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectAwaitInternal(select, block as (suspend (Any?) -> R))
+    override val onAwait: SelectClause1<T>
+        get() = this as SelectClause1<T>
 
     override fun complete(value: T): Boolean {
         loopOnState { state ->
