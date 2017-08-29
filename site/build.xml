@@ -33,7 +33,7 @@
     <target name="site" depends="knit">
         <copy todir="target">
             <fileset dir="docs"/>
-            <fileset dir="../kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
+            <fileset dir="../core/kotlinx-coroutines-core/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-reactive/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-reactor/target/dokka" includes="**/*.md"/>
             <fileset dir="../reactive/kotlinx-coroutines-rx1/target/dokka" includes="**/*.md"/>

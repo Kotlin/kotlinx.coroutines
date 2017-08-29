@@ -5,7 +5,7 @@ This is a companion version for Kotlin 1.1.4 release (this is the minimal requir
 
 ## Modules
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) -- core primitives to work with coroutines:
+* [core](core/README.md) -- core primitives to work with coroutines:
   * `launch`, `async`, `produce`, `actor`, etc coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `CommonPool` and other coroutine contexts;
