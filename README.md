@@ -1,4 +1,8 @@
-# kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/_latestVersion)
+# kotlinx.coroutines 
+
+[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.18) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.18)
 
 Library support for Kotlin coroutines. 
 This is a companion version for Kotlin 1.1.4 release (this is the minimal required Kotlin runtime version). 
