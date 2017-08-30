@@ -23,7 +23,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.17-SNAPSHOT</version>
+    <version>0.18-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <description>Coroutines support libraries for Kotlin 1.1</description>
@@ -41,10 +41,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.1.4-2</kotlin.version>
-        <dokka.version>0.9.15-eap-1</dokka.version>
+        <kotlin.version>1.1.4</kotlin.version>
+        <dokka.version>0.9.15</dokka.version>
         <junit.version>4.12</junit.version>
-        <atomicfu.version>0.3</atomicfu.version>
+        <atomicfu.version>0.6</atomicfu.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
@@ -116,10 +116,10 @@
     </distributionManagement>
 
     <modules>
-        <module>kotlinx-coroutines-core</module>
         <module>benchmarks</module>
         <module>site</module>
         <module>knit</module>
+        <module>core/kotlinx-coroutines-core</module>
         <module>reactive/kotlinx-coroutines-reactive</module>
         <module>reactive/kotlinx-coroutines-reactor</module>
         <module>reactive/kotlinx-coroutines-rx1</module>
@@ -132,7 +132,6 @@
         <module>integration/kotlinx-coroutines-nio</module>
         <module>integration/kotlinx-coroutines-guava</module>
         <module>integration/kotlinx-coroutines-quasar</module>
-        <module>integration/kotlinx-coroutines-io</module>
     </modules>
 
     <dependencies>

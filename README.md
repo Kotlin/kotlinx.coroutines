@@ -1,10 +1,11 @@
 # kotlinx.coroutines [ ![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/_latestVersion)
 
-Library support for Kotlin coroutines. This is a companion version for Kotlin 1.1 release. 
+Library support for Kotlin coroutines. 
+This is a companion version for Kotlin 1.1.4 release (this is the minimal required Kotlin runtime version). 
 
 ## Modules
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) -- core primitives to work with coroutines:
+* [core](core/README.md) -- core primitives to work with coroutines:
   * `launch`, `async`, `produce`, `actor`, etc coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `CommonPool` and other coroutine contexts;
@@ -20,9 +21,12 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 
 ## Documentation
 
-* [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
-* [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
-* [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
+* [Introduction to Kotlin Coroutines](https://vimeo.com/222499934) video
+  (Roman Elizarov at GeekOut 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-kotlin-coroutines))
+* Guides and manuals: 
+  * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
+  * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
+  * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
@@ -34,7 +38,7 @@ Library support for Kotlin coroutines. This is a companion version for Kotlin 1.
 The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository
 and also linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines).
 
-These libraries require kotlin compiler version `1.1.x` and 
+These libraries require kotlin compiler version `1.1.4` or later and 
 require kotlin runtime of the same version as a dependency.
 
 ### Maven
@@ -54,7 +58,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.17</version>
+    <version>0.18</version>
 </dependency>
 ```
 
@@ -62,7 +66,7 @@ And make sure that you use the right Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.3-2</kotlin.version>
+    <kotlin.version>1.1.4</kotlin.version>
 </properties>
 ```
 
@@ -79,13 +83,13 @@ repositories {
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.17'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 ```
 
 And make sure that you use the right Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.3-2'
+    ext.kotlin_version = '1.1.4'
 }
 ```

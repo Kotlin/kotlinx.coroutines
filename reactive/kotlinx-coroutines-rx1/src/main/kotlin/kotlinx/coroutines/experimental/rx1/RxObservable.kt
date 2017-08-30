@@ -24,6 +24,7 @@ import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.handleCoroutineException
 import kotlinx.coroutines.experimental.newCoroutineContext
+import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.sync.Mutex
 import rx.Observable
@@ -63,10 +64,10 @@ private const val CLOSED_MESSAGE = "This subscription had already closed (comple
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
-private class RxObservableCoroutine<T>(
+private class RxObservableCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Producer, Subscription {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Producer, Subscription, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
@@ -87,7 +88,7 @@ private class RxObservableCoroutine<T>(
         return true
     }
 
-    public suspend override fun send(element: T): Unit {
+    public suspend override fun send(element: T) {
         // fast-path -- try send without suspension
         if (offer(element)) return
         // slow-path does suspend
@@ -99,11 +100,17 @@ private class RxObservableCoroutine<T>(
         doLockedNext(element)
     }
 
-    override fun <R> registerSelectSend(select: SelectInstance<R>, element: T, block: suspend () -> R) =
-        mutex.registerSelectLock(select, null) {
+    override val onSend: SelectClause2<T, SendChannel<T>>
+        get() = this
+
+    // registerSelectSend
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+    override fun <R> registerSelectClause2(select: SelectInstance<R>, element: T, block: suspend (SendChannel<T>) -> R) {
+        mutex.onLock.registerSelectClause2(select, null) {
             doLockedNext(element)
-            block()
+            block(this)
         }
+    }
 
     // assert: mutex.isLocked()
     private fun doLockedNext(elem: T) {

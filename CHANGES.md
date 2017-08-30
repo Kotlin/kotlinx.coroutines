@@ -1,5 +1,24 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.18
+
+* Kotlin 1.1.4 is required to use this version, which enables:
+  * `withLock` and `consumeEach` functions are now inline suspend functions.
+  * `JobSupport` class implementation is optimized (one fewer field).
+* `TimeoutException` is public (see #89).
+* Improvements to `Mutex` (courtesy of @fvasco):
+  * Introduced `holdsLock` (see #92).
+  * Improved documentation on `Mutex` fairness (see #90).
+* Fixed NPE when `ArrayBroadcastChannel` is closed concurrently with receive (see #97).
+* Fixed bug in internal class LockFreeLinkedList that resulted in ISE under stress in extremely rare circumstances.
+* Integrations:
+  * [quasar](integration/kotlinx-coroutines-quasar): Introduced integration with suspendable JVM functions
+    that are instrumented with [Parallel Universe Quasar](http://docs.paralleluniverse.co/quasar/) 
+    (thanks to the help of @pron). 
+  * [reactor](reactive/kotlinx-coroutines-reactor): Replaced deprecated `setCancellation` with `onDipose` and 
+    updated to Aluminium-SR3 release (courtesy of @yxf07, see #96) 
+  * [jdk8](integration/kotlinx-coroutines-jdk8): Added adapters for `java.time` classes (courtesy of @fvasco, see #93)     
+
 ## Version 0.17
 
 * `CompletableDeferred` is introduced as a set-once event-like communication primitive (see #70).
