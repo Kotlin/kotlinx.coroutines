@@ -11,6 +11,7 @@ Library support for Kotlin coroutines. This reference is a companion to
 ## Modules
 
 [kotlinx-coroutines-core](kotlinx-coroutines-core)         | Core primitives to work with coroutines
+[kotlinx-coroutines-io](kotlinx-coroutines-io)             | Byte I/O channels (_unstable_, work in progress) 
 [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) | Utilities for [Reactive Streams](http://www.reactive-streams.org)
 [kotlinx-coroutines-reactor](kotlinx-coroutines-reactor)   | Utilities for [Reactor](https://projectreactor.io)
 [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1)           | Utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x)

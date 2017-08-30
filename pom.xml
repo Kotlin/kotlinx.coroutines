@@ -120,6 +120,7 @@
         <module>site</module>
         <module>knit</module>
         <module>core/kotlinx-coroutines-core</module>
+        <module>core/kotlinx-coroutines-io</module>
         <module>reactive/kotlinx-coroutines-reactive</module>
         <module>reactive/kotlinx-coroutines-reactor</module>
         <module>reactive/kotlinx-coroutines-rx1</module>
