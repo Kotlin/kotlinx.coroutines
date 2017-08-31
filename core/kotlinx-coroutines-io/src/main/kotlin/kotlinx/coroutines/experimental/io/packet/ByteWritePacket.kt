@@ -5,6 +5,8 @@ import java.nio.ByteBuffer
 import java.nio.CharBuffer
 
 interface ByteWritePacket : Appendable {
+    val size: Int
+
     fun writeFully(src: ByteArray, offset: Int, length: Int)
     fun writeFully(src: ByteArray) = writeFully(src, 0, src.size)
     fun writeFully(src: ByteBuffer)
