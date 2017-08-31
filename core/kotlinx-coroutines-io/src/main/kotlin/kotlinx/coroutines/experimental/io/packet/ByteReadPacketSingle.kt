@@ -14,7 +14,7 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
 
     internal fun steal(): ByteBuffer = buffer?.also { buffer = null } ?: throw IllegalStateException("EOF")
 
-    override fun readLazy(dst: ByteArray, offset: Int, length: Int): Int {
+    override fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int {
         var copied = 0
 
         val rc = reading { buffer ->
@@ -28,7 +28,7 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
         return if (rc) copied else -1
     }
 
-    override fun readLazy(dst: ByteBuffer): Int {
+    override fun readAvailable(dst: ByteBuffer): Int {
         var copied = 0
 
         val rc = reading { buffer ->
@@ -49,12 +49,12 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
     }
 
     override fun readFully(dst: ByteArray, offset: Int, length: Int) {
-        val rc = readLazy(dst, offset, length)
+        val rc = readAvailable(dst, offset, length)
         if (rc < length) throw EOFException("Not enough bytes in the packet")
     }
 
     override fun readFully(dst: ByteBuffer): Int {
-        val rc = readLazy(dst)
+        val rc = readAvailable(dst)
         if (dst.hasRemaining()) throw EOFException("Not enough bytes in the packet")
         return rc
     }
@@ -163,7 +163,7 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
                 return if (rc) v.toInt() and 0xff else -1
             }
 
-            override fun read(b: ByteArray, off: Int, len: Int) = readLazy(b, off, len)
+            override fun read(b: ByteArray, off: Int, len: Int) = readAvailable(b, off, len)
             override fun skip(n: Long): Long {
                 if (n > Int.MAX_VALUE) return this@ByteReadPacketSingle.skip(Int.MAX_VALUE).toLong()
                 return this@ByteReadPacketSingle.skip(n.toInt()).toLong()

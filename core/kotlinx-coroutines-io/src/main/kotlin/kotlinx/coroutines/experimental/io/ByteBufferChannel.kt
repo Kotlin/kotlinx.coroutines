@@ -897,7 +897,7 @@ internal class ByteBufferChannel(
         val t = try {
             while (packet.remaining > 0) {
                 buffer.clear()
-                packet.readLazy(buffer)
+                packet.readAvailable(buffer)
                 buffer.flip()
                 writeAsMuchAsPossible(buffer)
                 if (buffer.hasRemaining()) {
@@ -926,7 +926,7 @@ internal class ByteBufferChannel(
         try {
             do {
                 buffer.compact()
-                packet.readLazy(buffer)
+                packet.readAvailable(buffer)
                 buffer.flip()
                 writeFully(buffer)
             } while (packet.remaining > 0)

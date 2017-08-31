@@ -7,9 +7,9 @@ import kotlin.experimental.and
 interface ByteReadPacket {
     val remaining: Int
 
-    fun readLazy(dst: ByteArray, offset: Int, length: Int): Int
-    fun readLazy(dst: ByteArray) = readLazy(dst, 0, dst.size)
-    fun readLazy(dst: ByteBuffer): Int
+    fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int
+    fun readAvailable(dst: ByteArray) = readAvailable(dst, 0, dst.size)
+    fun readAvailable(dst: ByteBuffer): Int
 
     fun readFully(dst: ByteArray, offset: Int, length: Int)
     fun readFully(dst: ByteArray) = readFully(dst, 0, dst.size)

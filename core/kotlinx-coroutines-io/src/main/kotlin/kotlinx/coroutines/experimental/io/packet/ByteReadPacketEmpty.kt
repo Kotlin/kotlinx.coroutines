@@ -8,8 +8,8 @@ object ByteReadPacketEmpty : ByteReadPacket {
     override val remaining: Int
         get() = 0
 
-    override fun readLazy(dst: ByteArray, offset: Int, length: Int) = -1
-    override fun readLazy(dst: ByteBuffer): Int = -1
+    override fun readAvailable(dst: ByteArray, offset: Int, length: Int) = -1
+    override fun readAvailable(dst: ByteBuffer): Int = -1
 
     override fun readFully(dst: ByteArray, offset: Int, length: Int) {
         if (length > 0) throw EOFException("Couldn't read $length bytes from empty packet")
