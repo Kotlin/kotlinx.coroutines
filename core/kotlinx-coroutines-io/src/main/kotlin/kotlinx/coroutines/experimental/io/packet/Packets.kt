@@ -16,6 +16,8 @@ private val PacketBufferPool: ObjectPool<ByteBuffer> =
 fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket =
         ByteWritePacketImpl(PacketBufferPool).apply(block).build()
 
+fun WritePacket(): ByteWritePacket = ByteWritePacketImpl(PacketBufferPool)
+
 fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE): String? {
     val sb = StringBuilder(estimate)
     return if (readUTF8LineTo(sb, limit)) sb.toString() else null
