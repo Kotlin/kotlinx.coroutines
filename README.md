@@ -97,3 +97,14 @@ buildscript {
     ext.kotlin_version = '1.1.4'
 }
 ```
+
+### ProGuard
+
+In obfuscated code, fields with different types can have the same names,
+and `AtomicReferenceFieldUpdater` may be unable to find the correct ones.
+To avoid field overloading by type during obfuscation, add this to your config:
+```
+-keepclassmembernames class kotlinx.** {
+    volatile <fields>;
+}
+```
