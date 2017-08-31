@@ -105,11 +105,11 @@ public interface ByteReadChannel {
     suspend fun <A : Appendable> readUTF8LineTo(out: A, limit: Int = Int.MAX_VALUE): Boolean
 }
 
-suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
-    val o = BufferObjectPool.borrow()
+suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel): Long {
+    val state = BufferObjectPool.borrow()
     try {
         var copied = 0L
-        val bb = o.backingBuffer
+        val bb = state.backingBuffer
 
         while (true) {
             bb.clear()
@@ -120,13 +120,18 @@ suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
             dst.writeFully(bb)
             copied += size
         }
-
-        dst.close()
         return copied
     } catch (t: Throwable) {
         dst.close(t)
         throw t
     } finally {
-        BufferObjectPool.recycle(o)
+        BufferObjectPool.recycle(state)
     }
+}
+
+
+suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
+    val count = copyTo(dst)
+    dst.close()
+    return count
 }
