@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.internal.BufferObjectPool
+import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
 
 /**
@@ -105,19 +105,26 @@ public interface ByteReadChannel {
     suspend fun <A : Appendable> readUTF8LineTo(out: A, limit: Int = Int.MAX_VALUE): Boolean
 }
 
-suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel): Long {
-    val state = BufferObjectPool.borrow()
+/**
+ * Reads up to [limit] bytes from receiver channel and writes them to [dst] channel.
+ * Closes [dst] channel if fails to read or write with cause exception.
+ * @return a number of copied bytes
+ */
+suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX_VALUE): Long {
+    val buffer = BufferPool.borrow()
     try {
         var copied = 0L
-        val bb = state.backingBuffer
 
-        while (true) {
-            bb.clear()
-            val size = readAvailable(bb)
+        while (copied < limit) {
+            buffer.clear()
+            if (limit - copied < buffer.limit()) {
+                buffer.limit((limit - copied).toInt())
+            }
+            val size = readAvailable(buffer)
             if (size == -1) break
 
-            bb.flip()
-            dst.writeFully(bb)
+            buffer.flip()
+            dst.writeFully(buffer)
             copied += size
         }
         return copied
@@ -125,11 +132,15 @@ suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel): Long {
         dst.close(t)
         throw t
     } finally {
-        BufferObjectPool.recycle(state)
+        BufferPool.recycle(buffer)
     }
 }
 
-
+/**
+ * Reads all the bytes from receiver channel and writes them to [dst] channel and then closes it.
+ * Closes [dst] channel if fails to read or write with cause exception.
+ * @return a number of copied bytes
+ */
 suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
     val count = copyTo(dst)
     dst.close()

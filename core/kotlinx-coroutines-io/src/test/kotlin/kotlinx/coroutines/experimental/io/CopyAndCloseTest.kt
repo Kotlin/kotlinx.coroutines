@@ -75,4 +75,30 @@ class CopyAndCloseTest : TestBase() {
 
         finish(6)
     }
+
+    @Test
+    fun copyLimitedTest() = runBlocking {
+        expect(1)
+
+        launch(coroutineContext) {
+            expect(2)
+            val copied = from.copyTo(to, 3) // should suspend
+
+            expect(5)
+
+            assertEquals(3, copied)
+        }
+
+        yield()
+
+        expect(3)
+        from.writeByte(1)
+        yield()
+
+        expect(4)
+        from.writeInt(2)
+        yield()
+
+        finish(6)
+    }
 }
