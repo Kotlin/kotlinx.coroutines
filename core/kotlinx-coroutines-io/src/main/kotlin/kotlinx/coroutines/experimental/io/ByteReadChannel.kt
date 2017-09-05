@@ -22,6 +22,8 @@ public interface ByteReadChannel {
      */
     public val isClosedForRead: Boolean
 
+    public val isClosedForWrite: Boolean
+
     /**
      * Byte order that is used for multi-byte read operations
      * (such as [readShort], [readInt], [readLong], [readFloat], and [readDouble]).
@@ -92,7 +94,13 @@ public interface ByteReadChannel {
      */
     suspend fun readFloat(): Float
 
-    suspend fun lookAhead(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean)
+    /**
+     * For every available bytes range invokes [visitor] function until it return false or end of stream encountered
+     */
+    suspend fun consumeEachBufferRange(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean)
+
+    fun <R> lookAhead(visitor: LookAheadSession.() -> R): R
+    suspend fun <R> lookAheadSuspend(visitor: suspend LookAheadSuspendSession.() -> R): R
 
     /**
      * Reads a line of UTF-8 characters to the specified [out] buffer up to [limit] characters.

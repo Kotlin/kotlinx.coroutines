@@ -16,7 +16,7 @@ internal class ByteBufferChannel(
     override val autoFlush: Boolean,
     private val pool: ObjectPool<ReadWriteBufferState.Initial> = BufferObjectPool,
     private val reservedSize: Int = RESERVED_SIZE
-) : ByteChannel {
+) : ByteChannel, LookAheadSuspendSession {
     // internal constructor for reading of byte buffers
     constructor(content: ByteBuffer) : this(false, BufferObjectNoPool, 0) {
         state = ReadWriteBufferState.Initial(content.slice(), 0).apply {
@@ -941,12 +941,85 @@ internal class ByteBufferChannel(
      * Never invokes [visitor] with empty buffer unless [last] = true. Invokes visitor with last = true at most once
      * even if there are remaining bytes and visitor returned true.
      */
-    override suspend fun lookAhead(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
-        if (lookAheadFast(false, visitor)) return
-        lookAheadSuspend(visitor)
+    override suspend fun consumeEachBufferRange(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
+        if (consumeEachBufferRangeFast(false, visitor)) return
+        consumeEachBufferRangeSuspend(visitor)
     }
 
-    private inline fun lookAheadFast(last: Boolean, visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
+    override fun <R> lookAhead(visitor: LookAheadSession.() -> R): R {
+        if (state === ReadWriteBufferState.Terminated) {
+            return visitor(TerminatedLookAhead)
+        }
+
+        var result: R? = null
+        val rc = reading {
+            result = visitor(this@ByteBufferChannel)
+            true
+        }
+
+        if (!rc) {
+            return visitor(TerminatedLookAhead)
+        }
+
+        return result!!
+    }
+
+    suspend override fun <R> lookAheadSuspend(visitor: suspend LookAheadSuspendSession.() -> R): R {
+        if (state === ReadWriteBufferState.Terminated) {
+            return visitor(TerminatedLookAhead)
+        }
+
+        var result: R? = null
+        val rc = reading {
+            result = visitor(this@ByteBufferChannel)
+            true
+        }
+
+        if (!rc) {
+            if (closed != null || state === ReadWriteBufferState.Terminated) return visitor(TerminatedLookAhead)
+            result = visitor(this)
+            if (!state.idle) {
+                restoreStateAfterRead()
+                tryTerminate()
+            }
+        }
+
+        return result!!
+    }
+
+    override fun consumed(n: Int) {
+        require(n >= 0)
+
+        state.let { s ->
+            if (!s.capacity.tryReadExact(n)) throw IllegalStateException("Unable to consume $n bytes: not enough available bytes")
+            s.readBuffer.bytesRead(s.capacity, n)
+        }
+    }
+
+    suspend override fun awaitAtLeast(n: Int) {
+        if (readSuspend(n) && state.idle) {
+            setupStateForRead()
+        }
+    }
+
+    override fun request(skip: Int, atLeast: Int): ByteBuffer? {
+        return state.let { s ->
+            val available = s.capacity.availableForRead
+            val rp = readPosition
+
+            if (available < atLeast + skip) return null
+            if (s.idle || (s !is ReadWriteBufferState.Reading && s !is ReadWriteBufferState.ReadingWriting)) return null
+
+            val buffer = s.readBuffer
+
+            val position = buffer.carryIndex(rp + skip)
+            buffer.prepareBuffer(readByteOrder, position, available - skip)
+
+            if (buffer.remaining() >= atLeast) buffer else null
+        }
+    }
+
+    private inline fun consumeEachBufferRangeFast(last: Boolean, visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
         if (state === ReadWriteBufferState.Terminated && !last) return false
 
         val rc = reading {
@@ -974,11 +1047,11 @@ internal class ByteBufferChannel(
         return rc
     }
 
-    private suspend fun lookAheadSuspend(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
+    private suspend fun consumeEachBufferRangeSuspend(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
         var last = false
 
         do {
-            if (lookAheadFast(last, visitor)) return true
+            if (consumeEachBufferRangeFast(last, visitor)) return true
             if (last) return false
             if (!readSuspend(1)) {
                 last = true
@@ -1006,7 +1079,7 @@ internal class ByteBufferChannel(
         var unicodeStarted = false
         var eol = false
 
-        lookAheadFast(false) { buffer, last ->
+        consumeEachBufferRangeFast(false) { buffer, last ->
             var forceConsume = false
 
             val rejected = !buffer.decodeASCII { ch ->
@@ -1058,7 +1131,7 @@ internal class ByteBufferChannel(
         var consumed1 = 0
         var eol = false
 
-        lookAheadFast(false) { buffer, last ->
+        consumeEachBufferRangeFast(false) { buffer, last ->
             var forceConsume = false
 
             val rc = buffer.decodeUTF8 { ch ->
@@ -1108,7 +1181,7 @@ internal class ByteBufferChannel(
         var eol = false
         var wrap = 0
 
-        lookAheadSuspend { buffer, last ->
+        consumeEachBufferRangeSuspend { buffer, last ->
             var forceConsume = false
 
             val rc = buffer.decodeUTF8 { ch ->
@@ -1296,6 +1369,17 @@ internal class ByteBufferChannel(
         private val WriteOp = updater(ByteBufferChannel::writeOp)
         private val ReadOp = updater(ByteBufferChannel::readOp)
         private val Closed = updater(ByteBufferChannel::closed)
+    }
+
+    private object TerminatedLookAhead : LookAheadSuspendSession {
+        override fun consumed(n: Int) {
+            if (n > 0) throw IllegalStateException("Unable to mark $n bytes consumed for already terminated channel")
+        }
+
+        override fun request(skip: Int, atLeast: Int) = null
+
+        suspend override fun awaitAtLeast(n: Int) {
+        }
     }
 
     private class ClosedElement(val cause: Throwable?) {
