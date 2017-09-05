@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.internal.*
-import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.coroutines.experimental.io.packet.*
 
 /**
  * Channel for asynchronous reading of sequences of bytes.
@@ -145,4 +145,37 @@ suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
     val count = copyTo(dst)
     dst.close()
     return count
+}
+
+/**
+ * Reads all the bytes from receiver channel and builds a packet that is returned unless the specified [limit] exceeded.
+ * It will simply stop reading and return packet of size [limit] in this case
+ */
+suspend fun ByteReadChannel.readAll(limit: Int = Int.MAX_VALUE): ByteReadPacket {
+    val buffer = BufferPool.borrow()
+    val packet = WritePacket()
+
+    try {
+        var copied = 0L
+
+        while (copied < limit) {
+            buffer.clear()
+            if (limit - copied < buffer.limit()) {
+                buffer.limit((limit - copied).toInt())
+            }
+            val size = readAvailable(buffer)
+            if (size == -1) break
+
+            buffer.flip()
+            packet.writeFully(buffer)
+            copied += size
+        }
+
+        return packet.build()
+    } catch (t: Throwable) {
+        packet.release()
+        throw t
+    } finally {
+        BufferPool.recycle(buffer)
+    }
 }
