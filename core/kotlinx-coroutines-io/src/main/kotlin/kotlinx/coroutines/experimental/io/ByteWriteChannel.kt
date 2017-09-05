@@ -1,7 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.io.packet.buildPacket
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
@@ -159,6 +158,14 @@ suspend fun ByteWriteChannel.writeBoolean(b: Boolean) {
  */
 suspend fun ByteWriteChannel.writeChar(ch: Char) {
     writeShort(ch.toInt())
+}
+
+inline suspend fun ByteWriteChannel.writePacket(builder: ByteWritePacket.() -> Unit) {
+    writePacket(buildPacket(builder))
+}
+
+suspend fun ByteWriteChannel.writePacketSuspend(builder: suspend ByteWritePacket.() -> Unit) {
+    writePacket(buildPacket { builder() })
 }
 
 class ClosedWriteChannelException(message: String?) : CancellationException(message)

@@ -13,8 +13,8 @@ private val PacketBufferPool: ObjectPool<ByteBuffer> =
         override fun produceInstance(): ByteBuffer = ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE)
     }
 
-fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket =
-        ByteWritePacketImpl(PacketBufferPool).apply(block).build()
+inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket =
+        WritePacket().apply(block).build()
 
 fun WritePacket(): ByteWritePacket = ByteWritePacketImpl(PacketBufferPool)
 
