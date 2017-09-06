@@ -30,14 +30,13 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
-
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
 object JavaFx : CoroutineDispatcher(), Delay {
     init {
         // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
-        PlatformImpl.startup {}
+        initPlatform()
     }
 
     private val pulseTimer by lazy {
@@ -92,4 +91,8 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun toString() = "JavaFx"
+}
+
+internal fun initPlatform() {
+    PlatformImpl.startup {}
 }

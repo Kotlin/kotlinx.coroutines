@@ -32,16 +32,25 @@ class JavaFxTest : TestBase() {
     }
 
     @Test
-    fun testDelay() = runBlocking {
-        expect(1)
-        val job = launch(JavaFx) {
-            check(Platform.isFxApplicationThread())
-            expect(2)
-            delay(100)
-            check(Platform.isFxApplicationThread())
-            expect(3)
+    fun testDelay() {
+        try {
+            initPlatform()
+        } catch (e: UnsupportedOperationException) {
+            println("Skipping JavaFxTest in headless environment")
+            return // ignore test in headless environments
         }
-        job.join()
-        finish(4)
+
+        runBlocking {
+            expect(1)
+            val job = launch(JavaFx) {
+                check(Platform.isFxApplicationThread())
+                expect(2)
+                delay(100)
+                check(Platform.isFxApplicationThread())
+                expect(3)
+            }
+            job.join()
+            finish(4)
+        }
     }
 }
