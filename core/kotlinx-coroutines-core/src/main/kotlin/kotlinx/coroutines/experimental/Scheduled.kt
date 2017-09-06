@@ -26,12 +26,12 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
- * [TimeoutException] if timeout was exceeded.
+ * [TimeoutCancellationException] if timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutException], so normally that exception,
+ * cancellable suspending function inside the block throws [TimeoutCancellationException], so normally that exception,
  * if uncaught, also gets thrown by `withTimeout` as a result.
- * However, the code in the block can suppress [TimeoutException].
+ * However, the code in the block can suppress [TimeoutCancellationException].
  *
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -64,7 +64,7 @@ private open class TimeoutCompletion<U, in T: U>(
 ) : JobSupport(active = true), Runnable, Continuation<T> {
     @Suppress("LeakingThis")
     override val context: CoroutineContext = cont.context + this // mix in this Job into the context
-    override fun run() { cancel(TimeoutException(time, unit, this)) }
+    override fun run() { cancel(TimeoutCancellationException(time, unit, this)) }
     override fun resume(value: T) { cont.resumeDirect(value) }
     override fun resumeWithException(exception: Throwable) { cont.resumeDirectWithException(exception) }
 }
@@ -74,9 +74,9 @@ private open class TimeoutCompletion<U, in T: U>(
  * `null` if this timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutException]. Normally that exception,
+ * cancellable suspending function inside the block throws [TimeoutCancellationException]. Normally that exception,
  * if uncaught by the block, gets converted into the `null` result of `withTimeoutOrNull`.
- * However, the code in the block can suppress [TimeoutException].
+ * However, the code in the block can suppress [TimeoutCancellationException].
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -100,7 +100,7 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
         // however start it as undispatched coroutine, because we are already in the proper context
         try {
             block.startCoroutineUninterceptedOrReturn(completion)
-        } catch (e: TimeoutException) {
+        } catch (e: TimeoutCancellationException) {
             // replace inner timeout exception on our coroutine with null result
             if (e.coroutine == completion) null else throw e
         }
@@ -114,7 +114,7 @@ private class TimeoutOrNullCompletion<T>(
 ) : TimeoutCompletion<T?, T>(time, unit, cont) {
     override fun resumeWithException(exception: Throwable) {
         // suppress inner timeout exception and replace it with null
-        if (exception is TimeoutException && exception.coroutine === this)
+        if (exception is TimeoutCancellationException && exception.coroutine === this)
             cont.resumeDirect(null) else
             cont.resumeDirectWithException(exception)
     }
@@ -123,18 +123,25 @@ private class TimeoutOrNullCompletion<T>(
 /**
  * This exception is thrown by [withTimeout] to indicate timeout.
  */
-public class TimeoutException internal constructor(
+@Suppress("DEPRECATION")
+public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField internal val coroutine: Job?
-) : CancellationException(message) {
+) : TimeoutException(message) {
     /**
      * Creates timeout exception with a given message.
      */
     public constructor(message: String) : this(message, null)
 }
 
-private fun TimeoutException(
+/**
+ * @suppress **Deprecated**: Renamed to TimeoutCancellationException
+ */
+@Deprecated("Renamed to TimeoutCancellationException", replaceWith = ReplaceWith("TimeoutCancellationException"))
+public open class TimeoutException(message: String) : CancellationException(message)
+
+private fun TimeoutCancellationException(
     time: Long,
     unit: TimeUnit,
     coroutine: Job
-) : TimeoutException = TimeoutException("Timed out waiting for $time $unit", coroutine)
+) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time $unit", coroutine)

@@ -120,7 +120,7 @@ class GuideTest {
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
-            "Exception in thread \"main\" kotlinx.coroutines.experimental.TimeoutException: Timed out waiting for 1300 MILLISECONDS"
+            "Exception in thread \"main\" kotlinx.coroutines.experimental.TimeoutCancellationException: Timed out waiting for 1300 MILLISECONDS"
         )
     }
 
