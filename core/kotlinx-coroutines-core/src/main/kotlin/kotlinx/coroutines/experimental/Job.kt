@@ -340,6 +340,19 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
     invokeOnCompletion(CancelFutureOnCompletion(this, future))
 
 /**
+ * Cancels the job and suspends invoking coroutine until the cancelled job is complete.
+ *
+ * This suspending function is cancellable. If the [Job] of the invoking coroutine is cancelled or completed while this
+ * suspending function is suspended, this function immediately resumes with [CancellationException].
+ *
+ * This is a shortcut for the invocation of [cancel][Job.cancel] followed by [join][Job.join].
+ */
+public suspend fun Job.cancelAndJoin() {
+    cancel()
+    return join()
+}
+
+/**
  * @suppress **Deprecated**: `join` is now a member function of `Job`.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DeprecatedCallableAddReplaceWith")

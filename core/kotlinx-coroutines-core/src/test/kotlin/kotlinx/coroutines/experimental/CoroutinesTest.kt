@@ -213,4 +213,21 @@ class CoroutinesTest : TestBase() {
         check(!job.isActive && job.isCompleted && job.isCancelled)
         finish(9)
     }
+
+    @Test
+    fun testCancelAndJoin() = runBlocking {
+        expect(1)
+        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                yield()
+                expectUnreached() // will get cancelled
+            } finally {
+                expect(4)
+            }
+        }
+        expect(3)
+        job.cancelAndJoin()
+        finish(5)
+    }
 }
