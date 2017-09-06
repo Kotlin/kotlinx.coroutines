@@ -2,11 +2,9 @@
 
 package kotlinx.coroutines.experimental.io.packet
 
-import kotlinx.coroutines.experimental.io.internal.ObjectPool
-import kotlinx.coroutines.experimental.io.internal.decodeUTF8
+import kotlinx.coroutines.experimental.io.internal.*
 import java.io.*
-import java.nio.BufferOverflowException
-import java.nio.ByteBuffer
+import java.nio.*
 import java.nio.charset.*
 import java.util.*
 
@@ -143,6 +141,25 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
         if (rc && size > 0) throw MalformedInputException(0)
 
         return rc
+    }
+
+    override fun readText(): CharSequence {
+        val sb = StringBuilder(remaining)
+
+        var size = 0
+
+        reading(1) { bb ->
+            size = bb.decodeUTF8 { ch ->
+                sb.append(ch)
+                true
+            }
+
+            size == 0
+        }
+
+        if (size > 0) throw CharacterCodingException()
+
+        return sb
     }
 
     override fun skip(n: Int): Int {

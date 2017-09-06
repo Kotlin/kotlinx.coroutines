@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.packet.*
 import org.junit.*
+import java.util.*
 import kotlin.test.*
 
 class BytePacketReaderWriterTest {
@@ -224,5 +225,53 @@ class BytePacketReaderWriterTest {
         }
 
         assertNull(p.readUTF8Line())
+    }
+
+    @Test
+    fun testSingleBufferReadText() {
+        val p = buildPacket {
+            append("ABC")
+        }
+
+        assertEquals("ABC", p.readText().toString())
+    }
+
+    @Test
+    fun testMultiBufferReadText() {
+        val s = buildString {
+            repeat(100000) {
+                append("x")
+            }
+        }
+
+        val packet = buildPacket {
+            writeFully(s.toByteArray())
+        }
+
+        assertEquals(s, packet.readText().toString())
+    }
+
+    @Test
+    fun testSingleBufferReadAll() {
+        val bb = ByteArray(100)
+        Random().nextBytes(bb)
+
+        val p = buildPacket {
+            writeFully(bb)
+        }
+
+        assertTrue { bb.contentEquals(p.readBytes()) }
+    }
+
+    @Test
+    fun testMultiBufferReadAll() {
+        val bb = ByteArray(100000)
+        Random().nextBytes(bb)
+
+        val p = buildPacket {
+            writeFully(bb)
+        }
+
+        assertTrue { bb.contentEquals(p.readBytes()) }
     }
 }

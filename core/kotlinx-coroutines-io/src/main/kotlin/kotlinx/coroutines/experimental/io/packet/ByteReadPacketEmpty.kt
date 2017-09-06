@@ -53,6 +53,8 @@ object ByteReadPacketEmpty : ByteReadPacket {
     override fun inputStream(): InputStream = EmptyInputStream
     override fun readerUTF8(): Reader = EmptyReader
 
+    override fun readText() = ""
+
     private object EmptyInputStream : InputStream() {
         override fun available() = 0
 

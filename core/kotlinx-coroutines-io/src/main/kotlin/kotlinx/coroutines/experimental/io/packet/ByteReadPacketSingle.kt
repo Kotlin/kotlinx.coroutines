@@ -5,7 +5,7 @@ import kotlinx.coroutines.experimental.io.internal.decodeUTF8
 import java.io.*
 import java.nio.BufferOverflowException
 import java.nio.ByteBuffer
-import java.nio.charset.MalformedInputException
+import java.nio.charset.*
 
 internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
@@ -136,6 +136,25 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
                 }
             } else if (rc > 0) throw MalformedInputException(0)
         }
+    }
+
+    override fun readText(): CharSequence {
+        val sb = StringBuilder(remaining)
+
+        var size = 0
+
+        reading { bb ->
+            size = bb.decodeUTF8 { ch ->
+                sb.append(ch)
+                true
+            }
+
+            size == 0
+        }
+
+        if (size > 0) throw CharacterCodingException()
+
+        return sb
     }
 
     override fun skip(n: Int): Int {

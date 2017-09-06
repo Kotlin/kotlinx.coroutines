@@ -38,4 +38,6 @@ interface ByteReadPacket {
 
     fun inputStream(): InputStream
     fun readerUTF8(): Reader
+
+    fun readText(): CharSequence
 }

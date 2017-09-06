@@ -1,8 +1,6 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import kotlinx.coroutines.experimental.io.internal.ObjectPool
-import kotlinx.coroutines.experimental.io.internal.ObjectPoolImpl
-import kotlinx.coroutines.experimental.io.internal.getIOIntProperty
+import kotlinx.coroutines.experimental.io.internal.*
 import java.nio.ByteBuffer
 
 internal val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
@@ -22,3 +20,5 @@ fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE):
     val sb = StringBuilder(estimate)
     return if (readUTF8LineTo(sb, limit)) sb.toString() else null
 }
+
+fun ByteReadPacket.readBytes() = inputStream().readBytes(remaining)
