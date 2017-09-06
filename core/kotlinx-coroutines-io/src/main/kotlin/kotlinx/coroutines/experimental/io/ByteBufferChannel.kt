@@ -231,7 +231,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    private fun readAsMuchAsPossible(dst: ByteBuffer, consumed0: Int = 0): Int {
+    private tailrec fun readAsMuchAsPossible(dst: ByteBuffer, consumed0: Int = 0): Int {
         var consumed = 0
 
         val rc = reading {
@@ -259,7 +259,7 @@ internal class ByteBufferChannel(
         else consumed + consumed0
     }
 
-    private fun readAsMuchAsPossible(dst: ByteArray, offset: Int, length: Int, consumed0: Int = 0): Int {
+    private tailrec fun readAsMuchAsPossible(dst: ByteArray, offset: Int, length: Int, consumed0: Int = 0): Int {
         var consumed = 0
 
         val rc = reading {

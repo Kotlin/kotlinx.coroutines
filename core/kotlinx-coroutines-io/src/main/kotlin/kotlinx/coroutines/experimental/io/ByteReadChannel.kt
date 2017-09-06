@@ -159,7 +159,7 @@ suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
  * Reads all the bytes from receiver channel and builds a packet that is returned unless the specified [limit] exceeded.
  * It will simply stop reading and return packet of size [limit] in this case
  */
-suspend fun ByteReadChannel.readAll(limit: Int = Int.MAX_VALUE): ByteReadPacket {
+suspend fun ByteReadChannel.readRemaining(limit: Int = Int.MAX_VALUE): ByteReadPacket {
     val buffer = BufferPool.borrow()
     val packet = WritePacket()
 

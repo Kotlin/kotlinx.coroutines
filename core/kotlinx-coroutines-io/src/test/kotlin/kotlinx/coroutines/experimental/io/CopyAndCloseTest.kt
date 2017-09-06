@@ -1,17 +1,20 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.junit.Test
-import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.io.internal.*
+import org.junit.*
+import java.io.*
+import kotlin.test.*
 
 class CopyAndCloseTest : TestBase() {
     private val from = ByteChannel(true)
     private val to = ByteChannel(true)
+
+    @After
+    fun tearDown() {
+        from.close(CancellationException())
+        to.close(CancellationException())
+    }
 
     @Test
     fun smokeTest() = runBlocking {
@@ -101,4 +104,50 @@ class CopyAndCloseTest : TestBase() {
 
         finish(6)
     }
+
+    @Test
+    fun readRemaining() = runBlocking {
+        expect(1)
+
+        launch(coroutineContext) {
+            expect(2)
+            from.writeFully("123".toByteArray())
+
+            yield()
+            expect(3)
+            from.writeFully("456".toByteArray().asByteBuffer())
+
+            yield()
+            expect(4)
+            from.close()
+        }
+
+        yield()
+        assertEquals("123456", from.readRemaining().readText().toString())
+
+        yield()
+
+        finish(5)
+    }
+
+    @Test
+    fun readRemainingLimitFailed() = runBlocking {
+        expect(1)
+
+        launch(coroutineContext) {
+            expect(2)
+            from.writeFully("123".toByteArray())
+
+            yield()
+            expect(3)
+            from.writeFully("456".toByteArray().asByteBuffer())
+        }
+
+        yield()
+        assertEquals("12345", from.readRemaining(5).readText().toString())
+
+        finish(4)
+    }
+
+
 }
