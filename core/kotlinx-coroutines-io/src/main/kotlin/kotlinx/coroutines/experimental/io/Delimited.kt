@@ -130,8 +130,10 @@ private fun LookAheadSession.tryEnsureDelimiter(delimiter: ByteBuffer): Int {
     val found = minOf(buffer.remaining() - index, delimiter.remaining())
     val notKnown = delimiter.remaining() - found
 
-    val next = (if (notKnown > 0) request(index + found, notKnown) else null) ?: return found
-    if (!next.startsWith(delimiter, found)) throw IOException("Failed to skip delimiter: actual bytes differ from delimiter bytes")
+    if (notKnown > 0) {
+        val next = request(index + found, notKnown) ?: return found
+        if (!next.startsWith(delimiter, found)) throw IOException("Failed to skip delimiter: actual bytes differ from delimiter bytes")
+    }
 
     consumed(delimiter.remaining())
     return delimiter.remaining()
