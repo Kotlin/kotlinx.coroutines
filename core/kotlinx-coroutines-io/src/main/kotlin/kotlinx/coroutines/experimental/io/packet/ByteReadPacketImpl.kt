@@ -4,11 +4,10 @@ package kotlinx.coroutines.experimental.io.packet
 
 import kotlinx.coroutines.experimental.io.internal.ObjectPool
 import kotlinx.coroutines.experimental.io.internal.decodeUTF8
-import java.io.EOFException
-import java.io.InputStream
+import java.io.*
 import java.nio.BufferOverflowException
 import java.nio.ByteBuffer
-import java.nio.charset.MalformedInputException
+import java.nio.charset.*
 import java.util.*
 
 internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
@@ -141,7 +140,7 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
             !end && size == 0
         }
 
-        if (!rc && size != 0) throw MalformedInputException(0)
+        if (rc && size > 0) throw MalformedInputException(0)
 
         return rc
     }
@@ -160,10 +159,6 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
         return skipped
     }
 
-    override fun skipExact(n: Int) {
-        if (skip(n) != n) throw EOFException("Unable to skip $n bytes due to end of packet")
-    }
-
     override fun inputStream(): InputStream {
         return object : InputStream() {
             override fun read(): Int {
@@ -179,6 +174,38 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
             }
 
             override fun available() = remaining
+        }
+    }
+
+    override fun readerUTF8(): Reader {
+        return object : Reader() {
+            override fun close() {
+                release()
+            }
+
+            override fun read(cbuf: CharArray, off: Int, len: Int): Int {
+                var decoded = 0
+                var size = 1
+
+                val rc = reading(size) { bb ->
+                    size = bb.decodeUTF8 { ch ->
+                        if (decoded == len) false
+                        else {
+                            cbuf[off + decoded] = ch
+                            decoded++
+                            true
+                        }
+                    }
+
+                    size == 0
+                }
+
+                return when {
+                    rc && size > 0 -> throw CharacterCodingException()
+                    rc -> decoded
+                    else -> -1
+                }
+            }
         }
     }
 
@@ -226,6 +253,8 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
 
         val extraBytes = size - buffer.remaining()
         val next = packets.peekFirst()
+
+        if (extraBytes > next.remaining()) return  false
 
         buffer.compact()
         repeat(extraBytes) {

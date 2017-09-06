@@ -2,8 +2,7 @@ package kotlinx.coroutines.experimental.io.packet
 
 import kotlinx.coroutines.experimental.io.internal.ObjectPool
 import kotlinx.coroutines.experimental.io.internal.decodeUTF8
-import java.io.EOFException
-import java.io.InputStream
+import java.io.*
 import java.nio.BufferOverflowException
 import java.nio.ByteBuffer
 import java.nio.charset.MalformedInputException
@@ -151,10 +150,6 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
         return skipped
     }
 
-    override fun skipExact(n: Int) {
-        if (skip(n) != n) throw EOFException("Unable to skip $n bytes due to end of packet")
-    }
-
     override fun inputStream(): InputStream {
         return object : InputStream() {
             override fun read(): Int {
@@ -170,6 +165,39 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
             }
 
             override fun available() = remaining
+
+            override fun close() {
+                release()
+            }
+        }
+    }
+
+    override fun readerUTF8(): Reader {
+        return object : Reader() {
+            override fun close() {
+                release()
+            }
+
+            override fun read(cbuf: CharArray, off: Int, len: Int): Int {
+                var decoded = 0
+
+                val rc = reading { bb ->
+                    if (len == 0) return@reading
+
+                    val rc = bb.decodeUTF8 { ch ->
+                        if (decoded == len) false
+                        else {
+                            cbuf[off + decoded] =ch
+                            decoded++
+                            true
+                        }
+                    }
+
+                    if (rc > 0) throw MalformedInputException(0)
+                }
+
+                return if (!rc) -1 else decoded
+            }
         }
     }
 

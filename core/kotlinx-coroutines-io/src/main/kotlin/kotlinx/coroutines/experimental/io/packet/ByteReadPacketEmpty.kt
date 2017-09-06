@@ -1,8 +1,7 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import java.io.EOFException
-import java.io.InputStream
-import java.nio.ByteBuffer
+import java.io.*
+import java.nio.*
 
 object ByteReadPacketEmpty : ByteReadPacket {
     override val remaining: Int
@@ -44,22 +43,17 @@ object ByteReadPacketEmpty : ByteReadPacket {
         throw EOFException("Couldn't read float from empty packet")
     }
 
-    override fun skip(n: Int): Int {
-        return 0
-    }
-
-    override fun skipExact(n: Int) {
-        if (n != 0) throw EOFException("Couldn't skip $n bytes in empty packet")
-    }
+    override fun skip(n: Int) = 0
 
     override fun release() {
     }
 
     override fun readUTF8LineTo(out: Appendable, limit: Int) = false
 
-    override fun inputStream() = EmptyInputStream
+    override fun inputStream(): InputStream = EmptyInputStream
+    override fun readerUTF8(): Reader = EmptyReader
 
-    private val EmptyInputStream = object : InputStream() {
+    private object EmptyInputStream : InputStream() {
         override fun available() = 0
 
         override fun read(): Int = -1
@@ -77,5 +71,14 @@ object ByteReadPacketEmpty : ByteReadPacket {
 
         override fun close() {
         }
+    }
+
+    private object EmptyReader : Reader() {
+        override fun close() {
+        }
+
+        override fun read(cbuf: CharArray?, off: Int, len: Int) = -1
+        override fun read() = -1
+        override fun read(target: CharBuffer?) = -1
     }
 }

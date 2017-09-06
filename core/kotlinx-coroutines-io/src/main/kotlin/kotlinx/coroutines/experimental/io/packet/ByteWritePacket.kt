@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import java.io.OutputStream
+import java.io.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 
@@ -26,6 +26,7 @@ interface ByteWritePacket : Appendable {
     fun build(): ByteReadPacket
 
     fun outputStream(): OutputStream
+    fun writerUTF8(): Writer
 
     override fun append(csq: CharSequence): ByteWritePacket {
         append(csq, 0, csq.length)

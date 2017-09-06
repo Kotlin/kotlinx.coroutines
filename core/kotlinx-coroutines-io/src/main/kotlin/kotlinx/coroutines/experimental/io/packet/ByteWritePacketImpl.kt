@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental.io.packet
 
 import kotlinx.coroutines.experimental.io.internal.ObjectPool
-import java.io.OutputStream
+import java.io.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
@@ -105,7 +105,9 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
 
     // expects at least one byte remaining in [bb]
     private tailrec fun appendUTF8(csq: CharSequence, start: Int, end: Int, bb: ByteBuffer) {
-        for (i in start .. end) {
+        val limitedEnd = minOf(end, start + bb.remaining())
+
+        for (i in start until limitedEnd) {
             val chi = csq[i].toInt() and 0xffff
             val requiredSize = when {
                 chi <= 0x7f -> 1
@@ -118,6 +120,53 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
             }
 
             size += bb.putUtf8Char(chi)
+        }
+
+        if (limitedEnd < end) {
+            return appendUTF8(csq, limitedEnd, end, appendNewBuffer())
+        }
+    }
+
+    private tailrec fun appendASCII(csq: CharArray, start: Int, end: Int) {
+        val bb = ensure()
+        val limitedEnd = minOf(end, start + bb.remaining())
+
+        for (i in start until limitedEnd) {
+            val chi = csq[i].toInt() and 0xffff
+            if (chi >= 0x80) {
+                appendUTF8(csq, i, end, bb)
+                return
+            }
+
+            bb.put(chi.toByte())
+            size++
+        }
+
+        if (limitedEnd < end) {
+            return appendASCII(csq, limitedEnd, end)
+        }
+    }
+
+    // expects at least one byte remaining in [bb]
+    private tailrec fun appendUTF8(csq: CharArray, start: Int, end: Int, bb: ByteBuffer) {
+        val limitedEnd = minOf(end, start + bb.remaining())
+        for (i in start until limitedEnd) {
+            val chi = csq[i].toInt() and 0xffff
+            val requiredSize = when {
+                chi <= 0x7f -> 1
+                chi > 0x7ff -> 3
+                else -> 2
+            }
+
+            if (bb.remaining() < requiredSize) {
+                return appendUTF8(csq, i, end, appendNewBuffer())
+            }
+
+            size += bb.putUtf8Char(chi)
+        }
+
+        if (limitedEnd < end) {
+            return appendUTF8(csq, limitedEnd, end, appendNewBuffer())
         }
     }
 
@@ -164,6 +213,20 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         }
     }
 
+    override fun writerUTF8(): Writer {
+        return object : Writer() {
+            override fun write(cbuf: CharArray, off: Int, len: Int) {
+                appendASCII(cbuf, off, len)
+            }
+
+            override fun flush() {
+            }
+
+            override fun close() {
+            }
+        }
+    }
+
     override fun build(): ByteReadPacket {
         val bs = buffers ?: return ByteReadPacketEmpty
         buffers = null
@@ -202,7 +265,7 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         val buffer = last()?.takeIf { it.remaining() >= size }
 
         if (buffer == null) {
-            block(ensure())
+            block(appendNewBuffer())
         } else {
             block(buffer)
         }

@@ -5,7 +5,7 @@ import kotlinx.coroutines.experimental.io.internal.ObjectPoolImpl
 import kotlinx.coroutines.experimental.io.internal.getIOIntProperty
 import java.nio.ByteBuffer
 
-private val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
+internal val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
 private val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 128)
 
 private val PacketBufferPool: ObjectPool<ByteBuffer> =

@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import java.io.InputStream
+import java.io.*
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
@@ -28,11 +28,14 @@ interface ByteReadPacket {
     fun readFloat(): Float
 
     fun skip(n: Int): Int
-    fun skipExact(n: Int)
+    fun skipExact(n: Int) {
+        if (skip(n) != n) throw EOFException("Unable to skip $n bytes due to end of packet")
+    }
 
     fun release()
 
     fun readUTF8LineTo(out: Appendable, limit: Int = Int.MAX_VALUE): Boolean
 
     fun inputStream(): InputStream
+    fun readerUTF8(): Reader
 }
