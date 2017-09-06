@@ -48,6 +48,7 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
+        <core.docs.file>core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
     </properties>
 
     <prerequisites>

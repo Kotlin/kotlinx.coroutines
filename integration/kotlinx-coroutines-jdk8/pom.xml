@@ -41,7 +41,7 @@
                     <externalDocumentationLinks combine.children="append">
                         <link>
                             <url>${core.docs.url}</url>
-                            <packageListUrl>file:///${project.parent.basedir}/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</packageListUrl>
+                            <packageListUrl>file:///${project.parent.basedir}/${core.docs.file}</packageListUrl>
                         </link>
                     </externalDocumentationLinks>
                     <skip>false</skip>
