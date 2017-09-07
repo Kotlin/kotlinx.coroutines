@@ -57,6 +57,14 @@ internal class ByteBufferChannel(
     override val isClosedForWrite: Boolean
         get() = closed != null
 
+    @Volatile
+    override var totalBytesRead: Long = 0L
+        private set
+
+    @Volatile
+    override var totalBytesWritten: Long = 0L
+        private set
+
     override fun close(cause: Throwable?): Boolean {
         if (closed != null) return false
         val newClosed = if (cause == null) ClosedElement.EmptyCause else ClosedElement(cause)
@@ -563,6 +571,7 @@ internal class ByteBufferChannel(
 
         writePosition = carryIndex(writePosition + n)
         c.completeWrite(n)
+        totalBytesWritten += n
     }
 
     private fun ByteBuffer.bytesRead(c: RingBufferCapacity, n: Int) {
@@ -570,6 +579,7 @@ internal class ByteBufferChannel(
 
         readPosition = carryIndex(readPosition + n)
         c.completeRead(n)
+        totalBytesRead += n
         resumeWriteOp()
     }
 

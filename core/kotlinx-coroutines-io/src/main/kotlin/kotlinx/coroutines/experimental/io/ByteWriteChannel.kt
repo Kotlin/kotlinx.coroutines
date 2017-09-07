@@ -37,6 +37,12 @@ public interface ByteWriteChannel {
     public var writeByteOrder: ByteOrder
 
     /**
+     * Number of bytes written to the channel.
+     * It is not guaranteed to be atomic so could be updated in the middle of write operation.
+     */
+    public val totalBytesWritten: Long
+
+    /**
      * Writes as much as possible and only suspends if buffer is full
      */
     suspend fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int

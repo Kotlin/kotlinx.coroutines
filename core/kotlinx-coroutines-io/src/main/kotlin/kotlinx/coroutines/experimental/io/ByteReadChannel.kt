@@ -31,6 +31,12 @@ public interface ByteReadChannel {
     public var readByteOrder: ByteOrder
 
     /**
+     * Number of bytes read from the channel.
+     * It is not guaranteed to be atomic so could be updated in the middle of long running read operation.
+     */
+    public val totalBytesRead: Long
+
+    /**
      * Reads all available bytes to [dst] buffer and returns immediately or suspends if no bytes available
      * @return number of bytes were read or `-1` if the channel has been closed
      */
