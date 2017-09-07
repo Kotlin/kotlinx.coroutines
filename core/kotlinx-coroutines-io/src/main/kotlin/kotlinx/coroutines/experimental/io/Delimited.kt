@@ -32,9 +32,11 @@ suspend fun ByteReadChannel.readUntilDelimiter(delimiter: ByteBuffer, dst: ByteB
         } while (dst.hasRemaining() && !endFound)
     }
 
-    if (!dst.hasRemaining() || endFound) return copied
-
-    return readUntilDelimiterSuspend(delimiter, dst, copied)
+    return when {
+        copied == 0 && isClosedForRead -> -1
+        !dst.hasRemaining() || endFound -> copied
+        else -> readUntilDelimiterSuspend(delimiter, dst, copied)
+    }
 }
 
 suspend fun ByteReadChannel.skipDelimiter(delimiter: ByteBuffer) {
@@ -62,18 +64,21 @@ private suspend fun ByteReadChannel.readUntilDelimiterSuspend(delimiter: ByteBuf
     require(delimiter !== dst)
     require(copied0 >= 0)
 
-    return lookAheadSuspend {
-        var endFound = false
+    var endFound = false
+    val copied = lookAheadSuspend {
         var copied = copied0
 
         do {
             awaitAtLeast(1)
             val rc = tryCopyUntilDelimiter(delimiter, dst)
             if (rc == 0) {
-                if (request(0, delimiter.remaining())?.startsWith(delimiter, 0) == true) {
+                if (startsWithDelimiter(delimiter) == delimiter.remaining()) {
+                    endFound = true
                     break
                 }
-                if (!isClosedForRead) {
+                if (isClosedForWrite) {
+                    break
+                } else {
                     awaitAtLeast(delimiter.remaining())
                     continue
                 }
@@ -87,6 +92,12 @@ private suspend fun ByteReadChannel.readUntilDelimiterSuspend(delimiter: ByteBuf
         } while (dst.hasRemaining() && !endFound)
 
         copied
+    }
+
+    return when {
+        copied > 0 && isClosedForWrite && !endFound -> copied + readAvailable(dst).coerceAtLeast(0)
+        copied == 0 && isClosedForRead -> -1
+        else -> copied
     }
 }
 
@@ -102,17 +113,24 @@ private fun LookAheadSession.tryCopyUntilDelimiter(delimiter: ByteBuffer, dst: B
         val found = minOf(buffer.remaining() - index, delimiter.remaining())
         val notKnown = delimiter.remaining() - found
 
-        val next = if (notKnown > 0) request(index + found, notKnown) else null
-        if (next != null) {
-            if (next.startsWith(delimiter, found)) {
-                endFound = true
-                dst.putLimited(buffer, buffer.position() + index)
-            } else {
-                dst.putLimited(buffer, buffer.position() + index + 1)
-            }
-        } else {
-            endFound = notKnown == 0
+        if (notKnown == 0) {
+            endFound = true
             dst.putLimited(buffer, buffer.position() + index)
+        } else {
+            val remembered = buffer.duplicate()
+            val next = request(index + found, 1)
+            if (next == null) {
+                dst.putLimited(remembered, remembered.position() + index)
+            } else if (next.startsWith(delimiter, found)) {
+                if (next.remaining() >= notKnown) {
+                    endFound = true
+                    dst.putLimited(remembered, remembered.position() + index)
+                } else {
+                    dst.putLimited(remembered, remembered.position() + index)
+                }
+            } else {
+                dst.putLimited(remembered, remembered.position() + index + 1)
+            }
         }
     } else {
         dst.putAtMost(buffer)
@@ -123,18 +141,29 @@ private fun LookAheadSession.tryCopyUntilDelimiter(delimiter: ByteBuffer, dst: B
 }
 
 private fun LookAheadSession.tryEnsureDelimiter(delimiter: ByteBuffer): Int {
+    val found = startsWithDelimiter(delimiter)
+    if (found == -1) throw IOException("Failed to skip delimiter: actual bytes differ from delimiter bytes")
+    if (found < delimiter.remaining()) return found
+
+    consumed(delimiter.remaining())
+    return delimiter.remaining()
+}
+
+/**
+ * @return Number of bytes of the delimiter found (possibly 0 if no bytes available yet) or -1 if it doesn't start
+ */
+private fun LookAheadSession.startsWithDelimiter(delimiter: ByteBuffer): Int {
     val buffer = request(0, 1) ?: return 0
     val index = buffer.indexOfPartial(delimiter)
-    if (index != 0) throw IOException("Failed to skip delimiter: actual bytes differ from delimiter bytes")
+    if (index != 0) return -1
 
     val found = minOf(buffer.remaining() - index, delimiter.remaining())
     val notKnown = delimiter.remaining() - found
 
     if (notKnown > 0) {
         val next = request(index + found, notKnown) ?: return found
-        if (!next.startsWith(delimiter, found)) throw IOException("Failed to skip delimiter: actual bytes differ from delimiter bytes")
+        if (!next.startsWith(delimiter, found)) return -1
     }
 
-    consumed(delimiter.remaining())
     return delimiter.remaining()
 }
