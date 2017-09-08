@@ -39,22 +39,14 @@ This is a companion version for Kotlin 1.1.4 release (this is the minimal requir
 
 > Note that these libraries are experimental and are subject to change.
 
-The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository
-and also linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines).
+The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository,
+linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines) and 
+pushed to [Maven Central](https://search.maven.org/#search%7Cga%7C1%7Cg%3Aorg.jetbrains.kotlinx%20a%3Akotlinx-coroutines).
 
 These libraries require kotlin compiler version `1.1.4` or later and 
 require kotlin runtime of the same version as a dependency.
 
 ### Maven
-
-Add Bintray JCenter repository to `<repositories>` section:
-
-```xml
-<repository>
-    <id>central</id>
-    <url>http://jcenter.bintray.com</url>
-</repository>
-```
 
 Add dependencies (you can also add other modules that you need):
 
@@ -75,14 +67,6 @@ And make sure that you use the right Kotlin version:
 ```
 
 ### Gradle
-
-Add Bintray JCenter repository:
-
-```groovy
-repositories {
-    jcenter()
-}
-```
 
 Add dependencies (you can also add other modules that you need):
 
