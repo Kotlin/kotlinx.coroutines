@@ -26,8 +26,8 @@
     <version>0.18-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>kotlinx-coroutines</name>
     <description>Coroutines support libraries for Kotlin 1.1</description>
-
     <url>https://github.com/Kotlin/kotlinx.coroutines/</url>
 
     <licenses>
@@ -48,7 +48,7 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
-        <core.docs.file>core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
+        <core.docs.file>${highest-basedir}/core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
     </properties>
 
     <prerequisites>
@@ -279,6 +279,23 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- determine highest-basedir -->
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>directories</id>
+                        <goals>
+                            <goal>highest-basedir</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <property>highest-basedir</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -361,11 +378,17 @@
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.3</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.commonjava.maven.plugins</groupId>
+                    <artifactId>directory-maven-plugin</artifactId>
+                    <version>0.1</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
 
     <profiles>
+        <!-- Profile to build against snapshot version of Kotlin compiler -->
         <profile>
             <id>kotlin-snapshot</id>
             <activation>
@@ -388,6 +411,39 @@
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </repository>
             </repositories>
+        </profile>
+        <!-- Profile to attach javadocs with dokka -->
+        <profile>
+            <id>javadoc</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <!-- documentation -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.dokka</groupId>
+                        <artifactId>dokka-maven-plugin</artifactId>
+                        <executions>
+                            <!-- build dokka htmls and package list (for refs) -->
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>dokka</goal>
+                                </goals>
+                            </execution>
+                            <!-- attach javadoc with dokka -->
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>javadocJar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
