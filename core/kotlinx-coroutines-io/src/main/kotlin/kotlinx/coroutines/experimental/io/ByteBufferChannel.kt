@@ -69,7 +69,7 @@ internal class ByteBufferChannel(
         if (closed != null) return false
         val newClosed = if (cause == null) ClosedElement.EmptyCause else ClosedElement(cause)
         if (!Closed.compareAndSet(this, null, newClosed)) return false
-        flush()
+        state.capacity.flush()
         if (state.capacity.isEmpty() || cause != null) tryTerminate()
         resumeClosed(cause)
         return true
