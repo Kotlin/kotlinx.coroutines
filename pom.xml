@@ -44,7 +44,7 @@
         <kotlin.version>1.1.4</kotlin.version>
         <dokka.version>0.9.15</dokka.version>
         <junit.version>4.12</junit.version>
-        <atomicfu.version>0.6</atomicfu.version>
+        <atomicfu.version>0.7</atomicfu.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
