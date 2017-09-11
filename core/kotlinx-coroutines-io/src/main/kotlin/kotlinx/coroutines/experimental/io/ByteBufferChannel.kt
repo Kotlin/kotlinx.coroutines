@@ -328,7 +328,13 @@ internal class ByteBufferChannel(
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
         return when {
-            consumed == 0 && closed != null -> -1
+            consumed == 0 && closed != null -> {
+                if (state.capacity.flush()) {
+                    return readAsMuchAsPossible(dst, offset, length)
+                } else {
+                    -1
+                }
+            }
             consumed > 0 || length == 0 -> consumed
             else -> readAvailableSuspend(dst, offset, length)
         }
@@ -338,7 +344,13 @@ internal class ByteBufferChannel(
         val consumed = readAsMuchAsPossible(dst)
 
         return when {
-            consumed == 0 && closed != null -> -1
+            consumed == 0 && closed != null -> {
+                if (state.capacity.flush()) {
+                    return readAsMuchAsPossible(dst)
+                } else {
+                    -1
+                }
+            }
             consumed > 0 || !dst.hasRemaining() -> consumed
             else -> readAvailableSuspend(dst)
         }
@@ -1268,11 +1280,12 @@ internal class ByteBufferChannel(
     }
 
     private tailrec suspend fun readSuspend(size: Int): Boolean {
-        if (state.capacity.availableForRead >= size) return true
+        val capacity = state.capacity
+        if (capacity.availableForRead >= size) return true
 
         closed?.let { c ->
-            if (c.cause == null) return false
-            throw c.cause
+            if (c.cause != null) throw c.cause
+            return capacity.flush() && capacity.availableForRead >= size
         }
 
         if (!readSuspendImpl(size)) return false
@@ -1291,13 +1304,12 @@ internal class ByteBufferChannel(
                 }
 
                 closed?.let {
-                    if (it.cause == null && state.capacity.availableForRead == 0) {
-                        c.resume(false)
-                        return@suspendCancellableCoroutine
-                    } else if (it.cause != null) {
+                    if (it.cause != null) {
                         c.resumeWithException(it.cause)
-                        return@suspendCancellableCoroutine
+                    } else {
+                        c.resume(state.capacity.flush() && state.capacity.availableForRead >= size)
                     }
+                    return@suspendCancellableCoroutine
                 }
             } while (!setContinuation({ readOp }, ReadOp, c, { closed == null && state.capacity.availableForRead < size }))
         }
