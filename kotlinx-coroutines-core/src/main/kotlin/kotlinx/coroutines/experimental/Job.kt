@@ -42,6 +42,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * A job has the following states:
  *
+ * ```
  * | **State**                               | [isActive] | [isCompleted] | [isCancelled] |
  * | --------------------------------------- | ---------- | ------------- | ------------- |
  * | _New_ (optional initial state)          | `false`    | `false`       | `false`       |
@@ -49,6 +50,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * | _Cancelling_ (optional transient state) | `false`    | `false`       | `true`        |
  * | _Cancelled_ (final state)               | `false`    | `true`        | `true`        |
  * | _Completed normally_ (final state)      | `false`    | `true`        | `false`       |
+ * ```
  *
  * Usually, a job is created in _active_ state (it is created and started). However, coroutine builders
  * that provide an optional `start` parameter create a coroutine in _new_ state when this parameter is set to
