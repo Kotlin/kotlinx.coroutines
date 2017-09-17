@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.io.packet
 
+import kotlinx.coroutines.experimental.io.*
 import kotlinx.coroutines.experimental.io.internal.ObjectPool
 import kotlinx.coroutines.experimental.io.internal.decodeUTF8
 import java.io.*
@@ -223,6 +224,14 @@ internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal va
     override fun release() {
         recycle(buffer ?: return)
         buffer = null
+    }
+
+    override fun copy(): ByteReadPacket {
+        val bb = buffer?.takeIf { it.hasRemaining() } ?: return ByteReadPacketEmpty
+        val copyBuffer = pool.borrow()
+        copyBuffer.put(bb.duplicate())
+        copyBuffer.flip()
+        return ByteReadPacketSingle(copyBuffer, pool)
     }
 
     private inline fun reading(block: (ByteBuffer) -> Unit): Boolean {

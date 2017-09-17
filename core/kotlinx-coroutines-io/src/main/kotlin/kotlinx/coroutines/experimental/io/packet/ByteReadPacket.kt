@@ -33,6 +33,7 @@ interface ByteReadPacket {
     }
 
     fun release()
+    fun copy(): ByteReadPacket
 
     fun readUTF8LineTo(out: Appendable, limit: Int = Int.MAX_VALUE): Boolean
 

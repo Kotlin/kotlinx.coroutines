@@ -274,4 +274,35 @@ class BytePacketReaderWriterTest {
 
         assertTrue { bb.contentEquals(p.readBytes()) }
     }
+
+    @Test
+    fun testCopySingleBufferPacket() {
+        val bb = ByteArray(100)
+        Random().nextBytes(bb)
+
+        val p = buildPacket {
+            writeFully(bb)
+        }
+
+        val copy = p.copy()
+        assertEquals(p.remaining, p.remaining)
+        assertTrue { p.readBytes().contentEquals(copy.readBytes()) }
+    }
+
+    @Test
+    fun testCopyMultipleBufferPacket() {
+        val bb = ByteArray(1000000)
+        Random().nextBytes(bb)
+
+        val p = buildPacket {
+            writeFully(bb)
+        }
+
+        val copy = p.copy()
+        assertEquals(p.remaining, p.remaining)
+        val bytes = p.readBytes()
+        val copied = copy.readBytes()
+
+        assertTrue { bytes.contentEquals(copied) }
+    }
 }

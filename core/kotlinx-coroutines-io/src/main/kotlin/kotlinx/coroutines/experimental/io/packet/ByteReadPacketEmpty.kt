@@ -48,6 +48,8 @@ object ByteReadPacketEmpty : ByteReadPacket {
     override fun release() {
     }
 
+    override fun copy() = this
+
     override fun readUTF8LineTo(out: Appendable, limit: Int) = false
 
     override fun inputStream(): InputStream = EmptyInputStream

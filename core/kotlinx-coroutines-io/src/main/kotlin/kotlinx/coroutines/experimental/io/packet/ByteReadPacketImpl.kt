@@ -50,6 +50,7 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
 
     override fun readFully(dst: ByteArray, offset: Int, length: Int) {
         val rc = readAvailable(dst, offset, length)
+        if (rc == -1 && length == 0) return
         if (rc < length) throw EOFException("Not enough bytes in the packet")
     }
 
@@ -230,6 +231,17 @@ internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, i
         while (packets.isNotEmpty()) {
             recycle(packets.remove())
         }
+    }
+
+    override fun copy(): ByteReadPacket {
+        if (packets.isEmpty()) return ByteReadPacketEmpty
+        val copyDeque = ArrayDeque<ByteBuffer>(packets.size)
+
+        for (p in packets) {
+            copyDeque.add(pool.borrow().also { it.put(p.duplicate()); it.flip() })
+        }
+
+        return ByteReadPacketImpl(copyDeque, pool)
     }
 
     private inline fun reading(size: Int, block: (ByteBuffer) -> Boolean): Boolean {
