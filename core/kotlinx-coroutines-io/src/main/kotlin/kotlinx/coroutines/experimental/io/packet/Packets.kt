@@ -21,4 +21,4 @@ fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE):
     return if (readUTF8LineTo(sb, limit)) sb.toString() else null
 }
 
-fun ByteReadPacket.readBytes() = inputStream().readBytes(remaining)
+fun ByteReadPacket.readBytes(n: Int = remaining): ByteArray = ByteArray(n).also { readFully(it) }
