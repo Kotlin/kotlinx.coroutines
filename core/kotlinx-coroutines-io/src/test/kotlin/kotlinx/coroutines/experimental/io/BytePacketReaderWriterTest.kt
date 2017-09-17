@@ -319,6 +319,7 @@ class BytePacketReaderWriterTest {
         }
 
         assertEquals("123ABC.", outer.readText().toString())
+        assertEquals(0, inner.remaining)
     }
 
     @Test
@@ -334,5 +335,38 @@ class BytePacketReaderWriterTest {
         }
 
         assertEquals("123" + "o".repeat(100000) + ".", outer.readText().toString())
+        assertEquals(0, inner.remaining)
+    }
+
+    @Test
+    fun testWritePacketSingleUnconsumed() {
+        val inner = buildPacket {
+            append("ABC")
+        }
+
+        val outer = buildPacket {
+            append("123")
+            writePacketUnconsumed(inner)
+            append(".")
+        }
+
+        assertEquals("123ABC.", outer.readText().toString())
+        assertEquals(3, inner.remaining)
+    }
+
+    @Test
+    fun testWritePacketMultipleUnconsumed() {
+        val inner = buildPacket {
+            append("o".repeat(100000))
+        }
+
+        val outer = buildPacket {
+            append("123")
+            writePacketUnconsumed(inner)
+            append(".")
+        }
+
+        assertEquals("123" + "o".repeat(100000) + ".", outer.readText().toString())
+        assertEquals(100000, inner.remaining)
     }
 }

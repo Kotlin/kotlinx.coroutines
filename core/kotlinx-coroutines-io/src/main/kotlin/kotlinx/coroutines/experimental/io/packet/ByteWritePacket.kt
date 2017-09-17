@@ -29,6 +29,7 @@ interface ByteWritePacket : Appendable {
     fun writerUTF8(): Writer
 
     fun writePacket(p: ByteReadPacket)
+    fun writePacketUnconsumed(p: ByteReadPacket)
 
     override fun append(csq: CharSequence): ByteWritePacket {
         append(csq, 0, csq.length)

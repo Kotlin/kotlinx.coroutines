@@ -96,6 +96,24 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
                     last(p.steal().also { it.compact() })
                 }
             }
+            else -> {
+                writeFully(p.readBytes())
+            }
+        }
+    }
+
+    override fun writePacketUnconsumed(p: ByteReadPacket) {
+        when (p) {
+            is ByteReadPacketEmpty -> {}
+            is ByteReadPacketSingle -> {
+                p.buffer?.duplicate()?.let { writeFully(it) }
+            }
+            is ByteReadPacketImpl -> {
+                for (buffer in p.packets) {
+                    writeFully(buffer.duplicate())
+                }
+            }
+            else -> throw UnsupportedOperationException()
         }
     }
 

@@ -8,7 +8,7 @@ import java.nio.*
 import java.nio.charset.*
 import java.util.*
 
-internal class ByteReadPacketImpl(private val packets: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
+internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
         get() = packets.sumBy { it.remaining() }
 

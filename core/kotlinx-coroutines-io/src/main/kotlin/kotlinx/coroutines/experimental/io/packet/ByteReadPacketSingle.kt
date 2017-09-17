@@ -1,14 +1,11 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import kotlinx.coroutines.experimental.io.*
-import kotlinx.coroutines.experimental.io.internal.ObjectPool
-import kotlinx.coroutines.experimental.io.internal.decodeUTF8
+import kotlinx.coroutines.experimental.io.internal.*
 import java.io.*
-import java.nio.BufferOverflowException
-import java.nio.ByteBuffer
+import java.nio.*
 import java.nio.charset.*
 
-internal class ByteReadPacketSingle(private var buffer: ByteBuffer?, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
+internal class ByteReadPacketSingle(internal var buffer: ByteBuffer?, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
         get() = buffer?.remaining() ?: 0
 
