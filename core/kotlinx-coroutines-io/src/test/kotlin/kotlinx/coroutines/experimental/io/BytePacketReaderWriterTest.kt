@@ -314,7 +314,9 @@ class BytePacketReaderWriterTest {
 
         val outer = buildPacket {
             append("123")
+            assertEquals(3, size)
             writePacket(inner)
+            assertEquals(6, size)
             append(".")
         }
 
@@ -330,7 +332,9 @@ class BytePacketReaderWriterTest {
 
         val outer = buildPacket {
             append("123")
+            assertEquals(3, size)
             writePacket(inner)
+            assertEquals(100003, size)
             append(".")
         }
 
@@ -346,7 +350,9 @@ class BytePacketReaderWriterTest {
 
         val outer = buildPacket {
             append("123")
+            assertEquals(3, size)
             writePacketUnconsumed(inner)
+            assertEquals(6, size)
             append(".")
         }
 
@@ -362,7 +368,9 @@ class BytePacketReaderWriterTest {
 
         val outer = buildPacket {
             append("123")
+            assertEquals(3, size)
             writePacketUnconsumed(inner)
+            assertEquals(100003, size)
             append(".")
         }
 

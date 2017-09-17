@@ -88,10 +88,12 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
             is ByteReadPacketEmpty -> {}
             is ByteReadPacketSingle -> {
                 if (p.remaining > 0) {
+                    size += p.remaining
                     last(p.steal().also { it.compact() })
                 }
             }
             is ByteReadPacketImpl -> {
+                size += p.remaining
                 while (p.remaining > 0) {
                     last(p.steal().also { it.compact() })
                 }
