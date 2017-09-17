@@ -83,6 +83,22 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         return this
     }
 
+    override fun writePacket(p: ByteReadPacket) {
+        when (p) {
+            is ByteReadPacketEmpty -> {}
+            is ByteReadPacketSingle -> {
+                if (p.remaining > 0) {
+                    last(p.steal().also { it.compact() })
+                }
+            }
+            is ByteReadPacketImpl -> {
+                while (p.remaining > 0) {
+                    last(p.steal().also { it.compact() })
+                }
+            }
+        }
+    }
+
     private tailrec fun appendASCII(csq: CharSequence, start: Int, end: Int) {
         val bb = ensure()
         val limitedEnd = minOf(end, start + bb.remaining())

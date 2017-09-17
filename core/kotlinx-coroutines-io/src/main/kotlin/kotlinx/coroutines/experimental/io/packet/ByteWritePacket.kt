@@ -28,6 +28,8 @@ interface ByteWritePacket : Appendable {
     fun outputStream(): OutputStream
     fun writerUTF8(): Writer
 
+    fun writePacket(p: ByteReadPacket)
+
     override fun append(csq: CharSequence): ByteWritePacket {
         append(csq, 0, csq.length)
         return this

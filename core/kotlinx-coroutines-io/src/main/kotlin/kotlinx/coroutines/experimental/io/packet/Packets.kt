@@ -9,6 +9,7 @@ private val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 1
 private val PacketBufferPool: ObjectPool<ByteBuffer> =
     object : ObjectPoolImpl<ByteBuffer>(PACKET_BUFFER_POOL_SIZE) {
         override fun produceInstance(): ByteBuffer = ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE)
+        override fun clearInstance(instance: ByteBuffer) = instance.apply { clear() }
     }
 
 inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket =

@@ -305,4 +305,34 @@ class BytePacketReaderWriterTest {
 
         assertTrue { bytes.contentEquals(copied) }
     }
+
+    @Test
+    fun testWritePacketSingle() {
+        val inner = buildPacket {
+            append("ABC")
+        }
+
+        val outer = buildPacket {
+            append("123")
+            writePacket(inner)
+            append(".")
+        }
+
+        assertEquals("123ABC.", outer.readText().toString())
+    }
+
+    @Test
+    fun testWritePacketMultiple() {
+        val inner = buildPacket {
+            append("o".repeat(100000))
+        }
+
+        val outer = buildPacket {
+            append("123")
+            writePacket(inner)
+            append(".")
+        }
+
+        assertEquals("123" + "o".repeat(100000) + ".", outer.readText().toString())
+    }
 }
