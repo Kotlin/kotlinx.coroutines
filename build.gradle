@@ -1,0 +1,94 @@
+allprojects {
+    group = 'org.jetbrains.kotlinx'
+    version = '0.18-SNAPSHOT'
+}
+
+buildscript {
+    ext.kotlin_version = '1.1.4-2'
+    ext.junit_version = '4.12'
+    ext.atomicFU_version = '0.7-SNAPSHOT'
+    ext.dokka_version = '0.9.15'
+    repositories {
+        jcenter()
+        mavenLocal() //TODO: remove
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
+        classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
+    }
+}
+
+subprojects {
+    apply plugin: 'kotlin'
+    apply plugin: 'org.jetbrains.dokka'
+    apply plugin: 'kotlinx-atomicfu'
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+    kotlin.experimental.coroutines "enable"
+
+    dokka {
+        ext.core_docs_url = 'https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/'
+        ext.core_docs_file = "${rootProject.projectDir}/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+        linkMapping {
+            dir = 'src/main/kotlin'
+            url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/${project.name}/src/main/kotlin"
+            suffix = "#L"
+        }
+        includes = ['README.md']
+        outputFormat = 'kotlin-website'
+        jdkVersion = 8
+    }
+
+    test {
+        testLogging.showStandardStreams = true
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+    artifacts {
+        archives sourcesJar
+    }
+
+    repositories {
+        mavenLocal() //TODO: remove
+        jcenter()
+        maven { url "http://jcenter.bintray.com" }
+        maven { url "http://kotlin.bintray.com/kotlinx" }
+        maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
+        maven { url "https://dl.bintray.com/devexperts/Maven/" }
+        maven { url "http://repo.typesafe.com/typesafe/releases/" }
+    }
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+
+        testCompile "junit:junit:$junit_version"
+        testCompileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+        testRuntime "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+    }
+}
+
+configure(subprojects.findAll {it.name != 'kotlinx-coroutines-core'}) {
+    // 'kotlinx-coroutines-android' projects name is lexicographically smaller than 'kotlinx-coroutines-core's,
+    // therefore its subprojects {...} clojure evaluated before 'kotlinx-coroutines-core's and
+    // can't find sourceSets property of 'kotlinx-coroutines-core'
+    dependencies {
+            compile project(':kotlinx-coroutines-core')
+            testCompile project(':kotlinx-coroutines-core').sourceSets.test.output //the only way IDEA can resolve test classes
+        }
+
+        dokka {
+            externalDocumentationLink {
+                url = new URL(dokka.core_docs_url)
+                packageListUrl = new URL("file://${dokka.core_docs_file}")
+            }
+        }
+}

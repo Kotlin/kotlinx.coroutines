@@ -1,0 +1,64 @@
+buildscript {
+    ext.lincheck_version = '1.8.1'
+}
+
+dependencies {
+    testCompile "com.devexperts.lincheck:core:${lincheck_version}"
+}
+
+project.ext {
+    CLASSES_AFTER_ATOMICFU_TRANSFORM = file("$buildDir/classes-atomicfu/main")
+    CLASSES_BEFORE_ATOMICFU_TRANSFORM = compileKotlin.destinationDir
+}
+
+atomicFU {
+    inputDir = CLASSES_BEFORE_ATOMICFU_TRANSFORM
+    outputDir = CLASSES_AFTER_ATOMICFU_TRANSFORM
+    classPath = sourceSets.main.runtimeClasspath.asPath.split(":")//FIXME?
+}
+atomicFU.dependsOn compileKotlin
+
+sourceSets {
+    transformed {
+        compileClasspath = sourceSets.main.compileClasspath
+        runtimeClasspath = sourceSets.main.runtimeClasspath
+        output.classesDir = CLASSES_AFTER_ATOMICFU_TRANSFORM
+        output.resourcesDir = sourceSets.main.output.resourcesDir
+    }
+}
+
+FileCollection replaceMainClassPathWithTransformed(filesList) {
+    def index = filesList.findIndexOf { it == sourceSets.main.output.classesDir }
+    def list = filesList.toList()
+    list.set(index, CLASSES_AFTER_ATOMICFU_TRANSFORM)
+    return files(list)
+}
+
+test {
+    classpath = replaceMainClassPathWithTransformed(classpath)
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    exclude '**/*LinearizabilityTest.*'
+    exclude '**/*LFTest.*'
+    enableAssertions = true
+    systemProperty 'java.security.manager', 'kotlinx.coroutines.experimental.TestSecurityManager'
+}
+
+task lockFreedomTest(type: Test, dependsOn: testClasses) {
+    include '**/*LFTest.*'
+}
+testClasses.dependsOn atomicFU
+test.dependsOn lockFreedomTest
+
+jar {
+    from sourceSets.transformed.output
+}
+
+task testsJar(type: Jar, dependsOn: classes) {
+    classifier = 'tests'
+    from sourceSets.test.output
+}
+
+artifacts {
+    archives testsJar
+}

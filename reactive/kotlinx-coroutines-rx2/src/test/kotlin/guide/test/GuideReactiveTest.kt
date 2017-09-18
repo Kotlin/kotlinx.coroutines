@@ -1,6 +1,7 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.test
 
+import org.junit.Ignore
 import org.junit.Test
 
 class GuideReactiveTest : ReactiveTestBase() {
@@ -168,6 +169,7 @@ class GuideReactiveTest : ReactiveTestBase() {
         )
     }
 
+    @Ignore
     @Test
     fun testGuideReactiveContextExample04() {
         test("GuideReactiveContextExample04") { guide.reactive.context.example04.main(emptyArray()) }.verifyLinesStart(

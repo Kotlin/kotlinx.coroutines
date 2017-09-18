@@ -1,0 +1,8 @@
+dependencies {
+    compile "io.reactivex:rxjava:1.2.6"
+}
+dokka {
+    externalDocumentationLink {
+        url = new URL("http://reactivex.io/RxJava/1.x/javadoc/")
+    }
+}
