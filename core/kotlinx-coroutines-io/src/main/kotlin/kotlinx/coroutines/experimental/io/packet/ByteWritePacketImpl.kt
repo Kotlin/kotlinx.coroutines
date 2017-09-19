@@ -116,9 +116,10 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
 
     private fun writePacketSingle(p: ByteReadPacketSingle) {
         val initialRemaining = p.remaining
+        val samePool = p.pool === this.pool
         if (initialRemaining > 0) {
             size += initialRemaining
-            writePacketBuffer(p.steal())
+            writePacketBuffer(p.steal(), samePool, p.pool)
         }
     }
 
@@ -126,17 +127,19 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         val initialRemaining = p.remaining
         if (initialRemaining > 0) {
             size += initialRemaining
+            val samePool = p.pool === this.pool
+            val packetPool = p.pool
 
             do {
-                writePacketBuffer(p.steal())
+                writePacketBuffer(p.steal(), samePool, packetPool)
             } while (p.remaining > 0)
         }
     }
 
-    private fun writePacketBuffer(buffer: ByteBuffer) {
+    private fun writePacketBuffer(buffer: ByteBuffer, samePool: Boolean, packetPool: ObjectPool<ByteBuffer>) {
         val last = last()
 
-        if (buffer.position() > 0 && last != null) {
+        if (samePool && buffer.position() > 0 && last != null) {
             if (last === buffers || buffersCount() == 1) {
                 val count = last.position() - headerSizeHint
                 if (count < PACKET_MAX_COPY_SIZE && count <= buffer.position()) {
@@ -152,11 +155,16 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
             }
         } else if (last != null && last.remaining() <= buffer.remaining() && buffer.remaining() < PACKET_MAX_COPY_SIZE) {
             last.put(buffer)
-            recycle(buffer)
+            packetPool.recycle(buffer)
             return
         }
 
-        last(buffer.also { it.compact() })
+        if (samePool) {
+            last(buffer.also { it.compact() })
+        } else {
+            writeFully(buffer)
+            packetPool.recycle(buffer)
+        }
     }
 
     override fun writePacketUnconsumed(p: ByteReadPacket) {
@@ -166,7 +174,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
                 p.buffer?.duplicate()?.let { writeFully(it) }
             }
             is ByteReadPacketImpl -> {
-                for (buffer in p.packets) {
+                for (buffer in p.buffers) {
                     writeFully(buffer.duplicate())
                 }
             }

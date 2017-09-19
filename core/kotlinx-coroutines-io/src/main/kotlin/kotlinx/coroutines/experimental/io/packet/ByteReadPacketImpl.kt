@@ -8,11 +8,11 @@ import java.nio.*
 import java.nio.charset.*
 import java.util.*
 
-internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
+internal class ByteReadPacketImpl(internal val buffers: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
-        get() = if (packets.isNotEmpty()) packets.sumBy { it.remaining() } else 0
+        get() = if (buffers.isNotEmpty()) buffers.sumBy { it.remaining() } else 0
 
-    internal fun steal(): ByteBuffer = packets.pollFirst() ?: throw IllegalStateException("EOF")
+    internal fun steal(): ByteBuffer = buffers.pollFirst() ?: throw IllegalStateException("EOF")
 
     override fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int {
         var copied = 0
@@ -228,16 +228,16 @@ internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, 
     }
 
     override fun release() {
-        while (packets.isNotEmpty()) {
-            recycle(packets.remove())
+        while (buffers.isNotEmpty()) {
+            recycle(buffers.remove())
         }
     }
 
     override fun copy(): ByteReadPacket {
-        if (packets.isEmpty()) return ByteReadPacketEmpty
-        val copyDeque = ArrayDeque<ByteBuffer>(packets.size)
+        if (buffers.isEmpty()) return ByteReadPacketEmpty
+        val copyDeque = ArrayDeque<ByteBuffer>(buffers.size)
 
-        for (p in packets) {
+        for (p in buffers) {
             copyDeque.add(pool.borrow().also { it.put(p.duplicate()); it.flip() })
         }
 
@@ -245,10 +245,10 @@ internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, 
     }
 
     private inline fun reading(size: Int, block: (ByteBuffer) -> Boolean): Boolean {
-        if (packets.isEmpty()) return false
+        if (buffers.isEmpty()) return false
 
         var visited = false
-        var buffer = packets.peekFirst()
+        var buffer = buffers.peekFirst()
         var stop = false
 
         while (!stop) {
@@ -262,11 +262,11 @@ internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, 
             }
 
             if (!buffer.hasRemaining()) {
-                packets.removeFirst()
+                buffers.removeFirst()
                 recycle(buffer)
 
-                if (packets.isEmpty()) break
-                buffer = packets.peekFirst()
+                if (buffers.isEmpty()) break
+                buffer = buffers.peekFirst()
             }
         }
 
@@ -274,14 +274,14 @@ internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, 
     }
 
     private fun tryStealBytesFromNextBuffer(size: Int, buffer: ByteBuffer): Boolean {
-        if (packets.size == 1) {
+        if (buffers.size == 1) {
             return false
         }
 
-        packets.removeFirst()
+        buffers.removeFirst()
 
         val extraBytes = size - buffer.remaining()
-        val next = packets.peekFirst()
+        val next = buffers.peekFirst()
 
         if (extraBytes > next.remaining()) return  false
 
@@ -291,7 +291,7 @@ internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, 
         }
         buffer.flip()
 
-        packets.addFirst(buffer)
+        buffers.addFirst(buffer)
         return true
     }
 
