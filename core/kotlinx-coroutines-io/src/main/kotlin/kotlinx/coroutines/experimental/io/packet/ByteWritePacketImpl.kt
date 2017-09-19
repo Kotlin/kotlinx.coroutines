@@ -5,8 +5,13 @@ import java.io.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
+import kotlin.NoSuchElementException
 
-internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : ByteWritePacket {
+internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val pool: ObjectPool<ByteBuffer>) : ByteWritePacket {
+    init {
+        require(headerSizeHint >= 0) { "shouldn't be negative: headerSizeHint = $headerSizeHint" }
+    }
+
     override var size: Int = 0
         private set
     private var buffers: Any? = null
@@ -86,22 +91,72 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
     override fun writePacket(p: ByteReadPacket) {
         when (p) {
             is ByteReadPacketEmpty -> {}
-            is ByteReadPacketSingle -> {
-                if (p.remaining > 0) {
-                    size += p.remaining
-                    last(p.steal().also { it.compact() })
-                }
-            }
-            is ByteReadPacketImpl -> {
-                size += p.remaining
-                while (p.remaining > 0) {
-                    last(p.steal().also { it.compact() })
-                }
-            }
-            else -> {
-                writeFully(p.readBytes())
-            }
+            is ByteReadPacketSingle -> writePacketSingle(p)
+            is ByteReadPacketImpl -> writePacketMultiple(p)
+            else -> writeFully(p.readBytes())
         }
+    }
+
+    private fun reverseCopyToForeignBuffer(count: Int, last: ByteBuffer, buffer: ByteBuffer) {
+        val startOffset = buffer.position() - count
+        val l = buffer.limit()
+        buffer.position(startOffset)
+        buffer.limit(startOffset + count)
+
+        last.flip()
+        last.position(last.limit() - count)
+        buffer.put(last)
+
+        recycleLast()
+        headerSizeHint = startOffset
+        buffer.limit(buffer.capacity())
+        buffer.position(l)
+        last(buffer)
+    }
+
+    private fun writePacketSingle(p: ByteReadPacketSingle) {
+        val initialRemaining = p.remaining
+        if (initialRemaining > 0) {
+            size += initialRemaining
+            writePacketBuffer(p.steal())
+        }
+    }
+
+    private fun writePacketMultiple(p: ByteReadPacketImpl) {
+        val initialRemaining = p.remaining
+        if (initialRemaining > 0) {
+            size += initialRemaining
+
+            do {
+                writePacketBuffer(p.steal())
+            } while (p.remaining > 0)
+        }
+    }
+
+    private fun writePacketBuffer(buffer: ByteBuffer) {
+        val last = last()
+
+        if (buffer.position() > 0 && last != null) {
+            if (last === buffers || buffersCount() == 1) {
+                val count = last.position() - headerSizeHint
+                if (count < PACKET_MAX_COPY_SIZE && count <= buffer.position()) {
+                    reverseCopyToForeignBuffer(count, last, buffer)
+                    return
+                }
+            } else {
+                val count = last.position()
+                if (count < PACKET_MAX_COPY_SIZE && count == buffer.position()) {
+                    reverseCopyToForeignBuffer(count, last, buffer)
+                    return
+                }
+            }
+        } else if (last != null && last.remaining() <= buffer.remaining() && buffer.remaining() < PACKET_MAX_COPY_SIZE) {
+            last.put(buffer)
+            recycle(buffer)
+            return
+        }
+
+        last(buffer.also { it.compact() })
     }
 
     override fun writePacketUnconsumed(p: ByteReadPacket) {
@@ -264,22 +319,43 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
     }
 
     override fun build(): ByteReadPacket {
-        val bs = buffers ?: return ByteReadPacketEmpty
+        val bs = buffers
         buffers = null
+        size = 0
 
-        return if (bs is ArrayDeque<*>) {
-            @Suppress("UNCHECKED_CAST")
-            when {
-                bs.isEmpty() -> ByteReadPacketEmpty
-                bs.size == 1 -> ByteReadPacketSingle((bs.first as ByteBuffer).also { it.flip() }, pool)
-                else -> ByteReadPacketImpl((bs as ArrayDeque<ByteBuffer>).also {
-                    for (b in bs) {
-                        b.flip()
-                    }
-                }, pool)
+        return when (bs) {
+            null -> ByteReadPacketEmpty
+            is ArrayDeque<*> -> {
+                @Suppress("UNCHECKED_CAST") buildMultiBufferPacket(bs as ArrayDeque<ByteBuffer>)
             }
-        } else {
-            ByteReadPacketSingle((bs as ByteBuffer).also { it.flip() }, pool)
+            else -> ByteReadPacketSingle((bs as ByteBuffer).also { switchBufferToRead(true, it) }, pool)
+        }
+    }
+
+    private fun buildMultiBufferPacket(buffers: ArrayDeque<ByteBuffer>): ByteReadPacket {
+        return when (buffers.size) {
+            0 -> ByteReadPacketEmpty
+            1 -> ByteReadPacketSingle(buffers.first.also { switchBufferToRead(true, it) }, pool)
+            else -> {
+                val it = buffers.iterator()
+                switchBufferToRead(true, it.next())
+                do {
+                    switchBufferToRead(false, it.next())
+                } while (it.hasNext())
+
+                ByteReadPacketImpl(buffers, pool)
+            }
+        }
+    }
+
+    private fun switchBufferToRead(first: Boolean, bb: ByteBuffer) {
+        bb.flip()
+
+        if (first) {
+            val skip = headerSizeHint
+            if (skip > 0) {
+                bb.position(bb.position() + skip)
+            }
         }
     }
 
@@ -295,6 +371,10 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         } else {
             recycle(bs as ByteBuffer)
         }
+    }
+
+    override fun reset() {
+        release()
     }
 
     private inline fun write(size: Int, block: (ByteBuffer) -> Unit) {
@@ -313,6 +393,9 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
         val new = pool.borrow()
         new.clear()
         last(new)
+        if (buffers === new) {
+            new.position(headerSizeHint)
+        }
         return new
     }
 
@@ -328,12 +411,41 @@ internal class ByteWritePacketImpl(private val pool: ObjectPool<ByteBuffer>) : B
     private fun last(new: ByteBuffer) {
         @Suppress("UNCHECKED_CAST")
         if (buffers is ArrayDeque<*>) (buffers as ArrayDeque<ByteBuffer>).addLast(new)
-        else if (buffers == null) buffers = new
-        else {
+        else if (buffers == null) {
+            buffers = new
+        } else {
             val dq = ArrayDeque<ByteBuffer>()
             dq.addFirst(buffers as ByteBuffer)
             dq.addLast(new)
             buffers = dq
+        }
+    }
+
+    private fun recycleLast() {
+        val b = buffers
+        when (b) {
+            is ArrayDeque<*> -> {
+                recycle(b.pollLast() as ByteBuffer)
+                if (b.isEmpty()) {
+                    buffers = null
+                }
+            }
+            is ByteBuffer -> {
+                buffers = null
+                recycle(b)
+            }
+            else -> throw NoSuchElementException("Unable to recycle last buffer: buffers chain is empty")
+        }
+    }
+
+    private fun buffersCount(): Int {
+        val bb = buffers
+
+        return when (bb) {
+            null -> 0
+            is ByteBuffer -> 1
+            is ArrayDeque<*> -> bb.size
+            else -> 0
         }
     }
 

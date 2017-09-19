@@ -6,8 +6,7 @@ import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
 import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
 import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
-import kotlinx.coroutines.experimental.io.packet.buildPacket
-import kotlinx.coroutines.experimental.io.packet.readUTF8Line
+import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Rule
@@ -28,10 +27,16 @@ class ByteBufferChannelTest {
     val timeout = Timeout(10, TimeUnit.SECONDS)
 
     @get:Rule
-    val failures = ErrorCollector()
+    private val failures = ErrorCollector()
+
+    @get:Rule
+    private val pool = VerifyingObjectPool(BufferObjectNoPool)
+
+    @get:Rule
+    private val pktPool = VerifyingObjectPool(PacketBufferPool)
 
     private val Size = BUFFER_SIZE - RESERVED_SIZE
-    private val ch = ByteBufferChannel(autoFlush = false, pool = BufferObjectNoPool)
+    private val ch = ByteBufferChannel(autoFlush = false, pool = pool)
 
     @Test
     fun testBoolean() {
@@ -555,6 +560,27 @@ class ByteBufferChannelTest {
     }
 
     @Test
+    fun testPacketMultipleBufferOfOne() = runBlocking {
+        val packet0 = buildPacket {
+            writeInt(0xffee)
+            writeStringUtf8("Hello")
+        } as ByteReadPacketSingle
+
+        val packet = ByteReadPacketImpl(ArrayDeque(listOf(packet0.steal())), pktPool)
+
+        ch.writeInt(packet.remaining)
+        ch.writePacket(packet)
+
+        ch.flush()
+
+        val size = ch.readInt()
+        val readed = ch.readPacket(size)
+
+        assertEquals(0xffee, readed.readInt())
+        assertEquals("Hello", readed.readUTF8Line())
+    }
+
+    @Test
     fun testBigPacket() = runBlocking {
         launch(CommonPool + CoroutineName("writer")) {
             val packet = buildPacket {
@@ -612,4 +638,6 @@ class ByteBufferChannelTest {
 
         assertEquals("abc", ch.readASCIILine())
     }
+
+    private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pktPool, 0, block)
 }

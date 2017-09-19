@@ -367,12 +367,12 @@ internal class ByteBufferChannel(
         return readAvailable(dst)
     }
 
-    suspend override fun readPacket(size: Int): ByteReadPacket {
+    suspend override fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
         closed?.cause?.let { throw it }
 
         if (size == 0) return ByteReadPacketEmpty
 
-        val builder = ByteWritePacketImpl(BufferPool)
+        val builder = ByteWritePacketImpl(headerSizeHint, BufferPool)
         val buffer = BufferPool.borrow()
 
         try {
@@ -874,6 +874,7 @@ internal class ByteBufferChannel(
                 writeAsMuchAsPossible(buffer)
                 if (buffer.hasRemaining()) break
                 packet.pool.recycle(buffer)
+                buffer = null
             }
             null
         } catch (t: Throwable) { t }

@@ -10,7 +10,7 @@ import java.util.*
 
 internal class ByteReadPacketImpl(internal val packets: ArrayDeque<ByteBuffer>, internal val pool: ObjectPool<ByteBuffer>) : ByteReadPacket {
     override val remaining: Int
-        get() = packets.sumBy { it.remaining() }
+        get() = if (packets.isNotEmpty()) packets.sumBy { it.remaining() } else 0
 
     internal fun steal(): ByteBuffer = packets.pollFirst() ?: throw IllegalStateException("EOF")
 

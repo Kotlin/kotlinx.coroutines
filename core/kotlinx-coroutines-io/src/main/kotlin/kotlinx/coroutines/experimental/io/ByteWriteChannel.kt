@@ -168,8 +168,8 @@ suspend fun ByteWriteChannel.writeChar(ch: Char) {
     writeShort(ch.toInt())
 }
 
-inline suspend fun ByteWriteChannel.writePacket(builder: ByteWritePacket.() -> Unit) {
-    writePacket(buildPacket(builder))
+inline suspend fun ByteWriteChannel.writePacket(headerSizeHint: Int = 0, builder: ByteWritePacket.() -> Unit) {
+    writePacket(buildPacket(headerSizeHint, builder))
 }
 
 suspend fun ByteWriteChannel.writePacketSuspend(builder: suspend ByteWritePacket.() -> Unit) {

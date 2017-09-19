@@ -1,12 +1,15 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.packet.*
-import org.junit.Test
+import org.junit.*
 import java.io.*
 import java.nio.ByteBuffer
 import kotlin.test.*
 
 class BytePacketBuildTest {
+    @get:Rule
+    private val pool = VerifyingObjectPool(PacketBufferPool)
+
     @Test
     fun smokeSingleBufferTest() {
         val p = buildPacket {
@@ -159,4 +162,5 @@ class BytePacketBuildTest {
         }
     }
 
+    private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pool, 0, block)
 }

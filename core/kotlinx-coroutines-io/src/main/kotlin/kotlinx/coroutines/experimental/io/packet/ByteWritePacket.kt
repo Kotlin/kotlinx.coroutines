@@ -24,11 +24,13 @@ interface ByteWritePacket : Appendable {
 
     fun release()
     fun build(): ByteReadPacket
+    fun reset()
 
     fun outputStream(): OutputStream
     fun writerUTF8(): Writer
 
     fun writePacket(p: ByteReadPacket)
+    @Deprecated("")
     fun writePacketUnconsumed(p: ByteReadPacket)
 
     override fun append(csq: CharSequence): ByteWritePacket {

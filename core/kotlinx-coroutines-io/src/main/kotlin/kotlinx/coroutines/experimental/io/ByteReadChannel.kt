@@ -54,9 +54,9 @@ public interface ByteReadChannel {
 
     /**
      * Reads the specified amount of bytes and makes a byte packet from them. Fails if channel has been closed
-     * and not enough bytes available.
+     * and not enough bytes available. Accepts [headerSizeHint] to be provided, see [WritePacket].
      */
-    suspend fun readPacket(size: Int): ByteReadPacket
+    suspend fun readPacket(size: Int, headerSizeHint: Int = 0): ByteReadPacket
 
     /**
      * Reads a long number (suspending if not enough bytes available) or fails if channel has been closed

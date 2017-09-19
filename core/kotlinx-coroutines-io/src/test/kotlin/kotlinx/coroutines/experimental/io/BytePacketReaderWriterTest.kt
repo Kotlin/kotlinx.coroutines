@@ -6,6 +6,9 @@ import java.util.*
 import kotlin.test.*
 
 class BytePacketReaderWriterTest {
+    @get:Rule
+    private val pool = VerifyingObjectPool(PacketBufferPool)
+
     @Test
     fun testReaderEmpty() {
         val packet = buildPacket {
@@ -343,6 +346,57 @@ class BytePacketReaderWriterTest {
     }
 
     @Test
+    fun writePacketWithHintExact() {
+        val inner = buildPacket(pool, 4) {
+            append(".")
+        }
+
+        val outer = buildPacket {
+            append("1234")
+            assertEquals(4, size)
+            writePacket(inner)
+            assertEquals(5, size)
+        }
+
+        assertEquals("1234.", outer.readText().toString())
+        assertEquals(0, inner.remaining)
+    }
+
+    @Test
+    fun writePacketWithHintBigger() {
+        val inner = buildPacket(pool, 10) {
+            append(".")
+        }
+
+        val outer = buildPacket {
+            append("1234")
+            assertEquals(4, size)
+            writePacket(inner)
+            assertEquals(5, size)
+        }
+
+        assertEquals("1234.", outer.readText().toString())
+        assertEquals(0, inner.remaining)
+    }
+
+    @Test
+    fun writePacketWithHintFailed() {
+        val inner = buildPacket(pool, 3) {
+            append(".")
+        }
+
+        val outer = buildPacket {
+            append("1234")
+            assertEquals(4, size)
+            writePacket(inner)
+            assertEquals(5, size)
+        }
+
+        assertEquals("1234.", outer.readText().toString())
+        assertEquals(0, inner.remaining)
+    }
+
+    @Test
     fun testWritePacketSingleUnconsumed() {
         val inner = buildPacket {
             append("ABC")
@@ -377,4 +431,6 @@ class BytePacketReaderWriterTest {
         assertEquals("123" + "o".repeat(100000) + ".", outer.readText().toString())
         assertEquals(100000, inner.remaining)
     }
+
+    private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pool, 0, block)
 }
