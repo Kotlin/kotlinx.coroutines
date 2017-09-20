@@ -1,0 +1,44 @@
+dependencies {
+    compile project(':knit')
+}
+
+FileTree mdFiles = fileTree(project.rootDir) {
+    include '**/*.md'
+    exclude '**/target/**'
+}
+
+task knit(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = project.rootDir
+    main = 'KnitKt'
+    args mdFiles
+}
+
+task copyDocs(dependsOn: knit) {
+    copy {
+        from '../core/kotlinx-coroutines-core/build/dokka'
+        from '../core/kotlinx-coroutines-io/build/dokka'
+        from '../reactive/kotlinx-coroutines-reactive/build/dokka'
+        from '../reactive/kotlinx-coroutines-reactor/build/dokka'
+        from '../reactive/kotlinx-coroutines-rx1/build/dokka'
+        from '../reactive/kotlinx-coroutines-rx2/build/dokka'
+        from '../ui/kotlinx-coroutines-android/build/dokka'
+        from '../ui/kotlinx-coroutines-javafx/build/dokka'
+        from '../ui/kotlinx-coroutines-swing/build/dokka'
+        from '../integration/kotlinx-coroutines-jdk8/build/dokka'
+        from '../integration/kotlinx-coroutines-nio/build/dokka'
+        from '../integration/kotlinx-coroutines-guava/build/dokka'
+        from '../integration/kotlinx-coroutines-quasar/build/dokka'
+        include '**/*.md'
+        into 'build/gh-pages'
+    }
+    copy {
+        from 'docs'
+        into 'build/gh-pages'
+    }
+}
+
+task jekyllBuild(type: Exec, description: 'Generate github pages', dependsOn: copyDocs) {
+    workingDir "$projectDir/build/gh-pages"
+    commandLine 'jekyll', 'build'
+}

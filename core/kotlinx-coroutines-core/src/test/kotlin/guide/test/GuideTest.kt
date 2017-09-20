@@ -1,7 +1,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.test
 
-import org.junit.Ignore
 import org.junit.Test
 
 class GuideTest {
@@ -157,7 +156,6 @@ class GuideTest {
         )
     }
 
-    @Ignore
     @Test
     fun testGuideContextExample01() {
         test("GuideContextExample01") { guide.context.example01.main(emptyArray()) }.verifyLinesStartUnordered(
@@ -168,7 +166,6 @@ class GuideTest {
         )
     }
 
-    @Ignore
     @Test
     fun testGuideContextExample02() {
         test("GuideContextExample02") { guide.context.example02.main(emptyArray()) }.verifyLinesStart(
@@ -179,7 +176,6 @@ class GuideTest {
         )
     }
 
-    @Ignore
     @Test
     fun testGuideContextExample03() {
         test("GuideContextExample03") { guide.context.example03.main(emptyArray()) }.verifyLines(
@@ -223,7 +219,6 @@ class GuideTest {
         )
     }
 
-    @Ignore
     @Test
     fun testGuideContextExample08() {
         test("GuideContextExample08") { guide.context.example08.main(emptyArray()) }.verifyLinesFlexibleThread(

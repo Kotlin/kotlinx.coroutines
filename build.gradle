@@ -35,7 +35,7 @@ subprojects {
         ext.core_docs_url = 'https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/'
         ext.core_docs_file = "${rootProject.projectDir}/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
         linkMapping {
-            dir = 'src/main/kotlin'
+            dir = "$projectDir/src/main/kotlin"
             url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/${project.name}/src/main/kotlin"
             suffix = "#L"
         }
@@ -63,7 +63,6 @@ subprojects {
         maven { url "http://kotlin.bintray.com/kotlinx" }
         maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
         maven { url "https://dl.bintray.com/devexperts/Maven/" }
-        maven { url "http://repo.typesafe.com/typesafe/releases/" }
     }
 
     dependencies {
@@ -76,19 +75,22 @@ subprojects {
     }
 }
 
-configure(subprojects.findAll {it.name != 'kotlinx-coroutines-core'}) {
+configure(subprojects.findAll { !['kotlinx-coroutines-core', 'benchmarks', 'knit', 'site'].contains(it.name) }) {
     // 'kotlinx-coroutines-android' projects name is lexicographically smaller than 'kotlinx-coroutines-core's,
     // therefore its subprojects {...} clojure evaluated before 'kotlinx-coroutines-core's and
     // can't find sourceSets property of 'kotlinx-coroutines-core'
     dependencies {
-            compile project(':kotlinx-coroutines-core')
-            testCompile project(':kotlinx-coroutines-core').sourceSets.test.output //the only way IDEA can resolve test classes
-        }
+        compile project(':kotlinx-coroutines-core')
+        //the only way IDEA can resolve test classes
+        testCompile project(':kotlinx-coroutines-core').sourceSets.test.output
+    }
 
-        dokka {
-            externalDocumentationLink {
-                url = new URL(dokka.core_docs_url)
-                packageListUrl = new URL("file://${dokka.core_docs_file}")
-            }
+    dokka.dependsOn project(':kotlinx-coroutines-core').dokka
+
+    dokka {
+        externalDocumentationLink {
+            url = new URL(dokka.core_docs_url)
+            packageListUrl = new URL("file://${dokka.core_docs_file}")
         }
+    }
 }

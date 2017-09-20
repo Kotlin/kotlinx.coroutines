@@ -16,6 +16,9 @@ include 'kotlinx-coroutines-android'
 include 'kotlinx-coroutines-javafx'
 include 'kotlinx-coroutines-swing'
 
+include 'benchmarks'
+include 'knit'
+include 'site'
 
 project(':kotlinx-coroutines-core').projectDir = file('core/kotlinx-coroutines-core')
 project(':kotlinx-coroutines-io').projectDir = file('core/kotlinx-coroutines-io')
