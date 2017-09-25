@@ -220,4 +220,122 @@ class ByteBufferChannelScenarioTest : TestBase() {
             finish(2)
         }
     }
+
+    @Test
+    fun testWriteBlock() {
+        runBlocking {
+            launch(coroutineContext) {
+                expect(1)
+
+                ch.write {
+                    it.putLong(0x1234567812345678L)
+                }
+
+                expect(2)
+            }
+
+            yield()
+            expect(3)
+
+            assertEquals(0x1234567812345678L, ch.readLong())
+            assertEquals(0, ch.availableForRead)
+
+            finish(4)
+        }
+    }
+
+    @Test
+    fun testWriteBlockSuspend() {
+        runBlocking {
+            launch(coroutineContext) {
+                expect(1)
+
+                ch.writeFully(ByteArray(4088))
+
+                expect(2)
+
+                ch.write(8) {
+                    it.putLong(0x1234567812345678L)
+                }
+
+                expect(4)
+            }
+
+            yield()
+            expect(3)
+
+            ch.readFully(ByteArray(9))
+            yield()
+            expect(5)
+
+            ch.readFully(ByteArray(4088 - 9))
+
+            expect(6)
+
+            assertEquals(0x1234567812345678L, ch.readLong())
+            assertEquals(0, ch.availableForRead)
+
+            finish(7)
+        }
+    }
+
+    @Test
+    fun testReadBlock() = runBlocking {
+        ch.writeLong(0x1234567812345678L)
+
+        ch.read {
+            assertEquals(0x1234567812345678L, it.getLong())
+        }
+
+        finish(1)
+    }
+
+    @Test
+    fun testReadBlockSuspend() = runBlocking {
+        ch.writeByte(0x12)
+
+        launch(coroutineContext) {
+            expect(1)
+            ch.read(8) {
+                assertEquals(0x1234567812345678L, it.getLong())
+            }
+
+            expect(3)
+        }
+
+        yield()
+        expect(2)
+
+        ch.writeLong(0x3456781234567800L)
+        yield()
+
+        expect(4)
+        ch.readByte()
+        assertEquals(0, ch.availableForRead)
+
+        finish(5)
+    }
+
+    @Test
+    fun testReadBlockSuspend2() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.read(8) {
+                assertEquals(0x1234567812345678L, it.getLong())
+            }
+
+            expect(3)
+        }
+
+        yield()
+        expect(2)
+
+        ch.writeLong(0x1234567812345678L)
+        yield()
+
+        expect(4)
+        assertEquals(0, ch.availableForRead)
+
+        finish(5)
+    }
 }

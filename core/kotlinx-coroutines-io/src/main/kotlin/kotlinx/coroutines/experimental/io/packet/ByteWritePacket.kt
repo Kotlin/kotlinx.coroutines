@@ -30,8 +30,9 @@ interface ByteWritePacket : Appendable {
     fun writerUTF8(): Writer
 
     fun writePacket(p: ByteReadPacket)
-    @Deprecated("")
-    fun writePacketUnconsumed(p: ByteReadPacket)
+
+    @Deprecated("Use copy() instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("writePacket(p.copy())"))
+    fun writePacketUnconsumed(p: ByteReadPacket) = writePacket(p.copy())
 
     override fun append(csq: CharSequence): ByteWritePacket {
         append(csq, 0, csq.length)

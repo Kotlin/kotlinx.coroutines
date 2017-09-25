@@ -60,6 +60,21 @@ public interface ByteWriteChannel {
     suspend fun writeFully(src: ByteBuffer)
 
     /**
+     * Invokes [block] when it will be possible to write at least [min] bytes
+     * providing byte buffer to it so lambda can write to the buffer
+     * up to [ByteBuffer.remaining] bytes. If there are no [min] bytes spaces available then the invocation could
+     * suspend until the requirement will be met.
+     *
+     * Warning: it is not guaranteed that all of remaining bytes will be represented as a single byte buffer
+     * eg: it could be 4 bytes available for write but the provided byte buffer could have only 2 remaining bytes:
+     * in this case you have to invoke write again (with decreased [min] accordingly).
+     *
+     * @param min amount of bytes available for write, should be positive
+     * @param block to be invoked when at least [min] bytes free capacity available
+     */
+    suspend fun write(min: Int = 1, block: (ByteBuffer) -> Unit)
+
+    /**
      * Writes a [packet] fully or fails if channel get closed before the whole packet has been written
      */
     suspend fun writePacket(packet: ByteReadPacket)

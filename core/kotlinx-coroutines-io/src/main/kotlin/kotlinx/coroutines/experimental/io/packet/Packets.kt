@@ -1,19 +1,13 @@
 package kotlinx.coroutines.experimental.io.packet
 
+import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.*
-import java.nio.ByteBuffer
 
 internal val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
 private val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 128)
 internal val PACKET_MAX_COPY_SIZE = getIOIntProperty("PacketMaxCopySize", 500)
 
-internal val PacketBufferPool: ObjectPool<ByteBuffer> =
-    object : ObjectPoolImpl<ByteBuffer>(PACKET_BUFFER_POOL_SIZE) {
-        override fun produceInstance(): ByteBuffer = ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE)
-        override fun clearInstance(instance: ByteBuffer) = instance.apply { clear() }
-    }
-
-internal inline fun buildPacket(pool: ObjectPool<ByteBuffer> = PacketBufferPool, headerSizeHint: Int, block: ByteWritePacket.() -> Unit): ByteReadPacket {
+internal inline fun buildPacket(pool: ObjectPool<BufferView> = BufferView.Pool, headerSizeHint: Int, block: ByteWritePacket.() -> Unit): ByteReadPacket {
     val w = ByteWritePacketImpl(headerSizeHint, pool)
     try {
         block(w)
@@ -35,7 +29,7 @@ inline fun buildPacket(headerSizeHint: Int = 0, block: ByteWritePacket.() -> Uni
     }
 }
 
-fun WritePacket(headerSizeHint: Int = 0): ByteWritePacket = ByteWritePacketImpl(headerSizeHint, PacketBufferPool)
+fun WritePacket(headerSizeHint: Int = 0): ByteWritePacket = ByteWritePacketImpl(headerSizeHint, BufferView.Pool)
 
 fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE): String? {
     val sb = StringBuilder(estimate)

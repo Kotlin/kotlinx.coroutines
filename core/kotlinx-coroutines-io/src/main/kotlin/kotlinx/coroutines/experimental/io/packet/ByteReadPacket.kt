@@ -1,11 +1,12 @@
 package kotlinx.coroutines.experimental.io.packet
 
+import kotlinx.coroutines.experimental.io.*
 import java.io.*
-import java.nio.ByteBuffer
 import kotlin.experimental.and
 
 interface ByteReadPacket {
     val remaining: Int
+    val isEmpty: Boolean get() = remaining > 0
 
     fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int
     fun readAvailable(dst: ByteArray) = readAvailable(dst, 0, dst.size)

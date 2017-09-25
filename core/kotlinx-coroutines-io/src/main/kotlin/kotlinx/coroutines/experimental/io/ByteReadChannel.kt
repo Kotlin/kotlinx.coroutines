@@ -117,6 +117,21 @@ public interface ByteReadChannel {
      * and no characters were read.
      */
     suspend fun <A : Appendable> readUTF8LineTo(out: A, limit: Int = Int.MAX_VALUE): Boolean
+
+    /**
+     * Invokes [block] when it will be possible to read at least [min] bytes
+     * providing byte buffer to it so lambda can read from the buffer
+     * up to [ByteBuffer.remaining] bytes. If there are no [min] bytes available then the invocation could
+     * suspend until the requirement will be met.
+     *
+     * Warning: it is not guaranteed that all of remaining bytes will be represented as a single byte buffer
+     * eg: it could be 4 bytes available for read but the provided byte buffer could have only 2 remaining bytes:
+     * in this case you have to invoke read again (with decreased [min] accordingly).
+     *
+     * @param min amount of bytes available for read, should be positive
+     * @param block to be invoked when at least [min] bytes available for read
+     */
+    suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)
 }
 
 /**

@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.packet.*
 import org.junit.*
 import java.io.*
@@ -8,7 +9,7 @@ import kotlin.test.*
 
 class BytePacketBuildTest {
     @get:Rule
-    private val pool = VerifyingObjectPool(PacketBufferPool)
+    private val pool = VerifyingObjectPool(BufferView.Pool)
 
     @Test
     fun smokeSingleBufferTest() {

@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineName
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
 import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
 import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
@@ -33,7 +34,7 @@ class ByteBufferChannelTest {
     private val pool = VerifyingObjectPool(BufferObjectNoPool)
 
     @get:Rule
-    private val pktPool = VerifyingObjectPool(PacketBufferPool)
+    private val pktPool = VerifyingObjectPool(BufferView.Pool)
 
     private val Size = BUFFER_SIZE - RESERVED_SIZE
     private val ch = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -564,9 +565,9 @@ class ByteBufferChannelTest {
         val packet0 = buildPacket {
             writeInt(0xffee)
             writeStringUtf8("Hello")
-        } as ByteReadPacketSingle
+        } as ByteReadPacketViewBased
 
-        val packet = ByteReadPacketImpl(ArrayDeque(listOf(packet0.steal())), pktPool)
+        val packet = ByteReadPacketViewBased(packet0.steal()!!)
 
         ch.writeInt(packet.remaining)
         ch.writePacket(packet)

@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.packet.*
 import org.junit.*
 import java.util.*
@@ -7,7 +8,7 @@ import kotlin.test.*
 
 class BytePacketReaderWriterTest {
     @get:Rule
-    private val pool = VerifyingObjectPool(PacketBufferPool)
+    private val pool = VerifyingObjectPool(BufferView.Pool)
 
     @Test
     fun testReaderEmpty() {
@@ -405,7 +406,7 @@ class BytePacketReaderWriterTest {
         val outer = buildPacket {
             append("123")
             assertEquals(3, size)
-            writePacketUnconsumed(inner)
+            writePacket(inner.copy())
             assertEquals(6, size)
             append(".")
         }
@@ -423,7 +424,7 @@ class BytePacketReaderWriterTest {
         val outer = buildPacket {
             append("123")
             assertEquals(3, size)
-            writePacketUnconsumed(inner)
+            writePacket(inner.copy())
             assertEquals(100003, size)
             append(".")
         }

@@ -1,28 +1,29 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import kotlinx.coroutines.experimental.io.internal.ObjectPool
+import kotlinx.coroutines.experimental.io.buffers.*
+import kotlinx.coroutines.experimental.io.internal.*
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
-import java.util.*
-import kotlin.NoSuchElementException
 
-internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val pool: ObjectPool<ByteBuffer>) : ByteWritePacket {
+internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val pool: ObjectPool<BufferView>) : ByteWritePacket {
     init {
         require(headerSizeHint >= 0) { "shouldn't be negative: headerSizeHint = $headerSizeHint" }
     }
 
     override var size: Int = 0
         private set
-    private var buffers: Any? = null
+
+    private var head: BufferView = BufferView.Empty
+    private var tail: BufferView = head
 
     override fun writeFully(src: ByteArray, offset: Int, length: Int) {
         var copied = 0
 
         while (copied < length) {
             write(1) { buffer ->
-                val size = minOf(buffer.remaining(), length - copied)
-                buffer.put(src, offset + copied, size)
+                val size = minOf(buffer.writeRemaining, length - copied)
+                buffer.write(src, offset + copied, size)
                 copied += size
             }
         }
@@ -34,12 +35,16 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         val s = src.remaining()
         while (src.hasRemaining()) {
             write(1) { buffer ->
-                if (buffer.remaining() >= src.remaining()) {
-                    buffer.put(src)
+                val srcSize = src.remaining()
+                val capacity = buffer.writeRemaining
+
+                if (capacity >= srcSize) {
+                    buffer.write(src)
                 } else {
-                    while (buffer.hasRemaining() && src.hasRemaining()) {
-                        buffer.put(src.get())
-                    }
+                    val lim = src.limit()
+                    src.limit(src.position() + capacity)
+                    buffer.write(src)
+                    src.limit(lim)
                 }
             }
         }
@@ -47,32 +52,32 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
     }
 
     override fun writeLong(l: Long) {
-        write(8) { it.putLong(l) }
+        write(8) { it.writeLong(l) }
         size += 8
     }
 
     override fun writeInt(i: Int) {
-        write(4) { it.putInt(i) }
+        write(4) { it.writeInt(i) }
         size += 4
     }
 
     override fun writeShort(s: Short) {
-        write(2) { it.putShort(s) }
+        write(2) { it.writeShort(s) }
         size += 2
     }
 
     override fun writeByte(b: Byte) {
-        write(1) { it.put(b) }
+        write(1) { it.writeByte(b) }
         size += 1
     }
 
     override fun writeDouble(d: Double) {
-        write(8) { it.putDouble(d) }
+        write(8) { it.writeDouble(d) }
         size += 8
     }
 
     override fun writeFloat(f: Float) {
-        write(4) { it.putFloat(f) }
+        write(4) { it.writeFloat(f) }
         size += 4
     }
 
@@ -90,101 +95,79 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
 
     override fun writePacket(p: ByteReadPacket) {
         when (p) {
-            is ByteReadPacketEmpty -> {}
-            is ByteReadPacketSingle -> writePacketSingle(p)
-            is ByteReadPacketImpl -> writePacketMultiple(p)
+            ByteReadPacketEmpty -> {}
+            is ByteReadPacketViewBased -> writePacket2(p)
             else -> writeFully(p.readBytes())
         }
     }
 
-    private fun reverseCopyToForeignBuffer(count: Int, last: ByteBuffer, buffer: ByteBuffer) {
-        val startOffset = buffer.position() - count
-        val l = buffer.limit()
-        buffer.position(startOffset)
-        buffer.limit(startOffset + count)
-
-        last.flip()
-        last.position(last.limit() - count)
-        buffer.put(last)
-
-        recycleLast()
-        headerSizeHint = startOffset
-        buffer.limit(buffer.capacity())
-        buffer.position(l)
-        last(buffer)
-    }
-
-    private fun writePacketSingle(p: ByteReadPacketSingle) {
-        val initialRemaining = p.remaining
-        val samePool = p.pool === this.pool
-        if (initialRemaining > 0) {
-            size += initialRemaining
-            writePacketBuffer(p.steal(), samePool, p.pool)
-        }
-    }
-
-    private fun writePacketMultiple(p: ByteReadPacketImpl) {
-        val initialRemaining = p.remaining
-        if (initialRemaining > 0) {
-            size += initialRemaining
-            val samePool = p.pool === this.pool
-            val packetPool = p.pool
-
-            do {
-                writePacketBuffer(p.steal(), samePool, packetPool)
-            } while (p.remaining > 0)
-        }
-    }
-
-    private fun writePacketBuffer(buffer: ByteBuffer, samePool: Boolean, packetPool: ObjectPool<ByteBuffer>) {
-        val last = last()
-
-        if (samePool && buffer.position() > 0 && last != null) {
-            if (last === buffers || buffersCount() == 1) {
-                val count = last.position() - headerSizeHint
-                if (count < PACKET_MAX_COPY_SIZE && count <= buffer.position()) {
-                    reverseCopyToForeignBuffer(count, last, buffer)
-                    return
-                }
-            } else {
-                val count = last.position()
-                if (count < PACKET_MAX_COPY_SIZE && count == buffer.position()) {
-                    reverseCopyToForeignBuffer(count, last, buffer)
-                    return
-                }
-            }
-        } else if (last != null && last.remaining() <= buffer.remaining() && buffer.remaining() < PACKET_MAX_COPY_SIZE) {
-            last.put(buffer)
-            packetPool.recycle(buffer)
+    private fun writePacket2(p: ByteReadPacketViewBased) {
+        val foreignStolen = p.steal()
+        if (foreignStolen == null) {
+            p.release()
             return
         }
 
-        if (samePool) {
-            last(buffer.also { it.compact() })
-        } else {
-            writeFully(buffer)
-            packetPool.recycle(buffer)
+        val tail = tail
+        if (tail === BufferView.Empty) {
+            head = foreignStolen
+            this.tail = foreignStolen.tail()
+            size = foreignStolen.remainingAll().toInt()
+            return
         }
-    }
 
-    override fun writePacketUnconsumed(p: ByteReadPacket) {
-        when (p) {
-            is ByteReadPacketEmpty -> {}
-            is ByteReadPacketSingle -> {
-                p.buffer?.duplicate()?.let { writeFully(it) }
-            }
-            is ByteReadPacketImpl -> {
-                for (buffer in p.buffers) {
-                    writeFully(buffer.duplicate())
+        val lastSize = tail.readRemaining
+        val nextSize = foreignStolen.readRemaining
+
+        val maxCopySize = PACKET_MAX_COPY_SIZE
+        val appendSize = if (nextSize < maxCopySize && nextSize <= tail.endGap) {
+            nextSize
+        } else -1
+
+        val prependSize = if (lastSize < maxCopySize && lastSize <= foreignStolen.startGap && foreignStolen.isExclusivelyOwned()) {
+            lastSize
+        } else -1
+
+        if (appendSize == -1 && prependSize == -1) {
+            // simply enqueue
+            tail.next = foreignStolen
+            this.tail = foreignStolen.tail()
+            size = head.remainingAll().toInt()
+        } else if (prependSize == -1 || appendSize <= prependSize) {
+            // do append
+            tail.writeBufferAppend(foreignStolen)
+            tail.next = foreignStolen.next
+            this.tail = foreignStolen.tail().takeUnless { it === foreignStolen } ?: tail
+            foreignStolen.release()
+            size = head.remainingAll().toInt()
+        } else if (appendSize == -1 || prependSize < appendSize) {
+            // do prepend
+            foreignStolen.writeBufferPrepend(tail)
+
+            if (head === tail) {
+                head = foreignStolen
+            } else {
+                var pre = head
+                while (true) {
+                    val next = pre.next!!
+                    if (next === tail) break
+                    pre = next
                 }
+
+                pre.next = foreignStolen
             }
-            else -> throw UnsupportedOperationException()
+            tail.release()
+
+            this.tail = foreignStolen.tail()
+            size = head.remainingAll().toInt()
+        } else {
+            throw IllegalStateException("prep = $prependSize, app = $appendSize")
         }
     }
 
     private tailrec fun appendASCII(csq: CharSequence, start: Int, end: Int) {
         val bb = ensure()
-        val limitedEnd = minOf(end, start + bb.remaining())
+        val limitedEnd = minOf(end, start + bb.writeRemaining)
 
         for (i in start until limitedEnd) {
             val chi = csq[i].toInt() and 0xffff
@@ -193,7 +176,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
                 return
             }
 
-            bb.put(chi.toByte())
+            bb.writeByte(chi.toByte())
             size++
         }
 
@@ -203,8 +186,9 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
     }
 
     // expects at least one byte remaining in [bb]
-    private tailrec fun appendUTF8(csq: CharSequence, start: Int, end: Int, bb: ByteBuffer) {
-        val limitedEnd = minOf(end, start + bb.remaining())
+    private tailrec fun appendUTF8(csq: CharSequence, start: Int, end: Int, bb: BufferView) {
+        var rem = bb.writeRemaining
+        val limitedEnd = minOf(end, start + rem)
 
         for (i in start until limitedEnd) {
             val chi = csq[i].toInt() and 0xffff
@@ -214,11 +198,13 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
                 else -> 2
             }
 
-            if (bb.remaining() < requiredSize) {
+            if (rem < requiredSize) {
                 return appendUTF8(csq, i, end, appendNewBuffer())
             }
 
-            size += bb.putUtf8Char(chi)
+            val chSize = bb.putUtf8Char(chi)
+            rem -= chSize
+            size += chSize
         }
 
         if (limitedEnd < end) {
@@ -228,7 +214,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
 
     private tailrec fun appendASCII(csq: CharArray, start: Int, end: Int) {
         val bb = ensure()
-        val limitedEnd = minOf(end, start + bb.remaining())
+        val limitedEnd = minOf(end, start + bb.writeRemaining)
 
         for (i in start until limitedEnd) {
             val chi = csq[i].toInt() and 0xffff
@@ -237,7 +223,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
                 return
             }
 
-            bb.put(chi.toByte())
+            bb.writeByte(chi.toByte())
             size++
         }
 
@@ -247,8 +233,8 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
     }
 
     // expects at least one byte remaining in [bb]
-    private tailrec fun appendUTF8(csq: CharArray, start: Int, end: Int, bb: ByteBuffer) {
-        val limitedEnd = minOf(end, start + bb.remaining())
+    private tailrec fun appendUTF8(csq: CharArray, start: Int, end: Int, bb: BufferView) {
+        val limitedEnd = minOf(end, start + bb.writeRemaining)
         for (i in start until limitedEnd) {
             val chi = csq[i].toInt() and 0xffff
             val requiredSize = when {
@@ -257,7 +243,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
                 else -> 2
             }
 
-            if (bb.remaining() < requiredSize) {
+            if (bb.writeRemaining < requiredSize) {
                 return appendUTF8(csq, i, end, appendNewBuffer())
             }
 
@@ -282,20 +268,20 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun ByteBuffer.putUtf8Char(v: Int) = when {
+    private inline fun BufferView.putUtf8Char(v: Int) = when {
         v in 1..0x7f -> {
-            put(v.toByte())
+            writeByte(v.toByte())
             1
         }
         v > 0x7ff -> {
-            put((0xe0 or ((v shr 12) and 0x0f)).toByte())
-            put((0x80 or ((v shr  6) and 0x3f)).toByte())
-            put((0x80 or ( v         and 0x3f)).toByte())
+            writeByte((0xe0 or ((v shr 12) and 0x0f)).toByte())
+            writeByte((0x80 or ((v shr  6) and 0x3f)).toByte())
+            writeByte((0x80 or ( v         and 0x3f)).toByte())
             3
         }
         else -> {
-            put((0xc0 or ((v shr  6) and 0x1f)).toByte())
-            put((0x80 or ( v         and 0x3f)).toByte())
+            writeByte((0xc0 or ((v shr  6) and 0x1f)).toByte())
+            writeByte((0x80 or ( v         and 0x3f)).toByte())
             2
         }
     }
@@ -327,57 +313,25 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
     }
 
     override fun build(): ByteReadPacket {
-        val bs = buffers
-        buffers = null
-        size = 0
+        val head = this.head
 
-        return when (bs) {
-            null -> ByteReadPacketEmpty
-            is ArrayDeque<*> -> {
-                @Suppress("UNCHECKED_CAST") buildMultiBufferPacket(bs as ArrayDeque<ByteBuffer>)
-            }
-            else -> ByteReadPacketSingle((bs as ByteBuffer).also { switchBufferToRead(true, it) }, pool)
-        }
-    }
+        this.head = BufferView.Empty
+        this.tail = BufferView.Empty
+        this.size = 0
 
-    private fun buildMultiBufferPacket(buffers: ArrayDeque<ByteBuffer>): ByteReadPacket {
-        return when (buffers.size) {
-            0 -> ByteReadPacketEmpty
-            1 -> ByteReadPacketSingle(buffers.first.also { switchBufferToRead(true, it) }, pool)
-            else -> {
-                val it = buffers.iterator()
-                switchBufferToRead(true, it.next())
-                do {
-                    switchBufferToRead(false, it.next())
-                } while (it.hasNext())
-
-                ByteReadPacketImpl(buffers, pool)
-            }
-        }
-    }
-
-    private fun switchBufferToRead(first: Boolean, bb: ByteBuffer) {
-        bb.flip()
-
-        if (first) {
-            val skip = headerSizeHint
-            if (skip > 0) {
-                bb.position(bb.position() + skip)
-            }
-        }
+        if (head === BufferView.Empty) return ByteReadPacketViewBased.Empty
+        return ByteReadPacketViewBased(head)
     }
 
     override fun release() {
-        val bs = buffers ?: return
-        buffers = null
-        size = 0
+        val head = this.head
+        val empty = BufferView.Empty
 
-        if (bs is ArrayDeque<*>) {
-            for (o in bs) {
-                recycle(o as ByteBuffer)
-            }
-        } else {
-            recycle(bs as ByteBuffer)
+        if (head !== empty) {
+            this.head = empty
+            this.tail = empty
+            head.releaseAll()
+            size = 0
         }
     }
 
@@ -385,8 +339,8 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         release()
     }
 
-    private inline fun write(size: Int, block: (ByteBuffer) -> Unit) {
-        val buffer = last()?.takeIf { it.remaining() >= size }
+    private inline fun write(size: Int, block: (BufferView) -> Unit) {
+        val buffer = last()?.takeIf { it.writeRemaining >= size }
 
         if (buffer == null) {
             block(appendNewBuffer())
@@ -395,69 +349,27 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         }
     }
 
-    private fun ensure(): ByteBuffer = last()?.takeIf { it.hasRemaining() } ?: appendNewBuffer()
+    private fun ensure(): BufferView = last()?.takeIf { it.writeRemaining > 0 } ?: appendNewBuffer()
 
-    private fun appendNewBuffer(): ByteBuffer {
+    private fun appendNewBuffer(): BufferView {
         val new = pool.borrow()
-        new.clear()
-        last(new)
-        if (buffers === new) {
-            new.position(headerSizeHint)
+        if (head === BufferView.Empty) {
+            new.reserveStartGap(headerSizeHint)
         }
+        new.reserveEndGap(ByteReadPacketViewBased.ReservedSize)
+        last(new)
         return new
     }
 
-    private fun last(): ByteBuffer? = buffers?.let { b ->
-        @Suppress("UNCHECKED_CAST")
-        when (b) {
-            is ByteBuffer -> b
-            is ArrayDeque<*> -> (b as ArrayDeque<ByteBuffer>).takeIf { it.isNotEmpty() }?.peekLast()
-            else -> null
-        }
-    }
+    private fun last(): BufferView? = tail.takeIf { it !== BufferView.Empty }
 
-    private fun last(new: ByteBuffer) {
-        @Suppress("UNCHECKED_CAST")
-        if (buffers is ArrayDeque<*>) (buffers as ArrayDeque<ByteBuffer>).addLast(new)
-        else if (buffers == null) {
-            buffers = new
+    private fun last(new: BufferView) {
+        if (head === BufferView.Empty) {
+            tail = new
+            head = new
         } else {
-            val dq = ArrayDeque<ByteBuffer>()
-            dq.addFirst(buffers as ByteBuffer)
-            dq.addLast(new)
-            buffers = dq
+            tail.next = new
+            tail = new
         }
-    }
-
-    private fun recycleLast() {
-        val b = buffers
-        when (b) {
-            is ArrayDeque<*> -> {
-                recycle(b.pollLast() as ByteBuffer)
-                if (b.isEmpty()) {
-                    buffers = null
-                }
-            }
-            is ByteBuffer -> {
-                buffers = null
-                recycle(b)
-            }
-            else -> throw NoSuchElementException("Unable to recycle last buffer: buffers chain is empty")
-        }
-    }
-
-    private fun buffersCount(): Int {
-        val bb = buffers
-
-        return when (bb) {
-            null -> 0
-            is ByteBuffer -> 1
-            is ArrayDeque<*> -> bb.size
-            else -> 0
-        }
-    }
-
-    private fun recycle(buffer: ByteBuffer) {
-        pool.recycle(buffer)
     }
 }
