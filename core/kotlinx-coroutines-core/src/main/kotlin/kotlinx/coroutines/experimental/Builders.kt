@@ -83,7 +83,7 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * a current one, otherwise it is ignored.
  * By default, the coroutine is immediately scheduled for execution and can be cancelled
  * while it is waiting to be executed and it can be cancelled while the result is scheduled
- * to be be processed by the invoker context.
+ * to be processed by the invoker context.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
