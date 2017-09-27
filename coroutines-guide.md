@@ -343,7 +343,8 @@ main: Now I can quit.
 <!--- TEST -->
 
 As soon as main invokes `job.cancel`, we don't see any output from the other coroutine because it was cancelled. 
-There is also an extension function [cancelAndJoin] that combines [cancel] and [join] invocations.
+There is also a [Job] extension function [cancelAndJoin] 
+that combines [cancel][Job.cancel] and [join][Job.join] invocations.
 
 ### Cancellation is cooperative
 
@@ -458,8 +459,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-04.kt)
 
-Both [join] and [cancelAndJoin] wait for all the finalization actions to complete, so the example above 
-produces the following output:
+Both [join][Job.join] and [cancelAndJoin] wait for all the finalization actions to complete, 
+so the example above produces the following output:
 
 ```text
 I'm sleeping 0 ...
@@ -1047,7 +1048,7 @@ main: Who has survived request cancellation?
 ### Parental responsibilities 
 
 A parent coroutine always waits for completion of all its children. Parent does not have to explicitly track
-all the children it launches and it does not have to use [join] to wait for them at the end:
+all the children it launches and it does not have to use [Job.join] to wait for them at the end:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1132,7 +1133,7 @@ and update data, do animations, etc. All of these coroutines must be cancelled w
 to avoid memory leaks. 
   
 We can manage a lifecycle of our coroutines by creating an instance of [Job] that is tied to 
-the lifecycle of our activity. A job instance is created using [`Job()`][Job] factory function
+the lifecycle of our activity. A job instance is created using [Job()] factory function
 as the following example shows. We need to make sure that all the coroutines are started 
 with this job in their context and then a single invocation of [Job.cancel] terminates them all.
 Moreover, [Job.join] waits for all of them to complete, so we can also use [cancelAndJoin] here in
@@ -1373,7 +1374,7 @@ The following example prints the first ten prime numbers,
 running the whole pipeline in the context of the main thread. Since all the coroutines are launched as
 children of the main [runBlocking] coroutine in its [coroutineContext][CoroutineScope.coroutineContext],
 we don't have to keep an explicit list of all the coroutine we have created. 
-We use [CoroutineContext.cancelChildren] extension to cancel all the children coroutines. 
+We use [cancelChildren] extension function to cancel all the children coroutines. 
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1529,7 +1530,7 @@ The channels shown so far had no buffer. Unbuffered channels transfer elements w
 meet each other (aka rendezvous). If send is invoked first, then it is suspended until receive is invoked, 
 if receive is invoked first, it is suspended until send is invoked.
 
-Both [`Channel()`][Channel] factory function and [produce] builder take an optional `capacity` parameter to
+Both [Channel()] factory function and [produce] builder take an optional `capacity` parameter to
 specify _buffer size_. Buffer allows senders to send multiple elements before suspending, 
 similar to the `BlockingQueue` with a specified capacity, which blocks when buffer is full.
 
@@ -1829,7 +1830,7 @@ that is never executed concurrently. In a blocking world you'd typically use `sy
 Coroutine's alternative is called [Mutex]. It has [lock][Mutex.lock] and [unlock][Mutex.unlock] functions to 
 delimit a critical section. The key difference is that `Mutex.lock` is a suspending function. It does not block a thread.
 
-There is also [Mutex.withLock] extension function that conveniently represents 
+There is also [withLock] extension function that conveniently represents 
 `mutex.lock(); try { ... } finally { mutex.unlock() }` pattern: 
 
 ```kotlin
@@ -2292,6 +2293,8 @@ Channel was closed
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
 [cancelAndJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/cancel-and-join.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
+[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/is-active.html
@@ -2311,14 +2314,15 @@ Channel was closed
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
+[Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html
+[cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-completable-deferred/index.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->
 [Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/index.html
 [Mutex.lock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/lock.html
 [Mutex.unlock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/unlock.html
+[withLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/with-lock.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
@@ -2326,6 +2330,7 @@ Channel was closed
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
+[Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html

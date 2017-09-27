@@ -63,7 +63,7 @@ const val FLEXIBLE_THREAD_PREDICATE = "FLEXIBLE_THREAD"
 const val LINES_START_UNORDERED_PREDICATE = "LINES_START_UNORDERED"
 const val LINES_START_PREDICATE = "LINES_START"
 
-val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_.]+)\\]($|[^\\[\\(])")
+val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_().]+)\\]($|[^\\[\\(])")
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
@@ -424,6 +424,22 @@ val apiIndexCache: MutableMap<ApiIndexKey, Map<String, String>> = HashMap()
 val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
+val FUNCTIONS_SECTION_HEADER = "### Functions"
+
+val AMBIGUOUS = "#AMBIGUOUS: "
+
+fun HashMap<String,String>.putUnambiguous(key: String, value: String) {
+    val oldValue = this[key]
+    val putVal =
+        if (oldValue != null && oldValue != value) {
+            when {
+                oldValue.contains("[$value]") -> oldValue
+                oldValue.startsWith(AMBIGUOUS) -> "$oldValue; [$value]"
+                else -> "$AMBIGUOUS[$oldValue]; [$value]"
+            }
+        } else value
+    put(key, putVal)
+}
 
 fun loadApiIndex(
     docsRoot: String,
@@ -434,18 +450,28 @@ fun loadApiIndex(
     val fileName = docsRoot + "/" + path + INDEX_MD
     val visited = mutableSetOf<String>()
     val map = HashMap<String,String>()
+    var inFunctionsSection = false
     File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
         while (true) {
             val line = readLine() ?: break
+            if (line == FUNCTIONS_SECTION_HEADER) inFunctionsSection = true
             val result = REF_LINE_REGEX.matchEntire(line) ?: continue
-            val refLink = result.groups[1]!!.value
-            if (refLink.startsWith("..")) continue // ignore cross-references
-            val refName = namePrefix + result.groups[2]!!.value
-            map.putIfAbsent(refName, path + "/" + refLink)
-            map.putIfAbsent(pkg + "." + refName, path + "/" + refLink)
-            if (refLink.endsWith(INDEX_HTML)) {
-                if (visited.add(refLink)) {
-                    val path2 = path + "/" + refLink.substring(0, refLink.length - INDEX_HTML.length)
+            val link = result.groups[1]!!.value
+            if (link.startsWith("..")) continue // ignore cross-references
+            val absLink = path + "/" + link
+            var name = result.groups[2]!!.value
+            // a special disambiguation fix for pseudo-constructor functions
+            if (inFunctionsSection && name[0] in 'A'..'Z') name += "()"
+            val refName = namePrefix + name
+            val fqName = pkg + "." + refName
+            // Put short names for extensions on 3rd party classes (prefix is FQname of those classes)
+            if (namePrefix != "" && namePrefix[0] in 'a'..'z') map.putUnambiguous(name, absLink)
+            // Always put fully qualified names
+            map.putUnambiguous(refName, absLink)
+            map.putUnambiguous(fqName, absLink)
+            if (link.endsWith(INDEX_HTML)) {
+                if (visited.add(link)) {
+                    val path2 = path + "/" + link.substring(0, link.length - INDEX_HTML.length)
                     map += loadApiIndex(docsRoot, path2, pkg, refName + ".")
                         ?: throw IllegalArgumentException("Failed to parse ${docsRoot + "/" + path2}")
                 }
@@ -473,6 +499,10 @@ fun processApiIndex(
     while (it.hasNext()) {
         val refName = it.next()
         val refLink = map[refName] ?: continue
+        if (refLink.startsWith(AMBIGUOUS)) {
+            println("WARNING: Ambiguous reference to [$refName]: ${refLink.substring(AMBIGUOUS.length)}")
+            continue
+        }
         indexList += "[$refName]: $siteRoot/$refLink"
         it.remove()
     }
