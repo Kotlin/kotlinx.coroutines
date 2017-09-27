@@ -77,8 +77,8 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
      * The most recently sent element to this channel.
      *
      * Access to this property throws [IllegalStateException] when this class is constructed without
-     * initial value and no value was sent yet or if it was [closed][close] _normally_ and
-     * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     * initial value and no value was sent yet or if it was [closed][close] without a cause.
+     * It throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
     @Suppress("UNCHECKED_CAST")
     public val value: E get() {
@@ -187,9 +187,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
      * future subscribers. This implementation never suspends.
-     *
-     * It throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
-     * It throws the original [close] cause exception if the channel has _failed_.
+     * It throws exception if the channel [isClosedForSend] (see [close] for details).
      */
     suspend override fun send(element: E) {
         offerInternal(element)?.let { throw it.sendException }
@@ -198,9 +196,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Sends the value to all subscribed receives and stores this value as the most recent state for
      * future subscribers. This implementation always returns `true`.
-     *
-     * It throws [ClosedSendChannelException] if the channel [isClosedForSend] _normally_.
-     * It throws the original [close] cause exception if the channel has _failed_.
+     * It throws exception if the channel [isClosedForSend] (see [close] for details).
      */
     override fun offer(element: E): Boolean {
         offerInternal(element)?.let { throw it.sendException }
