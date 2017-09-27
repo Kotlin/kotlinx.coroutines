@@ -34,4 +34,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     broadcast.offer("three")
     broadcast.offer("four")
     yield() // yield the main thread to the launched coroutine
+    broadcast.close() // now close broadcast channel to cancel consumer, too    
 }

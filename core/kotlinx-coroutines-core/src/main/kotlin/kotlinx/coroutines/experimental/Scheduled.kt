@@ -16,11 +16,12 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.JobSupport.CompletedExceptionally
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
@@ -29,9 +30,9 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * [TimeoutCancellationException] if timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutCancellationException], so normally that exception,
- * if uncaught, also gets thrown by `withTimeout` as a result.
- * However, the code in the block can suppress [TimeoutCancellationException].
+ * cancellable suspending function inside the block throws [TimeoutCancellationException].
+ * Even if the code in the block suppresses [TimeoutCancellationException], it
+ * is still thrown by `withTimeout` invocation.
  *
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -42,31 +43,68 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * @param time timeout time
  * @param unit timeout unit (milliseconds by default)
  */
-public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T {
+public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T {
     require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) throw CancellationException("Timed out immediately")
     return suspendCoroutineOrReturn { cont: Continuation<T> ->
-        val context = cont.context
-        val completion = TimeoutCompletion(time, unit, cont)
-        // schedule cancellation of this coroutine on time
-        completion.disposeOnCompletion(context.delay.invokeOnTimeout(time, unit, completion))
-        completion.initParentJob(context[Job])
-        // restart block using new coroutine with new job,
-        // however start it as undispatched coroutine, because we are already in the proper context
-        block.startCoroutineUninterceptedOrReturn(completion)
+        setupTimeout(TimeoutCoroutine(time, unit, cont), block)
     }
 }
 
-private open class TimeoutCompletion<U, in T: U>(
-    private val time: Long,
-    private val unit: TimeUnit,
-    @JvmField protected val cont: Continuation<U>
-) : JobSupport(active = true), Runnable, Continuation<T> {
+private fun <U, T: U> setupTimeout(
+    coroutine: TimeoutCoroutine<U, T>,
+    block: suspend CoroutineScope.() -> T
+): Any? {
+    // schedule cancellation of this coroutine on time
+    val cont = coroutine.cont
+    val context = cont.context
+    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine.unit, coroutine))
+    coroutine.initParentJob(context[Job])
+    // restart block using new coroutine with new job,
+    // however start it as undispatched coroutine, because we are already in the proper context
+    val result = try {
+        block.startCoroutineUninterceptedOrReturn(receiver = coroutine, completion = coroutine)
+    } catch (e: Throwable) {
+        CompletedExceptionally(e)
+    }
+    return when {
+        result == COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
+        coroutine.makeCompleting(result, MODE_IGNORE) -> {
+            if (result is CompletedExceptionally) throw result.exception else result
+        }
+        else -> COROUTINE_SUSPENDED
+    }
+}
+
+/**
+ * @suppress **Deprecated**: for binary compatibility only
+ */
+@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T =
+    withTimeout(time, unit) { block() }
+
+private open class TimeoutCoroutine<U, in T: U>(
+    @JvmField val time: Long,
+    @JvmField val unit: TimeUnit,
+    @JvmField val cont: Continuation<U>
+) : AbstractCoroutine<T>(cont.context, active = true), Runnable, Continuation<T> {
+    override val defaultResumeMode: Int get() = MODE_DIRECT
+
     @Suppress("LeakingThis")
-    override val context: CoroutineContext = cont.context + this // mix in this Job into the context
-    override fun run() { cancel(TimeoutCancellationException(time, unit, this)) }
-    override fun resume(value: T) { cont.resumeDirect(value) }
-    override fun resumeWithException(exception: Throwable) { cont.resumeDirectWithException(exception) }
+    override fun run() {
+        cancel(TimeoutCancellationException(time, unit, this))
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun afterCompletion(state: Any?, mode: Int) {
+        if (state is CompletedExceptionally)
+            cont.resumeWithExceptionMode(state.exception, mode)
+        else
+            cont.resumeMode(state as T, mode)
+    }
+
+    override fun nameString(): String =
+        "${super.nameString()}($time $unit)"
 }
 
 /**
@@ -74,9 +112,9 @@ private open class TimeoutCompletion<U, in T: U>(
  * `null` if this timeout was exceeded.
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
- * cancellable suspending function inside the block throws [TimeoutCancellationException]. Normally that exception,
- * if uncaught by the block, gets converted into the `null` result of `withTimeoutOrNull`.
- * However, the code in the block can suppress [TimeoutCancellationException].
+ * cancellable suspending function inside the block throws [TimeoutCancellationException].
+ * Even if the code in the block suppresses [TimeoutCancellationException], this
+ * invocation of `withTimeoutOrNull` still returns `null`.
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -87,36 +125,35 @@ private open class TimeoutCompletion<U, in T: U>(
  * @param time timeout time
  * @param unit timeout unit (milliseconds by default)
  */
-public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T? {
+public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T? {
     require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) return null
     return suspendCoroutineOrReturn { cont: Continuation<T?> ->
-        val context = cont.context
-        val completion = TimeoutOrNullCompletion(time, unit, cont)
-        // schedule cancellation of this coroutine on time
-        completion.disposeOnCompletion(context.delay.invokeOnTimeout(time, unit, completion))
-        completion.initParentJob(context[Job])
-        // restart block using new coroutine with new job,
-        // however start it as undispatched coroutine, because we are already in the proper context
-        try {
-            block.startCoroutineUninterceptedOrReturn(completion)
-        } catch (e: TimeoutCancellationException) {
-            // replace inner timeout exception on our coroutine with null result
-            if (e.coroutine == completion) null else throw e
-        }
+        setupTimeout(TimeoutOrNullCoroutine(time, unit, cont), block)
     }
 }
 
-private class TimeoutOrNullCompletion<T>(
+/**
+ * @suppress **Deprecated**: for binary compatibility only
+ */
+@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T? =
+    withTimeoutOrNull(time, unit) { block() }
+
+private class TimeoutOrNullCoroutine<T>(
     time: Long,
     unit: TimeUnit,
     cont: Continuation<T?>
-) : TimeoutCompletion<T?, T>(time, unit, cont) {
-    override fun resumeWithException(exception: Throwable) {
-        // suppress inner timeout exception and replace it with null
-        if (exception is TimeoutCancellationException && exception.coroutine === this)
-            cont.resumeDirect(null) else
-            cont.resumeDirectWithException(exception)
+) : TimeoutCoroutine<T?, T>(time, unit, cont) {
+    @Suppress("UNCHECKED_CAST")
+    override fun afterCompletion(state: Any?, mode: Int) {
+        if (state is CompletedExceptionally) {
+            val exception = state.exception
+            if (exception is TimeoutCancellationException && exception.coroutine === this)
+                cont.resumeMode(null, mode) else
+                cont.resumeWithExceptionMode(exception, mode)
+        } else
+            cont.resumeMode(state as T, mode)
     }
 }
 
@@ -140,6 +177,7 @@ public class TimeoutCancellationException internal constructor(
 @Deprecated("Renamed to TimeoutCancellationException", replaceWith = ReplaceWith("TimeoutCancellationException"))
 public open class TimeoutException(message: String) : CancellationException(message)
 
+@Suppress("FunctionName")
 private fun TimeoutCancellationException(
     time: Long,
     unit: TimeUnit,

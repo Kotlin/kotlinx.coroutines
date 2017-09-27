@@ -23,10 +23,40 @@ import java.io.IOException
 
 class WithTimeoutTest : TestBase() {
     /**
+     * Tests a case of no timeout and no suspension inside.
+     */
+    @Test
+    fun testBasicNoSuspend() = runTest {
+        expect(1)
+        val result = withTimeout(10_000) {
+            expect(2)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(3)
+    }
+
+    /**
+     * Tests a case of no timeout and one suspension inside.
+     */
+    @Test
+    fun testBasicSuspend() = runTest {
+        expect(1)
+        val result = withTimeout(10_000) {
+            expect(2)
+            yield()
+            expect(3)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(4)
+    }
+
+    /**
      * Tests proper dispatching of `withTimeout` blocks
      */
     @Test
-    fun testDispatch() = runBlocking {
+    fun testDispatch() = runTest {
         expect(1)
         launch(coroutineContext) {
             expect(4)
@@ -49,7 +79,7 @@ class WithTimeoutTest : TestBase() {
 
 
     @Test
-    fun testExceptionOnTimeout() = runBlocking<Unit> {
+    fun testExceptionOnTimeout() = runTest {
         expect(1)
         try {
             withTimeout(100) {
@@ -65,23 +95,27 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSuppressException() = runBlocking {
+    fun testSuppressException() = runTest(
+        expected = { it is CancellationException }
+    ) {
         expect(1)
         val result = withTimeout(100) {
             expect(2)
             try {
                 delay(1000)
             } catch (e: CancellationException) {
-                expect(3)
+                finish(3)
             }
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
-        finish(4)
+        expectUnreached()
     }
 
-    @Test(expected = IOException::class)
-    fun testReplaceException() = runBlocking {
+    @Test
+    fun testReplaceException() = runTest(
+        expected = { it is CancellationException },
+        unhandled = listOf({ it -> it is UnexpectedCoroutineException && it.cause is IOException })
+    ) {
         expect(1)
         withTimeout(100) {
             expect(2)
@@ -91,6 +125,7 @@ class WithTimeoutTest : TestBase() {
                 finish(3)
                 throw IOException(e)
             }
+            expectUnreached()
             "OK"
         }
         expectUnreached()
@@ -100,11 +135,29 @@ class WithTimeoutTest : TestBase() {
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
     @Test(expected = CancellationException::class)
-    fun testYieldBlockingWithTimeout() = runBlocking {
+    fun testYieldBlockingWithTimeout() = runTest {
         withTimeout(100) {
             while (true) {
                 yield()
             }
         }
+    }
+
+    /**
+     * Tests that [withTimeout] waits for children coroutines to complete.
+     */
+    @Test
+    fun testWithTimeoutChildWait() = runTest {
+        expect(1)
+        withTimeout(100) {
+            expect(2)
+            // launch child with timeout
+            launch(coroutineContext) {
+                expect(4)
+            }
+            expect(3)
+            // now will wait for child before returning
+        }
+        finish(5)
     }
 }

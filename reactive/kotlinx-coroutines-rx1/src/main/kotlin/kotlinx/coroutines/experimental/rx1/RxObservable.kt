@@ -19,7 +19,6 @@ package kotlinx.coroutines.experimental.rx1
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.handleCoroutineException
@@ -60,7 +59,6 @@ public fun <T> rxObservable(
     block.startCoroutine(coroutine, coroutine)
 }
 
-private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
@@ -78,9 +76,6 @@ private class RxObservableCoroutine<in T>(
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancel(cause)
-
-    private fun sendException() =
-        (state as? CompletedExceptionally)?.cause ?: ClosedSendChannelException(CLOSED_MESSAGE)
 
     override fun offer(element: T): Boolean {
         if (!mutex.tryLock()) return false
@@ -117,7 +112,7 @@ private class RxObservableCoroutine<in T>(
         // check if already closed for send
         if (!isActive) {
             doLockedSignalCompleted()
-            throw sendException()
+            throw getCancellationException()
         }
         // notify subscriber
         try {
@@ -129,7 +124,7 @@ private class RxObservableCoroutine<in T>(
             } finally {
                 doLockedSignalCompleted()
             }
-            throw sendException()
+            throw getCancellationException()
         }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
@@ -199,7 +194,7 @@ private class RxObservableCoroutine<in T>(
         }
     }
 
-    override fun onCancellation() {
+    override fun onCancellation(exceptionally: CompletedExceptionally?) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion

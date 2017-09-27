@@ -29,6 +29,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
     job.cancel() // cancels the job
-    delay(1300L) // delay a bit to ensure it was cancelled indeed
+    job.join() // waits for job's completion 
     println("main: Now I can quit.")
 }

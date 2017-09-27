@@ -62,8 +62,8 @@ open class TestBase {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
-    public fun error(message: Any): Nothing {
-        val exception = IllegalStateException(message.toString())
+    public fun error(message: Any, cause: Throwable? = null): Nothing {
+        val exception = IllegalStateException(message.toString(), cause)
         error.compareAndSet(null, exception)
         throw exception
     }
@@ -115,5 +115,36 @@ open class TestBase {
         CommonPool.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
         checkTestThreads(threadsBefore)
+    }
+
+    fun runTest(
+        expected: ((Throwable) -> Boolean)? = null,
+        unhandled: List<(Throwable) -> Boolean> = emptyList(),
+        block: suspend CoroutineScope.() -> Unit
+    ) {
+        var exCount = 0
+        var ex: Throwable? = null
+        try {
+            runBlocking(block = block, context = CoroutineExceptionHandler { context, e ->
+                if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
+                exCount++
+                if (exCount > unhandled.size)
+                    error("Too many unhandled exceptions $exCount, expected ${unhandled.size}, got: $e", e)
+                if (!unhandled[exCount - 1](e))
+                    error("Unhandled exception was unexpected: $e", e)
+                context[Job]?.cancel(e)
+            })
+        } catch (e: Throwable) {
+            ex = e
+            if (expected != null) {
+                if (!expected(e))
+                    error("Unexpected exception: $e", e)
+            } else
+                throw e
+        } finally {
+            if (ex == null && expected != null) error("Exception was expected but none produced")
+        }
+        if (unhandled != null && exCount < unhandled.size)
+            error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }

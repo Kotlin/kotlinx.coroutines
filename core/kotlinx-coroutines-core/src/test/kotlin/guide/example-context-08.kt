@@ -19,20 +19,17 @@ package guide.context.example08
 
 import kotlinx.coroutines.experimental.*
 
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-
-fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
-    log("Started main coroutine")
-    // run two background value computations
-    val v1 = async(CommonPool + CoroutineName("v1coroutine")) {
-        log("Computing v1")
-        delay(500)
-        252
+fun main(args: Array<String>) = runBlocking<Unit> {
+    // start a coroutine to process some kind of incoming request
+    val request = launch(CommonPool) {
+        repeat(3) { i -> // launch a few children jobs
+            launch(coroutineContext)  {
+                delay((i + 1) * 200L) // variable delay 200ms, 400ms, 600ms
+                println("Coroutine $i is done")
+            }
+        }
+        println("request: I'm done and I don't explicitly join my children that are still active")
     }
-    val v2 = async(CommonPool + CoroutineName("v2coroutine")) {
-        log("Computing v2")
-        delay(1000)
-        6
-    }
-    log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
+    request.join() // wait for completion of the request, including all its children
+    println("Now processing of the request is complete")
 }

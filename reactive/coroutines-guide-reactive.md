@@ -482,6 +482,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("three")
     subject.onNext("four")
     yield() // yield the main thread to the launched coroutine <--- HERE
+    subject.onComplete() // now complete subject's sequence to cancel consumer, too    
 }
 ```
 
@@ -519,6 +520,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     broadcast.offer("three")
     broadcast.offer("four")
     yield() // yield the main thread to the launched coroutine
+    broadcast.close() // now close broadcast channel to cancel consumer, too    
 }
 ```
 
@@ -756,7 +758,8 @@ Notice, the use of `coroutineContext` in the invocation of [launch] coroutine bu
 to the [CoroutineScope.coroutineContext] that is provided by [publish] builder. This way, all the coroutines that are
 being launched here are [children](../coroutines-guide.md#children-of-a-coroutine) of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
-This implementation completes as soon as the original publisher completes. 
+Moreover, since parent coroutine waits until all children are complete, this implementation fully
+merges all the received streams.
 
 For a test, let us start with `rangeWithInterval` function from the previous example and write a 
 producer that sends its results twice with some delay:
@@ -799,6 +802,7 @@ And the results should be:
 3
 4
 12
+13
 ```
 
 <!--- TEST -->

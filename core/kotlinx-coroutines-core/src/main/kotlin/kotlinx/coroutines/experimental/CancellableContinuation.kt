@@ -162,7 +162,7 @@ public inline suspend fun <T> suspendAtomicCancellableCoroutine(
  * @suppress **This is unstable API and it is subject to change.**
  */
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle =
-    invokeOnCompletion(RemoveOnCancel(this, node))
+    invokeOnCompletion(handler = RemoveOnCancel(this, node))
 
 // --------------- implementation details ---------------
 
@@ -245,7 +245,7 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token, state, resumeMode)
+        completeUpdateState(token as Incomplete, state, resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
@@ -258,7 +258,8 @@ internal class CancellableContinuationImpl<in T>(
         resumeWithExceptionImpl(exception, if (dc.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
-    override fun toString(): String = super.toString() + "[${delegate.toDebugString()}]"
+    override fun nameString(): String =
+        "CancellableContinuation(${delegate.toDebugString()})"
 }
 
 private class CompletedIdempotentResult(

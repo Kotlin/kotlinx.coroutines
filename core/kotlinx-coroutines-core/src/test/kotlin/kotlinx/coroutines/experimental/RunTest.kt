@@ -24,10 +24,10 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 class RunTest : TestBase() {
     @Test
-    fun testSameContextNoSuspend() = runBlocking<Unit> {
+    fun testSameContextNoSuspend() = runTest {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch here
-            expectUnreached() // will terminate before it has a chance to start
+            finish(5) // after main exits
         }
         expect(2)
         val result = run(coroutineContext) { // same context!
@@ -35,11 +35,12 @@ class RunTest : TestBase() {
             "OK"
         }
         assertThat(result, IsEqual("OK"))
-        finish(4)
+        expect(4)
+        // will wait for the first coroutine
     }
 
     @Test
-    fun testSameContextWithSuspend() = runBlocking<Unit> {
+    fun testSameContextWithSuspend() = runTest {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch here
             expect(4)
@@ -56,10 +57,10 @@ class RunTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithJobNoSuspend() = runBlocking<Unit> {
+    fun testCancelWithJobNoSuspend() = runTest {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch to here
-            expectUnreached() // will terminate before it has a chance to start
+            finish(6) // after main exits
         }
         expect(2)
         val job = Job()
@@ -75,11 +76,12 @@ class RunTest : TestBase() {
             "OK"
         }
         assertThat(result, IsEqual("OK"))
-        finish(5)
+        expect(5)
+        // will wait for the first coroutine
     }
 
     @Test
-    fun testCancelWithJobWithSuspend() = runBlocking<Unit> {
+    fun testCancelWithJobWithSuspend() = runTest {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch to here
             expect(4)
@@ -104,7 +106,7 @@ class RunTest : TestBase() {
     }
 
     @Test
-    fun testCommonPoolNoSuspend() = runBlocking<Unit> {
+    fun testCommonPoolNoSuspend() = runTest {
         expect(1)
         val result = run(CommonPool) {
             expect(2)
@@ -115,7 +117,7 @@ class RunTest : TestBase() {
     }
 
     @Test
-    fun testCommonPoolWithSuspend() = runBlocking<Unit> {
+    fun testCommonPoolWithSuspend() = runTest {
         expect(1)
         val result = run(CommonPool) {
             expect(2)
@@ -127,8 +129,10 @@ class RunTest : TestBase() {
         finish(4)
     }
 
-    @Test(expected = CancellationException::class)
-    fun testRunCancellableDefault() = runBlocking<Unit> {
+    @Test
+    fun testRunCancellableDefault() = runTest(
+        expected = { it is JobCancellationException }
+    ) {
         val job = Job()
         job.cancel() // cancel before it has a chance to run
         run(job + wrapperDispatcher(coroutineContext)) {
@@ -136,8 +140,10 @@ class RunTest : TestBase() {
         }
     }
 
-    @Test(expected = CancellationException::class)
-    fun testRunAtomicTryCancel() = runBlocking<Unit> {
+    @Test
+    fun testRunAtomicTryCancel() = runTest(
+        expected = { it is JobCancellationException }
+    ) {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
@@ -148,8 +154,10 @@ class RunTest : TestBase() {
         }
     }
 
-    @Test(expected = CancellationException::class)
-    fun testRunUndispatchedTryCancel() = runBlocking<Unit> {
+    @Test
+    fun testRunUndispatchedTryCancel() = runTest(
+        expected = { it is JobCancellationException }
+    ) {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run

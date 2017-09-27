@@ -21,6 +21,7 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch
@@ -41,9 +42,9 @@ var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     massiveRun(CommonPool) {
-        mutex.lock()
-        try { counter++ }
-        finally { mutex.unlock() }
+        mutex.withLock {
+            counter++        
+        }
     }
     println("Counter = $counter")
 }

@@ -48,4 +48,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
     }
+    coroutineContext.cancelChildren()    
 }

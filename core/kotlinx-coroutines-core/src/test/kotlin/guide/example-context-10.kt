@@ -15,20 +15,22 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.channel.example08
+package guide.context.example10
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val channel = Channel<Int>(4) // create buffered channel
-    val sender = launch(coroutineContext) { // launch sender coroutine
-        repeat(10) {
-            println("Sending $it") // print before sending each element
-            channel.send(it) // will suspend when buffer is full
+    val job = Job() // create a job object to manage our lifecycle
+    // now launch ten coroutines for a demo, each working for a different time
+    val coroutines = List(10) { i ->
+        // they are all children of our job object
+        launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
+            delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
+            println("Coroutine $i is done")
         }
     }
-    // don't receive anything... just wait....
-    delay(1000)
-    sender.cancel() // cancel sender coroutine
+    println("Launched ${coroutines.size} coroutines")
+    delay(500L) // delay for half a second
+    println("Cancelling the job!")
+    job.cancelAndJoin() // cancel all our coroutines and wait for all of them to complete
 }

@@ -19,7 +19,6 @@ package kotlinx.coroutines.experimental.reactive
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.handleCoroutineException
@@ -77,9 +76,6 @@ private class PublisherCoroutine<in T>(
     override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancel(cause)
 
-    private fun sendException() =
-        (state as? CompletedExceptionally)?.cause ?: ClosedSendChannelException(CLOSED_MESSAGE)
-
     override fun offer(element: T): Boolean {
         if (!mutex.tryLock()) return false
         doLockedNext(element)
@@ -115,7 +111,7 @@ private class PublisherCoroutine<in T>(
         // check if already closed for send
         if (!isActive) {
             doLockedSignalCompleted()
-            throw sendException()
+            throw getCancellationException()
         }
         // notify subscriber
         try {
@@ -127,7 +123,7 @@ private class PublisherCoroutine<in T>(
             } finally {
                 doLockedSignalCompleted()
             }
-            throw sendException()
+            throw getCancellationException()
         }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
@@ -197,7 +193,7 @@ private class PublisherCoroutine<in T>(
         }
     }
 
-    override fun onCancellation() {
+    override fun onCancellation(exceptionally: CompletedExceptionally?) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion

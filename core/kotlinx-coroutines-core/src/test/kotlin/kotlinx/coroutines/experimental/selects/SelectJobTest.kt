@@ -22,10 +22,10 @@ import org.junit.Test
 
 class SelectJobTest : TestBase() {
     @Test
-    fun testSelectCompleted() = runBlocking<Unit> {
+    fun testSelectCompleted() = runTest {
         expect(1)
         launch(coroutineContext) { // makes sure we don't yield to it earlier
-            expectUnreached() // will terminate before it has a chance to start
+            finish(4) // after main exits
         }
         val job = Job()
         job.cancel()
@@ -34,11 +34,12 @@ class SelectJobTest : TestBase() {
                 expect(2)
             }
         }
-        finish(3)
+        expect(3)
+        // will wait for the first coroutine
     }
 
     @Test
-    fun testSelectIncomplete() = runBlocking<Unit> {
+    fun testSelectIncomplete() = runTest {
         expect(1)
         val job = Job()
         launch(coroutineContext) { // makes sure we don't yield to it earlier
@@ -62,7 +63,7 @@ class SelectJobTest : TestBase() {
     }
 
     @Test
-    fun testSelectLazy() = runBlocking<Unit> {
+    fun testSelectLazy() = runTest {
         expect(1)
         val job = launch(coroutineContext, CoroutineStart.LAZY) {
             expect(2)

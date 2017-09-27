@@ -19,19 +19,20 @@ package guide.context.example09
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = Job() // create a job object to manage our lifecycle
-    // now launch ten coroutines for a demo, each working for a different time
-    val coroutines = List(10) { i ->
-        // they are all children of our job object
-        launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
-            delay(i * 200L) // variable delay 0ms, 200ms, 400ms, ... etc
-            println("Coroutine $i is done")
-        }
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+    log("Started main coroutine")
+    // run two background value computations
+    val v1 = async(CommonPool + CoroutineName("v1coroutine")) {
+        log("Computing v1")
+        delay(500)
+        252
     }
-    println("Launched ${coroutines.size} coroutines")
-    delay(500L) // delay for half a second
-    println("Cancelling job!")
-    job.cancel() // cancel our job.. !!!
-    delay(1000L) // delay for more to see if our coroutines are still working
+    val v2 = async(CommonPool + CoroutineName("v2coroutine")) {
+        log("Computing v2")
+        delay(1000)
+        6
+    }
+    log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
 }

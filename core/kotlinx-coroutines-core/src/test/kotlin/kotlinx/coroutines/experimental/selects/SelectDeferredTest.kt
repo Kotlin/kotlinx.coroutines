@@ -128,4 +128,23 @@ class SelectDeferredTest : TestBase() {
         finish(9)
     }
 
+    @Test
+    fun testSelectCancel() = runTest(
+        expected = { it is JobCancellationException }
+    ) {
+        expect(1)
+        val d = CompletableDeferred<String>()
+        launch (coroutineContext) {
+            finish(3)
+            d.cancel() // will cancel after select starts
+        }
+        expect(2)
+        select<Unit> {
+            d.onAwait {
+                expectUnreached() // will not select
+            }
+        }
+        expectUnreached()
+    }
+
 }

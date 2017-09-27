@@ -141,11 +141,10 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
-    val eventLoop = if (context[ContinuationInterceptor] == null) EventLoopImpl(currentThread) else null
+    val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop(currentThread) else null
     val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop = eventLoop != null)
     coroutine.initParentJob(context[Job])
-    eventLoop?.initParentJob(coroutine)
     block.startCoroutine(coroutine, coroutine)
     return coroutine.joinBlocking()
 }
@@ -156,9 +155,9 @@ private open class StandaloneCoroutine(
     private val parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override fun afterCompletion(state: Any?, mode: Int) {
+    override fun onCancellation(exceptionally: CompletedExceptionally?) {
         // note the use of the parent's job context below!
-        if (state is CompletedExceptionally) handleCoroutineException(parentContext, state.exception)
+        if (exceptionally != null) handleCoroutineException(parentContext, exceptionally.exception)
     }
 }
 
@@ -209,10 +208,14 @@ private class BlockingCoroutine<T>(
     private val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
 
     init {
-        if (privateEventLoop) require(eventLoop is EventLoopImpl)
+        if (privateEventLoop) require(eventLoop is BlockingEventLoop)
     }
 
     override fun afterCompletion(state: Any?, mode: Int) {
+        // signal termination to event loop (don't accept more tasks)
+        if (privateEventLoop)
+            (eventLoop as BlockingEventLoop).isCompleted = true
+        // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
             LockSupport.unpark(blockedThread)
     }
@@ -228,11 +231,12 @@ private class BlockingCoroutine<T>(
             timeSource.parkNanos(this, parkNanos)
         }
         // process queued events (that could have been added after last processNextEvent and before cancel
-        if (privateEventLoop) (eventLoop as EventLoopImpl).shutdown()
+        if (privateEventLoop) (eventLoop as BlockingEventLoop).shutdown()
         timeSource.unregisterTimeLoopThread()
         // now return result
         val state = this.state
         (state as? CompletedExceptionally)?.let { throw it.exception }
         return state as T
     }
+
 }

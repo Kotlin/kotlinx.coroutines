@@ -117,7 +117,8 @@ class JobTest : TestBase() {
         val tryCancel = Try<Unit> { job.cancel() }
         check(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
-        check(tryCancel.exception is TestException)
+        check(tryCancel.exception is CompletionHandlerException)
+        check(tryCancel.exception!!.cause is TestException)
     }
 
     @Test

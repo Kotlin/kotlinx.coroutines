@@ -247,19 +247,10 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 }
 
-internal class EventLoopImpl(
+internal abstract class ThreadEventLoop(
     private val thread: Thread
 ) : EventLoopBase() {
-    private var parentJob: Job? = null
-
-    override val canComplete: Boolean get() = parentJob != null
-    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
     override fun isCorrectThread(): Boolean = Thread.currentThread() === thread
-
-    fun initParentJob(coroutine: Job) {
-        require(this.parentJob == null)
-        this.parentJob = coroutine
-    }
 
     override fun unpark() {
         if (Thread.currentThread() !== thread)
@@ -274,5 +265,23 @@ internal class EventLoopImpl(
         // reschedule the rest of delayed tasks
         rescheduleAllDelayed()
     }
+
 }
 
+private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
+    private var parentJob: Job? = null
+
+    override val canComplete: Boolean get() = parentJob != null
+    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
+
+    fun initParentJob(parentJob: Job) {
+        require(this.parentJob == null)
+        this.parentJob = parentJob
+    }
+}
+
+internal class BlockingEventLoop(thread: Thread) : ThreadEventLoop(thread) {
+    override val canComplete: Boolean get() = true
+    @Volatile
+    public override var isCompleted: Boolean = false
+}

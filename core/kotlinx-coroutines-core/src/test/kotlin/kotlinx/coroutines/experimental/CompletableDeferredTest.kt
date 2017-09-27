@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
+import org.hamcrest.core.IsNull
 import org.junit.Assert.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
@@ -30,8 +31,9 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.isCancelled, IsEqual(false))
         assertThat(c.isCompleted, IsEqual(false))
         assertThat(c.isCompletedExceptionally, IsEqual(false))
-        assertThrows<IllegalStateException> { c.getCompletionException() }
+        assertThrows<IllegalStateException> { c.getCancellationException() }
         assertThrows<IllegalStateException> { c.getCompleted() }
+        assertThrows<IllegalStateException> { c.getCompletionExceptionOrNull() }
     }
 
     @Test
@@ -48,8 +50,9 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.isCancelled, IsEqual(false))
         assertThat(c.isCompleted, IsEqual(true))
         assertThat(c.isCompletedExceptionally, IsEqual(false))
-        assertThat(c.getCompletionException(), IsInstanceOf(CancellationException::class.java))
+        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
         assertThat(c.getCompleted(), IsEqual("OK"))
+        assertThat(c.getCompletionExceptionOrNull(), IsNull())
     }
 
     @Test
@@ -66,8 +69,9 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.isCancelled, IsEqual(false))
         assertThat(c.isCompleted, IsEqual(true))
         assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCompletionException(), IsInstanceOf(TestException::class.java))
+        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
         assertThrows<TestException> { c.getCompleted() }
+        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(TestException::class.java))
     }
 
     @Test
@@ -84,8 +88,9 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.isCancelled, IsEqual(true))
         assertThat(c.isCompleted, IsEqual(true))
         assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCompletionException(), IsInstanceOf(CancellationException::class.java))
+        assertThat(c.getCancellationException(), IsInstanceOf(CancellationException::class.java))
         assertThrows<CancellationException> { c.getCompleted() }
+        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(CancellationException::class.java))
     }
 
     @Test
@@ -102,8 +107,9 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.isCancelled, IsEqual(true))
         assertThat(c.isCompleted, IsEqual(true))
         assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCompletionException(), IsInstanceOf(TestException::class.java))
+        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
         assertThrows<TestException> { c.getCompleted() }
+        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(TestException::class.java))
     }
 
     @Test

@@ -32,6 +32,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * | --------------------------------------- | ---------- | ------------- | -------------------------- | ------------- |
  * | _New_ (optional initial state)          | `false`    | `false`       | `false`                    | `false`       |
  * | _Active_ (default initial state)        | `true`     | `false`       | `false`                    | `false`       |
+ * | _Completing_ (optional transient state) | `true`     | `false`       | `false`                    | `false`       |
  * | _Cancelling_ (optional transient state) | `false`    | `false`       | `false`                    | `true`        |
  * | _Cancelled_ (final state)               | `false`    | `true`        | `true`                     | `true`        |
  * | _Resolved_  (final state)               | `false`    | `true`        | `false`                    | `false`       |
@@ -46,18 +47,19 @@ import kotlin.coroutines.experimental.CoroutineContext
  * _cancelling_ state immediately. A simple implementation of deferred -- [CompletableDeferred],
  * that is not backed by a coroutine, does not have a _cancelling_ state, but becomes _cancelled_
  * on [cancel] immediately. Coroutines, on the other hand, become _cancelled_ only when they finish
- * executing their code.
+ * executing their code and after all their [children][attachChild] complete.
  *
  * ```
- *    +-----+       start      +--------+   complete   +-----------+
- *    | New | ---------------> | Active | ---------+-> | Resolved  |
- *    +-----+                  +--------+          |   |(completed)|
- *       |                         |               |   +-----------+
- *       | cancel                  | cancel        |
- *       V                         V               |   +-----------+
- *  +-----------+   finish   +------------+        +-> |  Failed   |
- *  | Cancelled | <--------- | Cancelling |            |(completed)|
- *  |(completed)|            +------------+            +-----------+
+ *                                                     wait children
+ *    +-----+       start      +--------+   complete  +-------------+ finish +-----------+
+ *    | New | ---------------> | Active | ----------> | Completing  | ---+-> | Resolved  |
+ *    +-----+                  +--------+             +-------------+    |   |(completed)|
+ *       |                         |                        |            |   +-----------+
+ *       | cancel                  | cancel                 | cancel     |
+ *       V                         V                        |            |   +-----------+
+ *  +-----------+   finish   +------------+                 |            +-> |  Failed   |
+ *  | Cancelled | <--------- | Cancelling | <---------------+                |(completed)|
+ *  |(completed)|            +------------+                                  +-----------+
  *  +-----------+
  * ```
  *
@@ -68,7 +70,9 @@ import kotlin.coroutines.experimental.CoroutineContext
  * or the cancellation cause inside the coroutine.
  *
  * A deferred value can have a _parent_ job. A deferred value with a parent is cancelled when its parent is
- * cancelled or completes.
+ * cancelled or completes. Parent waits for all its [children][attachChild] to complete in _completing_ or
+ * _cancelling_ state. _Completing_ state is purely internal. For an outside observer a _completing_
+ * deferred is still active, while internally it is waiting for its children.
  *
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
@@ -108,9 +112,19 @@ public interface Deferred<out T> : Job {
      * [completed exceptionally][isCompletedExceptionally].
      *
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
-     * the value is already complete.
+     * the value is already complete. See also [getCompletionExceptionOrNull].
      */
     public fun getCompleted(): T
+
+    /**
+     * Returns *completion exception* result if this deferred [completed exceptionally][isCompletedExceptionally],
+     * `null` if it is completed normally, or throws [IllegalStateException] if this deferred value has not
+     * [completed][isCompleted] yet.
+     *
+     * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
+     * the value is already complete. See also [getCompleted].
+     */
+    public fun getCompletionExceptionOrNull(): Throwable?
 
     /**
      * @suppress **Deprecated**: Use `isActive`.

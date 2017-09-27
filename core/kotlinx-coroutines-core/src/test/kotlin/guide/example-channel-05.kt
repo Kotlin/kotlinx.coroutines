@@ -37,4 +37,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         println(prime)
         cur = filter(coroutineContext, cur, prime)
     }
+    coroutineContext.cancelChildren() // cancel all children to let main finish
 }

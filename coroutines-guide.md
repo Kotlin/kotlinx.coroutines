@@ -76,6 +76,7 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Job in the context](#job-in-the-context)
   * [Children of a coroutine](#children-of-a-coroutine)
   * [Combining contexts](#combining-contexts)
+  * [Parental responsibilities](#parental-responsibilities)
   * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
   * [Cancellation via explicit job](#cancellation-via-explicit-job)
 * [Channels](#channels)
@@ -322,7 +323,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
     job.cancel() // cancels the job
-    delay(1300L) // delay a bit to ensure it was cancelled indeed
+    job.join() // waits for job's completion 
     println("main: Now I can quit.")
 }
 ``` 
@@ -342,6 +343,7 @@ main: Now I can quit.
 <!--- TEST -->
 
 As soon as main invokes `job.cancel`, we don't see any output from the other coroutine because it was cancelled. 
+There is also an extension function [cancelAndJoin] that combines [cancel] and [join] invocations.
 
 ### Cancellation is cooperative
 
@@ -357,7 +359,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
         var nextPrintTime = startTime
         var i = 0
-        while (i < 10) { // computation loop, just wastes CPU
+        while (i < 5) { // computation loop, just wastes CPU
             // print a message twice a second
             if (System.currentTimeMillis() >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
@@ -367,15 +369,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    delay(1300L) // delay a bit to see if it was cancelled....
+    job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
 }
 ```
 
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-02.kt)
 
-Run it to see that it continues to print "I'm sleeping" even after cancellation.
+Run it to see that it continues to print "I'm sleeping" even after cancellation
+until the job completes by itself after five iterations.
 
 <!--- TEST 
 I'm sleeping 0 ...
@@ -384,7 +386,6 @@ I'm sleeping 2 ...
 main: I'm tired of waiting!
 I'm sleeping 3 ...
 I'm sleeping 4 ...
-I'm sleeping 5 ...
 main: Now I can quit.
 -->
 
@@ -394,7 +395,7 @@ There are two approaches to making computation code cancellable. The first one i
 invoke a suspending function. There is a [yield] function that is a good choice for that purpose.
 The other one is to explicitly check the cancellation status. Let us try the later approach. 
 
-Replace `while (i < 10)` in the previous example with `while (isActive)` and rerun it. 
+Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -412,15 +413,14 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    delay(1300L) // delay a bit to see if it was cancelled....
+    job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
 }
 ```
 
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-03.kt)
 
-As you can see, now this loop can be cancelled. [isActive][CoroutineScope.isActive] is a property that is available inside
+As you can see, now this loop is cancelled. [isActive][CoroutineScope.isActive] is a property that is available inside
 the code of coroutines via [CoroutineScope] object.
 
 <!--- TEST
@@ -451,15 +451,15 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    delay(1300L) // delay a bit to ensure it was cancelled indeed
+    job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
 }
 ``` 
 
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-04.kt)
 
-The example above produces the following output:
+Both [join] and [cancelAndJoin] wait for all the finalization actions to complete, so the example above 
+produces the following output:
 
 ```text
 I'm sleeping 0 ...
@@ -499,8 +499,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    delay(1300L) // delay a bit to ensure it was cancelled indeed
+    job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
 }
 ``` 
@@ -557,7 +556,33 @@ However, in this example we have used `withTimeout` right inside the `main` func
 Because cancellation is just an exception, all the resources will be closed in a usual way. 
 You can wrap the code with timeout in `try {...} catch (e: TimeoutCancellationException) {...}` block if 
 you need to do some additional action specifically on any kind of timeout or use [withTimeoutOrNull] function
-that is similar to [withTimeout], but returns `null` on timeout instead of throwing an exception.
+that is similar to [withTimeout], but returns `null` on timeout instead of throwing an exception:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val result = withTimeoutOrNull(1300L) {
+        repeat(1000) { i ->
+            println("I'm sleeping $i ...")
+            delay(500L)
+        }
+        "Done" // will get cancelled before it produces this result
+    }
+    println("Result is $result")
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-07.kt)
+
+There is no longer an exception when running this code:
+
+```text
+I'm sleeping 0 ...
+I'm sleeping 1 ...
+I'm sleeping 2 ...
+Result is null
+```
+
+<!--- TEST -->
 
 ## Composing suspending functions
 
@@ -928,10 +953,10 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 It produces something like
 
 ```
-My job is BlockingCoroutine{Active}@65ae6ba4
+My job is "coroutine#1":BlockingCoroutine{Active}@6d311334
 ```
 
-<!--- TEST lines.size == 1 && lines[0].startsWith("My job is BlockingCoroutine{Active}@") -->
+<!--- TEST lines.size == 1 && lines[0].startsWith("My job is \"coroutine#1\":BlockingCoroutine{Active}@") -->
 
 So, [isActive][CoroutineScope.isActive] in [CoroutineScope] is just a convenient shortcut for
 `coroutineContext[Job]!!.isActive`.
@@ -1019,6 +1044,42 @@ main: Who has survived request cancellation?
 
 <!--- TEST -->
 
+### Parental responsibilities 
+
+A parent coroutine always waits for completion of all its children. Parent does not have to explicitly track
+all the children it launches and it does not have to use [join] to wait for them at the end:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    // start a coroutine to process some kind of incoming request
+    val request = launch(CommonPool) {
+        repeat(3) { i -> // launch a few children jobs
+            launch(coroutineContext)  {
+                delay((i + 1) * 200L) // variable delay 200ms, 400ms, 600ms
+                println("Coroutine $i is done")
+            }
+        }
+        println("request: I'm done and I don't explicitly join my children that are still active")
+    }
+    request.join() // wait for completion of the request, including all its children
+    println("Now processing of the request is complete")
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-08.kt)
+
+The result is going to be:
+
+```text
+request: I'm done and I don't explicitly join my children that are still active
+Coroutine 0 is done
+Coroutine 1 is done
+Coroutine 2 is done
+Now processing of the request is complete
+```
+
+<!--- TEST -->
+
 ### Naming coroutines for debugging
 
 Automatically assigned ids are good when coroutines log often and you just need to correlate log records
@@ -1049,7 +1110,7 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-08.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-09.kt)
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
@@ -1074,6 +1135,8 @@ We can manage a lifecycle of our coroutines by creating an instance of [Job] tha
 the lifecycle of our activity. A job instance is created using [`Job()`][Job] factory function
 as the following example shows. We need to make sure that all the coroutines are started 
 with this job in their context and then a single invocation of [Job.cancel] terminates them all.
+Moreover, [Job.join] waits for all of them to complete, so we can also use [cancelAndJoin] here in
+this example:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1082,19 +1145,18 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val coroutines = List(10) { i ->
         // they are all children of our job object
         launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
-            delay(i * 200L) // variable delay 0ms, 200ms, 400ms, ... etc
+            delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
             println("Coroutine $i is done")
         }
     }
     println("Launched ${coroutines.size} coroutines")
     delay(500L) // delay for half a second
-    println("Cancelling job!")
-    job.cancel() // cancel our job.. !!!
-    delay(1000L) // delay for more to see if our coroutines are still working
+    println("Cancelling the job!")
+    job.cancelAndJoin() // cancel all our coroutines and wait for all of them to complete
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-09.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-10.kt)
 
 The output of this example is:
 
@@ -1102,16 +1164,17 @@ The output of this example is:
 Launched 10 coroutines
 Coroutine 0 is done
 Coroutine 1 is done
-Coroutine 2 is done
-Cancelling job!
+Cancelling the job!
 ```
 
 <!--- TEST -->
 
 As you can see, only the first three coroutines had printed a message and the others were cancelled 
-by a single  invocation of `job.cancel()`. So all we need to do in our hypothetical Android 
+by a single  invocation of `job.cancelAndJoin()`. So all we need to do in our hypothetical Android 
 application is to create a parent job object when activity is created, use it for child coroutines,
-and cancel it when activity is destroyed.
+and cancel it when activity is destroyed. We cannot `join` them in the case of Android lifecycle, 
+since it is synchronous, but this joining ability is useful when building backend services to ensure bounded 
+resource usage.
 
 ## Channels
 
@@ -1198,7 +1261,7 @@ You could abstract such a producer into a function that takes channel as its par
 to common sense that results must be returned from functions. 
 
 There is a convenience coroutine builder named [produce] that makes it easy to do it right on producer side,
-and an extension function [consumeEach], that can replace a `for` loop on the consumer side:
+and an extension function [consumeEach], that replaces a `for` loop on the consumer side:
 
 ```kotlin
 fun produceSquares() = produce<Int>(CommonPool) {
@@ -1271,7 +1334,7 @@ We don't have to cancel these coroutines in this example app, because
 [coroutines are like daemon threads](#coroutines-are-like-daemon-threads), 
 but in a larger app we'll need to stop our pipeline if we don't need it anymore.
 Alternatively, we could have run pipeline coroutines as 
-[children of a coroutine](#children-of-a-coroutine).
+[children of a coroutine](#children-of-a-coroutine) as is demonstrated in the following example.
 
 ### Prime numbers with pipeline
 
@@ -1307,7 +1370,10 @@ numbersFrom(2) -> filter(2) -> filter(3) -> filter(5) -> filter(7) ...
 ``` 
  
 The following example prints the first ten prime numbers, 
-running the whole pipeline in the context of the main thread:
+running the whole pipeline in the context of the main thread. Since all the coroutines are launched as
+children of the main [runBlocking] coroutine in its [coroutineContext][CoroutineScope.coroutineContext],
+we don't have to keep an explicit list of all the coroutine we have created. 
+We use [CoroutineContext.cancelChildren] extension to cancel all the children coroutines. 
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1317,6 +1383,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         println(prime)
         cur = filter(coroutineContext, cur, prime)
     }
+    coroutineContext.cancelChildren() // cancel all children to let main finish
 }
 ```
 
@@ -1427,7 +1494,7 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 ```
 
 Now, let us see what happens if we launch a couple of coroutines sending strings 
-(in this example we launch them in the context of the main thread):
+(in this example we launch them in the context of the main thread as main coroutine's children):
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -1437,6 +1504,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(6) { // receive first six
         println(channel.receive())
     }
+    coroutineContext.cancelChildren() // cancel all children to let main finish
 }
 ```
 
@@ -1470,7 +1538,7 @@ Take a look at the behavior of the following code:
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val channel = Channel<Int>(4) // create buffered channel
-    launch(coroutineContext) { // launch sender coroutine
+    val sender = launch(coroutineContext) { // launch sender coroutine
         repeat(10) {
             println("Sending $it") // print before sending each element
             channel.send(it) // will suspend when buffer is full
@@ -1478,6 +1546,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     // don't receive anything... just wait....
     delay(1000)
+    sender.cancel() // cancel sender coroutine
 }
 ```
 
@@ -1497,7 +1566,6 @@ Sending 4
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
 
-
 ### Channels are fair
 
 Send and receive operations to channels are _fair_ with respect to the order of their invocation from 
@@ -1514,7 +1582,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(coroutineContext) { player("pong", table) }
     table.send(Ball(0)) // serve the ball
     delay(1000) // delay 1 second
-    table.receive() // game over, grab the ball
+    coroutineContext.cancelChildren() // game over, cancel them
 }
 
 suspend fun player(name: String, table: Channel<Ball>) {
@@ -1538,10 +1606,12 @@ ping Ball(hits=1)
 pong Ball(hits=2)
 ping Ball(hits=3)
 pong Ball(hits=4)
-ping Ball(hits=5)
 ```
 
 <!--- TEST -->
+
+Note, that sometimes channels may produce executions that look unfair due to the nature of the executor
+that is being used. See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/111) for details.
 
 ## Shared mutable state and concurrency
 
@@ -1566,6 +1636,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 <!--- INCLUDE .*/example-sync-06.kt
 import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
 -->
 
 <!--- INCLUDE .*/example-sync-07.kt
@@ -1758,15 +1829,18 @@ that is never executed concurrently. In a blocking world you'd typically use `sy
 Coroutine's alternative is called [Mutex]. It has [lock][Mutex.lock] and [unlock][Mutex.unlock] functions to 
 delimit a critical section. The key difference is that `Mutex.lock` is a suspending function. It does not block a thread.
 
+There is also [Mutex.withLock] extension function that conveniently represents 
+`mutex.lock(); try { ... } finally { mutex.unlock() }` pattern: 
+
 ```kotlin
 val mutex = Mutex()
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     massiveRun(CommonPool) {
-        mutex.lock()
-        try { counter++ }
-        finally { mutex.unlock() }
+        mutex.withLock {
+            counter++        
+        }
     }
     println("Counter = $counter")
 }
@@ -1920,6 +1994,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
+    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines    
 }
 ```
 
@@ -1979,6 +2054,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
     }
+    coroutineContext.cancelChildren()    
 }
 ```
 
@@ -2017,8 +2093,12 @@ with a biased nature of selection.
 Let us write an example of producer of integers that sends its values to a `side` channel when 
 the consumers on its primary channel cannot keep up with it:
 
+<!--- INCLUDE
+import kotlin.coroutines.experimental.CoroutineContext
+-->
+
 ```kotlin
-fun produceNumbers(side: SendChannel<Int>) = produce<Int>(CommonPool) {
+fun produceNumbers(context: CoroutineContext, side: SendChannel<Int>) = produce<Int>(context) {
     for (num in 1..10) { // produce 10 numbers from 1 to 10
         delay(100) // every 100 ms
         select<Unit> {
@@ -2037,11 +2117,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(coroutineContext) { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
     }
-    produceNumbers(side).consumeEach { 
+    produceNumbers(coroutineContext, side).consumeEach { 
         println("Consuming $it")
         delay(250) // let us digest the consumed number properly, do not hurry
     }
     println("Done consuming")
+    coroutineContext.cancelChildren()    
 }
 ``` 
  
@@ -2210,6 +2291,7 @@ Channel was closed
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
+[cancelAndJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/cancel-and-join.html
 [CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/is-active.html
@@ -2230,6 +2312,7 @@ Channel was closed
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
+[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-completable-deferred/index.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->

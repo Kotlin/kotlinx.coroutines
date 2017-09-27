@@ -73,7 +73,6 @@ class GuideTest {
             "main: I'm tired of waiting!",
             "I'm sleeping 3 ...",
             "I'm sleeping 4 ...",
-            "I'm sleeping 5 ...",
             "main: Now I can quit."
         )
     }
@@ -121,6 +120,16 @@ class GuideTest {
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
             "Exception in thread \"main\" kotlinx.coroutines.experimental.TimeoutCancellationException: Timed out waiting for 1300 MILLISECONDS"
+        )
+    }
+
+    @Test
+    fun testGuideCancelExample07() {
+        test("GuideCancelExample07") { guide.cancel.example07.main(emptyArray()) }.verifyLines(
+            "I'm sleeping 0 ...",
+            "I'm sleeping 1 ...",
+            "I'm sleeping 2 ...",
+            "Result is null"
         )
     }
 
@@ -197,7 +206,7 @@ class GuideTest {
     @Test
     fun testGuideContextExample05() {
         test("GuideContextExample05") { guide.context.example05.main(emptyArray()) }.also { lines ->
-            check(lines.size == 1 && lines[0].startsWith("My job is BlockingCoroutine{Active}@"))
+            check(lines.size == 1 && lines[0].startsWith("My job is \"coroutine#1\":BlockingCoroutine{Active}@"))
         }
     }
 
@@ -221,7 +230,18 @@ class GuideTest {
 
     @Test
     fun testGuideContextExample08() {
-        test("GuideContextExample08") { guide.context.example08.main(emptyArray()) }.verifyLinesFlexibleThread(
+        test("GuideContextExample08") { guide.context.example08.main(emptyArray()) }.verifyLines(
+            "request: I'm done and I don't explicitly join my children that are still active",
+            "Coroutine 0 is done",
+            "Coroutine 1 is done",
+            "Coroutine 2 is done",
+            "Now processing of the request is complete"
+        )
+    }
+
+    @Test
+    fun testGuideContextExample09() {
+        test("GuideContextExample09") { guide.context.example09.main(emptyArray()) }.verifyLinesFlexibleThread(
             "[main @main#1] Started main coroutine",
             "[ForkJoinPool.commonPool-worker-1 @v1coroutine#2] Computing v1",
             "[ForkJoinPool.commonPool-worker-2 @v2coroutine#3] Computing v2",
@@ -230,13 +250,12 @@ class GuideTest {
     }
 
     @Test
-    fun testGuideContextExample09() {
-        test("GuideContextExample09") { guide.context.example09.main(emptyArray()) }.verifyLines(
+    fun testGuideContextExample10() {
+        test("GuideContextExample10") { guide.context.example10.main(emptyArray()) }.verifyLines(
             "Launched 10 coroutines",
             "Coroutine 0 is done",
             "Coroutine 1 is done",
-            "Coroutine 2 is done",
-            "Cancelling job!"
+            "Cancelling the job!"
         )
     }
 
@@ -340,8 +359,7 @@ class GuideTest {
             "ping Ball(hits=1)",
             "pong Ball(hits=2)",
             "ping Ball(hits=3)",
-            "pong Ball(hits=4)",
-            "ping Ball(hits=5)"
+            "pong Ball(hits=4)"
         )
     }
 

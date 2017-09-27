@@ -20,9 +20,12 @@ import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
- * Abstract class to simplify writing of coroutine completion objects that
- * implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
- * It stores the result of continuation in the state of the job.
+ * Abstract class for coroutines.
+ *
+ *  * Coroutines implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
+ *  * Coroutine stores the result of continuation in the state of the job.
+ *  * Coroutine waits for children coroutines to finish before completing.
+ *  * Coroutines are cancelled through an intermediate _cancelling_ state.
  *
  * @param active when `true` coroutine is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
@@ -35,35 +38,26 @@ public abstract class AbstractCoroutine<in T>(
     public final override val context: CoroutineContext = parentContext + this
     public final override val coroutineContext: CoroutineContext get() = context
 
+    // all coroutines are cancelled through an intermediate cancelling state
     final override val hasCancellingState: Boolean get() = true
 
+    protected open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
+
     final override fun resume(value: T) {
-        loopOnState { state ->
-            when (state) {
-                is Incomplete -> if (updateState(state, value, MODE_ATOMIC_DEFAULT)) return
-                is Cancelled -> return // ignore resumes on cancelled continuation
-                else -> error("Already resumed, but got value $value")
-            }
-        }
+        makeCompleting(value, defaultResumeMode)
     }
 
     final override fun resumeWithException(exception: Throwable) {
-        loopOnState { state ->
-            when (state) {
-                is Incomplete -> {
-                    if (updateState(state, CompletedExceptionally(exception), MODE_ATOMIC_DEFAULT)) return
-                }
-                is Cancelled -> {
-                    // ignore resumes on cancelled continuation, but handle exception if a different one is here
-                    if (exception !== state.exception) handleCoroutineException(context, exception)
-                    return
-                }
-                else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)
-            }
-        }
+        makeCompleting(CompletedExceptionally(exception), defaultResumeMode)
     }
 
     final override fun handleException(exception: Throwable) {
         handleCoroutineException(parentContext, exception)
     }
+
+    override fun nameString(): String {
+        val coroutineName = context.coroutineName ?: return super.nameString()
+        return "\"$coroutineName\":${super.nameString()}"
+    }
 }
+

@@ -53,4 +53,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
+    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines    
 }

@@ -24,10 +24,40 @@ import java.io.IOException
 
 class WithTimeoutOrNullTest : TestBase() {
     /**
+     * Tests a case of no timeout and no suspension inside.
+     */
+    @Test
+    fun testBasicNoSuspend() = runTest {
+        expect(1)
+        val result = withTimeoutOrNull(10_000) {
+            expect(2)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(3)
+    }
+
+    /**
+     * Tests a case of no timeout and one suspension inside.
+     */
+    @Test
+    fun testBasicSuspend() = runTest {
+        expect(1)
+        val result = withTimeoutOrNull(10_000) {
+            expect(2)
+            yield()
+            expect(3)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(4)
+    }
+
+    /**
      * Tests property dispatching of `withTimeoutOrNull` blocks
      */
     @Test
-    fun testDispatch() = runBlocking {
+    fun testDispatch() = runTest {
         expect(1)
         launch(coroutineContext) {
             expect(4)
@@ -49,7 +79,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testNullOnTimeout() = runBlocking {
+    fun testNullOnTimeout() = runTest {
         expect(1)
         val result = withTimeoutOrNull(100) {
             expect(2)
@@ -62,7 +92,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testSuppressException() = runBlocking {
+    fun testSuppressException() = runTest {
         expect(1)
         val result = withTimeoutOrNull(100) {
             expect(2)
@@ -73,24 +103,28 @@ class WithTimeoutOrNullTest : TestBase() {
             }
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertThat(result, IsNull())
         finish(4)
     }
 
-    @Test(expected = IOException::class)
-    fun testReplaceException() = runBlocking {
+    @Test
+    fun testReplaceException() = runTest(
+        unhandled = listOf({ it -> it is UnexpectedCoroutineException && it.cause is IOException })
+    ) {
         expect(1)
-        withTimeoutOrNull(100) {
+        val result = withTimeoutOrNull(100) {
             expect(2)
             try {
                 delay(1000)
             } catch (e: CancellationException) {
-                finish(3)
+                expect(3)
                 throw IOException(e)
             }
+            expectUnreached()
             "OK"
         }
-        expectUnreached()
+        assertThat(result, IsNull())
+        finish(4)
     }
 
     /**

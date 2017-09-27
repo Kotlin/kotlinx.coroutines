@@ -22,6 +22,7 @@ import kotlin.coroutines.experimental.Continuation
 @PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
 @PublishedApi internal const val MODE_DIRECT = 2         // when the context is right just invoke the delegate continuation direct
 @PublishedApi internal const val MODE_UNDISPATCHED = 3   // when the thread is right, but need to mark it with current coroutine
+@PublishedApi internal const val MODE_IGNORE = 4         // don't do anything
 
 fun <T> Continuation<T>.resumeMode(value: T, mode: Int) {
     when (mode) {
@@ -29,6 +30,7 @@ fun <T> Continuation<T>.resumeMode(value: T, mode: Int) {
         MODE_CANCELLABLE -> resumeCancellable(value)
         MODE_DIRECT -> resumeDirect(value)
         MODE_UNDISPATCHED -> (this as DispatchedContinuation).resumeUndispatched(value)
+        MODE_IGNORE -> {}
         else -> error("Invalid mode $mode")
     }
 }
@@ -39,6 +41,7 @@ fun <T> Continuation<T>.resumeWithExceptionMode(exception: Throwable, mode: Int)
         MODE_CANCELLABLE -> resumeCancellableWithException(exception)
         MODE_DIRECT -> resumeDirectWithException(exception)
         MODE_UNDISPATCHED -> (this as DispatchedContinuation).resumeUndispatchedWithException(exception)
+        MODE_IGNORE -> {}
         else -> error("Invalid mode $mode")
     }
 }

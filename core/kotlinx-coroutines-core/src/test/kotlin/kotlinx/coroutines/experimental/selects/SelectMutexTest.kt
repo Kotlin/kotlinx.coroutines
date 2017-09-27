@@ -18,7 +18,6 @@ package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.MutexImpl
 import kotlinx.coroutines.experimental.yield
@@ -28,11 +27,11 @@ import org.junit.Test
 
 class SelectMutexTest : TestBase() {
     @Test
-    fun testSelectLock() = runBlocking<Unit> {
+    fun testSelectLock() = runTest {
         val mutex = Mutex()
         expect(1)
         launch(coroutineContext) { // ensure that it is not scheduled earlier than needed
-            expectUnreached() // will terminate before it has a chance to start
+            finish(4) // after main exits
         }
         val res = select<String> {
             mutex.onLock {
@@ -42,11 +41,12 @@ class SelectMutexTest : TestBase() {
             }
         }
         assertEquals("OK", res)
-        finish(3)
+        expect(3)
+        // will wait for the first coroutine
     }
 
     @Test
-    fun testSelectLockWait() = runBlocking<Unit> {
+    fun testSelectLockWait() = runTest {
         val mutex = Mutex(true) // locked
         expect(1)
         launch(coroutineContext) {
@@ -71,7 +71,7 @@ class SelectMutexTest : TestBase() {
     }
 
     @Test
-    fun testSelectCancelledResourceRelease() = runBlocking<Unit> {
+    fun testSelectCancelledResourceRelease() = runTest {
         val n = 1_000 * stressTestMultiplier
         val mutex = Mutex(true) as MutexImpl // locked
         expect(1)

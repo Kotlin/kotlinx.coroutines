@@ -22,7 +22,6 @@ import io.reactivex.functions.Cancellable
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.AbstractCoroutine
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.handleCoroutineException
@@ -58,7 +57,6 @@ public fun <T> rxObservable(
     block.startCoroutine(coroutine, coroutine)
 }
 
-private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
 private const val OPEN = 0        // open channel, still working
 private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2  // already signalled subscriber onCompleted/onError
@@ -78,16 +76,13 @@ private class RxObservableCoroutine<T>(
     override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancel(cause)
 
-    private fun sendException() =
-        (state as? CompletedExceptionally)?.cause ?: ClosedSendChannelException(CLOSED_MESSAGE)
-
     override fun offer(element: T): Boolean {
         if (!mutex.tryLock()) return false
         doLockedNext(element)
         return true
     }
 
-    public suspend override fun send(element: T): Unit {
+    public suspend override fun send(element: T) {
         // fast-path -- try send without suspension
         if (offer(element)) return
         // slow-path does suspend
@@ -116,7 +111,7 @@ private class RxObservableCoroutine<T>(
         // check if already closed for send
         if (!isActive) {
             doLockedSignalCompleted()
-            throw sendException()
+            throw getCancellationException()
         }
         // notify subscriber
         try {
@@ -128,7 +123,7 @@ private class RxObservableCoroutine<T>(
             } finally {
                 doLockedSignalCompleted()
             }
-            throw sendException()
+            throw getCancellationException()
         }
         /*
            There is no sense to check for `isActive` before doing `unlock`, because cancellation/completion might
@@ -162,7 +157,7 @@ private class RxObservableCoroutine<T>(
         }
     }
 
-    override fun onCancellation() {
+    override fun onCancellation(exceptionally: CompletedExceptionally?) {
         if (!_signal.compareAndSet(OPEN, CLOSED)) return // abort, other thread invoked doLockedSignalCompleted
         if (mutex.tryLock()) // if we can acquire the lock
             doLockedSignalCompleted()

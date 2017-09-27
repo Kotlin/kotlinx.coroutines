@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
@@ -29,10 +30,14 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  */
 suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
     val context = cont.context
-    val job = context[Job]
-    if (job != null && !job.isActive) throw job.getCompletionException()
+    context.checkCompletion()
     if (cont !is DispatchedContinuation<Unit>) return@sc Unit
     if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
     cont.dispatchYield(Unit)
     COROUTINE_SUSPENDED
+}
+
+internal fun CoroutineContext.checkCompletion() {
+    val job = get(Job)
+    if (job != null && !job.isActive) throw job.getCancellationException()
 }

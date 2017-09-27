@@ -89,33 +89,40 @@ public fun newCoroutineContext(context: CoroutineContext): CoroutineContext =
  * Executes a block using a given coroutine context.
  */
 internal inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
-    val oldName = updateContext(context)
+    val oldName = context.updateThreadContext()
     try {
         return block()
     } finally {
-        restoreContext(oldName)
+        restoreThreadContext(oldName)
     }
 }
 
 @PublishedApi
-internal fun updateContext(context: CoroutineContext): String? {
+internal fun CoroutineContext.updateThreadContext(): String? {
     if (!DEBUG) return null
-    val newId = context[CoroutineId] ?: return null
+    val coroutineId = this[CoroutineId] ?: return null
+    val coroutineName = this[CoroutineName]?.name ?: "coroutine"
     val currentThread = Thread.currentThread()
     val oldName = currentThread.name
-    val coroutineName = context[CoroutineName]?.name ?: "coroutine"
     currentThread.name = buildString(oldName.length + coroutineName.length + 10) {
         append(oldName)
         append(" @")
         append(coroutineName)
         append('#')
-        append(newId.id)
+        append(coroutineId.id)
     }
     return oldName
 }
 
+internal val CoroutineContext.coroutineName: String? get() {
+    if (!DEBUG) return null
+    val coroutineId = this[CoroutineId] ?: return null
+    val coroutineName = this[CoroutineName]?.name ?: "coroutine"
+    return "$coroutineName#${coroutineId.id}"
+}
+
 @PublishedApi
-internal fun restoreContext(oldName: String?) {
+internal fun restoreThreadContext(oldName: String?) {
     if (oldName != null) Thread.currentThread().name = oldName
 }
 

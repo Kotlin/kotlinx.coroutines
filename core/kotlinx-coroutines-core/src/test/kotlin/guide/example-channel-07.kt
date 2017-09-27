@@ -34,4 +34,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(6) { // receive first six
         println(channel.receive())
     }
+    coroutineContext.cancelChildren() // cancel all children to let main finish
 }

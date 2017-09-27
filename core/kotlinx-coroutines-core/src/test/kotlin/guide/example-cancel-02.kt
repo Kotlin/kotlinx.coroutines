@@ -24,7 +24,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val job = launch(CommonPool) {
         var nextPrintTime = startTime
         var i = 0
-        while (i < 10) { // computation loop, just wastes CPU
+        while (i < 5) { // computation loop, just wastes CPU
             // print a message twice a second
             if (System.currentTimeMillis() >= nextPrintTime) {
                 println("I'm sleeping ${i++} ...")
@@ -34,7 +34,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     delay(1300L) // delay a bit
     println("main: I'm tired of waiting!")
-    job.cancel() // cancels the job
-    delay(1300L) // delay a bit to see if it was cancelled....
+    job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
 }

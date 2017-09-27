@@ -28,7 +28,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(coroutineContext) { player("pong", table) }
     table.send(Ball(0)) // serve the ball
     delay(1000) // delay 1 second
-    table.receive() // game over, grab the ball
+    coroutineContext.cancelChildren() // game over, cancel them
 }
 
 suspend fun player(name: String, table: Channel<Ball>) {

@@ -15,20 +15,17 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.channel.example08
+package guide.cancel.example07
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val channel = Channel<Int>(4) // create buffered channel
-    val sender = launch(coroutineContext) { // launch sender coroutine
-        repeat(10) {
-            println("Sending $it") // print before sending each element
-            channel.send(it) // will suspend when buffer is full
+    val result = withTimeoutOrNull(1300L) {
+        repeat(1000) { i ->
+            println("I'm sleeping $i ...")
+            delay(500L)
         }
+        "Done" // will get cancelled before it produces this result
     }
-    // don't receive anything... just wait....
-    delay(1000)
-    sender.cancel() // cancel sender coroutine
+    println("Result is $result")
 }
