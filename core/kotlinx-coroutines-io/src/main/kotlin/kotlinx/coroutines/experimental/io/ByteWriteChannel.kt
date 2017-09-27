@@ -1,6 +1,8 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
+import kotlinx.coroutines.experimental.io.packet.buildPacket
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
@@ -174,4 +176,9 @@ suspend fun ByteWriteChannel.writePacketSuspend(builder: suspend ByteWritePacket
     writePacket(buildPacket { builder() })
 }
 
-class ClosedWriteChannelException(message: String?) : CancellationException(message)
+/**
+ * Indicates attempt to write on [isClosedForWrite][ByteWriteChannel.isClosedForWrite] channel
+ * that was closed without a cause. A _failed_ channel rethrows the original [close][ByteWriteChannel.close] cause
+ * exception on send attempts.
+ */
+public class ClosedWriteChannelException(message: String?) : CancellationException(message)

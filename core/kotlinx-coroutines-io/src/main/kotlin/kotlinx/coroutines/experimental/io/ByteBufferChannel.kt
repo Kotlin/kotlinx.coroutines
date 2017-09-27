@@ -4,12 +4,13 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.CancellableContinuation
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.ClosedSendChannelException
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.suspendCancellableCoroutine
 import java.nio.BufferOverflowException
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+
+internal const val DEFAULT_CLOSE_MESSAGE = "Byte channel was closed"
 
 // implementation for ByteChannel
 internal class ByteBufferChannel(
@@ -1276,7 +1277,8 @@ internal class ByteBufferChannel(
                 c.resume(state.capacity.availableForRead > 0)
         }
 
-        WriteOp.getAndSet(this, null)?.tryResumeWithException(cause ?: ClosedSendChannelException(null))
+        WriteOp.getAndSet(this, null)?.tryResumeWithException(cause ?:
+            ClosedWriteChannelException(DEFAULT_CLOSE_MESSAGE))
     }
 
     private tailrec suspend fun readSuspend(size: Int): Boolean {
