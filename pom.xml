@@ -48,7 +48,7 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
-        <core.docs.file>${highest-basedir}/core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
+        <core.docs.file>${project.basedir}/../../core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
     </properties>
 
     <prerequisites>
@@ -279,23 +279,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- determine highest-basedir -->
-            <plugin>
-                <groupId>org.commonjava.maven.plugins</groupId>
-                <artifactId>directory-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>directories</id>
-                        <goals>
-                            <goal>highest-basedir</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                        <configuration>
-                            <property>highest-basedir</property>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -377,11 +360,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>1.3</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.commonjava.maven.plugins</groupId>
-                    <artifactId>directory-maven-plugin</artifactId>
-                    <version>0.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
