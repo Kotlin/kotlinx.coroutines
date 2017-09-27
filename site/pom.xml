@@ -36,6 +36,11 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-io</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-reactive</artifactId>
             <version>${project.version}</version>
         </dependency>
