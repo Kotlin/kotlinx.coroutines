@@ -949,9 +949,10 @@ internal class ByteBufferChannel(
                     written = 0
                     writing {
                         val size = minOf(remaining(), node.readRemaining)
-                        if (!it.tryWriteExact(size)) throw IllegalStateException()
-                        written = node.read(this, size)
-                        bytesWritten(it, size)
+                        if (it.tryWriteExact(size)) {
+                            written = node.read(this, size)
+                            bytesWritten(it, size)
+                        }
                     }
                 } catch (t: Throwable) {
                     node.release()
