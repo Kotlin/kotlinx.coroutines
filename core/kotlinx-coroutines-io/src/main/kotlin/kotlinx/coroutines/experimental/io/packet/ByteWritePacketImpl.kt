@@ -81,6 +81,12 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         size += 4
     }
 
+    override fun writeDirect(size: Int, block: (ByteBuffer) -> Unit) {
+        write(size) {
+            it.writeDirect(size, block)
+        }
+    }
+
     override fun append(c: Char): ByteWritePacket {
         write(3) {
             size += it.putUtf8Char(c.toInt() and 0xffff)

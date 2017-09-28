@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental.io.buffers
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.io.*
 import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
 
 internal class BufferView private constructor(private var content: ByteBuffer,
                                                  private val origin: BufferView?,
@@ -32,8 +33,8 @@ internal class BufferView private constructor(private var content: ByteBuffer,
             field = value
         }
 
-    val readRemaining: Int get() = writePosition - readPosition
-    val writeRemaining: Int get() = limit - writePosition
+    inline val readRemaining: Int get() = writePosition - readPosition
+    inline val writeRemaining: Int get() = limit - writePosition
 
     val startGap: Int get() = readPosition
     val endGap: Int get() = limit - writePosition
@@ -268,9 +269,21 @@ internal class BufferView private constructor(private var content: ByteBuffer,
                 unlink()
                 origin.release()
             } else {
-                pool?.recycle(this)
+                pool?.recycle(this) ?: unlink()
             }
         }
+    }
+
+    internal fun writeDirect(size: Int, block: (ByteBuffer) -> Unit) {
+        val rem = writeRemaining
+        require (size <= rem) { "size $size is greater than buffer's remaining capacity $rem" }
+        val buffer = writeDuplicated(rem)
+        val positionBefore = buffer.position()
+        block(buffer)
+        val delta = buffer.position() - positionBefore
+        if (delta < 0 || delta > rem) throw IllegalStateException("Wrong buffer position change: $delta (position should be moved forward only by at most size bytes (size =  $size)")
+
+        writePosition += delta
     }
 
     private fun readDuplicated(limit: Int = Int.MAX_VALUE): ByteBuffer {
@@ -323,8 +336,8 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         }
     }
 
-    internal object Pool : ObjectPoolImpl<BufferView>(BufferViewCapacity) {
-        override fun produceInstance() = BufferView(ByteBuffer.allocateDirect(BufferViewContentSize), this)
+    internal object Pool : ObjectPoolImpl<BufferView>(PACKET_BUFFER_POOL_SIZE) {
+        override fun produceInstance() = BufferView(ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE), this)
         override fun clearInstance(instance: BufferView): BufferView {
             return instance.apply {
                 next = null
@@ -344,9 +357,6 @@ internal class BufferView private constructor(private var content: ByteBuffer,
     }
 
     companion object {
-        private val BufferViewContentSize = 4096
-        private val BufferViewCapacity = 1024
-
         private val EmptyBuffer = ByteBuffer.allocate(0)!!
 
         val Empty = BufferView(EmptyBuffer)

@@ -4,7 +4,7 @@ import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.*
 
 internal val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
-private val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 128)
+internal val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 128)
 internal val PACKET_MAX_COPY_SIZE = getIOIntProperty("PacketMaxCopySize", 500)
 
 internal inline fun buildPacket(pool: ObjectPool<BufferView> = BufferView.Pool, headerSizeHint: Int, block: ByteWritePacket.() -> Unit): ByteReadPacket {

@@ -433,5 +433,16 @@ class BytePacketReaderWriterTest {
         assertEquals(100000, inner.remaining)
     }
 
+    @Test
+    fun testWriteDirect() {
+        val packet = buildPacket {
+            writeDirect { bb ->
+                bb.putLong(0x1234567812345678L)
+            }
+        }
+
+        assertEquals(0x1234567812345678L, packet.readLong())
+    }
+
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pool, 0, block)
 }

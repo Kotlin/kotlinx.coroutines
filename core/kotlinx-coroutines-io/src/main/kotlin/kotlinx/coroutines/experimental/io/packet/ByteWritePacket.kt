@@ -34,6 +34,8 @@ interface ByteWritePacket : Appendable {
     @Deprecated("Use copy() instead", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("writePacket(p.copy())"))
     fun writePacketUnconsumed(p: ByteReadPacket) = writePacket(p.copy())
 
+    fun writeDirect(size: Int = 1, block: (ByteBuffer) -> Unit)
+
     override fun append(csq: CharSequence): ByteWritePacket {
         append(csq, 0, csq.length)
         return this
