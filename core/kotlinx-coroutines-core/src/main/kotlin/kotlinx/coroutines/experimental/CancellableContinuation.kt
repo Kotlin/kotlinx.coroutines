@@ -249,13 +249,13 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
-        val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
-        resumeImpl(value, if (dc.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
+        val dc = delegate as? DispatchedContinuation
+        resumeImpl(value, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
-        val dc = delegate as? DispatchedContinuation ?: throw IllegalArgumentException("Must be used with DispatchedContinuation")
-        resumeWithExceptionImpl(exception, if (dc.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
+        val dc = delegate as? DispatchedContinuation
+        resumeWithExceptionImpl(exception, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
 
     override fun nameString(): String =
