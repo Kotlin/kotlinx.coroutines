@@ -30,6 +30,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  *   The coroutine will resume in whatever thread that is used by the
  *   corresponding suspending function, without confining it to any specific thread or pool.
  *   This in an appropriate choice for IO-intensive coroutines that do not consume CPU resources.
+ * * [DefaultDispatcher] -- is used by all standard builder if no dispatcher nor any other [ContinuationInterceptor]
+ *   is specified in their context. It is currently equal to [CommonPool] (subject to change).
  * * [CommonPool] -- immediately returns from the coroutine builder and schedules coroutine execution to
  *   a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.

@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.selects.SelectClause1
 import kotlinx.coroutines.experimental.selects.select
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -137,10 +138,12 @@ public interface Deferred<out T> : Job {
  * Creates new coroutine and returns its future result as an implementation of [Deferred].
  *
  * The running coroutine is cancelled when the resulting object is [cancelled][Job.cancel].
- * The [context] for the new coroutine must be explicitly specified.
- * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
+ *
+ * The [context] for the new coroutine can be explicitly specified.
+ * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -148,12 +151,12 @@ public interface Deferred<out T> : Job {
  * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
  * function and will be started implicitly on the first invocation of [join][Job.join] or [await][Deferred.await].
  *
- * @param context context of the coroutine
- * @param start coroutine start option
- * @param block the coroutine code
+ * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param block the coroutine code.
  */
 public fun <T> async(
-    context: CoroutineContext,
+    context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> {

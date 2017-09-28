@@ -16,10 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.newCoroutineContext
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
@@ -72,22 +70,23 @@ typealias ChannelJob<E> = ProducerJob<E>
  * when the coroutine completes.
  * The running coroutine is cancelled when the its job is [cancelled][Job.cancel].
  *
- * The [context] for the new coroutine must be explicitly specified.
- * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
+ * The [context] for the new coroutine can be explicitly specified.
+ * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine
- * @param capacity capacity of the channel's buffer (no buffer by default)
- * @param block the coroutine code
+ * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param capacity capacity of the channel's buffer (no buffer by default).
+ * @param block the coroutine code.
  */
 public fun <E> produce(
-    context: CoroutineContext,
+    context: CoroutineContext = DefaultDispatcher,
     capacity: Int = 0,
     block: suspend ProducerScope<E>.() -> Unit
 ): ProducerJob<E> {

@@ -28,10 +28,11 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
  * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
- * The [context] for the new coroutine must be explicitly specified.
- * See [CoroutineDispatcher] for the standard [context] implementations that are provided by `kotlinx.coroutines`.
+ * The [context] for the new coroutine can be explicitly specified.
+ * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -45,12 +46,12 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
 
- * @param context context of the coroutine
- * @param start coroutine start option
- * @param block the coroutine code
+ * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param block the coroutine code.
  */
 public fun launch(
-    context: CoroutineContext,
+    context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
 ): Job {
@@ -137,6 +138,9 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
  * this `runBlocking` invocation throws [InterruptedException].
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ *
+ * @param context context of the coroutine. The default value is an implementation of [EventLoop].
+ * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {

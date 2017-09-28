@@ -17,24 +17,22 @@
 package kotlinx.coroutines.experimental.reactive
 
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.experimental.AbstractCoroutine
-import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.handleCoroutineException
-import kotlinx.coroutines.experimental.newCoroutineContext
 import kotlinx.coroutines.experimental.selects.SelectClause2
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.sync.Mutex
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
- * Every time the returned publisher is subscribed, it starts a new coroutine in the specified [context].
+ * Every time the returned publisher is subscribed, it starts a new coroutine.
  * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
  *
  * Invocations of `send` are suspended appropriately when subscribers apply back-pressure and to ensure that
@@ -45,9 +43,19 @@ import kotlin.coroutines.experimental.startCoroutine
  * | `send`                                       | `onNext`
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
+ *
+ * The [context] for the new coroutine can be explicitly specified.
+ * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
+ * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ *
+ * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param block the coroutine code.
  */
+@JvmOverloads // for binary compatibility with older code compiled before context had a default
 public fun <T> publish(
-    context: CoroutineContext,
+    context: CoroutineContext = DefaultDispatcher,
     block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     val newContext = newCoroutineContext(context)

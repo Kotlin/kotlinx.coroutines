@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
 private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
@@ -65,7 +66,16 @@ public object Unconfined : CoroutineDispatcher() {
 public typealias Here = Unconfined
 
 /**
- * Creates context for the new coroutine with optional support for debugging facilities (when turned on).
+ * This is the default [CoroutineDispatcher] that is used by all standard builders like
+ * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
+ *
+ * It is currently equal to [CommonPool], but the value is subject to change in the future.
+ */
+public val DefaultDispatcher: CoroutineDispatcher = CommonPool
+
+/**
+ * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
+ * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
  *
  * **Debugging facilities:** In debug mode every coroutine is assigned a unique consecutive identifier.
  * Every thread that executes a coroutine has its name modified to include the name and identifier of the
@@ -82,8 +92,11 @@ public typealias Here = Unconfined
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
  */
-public fun newCoroutineContext(context: CoroutineContext): CoroutineContext =
-    if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
+public fun newCoroutineContext(context: CoroutineContext): CoroutineContext {
+    val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
+    return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
+        debug + DefaultDispatcher else debug
+}
 
 /**
  * Executes a block using a given coroutine context.

@@ -15,19 +15,17 @@
  */
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.AbstractCoroutine
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.newCoroutineContext
+import kotlinx.coroutines.experimental.*
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import reactor.core.publisher.MonoSink
+import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
 
 /**
  * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
- * Every time the returned mono is subscribed, it starts a new coroutine in the specified [context].
+ * Every time the returned mono is subscribed, it starts a new coroutine.
  * Coroutine returns a single, possibly null value. Unsubscribing cancels running coroutine.
  *
  * | **Coroutine action**                  | **Signal to sink**
@@ -35,10 +33,20 @@ import kotlin.coroutines.experimental.startCoroutine
  * | Returns a non-null value              | `success(value)`
  * | Returns a null                        | `success`
  * | Failure with exception or unsubscribe | `error`
+ *
+ * The [context] for the new coroutine can be explicitly specified.
+ * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
+ * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ *
+ * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param block the coroutine code.
  */
+@JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> mono(
-        context: CoroutineContext,
-        block: suspend CoroutineScope.() -> T?
+    context: CoroutineContext = DefaultDispatcher,
+    block: suspend CoroutineScope.() -> T?
 ): Mono<T> = Mono.create { sink ->
     val newContext = newCoroutineContext(context)
     val coroutine = MonoCoroutine(newContext, sink)
