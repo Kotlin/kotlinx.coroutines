@@ -28,6 +28,10 @@
     <artifactId>kotlinx-coroutines-quasar</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <subdir>integration</subdir>
+    </properties>
+
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>

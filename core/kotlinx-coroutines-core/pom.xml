@@ -32,6 +32,7 @@
     <properties>
         <!-- makes sure core is portable to lowest common denominator -->
         <kotlin.compiler.jdkHome>${env.JDK_16}</kotlin.compiler.jdkHome>
+        <subdir>core</subdir>
     </properties>
 
     <repositories>

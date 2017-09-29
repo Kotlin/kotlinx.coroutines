@@ -11,6 +11,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>kotlinx-coroutines-io</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <subdir>core</subdir>
+    </properties>
 
     <dependencies>
         <dependency>

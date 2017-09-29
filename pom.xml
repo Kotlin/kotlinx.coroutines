@@ -235,7 +235,7 @@
                     <sourceLinks>
                         <link>
                             <dir>${project.basedir}/src/main/kotlin</dir>
-                            <url>http://github.com/kotlin/kotlinx.coroutines/tree/master/${project.artifactId}/src/main/kotlin</url>
+                            <url>http://github.com/kotlin/kotlinx.coroutines/tree/master/${subdir}/${project.artifactId}/src/main/kotlin</url>
                             <urlSuffix>#L</urlSuffix>
                         </link>
                     </sourceLinks>

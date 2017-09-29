@@ -29,6 +29,10 @@
     <artifactId>kotlinx-coroutines-reactive</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <subdir>reactive</subdir>
+    </properties>
+
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
