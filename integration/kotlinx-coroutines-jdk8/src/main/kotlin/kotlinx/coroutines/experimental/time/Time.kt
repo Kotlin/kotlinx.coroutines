@@ -15,6 +15,7 @@
  */
 package kotlinx.coroutines.experimental.time
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -34,11 +35,25 @@ public suspend fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: sus
 /**
  * "java.time" adapter method for [kotlinx.coroutines.experimental.withTimeout]
  */
-public suspend fun <T> withTimeout(duration: Duration, block: suspend () -> T): T =
+public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T =
         kotlinx.coroutines.experimental.withTimeout(duration.toNanos(), TimeUnit.NANOSECONDS, block)
+
+/**
+ * @suppress **Deprecated**: for binary compatibility only
+ */
+@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+public suspend fun <T> withTimeout(duration: Duration, block: suspend () -> T): T =
+        kotlinx.coroutines.experimental.withTimeout(duration.toNanos(), TimeUnit.NANOSECONDS) { block() }
 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.experimental.withTimeoutOrNull]
  */
-public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend () -> T): T? =
+public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend CoroutineScope.() -> T): T? =
         kotlinx.coroutines.experimental.withTimeoutOrNull(duration.toNanos(), TimeUnit.NANOSECONDS, block)
+
+/**
+ * @suppress **Deprecated**: for binary compatibility only
+ */
+@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
+public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend () -> T): T? =
+        kotlinx.coroutines.experimental.withTimeoutOrNull(duration.toNanos(), TimeUnit.NANOSECONDS) { block() }

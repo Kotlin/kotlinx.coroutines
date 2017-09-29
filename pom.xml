@@ -23,11 +23,11 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.18-SNAPSHOT</version>
+    <version>0.19-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>kotlinx-coroutines</name>
     <description>Coroutines support libraries for Kotlin 1.1</description>
-
     <url>https://github.com/Kotlin/kotlinx.coroutines/</url>
 
     <licenses>
@@ -41,13 +41,14 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.1.4</kotlin.version>
+        <kotlin.version>1.1.51</kotlin.version>
         <dokka.version>0.9.15</dokka.version>
         <junit.version>4.12</junit.version>
-        <atomicfu.version>0.6</atomicfu.version>
+        <atomicfu.version>0.8</atomicfu.version>
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
         <core.docs.url>https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/</core.docs.url>
+        <core.docs.file>${project.basedir}/../../core/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</core.docs.file>
     </properties>
 
     <prerequisites>
@@ -116,10 +117,11 @@
     </distributionManagement>
 
     <modules>
-        <module>kotlinx-coroutines-core</module>
         <module>benchmarks</module>
         <module>site</module>
         <module>knit</module>
+        <module>core/kotlinx-coroutines-core</module>
+        <module>core/kotlinx-coroutines-io</module>
         <module>reactive/kotlinx-coroutines-reactive</module>
         <module>reactive/kotlinx-coroutines-reactor</module>
         <module>reactive/kotlinx-coroutines-rx1</module>
@@ -233,7 +235,7 @@
                     <sourceLinks>
                         <link>
                             <dir>${project.basedir}/src/main/kotlin</dir>
-                            <url>http://github.com/kotlin/kotlinx.coroutines/tree/master/${project.artifactId}/src/main/kotlin</url>
+                            <url>http://github.com/kotlin/kotlinx.coroutines/tree/master/${subdir}/${project.artifactId}/src/main/kotlin</url>
                             <urlSuffix>#L</urlSuffix>
                         </link>
                     </sourceLinks>
@@ -364,6 +366,7 @@
     </build>
 
     <profiles>
+        <!-- Profile to build against snapshot version of Kotlin compiler -->
         <profile>
             <id>kotlin-snapshot</id>
             <activation>
@@ -386,6 +389,39 @@
                     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
                 </repository>
             </repositories>
+        </profile>
+        <!-- Profile to attach javadocs with dokka -->
+        <profile>
+            <id>javadoc</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <!-- documentation -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.dokka</groupId>
+                        <artifactId>dokka-maven-plugin</artifactId>
+                        <executions>
+                            <!-- build dokka htmls and package list (for refs) -->
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>dokka</goal>
+                                </goals>
+                            </execution>
+                            <!-- attach javadoc with dokka -->
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>javadocJar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

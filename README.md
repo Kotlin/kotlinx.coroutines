@@ -2,14 +2,14 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.18) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.18)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.19) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.19)
 
 Library support for Kotlin coroutines. 
 This is a companion version for Kotlin 1.1.4 release (this is the minimal required Kotlin runtime version). 
 
 ## Modules
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) -- core primitives to work with coroutines:
+* [core](core/README.md) -- core primitives to work with coroutines:
   * `launch`, `async`, `produce`, `actor`, etc coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `CommonPool` and other coroutine contexts;
@@ -39,22 +39,11 @@ This is a companion version for Kotlin 1.1.4 release (this is the minimal requir
 
 > Note that these libraries are experimental and are subject to change.
 
-The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository
-and also linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines).
-
-These libraries require kotlin compiler version `1.1.4` or later and 
-require kotlin runtime of the same version as a dependency.
+The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository,
+linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines) and 
+pushed to [Maven Central](https://search.maven.org/#search%7Cga%7C1%7Cg%3Aorg.jetbrains.kotlinx%20a%3Akotlinx-coroutines).
 
 ### Maven
-
-Add Bintray JCenter repository to `<repositories>` section:
-
-```xml
-<repository>
-    <id>central</id>
-    <url>http://jcenter.bintray.com</url>
-</repository>
-```
 
 Add dependencies (you can also add other modules that you need):
 
@@ -62,39 +51,31 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.18</version>
+    <version>0.19</version>
 </dependency>
 ```
 
-And make sure that you use the right Kotlin version:
+And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.4</kotlin.version>
+    <kotlin.version>1.1.51</kotlin.version>
 </properties>
 ```
 
 ### Gradle
 
-Add Bintray JCenter repository:
-
-```groovy
-repositories {
-    jcenter()
-}
-```
-
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19'
 ```
 
-And make sure that you use the right Kotlin version:
+And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.4'
+    ext.kotlin_version = '1.1.51'
 }
 ```
 

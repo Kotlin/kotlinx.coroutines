@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.javafx
 
+import com.sun.javafx.application.PlatformImpl
 import javafx.animation.AnimationTimer
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
@@ -29,11 +30,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
-
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
 object JavaFx : CoroutineDispatcher(), Delay {
+    init {
+        // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
+        initPlatform()
+    }
+
     private val pulseTimer by lazy {
         PulseTimer().apply { start() }
     }
@@ -86,4 +91,8 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun toString() = "JavaFx"
+}
+
+internal fun initPlatform() {
+    PlatformImpl.startup {}
 }

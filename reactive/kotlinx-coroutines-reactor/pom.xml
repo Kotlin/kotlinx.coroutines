@@ -23,12 +23,16 @@
     <parent>
         <groupId>org.jetbrains.kotlinx</groupId>
         <artifactId>kotlinx-coroutines</artifactId>
-        <version>0.18-SNAPSHOT</version>
+        <version>0.19-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>kotlinx-coroutines-reactor</artifactId>
     <packaging>jar</packaging>
+
+    <properties>
+        <subdir>reactive</subdir>
+    </properties>
 
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
@@ -43,7 +47,7 @@
                     <externalDocumentationLinks combine.children="append">
                         <link>
                             <url>${core.docs.url}</url>
-                            <packageListUrl>file:///${project.parent.basedir}/kotlinx-coroutines-core/target/dokka/kotlinx-coroutines-core/package-list</packageListUrl>
+                            <packageListUrl>file:///${core.docs.file}</packageListUrl>
                         </link>
                         <link>
                             <url>https://projectreactor.io/docs/core/release/api/</url>

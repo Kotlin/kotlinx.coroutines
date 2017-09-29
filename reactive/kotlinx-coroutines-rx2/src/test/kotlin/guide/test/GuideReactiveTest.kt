@@ -137,7 +137,8 @@ class GuideReactiveTest : ReactiveTestBase() {
             "11",
             "3",
             "4",
-            "12"
+            "12",
+            "13"
         )
     }
 
