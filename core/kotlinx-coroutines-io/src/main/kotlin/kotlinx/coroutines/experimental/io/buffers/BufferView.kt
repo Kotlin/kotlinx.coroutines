@@ -274,7 +274,19 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         }
     }
 
-    internal fun writeDirect(size: Int, block: (ByteBuffer) -> Unit) {
+    internal inline fun readDirect(block: (ByteBuffer) -> Unit) {
+        val bb = readDuplicated(readRemaining)
+        val positionBefore = bb.position()
+        val limit = bb.limit()
+        block(bb)
+        val delta = bb.position() - positionBefore
+        if (delta < 0) throw IllegalStateException("Wrong buffer position change: negative shift $delta")
+        if (bb.limit() != limit) throw IllegalStateException("Limit change is now allowed")
+
+        readPosition += delta
+    }
+
+    internal inline fun writeDirect(size: Int, block: (ByteBuffer) -> Unit) {
         val rem = writeRemaining
         require (size <= rem) { "size $size is greater than buffer's remaining capacity $rem" }
         val buffer = writeDuplicated(rem)
