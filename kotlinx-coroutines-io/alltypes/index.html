@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>alltypes - kotlinx-coroutines-io</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-io/alltypes/">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Byte I/O channels (<em>unstable</em>, work in progress).</p>
+
+<h3 id="all-types">All Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-byte-buffer.html">kotlinx.coroutines.experimental.io.ByteBuffer</a></p>
+      </td>
+<td>
+
+        <p>Byte buffer.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-byte-channel.html">kotlinx.coroutines.experimental.io.ByteChannel</a></p>
+      </td>
+<td>
+
+        <p>Channel for asynchronous reading and writing of sequences of bytes.
+This is a buffered <strong>single-reader single-writer channel</strong>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-byte-order.html">kotlinx.coroutines.experimental.io.ByteOrder</a></p>
+      </td>
+<td>
+
+        <p>Byte order.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-byte-read-channel/index.html">kotlinx.coroutines.experimental.io.ByteReadChannel</a></p>
+      </td>
+<td>
+
+        <p>Channel for asynchronous reading of sequences of bytes.
+This is a <strong>single-reader channel</strong>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io.packet/-byte-read-packet/index.html">kotlinx.coroutines.experimental.io.packet.ByteReadPacket</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io.packet/-byte-read-packet-empty/index.html">kotlinx.coroutines.experimental.io.packet.ByteReadPacketEmpty</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-byte-write-channel/index.html">kotlinx.coroutines.experimental.io.ByteWriteChannel</a></p>
+      </td>
+<td>
+
+        <p>Channel for asynchronous writing of sequences of bytes.
+This is a <strong>single-writer channel</strong>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io.packet/-byte-write-packet/index.html">kotlinx.coroutines.experimental.io.packet.ByteWritePacket</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-closed-write-channel-exception/index.html">kotlinx.coroutines.experimental.io.ClosedWriteChannelException</a></p>
+      </td>
+<td>
+
+        <p>Indicates attempt to write on <a href="../kotlinx.coroutines.experimental.io/-byte-write-channel/is-closed-for-write.html">isClosedForWrite</a> channel
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.io/-byte-write-channel/close.html">close</a> cause
+exception on send attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-look-ahead-session/index.html">kotlinx.coroutines.experimental.io.LookAheadSession</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-look-ahead-suspend-session/index.html">kotlinx.coroutines.experimental.io.LookAheadSuspendSession</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-reader-job/index.html">kotlinx.coroutines.experimental.io.ReaderJob</a></p>
+      </td>
+<td>
+
+        <p>A coroutine job that is reading from a byte channel</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-reader-scope/index.html">kotlinx.coroutines.experimental.io.ReaderScope</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-writer-job/index.html">kotlinx.coroutines.experimental.io.WriterJob</a></p>
+      </td>
+<td>
+
+        <p>A coroutine job that is writing to a byte channel</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.io/-writer-scope/index.html">kotlinx.coroutines.experimental.io.WriterScope</a></p>
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

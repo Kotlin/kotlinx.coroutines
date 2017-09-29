@@ -31,7 +31,7 @@
 
 <h1 id="receive">receive</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L469">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receive</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L477">(source)</a></div>
 
 <p>Overrides <a href="../-receive-channel/receive.html">ReceiveChannel.receive</a></p>
 
@@ -52,7 +52,7 @@ was already resumed and the continuation was posted for execution to the threadâ
 <p>Note, that this function does not check for cancellation when it is not suspended.
 Use <a href="#">yield</a> or <a href="#">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
 
-<p>This function can be used in <a href="#">select</a> invocation with <a href="#">onReceive</a> clause.
+<p>This function can be used in <a href="#">select</a> invocation with <a href="on-receive.html">onReceive</a> clause.
 Use <a href="poll.html">poll</a> to try receiving from this channel without waiting.</p>
 
 

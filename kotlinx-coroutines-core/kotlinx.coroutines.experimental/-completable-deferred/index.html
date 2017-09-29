@@ -31,7 +31,7 @@
 
 <h1 id="completabledeferred">CompletableDeferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableDeferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CompletableDeferred.kt#L54">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableDeferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CompletableDeferred.kt#L54">(source)</a></div>
 
 <p>A <a href="../-deferred/index.html">Deferred</a> that can be completed via public functions
 <a href="complete.html">complete</a>, <a href="complete-exceptionally.html">completeExceptionally</a>, and <a href="#">cancel</a>.</p>
@@ -117,6 +117,21 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="../-deferred/on-await.html">onAwait</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onAwait</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="../-deferred/await.html">await</a> suspending function that selects with the deferred value when it is
+resolved. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails if the deferred value completes exceptionally (either fails or
+it cancelled).</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -188,6 +203,21 @@ returning the resulting value or throwing the corresponding exception if the def
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="../-deferred/get-completion-exception-or-null.html">getCompletionExceptionOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompletionExceptionOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
+
+        <p>Returns <em>completion exception</em> result if this deferred <a href="../-deferred/is-completed-exceptionally.html">completed exceptionally</a>,
+<code>null</code> if it is completed normally, or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not
+<a href="../-job/is-completed.html">completed</a> yet.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -195,6 +225,49 @@ returning the resulting value or throwing the corresponding exception if the def
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html">cancel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels <a href="../-job/index.html">Job</a> of this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html#kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if the job was
+cancelled as a result of this invocation and <code>false</code> if there is no job in the context or if it was already
+cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../cancel-and-join.html">cancelAndJoin</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html">cancelChildren</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
+It does not do anything if there is no job in the context or it has no children.
+See <a href="../-job/cancel-children.html">Job.cancelChildren</a> for details.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

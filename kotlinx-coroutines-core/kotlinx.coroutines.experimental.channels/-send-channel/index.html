@@ -31,7 +31,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L32">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L32">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -49,9 +49,7 @@
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="close.html">close</a> and thus
-the <a href="send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
-an element to a failed channel throw the original <a href="close.html">close</a> cause exception.</p>
+the <a href="send.html">send</a> and <a href="offer.html">offer</a> attempts throws exception.</p>
 
       </td>
 </tr>
@@ -66,6 +64,21 @@ an element to a failed channel throw the original <a href="close.html">close</a>
 
         <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="is-closed-for-send.html">isClosedForSend</a> channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-send.html">onSend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="send.html">send</a> suspending function that selects when the element that is specified
+as parameter is sent to the channel. When the clause is selected the reference to this channel
+is passed into the corresponding block.</p>
 
       </td>
 </tr>
@@ -105,8 +118,7 @@ are received.</p>
 
         <p>Adds <a href="offer.html#kotlinx.coroutines.experimental.channels.SendChannel$offer(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</a> into this queue if it is possible to do so immediately without violating capacity restrictions
 and returns <code>true</code>. Otherwise, it returns <code>false</code> immediately
-or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
-It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+or throws exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
 
       </td>
 </tr>
@@ -120,8 +132,7 @@ It throws the original <a href="close.html">close</a> cause exception if the cha
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Adds <a href="send.html#kotlinx.coroutines.experimental.channels.SendChannel$send(kotlinx.coroutines.experimental.channels.SendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="is-full.html">isFull</a>,
-or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
-It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+or throws exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
 
       </td>
 </tr>

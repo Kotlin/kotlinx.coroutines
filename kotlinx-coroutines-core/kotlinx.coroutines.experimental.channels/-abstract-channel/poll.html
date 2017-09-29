@@ -31,13 +31,13 @@
 
 <h1 id="poll">poll</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L557">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L565">(source)</a></div>
 
 <p>Overrides <a href="../-receive-channel/poll.html">ReceiveChannel.poll</a></p>
 
-<p>Retrieves and removes the head of this queue, or returns <code>null</code> if this queue <a href="is-empty.html">isEmpty</a>
-or is <a href="is-closed-for-receive.html">closed</a> <em>normally</em>,
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+<p>Retrieves and removes the element from this channel, or returns <code>null</code> if this channel <a href="is-empty.html">isEmpty</a>
+or is <a href="is-closed-for-receive.html">isClosedForReceive</a> without cause.
+It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
 
       </div>

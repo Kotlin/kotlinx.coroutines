@@ -31,7 +31,7 @@
 
 <h1 id="abstractchannel">AbstractChannel</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L408">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L416">(source)</a></div>
 
 <p>Abstract send/receive channel. It is a base class for all channel implementations.</p>
 
@@ -90,6 +90,38 @@ This function returns <code>false</code> for <a href="is-closed-for-receive.html
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="on-receive.html">onReceive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceive</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="#">select</a> expression of <a href="receive.html">receive</a> suspending function that selects with the element that
+is received from the channel.
+The <a href="#">select</a> invocation fails with exception if the channel
+<a href="is-closed-for-receive.html">isClosedForReceive</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="on-receive-or-null.html">onReceiveOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">?</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="#">select</a> expression of <a href="receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
+is received from the channel or selects with <code>null</code> if if the channel
+<a href="is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="#">select</a> invocation fails with
+the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -107,9 +139,7 @@ This function returns <code>false</code> for <a href="is-closed-for-receive.html
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-abstract-send-channel/close.html">close</a> and thus
-the <a href="../-abstract-send-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
-an element to a failed channel throw the original <a href="../-abstract-send-channel/close.html">close</a> cause exception.</p>
+the <a href="../-abstract-send-channel/send.html">send</a> and <a href="../-abstract-send-channel/offer.html">offer</a> attempts throws exception.</p>
 
       </td>
 </tr>
@@ -124,6 +154,21 @@ an element to a failed channel throw the original <a href="../-abstract-send-cha
 
         <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-abstract-send-channel/send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-abstract-send-channel/on-send.html">onSend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="#">select</a> expression of <a href="../-abstract-send-channel/send.html">send</a> suspending function that selects when the element that is specified
+as parameter is sent to the channel. When the clause is selected the reference to this channel
+is passed into the corresponding block.</p>
 
       </td>
 </tr>
@@ -144,7 +189,7 @@ This function returns <code>false</code> for <a href="../-abstract-send-channel/
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">iterator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-channel-iterator/index.html"><span class="identifier">ChannelIterator</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Returns new iterator to receive elements from this channels using <code>for</code> loop.
-Iteration completes normally when the channel is <a href="is-closed-for-receive.html">closed</a> <em>normally</em> and
+Iteration completes normally when the channel is <a href="is-closed-for-receive.html">isClosedForReceive</a> without cause and
 throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
@@ -184,9 +229,9 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">poll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
 
-        <p>Retrieves and removes the head of this queue, or returns <code>null</code> if this queue <a href="is-empty.html">isEmpty</a>
-or is <a href="is-closed-for-receive.html">closed</a> <em>normally</em>,
-or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+        <p>Retrieves and removes the element from this channel, or returns <code>null</code> if this channel <a href="is-empty.html">isEmpty</a>
+or is <a href="is-closed-for-receive.html">isClosedForReceive</a> without cause.
+It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
 </tr>
@@ -216,7 +261,7 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
 
         <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="is-empty.html">isEmpty</a>
-or returns <code>null</code> if the channel is <a href="is-closed-for-receive.html">closed</a> <em>normally</em>,
+or returns <code>null</code> if the channel is <a href="is-closed-for-receive.html">closed</a> without cause
 or throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>

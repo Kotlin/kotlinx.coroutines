@@ -31,10 +31,10 @@
 
 <h1 id="closedsendchannelexception">ClosedSendChannelException</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L304">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-cancellation-exception.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L307">(source)</a></div>
 
 <p>Indicates attempt to <a href="../-send-channel/send.html">send</a> on <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
-that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
 <h3 id="constructors">Constructors</h3>
@@ -51,7 +51,7 @@ exception on send attempts.</p>
         <div class="signature"><code><span class="identifier">ClosedSendChannelException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ClosedSendChannelException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
 
         <p>Indicates attempt to <a href="../-send-channel/send.html">send</a> on <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
-that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
       </td>

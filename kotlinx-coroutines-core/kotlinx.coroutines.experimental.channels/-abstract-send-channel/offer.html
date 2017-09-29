@@ -31,12 +31,11 @@
 
 <h1 id="offer">offer</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L185">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">offer</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L185">(source)</a></div>
 
 <p>Adds <a href="offer.html#kotlinx.coroutines.experimental.channels.AbstractSendChannel$offer(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</a> into this queue if it is possible to do so immediately without violating capacity restrictions
 and returns <code>true</code>. Otherwise, it returns <code>false</code> immediately
-or throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> if the channel <a href="is-closed-for-send.html">isClosedForSend</a> <em>normally</em>.
-It throws the original <a href="close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+or throws exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
 
 
       </div>

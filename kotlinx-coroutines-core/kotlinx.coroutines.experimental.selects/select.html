@@ -31,7 +31,7 @@
 
 <h1 id="select">select</h1>
 
-<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L176">(source)</a></div>
+<div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/selects/Select.kt#L210">(source)</a></div>
 
 <p>Waits for the result of multiple suspending functions simultaneously, which are specified using <em>clauses</em>
 in the <a href="select.html#kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</a> scope of this select invocation. The caller is suspended until one of the clauses
@@ -62,37 +62,37 @@ of the alternatives or to perform default (<code>else</code>) action if none of 
     <tr>
       <td><a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a></td>
       <td><a href="../kotlinx.coroutines.experimental/-job/join.html">join</a></td>
-      <td><a href="-select-builder/on-join.html">onJoin</a></td>
+      <td><a href="#">onJoin</a></td>
       <td><a href="../kotlinx.coroutines.experimental/-job/is-completed.html">isCompleted</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.experimental/-deferred/index.html">Deferred</a></td>
       <td><a href="../kotlinx.coroutines.experimental/-deferred/await.html">await</a></td>
-      <td><a href="-select-builder/on-await.html">onAwait</a></td>
+      <td><a href="#">onAwait</a></td>
       <td><a href="../kotlinx.coroutines.experimental/-job/is-completed.html">isCompleted</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">SendChannel</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a></td>
-      <td><a href="-select-builder/on-send.html">onSend</a></td>
+      <td><a href="#">onSend</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-send-channel/offer.html">offer</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">receive</a></td>
-      <td><a href="-select-builder/on-receive.html">onReceive</a></td>
+      <td><a href="#">onReceive</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/poll.html">poll</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive-or-null.html">receiveOrNull</a></td>
-      <td><a href="-select-builder/on-receive-or-null.html">onReceiveOrNull</a></td>
+      <td><a href="#">onReceiveOrNull</a></td>
       <td><a href="../kotlinx.coroutines.experimental.channels/-receive-channel/poll.html">poll</a></td>
     </tr>
     <tr>
       <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/index.html">Mutex</a></td>
       <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/lock.html">lock</a></td>
-      <td><a href="-select-builder/on-lock.html">onLock</a></td>
+      <td><a href="#">onLock</a></td>
       <td><a href="../kotlinx.coroutines.experimental.sync/-mutex/try-lock.html">tryLock</a></td>
     </tr>
     <tr>
@@ -107,8 +107,8 @@ of the alternatives or to perform default (<code>else</code>) action if none of 
 <p>This suspending function is cancellable. If the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this
 function is suspended, this function immediately resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
 
-<p>Atomicity of cancellation depends on the clause: <a href="-select-builder/on-send.html">onSend</a>, <a href="-select-builder/on-receive.html">onReceive</a>,
-<a href="-select-builder/on-receive-or-null.html">onReceiveOrNull</a>, and <a href="-select-builder/on-lock.html">onLock</a> clauses are
+<p>Atomicity of cancellation depends on the clause: <a href="#">onSend</a>, <a href="#">onReceive</a>,
+<a href="#">onReceiveOrNull</a>, and <a href="#">onLock</a> clauses are
 <em>atomically cancellable</em>. When select throws <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> it means that those clauses had not performed
 their respective operations.
 As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may

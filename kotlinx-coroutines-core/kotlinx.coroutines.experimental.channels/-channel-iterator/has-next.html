@@ -31,11 +31,11 @@
 
 <h1 id="hasnext">hasNext</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">hasNext</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L220">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">operator</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">hasNext</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L223">(source)</a></div>
 
 <p>Returns <code>true</code> if the channel has more elements suspending the caller while this channel
 <a href="../-receive-channel/is-empty.html">isEmpty</a> or returns <code>false</code> if the channel
-<a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> <em>normally</em>.
+<a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause.
 It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
 <p>This function retrieves and removes the element from this channel for the subsequent invocation

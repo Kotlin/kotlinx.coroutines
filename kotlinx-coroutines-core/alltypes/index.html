@@ -160,7 +160,7 @@ from concurrent coroutines.</p>
 <td>
 
         <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">receive</a> on <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
-channel that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
+channel that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
 exception on receive attempts.</p>
 
       </td>
@@ -172,7 +172,7 @@ exception on receive attempts.</p>
 <td>
 
         <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a> on <a href="../kotlinx.coroutines.experimental.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
-that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
       </td>
@@ -213,6 +213,16 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/-completion-handler-exception/index.html">kotlinx.coroutines.experimental.CompletionHandlerException</a></p>
+      </td>
+<td>
+
+        <p>This exception gets thrown if an exception is caught while processing <a href="../kotlinx.coroutines.experimental/-completion-handler.html">CompletionHandler</a> invocation for <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel</a></p>
       </td>
 <td>
@@ -245,6 +255,14 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/index.html">kotlin.coroutines.experimental.CoroutineContext</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">kotlinx.coroutines.experimental.CoroutineDispatcher</a></p>
       </td>
 <td>
@@ -259,8 +277,7 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
       </td>
 <td>
 
-        <p>An optional element on the coroutine context to handle uncaught exceptions.
-See <a href="../kotlinx.coroutines.experimental/handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+        <p>An optional element on the coroutine context to handle uncaught exceptions.</p>
 
       </td>
 </tr>
@@ -382,6 +399,18 @@ or completion of parent immediately cancels all its children.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/-job-cancellation-exception/index.html">kotlinx.coroutines.experimental.JobCancellationException</a></p>
+      </td>
+<td>
+
+        <p>Thrown by cancellable suspending functions if the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the coroutine is cancelled or completed
+without cause, or with a cause or exception that is not <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>
+(see <a href="../kotlinx.coroutines.experimental/-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html">kotlinx.coroutines.experimental.channels.LinkedListChannel</a></p>
       </td>
 <td>
@@ -476,6 +505,36 @@ until another coroutine invokes <a href="../kotlinx.coroutines.experimental.chan
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental.selects/-select-clause0.html">kotlinx.coroutines.experimental.selects.SelectClause0</a></p>
+      </td>
+<td>
+
+        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression without additional parameters that does not select any value.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.selects/-select-clause1.html">kotlinx.coroutines.experimental.selects.SelectClause1</a></p>
+      </td>
+<td>
+
+        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression without additional parameters that selects value of type <a href="#">Q</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.selects/-select-clause2.html">kotlinx.coroutines.experimental.selects.SelectClause2</a></p>
+      </td>
+<td>
+
+        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression with additional parameter of type <a href="#">P</a> that selects value of type <a href="#">Q</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">kotlinx.coroutines.experimental.channels.SendChannel</a></p>
       </td>
 <td>
@@ -497,7 +556,7 @@ open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-s
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-timeout-exception/index.html">kotlinx.coroutines.experimental.TimeoutException</a></p>
+        <p><a href="../kotlinx.coroutines.experimental/-timeout-cancellation-exception/index.html">kotlinx.coroutines.experimental.TimeoutCancellationException</a></p>
       </td>
 <td>
 
@@ -515,6 +574,18 @@ open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-s
 It executes initial continuation of the coroutine <em>right here</em> in the current call-frame
 and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
 mandating any specific threading policy.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-unexpected-coroutine-exception/index.html">kotlinx.coroutines.experimental.UnexpectedCoroutineException</a></p>
+      </td>
+<td>
+
+        <p>Represents an exception in the coroutine that was not caught by it and was not expected to be thrown.
+This happens when coroutine is cancelled, but it completes with the different exception than its cancellation
+cause was.</p>
 
       </td>
 </tr>

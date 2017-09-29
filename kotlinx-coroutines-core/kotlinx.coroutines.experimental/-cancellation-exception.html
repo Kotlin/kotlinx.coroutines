@@ -31,7 +31,7 @@
 
 <h1 id="cancellationexception">CancellationException</h1>
 
-<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L303">(source)</a></div>
+<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CancellationException</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CancellationException.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L354">(source)</a></div>
 
 <p>Thrown by cancellable suspending functions if the <a href="-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.</p>
 
@@ -49,7 +49,7 @@
         <div class="signature"><code><span class="keyword">class </span><span class="identifier">ClosedSendChannelException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CancellationException</span></code></div>
 
         <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a> on <a href="../kotlinx.coroutines.experimental.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
-that was closed <em>normally</em>. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
+that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
 
       </td>
@@ -57,13 +57,15 @@ exception on send attempts.</p>
 <tr>
 <td>
 
-        <p><a href="-timeout-exception/index.html">TimeoutException</a></p>
+        <p><a href="-job-cancellation-exception/index.html">JobCancellationException</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">TimeoutException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CancellationException</span></code></div>
+        <div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CancellationException</span></code></div>
 
-        <p>This exception is thrown by <a href="with-timeout.html">withTimeout</a> to indicate timeout.</p>
+        <p>Thrown by cancellable suspending functions if the <a href="-job/index.html">Job</a> of the coroutine is cancelled or completed
+without cause, or with a cause or exception that is not CancellationException
+(see <a href="-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
 
       </td>
 </tr>

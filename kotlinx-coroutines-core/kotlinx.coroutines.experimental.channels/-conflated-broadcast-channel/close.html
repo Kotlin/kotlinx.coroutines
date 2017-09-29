@@ -31,7 +31,7 @@
 
 <h1 id="close">close</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L170">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L171">(source)</a></div>
 
 <p>Overrides <a href="../-send-channel/close.html">SendChannel.close</a></p>
 
@@ -42,9 +42,9 @@ Conceptually, its sends a special “close token” over this channel. Immediate
 on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
 are received.</p>
 
-<p>A channel that was closed without a <a href="close.html#kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</a>, is considered to be <em>closed normally</em>.
-A channel that was closed with non-null <a href="close.html#kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</a> is called a <em>failed channel</em>. Attempts to send or
-receive on a failed channel throw this cause exception.</p>
+<p>A channel that was closed without a <a href="close.html#kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</a> throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a> on attempts to send or receive.
+A channel that was closed with non-null <a href="close.html#kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</a> is called a <em>failed</em> channel. Attempts to send or
+receive on a failed channel throw the specified <a href="close.html#kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel$close(kotlin.Throwable)/cause">cause</a> exception.</p>
 
 
       </div>

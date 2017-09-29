@@ -31,7 +31,7 @@
 
 <h1 id="arraybroadcastchannel">ArrayBroadcastChannel</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L39">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L39">(source)</a></div>
 
 <p>Broadcast channel with array buffer of a fixed <a href="capacity.html">capacity</a>.
 Sender suspends only when buffer is full due to one of the receives being slow to consume and
@@ -102,9 +102,7 @@ receiver suspends only when buffer is empty.</p>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">isClosedForSend</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> if this channel was closed by invocation of <a href="../-abstract-send-channel/close.html">close</a> and thus
-the <a href="../-abstract-send-channel/send.html">send</a> attempt throws <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>. If the channel was closed because of the exception, it
-is considered closed, too, but it is called a <em>failed</em> channel. All suspending attempts to send
-an element to a failed channel throw the original <a href="../-abstract-send-channel/close.html">close</a> cause exception.</p>
+the <a href="../-abstract-send-channel/send.html">send</a> and <a href="../-abstract-send-channel/offer.html">offer</a> attempts throws exception.</p>
 
       </td>
 </tr>
@@ -119,6 +117,21 @@ an element to a failed channel throw the original <a href="../-abstract-send-cha
 
         <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="../-abstract-send-channel/send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-abstract-send-channel/on-send.html">onSend</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Clause for <a href="#">select</a> expression of <a href="../-abstract-send-channel/send.html">send</a> suspending function that selects when the element that is specified
+as parameter is sent to the channel. When the clause is selected the reference to this channel
+is passed into the corresponding block.</p>
 
       </td>
 </tr>

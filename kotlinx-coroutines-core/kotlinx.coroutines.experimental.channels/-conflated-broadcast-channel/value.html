@@ -31,13 +31,13 @@
 
 <h1 id="value">value</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">value</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L83">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">value</span><span class="symbol">: </span><span class="identifier">E</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L84">(source)</a></div>
 
 <p>The most recently sent element to this channel.</p>
 
 <p>Access to this property throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> when this class is constructed without
-initial value and no value was sent yet or if it was <a href="close.html">closed</a> <em>normally</em> and
-throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
+initial value and no value was sent yet or if it was <a href="close.html">closed</a> without a cause.
+It throws the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
 
       </div>
