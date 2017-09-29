@@ -20,7 +20,7 @@ package guide.cancel.example05
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = launch(CommonPool) {
+    val job = launch {
         try {
             repeat(1000) { i ->
                 println("I'm sleeping $i ...")

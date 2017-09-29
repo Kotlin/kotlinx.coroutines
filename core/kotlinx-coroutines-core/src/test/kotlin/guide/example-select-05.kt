@@ -18,10 +18,12 @@
 package guide.select.example05
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.produce
+import kotlinx.coroutines.experimental.selects.select
 
-fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String>(CommonPool) {
+fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
     var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
@@ -42,7 +44,7 @@ fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String
     }
 }
 
-fun asyncString(str: String, time: Long) = async(CommonPool) {
+fun asyncString(str: String, time: Long) = async {
     delay(time)
     str
 }

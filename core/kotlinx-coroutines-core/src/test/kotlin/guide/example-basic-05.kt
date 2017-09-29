@@ -17,11 +17,13 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.basic.example05
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val jobs = List(100_000) { // create a lot of coroutines and list their jobs
-        launch(CommonPool) {
+    val jobs = List(100_000) { // launch a lot of coroutines and list their jobs
+        launch {
             delay(1000L)
             print(".")
         }

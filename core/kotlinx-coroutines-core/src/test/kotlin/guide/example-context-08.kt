@@ -17,11 +17,13 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.context.example08
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // start a coroutine to process some kind of incoming request
-    val request = launch(CommonPool) {
+    // launch a coroutine to process some kind of incoming request
+    val request = launch {
         repeat(3) { i -> // launch a few children jobs
             launch(coroutineContext)  {
                 delay((i + 1) * 200L) // variable delay 200ms, 400ms, 600ms

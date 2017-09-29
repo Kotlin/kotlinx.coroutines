@@ -17,13 +17,15 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.context.example06
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // start a coroutine to process some kind of incoming request
-    val request = launch(CommonPool) {
+    // launch a coroutine to process some kind of incoming request
+    val request = launch {
         // it spawns two other jobs, one with its separate context
-        val job1 = launch(CommonPool) {
+        val job1 = launch {
             println("job1: I have my own context and execute independently!")
             delay(1000)
             println("job1: I am not affected by cancellation of the request")

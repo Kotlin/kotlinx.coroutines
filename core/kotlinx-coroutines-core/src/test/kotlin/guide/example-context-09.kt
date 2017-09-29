@@ -17,19 +17,22 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.context.example09
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CoroutineName
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.runBlocking
 
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
     log("Started main coroutine")
     // run two background value computations
-    val v1 = async(CommonPool + CoroutineName("v1coroutine")) {
+    val v1 = async(CoroutineName("v1coroutine")) {
         log("Computing v1")
         delay(500)
         252
     }
-    val v2 = async(CommonPool + CoroutineName("v2coroutine")) {
+    val v2 = async(CoroutineName("v2coroutine")) {
         log("Computing v2")
         delay(1000)
         6

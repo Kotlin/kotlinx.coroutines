@@ -17,10 +17,12 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.basic.example04
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = launch(CommonPool) { doWorld() }
+    val job = launch { doWorld() }
     println("Hello,")
     job.join()
 }

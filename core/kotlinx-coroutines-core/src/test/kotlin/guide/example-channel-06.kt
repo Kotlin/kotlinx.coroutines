@@ -17,10 +17,14 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.channel.example06
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.produce
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
-fun produceNumbers() = produce<Int>(CommonPool) {
+fun produceNumbers() = produce<Int> {
     var x = 1 // start from 1
     while (true) {
         send(x++) // produce next
@@ -28,7 +32,7 @@ fun produceNumbers() = produce<Int>(CommonPool) {
     }
 }
 
-fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch(CommonPool) {
+fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
     channel.consumeEach {
         println("Processor #$id received $it")
     }    

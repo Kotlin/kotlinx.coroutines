@@ -17,10 +17,12 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.basic.example02
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
-    launch(CommonPool) { // create new coroutine in common thread pool
+    launch { // launch new coroutine
         delay(1000L)
         println("World!")
     }

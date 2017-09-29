@@ -17,7 +17,9 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.compose.example04
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.runBlocking
 import kotlin.system.measureTimeMillis
 
 suspend fun doSomethingUsefulOne(): Int {
@@ -31,12 +33,12 @@ suspend fun doSomethingUsefulTwo(): Int {
 }
 
 // The result type of asyncSomethingUsefulOne is Deferred<Int>
-fun asyncSomethingUsefulOne() = async(CommonPool) {
+fun asyncSomethingUsefulOne() = async {
     doSomethingUsefulOne()
 }
 
 // The result type of asyncSomethingUsefulTwo is Deferred<Int>
-fun asyncSomethingUsefulTwo() = async(CommonPool)  {
+fun asyncSomethingUsefulTwo() = async {
     doSomethingUsefulTwo()
 }
 

@@ -17,10 +17,13 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.sync.example07
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CompletableDeferred
+import kotlinx.coroutines.experimental.channels.actor
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
-import kotlinx.coroutines.experimental.channels.*
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch
@@ -42,7 +45,7 @@ object IncCounter : CounterMsg() // one-way message to increment counter
 class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg() // a request with reply
 
 // This function launches a new counter actor
-fun counterActor() = actor<CounterMsg>(CommonPool) {
+fun counterActor() = actor<CounterMsg> {
     var counter = 0 // actor state
     for (msg in channel) { // iterate over incoming messages
         when (msg) {

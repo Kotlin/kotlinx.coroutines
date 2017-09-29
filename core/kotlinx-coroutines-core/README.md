@@ -16,6 +16,7 @@ Coroutine dispatchers implementing [CoroutineDispatcher]:
  
 | **Name**                    | **Description**
 | --------------------------- | ---------------
+| [DefaultDispatcher]         | Is equal to [CommonPool]
 | [CommonPool]                | Confines coroutine execution to a shared pool of threads
 | [newSingleThreadContext]    | Create new single-threaded coroutine context
 | [newFixedThreadPoolContext] | Creates new thread pool of a fixed size 
@@ -91,6 +92,7 @@ Select expression to perform multiple suspending operations simultaneously until
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
+[DefaultDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-single-thread-context.html
 [newFixedThreadPoolContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-fixed-thread-pool-context.html

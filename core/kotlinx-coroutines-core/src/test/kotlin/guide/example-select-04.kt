@@ -17,12 +17,14 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.select.example04
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.selects.select
 import java.util.*
 
-fun asyncString(time: Int) = async(CommonPool) {
+fun asyncString(time: Int) = async {
     delay(time.toLong())
     "Waited for $time ms"
 }
