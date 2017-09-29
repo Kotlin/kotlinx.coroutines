@@ -87,7 +87,7 @@
                             <forkMode>once</forkMode>
                             <classesDirectory>${project.build.directory}/classes-atomicfu</classesDirectory>
                             <includes>
-                                <include>**/*LFTest.java</include>
+                                <include>**/*LFTest.*</include>
                             </includes>
                         </configuration>
                     </execution>
