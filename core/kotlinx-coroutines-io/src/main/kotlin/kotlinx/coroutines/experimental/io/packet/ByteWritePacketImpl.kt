@@ -144,7 +144,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
             tail.writeBufferAppend(foreignStolen)
             tail.next = foreignStolen.next
             this.tail = foreignStolen.tail().takeUnless { it === foreignStolen } ?: tail
-            foreignStolen.release()
+            foreignStolen.release(p.pool)
             size = head.remainingAll().toInt()
         } else if (appendSize == -1 || prependSize < appendSize) {
             // do prepend
@@ -162,7 +162,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
 
                 pre.next = foreignStolen
             }
-            tail.release()
+            tail.release(pool)
 
             this.tail = foreignStolen.tail()
             size = head.remainingAll().toInt()
@@ -326,7 +326,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         this.size = 0
 
         if (head === BufferView.Empty) return ByteReadPacketViewBased.Empty
-        return ByteReadPacketViewBased(head)
+        return ByteReadPacketViewBased(head, pool)
     }
 
     override fun release() {
@@ -336,7 +336,7 @@ internal class ByteWritePacketImpl(private var headerSizeHint: Int, private val 
         if (head !== empty) {
             this.head = empty
             this.tail = empty
-            head.releaseAll()
+            head.releaseAll(pool)
             size = 0
         }
     }

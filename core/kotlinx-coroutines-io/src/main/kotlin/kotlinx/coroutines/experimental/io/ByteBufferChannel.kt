@@ -955,7 +955,7 @@ internal class ByteBufferChannel(
                         }
                     }
                 } catch (t: Throwable) {
-                    node.release()
+                    node.release(packet.pool)
                     packet.release()
                     throw t
                 }
@@ -965,7 +965,7 @@ internal class ByteBufferChannel(
                 }
             }
 
-            node.release()
+            node.release(packet.pool)
         }
     }
 
@@ -984,13 +984,13 @@ internal class ByteBufferChannel(
                     }
 
                     if (node.readRemaining == 0) {
-                        node.release()
+                        node.release(packet.pool)
                         node = packet.steal()
                     }
                 }
             }
         } catch (t: Throwable) {
-            node?.release()
+            node?.release(packet.pool)
             packet.release()
             throw t
         }

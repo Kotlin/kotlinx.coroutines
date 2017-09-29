@@ -6,7 +6,8 @@ import kotlinx.coroutines.experimental.io.internal.*
 import java.io.*
 import java.nio.charset.*
 
-internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadPacket {
+internal class ByteReadPacketViewBased(private var head: BufferView,
+                                       internal val pool: ObjectPool<BufferView>) : ByteReadPacket {
 
     override val remaining: Int
         get() = head.remainingAll().toInt() // TODO Long or Int?
@@ -14,11 +15,11 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
     override val isEmpty: Boolean
         get() = head.isEmpty()
 
-    override fun copy(): ByteReadPacket = ByteReadPacketViewBased(head.copyAll())
+    override fun copy(): ByteReadPacket = ByteReadPacketViewBased(head.copyAll(), pool)
 
     override fun release() {
         if (head !== BufferView.Empty) {
-            head.releaseAll()
+            head.releaseAll(pool)
             head = BufferView.Empty
         }
     }
@@ -86,6 +87,7 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
                         true
                     }
                     '\n' -> {
+                        afterRead()
                         return true
                     }
                     else -> {
@@ -94,7 +96,10 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
                             return@decodeUTF8 false
                         }
 
-                        if (decoded == limit) throw BufferLimitExceededException("Too many characters in line: limit $limit exceeded")
+                        if (decoded == limit) {
+                            afterRead()
+                            throw BufferLimitExceededException("Too many characters in line: limit $limit exceeded")
+                        }
                         decoded++
                         out.append(ch)
                         true
@@ -102,7 +107,7 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
                 }
             }
 
-            if (size == 0) {
+            if (size == 0 || end) {
                 afterRead()
                 size = 1
             }
@@ -306,7 +311,7 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
         head.writeBufferAppend(next, minSize)
         if (next.readRemaining == 0) {
             head.next = next.next
-            next.release()
+            next.release(pool)
         }
 
         if (head.readRemaining >= minSize) return head
@@ -325,11 +330,13 @@ internal class ByteReadPacketViewBased(private var head: BufferView) : ByteReadP
     private fun releaseHead(head: BufferView) {
         val next = head.next
         this.head = next ?: BufferView.Empty
-        head.release()
+        head.release(pool)
     }
 
     companion object {
-        val Empty = ByteReadPacketViewBased(BufferView.Empty)
+        val Empty = ByteReadPacketViewBased(BufferView.Empty, object: NoPoolImpl<BufferView>() {
+            override fun borrow() = BufferView.Empty
+        })
         val ReservedSize = 8
         private val SkipBuffer = CharArray(8192)
     }

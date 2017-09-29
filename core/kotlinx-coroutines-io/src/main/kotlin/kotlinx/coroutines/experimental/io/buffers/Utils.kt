@@ -1,9 +1,11 @@
 package kotlinx.coroutines.experimental.io.buffers
 
-internal tailrec fun BufferView?.releaseAll() {
+import kotlinx.coroutines.experimental.io.internal.*
+
+internal tailrec fun BufferView?.releaseAll(pool: ObjectPool<BufferView>) {
     if (this == null) return
-    release()
-    next.releaseAll()
+    release(pool)
+    next.releaseAll(pool)
 }
 
 internal fun BufferView.copyAll(): BufferView {

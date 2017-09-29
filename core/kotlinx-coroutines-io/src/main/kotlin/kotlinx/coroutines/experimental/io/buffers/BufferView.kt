@@ -6,12 +6,10 @@ import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 
 internal class BufferView private constructor(private var content: ByteBuffer,
-                                                 private val origin: BufferView?,
-                                                 private val pool: ObjectPool<BufferView>?) {
+                                                 private val origin: BufferView?) {
 
-    constructor(pool: ObjectPool<ByteBuffer>) : this(pool.borrow(), null, null)
-    constructor(buffer: ByteBuffer, pool: ObjectPool<BufferView>) : this(buffer, null, pool)
-    constructor(buffer: ByteBuffer) : this(buffer, null, null)
+    constructor(pool: ObjectPool<ByteBuffer>) : this(pool.borrow(), null)
+    constructor(buffer: ByteBuffer) : this(buffer, null)
 
     private var duplicated: ByteBuffer? = null
 
@@ -88,7 +86,7 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         require(offset < dst.size)
         require(offset + length <= dst.size)
 
-        val dup = readDuplicated()
+        val dup = readDuplicated(length)
         dup.get(dst, offset, length)
         readPosition = rp + length
     }
@@ -202,7 +200,7 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         val to = duplicated()
         to.limit(rp)
         to.position(rp - size)
-        val from = other.readDuplicated()
+        val from = other.readDuplicated(Int.MAX_VALUE)
 
         to.put(from)
         readPosition = rp - size
@@ -250,9 +248,10 @@ internal class BufferView private constructor(private var content: ByteBuffer,
     fun isExclusivelyOwned(): Boolean = refCount.value == 1L
 
     fun makeView(): BufferView {
-        (origin ?: this).acquire()
+        val newOrigin = origin ?: this
+        newOrigin.acquire()
 
-        val view = BufferView(content, origin, null)
+        val view = BufferView(content, newOrigin)
         view.attachment = attachment
         view.readPosition = readPosition
         view.writePosition = writePosition
@@ -261,15 +260,15 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         return view
     }
 
-    fun release() {
+    fun release(pool: ObjectPool<BufferView>) {
         if (releaseRefCount()) {
             resetForWrite()
 
             if (origin != null) {
                 unlink()
-                origin.release()
+                origin.release(pool)
             } else {
-                pool?.recycle(this) ?: unlink()
+                pool.recycle(this)
             }
         }
     }
@@ -298,7 +297,7 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         writePosition += delta
     }
 
-    private fun readDuplicated(limit: Int = Int.MAX_VALUE): ByteBuffer {
+    private fun readDuplicated(limit: Int): ByteBuffer {
         val position = readPosition
         val upLimit = (position.toLong() + limit).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
 
@@ -308,7 +307,7 @@ internal class BufferView private constructor(private var content: ByteBuffer,
         return buffer
     }
 
-    private fun writeDuplicated(limit: Int = Int.MAX_VALUE): ByteBuffer {
+    private fun writeDuplicated(limit: Int): ByteBuffer {
         val position = writePosition
         val upLimit = (position.toLong() + limit).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
 
@@ -349,7 +348,7 @@ internal class BufferView private constructor(private var content: ByteBuffer,
     }
 
     internal object Pool : ObjectPoolImpl<BufferView>(PACKET_BUFFER_POOL_SIZE) {
-        override fun produceInstance() = BufferView(ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE), this)
+        override fun produceInstance() = BufferView(ByteBuffer.allocateDirect(PACKET_BUFFER_SIZE))
         override fun clearInstance(instance: BufferView): BufferView {
             return instance.apply {
                 next = null

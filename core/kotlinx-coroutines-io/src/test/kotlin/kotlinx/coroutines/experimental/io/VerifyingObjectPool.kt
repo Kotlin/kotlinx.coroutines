@@ -10,6 +10,9 @@ import kotlin.test.*
 class VerifyingObjectPool<T : Any> internal constructor(private val delegate: ObjectPool<T>) : ObjectPool<T> by delegate, TestRule {
     private val allocated = ConcurrentHashMap<IdentityWrapper<T>, Boolean>()
 
+    val used: Int
+        get() = allocated.size
+
     override fun borrow(): T {
         val instance = delegate.borrow()
         if (allocated.put(IdentityWrapper(instance), true) != null) {
@@ -28,9 +31,11 @@ class VerifyingObjectPool<T : Any> internal constructor(private val delegate: Ob
     override fun apply(base: Statement, description: Description): Statement {
         return object: Statement() {
             override fun evaluate() {
+                var failed = false
                 try {
                     base.evaluate()
                 } catch (t: Throwable) {
+                    failed = true
                     try {
                         assertEmpty()
                     } catch (emptyFailed: Throwable) {
@@ -38,7 +43,9 @@ class VerifyingObjectPool<T : Any> internal constructor(private val delegate: Ob
                     }
                     throw t
                 } finally {
-                    assertEmpty()
+                    if (!failed) {
+                        assertEmpty()
+                    }
                 }
             }
         }

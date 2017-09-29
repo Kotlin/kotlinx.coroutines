@@ -32,6 +32,7 @@ inline fun buildPacket(headerSizeHint: Int = 0, block: ByteWritePacket.() -> Uni
 fun WritePacket(headerSizeHint: Int = 0): ByteWritePacket = ByteWritePacketImpl(headerSizeHint, BufferView.Pool)
 
 fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE): String? {
+    if (isEmpty) return null
     val sb = StringBuilder(estimate)
     return if (readUTF8LineTo(sb, limit)) sb.toString() else null
 }

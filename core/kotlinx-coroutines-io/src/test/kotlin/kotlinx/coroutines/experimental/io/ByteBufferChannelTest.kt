@@ -31,10 +31,10 @@ class ByteBufferChannelTest {
     private val failures = ErrorCollector()
 
     @get:Rule
-    private val pool = VerifyingObjectPool(BufferObjectNoPool)
+    internal val pool = VerifyingObjectPool(BufferObjectNoPool)
 
     @get:Rule
-    private val pktPool = VerifyingObjectPool(BufferView.Pool)
+    internal val pktPool = VerifyingObjectPool(BufferView.Pool)
 
     private val Size = BUFFER_SIZE - RESERVED_SIZE
     private val ch = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -567,7 +567,7 @@ class ByteBufferChannelTest {
             writeStringUtf8("Hello")
         } as ByteReadPacketViewBased
 
-        val packet = ByteReadPacketViewBased(packet0.steal()!!)
+        val packet = ByteReadPacketViewBased(packet0.steal()!!, pktPool)
 
         ch.writeInt(packet.remaining)
         ch.writePacket(packet)

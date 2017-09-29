@@ -23,7 +23,7 @@ fun WritableByteChannel.writePacket(p: ByteReadPacket) {
                 }
             }
         } finally {
-            b?.release()
+            b?.release(p.pool)
             p.release()
         }
     } else {
@@ -59,6 +59,7 @@ private fun ReadableByteChannel.readPacketImpl(min: Long, max: Long): ByteReadPa
 
     if (max == 0L) return ByteReadPacketEmpty
 
+    val pool = BufferView.Pool
     val empty = BufferView.Empty
     var head: BufferView = empty
     var tail: BufferView = empty
@@ -69,7 +70,7 @@ private fun ReadableByteChannel.readPacketImpl(min: Long, max: Long): ByteReadPa
         while (read < min || (read == min && min == 0L)) {
             val remInt = (max - read).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
 
-            val part = tail.takeIf { it.writeRemaining.let { it > 200 || it >= remInt } } ?: BufferView.Pool.borrow().also {
+            val part = tail.takeIf { it.writeRemaining.let { it > 200 || it >= remInt } } ?: pool.borrow().also {
                 if (head === empty) {
                     head = it; tail = it
                 }
@@ -93,10 +94,10 @@ private fun ReadableByteChannel.readPacketImpl(min: Long, max: Long): ByteReadPa
             }
         }
     } catch (t: Throwable) {
-        head.releaseAll()
+        head.releaseAll(pool)
         throw t
     }
 
-    return ByteReadPacketViewBased(head)
+    return ByteReadPacketViewBased(head, pool)
 }
 

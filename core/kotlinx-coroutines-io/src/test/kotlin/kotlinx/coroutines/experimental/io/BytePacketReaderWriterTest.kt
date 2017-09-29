@@ -8,7 +8,7 @@ import kotlin.test.*
 
 class BytePacketReaderWriterTest {
     @get:Rule
-    private val pool = VerifyingObjectPool(BufferView.Pool)
+    internal val pool = VerifyingObjectPool(BufferView.Pool)
 
     @Test
     fun testReaderEmpty() {
@@ -413,6 +413,7 @@ class BytePacketReaderWriterTest {
 
         assertEquals("123ABC.", outer.readText().toString())
         assertEquals(3, inner.remaining)
+        inner.release()
     }
 
     @Test
@@ -431,6 +432,7 @@ class BytePacketReaderWriterTest {
 
         assertEquals("123" + "o".repeat(100000) + ".", outer.readText().toString())
         assertEquals(100000, inner.remaining)
+        inner.release()
     }
 
     @Test

@@ -9,7 +9,7 @@ import kotlin.test.*
 
 class BytePacketBuildTest {
     @get:Rule
-    private val pool = VerifyingObjectPool(BufferView.Pool)
+    internal val pool = VerifyingObjectPool(BufferView.Pool)
 
     @Test
     fun smokeSingleBufferTest() {
@@ -160,6 +160,8 @@ class BytePacketBuildTest {
             p.readInt()
             fail()
         } catch (expected: EOFException) {
+        } finally {
+            p.release()
         }
     }
 
