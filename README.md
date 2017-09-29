@@ -43,9 +43,6 @@ The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotl
 linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines) and 
 pushed to [Maven Central](https://search.maven.org/#search%7Cga%7C1%7Cg%3Aorg.jetbrains.kotlinx%20a%3Akotlinx-coroutines).
 
-These libraries require kotlin compiler version `1.1.4` or later and 
-require kotlin runtime of the same version as a dependency.
-
 ### Maven
 
 Add dependencies (you can also add other modules that you need):
@@ -58,11 +55,11 @@ Add dependencies (you can also add other modules that you need):
 </dependency>
 ```
 
-And make sure that you use the right Kotlin version:
+And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.4</kotlin.version>
+    <kotlin.version>1.1.51</kotlin.version>
 </properties>
 ```
 
@@ -74,11 +71,11 @@ Add dependencies (you can also add other modules that you need):
 compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
 ```
 
-And make sure that you use the right Kotlin version:
+And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.4'
+    ext.kotlin_version = '1.1.51'
 }
 ```
 
