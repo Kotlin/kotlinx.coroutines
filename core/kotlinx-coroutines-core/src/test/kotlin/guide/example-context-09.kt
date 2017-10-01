@@ -17,10 +17,7 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.context.example09
 
-import kotlinx.coroutines.experimental.CoroutineName
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
