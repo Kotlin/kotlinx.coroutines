@@ -71,6 +71,7 @@ internal class ByteBufferChannel(
     override fun close(cause: Throwable?): Boolean {
         if (closed != null) return false
         val newClosed = if (cause == null) ClosedElement.EmptyCause else ClosedElement(cause)
+        state.capacity.flush()
         if (!Closed.compareAndSet(this, null, newClosed)) return false
         state.capacity.flush()
         if (state.capacity.isEmpty() || cause != null) tryTerminate()
