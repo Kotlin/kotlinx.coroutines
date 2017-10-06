@@ -27,6 +27,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
 import reactor.core.publisher.Flux
+import java.time.Duration.*
 
 /**
  * Tests emitting single item with [flux].
@@ -62,7 +63,7 @@ class FluxSingleTest {
     @Test
     fun testSingleWithDelay() {
         val flux = flux(CommonPool) {
-            send(Flux.just("O").delayMillis(50).awaitSingle() + "K")
+            send(Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K")
         }
 
         checkSingleValue(flux) {

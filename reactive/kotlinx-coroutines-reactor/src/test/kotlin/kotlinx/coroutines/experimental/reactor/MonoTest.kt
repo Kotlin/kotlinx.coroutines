@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.Duration.*
 
 /**
  * Tests emitting single item with [mono].
@@ -148,7 +149,7 @@ class MonoTest : TestBase() {
     @Test
     fun testMonoWithDelay() {
         val mono = mono(CommonPool) {
-            Flux.just("O").delayMillis(50).awaitSingle() + "K"
+            Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K"
         }
 
         checkMonoValue(mono) {

@@ -64,7 +64,7 @@
             <dependency>
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-bom</artifactId>
-                <version>Aluminium-SR3</version>
+                <version>Bismuth-RELEASE</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -77,7 +77,7 @@
             <artifactId>reactor-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor.addons</groupId>
+            <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
