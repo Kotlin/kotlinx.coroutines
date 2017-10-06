@@ -17,16 +17,13 @@
 package kotlinx.coroutines.experimental.reactor
 
 import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.reactive.awaitFirst
-import kotlinx.coroutines.experimental.reactive.awaitFirstOrDefault
-import kotlinx.coroutines.experimental.reactive.awaitLast
-import kotlinx.coroutines.experimental.reactive.awaitSingle
-import kotlinx.coroutines.experimental.reactive.consumeEach
+import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
 import reactor.core.publisher.Flux
+import java.time.Duration.ofMillis
 
 /**
  * Tests emitting single item with [flux].
@@ -62,7 +59,7 @@ class FluxSingleTest {
     @Test
     fun testSingleWithDelay() {
         val flux = flux(CommonPool) {
-            send(Flux.just("O").delayMillis(50).awaitSingle() + "K")
+            send(Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K")
         }
 
         checkSingleValue(flux) {

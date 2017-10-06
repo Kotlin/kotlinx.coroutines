@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.time.Duration.ofMillis
 
 /**
  * Tests emitting single item with [mono].
@@ -87,7 +88,7 @@ class MonoTest : TestBase() {
             null
         }
         expect(2)
-        mono.subscribe ({}, { throw it }, {
+        mono.subscribe({}, { throw it }, {
             expect(5)
         })
         expect(3)
@@ -148,7 +149,7 @@ class MonoTest : TestBase() {
     @Test
     fun testMonoWithDelay() {
         val mono = mono(CommonPool) {
-            Flux.just("O").delayMillis(50).awaitSingle() + "K"
+            Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K"
         }
 
         checkMonoValue(mono) {
