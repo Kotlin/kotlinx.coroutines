@@ -1,3 +1,4 @@
 package kotlinx.coroutines.experimental.io.packet
 
-val ByteReadPacketEmpty: ByteReadPacket = ByteReadPacketViewBased.Empty
+@Deprecated("", ReplaceWith("ByteReadPacket.Empty"))
+val ByteReadPacketEmpty: ByteReadPacket = kotlinx.io.core.ByteReadPacket.Empty

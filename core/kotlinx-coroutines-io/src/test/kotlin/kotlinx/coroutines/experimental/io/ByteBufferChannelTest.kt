@@ -3,13 +3,13 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineName
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
 import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
 import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.io.core.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ErrorCollector
@@ -25,7 +25,7 @@ import kotlin.test.fail
 
 class ByteBufferChannelTest {
     @get:Rule
-    val timeout = Timeout(10, TimeUnit.SECONDS)
+    val timeout = Timeout(100000, TimeUnit.SECONDS)
 
     @get:Rule
     private val failures = ErrorCollector()
@@ -547,27 +547,6 @@ class ByteBufferChannelTest {
             writeInt(0xffee)
             writeStringUtf8("Hello")
         }
-
-        ch.writeInt(packet.remaining)
-        ch.writePacket(packet)
-
-        ch.flush()
-
-        val size = ch.readInt()
-        val readed = ch.readPacket(size)
-
-        assertEquals(0xffee, readed.readInt())
-        assertEquals("Hello", readed.readUTF8Line())
-    }
-
-    @Test
-    fun testPacketMultipleBufferOfOne() = runBlocking {
-        val packet0 = buildPacket {
-            writeInt(0xffee)
-            writeStringUtf8("Hello")
-        } as ByteReadPacketViewBased
-
-        val packet = ByteReadPacketViewBased(packet0.steal()!!, pktPool)
 
         ch.writeInt(packet.remaining)
         ch.writePacket(packet)

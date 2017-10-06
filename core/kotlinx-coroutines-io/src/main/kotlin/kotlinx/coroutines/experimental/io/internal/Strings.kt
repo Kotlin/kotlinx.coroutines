@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental.io.internal
 
-import kotlinx.coroutines.experimental.io.buffers.*
-import java.nio.ByteBuffer
-import java.nio.charset.MalformedInputException
+import kotlinx.io.core.*
+import java.nio.*
+import java.nio.charset.*
 
 /**
  * Decodes all the bytes to ASCII characters until end of buffer applying every character to [consumer]
@@ -25,7 +25,7 @@ internal inline fun BufferView.decodeASCII(consumer: (Char) -> Boolean): Boolean
     for (i in 0 until readRemaining) {
         val v = readByte().toInt() and 0xff
         if (v and 0x80 != 0 || !consumer(v.toChar())) {
-            pushBack()
+            pushBack(1)
             return false
         }
     }
@@ -121,13 +121,13 @@ internal inline fun BufferView.decodeUTF8(consumer: (Char) -> Boolean): Int {
     var value = 0
     var lastByteCount = 0
 
-    while (hasRemaining()) {
+    while (canRead()) {
         val v = readByte().toInt() and 0xff
         when {
             v and 0x80 == 0 -> {
                 if (byteCount != 0) throw MalformedInputException(0)
                 if (!consumer(v.toChar())) {
-                    pushBack()
+                    pushBack(1)
                     return -1
                 }
             }
@@ -151,7 +151,7 @@ internal inline fun BufferView.decodeUTF8(consumer: (Char) -> Boolean): Int {
                 byteCount--
 
                 if (byteCount > readRemaining) {
-                    pushBack() // return one byte back
+                    pushBack(1) // return one byte back
                     return lastByteCount
                 }
             }

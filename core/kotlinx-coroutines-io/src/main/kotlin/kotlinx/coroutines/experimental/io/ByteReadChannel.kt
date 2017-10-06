@@ -2,6 +2,8 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.io.core.*
 
 /**
  * Channel for asynchronous reading of sequences of bytes.

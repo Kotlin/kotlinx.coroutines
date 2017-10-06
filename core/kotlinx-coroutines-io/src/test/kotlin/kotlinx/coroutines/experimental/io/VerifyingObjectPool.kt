@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.io.pool.*
 import org.junit.rules.*
 import org.junit.runner.*
 import org.junit.runners.model.*

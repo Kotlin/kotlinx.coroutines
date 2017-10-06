@@ -2,23 +2,24 @@
 
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.buffers.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
-import java.io.*
-import java.nio.BufferOverflowException
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
+import kotlinx.io.core.*
+import kotlinx.io.core.ByteReadPacket
+import kotlinx.io.pool.*
+import java.io.EOFException
+import java.nio.*
+import java.util.concurrent.atomic.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Byte channel was closed"
 
 // implementation for ByteChannel
 internal class ByteBufferChannel(
-    override val autoFlush: Boolean,
-    private val pool: ObjectPool<ReadWriteBufferState.Initial> = BufferObjectPool,
-    private val reservedSize: Int = RESERVED_SIZE
+        override val autoFlush: Boolean,
+        private val pool: ObjectPool<ReadWriteBufferState.Initial> = BufferObjectPool,
+        private val reservedSize: Int = RESERVED_SIZE
 ) : ByteChannel, LookAheadSuspendSession {
     // internal constructor for reading of byte buffers
     constructor(content: ByteBuffer) : this(false, BufferObjectNoPool, 0) {
@@ -373,9 +374,9 @@ internal class ByteBufferChannel(
     suspend override fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
         closed?.cause?.let { throw it }
 
-        if (size == 0) return ByteReadPacketViewBased.Empty
+        if (size == 0) return ByteReadPacket.Empty
 
-        val builder = ByteWritePacketImpl(headerSizeHint, BufferView.Pool)
+        val builder = BytePacketBuilder(headerSizeHint)
         val buffer = BufferPool.borrow()
         var remaining = size
 
@@ -870,16 +871,6 @@ internal class ByteBufferChannel(
         }
     }
 
-    suspend override fun writePacket(packet: ByteReadPacket) {
-        closed?.sendException?.let { packet.release(); throw it }
-
-        when (packet) {
-            ByteReadPacketEmpty -> return
-            is ByteReadPacketViewBased -> writeViewBasedPacket(packet)
-            else -> writeExternalPacket(packet)
-        }
-    }
-
     override suspend fun write(min: Int, block: (ByteBuffer) -> Unit) {
         require(min > 0) { "min should be positive"}
 
@@ -939,112 +930,45 @@ internal class ByteBufferChannel(
         read(min, block)
     }
 
-    private suspend fun writeViewBasedPacket(packet: ByteReadPacketViewBased) {
-        while (!packet.isEmpty) {
-            val node = packet.steal() ?: break
-
-            var written: Int
-
-            while (node.readRemaining > 0) {
-                try {
-                    written = 0
-                    writing {
-                        val size = minOf(remaining(), node.readRemaining)
-                        if (it.tryWriteExact(size)) {
-                            written = node.read(this, size)
-                            bytesWritten(it, size)
-                        }
-                    }
-                } catch (t: Throwable) {
-                    node.release(packet.pool)
-                    packet.release()
-                    throw t
-                }
-
-                if (written == 0 && node.readRemaining > 0) {
-                    return writeViewBasedPacketSuspend(packet, node)
-                }
-            }
-
-            node.release(packet.pool)
-        }
-    }
-
-    private suspend fun writeViewBasedPacketSuspend(packet: ByteReadPacketViewBased, node0: BufferView) {
-        var node: BufferView? = node0
-
+    suspend override fun writePacket(packet: ByteReadPacket) {
         try {
-            while ((node != null && node.readRemaining > 0) || !packet.isEmpty) {
-                while (node != null && node.readRemaining > 0) {
-                    writeSuspend(1)
-                    writing {
-                        val size = minOf(remaining(), node!!.readRemaining)
-                        if (!it.tryWriteExact(size)) throw IllegalStateException()
-                        node!!.read(this, size)
-                        bytesWritten(it, size)
-                    }
-
-                    if (node.readRemaining == 0) {
-                        node.release(packet.pool)
-                        node = packet.steal()
-                    }
-                }
+            while (!packet.isEmpty) {
+                if (tryWritePacketPart(packet) == 0) break
             }
         } catch (t: Throwable) {
-            node?.release(packet.pool)
-            packet.release()
-            throw t
-        }
-    }
-
-    private suspend fun writeExternalPacket(packet: ByteReadPacket) {
-        val buffer = BufferPool.borrow()
-        val t = try {
-            while (packet.remaining > 0) {
-                buffer.clear()
-                packet.readAvailable(buffer)
-                buffer.flip()
-                writeAsMuchAsPossible(buffer)
-                if (buffer.hasRemaining()) {
-                    buffer.compact()
-                    break
-                } else {
-                    buffer.compact()
-                }
-            }
-
-            null
-        } catch (t: Throwable) {
-            t
-        }
-
-        if (t != null) {
-            BufferPool.recycle(buffer)
             packet.release()
             throw t
         }
 
-        buffer.flip()
-        if (buffer.hasRemaining()) {
-            return writeExternalPacketSuspend(buffer, packet)
+        if (packet.remaining > 0) {
+            return writePacketSuspend(packet)
         }
-
-        BufferPool.recycle(buffer)
-        packet.release()
     }
 
-    private suspend fun writeExternalPacketSuspend(buffer: ByteBuffer, packet: ByteReadPacket) {
+    private suspend fun writePacketSuspend(packet: ByteReadPacket) {
         try {
-            do {
-                buffer.compact()
-                packet.readAvailable(buffer)
-                buffer.flip()
-                writeFully(buffer)
-            } while (packet.remaining > 0)
+            while (!packet.isEmpty) {
+                writeSuspend(1)
+                tryWritePacketPart(packet)
+            }
         } finally {
-            BufferPool.recycle(buffer)
             packet.release()
         }
+    }
+
+    private fun tryWritePacketPart(packet: ByteReadPacket): Int {
+        var copied = 0
+        writing {
+            val size = it.tryWriteAtMost(minOf(packet.remaining, remaining()))
+            if (size > 0) {
+                limit(position() + size)
+                packet.readFully(this)
+                bytesWritten(it, size)
+            }
+            copied = size
+        }
+
+        return copied
     }
 
     /**

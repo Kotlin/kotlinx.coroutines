@@ -1,7 +1,8 @@
 package kotlinx.coroutines.experimental.io.packet
 
-import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.io.core.*
+import kotlinx.io.pool.*
 
 internal val PACKET_BUFFER_SIZE = getIOIntProperty("PacketBufferSize", 4096)
 internal val PACKET_BUFFER_POOL_SIZE = getIOIntProperty("PacketBufferPoolSize", 128)
@@ -29,12 +30,4 @@ inline fun buildPacket(headerSizeHint: Int = 0, block: ByteWritePacket.() -> Uni
     }
 }
 
-fun WritePacket(headerSizeHint: Int = 0): ByteWritePacket = ByteWritePacketImpl(headerSizeHint, BufferView.Pool)
-
-fun ByteReadPacket.readUTF8Line(estimate: Int = 16, limit: Int = Int.MAX_VALUE): String? {
-    if (isEmpty) return null
-    val sb = StringBuilder(estimate)
-    return if (readUTF8LineTo(sb, limit)) sb.toString() else null
-}
-
-fun ByteReadPacket.readBytes(n: Int = remaining): ByteArray = ByteArray(n).also { readFully(it) }
+fun WritePacket(headerSizeHint: Int = 0): ByteWritePacket = BytePacketBuilder(headerSizeHint)

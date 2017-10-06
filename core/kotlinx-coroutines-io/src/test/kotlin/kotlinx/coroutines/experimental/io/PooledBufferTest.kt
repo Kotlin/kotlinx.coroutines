@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.internal.ObjectPool
 import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
 import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.io.pool.*
 import org.junit.After
 import org.junit.Test
 import java.io.IOException

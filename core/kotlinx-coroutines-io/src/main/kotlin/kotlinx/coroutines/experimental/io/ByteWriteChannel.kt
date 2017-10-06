@@ -1,8 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
-import kotlinx.coroutines.experimental.io.packet.buildPacket
+import kotlinx.coroutines.experimental.io.packet.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
