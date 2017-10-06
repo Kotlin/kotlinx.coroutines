@@ -17,9 +17,7 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.compose.example02
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import kotlin.system.measureTimeMillis
 
 suspend fun doSomethingUsefulOne(): Int {
