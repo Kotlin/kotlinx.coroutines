@@ -7,6 +7,8 @@
   having to use `try/catch` or other exception handlers.  
 * Fixed a race in `ArrayBroadcastChannel` between `send` and `openChannel` invocations
   (see #138).   
+* Fixed quite a rare race in `runBlocking` that resulted in `AssertionError`. 
+  Unfortunately, cannot write a reliable stress-test to reproduce it. 
 * Updated Reactor support to leverage Bismuth release train 
   (contributed by @sdeleuze, see PR #141)
 

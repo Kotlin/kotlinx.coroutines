@@ -216,9 +216,6 @@ private class BlockingCoroutine<T>(
     }
 
     override fun afterCompletion(state: Any?, mode: Int) {
-        // signal termination to event loop (don't accept more tasks)
-        if (privateEventLoop)
-            (eventLoop as BlockingEventLoop).isCompleted = true
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
             LockSupport.unpark(blockedThread)
@@ -235,7 +232,12 @@ private class BlockingCoroutine<T>(
             timeSource.parkNanos(this, parkNanos)
         }
         // process queued events (that could have been added after last processNextEvent and before cancel
-        if (privateEventLoop) (eventLoop as BlockingEventLoop).shutdown()
+        if (privateEventLoop) (eventLoop as BlockingEventLoop).apply {
+            // We exit the "while" loop above when this coroutine's state "isCompleted",
+            // Here we should signal that BlockingEventLoop should not accept any more tasks
+            isCompleted = true
+            shutdown()
+        }
         timeSource.unregisterTimeLoopThread()
         // now return result
         val state = this.state

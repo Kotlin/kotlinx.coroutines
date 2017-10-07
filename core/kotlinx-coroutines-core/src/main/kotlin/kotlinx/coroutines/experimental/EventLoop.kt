@@ -265,7 +265,6 @@ internal abstract class ThreadEventLoop(
         // reschedule the rest of delayed tasks
         rescheduleAllDelayed()
     }
-
 }
 
 private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
