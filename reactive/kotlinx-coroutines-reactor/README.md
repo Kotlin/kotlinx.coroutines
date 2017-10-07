@@ -21,7 +21,6 @@ Conversion functions:
 | [Deferred.asMono][kotlinx.coroutines.experimental.Deferred.asMono] | Converts deferred value to hot mono
 | [ReceiveChannel.asFlux][kotlinx.coroutines.experimental.channels.ReceiveChannel.asFlux] | Converts streaming channel to hot flux
 | [Scheduler.asCoroutineDispatcher][reactor.core.scheduler.Scheduler.asCoroutineDispatcher] | Converts scheduler to [CoroutineDispatcher]
-| [TimedScheduler.asCoroutineDispatcher][reactor.core.scheduler.TimedScheduler.asCoroutineDispatcher] | Converts scheduler to [CoroutineDispatcher] supporting [Delay]
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
@@ -37,7 +36,6 @@ Conversion functions:
 [kotlinx.coroutines.experimental.Deferred.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-deferred/as-mono.html
 [kotlinx.coroutines.experimental.channels.ReceiveChannel.asFlux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.channels.-receive-channel/as-flux.html
 [reactor.core.scheduler.Scheduler.asCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/reactor.core.scheduler.-scheduler/as-coroutine-dispatcher.html
-[reactor.core.scheduler.TimedScheduler.asCoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/reactor.core.scheduler.-timed-scheduler/as-coroutine-dispatcher.html
 <!--- END -->
 
 # Package kotlinx.coroutines.experimental.reactor
