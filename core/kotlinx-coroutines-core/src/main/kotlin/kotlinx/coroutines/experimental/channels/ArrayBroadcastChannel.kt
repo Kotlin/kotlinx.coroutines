@@ -47,7 +47,7 @@ class ArrayBroadcastChannel<E>(
     }
 
     private val bufferLock = ReentrantLock()
-    private val buffer: Array<Any?> = arrayOfNulls<Any?>(capacity) // guarded by lock
+    private val buffer = arrayOfNulls<Any?>(capacity) // guarded by bufferLock
 
     // head & tail are Long (64 bits) and we assume that they never wrap around
     // head, tail, and size are guarded by bufferLock
@@ -58,24 +58,24 @@ class ArrayBroadcastChannel<E>(
     @Volatile
     private var size: Int = 0
 
+    /*
+        Writes to buffer are guarded by bufferLock, but reads from buffer are concurrent with writes
+          - Write element to buffer then write "tail" (volatile)
+          - Read "tail" (volatile), then read element from buffer
+        So read/writes to buffer need not be volatile
+     */
+
     private val subs = CopyOnWriteArrayList<Subscriber<E>>()
 
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
     override fun openSubscription(): SubscriptionReceiveChannel<E> {
-        val sub = Subscriber(this, head)
-        subs.add(sub)
-        // between creating and adding of subscription into the list the buffer head could have been bumped past it,
-        // so here we check if it did happen and update the head in subscription in this case
-        // we did not leak newly created subscription yet, so its subHead cannot update
-        val head = this.head // volatile read after sub was added to subs
-        if (head != sub.subHead) {
-            // needs update
-            sub.subHead = head
-            updateHead() // and also must recompute head of the buffer
+        bufferLock.withLock {
+            val sub = Subscriber(this, head)
+            subs.add(sub)
+            return sub
         }
-        return sub
     }
 
     override fun close(cause: Throwable?): Boolean {
@@ -122,12 +122,6 @@ class ArrayBroadcastChannel<E>(
         return OFFER_SUCCESS
     }
 
-    private fun closeSubscriber(sub: Subscriber<E>) {
-        subs.remove(sub)
-        if (head == sub.subHead)
-            updateHead()
-    }
-
     private fun checkSubOffers() {
         var updated = false
         var hasSubs = false
@@ -137,51 +131,54 @@ class ArrayBroadcastChannel<E>(
             if (sub.checkOffer()) updated = true
         }
         if (updated || !hasSubs)
-            updateHead()
+            updateHead(null)
     }
 
-    private fun updateHead() {
-        // compute minHead w/o lock (it will be eventually consistent)
-        val minHead = computeMinHead()
-        // update head in a loop
-        while (true) {
-            var send: Send? = null
-            var token: Any? = null
-            bufferLock.withLock {
-                val tail = this.tail
-                var head = this.head
-                val targetHead = minHead.coerceAtMost(tail)
-                if (targetHead <= head) return // nothing to do -- head was already moved
-                var size = this.size
-                // clean up removed (on not need if we don't have any subscribers anymore)
-                while (head < targetHead) {
-                    buffer[(head % capacity).toInt()] = null
-                    val wasFull = size >= capacity
-                    // update the size before checking queue (no more senders can queue up)
-                    this.head = ++head
-                    this.size = --size
-                    if (wasFull) {
-                        while (true) {
-                            send = takeFirstSendOrPeekClosed() ?: break // when when no sender
-                            if (send is Closed<*>) break // break when closed for send
-                            token = send!!.tryResumeSend(idempotent = null)
-                            if (token != null) {
-                                // put sent element to the buffer
-                                buffer[(tail % capacity).toInt()] = (send as Send).pollResult
-                                this.size = size + 1
-                                this.tail = tail + 1
-                                return@withLock // go out of lock to wakeup this sender
-                            }
+    private tailrec fun updateHead(removeSub: Subscriber<E>?) {
+        // update head in a tail rec loop
+        var send: Send? = null
+        var token: Any? = null
+        bufferLock.withLock {
+            if (removeSub != null) {
+                subs.remove(removeSub)
+                if (head != removeSub.subHead) return // no need to update
+            }
+            val minHead = computeMinHead()
+            val tail = this.tail
+            var head = this.head
+            val targetHead = minHead.coerceAtMost(tail)
+            if (targetHead <= head) return // nothing to do -- head was already moved
+            var size = this.size
+            // clean up removed (on not need if we don't have any subscribers anymore)
+            while (head < targetHead) {
+                buffer[(head % capacity).toInt()] = null
+                val wasFull = size >= capacity
+                // update the size before checking queue (no more senders can queue up)
+                this.head = ++head
+                this.size = --size
+                if (wasFull) {
+                    while (true) {
+                        send = takeFirstSendOrPeekClosed() ?: break // when when no sender
+                        if (send is Closed<*>) break // break when closed for send
+                        token = send!!.tryResumeSend(idempotent = null)
+                        if (token != null) {
+                            // put sent element to the buffer
+                            buffer[(tail % capacity).toInt()] = (send as Send).pollResult
+                            this.size = size + 1
+                            this.tail = tail + 1
+                            return@withLock // go out of lock to wakeup this sender
                         }
                     }
                 }
-                return // done updating here -> return
             }
-            // we only get out of the lock normally when there is a sender to resume
-            send!!.completeResumeSend(token!!)
-            // since we've just sent an element, we might need to resume some receivers
-            checkSubOffers()
+            return // done updating here -> return
         }
+        // we only get out of the lock normally when there is a sender to resume
+        send!!.completeResumeSend(token!!)
+        // since we've just sent an element, we might need to resume some receivers
+        checkSubOffers()
+        // tailrec call to recheck
+        updateHead(null)
     }
 
     private fun computeMinHead(): Long {
@@ -196,9 +193,9 @@ class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>,
-        @Volatile @JvmField var subHead: Long // guarded by lock
+        @Volatile @JvmField var subHead: Long // guarded by subLock
     ) : AbstractChannel<E>(), SubscriptionReceiveChannel<E> {
-        private val lock = ReentrantLock()
+        private val subLock = ReentrantLock()
 
         override val isBufferAlwaysEmpty: Boolean get() = false
         override val isBufferEmpty: Boolean get() = subHead >= broadcastChannel.tail
@@ -207,7 +204,7 @@ class ArrayBroadcastChannel<E>(
 
         override fun close() {
             if (close(cause = null))
-                broadcastChannel.closeSubscriber(this)
+                broadcastChannel.updateHead(removeSub = this)
         }
 
         // returns true if subHead was updated and broadcast channel's head must be checked
@@ -220,7 +217,7 @@ class ArrayBroadcastChannel<E>(
             while (needsToCheckOfferWithoutLock()) {
                 // just use `tryLock` here and break when some other thread is checking under lock
                 // it means that `checkOffer` must be retried after every `unlock`
-                if (!lock.tryLock()) break
+                if (!subLock.tryLock()) break
                 val receive: ReceiveOrClosed<E>?
                 val token: Any?
                 try {
@@ -241,7 +238,7 @@ class ArrayBroadcastChannel<E>(
                     this.subHead = subHead + 1 // retrieved element for this subscriber
                     updated = true
                 } finally {
-                    lock.unlock()
+                    subLock.unlock()
                 }
                 receive!!.completeResumeReceive(token!!)
             }
@@ -253,10 +250,8 @@ class ArrayBroadcastChannel<E>(
         // result is `E | POLL_FAILED | Closed`
         override fun pollInternal(): Any? {
             var updated = false
-            val result: Any?
-            lock.lock()
-            try {
-                result = peekUnderLock()
+            val result = subLock.withLock {
+                val result = peekUnderLock()
                 when {
                     result is Closed<*> -> { /* just bail out of lock */ }
                     result === POLL_FAILED -> { /* just bail out of lock */ }
@@ -267,8 +262,7 @@ class ArrayBroadcastChannel<E>(
                         updated = true
                     }
                 }
-            } finally {
-                lock.unlock()
+                result
             }
             // do close outside of lock
             (result as? Closed<*>)?.also { close(cause = it.closeCause) }
@@ -278,17 +272,15 @@ class ArrayBroadcastChannel<E>(
                 updated = true
             // and finally update broadcast's channel head if needed
             if (updated)
-                broadcastChannel.updateHead()
+                broadcastChannel.updateHead(null)
             return result
         }
 
         // result is `ALREADY_SELECTED | E | POLL_FAILED | Closed`
         override fun pollSelectInternal(select: SelectInstance<*>): Any? {
             var updated = false
-            var result: Any?
-            lock.lock()
-            try {
-                result = peekUnderLock()
+            val result = subLock.withLock {
+                var result = peekUnderLock()
                 when {
                     result is Closed<*> -> { /* just bail out of lock */ }
                     result === POLL_FAILED -> { /* just bail out of lock */ }
@@ -304,8 +296,7 @@ class ArrayBroadcastChannel<E>(
                         }
                     }
                 }
-            } finally {
-                lock.unlock()
+                result
             }
             // do close outside of lock
             (result as? Closed<*>)?.also { close(cause = it.closeCause) }
@@ -315,7 +306,7 @@ class ArrayBroadcastChannel<E>(
                 updated = true
             // and finally update broadcast's channel head if needed
             if (updated)
-                broadcastChannel.updateHead()
+                broadcastChannel.updateHead(null)
             return result
         }
 

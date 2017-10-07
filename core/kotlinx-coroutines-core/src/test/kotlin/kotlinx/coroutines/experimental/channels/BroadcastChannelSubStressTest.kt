@@ -1,0 +1,78 @@
+/*
+ * Copyright 2016-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package kotlinx.coroutines.experimental.channels
+
+import kotlinx.coroutines.experimental.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it,
+ * to stress test the logic of opening the subscription
+ * to broadcast channel while events are being concurrently sent to it.
+ */
+@RunWith(Parameterized::class)
+class BroadcastChannelSubStressTest(
+    val kind: TestBroadcastChannelKind
+) : TestBase() {
+    companion object {
+        @Parameterized.Parameters(name = "{0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> =
+            TestBroadcastChannelKind.values().map { arrayOf<Any>(it) }
+    }
+
+    private val nSeconds = 5 * stressTestMultiplier
+    private val broadcast = kind.create()
+
+    private val sentTotal = AtomicInteger()
+    private val receivedTotal = AtomicInteger()
+
+    @Test
+    fun testStress() = runBlocking {
+        val ctx = coroutineContext + CommonPool
+        val sender =
+            launch(context = ctx + CoroutineName("Sender")) {
+                while (isActive) {
+                    broadcast.send(sentTotal.incrementAndGet())
+                }
+            }
+        val receiver =
+            launch(context = ctx + CoroutineName("Receiver")) {
+                var last = -1
+                while (isActive) {
+                    broadcast.openSubscription().use { sub ->
+                        val i = sub.receive()
+                        check(i >= last) { "Last was $last, got $i" }
+                        receivedTotal.incrementAndGet()
+                        last = i
+                    }
+                }
+            }
+        repeat(nSeconds) { sec ->
+            delay(1000)
+            println("${sec + 1}: Sent ${sentTotal.get()}, received ${receivedTotal.get()}")
+        }
+        withTimeout(5, TimeUnit.SECONDS) {
+            sender.cancelAndJoin()
+            receiver.cancelAndJoin()
+        }
+    }
+}
