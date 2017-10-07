@@ -60,8 +60,10 @@ class BroadcastChannelMultiReceiveStressTest(
         val ctx = pool + coroutineContext[Job]!!
         val sender =
             launch(context = ctx + CoroutineName("Sender")) {
+                var i = 0
                 while (isActive) {
-                    broadcast.send(sentTotal.incrementAndGet())
+                    broadcast.send(++i)
+                    sentTotal.set(i) // set sentTotal only if `send` was not cancelled
                 }
             }
         val receivers = mutableListOf<Job>()
@@ -84,7 +86,7 @@ class BroadcastChannelMultiReceiveStressTest(
                 }
             }
             // wait a sec
-            delay(1000)
+            delay(100)
             // print progress
             println("${sec + 1}: Sent ${sentTotal.get()}, received ${receivedTotal.get()}, receivers=${receivers.size}")
         }
@@ -93,13 +95,21 @@ class BroadcastChannelMultiReceiveStressTest(
         val total = sentTotal.get()
         println("      Sent $total events, waiting for receivers")
         stopOnReceive.set(total)
-        withTimeout(5, TimeUnit.SECONDS) {
-            receivers.forEachIndexed { index, receiver ->
-                if (lastReceived[index].get() == total)
-                    receiver.cancel()
-                else
-                    receiver.join()
+        try {
+            withTimeout(5, TimeUnit.SECONDS) {
+                receivers.forEachIndexed { index, receiver ->
+                    if (lastReceived[index].get() == total)
+                        receiver.cancel()
+                    else
+                        receiver.join()
+                }
             }
+        } catch (e: Exception) {
+            println("Failed: $e")
+            receivers.indices.forEach { index  ->
+                println("lastReceived[$index] = ${lastReceived[index].get()}")
+            }
+            throw e
         }
         println("  Received ${receivedTotal.get()} events")
     }
