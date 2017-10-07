@@ -52,7 +52,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * | _Completing_ (optional transient state) | `true`     | `false`       | `false`       |
  * | _Cancelling_ (optional transient state) | `false`    | `false`       | `true`        |
  * | _Cancelled_ (final state)               | `false`    | `true`        | `true`        |
- * | _Completed normally_ (final state)      | `false`    | `true`        | `false`       |
+ * | _Completed_ (final state)               | `false`    | `true`        | `false`       |
  *
  * Usually, a job is created in _active_ state (it is created and started). However, coroutine builders
  * that provide an optional `start` parameter create a coroutine in _new_ state when this parameter is set to
@@ -68,8 +68,8 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *                                                      wait children
  *    +-----+       start      +--------+   complete   +-------------+  finish  +-----------+
  *    | New | ---------------> | Active | -----------> | Completing  | -------> | Completed |
- *    +-----+                  +--------+              +-------------+          | normally  |
- *       |                         |                         |                  +-----------+
+ *    +-----+                  +--------+              +-------------+          +-----------+
+ *       |                         |                         |
  *       | cancel                  | cancel                  | cancel
  *       V                         V                         |
  *  +-----------+   finish   +------------+                  |
@@ -82,7 +82,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * A job is active while the coroutine is working and job's cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException].
  *
- * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled or completes.
+ * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled or completes exceptionally.
  * Parent job waits for all its [children][attachChild] to complete in _completing_ or _cancelling_ state.
  * _Completing_ state is purely internal to the job. For an outside observer a _completing_ job is still active,
  * while internally it is waiting for its children.
@@ -185,9 +185,10 @@ public interface Job : CoroutineContext.Element {
      * returns a handle that should be used to detach it.
      *
      * A parent-child relation has the following effect:
-     * * Cancellation of parent with [cancel] immediately cancels all its children with the same cause.
+     * * Cancellation of parent with [cancel] or its exceptional completion (failure)
+     *   immediately cancels all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
-     *   complete first in _completing_ or _cancelling_ state.
+     *   complete in _completing_ or _cancelling_ state.
      *
      * A child must store the resulting [DisposableHandle] and [dispose][DisposableHandle.dispose] the attachment
      * to its parent on its own completion.
@@ -988,20 +989,28 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
                 throw IllegalStateException("Job $this is already complete, but is being completed with $proposedUpdate", proposedUpdate.exceptionOrNull)
             if (state is Finishing && state.completing)
                 throw IllegalStateException("Job $this is already completing, but is being completed with $proposedUpdate", proposedUpdate.exceptionOrNull)
-            val waitChild: Child = firstChild(state) ?: // or else complete immediately
+            val child: Child = firstChild(state) ?: // or else complete immediately w/o children
                 if (updateState(state, proposedUpdate, mode)) return true else return@loopOnState
-            // switch to completing state
+            // must promote to list to correct operate on child lists
             if (state is JobNode<*>) {
-                // must promote to list to make completing & retry
                 promoteSingleToNodeList(state)
-            } else {
-                val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
-                if (_state.compareAndSet(state, completing)) {
-                    waitForChild(waitChild, proposedUpdate)
-                    return false
-                }
+                return@loopOnState // retry
+            }
+            // cancel all children in list on exceptional completion
+            if (proposedUpdate is CompletedExceptionally)
+                child.cancelChildrenInternal(proposedUpdate.exception)
+            // switch to completing state
+            val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
+            if (_state.compareAndSet(state, completing)) {
+                waitForChild(child, proposedUpdate)
+                return false
             }
         }
+    }
+
+    private tailrec fun Child.cancelChildrenInternal(cause: Throwable) {
+        childJob.cancel(JobCancellationException("Child job was cancelled because of parent failure", cause, childJob))
+        nextChild()?.cancelChildrenInternal(cause)
     }
 
     private val Any?.exceptionOrNull: Throwable?
@@ -1010,8 +1019,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     private fun firstChild(state: Incomplete) =
         state as? Child ?: state.list?.nextChild()
 
-    private fun waitForChild(waitChild: Child, proposedUpdate: Any?) {
-        waitChild.child.invokeOnCompletion(handler = ChildCompletion(this, waitChild, proposedUpdate))
+    private fun waitForChild(child: Child, proposedUpdate: Any?) {
+        child.childJob.invokeOnCompletion(handler = ChildCompletion(this, child, proposedUpdate))
     }
 
     internal fun continueCompleting(lastChild: Child, proposedUpdate: Any?) {
@@ -1044,13 +1053,13 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     public override fun cancelChildren(cause: Throwable?) {
         val state = this.state
         when (state) {
-            is Child -> state.child.cancel(cause)
+            is Child -> state.childJob.cancel(cause)
             is Incomplete -> state.list?.cancelChildrenList(cause)
         }
     }
 
     private fun NodeList.cancelChildrenList(cause: Throwable?) {
-        forEach<Child> { it.child.cancel(cause) }
+        forEach<Child> { it.childJob.cancel(cause) }
     }
 
     /**
@@ -1079,7 +1088,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
 
     // for nicer debugging
     override final fun toString(): String =
-        "${nameString()}{${stateString()}}@${Integer.toHexString(System.identityHashCode(this))}"
+        "${nameString()}{${stateString()}}@$hexAddress"
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
@@ -1393,22 +1402,22 @@ private class InvokeOnCancellation(
 
 internal class Child(
     parent: JobSupport,
-    val child: Job
+    @JvmField val childJob: Job
 ) : JobCancellationNode<JobSupport>(parent) {
     override fun invoke(reason: Throwable?) {
         // Always materialize the actual instance of parent's completion exception and cancel child with it
-        child.cancel(job.getCancellationException())
+        childJob.cancel(job.getCancellationException())
     }
-    override fun toString(): String = "Child[$child]"
+    override fun toString(): String = "Child[$childJob]"
 }
 
 private class ChildCompletion(
     private val parent: JobSupport,
-    private val waitChild: Child,
+    private val child: Child,
     private val proposedUpdate: Any?
-) : JobNode<Job>(waitChild.child) {
+) : JobNode<Job>(child.childJob) {
     override fun invoke(reason: Throwable?) {
-        parent.continueCompleting(waitChild, proposedUpdate)
+        parent.continueCompleting(child, proposedUpdate)
     }
 }
 

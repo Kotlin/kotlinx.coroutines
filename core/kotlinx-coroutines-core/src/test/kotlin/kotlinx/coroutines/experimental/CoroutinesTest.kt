@@ -266,4 +266,49 @@ class CoroutinesTest : TestBase() {
         }
         expectUnreached()
     }
+
+    @Test
+    fun testParentCrashCancelsChildren() = runTest(
+        unhandled = listOf({ it -> it is IOException })
+    ) {
+        expect(1)
+        val parent = launch(coroutineContext + Job()) {
+            expect(4)
+            throw IOException("Crashed")
+        }
+        launch(coroutineContext + parent, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            try {
+                yield() // to test
+            } finally {
+                expect(5)
+                run(NonCancellable) { yield() } // to test
+                expect(7)
+            }
+            expectUnreached() // will get cancelled, because parent crashes
+        }
+        expect(3)
+        yield() // to parent
+        expect(6)
+        parent.join() // make sure crashed parent still waits for its child
+        finish(8)
+    }
+
+    @Test
+    fun testYieldInFinally() = runTest(
+        expected = { it is IOException }
+    ) {
+        expect(1)
+        try {
+            expect(2)
+            throwIOException()
+        } finally {
+            expect(3)
+            yield()
+            finish(4)
+        }
+        expectUnreached()
+    }
+
+    private fun throwIOException() { throw IOException() }
 }
