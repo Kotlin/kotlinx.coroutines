@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.19.1
+
+* Failed parent Job cancels all children jobs, then waits for them them.
+  This makes parent-child hierarchies easier to get working right without
+  having to use `try/catch` or other exception handlers.  
+* Fixed a race in `ArrayBroadcastChannel` between `send` and `openChannel` invocations
+  (see #138).   
+* Updated Reactor support to leverage Bismuth release train 
+  (contributed by @sdeleuze, see PR #141)
+
 ## Version 0.19
 
 * This release is published to Maven Central.
