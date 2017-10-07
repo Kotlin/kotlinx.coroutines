@@ -51,22 +51,76 @@
 <tr>
 <td>
 
-        <p><a href="-byte-read-packet-empty/index.html">ByteReadPacketEmpty</a></p>
+        <p><a href="-byte-write-packet/index.html">ByteWritePacket</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">ByteReadPacketEmpty</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ByteWritePacket</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-appendable/index.html"><span class="identifier">Appendable</span></a></code></div>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="java.io.-input-stream/index.html">java.io.InputStream</a></p>
+
+      </td>
+<td>
 
       </td>
 </tr>
 <tr>
 <td>
 
-        <p><a href="-byte-write-packet/index.html">ByteWritePacket</a></p>
+        <p><a href="java.io.-output-stream/index.html">java.io.OutputStream</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ByteWritePacket</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/-appendable/index.html"><span class="identifier">Appendable</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="java.nio.channels.-readable-byte-channel/index.html">java.nio.channels.ReadableByteChannel</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="java.nio.channels.-writable-byte-channel/index.html">java.nio.channels.WritableByteChannel</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-byte-read-packet-empty.html">ByteReadPacketEmpty</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">ByteReadPacketEmpty</span><span class="symbol">: </span><a href="-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
 
       </td>
 </tr>
@@ -84,7 +138,7 @@
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">WritePacket</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">WritePacket</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$WritePacket(kotlin.Int)/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">)</span><span class="symbol">: </span><a href="-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a></code></div>
 
       </td>
 </tr>
@@ -95,7 +149,7 @@
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">buildPacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$buildPacket(kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<a href="-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">buildPacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$buildPacket(kotlin.Int, kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$buildPacket(kotlin.Int, kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<a href="-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
 
       </td>
 </tr>

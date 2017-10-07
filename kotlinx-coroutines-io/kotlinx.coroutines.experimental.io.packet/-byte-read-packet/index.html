@@ -40,6 +40,17 @@
 <tr>
 <td>
 
+        <p><a href="is-empty.html">isEmpty</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">val </span><span class="identifier">isEmpty</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="remaining.html">remaining</a></p>
 
       </td>
@@ -88,7 +99,7 @@
 
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">readAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readAvailable(kotlin.ByteArray)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">readAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readAvailable(java.nio.ByteBuffer)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">readAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readAvailable(java.nio.ByteBuffer)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental.io/-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
       </td>
 </tr>
@@ -136,7 +147,7 @@
 
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">readFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readFully(kotlin.ByteArray)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">readFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readFully(java.nio.ByteBuffer)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">readFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.packet.ByteReadPacket$readFully(java.nio.ByteBuffer)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental.io/-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
       </td>
 </tr>
@@ -298,24 +309,6 @@
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">ByteReadPacket</span><span class="symbol">.</span><span class="identifier">readUTF8Line</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$readUTF8Line(kotlinx.coroutines.experimental.io.packet.ByteReadPacket, kotlin.Int, kotlin.Int)/estimate">estimate</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;16<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.packet$readUTF8Line(kotlinx.coroutines.experimental.io.packet.ByteReadPacket, kotlin.Int, kotlin.Int)/limit">limit</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span></code></div>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-byte-read-packet-empty/index.html">ByteReadPacketEmpty</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">ByteReadPacketEmpty</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">ByteReadPacket</span></code></div>
 
       </td>
 </tr>

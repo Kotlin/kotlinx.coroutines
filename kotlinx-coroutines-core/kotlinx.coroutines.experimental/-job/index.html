@@ -84,7 +84,7 @@ or completion of parent immediately cancels all its children.</p>
       <td><code>true</code></td>
     </tr>
     <tr>
-      <td><em>Completed normally</em> (final state)</td>
+      <td><em>Completed</em> (final state)</td>
       <td><code>false</code></td>
       <td><code>true</code></td>
       <td><code>false</code></td>
@@ -105,8 +105,8 @@ when all its children <a href="is-completed.html">complete</a>.</p>
 <pre>                                                        wait children
       +-----+       start      +--------+   complete   +-------------+  finish  +-----------+
       | New | ---------------&gt; | Active | -----------&gt; | Completing  | -------&gt; | Completed |
-      +-----+                  +--------+              +-------------+          | normally  |
-         |                         |                         |                  +-----------+
+      +-----+                  +--------+              +-------------+          +-----------+
+         |                         |                         |
          | cancel                  | cancel                  | cancel
          V                         V                         |
     +-----------+   finish   +------------+                  |
@@ -119,7 +119,7 @@ when all its children <a href="is-completed.html">complete</a>.</p>
 A job is active while the coroutine is working and job’s cancellation aborts the coroutine when
 the coroutine is suspended on a <em>cancellable</em> suspension point by throwing <a href="../-cancellation-exception.html">CancellationException</a>.</p>
 
-<p>A job can have a <em>parent</em> job. A job with a parent is cancelled when its parent is cancelled or completes.
+<p>A job can have a <em>parent</em> job. A job with a parent is cancelled when its parent is cancelled or completes exceptionally.
 Parent job waits for all its <a href="attach-child.html">children</a> to complete in <em>completing</em> or <em>cancelling</em> state.
 <em>Completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still active,
 while internally it is waiting for its children.</p>

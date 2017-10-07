@@ -240,6 +240,22 @@ This is an idempotent operation – repeated invocations of this function have n
 <tr>
 <td>
 
+        <p><a href="-byte-read-channel/read.html">read</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">read</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$read(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$read(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Invokes <a href="-byte-read-channel/read.html#kotlinx.coroutines.experimental.io.ByteReadChannel$read(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</a> when it will be possible to read at least <a href="-byte-read-channel/read.html#kotlinx.coroutines.experimental.io.ByteReadChannel$read(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes
+providing byte buffer to it so lambda can read from the buffer
+up to <a href="#">ByteBuffer.remaining</a> bytes. If there are no <a href="-byte-read-channel/read.html#kotlinx.coroutines.experimental.io.ByteReadChannel$read(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes available then the invocation could
+suspend until the requirement will be met.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="-byte-read-channel/read-available.html">readAvailable</a></p>
 
       </td>
@@ -363,10 +379,10 @@ and not enough bytes.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readPacket</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int)/size">size</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.experimental.io.packet/-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readPacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/size">size</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.experimental.io.packet/-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
 
         <p>Reads the specified amount of bytes and makes a byte packet from them. Fails if channel has been closed
-and not enough bytes available.</p>
+and not enough bytes available. Accepts <a href="-byte-read-channel/read-packet.html#kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/headerSizeHint">headerSizeHint</a> to be provided, see <a href="../kotlinx.coroutines.experimental.io.packet/-write-packet.html">WritePacket</a>.</p>
 
       </td>
 </tr>
@@ -396,6 +412,22 @@ and not enough bytes.</p>
         <p>Reads a line of UTF-8 characters to the specified <a href="-byte-read-channel/read-u-t-f8-line-to.html#kotlinx.coroutines.experimental.io.ByteReadChannel$readUTF8LineTo(kotlinx.coroutines.experimental.io.ByteReadChannel.readUTF8LineTo.A, kotlin.Int)/out">out</a> buffer up to <a href="-byte-read-channel/read-u-t-f8-line-to.html#kotlinx.coroutines.experimental.io.ByteReadChannel$readUTF8LineTo(kotlinx.coroutines.experimental.io.ByteReadChannel.readUTF8LineTo.A, kotlin.Int)/limit">limit</a> characters.
 Supports both CR-LF and LF line endings.
 Throws an exception if the specified <a href="-byte-read-channel/read-u-t-f8-line-to.html#kotlinx.coroutines.experimental.io.ByteReadChannel$readUTF8LineTo(kotlinx.coroutines.experimental.io.ByteReadChannel.readUTF8LineTo.A, kotlin.Int)/limit">limit</a> has been exceeded.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-byte-write-channel/write.html">write</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">write</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Invokes <a href="-byte-write-channel/write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</a> when it will be possible to write at least <a href="-byte-write-channel/write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes
+providing byte buffer to it so lambda can write to the buffer
+up to <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/Buffer.html#remaining()">ByteBuffer.remaining</a> bytes. If there are no <a href="-byte-write-channel/write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes spaces available then the invocation could
+suspend until the requirement will be met.</p>
 
       </td>
 </tr>
@@ -731,7 +763,7 @@ It will simply stop reading and return packet of size <a href="read-remaining.ht
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">.</span><span class="identifier">writePacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$writePacket(kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.experimental.io.packet/-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">.</span><span class="identifier">writePacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$writePacket(kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Int, kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$writePacket(kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Int, kotlin.Function1((kotlinx.coroutines.experimental.io.packet.ByteWritePacket, kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines.experimental.io.packet/-byte-write-packet/index.html"><span class="identifier">ByteWritePacket</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
       </td>
 </tr>

@@ -31,7 +31,7 @@
 
 <h1 id="attachchild">attachChild</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">attachChild</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$attachChild(kotlinx.coroutines.experimental.Job)/child">child</span><span class="symbol">:</span>&nbsp;<a href="index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L199">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">attachChild</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$attachChild(kotlinx.coroutines.experimental.Job)/child">child</span><span class="symbol">:</span>&nbsp;<a href="index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L200">(source)</a></div>
 
 <p>Attaches child job so that this job becomes its parent and
 returns a handle that should be used to detach it.</p>
@@ -39,9 +39,10 @@ returns a handle that should be used to detach it.</p>
 <p>A parent-child relation has the following effect:</p>
 
 <ul>
-  <li>Cancellation of parent with <a href="cancel.html">cancel</a> immediately cancels all its children with the same cause.</li>
+  <li>Cancellation of parent with <a href="cancel.html">cancel</a> or its exceptional completion (failure)
+immediately cancels all its children.</li>
   <li>Parent cannot complete until all its children are complete. Parent waits for all its children to
-complete first in <em>completing</em> or <em>cancelling</em> state.</li>
+complete in <em>completing</em> or <em>cancelling</em> state.</li>
 </ul>
 
 <p>A child must store the resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> and <a href="../-disposable-handle/dispose.html">dispose</a> the attachment
