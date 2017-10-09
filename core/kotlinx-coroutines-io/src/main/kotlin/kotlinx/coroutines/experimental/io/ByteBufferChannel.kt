@@ -272,6 +272,33 @@ internal class ByteBufferChannel(
         else consumed + consumed0
     }
 
+    private tailrec fun readAsMuchAsPossible(dst: BufferView, consumed0: Int = 0): Int {
+        var consumed = 0
+
+        val rc = reading {
+            val dstSize = dst.writeRemaining
+            val part = it.tryReadAtMost(minOf(remaining(), dstSize))
+            if (part > 0) {
+                consumed += part
+
+                if (dstSize < remaining()) {
+                    limit(position() + dstSize)
+                }
+                dst.write(this)
+
+                bytesRead(it, part)
+                true
+            } else {
+                false
+            }
+        }
+
+        return if (rc && dst.canWrite() && state.capacity.availableForRead > 0)
+            readAsMuchAsPossible(dst, consumed0 + consumed)
+        else consumed + consumed0
+    }
+
+
     private tailrec fun readAsMuchAsPossible(dst: ByteArray, offset: Int, length: Int, consumed0: Int = 0): Int {
         var consumed = 0
 
@@ -361,12 +388,33 @@ internal class ByteBufferChannel(
         }
     }
 
+    suspend override fun readAvailable(dst: BufferView): Int {
+        val consumed = readAsMuchAsPossible(dst)
+
+        return when {
+            consumed == 0 && closed != null -> {
+                if (state.capacity.flush()) {
+                    return readAsMuchAsPossible(dst)
+                } else {
+                    -1
+                }
+            }
+            consumed > 0 || !dst.canWrite() -> consumed
+            else -> readAvailableSuspend(dst)
+        }
+    }
+
     private suspend fun readAvailableSuspend(dst: ByteArray, offset: Int, length: Int): Int {
         if (!readSuspend(1)) return -1
         return readAvailable(dst, offset, length)
     }
 
     private suspend fun readAvailableSuspend(dst: ByteBuffer): Int {
+        if (!readSuspend(1)) return -1
+        return readAvailable(dst)
+    }
+
+    private suspend fun readAvailableSuspend(dst: BufferView): Int {
         if (!readSuspend(1)) return -1
         return readAvailable(dst)
     }
@@ -756,10 +804,25 @@ internal class ByteBufferChannel(
         val copied = writeAsMuchAsPossible(src)
         if (copied > 0) return copied
 
-        return writeLazySuspend(src)
+        return writeAvailableSuspend(src)
     }
 
-    private suspend fun writeLazySuspend(src: ByteBuffer): Int {
+    suspend override fun writeAvailable(src: BufferView): Int {
+        val copied = writeAsMuchAsPossible(src)
+        if (copied > 0) return copied
+
+        return writeAvailableSuspend(src)
+    }
+
+    private suspend fun writeAvailableSuspend(src: ByteBuffer): Int {
+        while (true) {
+            writeSuspend(1)
+            val copied = writeAvailable(src)
+            if (copied > 0) return copied
+        }
+    }
+
+    private suspend fun writeAvailableSuspend(src: BufferView): Int {
         while (true) {
             writeSuspend(1)
             val copied = writeAvailable(src)
@@ -774,8 +837,22 @@ internal class ByteBufferChannel(
         return writeFullySuspend(src)
     }
 
+    suspend override fun writeFully(src: BufferView) {
+        writeAsMuchAsPossible(src)
+        if (!src.canRead()) return
+
+        return writeFullySuspend(src)
+    }
+
     private suspend fun writeFullySuspend(src: ByteBuffer) {
         while (src.hasRemaining()) {
+            writeSuspend(1)
+            writeAsMuchAsPossible(src)
+        }
+    }
+
+    private suspend fun writeFullySuspend(src: BufferView) {
+        while (src.canRead()) {
             writeSuspend(1)
             writeAsMuchAsPossible(src)
         }
@@ -797,6 +874,30 @@ internal class ByteBufferChannel(
                         put(src.get())
                     }
                 }
+
+                written += possibleSize
+
+                prepareBuffer(writeByteOrder, carryIndex(writePosition + written), it.availableForWrite)
+            } while (true)
+
+            bytesWritten(it, written)
+
+            return written
+        }
+
+        return 0
+    }
+
+    private fun writeAsMuchAsPossible(src: BufferView): Int {
+        writing {
+            var written = 0
+
+            do {
+                val srcSize = src.readRemaining
+                val possibleSize = it.tryWriteAtMost(minOf(srcSize, remaining()))
+                if (possibleSize == 0) break
+
+                src.read(this, possibleSize)
 
                 written += possibleSize
 

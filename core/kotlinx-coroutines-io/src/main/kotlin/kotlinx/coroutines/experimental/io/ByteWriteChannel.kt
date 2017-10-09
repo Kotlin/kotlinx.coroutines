@@ -1,6 +1,8 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.io.core.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
@@ -48,6 +50,7 @@ public interface ByteWriteChannel {
     suspend fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int
     suspend fun writeAvailable(src: ByteArray) = writeAvailable(src, 0, src.size)
     suspend fun writeAvailable(src: ByteBuffer): Int
+    suspend fun writeAvailable(src: BufferView): Int
 
     /**
      * Writes all [src] bytes and suspends until all bytes written. Causes flush if buffer filled up or when [autoFlush]
@@ -56,6 +59,7 @@ public interface ByteWriteChannel {
     suspend fun writeFully(src: ByteArray, offset: Int, length: Int)
     suspend fun writeFully(src: ByteArray) = writeFully(src, 0, src.size)
     suspend fun writeFully(src: ByteBuffer)
+    suspend fun writeFully(src: BufferView)
 
     /**
      * Invokes [block] when it will be possible to write at least [min] bytes

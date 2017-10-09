@@ -45,6 +45,7 @@ public interface ByteReadChannel {
     suspend fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int
     suspend fun readAvailable(dst: ByteArray) = readAvailable(dst, 0, dst.size)
     suspend fun readAvailable(dst: ByteBuffer): Int
+    suspend fun readAvailable(dst: BufferView): Int
 
     /**
      * Reads all [length] bytes to [dst] buffer or fails if channel has been closed.
