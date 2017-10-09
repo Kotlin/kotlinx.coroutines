@@ -7,6 +7,7 @@ import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
 import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
 import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
 import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.io.core.*
@@ -619,5 +620,14 @@ class ByteBufferChannelTest {
         assertEquals("abc", ch.readASCIILine())
     }
 
-    private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pktPool, 0, block)
+    private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
+        val builder = BytePacketBuilder(0, pktPool)
+        try {
+            block(builder)
+            return builder.build()
+        } catch (t: Throwable) {
+            builder.release()
+            throw t
+        }
+    }
 }
