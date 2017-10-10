@@ -357,43 +357,46 @@ internal class ByteBufferChannel(
     suspend override fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int {
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
-        return if (consumed == 0 && closed != null) {
+        if (consumed == 0 && closed != null) {
             if (state.capacity.flush()) {
                 return readAsMuchAsPossible(dst, offset, length)
             } else {
-                -1
+                return -1
             }
         }
-        else if (consumed > 0 || length == 0) consumed
-        else readAvailableSuspend(dst, offset, length)
+        else if (consumed > 0 || length == 0) return consumed
+
+        return readAvailableSuspend(dst, offset, length)
     }
 
     suspend override fun readAvailable(dst: ByteBuffer): Int {
         val consumed = readAsMuchAsPossible(dst)
 
-        return if (consumed == 0 && closed != null) {
+        if (consumed == 0 && closed != null) {
             if (state.capacity.flush()) {
                 return readAsMuchAsPossible(dst)
             } else {
-                -1
+                return -1
             }
         }
-        else if (consumed > 0 || !dst.hasRemaining()) consumed
-        else readAvailableSuspend(dst)
+        else if (consumed > 0 || !dst.hasRemaining()) return consumed
+
+        return readAvailableSuspend(dst)
     }
 
     suspend override fun readAvailable(dst: BufferView): Int {
         val consumed = readAsMuchAsPossible(dst)
 
-        return if (consumed == 0 && closed != null) {
+        if (consumed == 0 && closed != null) {
             if (state.capacity.flush()) {
                 return readAsMuchAsPossible(dst)
             } else {
-                -1
+                return -1
             }
         }
-        else if (consumed > 0 || !dst.canWrite()) consumed
-        else readAvailableSuspend(dst)
+        else if (consumed > 0 || !dst.canWrite()) return consumed
+
+        return readAvailableSuspend(dst)
     }
 
     private suspend fun readAvailableSuspend(dst: ByteArray, offset: Int, length: Int): Int {
@@ -675,23 +678,37 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeByte(b: Byte) {
-        writing {
-            tryWriteByte(b, it)
-        }
+        val buffer = setupStateForWrite()
+        val c = state.capacity
+
+        return tryWriteByte(buffer, b, c)
     }
 
-    private suspend fun ByteBuffer.tryWriteByte(b: Byte, c: RingBufferCapacity) {
-        if (c.tryWriteExact(1)) {
-            put(b)
-            bytesWritten(c, 1)
-        } else {
-            writeByteSuspend(b, c)
+    private suspend fun tryWriteByte(buffer: ByteBuffer, b: Byte, c: RingBufferCapacity) {
+        if (!c.tryWriteExact(1)) {
+            return writeByteSuspend(buffer, b, c)
         }
+
+        doWrite(buffer, b, c)
     }
 
-    private suspend fun ByteBuffer.writeByteSuspend(b: Byte, c: RingBufferCapacity) {
-        writeSuspend(1)
-        tryWriteByte(b, c)
+    private fun doWrite(buffer: ByteBuffer, b: Byte, c: RingBufferCapacity) {
+        buffer.put(b)
+        buffer.bytesWritten(c, 1)
+        if (c.isFull() || autoFlush) flush()
+        restoreStateAfterWrite()
+    }
+
+    private suspend fun writeByteSuspend(buffer: ByteBuffer, b: Byte, c: RingBufferCapacity) {
+        try {
+            writeSuspend(1)
+        } catch (t: Throwable) {
+            restoreStateAfterWrite()
+            tryTerminate()
+            throw t
+        }
+
+        tryWriteByte(buffer, b, c)
     }
 
     suspend override fun writeShort(s: Short) {
