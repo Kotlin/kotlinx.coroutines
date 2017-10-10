@@ -248,17 +248,15 @@ internal class ByteBufferChannel(
         var consumed = 0
 
         val rc = reading {
-            val part = it.tryReadAtMost(minOf(remaining(), dst.remaining()))
+            val position = position()
+            val remaining = limit() - position
+
+            val part = it.tryReadAtMost(minOf(remaining, dst.remaining()))
             if (part > 0) {
                 consumed += part
 
-                if (dst.remaining() >= remaining()) {
-                    dst.put(this)
-                } else {
-                    repeat(part) {
-                        dst.put(get())
-                    }
-                }
+                limit(position + part)
+                dst.put(this)
 
                 bytesRead(it, part)
                 true
@@ -861,24 +859,24 @@ internal class ByteBufferChannel(
     private fun writeAsMuchAsPossible(src: ByteBuffer): Int {
         writing {
             var written = 0
+            val srcLimit = src.limit()
 
             do {
-                val possibleSize = it.tryWriteAtMost(minOf(src.remaining(), remaining()))
+                val srcRemaining = srcLimit - src.position()
+                if (srcRemaining == 0) break
+                val possibleSize = it.tryWriteAtMost(minOf(srcRemaining, remaining()))
                 if (possibleSize == 0) break
                 require(possibleSize > 0)
 
-                if (remaining() >= src.remaining()) {
-                    put(src)
-                } else {
-                    repeat(possibleSize) {
-                        put(src.get())
-                    }
-                }
+                src.limit(src.position() + possibleSize)
+                put(src)
 
                 written += possibleSize
 
                 prepareBuffer(writeByteOrder, carryIndex(writePosition + written), it.availableForWrite)
             } while (true)
+
+            src.limit(srcLimit)
 
             bytesWritten(it, written)
 
