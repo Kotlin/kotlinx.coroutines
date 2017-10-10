@@ -357,49 +357,43 @@ internal class ByteBufferChannel(
     suspend override fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int {
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
-        return when {
-            consumed == 0 && closed != null -> {
-                if (state.capacity.flush()) {
-                    return readAsMuchAsPossible(dst, offset, length)
-                } else {
-                    -1
-                }
+        return if (consumed == 0 && closed != null) {
+            if (state.capacity.flush()) {
+                return readAsMuchAsPossible(dst, offset, length)
+            } else {
+                -1
             }
-            consumed > 0 || length == 0 -> consumed
-            else -> readAvailableSuspend(dst, offset, length)
         }
+        else if (consumed > 0 || length == 0) consumed
+        else readAvailableSuspend(dst, offset, length)
     }
 
     suspend override fun readAvailable(dst: ByteBuffer): Int {
         val consumed = readAsMuchAsPossible(dst)
 
-        return when {
-            consumed == 0 && closed != null -> {
-                if (state.capacity.flush()) {
-                    return readAsMuchAsPossible(dst)
-                } else {
-                    -1
-                }
+        return if (consumed == 0 && closed != null) {
+            if (state.capacity.flush()) {
+                return readAsMuchAsPossible(dst)
+            } else {
+                -1
             }
-            consumed > 0 || !dst.hasRemaining() -> consumed
-            else -> readAvailableSuspend(dst)
         }
+        else if (consumed > 0 || !dst.hasRemaining()) consumed
+        else readAvailableSuspend(dst)
     }
 
     suspend override fun readAvailable(dst: BufferView): Int {
         val consumed = readAsMuchAsPossible(dst)
 
-        return when {
-            consumed == 0 && closed != null -> {
-                if (state.capacity.flush()) {
-                    return readAsMuchAsPossible(dst)
-                } else {
-                    -1
-                }
+        return if (consumed == 0 && closed != null) {
+            if (state.capacity.flush()) {
+                return readAsMuchAsPossible(dst)
+            } else {
+                -1
             }
-            consumed > 0 || !dst.canWrite() -> consumed
-            else -> readAvailableSuspend(dst)
         }
+        else if (consumed > 0 || !dst.canWrite()) consumed
+        else readAvailableSuspend(dst)
     }
 
     private suspend fun readAvailableSuspend(dst: ByteArray, offset: Int, length: Int): Int {
