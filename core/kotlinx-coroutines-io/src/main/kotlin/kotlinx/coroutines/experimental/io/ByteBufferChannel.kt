@@ -712,20 +712,14 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeShort(s: Short) {
-        writing {
-            if (!tryWriteShort(s, it)) {
-                writeShortSuspend(s, it)
-            }
-        }
+        val buffer = setupStateForWrite()
+        val c = state.capacity
+
+        return tryWriteShort(buffer, s, c)
     }
 
-    private suspend fun ByteBuffer.writeShortSuspend(s: Short, c: RingBufferCapacity) {
-        writeSuspend(2)
-        tryWriteShort(s, c)
-    }
-
-    private fun ByteBuffer.tryWriteShort(s: Short, c: RingBufferCapacity): Boolean {
-        if (c.tryWriteExact(2)) {
+    private fun doWrite(buffer: ByteBuffer, s: Short, c: RingBufferCapacity) {
+        buffer.apply {
             if (remaining() < 2) {
                 limit(capacity())
                 putShort(s)
@@ -735,10 +729,30 @@ internal class ByteBufferChannel(
             }
 
             bytesWritten(c, 2)
-            return true
         }
 
-        return false
+        if (c.isFull() || autoFlush) flush()
+        restoreStateAfterWrite()
+    }
+
+    private suspend fun tryWriteShort(buffer: ByteBuffer, s: Short, c: RingBufferCapacity) {
+        if (!c.tryWriteExact(2)) {
+            return writeShortSuspend(buffer, s, c)
+        }
+
+        return doWrite(buffer, s, c)
+    }
+
+    private suspend fun writeShortSuspend(buffer: ByteBuffer, s: Short, c: RingBufferCapacity) {
+        try {
+            writeSuspend(2)
+        } catch (t: Throwable) {
+            restoreStateAfterWrite()
+            tryTerminate()
+            throw t
+        }
+
+        tryWriteShort(buffer, s, c)
     }
 
     private fun ByteBuffer.tryWriteInt(i: Int, c: RingBufferCapacity): Boolean {
@@ -752,6 +766,9 @@ internal class ByteBufferChannel(
             }
 
             bytesWritten(c, 4)
+            if (c.isFull() || autoFlush) flush()
+            restoreStateAfterWrite()
+            tryTerminate()
             return true
         }
 
@@ -759,16 +776,26 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeInt(i: Int) {
-        writing {
-            if (!tryWriteInt(i, it)) {
-                writeIntSuspend(i, it)
-            }
+        val buffer = setupStateForWrite()
+        val c = state.capacity
+
+        if (!buffer.tryWriteInt(i, c)) {
+            return buffer.writeIntSuspend(i, c)
         }
     }
 
-    private suspend fun ByteBuffer.writeIntSuspend(i: Int, c: RingBufferCapacity) {
-        writeSuspend(4)
-        tryWriteInt(i, c)
+    private tailrec suspend fun ByteBuffer.writeIntSuspend(i: Int, c: RingBufferCapacity) {
+        try {
+            writeSuspend(4)
+        } catch (t: Throwable) {
+            restoreStateAfterWrite()
+            tryTerminate()
+            throw t
+        }
+
+        if (!tryWriteInt(i, c)) {
+            writeIntSuspend(i, c)
+        }
     }
 
     private fun ByteBuffer.tryWriteLong(l: Long, c: RingBufferCapacity): Boolean {
@@ -782,6 +809,9 @@ internal class ByteBufferChannel(
             }
 
             bytesWritten(c, 8)
+            if (c.isFull() || autoFlush) flush()
+            restoreStateAfterWrite()
+            tryTerminate()
             return true
         }
 
@@ -789,16 +819,19 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeLong(l: Long) {
-        writing {
-            if (!tryWriteLong(l, it)) {
-                writeLongSuspend(l, it)
-            }
+        val buffer = setupStateForWrite()
+        val c = state.capacity
+
+        if (!buffer.tryWriteLong(l, c)) {
+            return buffer.writeLongSuspend(l, c)
         }
     }
 
-    private suspend fun ByteBuffer.writeLongSuspend(l: Long, c: RingBufferCapacity) {
+    private tailrec suspend fun ByteBuffer.writeLongSuspend(l: Long, c: RingBufferCapacity) {
         writeSuspend(8)
-        tryWriteLong(l, c)
+        if (!tryWriteLong(l, c)) {
+            writeLongSuspend(l, c)
+        }
     }
 
     suspend override fun writeDouble(d: Double) {
