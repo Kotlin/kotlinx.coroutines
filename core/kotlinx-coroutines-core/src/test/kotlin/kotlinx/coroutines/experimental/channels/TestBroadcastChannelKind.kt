@@ -18,20 +18,20 @@ package kotlinx.coroutines.experimental.channels
 
 enum class TestBroadcastChannelKind {
     ARRAY_1 {
-        override fun create(): BroadcastChannel<Int> = ArrayBroadcastChannel<Int>(1)
+        override fun <T> create(): BroadcastChannel<T> = ArrayBroadcastChannel<T>(1)
         override fun toString(): String = "ArrayBroadcastChannel(1)"
     },
     ARRAY_10 {
-        override fun create(): BroadcastChannel<Int> = ArrayBroadcastChannel<Int>(10)
+        override fun <T> create(): BroadcastChannel<T> = ArrayBroadcastChannel<T>(10)
         override fun toString(): String = "ArrayBroadcastChannel(10)"
     },
     CONFLATED {
-        override fun create(): BroadcastChannel<Int> = ConflatedBroadcastChannel<Int>()
+        override fun <T> create(): BroadcastChannel<T> = ConflatedBroadcastChannel<T>()
         override fun toString(): String = "ConflatedBroadcastChannel"
         override val isConflated: Boolean get() = true
     }
     ;
 
-    abstract fun create(): BroadcastChannel<Int>
+    abstract fun <T> create(): BroadcastChannel<T>
     open val isConflated: Boolean get() = false
 }

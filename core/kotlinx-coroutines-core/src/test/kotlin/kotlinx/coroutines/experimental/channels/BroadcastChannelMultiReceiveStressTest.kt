@@ -23,7 +23,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Tests delivery of events to multiple broadcast channel subscribers.
@@ -42,13 +42,13 @@ class BroadcastChannelMultiReceiveStressTest(
     private val nReceivers = if (isStressTest) 10 else 5
     private val nSeconds = 5 * stressTestMultiplier
 
-    private val broadcast = kind.create()
+    private val broadcast = kind.create<Long>()
     private val pool = newFixedThreadPoolContext(nReceivers + 1, "BroadcastChannelMultiReceiveStressTest")
 
-    private val sentTotal = AtomicInteger()
-    private val receivedTotal = AtomicInteger()
-    private val stopOnReceive = AtomicInteger(-1)
-    private val lastReceived = Array(nReceivers) { AtomicInteger(-1) }
+    private val sentTotal = AtomicLong()
+    private val receivedTotal = AtomicLong()
+    private val stopOnReceive = AtomicLong(-1)
+    private val lastReceived = Array(nReceivers) { AtomicLong(-1) }
 
     @After
     fun tearDown() {
@@ -60,7 +60,7 @@ class BroadcastChannelMultiReceiveStressTest(
         val ctx = pool + coroutineContext[Job]!!
         val sender =
             launch(context = ctx + CoroutineName("Sender")) {
-                var i = 0
+                var i = 0L
                 while (isActive) {
                     broadcast.send(++i)
                     sentTotal.set(i) // set sentTotal only if `send` was not cancelled
@@ -114,17 +114,17 @@ class BroadcastChannelMultiReceiveStressTest(
         println("  Received ${receivedTotal.get()} events")
     }
 
-    private fun doReceived(receiverIndex: Int, i: Int): Boolean {
+    private fun doReceived(receiverIndex: Int, i: Long): Boolean {
         val last = lastReceived[receiverIndex].get()
         check(i > last) { "Last was $last, got $i" }
-        if (last != -1 && !kind.isConflated)
+        if (last != -1L && !kind.isConflated)
             check(i == last + 1) { "Last was $last, got $i" }
         receivedTotal.incrementAndGet()
         lastReceived[receiverIndex].set(i)
         return i == stopOnReceive.get()
     }
 
-    private suspend fun doReceive(channel: ReceiveChannel<Int>, receiverIndex: Int) {
+    private suspend fun doReceive(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
             try {
                 val stop = doReceived(receiverIndex, channel.receive())
@@ -134,33 +134,33 @@ class BroadcastChannelMultiReceiveStressTest(
         }
     }
 
-    private suspend fun doReceiveOrNull(channel: ReceiveChannel<Int>, receiverIndex: Int) {
+    private suspend fun doReceiveOrNull(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
             val stop = doReceived(receiverIndex, channel.receiveOrNull() ?: break)
             if (stop) break
         }
     }
 
-    private suspend fun doIterator(channel: ReceiveChannel<Int>, receiverIndex: Int) {
+    private suspend fun doIterator(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         for (event in channel) {
             val stop = doReceived(receiverIndex, event)
             if (stop) break
         }
     }
 
-    private suspend fun doReceiveSelect(channel: ReceiveChannel<Int>, receiverIndex: Int) {
+    private suspend fun doReceiveSelect(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
             try {
-                val event = select<Int> { channel.onReceive { it } }
+                val event = select<Long> { channel.onReceive { it } }
                 val stop = doReceived(receiverIndex, event)
                 if (stop) break
             } catch (ex: ClosedReceiveChannelException) { break }
         }
     }
 
-    private suspend fun doReceiveSelectOrNull(channel: ReceiveChannel<Int>, receiverIndex: Int) {
+    private suspend fun doReceiveSelectOrNull(channel: ReceiveChannel<Long>, receiverIndex: Int) {
         while (true) {
-            val event = select<Int?> { channel.onReceiveOrNull { it } } ?: break
+            val event = select<Long?> { channel.onReceiveOrNull { it } } ?: break
             val stop = doReceived(receiverIndex, event)
             if (stop) break
         }

@@ -21,7 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it,
@@ -40,10 +40,10 @@ class BroadcastChannelSubStressTest(
     }
 
     private val nSeconds = 5 * stressTestMultiplier
-    private val broadcast = kind.create()
+    private val broadcast = kind.create<Long>()
 
-    private val sentTotal = AtomicInteger()
-    private val receivedTotal = AtomicInteger()
+    private val sentTotal = AtomicLong()
+    private val receivedTotal = AtomicLong()
 
     @Test
     fun testStress() = runBlocking {
@@ -56,7 +56,7 @@ class BroadcastChannelSubStressTest(
             }
         val receiver =
             launch(context = ctx + CoroutineName("Receiver")) {
-                var last = -1
+                var last = -1L
                 while (isActive) {
                     broadcast.openSubscription().use { sub ->
                         val i = sub.receive()
