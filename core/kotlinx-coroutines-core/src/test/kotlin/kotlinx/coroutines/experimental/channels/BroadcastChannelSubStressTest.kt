@@ -61,6 +61,7 @@ class BroadcastChannelSubStressTest(
                     broadcast.openSubscription().use { sub ->
                         val i = sub.receive()
                         check(i >= last) { "Last was $last, got $i" }
+                        if (!kind.isConflated) check(i != last) { "Last was $last, got it again" }
                         receivedTotal.incrementAndGet()
                         last = i
                     }

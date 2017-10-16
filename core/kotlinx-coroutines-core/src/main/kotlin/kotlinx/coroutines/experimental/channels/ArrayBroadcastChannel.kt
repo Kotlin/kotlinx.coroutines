@@ -72,7 +72,7 @@ class ArrayBroadcastChannel<E>(
 
     override fun openSubscription(): SubscriptionReceiveChannel<E> {
         bufferLock.withLock {
-            val sub = Subscriber(this, head)
+            val sub = Subscriber(this, tail)
             subs.add(sub)
             return sub
         }
