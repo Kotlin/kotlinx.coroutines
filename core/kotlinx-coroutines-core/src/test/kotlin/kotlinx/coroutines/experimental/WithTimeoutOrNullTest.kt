@@ -92,7 +92,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testSuppressException() = runTest {
+    fun testSuppressExceptionWithResult() = runTest {
         expect(1)
         val result = withTimeoutOrNull(100) {
             expect(2)
@@ -108,8 +108,8 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testReplaceException() = runTest(
-        unhandled = listOf({ it -> it is UnexpectedCoroutineException && it.cause is IOException })
+    fun testSuppressExceptionWithAnotherException() = runTest(
+        expected = { it is IOException }
     ) {
         expect(1)
         val result = withTimeoutOrNull(100) {
@@ -117,14 +117,13 @@ class WithTimeoutOrNullTest : TestBase() {
             try {
                 delay(1000)
             } catch (e: CancellationException) {
-                expect(3)
+                finish(3)
                 throw IOException(e)
             }
             expectUnreached()
             "OK"
         }
-        assertThat(result, IsNull())
-        finish(4)
+        expectUnreached()
     }
 
     /**

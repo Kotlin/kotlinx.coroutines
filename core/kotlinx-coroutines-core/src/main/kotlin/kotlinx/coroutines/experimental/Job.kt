@@ -377,13 +377,6 @@ public class JobCancellationException(
 }
 
 /**
- * Represents an exception in the coroutine that was not caught by it and was not expected to be thrown.
- * This happens when coroutine is cancelled, but it completes with the different exception than its cancellation
- * cause was.
- */
-public class UnexpectedCoroutineException(message: String, cause: Throwable) : IllegalStateException(message, cause)
-
-/**
  * Unregisters a specified [registration] when this job is complete.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
@@ -621,36 +614,29 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         val update = coerceProposedUpdate(expect, proposedUpdate)
         if (!tryUpdateState(expect, update)) return false
         completeUpdateState(expect, update, mode)
-        // if an exceptional completion was suppressed (because cancellation was in progress), then report it separately
-        if (proposedUpdate is CompletedExceptionally && proposedUpdate.cause != null && !incorporatedCause(update, proposedUpdate.cause)) {
-            handleException(UnexpectedCoroutineException("Unexpected exception while cancellation is in progress; job=$this", proposedUpdate.cause))
-        }
         return true
     }
 
-    /**
-     * Checks if the cause that was proposed for state update is consistent with the resulting updated state
-     * and not exception information was lost. The key observation here is that [getCancellationException] wraps
-     * exceptions that are not [CancellationException] into an instance of [JobCancellationException] and we allow
-     * that [JobCancellationException] to be unwrapped again when it reaches the coroutine that was cancelled.
-     *
-     * NOTE: equality comparison of exceptions is performed here by design, see equals of JobCancellationException
-     */
-    private fun incorporatedCause(update: Any?, proposedCause: Throwable) =
-        update is CompletedExceptionally && update.exception.let { ex ->
-            ex == proposedCause || proposedCause is JobCancellationException && ex == proposedCause.cause
-        }
-
-    // when Job is in Cancelling state, it can only be promoted to Cancelled state with the same cause
-    // however, null cause can be replaced with more specific JobCancellationException (that contains better stack trace)
+    // when Job is in Cancelling state, it can only be promoted to Cancelled state,
+    // so if the proposed Update is not an appropriate Cancelled (preserving the cancellation cause),
+    // then the corresponding Cancelled state is constructed.
     private fun coerceProposedUpdate(expect: Incomplete, proposedUpdate: Any?): Any? =
-        if (expect is Finishing && expect.cancelled != null && !correspondinglyCancelled(expect.cancelled, proposedUpdate))
-            expect.cancelled else proposedUpdate
+        if (expect is Finishing && expect.cancelled != null && !isCorrespondinglyCancelled(expect.cancelled, proposedUpdate))
+            createCancelled(expect.cancelled, proposedUpdate) else proposedUpdate
 
-    private fun correspondinglyCancelled(cancelled: Cancelled, proposedUpdate: Any?): Boolean {
+    private fun isCorrespondinglyCancelled(cancelled: Cancelled, proposedUpdate: Any?): Boolean {
         if (proposedUpdate !is Cancelled) return false
-        return proposedUpdate.cause === cancelled.cause ||
+        // NOTE: equality comparison of causes is performed here by design, see equals of JobCancellationException
+        return proposedUpdate.cause == cancelled.cause ||
             proposedUpdate.cause is JobCancellationException && cancelled.cause == null
+    }
+
+    private fun createCancelled(cancelled: Cancelled, proposedUpdate: Any?): Cancelled {
+        if (proposedUpdate !is CompletedExceptionally) return cancelled // not exception -- just use original cancelled
+        val exception = proposedUpdate.exception
+        if (cancelled.exception == exception) return cancelled // that is the cancelled we need already!
+        cancelled.cause?.let { exception.addSuppressed(it) }
+        return Cancelled(this, exception)
     }
 
     /**

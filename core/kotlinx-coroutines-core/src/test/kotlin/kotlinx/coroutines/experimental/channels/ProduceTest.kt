@@ -16,31 +16,51 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.JobCancellationException
 import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Test
 
 class ProduceTest : TestBase() {
     @Test
-    fun testBasic() = runBlocking {
+    fun testBasic() = runTest {
         val c = produce(coroutineContext) {
+            expect(2)
             send(1)
+            expect(3)
             send(2)
+            expect(6)
         }
+        expect(1)
         check(c.receive() == 1)
+        expect(4)
         check(c.receive() == 2)
+        expect(5)
         check(c.receiveOrNull() == null)
+        finish(7)
     }
 
     @Test
-    fun testCancel() = runBlocking {
+    fun testCancel() = runTest {
         val c = produce(coroutineContext) {
+            expect(2)
             send(1)
-            send(2)
+            expect(3)
+            try {
+                send(2) // will get cancelled
+            } catch (e: Throwable) {
+                expect(6)
+                check(e is JobCancellationException && e.job == coroutineContext[Job])
+                throw e
+            }
             expectUnreached()
         }
+        expect(1)
         check(c.receive() == 1)
+        expect(4)
         c.cancel()
+        expect(5)
         check(c.receiveOrNull() == null)
+        finish(7)
     }
 }

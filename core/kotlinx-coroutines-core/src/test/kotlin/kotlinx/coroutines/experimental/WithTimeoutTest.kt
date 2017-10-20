@@ -95,7 +95,7 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSuppressException() = runTest(
+    fun testSuppressExceptionWithResult() = runTest(
         expected = { it is CancellationException }
     ) {
         expect(1)
@@ -112,9 +112,8 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testReplaceException() = runTest(
-        expected = { it is CancellationException },
-        unhandled = listOf({ it -> it is UnexpectedCoroutineException && it.cause is IOException })
+    fun testSuppressExceptionWithAnotherException() = runTest(
+        expected = { it is IOException }
     ) {
         expect(1)
         withTimeout(100) {

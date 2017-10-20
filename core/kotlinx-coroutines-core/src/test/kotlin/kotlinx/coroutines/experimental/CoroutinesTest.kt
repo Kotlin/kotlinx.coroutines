@@ -162,13 +162,14 @@ class CoroutinesTest : TestBase() {
 
     @Test
     fun testCancelParentOnChildException() = runTest(
-        expected = { it is IOException },
+        expected = { it is JobCancellationException && it.cause is IOException },
         unhandled = listOf({ it -> it is IOException })
     ) {
         expect(1)
         launch(coroutineContext) {
             finish(3)
-            throw IOException() // does not propagate exception to launch, but cancels parent (!)
+            throwIOException() // does not propagate exception to launch, but cancels parent (!)
+            expectUnreached()
         }
         expect(2)
         yield()
@@ -177,7 +178,7 @@ class CoroutinesTest : TestBase() {
 
     @Test
     fun testCancelParentOnNestedException() = runTest(
-        expected = { it is IOException },
+        expected = { it is JobCancellationException && it.cause is IOException },
         unhandled = listOf(
             { it -> it is IOException },
             { it -> it is IOException }
@@ -188,7 +189,8 @@ class CoroutinesTest : TestBase() {
             expect(3)
             launch(coroutineContext) {
                 finish(6)
-                throw IOException() // unhandled exception kills all parents
+                throwIOException() // unhandled exception kills all parents
+                expectUnreached()
             }
             expect(4)
             yield()
@@ -246,13 +248,14 @@ class CoroutinesTest : TestBase() {
 
     @Test
     fun testCancelAndJoinChildCrash() = runTest(
-        expected = { it is IOException && it.message == "OK" },
+        expected = { it is JobCancellationException && it.cause is IOException },
         unhandled = listOf({it -> it is IOException })
     ) {
         expect(1)
         val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
-            throw IOException("OK")
+            throwIOException()
+            expectUnreached()
         }
         // now we have a failed job with IOException
         finish(3)
@@ -308,6 +311,39 @@ class CoroutinesTest : TestBase() {
             finish(4)
         }
         expectUnreached()
+    }
+
+    @Test
+    fun testNotCancellableCodeWithExceptionCancelled() = runTest {
+        expect(1)
+        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
+        val job = launch(start = CoroutineStart.ATOMIC) {
+            Thread.sleep(100) // cannot be cancelled
+            throwIOException() // will throw
+            expectUnreached()
+        }
+        expect(2)
+        job.cancel()
+        finish(3)
+    }
+
+    @Test
+    fun testNotCancellableChildWithExceptionCancelled() = runTest(
+        expected = { it is IOException }
+    ) {
+        expect(1)
+        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
+        val d = async(coroutineContext, start = CoroutineStart.ATOMIC) {
+            finish(4)
+            throwIOException() // will throw
+            expectUnreached()
+        }
+        expect(2)
+        // now cancel with some other exception
+        d.cancel(IllegalArgumentException())
+        // now await to see how it got crashed -- IAE should have been suppressed by IOException
+        expect(3)
+        d.await()
     }
 
     private fun throwIOException() { throw IOException() }
