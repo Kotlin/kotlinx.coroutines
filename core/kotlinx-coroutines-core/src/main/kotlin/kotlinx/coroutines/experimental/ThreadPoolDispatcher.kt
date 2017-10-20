@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.io.Closeable
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,26 +24,42 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Creates new coroutine execution context with the a single thread and built-in [yield] and [delay] support.
- * All continuations are dispatched immediately when invoked inside the thread of this context.
- * Resources of this pool (its thread) are reclaimed when job of this context is cancelled.
- * The specified [name] defines the name of the new thread.
- * An optional [parent] job may be specified upon creation.
+ * **NOTE: The resulting [ThreadPoolDispatcher] owns native resources (its thread).
+ * Resources are reclaimed by [ThreadPoolDispatcher.close].**
+ *
+ * @param name the base name of the created thread.
  */
+fun newSingleThreadContext(name: String): ThreadPoolDispatcher =
+    newFixedThreadPoolContext(1, name)
+
+/**
+ * @suppress **Deprecated**: Parent job is no longer supported.
+ */
+@Deprecated(message = "Parent job is no longer supported, `close` the resulting ThreadPoolDispatcher to release resources",
+    level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("newSingleThreadContext(name)"))
 fun newSingleThreadContext(name: String, parent: Job? = null): CoroutineContext =
-    newFixedThreadPoolContext(1, name, parent)
+    newFixedThreadPoolContext(1, name)
 
 /**
  * Creates new coroutine execution context with the fixed-size thread-pool and built-in [yield] and [delay] support.
- * All continuations are dispatched immediately when invoked inside the threads of this context.
- * Resources of this pool (its threads) are reclaimed when job of this context is cancelled.
- * The specified [name] defines the names of the threads.
- * An optional [parent] job may be specified upon creation.
+ * **NOTE: The resulting [ThreadPoolDispatcher] owns native resources (its threads).
+ * Resources are reclaimed by [ThreadPoolDispatcher.close].**
+ *
+ * @param nThreads the number of threads.
+ * @param name the base name of the created threads.
  */
-fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null): CoroutineContext {
+fun newFixedThreadPoolContext(nThreads: Int, name: String): ThreadPoolDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
-    val job = Job(parent)
-    return job + ThreadPoolDispatcher(nThreads, name, job)
+    return ThreadPoolDispatcher(nThreads, name)
 }
+
+/**
+ * @suppress **Deprecated**: Parent job is no longer supported.
+ */
+@Deprecated(message = "Parent job is no longer supported, `close` the resulting ThreadPoolDispatcher to release resources",
+    level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("newFixedThreadPoolContext(nThreads, name)"))
+fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null): CoroutineContext =
+    newFixedThreadPoolContext(nThreads, name)
 
 internal class PoolThread(
     @JvmField val dispatcher: ThreadPoolDispatcher, // for debugging & tests
@@ -51,19 +68,25 @@ internal class PoolThread(
     init { isDaemon = true }
 }
 
-internal class ThreadPoolDispatcher(
+/**
+ * Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
+ * created with [newSingleThreadContext] and [newFixedThreadPoolContext].
+ */
+public class ThreadPoolDispatcher internal constructor(
     private val nThreads: Int,
-    private val name: String,
-    job: Job
-) : ExecutorCoroutineDispatcherBase() {
+    private val name: String
+) : ExecutorCoroutineDispatcherBase(), Closeable {
     private val threadNo = AtomicInteger()
 
-    override val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
+    internal override val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
         PoolThread(this, target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
     }
 
-    init {
-        job.invokeOnCompletion { executor.shutdown() }
+    /**
+     * Closes this dispatcher -- shuts down all threads in this pool and releases resources.
+     */
+    public override fun close() {
+        executor.shutdown()
     }
 
     override fun toString(): String = "ThreadPoolDispatcher[$nThreads, $name]"

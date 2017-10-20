@@ -31,7 +31,7 @@ class ExecutorsTest : TestBase() {
         runBlocking(context) {
             checkThreadName("TestThread")
         }
-        context[Job]!!.cancel()
+        context.close()
     }
 
     @Test
@@ -40,7 +40,7 @@ class ExecutorsTest : TestBase() {
         runBlocking(context) {
             checkThreadName("TestPool")
         }
-        context[Job]!!.cancel()
+        context.close()
     }
 
     @Test
@@ -63,7 +63,7 @@ class ExecutorsTest : TestBase() {
             }
             checkThreadName("Ctx1")
         }
-        ctx1[Job]!!.cancel()
-        ctx2[Job]!!.cancel()
+        ctx1.close()
+        ctx2.close()
     }
 }

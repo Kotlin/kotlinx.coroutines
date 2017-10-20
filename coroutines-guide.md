@@ -815,12 +815,16 @@ It produces the following output (maybe in different order):
 
 <!--- TEST LINES_START_UNORDERED -->
 
-The default dispatcher that we've used in previous sections is representend by [DefaultDispather], which 
+The default dispatcher that we've used in previous sections is representend by [DefaultDispatcher], which 
 is equal to [CommonPool] in the current implementation. So, `launch { ... }` is the same 
 as `launch(DefaultDispather) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
 
 The difference between parent [coroutineContext][CoroutineScope.coroutineContext] and
 [Unconfined] context will be shown later.
+
+Note, that [newSingleThreadContext] creates a new thread, which is a very expensive resource. 
+In a real application it must be either released, when no longer needed, using [close][ThreadPoolDispatcher.close] 
+function, or stored in a top-level variable and reused throughout the application.  
 
 ### Unconfined vs confined dispatcher
  
@@ -925,22 +929,24 @@ Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main(args: Array<String>) {
-    val ctx1 = newSingleThreadContext("Ctx1")
-    val ctx2 = newSingleThreadContext("Ctx2")
-    runBlocking(ctx1) {
-        log("Started in ctx1")
-        run(ctx2) {
-            log("Working in ctx2")
+    newSingleThreadContext("Ctx1").use { ctx1 ->
+        newSingleThreadContext("Ctx2").use { ctx2 ->
+            runBlocking(ctx1) {
+                log("Started in ctx1")
+                run(ctx2) {
+                    log("Working in ctx2")
+                }
+                log("Back to ctx1")
+            }
         }
-        log("Back to ctx1")
     }
 }
 ```
 
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-04.kt)
 
-It demonstrates two new techniques. One is using [runBlocking] with an explicitly specified context, and
-the second one is using [run] function to change a context of a coroutine while still staying in the 
+It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
+the other one is using [run] function to change a context of a coroutine while still staying in the 
 same coroutine as you can see in the output below:
 
 ```text
@@ -950,6 +956,10 @@ same coroutine as you can see in the output below:
 ```
 
 <!--- TEST -->
+
+
+Note, that is example also uses `use` function from the Kotlin standard library to release threads that
+are created with [newSingleThreadContext] when they are no longer needed. 
 
 ### Job in the context
 
@@ -2325,9 +2335,12 @@ Channel was closed
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/start.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
+[DefaultDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [CoroutineScope.coroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
+[newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-single-thread-context.html
+[ThreadPoolDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-thread-pool-dispatcher/close.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html

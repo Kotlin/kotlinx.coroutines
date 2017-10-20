@@ -52,7 +52,7 @@ class BroadcastChannelMultiReceiveStressTest(
 
     @After
     fun tearDown() {
-        pool.cancel()
+        pool.close()
     }
 
     @Test

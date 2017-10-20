@@ -39,9 +39,15 @@ public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
 
 private class ExecutorCoroutineDispatcher(override val executor: Executor) : ExecutorCoroutineDispatcherBase()
 
-internal abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
-    abstract val executor: Executor
-
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal abstract val executor: Executor
+    
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         try { executor.execute(timeSource.trackTask(block)) }
         catch (e: RejectedExecutionException) {

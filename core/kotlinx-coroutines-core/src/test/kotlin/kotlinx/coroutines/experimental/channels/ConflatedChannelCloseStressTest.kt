@@ -35,7 +35,9 @@ class ConflatedChannelCloseStressTest : TestBase() {
     val pool = newFixedThreadPoolContext(nSenders + 2, "TestStressClose")
 
     @After
-    fun tearDown() { pool[Job]!!.cancel() }
+    fun tearDown() {
+        pool.close()
+    }
 
     @Test
     fun testStressClose() = runBlocking<Unit> {
