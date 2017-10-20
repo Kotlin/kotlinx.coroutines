@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.loop
 import kotlin.coroutines.experimental.Continuation
-
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
@@ -29,9 +29,9 @@ private const val RESUMED = 2
  * @suppress **This is unstable API and it is subject to change.**
  */
 internal abstract class AbstractContinuation<in T>(
-    active: Boolean,
+    @JvmField protected val delegate: Continuation<T>,
     @JvmField protected val resumeMode: Int
-) : JobSupport(active), Continuation<T> {
+) : JobSupport(true), Continuation<T> {
     private val _decision = atomic(UNDECIDED)
 
     /* decision state machine
@@ -49,7 +49,7 @@ internal abstract class AbstractContinuation<in T>(
         Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
      */
 
-    protected fun trySuspend(): Boolean {
+    private fun trySuspend(): Boolean {
         _decision.loop { decision ->
             when (decision) {
                 UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, SUSPENDED)) return true
@@ -59,7 +59,7 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    protected fun tryResume(): Boolean {
+    private fun tryResume(): Boolean {
         _decision.loop { decision ->
             when (decision) {
                 UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, RESUMED)) return true
@@ -69,32 +69,48 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    override fun resume(value: T) = resumeImpl(value, resumeMode)
+    @PublishedApi
+    internal fun getResult(): Any? {
+        if (trySuspend()) return COROUTINE_SUSPENDED
+        // otherwise, afterCompletion was already invoked & invoked tryResume, and the result is in the state
+        val state = this.state
+        if (state is CompletedExceptionally) throw state.exception
+        return getSuccessfulResult(state)
+    }
 
-    protected fun resumeImpl(value: T, resumeMode: Int) {
-        loopOnState { state ->
-            when (state) {
-                is Incomplete -> if (updateState(state, value, resumeMode)) return
-                is Cancelled -> return // ignore resumes on cancelled continuation
-                else -> error("Already resumed, but got value $value")
-            }
+    override fun afterCompletion(state: Any?, mode: Int) {
+        if (tryResume()) return // completed before getResult invocation -- bail out
+        // otherwise, getResult has already commenced, i.e. completed later or in other thread
+        if (state is CompletedExceptionally) {
+            delegate.resumeWithExceptionMode(state.exception, mode)
+        } else {
+            delegate.resumeMode(getSuccessfulResult(state), mode)
         }
     }
 
-    override fun resumeWithException(exception: Throwable) = resumeWithExceptionImpl(exception, resumeMode)
+    @Suppress("UNCHECKED_CAST")
+    protected open fun <T> getSuccessfulResult(state: Any?): T =
+        state as T
 
-    protected fun resumeWithExceptionImpl(exception: Throwable, resumeMode: Int) {
+    override fun resume(value: T) =
+        resumeImpl(value, resumeMode)
+
+    override fun resumeWithException(exception: Throwable) =
+        resumeImpl(CompletedExceptionally(exception), resumeMode)
+
+    protected fun resumeImpl(proposedUpdate: Any?, resumeMode: Int) {
         loopOnState { state ->
             when (state) {
                 is Incomplete -> {
-                    if (updateState(state, CompletedExceptionally(exception), resumeMode)) return
+                    if (updateState(state, proposedUpdate, resumeMode)) return
                 }
                 is Cancelled -> {
-                    // ignore resumes on cancelled continuation, but handle exception if a different one is here
-                    if (exception != state.exception) handleCoroutineException(context, exception)
+                    // Ignore resumes in cancelled coroutines, but handle exception if a different one here
+                    if (proposedUpdate is CompletedExceptionally && proposedUpdate.exception != state.exception)
+                        handleException(proposedUpdate.exception)
                     return
                 }
-                else -> throw IllegalStateException("Already resumed, but got exception $exception", exception)
+                else -> error("Already resumed, but got $proposedUpdate")
             }
         }
     }

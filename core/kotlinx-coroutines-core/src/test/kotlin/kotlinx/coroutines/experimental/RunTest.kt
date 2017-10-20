@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.junit.Test
+import java.io.IOException
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -166,6 +167,33 @@ class RunTest : TestBase() {
             yield() // but will cancel here
             expectUnreached()
         }
+    }
+
+    @Test
+    fun testRunWithException() = runTest {
+        expect(1)
+        var job: Job? = null
+        job = launch(coroutineContext) {
+            try {
+                expect(3)
+                run(wrapperDispatcher(coroutineContext)) {
+                    expect(5)
+                    job!!.cancel() // cancel itself
+                    throw IOException() // but throw a different exception
+                }
+            } catch (e: Throwable) {
+                expect(7)
+                // make sure IOException, not CancellationException is thrown!
+                check(e is IOException)
+            }
+        }
+        expect(2)
+        yield() // to the launched job
+        expect(4)
+        yield() // again to the job
+        expect(6)
+        yield() // again to exception handler
+        finish(8)
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {

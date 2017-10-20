@@ -18,7 +18,6 @@ package kotlinx.coroutines.experimental
 
 import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
@@ -179,29 +178,15 @@ private class RunContinuationDirect<in T>(
     continuation: Continuation<T>
 ) : Continuation<T> by continuation
 
+
 @Suppress("UNCHECKED_CAST")
 private class RunCompletion<in T>(
     override val context: CoroutineContext,
-    private val delegate: Continuation<T>,
+    delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(true, resumeMode) {
-    @PublishedApi
-    internal fun getResult(): Any? {
-        if (trySuspend()) return COROUTINE_SUSPENDED
-        // otherwise, afterCompletion was already invoked & invoked tryResume, and the result is in the state
-        val state = this.state
-        if (state is CompletedExceptionally) throw state.exception
-        return state as T
-    }
-
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (tryResume()) return // completed before getResult invocation -- bail out
-        // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        if (state is CompletedExceptionally)
-            delegate.resumeWithExceptionMode(state.exception, mode)
-        else
-            delegate.resumeMode(state as T, mode)
-    }
+) : AbstractContinuation<T>(delegate, resumeMode) {
+    override val hasCancellingState: Boolean
+        get() = true
 }
 
 private class BlockingCoroutine<T>(

@@ -19,7 +19,6 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 import kotlin.coroutines.experimental.suspendCoroutine
 
@@ -179,9 +178,9 @@ private class RemoveOnCancel(
 
 @PublishedApi
 internal class CancellableContinuationImpl<in T>(
-    private val delegate: Continuation<T>,
+    delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(true, resumeMode), CancellableContinuation<T> {
+) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T> {
     @Volatile // just in case -- we don't want an extra data race, even benign one
     private var _context: CoroutineContext? = null // created on first need
 
@@ -190,25 +189,6 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun initCancellability() {
         initParentJob(delegate.context[Job])
-    }
-
-    @PublishedApi
-    internal fun getResult(): Any? {
-        if (trySuspend()) return COROUTINE_SUSPENDED
-        // otherwise, afterCompletion was already invoked & invoked tryResume, and the result is in the state
-        val state = this.state
-        if (state is CompletedExceptionally) throw state.exception
-        return getSuccessfulResult(state)
-    }
-
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (tryResume()) return // completed before getResult invocation -- bail out
-        // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        if (state is CompletedExceptionally) {
-            delegate.resumeWithExceptionMode(state.exception, mode)
-        } else {
-            delegate.resumeMode(getSuccessfulResult<T>(state), mode)
-        }
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
@@ -255,8 +235,12 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
         val dc = delegate as? DispatchedContinuation
-        resumeWithExceptionImpl(exception, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
+        resumeImpl(CompletedExceptionally(exception), if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> getSuccessfulResult(state: Any?): T =
+        if (state is CompletedIdempotentResult) state.result as T else state as T
 
     override fun nameString(): String =
         "CancellableContinuation(${delegate.toDebugString()})"
@@ -270,6 +254,3 @@ private class CompletedIdempotentResult(
     override fun toString(): String = "CompletedIdempotentResult[$result]"
 }
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> getSuccessfulResult(state: Any?): T =
-    if (state is CompletedIdempotentResult) state.result as T else state as T
