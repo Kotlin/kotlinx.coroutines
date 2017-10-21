@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ByteWriteChannel.write - kotlinx-coroutines-io</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-io/kotlinx.coroutines.experimental.io/-byte-write-channel/write.html">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-io</a> / <a href="../index.html">kotlinx.coroutines.experimental.io</a> / <a href="index.html">ByteWriteChannel</a> / <a href=".">write</a></div>
+
+<h1 id="write">write</h1>
+
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">write</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">ByteBuffer</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-io/src/main/kotlin/kotlinx/coroutines/experimental/io/ByteWriteChannel.kt#L75">(source)</a></div>
+
+<p>Invokes <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</a> when it will be possible to write at least <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes
+providing byte buffer to it so lambda can write to the buffer
+up to <a href="#">ByteBuffer.remaining</a> bytes. If there are no <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes spaces available then the invocation could
+suspend until the requirement will be met.</p>
+
+<p>Warning: it is not guaranteed that all of remaining bytes will be represented as a single byte buffer
+eg: it could be 4 bytes available for write but the provided byte buffer could have only 2 remaining bytes:
+in this case you have to invoke write again (with decreased <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> accordingly).</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>min</code> - amount of bytes available for write, should be positive</p>
+
+<p><code>block</code> - to be invoked when at least <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes free capacity available</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

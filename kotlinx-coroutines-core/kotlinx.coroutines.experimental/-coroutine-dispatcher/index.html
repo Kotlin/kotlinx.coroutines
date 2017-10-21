@@ -49,7 +49,7 @@ is specified in their context. It is currently equal to <a href="../-common-pool
 a common pool of shared background threads.
 This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.</li>
   <li>Private thread pools can be created with <a href="../new-single-thread-context.html">newSingleThreadContext</a> and <a href="../new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</li>
-  <li>An arbitrary <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> can be converted to dispatcher with <a href="../java.util.concurrent.-executor/as-coroutine-dispatcher.html">asCoroutineDispatcher</a> extension function.</li>
+  <li>An arbitrary <a href="#">Executor</a> can be converted to dispatcher with <a href="../java.util.concurrent.-executor/as-coroutine-dispatcher.html">asCoroutineDispatcher</a> extension function.</li>
 </ul>
 
 <p>This class ensures that debugging facilities in <a href="../new-coroutine-context.html">newCoroutineContext</a> function work properly.</p>
@@ -85,7 +85,7 @@ This is an appropriate choice for compute-intensive coroutines that consume a lo
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<span class="identifier">Runnable</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Dispatches execution of a runnable <a href="dispatch.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</a> onto another thread in the given <a href="dispatch.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</a>.</p>
 
@@ -183,7 +183,7 @@ See <a href="../-job/cancel-children.html">Job.cancelChildren</a> for details.</
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">CoroutineDispatcher</span></code></div>
 
         <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
-It uses <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
+It uses <a href="#">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
 coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
 When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
 

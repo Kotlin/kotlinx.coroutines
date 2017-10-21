@@ -40,9 +40,9 @@
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousServerSocketChannel.html"><span class="identifier">AsynchronousServerSocketChannel</span></a><span class="symbol">.</span><span class="identifier">aAccept</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousSocketChannel.html"><span class="identifier">AsynchronousSocketChannel</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">AsynchronousServerSocketChannel</span><span class="symbol">.</span><span class="identifier">aAccept</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">AsynchronousSocketChannel</span></code></div>
 
-        <p>Performs <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousServerSocketChannel.html#accept(A, java.nio.channels.CompletionHandler&lt;java.nio.channels.AsynchronousSocketChannel,? super A&gt;)">AsynchronousServerSocketChannel.accept</a> without blocking a thread and resumes when asynchronous operation completes.
+        <p>Performs <a href="#">AsynchronousServerSocketChannel.accept</a> without blocking a thread and resumes when asynchronous operation completes.
 This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
 <em>closes the underlying channel</em> and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
