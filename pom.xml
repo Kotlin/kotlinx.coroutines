@@ -23,7 +23,7 @@
 
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines</artifactId>
-    <version>0.19.1-SNAPSHOT</version>
+    <version>0.19.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>kotlinx-coroutines</name>

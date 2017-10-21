@@ -1,5 +1,27 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.19.2
+
+* Fixed `ArrayBroadcastChannel` receive of stale elements on `openSubscription`. 
+  Only elements that are sent after invocation of `openSubscription` are received now.
+* Added a default value for `context` parameter to `rxFlowable` (see #146 by @PhilGlass).
+* Exception propagation logic from cancelled coroutines is adjusted (see #152):
+  * When cancelled coroutine crashes due to some other exception, this other exception becomes the cancellation reason 
+    of the coroutine, while the original cancellation reason is suppressed.
+  * `UnexpectedCoroutineException` is no longer used to report those cases as is removed.
+  * This fixes a race between crash of CPU-consuming coroutine and cancellation which resulted in an unhandled exception 
+    and lead to crashes on Android.
+* `run` uses cancelling state & propagates exceptions when cancelled (see #147):
+  * When coroutine that was switched into a different dispatcher using `run` is cancelled, the run invocation does not 
+    complete immediately, but waits until the body completes.
+  * If the body completes with exception, then this exception is propagated.
+* No `Job` in `newSingleThreadContext` and `newFixedThreadPoolContext` anymore (see #149, #151):
+  * This resolves the common issue of using `run(ctx)` where ctx comes from either `newSingleThreadContext` or 
+    `newFixedThreadPoolContext` invocation. They both used to return a combination of dispatcher + job,
+     and this job was overriding the parent job, thus preventing propagation of cancellation. Not anymore.
+  * `ThreadPoolDispatcher` class is now public and is the result type for both functions. 
+     It has the `close` method to release the thread pool.
+
 ## Version 0.19.1
 
 * Failed parent Job cancels all children jobs, then waits for them them.
