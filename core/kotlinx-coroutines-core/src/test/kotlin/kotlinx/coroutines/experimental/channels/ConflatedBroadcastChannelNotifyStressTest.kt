@@ -37,6 +37,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
 
     @Test
     fun testStressNotify()= runBlocking<Unit> {
+        println("--- ConflatedBroadcastChannelNotifyStressTest")
         val senders = List(nSenders) { senderId ->
             launch(CommonPool + CoroutineName("Sender$senderId")) {
                 repeat(nEvents) { i ->

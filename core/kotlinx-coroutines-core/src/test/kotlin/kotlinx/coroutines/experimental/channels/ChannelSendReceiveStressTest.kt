@@ -59,8 +59,7 @@ class ChannelSendReceiveStressTest(
 
     @Test
     fun testSendReceiveStress() = runBlocking {
-        println("-------------------------------------")
-        println("Testing $kind with nSenders=$nSenders, nReceivers=$nReceivers")
+        println("--- ChannelSendReceiveStressTest $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         val receivers = List(nReceivers) { receiverIndex ->
             // different event receivers use different code
             launch(CommonPool + CoroutineName("receiver$receiverIndex")) {

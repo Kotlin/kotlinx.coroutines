@@ -41,6 +41,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
 
     @Test
     fun testStressClose() = runBlocking<Unit> {
+        println("--- ConflatedChannelCloseStressTest with nSenders=$nSenders")
         val senderJobs = List(nSenders) { Job() }
         val senders = List(nSenders) { senderId ->
             launch(pool) {

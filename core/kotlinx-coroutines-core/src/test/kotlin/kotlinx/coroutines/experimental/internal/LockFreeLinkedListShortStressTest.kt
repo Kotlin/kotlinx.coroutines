@@ -46,6 +46,7 @@ class LockFreeLinkedListShortStressTest : TestBase() {
 
     @Test
     fun testStress() {
+        println("--- LockFreeLinkedListShortStressTest")
         val deadline = System.currentTimeMillis() + TEST_DURATION
         repeat(nAdderThreads) { threadId ->
             threads += thread(start = false, name = "adder-$threadId") {

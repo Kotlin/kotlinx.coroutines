@@ -47,6 +47,7 @@ class BroadcastChannelSubStressTest(
 
     @Test
     fun testStress() = runBlocking {
+        println("--- BroadcastChannelSubStressTest $kind")
         val ctx = coroutineContext + CommonPool
         val sender =
             launch(context = ctx + CoroutineName("Sender")) {

@@ -40,7 +40,7 @@ class BroadcastChannelMultiReceiveStressTest(
     }
 
     private val nReceivers = if (isStressTest) 10 else 5
-    private val nSeconds = 5 * stressTestMultiplier
+    private val nSeconds = 3 * stressTestMultiplier
 
     private val broadcast = kind.create<Long>()
     private val pool = newFixedThreadPoolContext(nReceivers + 1, "BroadcastChannelMultiReceiveStressTest")
@@ -57,6 +57,7 @@ class BroadcastChannelMultiReceiveStressTest(
 
     @Test
     fun testStress() = runBlocking {
+        println("--- BroadcastChannelMultiReceiveStressTest $kind with nReceivers=$nReceivers")
         val ctx = pool + coroutineContext[Job]!!
         val sender =
             launch(context = ctx + CoroutineName("Sender")) {
@@ -67,31 +68,35 @@ class BroadcastChannelMultiReceiveStressTest(
                 }
             }
         val receivers = mutableListOf<Job>()
-        repeat(nSeconds) { sec ->
-            // launch new receiver up to max
-            if (receivers.size < nReceivers) {
-                val receiverIndex = receivers.size
-                val name = "Receiver$receiverIndex"
-                println("$sec: Launching $name")
-                receivers += launch(ctx + CoroutineName(name)) {
-                    broadcast.openSubscription().use { sub ->
-                        when (receiverIndex % 5) {
-                            0 -> doReceive(sub, receiverIndex)
-                            1 -> doReceiveOrNull(sub, receiverIndex)
-                            2 -> doIterator(sub, receiverIndex)
-                            3 -> doReceiveSelect(sub, receiverIndex)
-                            4 -> doReceiveSelectOrNull(sub, receiverIndex)
-                        }
+        fun printProgress() {
+            println("Sent ${sentTotal.get()}, received ${receivedTotal.get()}, receivers=${receivers.size}")
+        }
+        // ramp up receivers
+        repeat(nReceivers) {
+            delay(100) // wait 0.1 sec
+            val receiverIndex = receivers.size
+            val name = "Receiver$receiverIndex"
+            println("Launching $name")
+            receivers += launch(ctx + CoroutineName(name)) {
+                broadcast.openSubscription().use { sub ->
+                    when (receiverIndex % 5) {
+                        0 -> doReceive(sub, receiverIndex)
+                        1 -> doReceiveOrNull(sub, receiverIndex)
+                        2 -> doIterator(sub, receiverIndex)
+                        3 -> doReceiveSelect(sub, receiverIndex)
+                        4 -> doReceiveSelectOrNull(sub, receiverIndex)
                     }
                 }
             }
-            // wait a sec
-            delay(100)
-            // print progress
-            println("${sec + 1}: Sent ${sentTotal.get()}, received ${receivedTotal.get()}, receivers=${receivers.size}")
+            printProgress()
+        }
+        // wait
+        repeat(nSeconds) { sec ->
+            delay(1000)
+            printProgress()
         }
         sender.cancelAndJoin()
-        println("Tested with nReceivers=$nReceivers")
+        println("Tested $kind with nReceivers=$nReceivers")
         val total = sentTotal.get()
         println("      Sent $total events, waiting for receivers")
         stopOnReceive.set(total)

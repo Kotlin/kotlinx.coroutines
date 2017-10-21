@@ -43,6 +43,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
 
     @Test
     fun testStress() {
+        println("--- LockFreeLinkedListLongStressTest")
         for (j in 0 until nAddThreads)
             threads += thread(start = false, name = "adder-$j") {
                 for (i in j until nAdded step nAddThreads) {

@@ -72,6 +72,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
 
     @Test
     fun testAtomicCancelStress() = runBlocking<Unit> {
+        println("--- ChannelAtomicCancelStressTest $kind")
         val deadline = System.currentTimeMillis() + TEST_DURATION
         launchSender()
         launchReceiver()
