@@ -44,7 +44,7 @@ class ChannelSendReceiveStressTest(
     }
 
     val timeLimit = 30_000L * stressTestMultiplier // 30 sec
-    val nEvents = 1_000_000 * stressTestMultiplier
+    val nEvents = 200_000 * stressTestMultiplier
 
     val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
@@ -59,6 +59,8 @@ class ChannelSendReceiveStressTest(
 
     @Test
     fun testSendReceiveStress() = runBlocking {
+        println("-------------------------------------")
+        println("Testing $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         val receivers = List(nReceivers) { receiverIndex ->
             // different event receivers use different code
             launch(CommonPool + CoroutineName("receiver$receiverIndex")) {
