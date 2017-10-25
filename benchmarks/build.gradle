@@ -1,0 +1,17 @@
+plugins {
+    id "me.champeau.gradle.jmh" version "0.4.4"
+}
+
+repositories {
+    maven { url "http://repo.typesafe.com/typesafe/releases/" }
+}
+
+dependencies {
+    jmh 'com.typesafe.akka:akka-actor:2.0.2'
+    jmh project(':kotlinx-coroutines-core')
+    jmh project(':kotlinx-coroutines-core').sourceSets.test.output
+}
+
+jmh.jmhVersion = '1.19'
+
+jmhJar.archiveName = 'benchmarks.jar'

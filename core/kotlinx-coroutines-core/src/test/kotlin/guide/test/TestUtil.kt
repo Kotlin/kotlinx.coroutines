@@ -312,6 +312,7 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
             res = res.replace(Regex("ForkJoinPool-[0-9]+-worker-[0-9]+"), "CommonPool")
             res = res.replace(Regex("CommonPool-worker-[0-9]+"), "CommonPool")
             res = res.replace(Regex("RxComputationThreadPool-[0-9]+"), "RxComputationThreadPool")
+            res = res.replace(Regex("Test( worker)?"), "main")
         }
         SanitizeMode.NONE -> {}
     }

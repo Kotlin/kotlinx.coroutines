@@ -913,7 +913,7 @@ The output of this code is:
 [main @coroutine#1] The answer is 42
 ```
 
-<!--- TEST -->
+<!--- TEST FLEXIBLE_THREAD -->
 
 The `log` function prints the name of the thread in square brackets and you can see, that it is the `main`
 thread, but the identifier of the currently executing coroutine is appended to it. This identifier 

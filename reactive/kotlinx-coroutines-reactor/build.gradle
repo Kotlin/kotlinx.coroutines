@@ -1,0 +1,19 @@
+plugins {
+    id 'io.spring.dependency-management' version '1.0.3.RELEASE'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'io.projectreactor:reactor-bom:Bismuth-RELEASE'
+    }
+}
+
+dependencies {
+    compile 'io.projectreactor:reactor-core'
+    compile project(':kotlinx-coroutines-reactive')
+}
+dokka {
+    externalDocumentationLink {
+        url = new URL('https://projectreactor.io/docs/core/release/api/')
+    }
+}

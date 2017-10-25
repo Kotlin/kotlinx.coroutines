@@ -1,0 +1,3 @@
+dependencies {
+    testCompile project(':kotlinx-coroutines-jdk8')
+}

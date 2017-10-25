@@ -20,9 +20,7 @@ Follow the following simple guidelines when contributing integration with your f
 * Write tests and documentation, include top-level `README.md` with short overview and example.
 * Reference the new module from all the places:
   * List of modules in this document.
-  * List of modules in top-level [`pom.xml`](../pom.xml).
-  * List of dependencies for documentation site in [`site/pom.xml`](../site/pom.xml).
-  * List of directories for documentation site in [`site/build.xml`](../site/build.xml).
+  * List of modules in top-level [`settings.gradle`](../settings.gradle).
   * List of modules at the root of documentation site in [`site/docs/index.md`](../site/docs/index.md).
 * Update links to documentation website as explained [here](../knit/README.md#usage).
 * Squash your contribution to a single commit and create pull request to `develop` branch.

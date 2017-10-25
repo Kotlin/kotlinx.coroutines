@@ -8,7 +8,6 @@ It also includes links to the documentation web site into the documents.
 ## Usage
 
 * In project root directory do:
-  * Run `mvn clean compile site`
-  * Add `-DskipJekyll` if you have don't Jekyll installed or don't want to actually rebuild documentation web 
-    site static pages
+  * Run `./gradlew knit`
 * Commit updated documents and examples
+

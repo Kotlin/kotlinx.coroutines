@@ -1,0 +1,43 @@
+dependencies {
+    ext.lincheck_version = '1.8.1'
+    testCompile "com.devexperts.lincheck:core:$lincheck_version"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    kotlinOptions.jdkHome = System.env.JDK_16
+}
+
+tasks.withType(Test) {
+    minHeapSize = '1g'
+    maxHeapSize = '1g'
+    enableAssertions = true
+    systemProperty 'java.security.manager', 'kotlinx.coroutines.experimental.TestSecurityManager'
+}
+
+test {
+    exclude '**/*LFTest.*'
+}
+
+task lockFreedomTest(type: Test, dependsOn: testClasses) {
+    classpath = files(configurations.testRuntime,
+            sourceSets.main.output.classesDirs, //clear, untransformed classes
+            sourceSets.test.output.classesDirs)
+    include '**/*LFTest.*'
+}
+test.dependsOn lockFreedomTest
+
+task jdk16Test(type: Test, dependsOn: testClasses) {
+    executable = "$System.env.JDK_16/bin/java"
+    exclude '**/*LinearizabilityTest.*'
+    exclude '**/*LFTest.*'
+}
+test.dependsOn jdk16Test
+
+task testsJar(type: Jar, dependsOn: testClasses) {
+    classifier = 'tests'
+    from sourceSets.test.output
+}
+
+artifacts {
+    archives testsJar
+}

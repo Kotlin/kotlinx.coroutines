@@ -1,0 +1,14 @@
+configurations {
+    quasarAgent {
+        transitive = false
+    }
+}
+
+dependencies {
+    compile "co.paralleluniverse:quasar-core:0.7.9"
+    quasarAgent "co.paralleluniverse:quasar-core:0.7.9"
+}
+
+test {
+    jvmArgs "-javaagent:${configurations.quasarAgent.singleFile}"
+}

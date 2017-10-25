@@ -1,0 +1,20 @@
+apply plugin: "application"
+
+sourceSets {
+    main.kotlin.srcDirs = ['src']
+    main.java.srcDirs = ['src']
+    main.resources.srcDirs = ['resources']
+}
+
+FileTree mdFiles = fileTree(project.rootDir) {
+    include '**/*.md'
+    exclude '**/build/**'
+}
+
+mainClassName = "KnitKt"
+
+run.dependsOn rootProject.getTasksByName("dokka", true)
+run.args = mdFiles
+run.workingDir = project.rootDir
+
+task knit(dependsOn: run)

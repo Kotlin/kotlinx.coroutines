@@ -1,0 +1,7 @@
+dependencies {
+    ext.retrofit_version = '2.1.0'
+    compile project(':kotlinx-coroutines-rx1')
+    compile "com.squareup.retrofit2:retrofit:$retrofit_version"
+    compile "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    compile "com.squareup.retrofit2:adapter-rxjava:$retrofit_version"
+}

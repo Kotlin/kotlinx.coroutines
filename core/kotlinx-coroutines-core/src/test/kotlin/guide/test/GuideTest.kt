@@ -187,7 +187,7 @@ class GuideTest {
 
     @Test
     fun testGuideContextExample03() {
-        test("GuideContextExample03") { guide.context.example03.main(emptyArray()) }.verifyLines(
+        test("GuideContextExample03") { guide.context.example03.main(emptyArray()) }.verifyLinesFlexibleThread(
             "[main @coroutine#2] I'm computing a piece of the answer",
             "[main @coroutine#3] I'm computing another piece of the answer",
             "[main @coroutine#1] The answer is 42"

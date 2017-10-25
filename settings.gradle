@@ -1,0 +1,38 @@
+rootProject.name = 'kotlinx.coroutines'
+
+include 'kotlinx-coroutines-core'
+include 'kotlinx-coroutines-io'
+
+include 'kotlinx-coroutines-guava'
+include 'kotlinx-coroutines-jdk8'
+include 'kotlinx-coroutines-nio'
+include 'kotlinx-coroutines-quasar'
+
+include 'kotlinx-coroutines-reactive'
+include 'kotlinx-coroutines-reactor'
+include 'kotlinx-coroutines-rx1'
+include 'kotlinx-coroutines-rx2'
+include 'kotlinx-coroutines-rx-example'
+
+include 'kotlinx-coroutines-android'
+include 'kotlinx-coroutines-javafx'
+include 'kotlinx-coroutines-swing'
+
+include 'benchmarks'
+include 'knit'
+include 'site'
+
+project(':kotlinx-coroutines-core').projectDir = file('core/kotlinx-coroutines-core')
+project(':kotlinx-coroutines-io').projectDir = file('core/kotlinx-coroutines-io')
+project(':kotlinx-coroutines-guava').projectDir = file('integration/kotlinx-coroutines-guava')
+project(':kotlinx-coroutines-jdk8').projectDir = file('integration/kotlinx-coroutines-jdk8')
+project(':kotlinx-coroutines-nio').projectDir = file('integration/kotlinx-coroutines-nio')
+project(':kotlinx-coroutines-quasar').projectDir = file('integration/kotlinx-coroutines-quasar')
+project(':kotlinx-coroutines-reactive').projectDir = file('reactive/kotlinx-coroutines-reactive')
+project(':kotlinx-coroutines-reactor').projectDir = file('reactive/kotlinx-coroutines-reactor')
+project(':kotlinx-coroutines-rx1').projectDir = file('reactive/kotlinx-coroutines-rx1')
+project(':kotlinx-coroutines-rx2').projectDir = file('reactive/kotlinx-coroutines-rx2')
+project(':kotlinx-coroutines-rx-example').projectDir = file('reactive/kotlinx-coroutines-rx-example')
+project(':kotlinx-coroutines-android').projectDir = file('ui/kotlinx-coroutines-android')
+project(':kotlinx-coroutines-javafx').projectDir = file('ui/kotlinx-coroutines-javafx')
+project(':kotlinx-coroutines-swing').projectDir = file('ui/kotlinx-coroutines-swing')
