@@ -18,7 +18,6 @@ package kotlinx.coroutines.experimental.guava
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf

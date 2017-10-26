@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import guide.test.checkTestThreads
-import guide.test.currentThreads
 import org.junit.After
 import org.junit.Before
 import java.util.concurrent.atomic.AtomicBoolean

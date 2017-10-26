@@ -16,16 +16,12 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import guide.test.ignoreLostThreads
 import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.functions.Action
 import io.reactivex.internal.functions.Functions.ON_ERROR_MISSING
 import io.reactivex.internal.functions.Functions.emptyConsumer
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert

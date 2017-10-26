@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf

@@ -20,11 +20,7 @@ import co.paralleluniverse.fibers.Fiber
 import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.strands.SuspendableCallable
 import co.paralleluniverse.strands.dataflow.Val
-import guide.test.ignoreLostThreads
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit

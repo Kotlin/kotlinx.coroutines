@@ -16,11 +16,7 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import guide.test.ignoreLostThreads
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.run
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNot
 import org.junit.Assert.assertThat

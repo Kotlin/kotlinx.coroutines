@@ -16,14 +16,10 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import guide.test.ignoreLostThreads
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.awaitFirst
 import kotlinx.coroutines.experimental.reactive.awaitLast
 import kotlinx.coroutines.experimental.reactive.awaitSingle
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
 import org.junit.Assert

@@ -16,12 +16,8 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import guide.test.ignoreLostThreads
 import javafx.application.Platform
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.junit.Before
 import org.junit.Test
 

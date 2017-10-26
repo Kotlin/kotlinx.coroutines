@@ -111,6 +111,7 @@ class BroadcastChannelMultiReceiveStressTest(
             }
         } catch (e: Exception) {
             println("Failed: $e")
+            pool.dumpThreads("Threads in pool")
             receivers.indices.forEach { index  ->
                 println("lastReceived[$index] = ${lastReceived[index].get()}")
             }

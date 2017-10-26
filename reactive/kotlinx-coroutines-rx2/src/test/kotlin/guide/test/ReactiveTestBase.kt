@@ -19,6 +19,7 @@ package guide.test
 import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.plugins.RxJavaPlugins
+import kotlinx.coroutines.experimental.ignoreLostThreads
 import org.junit.After
 import org.junit.Before
 import java.util.concurrent.TimeUnit

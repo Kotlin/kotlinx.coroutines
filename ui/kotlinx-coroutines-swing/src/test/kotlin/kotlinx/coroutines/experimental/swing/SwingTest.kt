@@ -16,11 +16,7 @@
 
 package kotlinx.coroutines.experimental.swing
 
-import guide.test.ignoreLostThreads
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.junit.Before
 import org.junit.Test
 import javax.swing.SwingUtilities

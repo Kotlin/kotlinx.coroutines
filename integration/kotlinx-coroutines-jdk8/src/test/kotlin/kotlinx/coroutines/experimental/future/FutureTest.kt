@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental.future
 
-import guide.test.ignoreLostThreads
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
