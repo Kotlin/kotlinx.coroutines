@@ -70,13 +70,10 @@ class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    override fun openSubscription(): SubscriptionReceiveChannel<E> {
-        bufferLock.withLock {
-            val sub = Subscriber(this, tail)
-            subs.add(sub)
-            return sub
+    override fun openSubscription(): SubscriptionReceiveChannel<E> =
+        Subscriber(this).also {
+            updateHead(addSub = it)
         }
-    }
 
     override fun close(cause: Throwable?): Boolean {
         if (!super.close(cause)) return false
@@ -131,14 +128,22 @@ class ArrayBroadcastChannel<E>(
             if (sub.checkOffer()) updated = true
         }
         if (updated || !hasSubs)
-            updateHead(null)
+            updateHead()
     }
 
-    private tailrec fun updateHead(removeSub: Subscriber<E>?) {
+    // updates head if needed and optionally adds / removes subscriber under the same lock
+    private tailrec fun updateHead(addSub: Subscriber<E>? = null, removeSub: Subscriber<E>? = null) {
+        assert(addSub == null || removeSub == null) // only one of them can be specified
         // update head in a tail rec loop
         var send: Send? = null
         var token: Any? = null
         bufferLock.withLock {
+            if (addSub != null) {
+                addSub.subHead = tail // start from last element
+                val wasEmpty = subs.isEmpty()
+                subs.add(addSub)
+                if (!wasEmpty) return // no need to update when adding second and etc sub
+            }
             if (removeSub != null) {
                 subs.remove(removeSub)
                 if (head != removeSub.subHead) return // no need to update
@@ -178,7 +183,7 @@ class ArrayBroadcastChannel<E>(
         // since we've just sent an element, we might need to resume some receivers
         checkSubOffers()
         // tailrec call to recheck
-        updateHead(null)
+        updateHead()
     }
 
     private fun computeMinHead(): Long {
@@ -192,10 +197,12 @@ class ArrayBroadcastChannel<E>(
     private fun elementAt(index: Long): E = buffer[(index % capacity).toInt()] as E
 
     private class Subscriber<E>(
-        private val broadcastChannel: ArrayBroadcastChannel<E>,
-        @Volatile @JvmField var subHead: Long // guarded by subLock
+        private val broadcastChannel: ArrayBroadcastChannel<E>
     ) : AbstractChannel<E>(), SubscriptionReceiveChannel<E> {
         private val subLock = ReentrantLock()
+
+        @Volatile @JvmField
+        var subHead: Long = 0 // guarded by subLock
 
         override val isBufferAlwaysEmpty: Boolean get() = false
         override val isBufferEmpty: Boolean get() = subHead >= broadcastChannel.tail
@@ -272,7 +279,7 @@ class ArrayBroadcastChannel<E>(
                 updated = true
             // and finally update broadcast's channel head if needed
             if (updated)
-                broadcastChannel.updateHead(null)
+                broadcastChannel.updateHead()
             return result
         }
 
@@ -306,7 +313,7 @@ class ArrayBroadcastChannel<E>(
                 updated = true
             // and finally update broadcast's channel head if needed
             if (updated)
-                broadcastChannel.updateHead(null)
+                broadcastChannel.updateHead()
             return result
         }
 
