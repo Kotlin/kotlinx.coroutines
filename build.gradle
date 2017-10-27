@@ -164,7 +164,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     publishing {
         publications {
             maven(MavenPublication) {
-                artifact jar
+                from components.java
                 artifact javadocJar
                 artifact sourcesJar
                 pom.withXml {
