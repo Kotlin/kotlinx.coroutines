@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.19.3
+
+* Fixed `send`/`openSubscription` race in `ArrayBroadcastChannel`.
+  This race lead to stalled (hanged) `send`/`receive` invocations.
+* Project build has been migrated to Gradle.  
+
 ## Version 0.19.2
 
 * Fixed `ArrayBroadcastChannel` receive of stale elements on `openSubscription`. 
