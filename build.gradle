@@ -1,5 +1,7 @@
 allprojects {
     group = 'org.jetbrains.kotlinx'
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
 }
 
 buildscript {
@@ -190,6 +192,10 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
                 released  = new Date()
             }
         }
+    }
+
+    bintrayUpload.doLast {
+        println("Uploaded $project.name version $project.version")
     }
 }
 
