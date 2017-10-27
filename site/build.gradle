@@ -1,14 +1,10 @@
 
-task copyDocs(dependsOn: rootProject.getTasksByName("dokka", true)) {
-    copy {
-        from rootProject.getTasksByName("dokka", true).collect { "$it.project.buildDir/dokka" }
+task copyDocs(type: Copy, dependsOn: rootProject.getTasksByName("dokka", true)) {
+    from (rootProject.getTasksByName("dokka", true).collect { "$it.project.buildDir/dokka" }) {
         include "**/*.md"
-        into "$buildDir/gh-pages"
     }
-    copy {
-        from "docs"
-        into "$buildDir/gh-pages"
-    }
+    from "docs"
+    into "$buildDir/gh-pages"
 }
 
 task site(type: Exec, description: 'Generate github pages', dependsOn: copyDocs) {
