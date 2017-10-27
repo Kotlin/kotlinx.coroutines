@@ -5,13 +5,18 @@ import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
-import org.junit.Test
+import org.junit.*
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class ByteBufferChannelScenarioTest : TestBase() {
     private val ch = ByteBufferChannel(true)
+
+    @After
+    fun finish() {
+        ch.close(InterruptedException())
+    }
 
     @Test
     fun testReadBeforeAvailable() {

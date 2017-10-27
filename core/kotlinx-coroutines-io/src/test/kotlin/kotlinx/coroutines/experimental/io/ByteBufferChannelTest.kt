@@ -7,8 +7,7 @@ import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
 import kotlinx.io.core.*
 import kotlinx.io.pool.*
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.ErrorCollector
 import org.junit.rules.Timeout
 import java.nio.CharBuffer
@@ -39,6 +38,11 @@ class ByteBufferChannelTest {
 
     private val Size = BUFFER_SIZE - RESERVED_SIZE
     private val ch = ByteBufferChannel(autoFlush = false, pool = pool)
+
+    @After
+    fun finish() {
+        ch.close(InterruptedException())
+    }
 
     @Test
     fun testBoolean() {
@@ -647,7 +651,8 @@ class ByteBufferChannelTest {
         val dest = ByteBufferChannel(true, pool)
 
         launch {
-            ch.copyAndClose(dest)
+//            ch.copyAndClose(dest)
+           ch.joinTo(dest, true)
         }
 
         val reader = launch {
@@ -671,6 +676,8 @@ class ByteBufferChannelTest {
 
         runBlocking {
             reader.join()
+            dest.close()
+            ch.close()
         }
     }
 
@@ -719,6 +726,30 @@ class ByteBufferChannelTest {
         } finally {
             exec.close()
         }
+    }
+
+    @Test
+    fun testJoinToSmokeTest() = runBlocking {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+        ch.joinTo(other, false)
+
+        ch.writeInt(0x11223344)
+        ch.flush()
+        assertEquals(0x11223344, other.readInt())
+    }
+
+    @Test
+    fun testJoinToAfterWrite() = runBlocking {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        ch.writeInt(0x12345678)
+        ch.joinTo(other, false)
+
+        ch.writeInt(0x11223344)
+        ch.flush()
+
+        assertEquals(0x12345678, other.readInt())
+        assertEquals(0x11223344, other.readInt())
     }
 
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {

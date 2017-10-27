@@ -137,6 +137,26 @@ public interface ByteReadChannel {
     suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)
 }
 
+suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
+    require(dst !== this)
+
+    if (this is ByteBufferChannel && dst is ByteBufferChannel) {
+        return dst.joinFrom(this, closeOnEnd)
+    }
+
+    return joinToImpl(dst, closeOnEnd)
+}
+
+private suspend fun ByteReadChannel.joinToImpl(dst: ByteWriteChannel, close: Boolean) {
+    if (close) {
+        copyToImpl(dst, Long.MAX_VALUE)
+        dst.flush()
+    } else {
+        copyToImpl(dst, Long.MAX_VALUE)
+        dst.close()
+    }
+}
+
 /**
  * Reads up to [limit] bytes from receiver channel and writes them to [dst] channel.
  * Closes [dst] channel if fails to read or write with cause exception.
@@ -147,7 +167,7 @@ suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX
     require(limit >= 0L)
 
     if (this is ByteBufferChannel && dst is ByteBufferChannel) {
-        return dst.copyDirect(this, limit)
+        return dst.copyDirect(this, limit, false)
     }
 
     return copyToImpl(dst, limit)
