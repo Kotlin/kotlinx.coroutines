@@ -62,7 +62,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
     tasks.withType(Test) {
         testLogging.showStandardStreams = true
-        def stressTest = System.properties['stressTest']
+        def stressTest = project.properties['stressTest']
         if (stressTest != null) systemProperties['stressTest'] = stressTest
     }
 
