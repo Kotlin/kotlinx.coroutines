@@ -143,14 +143,30 @@ public interface ByteReadChannel {
  * @return a number of copied bytes
  */
 suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX_VALUE): Long {
+    require(this !== dst)
+    require(limit >= 0L)
+
+    if (this is ByteBufferChannel && dst is ByteBufferChannel) {
+        return dst.copyDirect(this, limit)
+    }
+
+    return copyToImpl(dst, limit)
+}
+
+private suspend fun ByteReadChannel.copyToImpl(dst: ByteWriteChannel, limit: Long): Long {
     val buffer = BufferPool.borrow()
+    val dstNeedsFlush = !dst.autoFlush
+
     try {
         var copied = 0L
 
-        while (copied < limit) {
+        while (true) {
             buffer.clear()
-            if (limit - copied < buffer.limit()) {
-                buffer.limit((limit - copied).toInt())
+
+            val bufferLimit = limit - copied
+            if (bufferLimit <= 0) break
+            if (bufferLimit < buffer.limit()) {
+                buffer.limit(bufferLimit.toInt())
             }
             val size = readAvailable(buffer)
             if (size == -1) break
@@ -158,6 +174,10 @@ suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX
             buffer.flip()
             dst.writeFully(buffer)
             copied += size
+
+            if (dstNeedsFlush && availableForRead == 0) {
+                dst.flush()
+            }
         }
         return copied
     } catch (t: Throwable) {

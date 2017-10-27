@@ -905,6 +905,75 @@ internal class ByteBufferChannel(
         }
     }
 
+    internal suspend fun copyDirect(src: ByteBufferChannel, limit: Long = Long.MAX_VALUE): Long {
+        if (limit == 0L || src.isClosedForRead) return 0L
+        val autoFlush = autoFlush
+        val byteOrder = writeByteOrder
+
+        try {
+            var copied = 0L
+            writing { state ->
+                val dstBuffer = this
+
+                while (copied < limit) {
+                    var avWBefore = state.availableForWrite
+                    if (avWBefore == 0) {
+                        writeSuspend(1)
+                        avWBefore = state.availableForWrite
+                    }
+
+                    prepareBuffer(byteOrder, writePosition, avWBefore)
+
+                    var partSize = 0
+
+                    val rc = src.reading { srcState ->
+                        val srcBuffer = this
+
+                        val rem = minOf(srcBuffer.remaining().toLong(), dstBuffer.remaining().toLong(), limit - copied).toInt()
+                        val n = state.tryWriteAtMost(rem)
+                        if (n > 0) {
+                            if (!srcState.tryReadExact(n)) throw AssertionError()
+
+                            srcBuffer.limit(srcBuffer.position() + n)
+
+                            dstBuffer.put(srcBuffer)
+                            partSize = n
+
+                            with(src) {
+                                srcBuffer.bytesRead(srcState, n)
+                            }
+                        }
+
+                        true
+                    }
+
+                    if (rc) {
+                        bytesWritten(state, partSize)
+                        copied += partSize
+
+                        if (avWBefore - partSize == 0 || autoFlush) {
+                            flush()
+                        }
+                    } else {
+                        if (src.isClosedForRead) break
+
+                        flush()
+                        if (!src.readSuspend(1)) break
+                    }
+                }
+            }
+
+            if (autoFlush) {
+                flush()
+            }
+
+            return copied
+        } catch (t: Throwable) {
+            close(t)
+            throw t
+        }
+    }
+
     private fun writeAsMuchAsPossible(src: ByteBuffer): Int {
         writing {
             var written = 0
@@ -1479,9 +1548,7 @@ internal class ByteBufferChannel(
     }
 
     private suspend fun writeSuspend(size: Int) {
-        closed?.sendException?.let { throw it }
-
-        while (state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty && closed == null) {
+        while (state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty) {
             suspendCancellableCoroutine<Unit>(holdCancellability = true) { c ->
                 do {
                     closed?.sendException?.let { throw it }
