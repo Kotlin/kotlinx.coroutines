@@ -1442,7 +1442,8 @@ internal class ByteBufferChannel(
 
         closed?.let { c ->
             if (c.cause != null) throw c.cause
-            return capacity.flush() && capacity.availableForRead >= size
+            val afterCapacity = state.capacity
+            return afterCapacity.flush() && afterCapacity.availableForRead >= size
         }
 
         if (!readSuspendImpl(size)) return false

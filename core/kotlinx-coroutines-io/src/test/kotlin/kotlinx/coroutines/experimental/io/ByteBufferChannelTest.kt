@@ -1,16 +1,12 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CoroutineName
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
-import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
-import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
+import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.io.core.*
+import kotlinx.io.pool.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ErrorCollector
@@ -26,13 +22,17 @@ import kotlin.test.fail
 
 class ByteBufferChannelTest {
     @get:Rule
-    val timeout = Timeout(100000, TimeUnit.SECONDS)
+    val timeout = Timeout(100, TimeUnit.SECONDS)
 
     @get:Rule
     private val failures = ErrorCollector()
 
     @get:Rule
-    internal val pool = VerifyingObjectPool(BufferObjectNoPool)
+    internal val pool = VerifyingObjectPool(object : NoPoolImpl<ReadWriteBufferState.Initial>() {
+        override fun borrow(): ReadWriteBufferState.Initial {
+            return ReadWriteBufferState.Initial(java.nio.ByteBuffer.allocate(4096))
+        }
+    })
 
     @get:Rule
     internal val pktPool = VerifyingObjectPool(BufferView.Pool)
@@ -618,6 +618,43 @@ class ByteBufferChannelTest {
         ch.close()
 
         assertEquals("abc", ch.readASCIILine())
+    }
+
+    @Test
+    fun testStressReadWriteFully() = runBlocking {
+        val size = 100
+        val data = ByteArray(size) { it.toByte() }
+        val exec = newFixedThreadPoolContext(8, "testStressReadFully")
+        val buffers = object : DefaultPool<ByteArray>(10) {
+            override fun produceInstance(): ByteArray {
+                return ByteArray(size)
+            }
+        }
+
+        try {
+            (1..1_000_000).map {
+                async(exec) {
+                    val channel = ByteBufferChannel(autoFlush = false, pool = pool)
+                    val job = launch(exec) {
+                        try {
+                            channel.writeFully(data)
+                        } finally {
+                            channel.close()
+                        }
+                    }
+
+                    yield()
+                    val buffer = buffers.borrow()
+                    channel.readFully(buffer)
+                    buffers.recycle(buffer)
+                    job.cancel()
+                }
+            }.forEach {
+                it.await()
+            }
+        } finally {
+            exec.close()
+        }
     }
 
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
