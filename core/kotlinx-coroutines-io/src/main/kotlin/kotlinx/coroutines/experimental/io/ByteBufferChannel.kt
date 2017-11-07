@@ -708,6 +708,7 @@ internal class ByteBufferChannel(
             throw t
         }
 
+        buffer.prepareBuffer(writeByteOrder, writePosition, c.availableForWrite)
         tryWriteByte(buffer, b, c)
     }
 
@@ -752,6 +753,7 @@ internal class ByteBufferChannel(
             throw t
         }
 
+        buffer.prepareBuffer(writeByteOrder, writePosition, c.availableForWrite)
         tryWriteShort(buffer, s, c)
     }
 
@@ -793,6 +795,7 @@ internal class ByteBufferChannel(
             throw t
         }
 
+        prepareBuffer(writeByteOrder, writePosition, c.availableForWrite)
         if (!tryWriteInt(i, c)) {
             writeIntSuspend(i, c)
         }
@@ -829,6 +832,8 @@ internal class ByteBufferChannel(
 
     private tailrec suspend fun ByteBuffer.writeLongSuspend(l: Long, c: RingBufferCapacity) {
         writeSuspend(8)
+
+        prepareBuffer(writeByteOrder, writePosition, c.availableForWrite)
         if (!tryWriteLong(l, c)) {
             writeLongSuspend(l, c)
         }
