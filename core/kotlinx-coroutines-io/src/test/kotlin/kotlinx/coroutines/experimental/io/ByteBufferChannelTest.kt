@@ -12,8 +12,8 @@ import org.junit.rules.ErrorCollector
 import org.junit.rules.Timeout
 import java.nio.CharBuffer
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.system.*
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
@@ -685,7 +685,7 @@ class ByteBufferChannelTest {
     fun testJoinToLarge() {
         val count = 1024 * 256 // * 8192 = 2Gb
 
-        launch {
+        val writerJob = launch {
             val bb = ByteBuffer.allocate(8192)
             for (i in 0 until bb.capacity()) {
                 bb.put((i and 0xff).toByte())
@@ -708,7 +708,7 @@ class ByteBufferChannelTest {
         val dest = ByteBufferChannel(true, pool)
 
         val joinerJob = launch {
-           ch.joinTo(dest, true)
+            ch.joinTo(dest, true)
         }
 
         val reader = launch {
@@ -726,16 +726,24 @@ class ByteBufferChannelTest {
                 }
             }
 
-            yield()
+            bb.clear()
+            assertEquals(-1, dest.readAvailable(bb))
             assertTrue(dest.isClosedForRead)
         }
 
-        runBlocking {
-            reader.join()
-            joinerJob.join()
-            dest.close()
-            ch.close()
+        val latch = CountDownLatch(1)
+        val r = AtomicInteger(3)
+
+        val handler: CompletionHandler = { t ->
+            t?.let { failures.addError(it); latch.countDown() }
+            if (r.decrementAndGet() == 0) latch.countDown()
         }
+
+        reader.invokeOnCompletion(true, handler)
+        writerJob.invokeOnCompletion(true, handler)
+        joinerJob.invokeOnCompletion(true, handler)
+
+        latch.await()
     }
 
     private fun launch(block: suspend () -> Unit): Job {
@@ -808,10 +816,11 @@ class ByteBufferChannelTest {
         launch(coroutineContext) {
             ch.joinTo(other, false)
         }
-        yield()
 
         ch.writeInt(0x11223344)
         ch.flush()
+
+        yield()
 
         assertEquals(0x12345678, other.readInt())
         assertEquals(0x11223344, other.readInt())
@@ -829,6 +838,32 @@ class ByteBufferChannelTest {
                     child.writeInt(i)
                     child.close()
                 }
+                child.joinTo(ch, false)
+            }
+        }
+
+        for (i in 1..steps) {
+            assertEquals(i, ch.readInt())
+        }
+
+        pipeline.join()
+        pipeline.invokeOnCompletion { cause ->
+            cause?.let { throw it }
+        }
+    }
+
+    @Test
+    fun testSequentialJoinYield() = runBlocking<Unit> {
+        val steps = 200_000
+
+        val pipeline = launch(coroutineContext) {
+            for (i in 1..steps) {
+                val child = ByteBufferChannel(false, pool)
+                launch(coroutineContext) {
+                    child.writeInt(i)
+                    child.close()
+                }
+                yield()
                 child.joinTo(ch, false)
             }
         }
