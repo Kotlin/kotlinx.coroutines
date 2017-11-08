@@ -62,8 +62,7 @@ class StringsTest {
 
         // no splitting
         runBlocking {
-            val ch = ByteReadChannel(content)
-//            testReadLine(ch, expectedLine, expectedRemaining)
+            ByteReadChannel(content)
         }
 
         // split

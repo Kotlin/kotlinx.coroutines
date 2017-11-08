@@ -651,7 +651,63 @@ class ByteBufferChannelTest {
         val dest = ByteBufferChannel(true, pool)
 
         val joinerJob = launch {
-//            ch.copyAndClose(dest)
+            ch.copyAndClose(dest)
+        }
+
+        val reader = launch {
+            val bb = ByteBuffer.allocate(8192)
+
+            for (i in 1..count) {
+                bb.clear()
+                dest.readFully(bb)
+                bb.flip()
+
+                if (i and 0x1fff == 0) {
+                    for (idx in 0 until bb.capacity()) {
+                        assertEquals((idx and 0xff).toByte(), bb.get())
+                    }
+                }
+            }
+
+            yield()
+            assertTrue(dest.isClosedForRead)
+        }
+
+        runBlocking {
+            reader.join()
+            joinerJob.join()
+            dest.close()
+            ch.close()
+        }
+    }
+
+    @Test
+    fun testJoinToLarge() {
+        val count = 1024 * 256 // * 8192 = 2Gb
+
+        launch {
+            val bb = ByteBuffer.allocate(8192)
+            for (i in 0 until bb.capacity()) {
+                bb.put((i and 0xff).toByte())
+            }
+
+            for (i in 1..count) {
+                bb.clear()
+                val split = i and 0x1fff
+
+                bb.limit(split)
+                ch.writeFully(bb)
+                yield()
+                bb.limit(bb.capacity())
+                ch.writeFully(bb)
+            }
+
+            ch.close()
+        }
+
+        val dest = ByteBufferChannel(true, pool)
+
+        val joinerJob = launch {
            ch.joinTo(dest, true)
         }
 
