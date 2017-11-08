@@ -38,6 +38,9 @@ internal class ByteBufferChannel(
     private var closed: ClosedElement? = null
 
     @Volatile
+    private var closeWaitJob: Job? = null
+
+    @Volatile
     private var delegatedTo: ByteBufferChannel? = null
     private var delegateClose: Boolean = false
 
@@ -87,6 +90,8 @@ internal class ByteBufferChannel(
             delegatedTo = null
             delegate?.close(cause)
         }
+
+        CloseWaitJob.getAndSet(this, null)?.cancel()
 
         return true
     }
@@ -1041,6 +1046,27 @@ internal class ByteBufferChannel(
         }
     }
 
+    internal suspend fun awaitClose() {
+        val existing = closeWaitJob
+        if (closed != null) return
+
+        if (existing != null) {
+            return existing.join()
+        } else {
+            val job = Job()
+            if (CloseWaitJob.compareAndSet(this, null, job)) {
+                if (closed != null) {
+                    job.cancel()
+                    CloseWaitJob.compareAndSet(this, job, null)
+                    return
+                }
+                return job.join()
+            } else {
+                return awaitClose()
+            }
+        }
+    }
+
     internal suspend fun joinFrom(src: ByteBufferChannel, delegateClose: Boolean) {
         if (src.closed != null) {
             if (delegateClose) close(src.closed!!.cause)
@@ -1054,6 +1080,7 @@ internal class ByteBufferChannel(
             close()
         } else {
             flush()
+            src.awaitClose()
         }
     }
 
@@ -1808,6 +1835,7 @@ internal class ByteBufferChannel(
         private val WriteOp = updater(ByteBufferChannel::writeOp)
         private val ReadOp = updater(ByteBufferChannel::readOp)
         private val Closed = updater(ByteBufferChannel::closed)
+        private val CloseWaitJob = updater(ByteBufferChannel::closeWaitJob)
     }
 
     private object TerminatedLookAhead : LookAheadSuspendSession {

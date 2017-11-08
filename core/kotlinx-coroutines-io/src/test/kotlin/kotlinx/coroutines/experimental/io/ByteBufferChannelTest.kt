@@ -650,7 +650,7 @@ class ByteBufferChannelTest {
 
         val dest = ByteBufferChannel(true, pool)
 
-        launch {
+        val joinerJob = launch {
 //            ch.copyAndClose(dest)
            ch.joinTo(dest, true)
         }
@@ -676,6 +676,7 @@ class ByteBufferChannelTest {
 
         runBlocking {
             reader.join()
+            joinerJob.join()
             dest.close()
             ch.close()
         }
@@ -729,27 +730,36 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    fun testJoinToSmokeTest() = runBlocking {
+    fun testJoinToSmokeTest() = runBlocking<Unit> {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
-        ch.joinTo(other, false)
+        launch(coroutineContext) {
+            ch.joinTo(other, false)
+        }
+        yield()
 
         ch.writeInt(0x11223344)
         ch.flush()
         assertEquals(0x11223344, other.readInt())
+
+        ch.close()
     }
 
     @Test
-    fun testJoinToAfterWrite() = runBlocking {
+    fun testJoinToAfterWrite() = runBlocking<Unit> {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
 
         ch.writeInt(0x12345678)
-        ch.joinTo(other, false)
+        launch(coroutineContext) {
+            ch.joinTo(other, false)
+        }
+        yield()
 
         ch.writeInt(0x11223344)
         ch.flush()
 
         assertEquals(0x12345678, other.readInt())
         assertEquals(0x11223344, other.readInt())
+        ch.close()
     }
 
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
