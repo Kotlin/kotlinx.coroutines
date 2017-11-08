@@ -88,7 +88,12 @@ internal class ByteBufferChannel(
         if (state === ReadWriteBufferState.Terminated) {
             val delegate = delegatedTo
             delegatedTo = null
-            delegate?.close(cause)
+
+            if (delegateClose) {
+                delegate?.close(cause)
+            } else {
+                delegate?.flush()
+            }
         }
 
         CloseWaitJob.getAndSet(this, null)?.cancel()
@@ -1072,6 +1077,7 @@ internal class ByteBufferChannel(
             if (delegateClose) close(src.closed!!.cause)
             return
         }
+        closed?.let { closed -> throw closed.sendException }
 
         src.setupDelegateTo(this, delegateClose)
         copyDirect(src, Long.MAX_VALUE, leaveOnDelegation = true)

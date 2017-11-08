@@ -818,6 +818,31 @@ class ByteBufferChannelTest {
         ch.close()
     }
 
+    @Test
+    fun testSequentialJoin() = runBlocking<Unit> {
+        val steps = 200_000
+
+        val pipeline = launch(coroutineContext) {
+            for (i in 1..steps) {
+                val child = ByteBufferChannel(false, pool)
+                launch(coroutineContext) {
+                    child.writeInt(i)
+                    child.close()
+                }
+                child.joinTo(ch, false)
+            }
+        }
+
+        for (i in 1..steps) {
+            assertEquals(i, ch.readInt())
+        }
+
+        pipeline.join()
+        pipeline.invokeOnCompletion { cause ->
+            cause?.let { throw it }
+        }
+    }
+
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
         val builder = BytePacketBuilder(0, pktPool)
         try {
