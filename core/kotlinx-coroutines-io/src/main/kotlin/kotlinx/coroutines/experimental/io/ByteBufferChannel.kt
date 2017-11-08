@@ -83,7 +83,9 @@ internal class ByteBufferChannel(
         resumeClosed(cause)
 
         if (state === ReadWriteBufferState.Terminated) {
-            delegatedTo?.close(cause)
+            val delegate = delegatedTo
+            delegatedTo = null
+            delegate?.close(cause)
         }
 
         return true
@@ -1031,6 +1033,11 @@ internal class ByteBufferChannel(
     }
 
     internal suspend fun joinFrom(src: ByteBufferChannel, delegateClose: Boolean) {
+        if (src.closed != null) {
+            if (delegateClose) close(src.closed!!.cause)
+            return
+        }
+
         src.setupDelegateTo(this, delegateClose)
         copyDirect(src, Long.MAX_VALUE, leaveOnDelegation = true)
 
