@@ -93,16 +93,19 @@ internal class ByteBufferChannel(
         joining?.let { joined -> joined.delegatedTo.flush(); return }
 
         val avw: Int
+        val flushed: Boolean
+
         while (true) {
             val s = state
-            if (!s.capacity.flush()) return
+            val f = s.capacity.flush()
             if (s === state) {
                 avw = s.capacity.availableForWrite
+                flushed = f
                 break
             }
         }
 
-        resumeReadOp()
+        if (flushed) resumeReadOp()
         if (avw > 0) resumeWriteOp()
     }
 
@@ -943,7 +946,7 @@ internal class ByteBufferChannel(
             }
 
             bytesWritten(c, 8)
-            if (c.isFull() || autoFlush) flush()
+            if (c.isFull() || autoFlush || joining != null) flush()
             restoreStateAfterWrite()
             tryTerminate()
             return true
