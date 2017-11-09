@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental.android
 
 import android.os.Handler
 import android.os.Looper
+import android.view.Choreographer
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
@@ -41,6 +42,9 @@ public class HandlerContext(
     private val handler: Handler,
     private val name: String? = null
 ) : CoroutineDispatcher(), Delay {
+    @Volatile
+    private var _choreographer: Choreographer? = null
+
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         handler.post(block)
     }
@@ -57,6 +61,37 @@ public class HandlerContext(
             override fun dispose() {
                 handler.removeCallbacks(block)
             }
+        }
+    }
+
+    /**
+     * Awaits the next animation frame and returns frame time in nanoseconds.
+     */
+    public suspend fun awaitFrame(): Long {
+        // fast path when choreographer is already known
+        val choreographer = _choreographer
+        if (choreographer != null) {
+            return suspendCancellableCoroutine { cont ->
+                postFrameCallback(choreographer, cont)
+            }
+        }
+        // post into looper thread thread to figure it out
+        return suspendCancellableCoroutine { cont ->
+           handler.post {
+               updateChoreographerAndPostFrameCallback(cont)
+           }
+        }
+    }
+
+    private fun updateChoreographerAndPostFrameCallback(cont: CancellableContinuation<Long>) {
+        val choreographer = _choreographer ?:
+            Choreographer.getInstance()!!.also { _choreographer = it }
+        postFrameCallback(choreographer, cont)
+    }
+
+    private fun postFrameCallback(choreographer: Choreographer, cont: CancellableContinuation<Long>) {
+        choreographer.postFrameCallback { nanos ->
+            with(cont) { resumeUndispatched(nanos) }
         }
     }
 
