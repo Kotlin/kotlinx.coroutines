@@ -17,7 +17,9 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.context.example06
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // launch a coroutine to process some kind of incoming request
@@ -30,6 +32,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
         // and the other inherits the parent context
         val job2 = launch(coroutineContext) {
+            delay(100)
             println("job2: I am a child of the request coroutine")
             delay(1000)
             println("job2: I will not execute this line if my parent request is cancelled")
