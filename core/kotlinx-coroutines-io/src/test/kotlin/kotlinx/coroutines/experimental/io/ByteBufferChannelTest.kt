@@ -806,6 +806,27 @@ class ByteBufferChannelTest {
     }
 
     @Test
+    fun testJoinToResumeRead() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = true, pool = pool)
+        val result = async(coroutineContext) {
+            other.readLong()
+        }
+        yield()
+
+        launch(coroutineContext) {
+            ch.joinTo(other, true)
+        }
+        yield()
+        yield()
+
+        ch.writeLong(0x1122334455667788L)
+        yield()
+        assertEquals(0x1122334455667788L, result.await())
+
+        ch.close()
+    }
+
+    @Test
     fun testJoinToAfterWrite() = runBlocking<Unit> {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
 
