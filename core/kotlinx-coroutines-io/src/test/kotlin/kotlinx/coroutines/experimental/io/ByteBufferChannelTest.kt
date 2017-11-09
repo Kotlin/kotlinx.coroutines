@@ -14,10 +14,7 @@ import java.nio.CharBuffer
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlin.test.*
 
 class ByteBufferChannelTest {
     @get:Rule
@@ -825,6 +822,61 @@ class ByteBufferChannelTest {
         assertEquals(0x12345678, other.readInt())
         assertEquals(0x11223344, other.readInt())
         ch.close()
+    }
+
+
+    @Test
+    fun testReadThenRead() = runBlocking<Unit> {
+        val phase = AtomicInteger(0)
+
+        val first = launch(coroutineContext) {
+            try {
+                ch.readInt()
+                fail("EOF expected")
+            } catch (expected: ClosedReceiveChannelException) {
+                assertEquals(1, phase.get())
+            }
+        }
+
+        yield()
+
+        val second = launch(coroutineContext) {
+            try {
+                ch.readInt()
+                fail("Should fail with ISE")
+            } catch (expected: IllegalStateException) {
+            }
+        }
+
+        yield()
+        phase.set(1)
+        ch.close()
+
+        yield()
+
+        first.invokeOnCompletion { t ->
+            t?.let { throw it }
+        }
+        second.invokeOnCompletion { t ->
+            t?.let { throw it }
+        }
+    }
+
+    @Test
+    @Ignore
+    fun testJoinToStress() = runBlocking<Unit> {
+        for (i in 1..10) {
+            println("Step $i")
+            val child = ByteBufferChannel(false, pool)
+            val writer = launch {
+                child.writeLong(999)
+                child.close()
+            }
+
+            child.joinTo(ch, false)
+            assertEquals(999, ch.readLong())
+            assertTrue { writer.isCompleted }
+        }
     }
 
     @Test

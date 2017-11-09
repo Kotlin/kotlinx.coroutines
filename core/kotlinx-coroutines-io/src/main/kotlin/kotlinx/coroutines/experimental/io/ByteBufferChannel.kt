@@ -82,7 +82,6 @@ internal class ByteBufferChannel(
         if (state.capacity.isEmpty() || cause != null) tryTerminate()
         resumeClosed(cause)
 
-
         if (state === ReadWriteBufferState.Terminated) {
             joining?.let { ensureClosedJoined(it) }
         }
@@ -120,10 +119,13 @@ internal class ByteBufferChannel(
     }
 
     private fun setupStateForWrite(): ByteBuffer? {
+        if (writeOp != null) throw IllegalStateException("Write operation is already in progress")
+
         var _allocated: ReadWriteBufferState.Initial? = null
         val (old, newState) = updateState { state ->
             when {
                 joining != null -> return null
+                closed != null -> throw closed!!.sendException
                 state === ReadWriteBufferState.IdleEmpty -> {
                     val allocated = _allocated ?: newBuffer().also { _allocated = it }
                     allocated.startWriting()
@@ -164,6 +166,8 @@ internal class ByteBufferChannel(
     }
 
     private fun setupStateForRead(): ByteBuffer? {
+        if (readOp != null) throw IllegalStateException("Read operation is already in progress")
+
         val (_, newState) = updateState { state ->
             when (state) {
                 ReadWriteBufferState.Terminated -> closed?.cause?.let { throw it } ?: return null
@@ -1737,7 +1741,9 @@ internal class ByteBufferChannel(
         closed?.let { c ->
             if (c.cause != null) throw c.cause
             val afterCapacity = state.capacity
-            return afterCapacity.flush() && afterCapacity.availableForRead >= size
+            val result = afterCapacity.flush() && afterCapacity.availableForRead >= size
+            if (readOp != null) throw IllegalStateException("Read operation is already in progress")
+            return result
         }
 
         if (!readSuspendImpl(size)) return false

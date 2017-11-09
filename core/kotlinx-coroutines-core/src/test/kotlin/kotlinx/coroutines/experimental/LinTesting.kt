@@ -57,7 +57,7 @@ class LinTesting {
 }
 
 class LinVerifier(
-    actorsPerThread: List<List<Actor>>, testInstance: Any, resetMethod: Method
+    actorsPerThread: List<List<Actor>>, testInstance: Any, resetMethod: Method?
 ) : Verifier(actorsPerThread, testInstance, resetMethod) {
     private val possibleResultsSet: Set<List<List<Result>>> =
         generateAllLinearizableExecutions(actorsPerThread)
