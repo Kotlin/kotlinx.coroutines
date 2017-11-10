@@ -1069,7 +1069,13 @@ internal class ByteBufferChannel(
 
     private suspend fun awaitClose() {
         if (closed != null) return
-        joining?.awaitClose() ?: error("Only works for joined")
+        val joined = joining
+
+        if (joined != null) {
+            joined.awaitClose()
+        } else if (closed == null) {
+            error("Only works for joined")
+        }
     }
 
     internal suspend fun joinFrom(src: ByteBufferChannel, delegateClose: Boolean) {
@@ -1167,6 +1173,7 @@ internal class ByteBufferChannel(
                 }
 
                 if (joining != null) break // TODO think of joining chain
+                if (copied >= limit) break
 
 //                println("readSuspend?")
                 if (!src.readSuspend(1))  {
