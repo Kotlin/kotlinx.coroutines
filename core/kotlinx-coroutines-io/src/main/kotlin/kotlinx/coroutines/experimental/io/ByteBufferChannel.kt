@@ -90,13 +90,14 @@ internal class ByteBufferChannel(
     }
 
     override fun flush() {
-        joining?.let { joined -> joined.delegatedTo.flush(); return }
+        joining?.delegatedTo?.flush()
 
         val avw: Int
         val flushed: Boolean
 
         while (true) {
             val s = state
+            if (s === ReadWriteBufferState.Terminated) return
             val f = s.capacity.flush()
             if (s === state) {
                 avw = s.capacity.availableForWrite
@@ -104,6 +105,9 @@ internal class ByteBufferChannel(
                 break
             }
         }
+
+
+//        println("flushed $flushed, avw $avw")
 
         if (flushed) resumeReadOp()
         if (avw > 0) resumeWriteOp()
@@ -1087,6 +1091,7 @@ internal class ByteBufferChannel(
     }
 
     internal suspend fun copyDirect(src: ByteBufferChannel, limit: Long, joined: JoiningState?): Long {
+//        println("enter copyDirect")
         if (limit == 0L) return 0L
         if (src.isClosedForRead) {
             if (joined != null) {
@@ -1135,11 +1140,13 @@ internal class ByteBufferChannel(
                             true
                         }
 
+//                        println("rc = $rc, partSize = $partSize")
                         if (rc) {
                             dstBuffer.bytesWritten(state, partSize)
                             copied += partSize
 
                             if (avWBefore - partSize == 0 || autoFlush) {
+//                                println("flush")
                                 flush()
                             }
                         } else {
@@ -1148,6 +1155,7 @@ internal class ByteBufferChannel(
                     }
                 }
 
+//                println("flush")
                 flush()
 
                 if (joined != null) {
@@ -1160,12 +1168,16 @@ internal class ByteBufferChannel(
 
                 if (joining != null) break // TODO think of joining chain
 
+//                println("readSuspend?")
                 if (!src.readSuspend(1))  {
+//                    println("readSuspend failed")
                     if (joined == null || src.tryCompleteJoining(joined)) break
                 }
+//                println("next loop")
             }
 
             if (autoFlush) {
+//                println("final flush")
                 flush()
             }
 
@@ -1779,6 +1791,10 @@ internal class ByteBufferChannel(
     private fun writeSuspendPredicate(size: Int): Boolean {
         if (closed != null) return false
         val joined = joining
+        val state = state
+        val closed = closed
+
+//        println("writeSuspend? $joined, $state, ${state.capacity.availableForWrite}, $closed")
 
         return if (joined == null) {
             state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty && closed == null
