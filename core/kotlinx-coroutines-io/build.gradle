@@ -4,4 +4,7 @@ dependencies {
     }
 
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+
+    ext.lincheck_version = '1.9'
+    testCompile "com.devexperts.lincheck:core:$lincheck_version"
 }
