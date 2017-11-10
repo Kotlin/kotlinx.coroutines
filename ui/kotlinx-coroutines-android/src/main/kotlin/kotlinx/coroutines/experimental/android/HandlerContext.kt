@@ -33,6 +33,8 @@ val UI = HandlerContext(Handler(Looper.getMainLooper()), "UI")
  */
 fun Handler.asCoroutineDispatcher() = HandlerContext(this)
 
+private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
+
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
  * @param handler a handler.
@@ -52,11 +54,11 @@ public class HandlerContext(
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         handler.postDelayed({
             with(continuation) { resumeUndispatched(Unit) }
-        }, unit.toMillis(time))
+        }, unit.toMillis(time).coerceAtMost(MAX_DELAY))
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        handler.postDelayed(block, unit.toMillis(time))
+        handler.postDelayed(block, unit.toMillis(time).coerceAtMost(MAX_DELAY))
         return object : DisposableHandle {
             override fun dispose() {
                 handler.removeCallbacks(block)
