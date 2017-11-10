@@ -1000,6 +1000,9 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeAvailable(src: ByteBuffer): Int {
+        val delegated = resolveDelegation(this)
+        if (delegated !== this) return delegated.writeAvailable(src)
+
         val copied = writeAsMuchAsPossible(src)
         if (copied > 0) return copied
 
@@ -1032,6 +1035,9 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeFully(src: ByteBuffer) {
+        val delegated = resolveDelegation(this)
+        if (delegated !== this) return delegated.writeFully(src)
+
         writeAsMuchAsPossible(src)
         if (!src.hasRemaining()) return
 
@@ -1101,8 +1107,11 @@ internal class ByteBufferChannel(
         if (limit == 0L) return 0L
         if (src.isClosedForRead) {
             if (joined != null) {
-                check(tryCompleteJoining(joined))
+                check(src.tryCompleteJoining(joined))
             }
+            return 0L
+        }
+        if (joined != null && src.tryCompleteJoining(joined)) {
             return 0L
         }
 
@@ -1161,9 +1170,6 @@ internal class ByteBufferChannel(
                     }
                 }
 
-//                println("flush")
-                flush()
-
                 if (joined != null) {
                     if (src.tryCompleteJoining(joined)) break
                     else if (src.state.capacity.flush()) { // force flush src to read-up all the bytes
@@ -1176,7 +1182,9 @@ internal class ByteBufferChannel(
                 if (copied >= limit) break
 
 //                println("readSuspend?")
-                if (!src.readSuspend(1))  {
+                flush()
+
+                if (src.availableForRead == 0 && !src.readSuspend(1))  {
 //                    println("readSuspend failed")
                     if (joined == null || src.tryCompleteJoining(joined)) break
                 }
@@ -1292,6 +1300,9 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeFully(src: ByteArray, offset: Int, length: Int) {
+        val delegated = resolveDelegation(this)
+        if (delegated !== this) return delegated.writeFully(src, offset, length)
+
         var rem = length
         var off = offset
 
@@ -1315,6 +1326,9 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int {
+        val delegated = resolveDelegation(this)
+        if (delegated !== this) return delegated.writeAvailable(src, offset, length)
+
         val size = writeAsMuchAsPossible(src, offset, length)
         if (size > 0) return size
         return writeSuspend(src, offset, length)
@@ -1392,6 +1406,9 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writePacket(packet: ByteReadPacket) {
+        val delegated = resolveDelegation(this)
+        if (delegated !== this) return delegated.writePacket(packet)
+
         try {
             while (!packet.isEmpty) {
                 if (tryWritePacketPart(packet) == 0) break
