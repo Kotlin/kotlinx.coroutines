@@ -6,13 +6,13 @@ import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 
-@StressCTest(iterations = 200, invocationsPerIteration = 2_000, actorsPerThread = arrayOf("1:1", "1:1", "1:1"), verifier = LinVerifier::class)
+@StressCTest(iterations = 200, invocationsPerIteration = 2_000, actorsPerThread = arrayOf("1:2", "1:1", "1:1"), verifier = LinVerifier::class)
 @OpGroupConfigs(
         OpGroupConfig(name = "write", nonParallel = true),
         OpGroupConfig(name = "read1", nonParallel = true),
         OpGroupConfig(name = "read2", nonParallel = true)
 )
-class ByteChannelJoinLinearizabilityTest {
+class ByteChannelJoinNoAutoFlushLinearizabilityTest {
     private lateinit var from: ByteChannel
     private lateinit var to: ByteChannel
 
@@ -20,9 +20,8 @@ class ByteChannelJoinLinearizabilityTest {
 
     @Reset
     fun reset() {
-//        println("============== reset ====================")
-        from = ByteChannel(true)
-        to = ByteChannel(true)
+        from = ByteChannel(false)
+        to = ByteChannel(false)
     }
 
     @Operation(runOnce = true, group = "read1")
@@ -35,6 +34,11 @@ class ByteChannelJoinLinearizabilityTest {
         from.writeLong(0x1122334455667788L)
     }
 
+    @Operation(group = "write")
+    fun flush() = lr.run("flush") {
+        from.flush()
+    }
+
     @Operation(runOnce = true, group = "read2")
     fun joinTo() = lr.run("join") {
         from.joinTo(to, true)
@@ -42,6 +46,6 @@ class ByteChannelJoinLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(ByteChannelJoinLinearizabilityTest::class.java)
+        LinChecker.check(ByteChannelJoinNoAutoFlushLinearizabilityTest::class.java)
     }
 }
