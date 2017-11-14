@@ -5,25 +5,35 @@ package kotlinx.coroutines.experimental.io
  */
 @Deprecated("Use writeStringUtf8 instead", ReplaceWith("writeStringUtf8(s)"))
 suspend fun ByteWriteChannel.writeUTF(s: String) {
-    writeStringUtf8(s)
+    return writeStringUtf8(s)
 }
 
 /**
  * See [java.io.DataOutput.writeChars]
  */
 suspend fun ByteWriteChannel.writeChars(s: String) {
+    val bb = ByteBuffer.allocate(s.length * 2)
+    val cb = bb.asCharBuffer()
+
     for (ch in s) {
-        writeShort(ch.toInt())
+        cb.put(ch)
     }
+
+    return writeFully(bb)
 }
 
 /**
  * See [java.io.DataOutput.writeBytes]
  */
 suspend fun ByteWriteChannel.writeBytes(s: String) {
+    val array = ByteArray(s.length)
+    var rc = 0
+
     for (ch in s) {
-        writeByte(ch.toInt())
+        array[rc++] = ch.toByte()
     }
+
+    return writeFully(array)
 }
 
 /**

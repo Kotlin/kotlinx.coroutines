@@ -144,10 +144,10 @@ suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
         return dst.joinFrom(this, closeOnEnd)
     }
 
-    return joinToImpl(dst, closeOnEnd)
+    return joinToImplSuspend(dst, closeOnEnd)
 }
 
-private suspend fun ByteReadChannel.joinToImpl(dst: ByteWriteChannel, close: Boolean) {
+private suspend fun ByteReadChannel.joinToImplSuspend(dst: ByteWriteChannel, close: Boolean) {
     copyToImpl(dst, Long.MAX_VALUE)
     if (close) {
         dst.close()

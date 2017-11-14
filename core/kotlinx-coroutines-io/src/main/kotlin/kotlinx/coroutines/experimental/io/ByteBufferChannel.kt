@@ -395,15 +395,15 @@ internal class ByteBufferChannel(
         else consumed + consumed0
     }
 
-    suspend override fun readFully(dst: ByteArray, offset: Int, length: Int) {
+    final suspend override fun readFully(dst: ByteArray, offset: Int, length: Int) {
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
         if (consumed < length) {
-            readFullySuspend(dst, offset + consumed, length - consumed)
+            return readFullySuspend(dst, offset + consumed, length - consumed)
         }
     }
 
-    suspend override fun readFully(dst: ByteBuffer): Int {
+    final suspend override fun readFully(dst: ByteBuffer): Int {
         val rc = readAsMuchAsPossible(dst)
         if (!dst.hasRemaining()) return rc
 
@@ -491,7 +491,7 @@ internal class ByteBufferChannel(
         return readAvailable(dst)
     }
 
-    suspend override fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
+    final suspend override fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
         closed?.cause?.let { throw it }
 
         if (size == 0) return ByteReadPacket.Empty
@@ -525,7 +525,7 @@ internal class ByteBufferChannel(
             BufferPool.recycle(buffer)
             builder.build()
         } else {
-            readPacketSuspend(remaining, builder, buffer)
+            return readPacketSuspend(remaining, builder, buffer)
         }
     }
 
@@ -557,7 +557,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    suspend override fun readByte(): Byte {
+    final suspend override fun readByte(): Byte {
         var b: Byte = 0
 
         val rc = reading {
@@ -568,10 +568,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            b
+        if (rc) {
+            return b
         } else {
-            readByteSuspend()
+            return readByteSuspend()
         }
     }
 
@@ -580,7 +580,7 @@ internal class ByteBufferChannel(
         return readByte()
     }
 
-    suspend override fun readBoolean(): Boolean {
+    final suspend override fun readBoolean(): Boolean {
         var b = false
 
         val rc = reading {
@@ -591,10 +591,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            b
+        if (rc) {
+            return b
         } else {
-            readBooleanSuspend()
+            return readBooleanSuspend()
         }
     }
 
@@ -603,7 +603,7 @@ internal class ByteBufferChannel(
         return readBoolean()
     }
 
-    suspend override fun readShort(): Short {
+    final suspend override fun readShort(): Short {
         var sh: Short = 0
 
         val rc = reading {
@@ -615,10 +615,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            sh
+        if (rc) {
+            return sh
         } else {
-            readShortSuspend()
+            return readShortSuspend()
         }
     }
 
@@ -627,7 +627,7 @@ internal class ByteBufferChannel(
         return readShort()
     }
 
-    suspend override fun readInt(): Int {
+    final suspend override fun readInt(): Int {
         var i = 0
 
         val rc = reading {
@@ -639,10 +639,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            i
+        if (rc) {
+            return i
         } else {
-            readIntSuspend()
+            return readIntSuspend()
         }
     }
 
@@ -651,7 +651,7 @@ internal class ByteBufferChannel(
         return readInt()
     }
 
-    suspend override fun readLong(): Long {
+    final suspend override fun readLong(): Long {
         var i = 0L
 
         val rc = reading {
@@ -663,10 +663,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            i
+        if (rc) {
+            return i
         } else {
-            readLongSuspend()
+            return readLongSuspend()
         }
     }
 
@@ -675,7 +675,7 @@ internal class ByteBufferChannel(
         return readLong()
     }
 
-    suspend override fun readDouble(): Double {
+    final suspend override fun readDouble(): Double {
         var d = 0.0
 
         val rc = reading {
@@ -687,10 +687,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            d
+        if (rc) {
+            return d
         } else {
-            readDoubleSuspend()
+            return readDoubleSuspend()
         }
     }
 
@@ -699,7 +699,7 @@ internal class ByteBufferChannel(
         return readDouble()
     }
 
-    suspend override fun readFloat(): Float {
+    final suspend override fun readFloat(): Float {
         var f = 0.0f
 
         val rc = reading {
@@ -711,10 +711,10 @@ internal class ByteBufferChannel(
             } else false
         }
 
-        return if (rc) {
-            f
+        if (rc) {
+            return f
         } else {
-            readFloatSuspend()
+            return readFloatSuspend()
         }
     }
 
@@ -902,15 +902,18 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeInt(i: Int) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeInt(i)
-
-        val buffer = setupStateForWrite() ?: return delegateInt(i)
-        val c = state.capacity
-
-        if (!buffer.tryWriteInt(i, c)) {
-            return buffer.writeIntSuspend(i, c)
+        val buffer = setupStateForWrite()
+        if (buffer == null) {
+            val delegation = resolveDelegation(this)
+            if (delegation !== this) return delegation.writeInt(i)
+            else return delegateSuspend(joining!!, { writeInt(i) })
         }
+        val c = state.capacity
+//
+        if (buffer.tryWriteInt(i, c)) {
+            return
+        }
+        return buffer.writeIntSuspend(i, c)
     }
 
     private tailrec suspend fun ByteBuffer.writeIntSuspend(i: Int, c: RingBufferCapacity) {
@@ -992,11 +995,11 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeDouble(d: Double) {
-        writeLong(java.lang.Double.doubleToRawLongBits(d))
+        return writeLong(java.lang.Double.doubleToRawLongBits(d))
     }
 
     suspend override fun writeFloat(f: Float) {
-        writeInt(java.lang.Float.floatToRawIntBits(f))
+        return writeInt(java.lang.Float.floatToRawIntBits(f))
     }
 
     suspend override fun writeAvailable(src: ByteBuffer): Int {
@@ -1078,7 +1081,7 @@ internal class ByteBufferChannel(
         val joined = joining
 
         if (joined != null) {
-            joined.awaitClose()
+            return joined.awaitClose()
         } else if (closed == null) {
             error("Only works for joined")
         }
@@ -1091,6 +1094,10 @@ internal class ByteBufferChannel(
         }
         closed?.let { closed -> throw closed.sendException }
 
+        return joinFromSuspend(src, delegateClose)
+    }
+
+    private suspend fun joinFromSuspend(src: ByteBufferChannel, delegateClose: Boolean) {
         val joined = src.setupDelegateTo(this, delegateClose)
         copyDirect(src, Long.MAX_VALUE, joined)
 
@@ -1316,7 +1323,7 @@ internal class ByteBufferChannel(
 
         if (rem == 0) return
 
-        writeFullySuspend(src, off, rem)
+        return writeFullySuspend(src, off, rem)
     }
 
     private tailrec suspend fun writeFullySuspend(src: ByteArray, offset: Int, length: Int) {
@@ -1456,9 +1463,9 @@ internal class ByteBufferChannel(
      * Never invokes [visitor] with empty buffer unless [last] = true. Invokes visitor with last = true at most once
      * even if there are remaining bytes and visitor returned true.
      */
-    override suspend fun consumeEachBufferRange(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
+    final override suspend fun consumeEachBufferRange(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
         if (consumeEachBufferRangeFast(false, visitor)) return
-        consumeEachBufferRangeSuspend(visitor)
+        return consumeEachBufferRangeSuspend(visitor)
     }
 
     override fun <R> lookAhead(visitor: LookAheadSession.() -> R): R {
@@ -1511,7 +1518,16 @@ internal class ByteBufferChannel(
         }
     }
 
-    suspend override fun awaitAtLeast(n: Int) {
+    final suspend override fun awaitAtLeast(n: Int) {
+        if (state.capacity.availableForRead >= n) {
+            if (state.idle) setupStateForRead()
+            return
+        }
+
+        return awaitAtLeastSuspend(n)
+    }
+
+    private suspend fun awaitAtLeastSuspend(n: Int) {
         if (readSuspend(n) && state.idle) {
             setupStateForRead()
         }
@@ -1562,12 +1578,12 @@ internal class ByteBufferChannel(
         return rc
     }
 
-    private suspend fun consumeEachBufferRangeSuspend(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
+    private suspend fun consumeEachBufferRangeSuspend(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
         var last = false
 
         do {
-            if (consumeEachBufferRangeFast(last, visitor)) return true
-            if (last) return false
+            if (consumeEachBufferRangeFast(last, visitor)) return
+            if (last) return
             if (!readSuspend(1)) {
                 last = true
             }

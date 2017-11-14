@@ -142,55 +142,58 @@ public interface ByteWriteChannel {
 }
 
 suspend fun ByteWriteChannel.writeShort(s: Int) {
-    writeShort((s and 0xffff).toShort())
+    return writeShort((s and 0xffff).toShort())
 }
 
 suspend fun ByteWriteChannel.writeByte(b: Int) {
-    writeByte((b and 0xff).toByte())
+    return writeByte((b and 0xff).toByte())
 }
 
 suspend fun ByteWriteChannel.writeInt(i: Long) {
-    writeInt(i.toInt())
+    return writeInt(i.toInt())
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharSequence) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharBuffer) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: String) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeBoolean(b: Boolean) {
-    writeByte(if (b) 1 else 0)
+    return writeByte(if (b) 1 else 0)
 }
 
 /**
  * Writes UTF16 character
  */
 suspend fun ByteWriteChannel.writeChar(ch: Char) {
-    writeShort(ch.toInt())
+    return writeShort(ch.toInt())
 }
 
 inline suspend fun ByteWriteChannel.writePacket(headerSizeHint: Int = 0, builder: ByteWritePacket.() -> Unit) {
-    writePacket(buildPacket(headerSizeHint, builder))
+    return writePacket(buildPacket(headerSizeHint, builder))
 }
 
 suspend fun ByteWriteChannel.writePacketSuspend(builder: suspend ByteWritePacket.() -> Unit) {
-    writePacket(buildPacket { builder() })
+    return writePacket(buildPacket { builder() })
 }
 
 /**
