@@ -845,6 +845,19 @@ class ByteBufferChannelTest {
         ch.close()
     }
 
+    @Test
+    fun testJoinToClosed() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        ch.writeInt(0x11223344)
+        ch.close()
+
+        ch.joinTo(other, true)
+        yield()
+
+        assertEquals(0x11223344, other.readInt())
+        assertTrue { other.isClosedForRead }
+    }
 
     @Test
     fun testReadThenRead() = runBlocking<Unit> {

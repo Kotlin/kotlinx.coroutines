@@ -230,7 +230,7 @@ internal class ByteBufferChannel(
         val alreadyClosed = closed
         if (alreadyClosed != null) {
             if (alreadyClosed.cause != null) delegate.close(alreadyClosed.cause)
-            else if (delegateClose) delegate.close()
+            else if (delegateClose && state === ReadWriteBufferState.Terminated) delegate.close()
             else delegate.flush()
         } else {
             flush()
@@ -1092,13 +1092,20 @@ internal class ByteBufferChannel(
             if (delegateClose) close(src.closed!!.cause)
             return
         }
-        closed?.let { closed -> throw closed.sendException }
+        closed?.let { closed ->
+            if (src.closed == null) throw closed.sendException
+            return
+        }
 
-        return joinFromSuspend(src, delegateClose)
+        val joined = src.setupDelegateTo(this, delegateClose)
+        if (src.tryCompleteJoining(joined)) {
+            return src.awaitClose()
+        }
+
+        return joinFromSuspend(src, delegateClose, joined)
     }
 
-    private suspend fun joinFromSuspend(src: ByteBufferChannel, delegateClose: Boolean) {
-        val joined = src.setupDelegateTo(this, delegateClose)
+    private suspend fun joinFromSuspend(src: ByteBufferChannel, delegateClose: Boolean, joined: JoiningState) {
         copyDirect(src, Long.MAX_VALUE, joined)
 
         if (delegateClose && src.isClosedForRead) {
