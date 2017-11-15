@@ -32,10 +32,6 @@ class ByteChannelJoinNoAutoFlushLinearizabilityTest {
     @Operation(runOnce = true, group = "write")
     fun write() = lr.run("write") {
         from.writeLong(0x1122334455667788L)
-    }
-
-    @Operation(group = "write")
-    fun flush() = lr.run("flush") {
         from.flush()
     }
 
