@@ -25,8 +25,9 @@ This is a companion version for Kotlin 1.1.4 release (this is the minimal requir
 
 ## Documentation
 
-* [Introduction to Kotlin Coroutines](https://vimeo.com/222499934) video
-  (Roman Elizarov at GeekOut 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-kotlin-coroutines))
+* Presentations and videos:
+   * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
+   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
 * Guides and manuals: 
   * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
