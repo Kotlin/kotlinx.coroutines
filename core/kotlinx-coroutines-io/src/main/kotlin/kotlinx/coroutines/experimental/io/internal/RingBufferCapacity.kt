@@ -40,6 +40,14 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
         }
     }
 
+    fun tryWriteAtLeast(n: Int): Int {
+        while (true) {
+            val remaining = availableForWrite
+            if (remaining < n) return 0
+            if (AvailableForWrite.compareAndSet(this, remaining, 0)) return remaining
+        }
+    }
+
     fun tryWriteExact(n: Int): Boolean {
         while (true) {
             val remaining = availableForWrite

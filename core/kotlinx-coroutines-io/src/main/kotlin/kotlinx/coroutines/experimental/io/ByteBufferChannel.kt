@@ -1363,16 +1363,32 @@ internal class ByteBufferChannel(
         var written = false
 
         writing { dst, state ->
-            if (state.availableForWrite >= min) {
+            val locked = state.tryWriteAtLeast(min)
+
+            if (locked > 0) {
+                // here we have locked all remaining for write bytes
+                // however we don't know how many bytes will be actually written
+                // so later we have to return (locked - actuallyWritten) bytes back
+
+                // it is important to lock bytes to fail concurrent tryLockForRelease
+                // once we have locked some bytes, tryLockForRelease will fail so it is safe to use buffer
+
                 val position = dst.position()
                 val l = dst.limit()
                 block(dst)
                 if (l != dst.limit()) throw IllegalStateException("buffer limit modified")
-                val delta = dst.position() - position
-                if (delta < 0) throw IllegalStateException("position has been moved backward: pushback is not supported")
 
-                if (!state.tryWriteExact(delta)) throw IllegalStateException()
-                dst.bytesWritten(state, delta)
+                val actuallyWritten = dst.position() - position
+                if (actuallyWritten < 0) throw IllegalStateException("position has been moved backward: pushback is not supported")
+
+                dst.bytesWritten(state, actuallyWritten)
+
+                if (actuallyWritten < locked) {
+                    state.completeRead(locked - actuallyWritten) // return back extra bytes (see note above)
+                    // we use completeRead in spite of that it is write block
+                    // we don't need to resume write as we are already in writing block
+                }
+
                 written = true
             }
         }
