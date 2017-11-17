@@ -294,7 +294,7 @@ internal class ByteBufferChannel(
     private fun ByteBuffer.carryIndex(idx: Int) = if (idx >= capacity() - reservedSize) idx - (capacity() - reservedSize) else idx
 
     private inline fun writing(block: ByteBufferChannel.(ByteBuffer, RingBufferCapacity) -> Unit) {
-        val current = resolveDelegation(this)
+        val current = joining?.let { resolveDelegation(this, it) } ?: this
         val buffer = current.setupStateForWrite() ?: return
         val capacity = current.state.capacity
 
@@ -754,9 +754,13 @@ internal class ByteBufferChannel(
         resumeWriteOp()
     }
 
-    private tailrec fun resolveDelegation(current: ByteBufferChannel): ByteBufferChannel {
-        val joined = current.joining ?: return current
-        if (current.state === ReadWriteBufferState.Terminated) return resolveDelegation(joined.delegatedTo)
+    private tailrec fun resolveDelegation(current: ByteBufferChannel, joining: JoiningState): ByteBufferChannel {
+        if (current.state === ReadWriteBufferState.Terminated) {
+            val joinedTo = joining.delegatedTo
+            val nextJoining = joinedTo.joining ?: return joinedTo
+            return resolveDelegation(joinedTo, nextJoining)
+        }
+
         return current
     }
 
@@ -774,8 +778,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeByte(b: Byte) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeByte(b)
+        joining?.let { return resolveDelegation(this, it).writeByte(b) }
 
         val buffer = setupStateForWrite() ?: return delegateByte(b)
         val c = state.capacity
@@ -823,8 +826,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeShort(s: Short) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeShort(s)
+        joining?.let { return resolveDelegation(this, it).writeShort(s) }
 
         val buffer = setupStateForWrite() ?: return delegateShort(s)
         val c = state.capacity
@@ -904,7 +906,7 @@ internal class ByteBufferChannel(
     suspend override fun writeInt(i: Int) {
         val buffer = setupStateForWrite()
         if (buffer == null) {
-            val delegation = resolveDelegation(this)
+            val delegation = resolveDelegation(this, joining!!)
             if (delegation !== this) return delegation.writeInt(i)
             else return delegateSuspend(joining!!, { writeInt(i) })
         }
@@ -963,8 +965,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeLong(l: Long) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeLong(l)
+        joining?.let { return resolveDelegation(this, it).writeLong(l) }
 
         val buffer = setupStateForWrite() ?: return delegateLong(l)
         val c = state.capacity
@@ -1003,27 +1004,29 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeAvailable(src: ByteBuffer): Int {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeAvailable(src)
+        joining?.let { return resolveDelegation(this, it).writeAvailable(src) }
 
         val copied = writeAsMuchAsPossible(src)
         if (copied > 0) return copied
 
-        return resolveDelegation(this).writeAvailableSuspend(src)
+        joining?.let { return resolveDelegation(this, it).writeAvailableSuspend(src) }
+        return writeAvailableSuspend(src)
     }
 
     suspend override fun writeAvailable(src: BufferView): Int {
+        joining?.let { return resolveDelegation(this, it).writeAvailable(src) }
+
         val copied = writeAsMuchAsPossible(src)
         if (copied > 0) return copied
 
-        return resolveDelegation(this).writeAvailableSuspend(src)
+        joining?.let { return resolveDelegation(this, it).writeAvailableSuspend(src) }
+        return writeAvailableSuspend(src)
     }
 
     private suspend fun writeAvailableSuspend(src: ByteBuffer): Int {
         writeSuspend(1) // here we don't need to restoreStateAfterWrite as write copy loop doesn't hold state
 
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeAvailableSuspend(src)
+        joining?.let { return resolveDelegation(this, it).writeAvailableSuspend(src) }
 
         return writeAvailable(src)
     }
@@ -1031,15 +1034,13 @@ internal class ByteBufferChannel(
     private suspend fun writeAvailableSuspend(src: BufferView): Int {
         writeSuspend(1)
 
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeAvailableSuspend(src)
+        joining?.let { return resolveDelegation(this, it).writeAvailableSuspend(src) }
 
         return writeAvailable(src)
     }
 
     suspend override fun writeFully(src: ByteBuffer) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeFully(src)
+        joining?.let { return resolveDelegation(this, it).writeFully(src) }
 
         writeAsMuchAsPossible(src)
         if (!src.hasRemaining()) return
@@ -1058,8 +1059,7 @@ internal class ByteBufferChannel(
         while (src.hasRemaining()) {
             writeSuspend(1)
 
-            val delegated = resolveDelegation(this)
-            if (delegated !== this) return delegated.writeFullySuspend(src)
+            joining?.let { return resolveDelegation(this, it).writeFully(src) }
 
             writeAsMuchAsPossible(src)
         }
@@ -1069,8 +1069,7 @@ internal class ByteBufferChannel(
         while (src.canRead()) {
             writeSuspend(1)
 
-            val delegated = resolveDelegation(this)
-            if (delegated !== this) return delegated.writeFullySuspend(src)
+            joining?.let { return resolveDelegation(this, it).writeFully(src) }
 
             writeAsMuchAsPossible(src)
         }
@@ -1314,8 +1313,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeFully(src: ByteArray, offset: Int, length: Int) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeFully(src, offset, length)
+        joining?.let { return resolveDelegation(this, it).writeFully(src, offset, length) }
 
         var rem = length
         var off = offset
@@ -1340,8 +1338,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writeAvailable(src, offset, length)
+        joining?.let { return resolveDelegation(this, it).writeAvailable(src, offset, length) }
 
         val size = writeAsMuchAsPossible(src, offset, length)
         if (size > 0) return size
@@ -1352,8 +1349,7 @@ internal class ByteBufferChannel(
         while (true) {
             writeSuspend(1)
 
-            val delegated = resolveDelegation(this)
-            if (delegated !== this) return delegated.writeSuspend(src, offset, length)
+            joining?.let { return resolveDelegation(this, it).writeSuspend(src, offset, length) }
 
             val size = writeAsMuchAsPossible(src, offset, length)
             if (size > 0) return size
@@ -1387,7 +1383,8 @@ internal class ByteBufferChannel(
 
     private suspend fun writeBlockSuspend(min: Int, block: (ByteBuffer) -> Unit) {
         writeSuspend(min)
-        resolveDelegation(this).write(min, block)
+        joining?.let { return resolveDelegation(this, it).write(min, block) }
+        return write(min, block)
     }
 
     override suspend fun read(min: Int, block: (ByteBuffer) -> Unit) {
@@ -1420,8 +1417,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writePacket(packet: ByteReadPacket) {
-        val delegated = resolveDelegation(this)
-        if (delegated !== this) return delegated.writePacket(packet)
+        joining?.let { return resolveDelegation(this, it).writePacket(packet) }
 
         try {
             while (!packet.isEmpty) {
@@ -1433,7 +1429,8 @@ internal class ByteBufferChannel(
         }
 
         if (packet.remaining > 0) {
-            return resolveDelegation(this).writePacketSuspend(packet)
+            joining?.let { return resolveDelegation(this, it).writePacket(packet) }
+            return writePacketSuspend(packet)
         }
     }
 
@@ -1441,8 +1438,8 @@ internal class ByteBufferChannel(
         try {
             while (!packet.isEmpty) {
                 writeSuspend(1)
-                val delegated = resolveDelegation(this)
-                if (delegated !== this) return delegated.writePacketSuspend(packet)
+
+                joining?.let { return resolveDelegation(this, it).writePacket(packet) }
                 tryWritePacketPart(packet)
             }
         } finally {
