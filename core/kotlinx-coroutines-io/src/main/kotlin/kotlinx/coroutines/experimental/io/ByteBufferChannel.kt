@@ -1973,7 +1973,10 @@ internal class ByteBufferChannel(
                     val current = _closeWaitJob.value
                     if (current != null) return current
                     val newJob = Job()
-                    if (_closeWaitJob.compareAndSet(null, newJob)) return newJob
+                    if (_closeWaitJob.compareAndSet(null, newJob)) {
+                        if (closed.value == 1) newJob.cancel()
+                        return newJob
+                    }
                 }
             }
 
