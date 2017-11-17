@@ -1041,7 +1041,7 @@ internal class ByteBufferChannel(
     }
 
     suspend override fun writeFully(src: ByteBuffer) {
-        joining?.let { resolveDelegation(this, it)?.let { return .writeFully(src) } }
+        joining?.let { resolveDelegation(this, it)?.let { return it.writeFully(src) } }
 
         writeAsMuchAsPossible(src)
         if (!src.hasRemaining()) return
