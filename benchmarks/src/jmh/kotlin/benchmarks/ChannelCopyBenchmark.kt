@@ -4,8 +4,27 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.io.*
 import org.openjdk.jmh.annotations.*
 import java.io.*
-import java.nio.*
 import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
+
+
+/*
+# Run complete. Total time: 00:01:52
+
+Benchmark                                          Mode  Cnt     Score     Error  Units
+ChannelCopyBenchmark.cioChannelCopy                avgt    5   828,087 ±  11,568  ns/op
+ChannelCopyBenchmark.cioCopyToInLaunch             avgt    5  2016,028 ±  15,846  ns/op
+ChannelCopyBenchmark.cioJoinToBeforeWrite          avgt    5  1413,410 ±  20,460  ns/op
+ChannelCopyBenchmark.cioJoinToClosed               avgt    5   892,200 ± 113,468  ns/op
+ChannelCopyBenchmark.cioJustWrite                  avgt    5   478,995 ± 106,499  ns/op
+ChannelCopyBenchmark.cioJustWriteUnintercepted     avgt    5   175,821 ±  21,018  ns/op
+ChannelCopyBenchmark.cioReadAndWrite               avgt    5   513,968 ±   5,142  ns/op
+ChannelCopyBenchmark.cioReadAndWriteUnintercepted  avgt    5   250,731 ±   9,800  ns/op
+ChannelCopyBenchmark.javaPipeConnectFirst          avgt    5   239,269 ±  11,470  ns/op
+ChannelCopyBenchmark.justRunBlocking               avgt    5   228,704 ±   4,349  ns/op
+ChannelCopyBenchmark.runBlockingAndLaunch          avgt    5   833,390 ±  14,968  ns/op
+*/
 
 @Warmup(iterations = 5)
 @Measurement(iterations = 5)
@@ -134,7 +153,22 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
+    fun cioJustWriteUnintercepted() = runForSureNoSuspend {
+        val c = ByteChannel()
+        c.writeFully(ABC)
+        c.close(ioe)
+    }
+
+    @Benchmark
     fun cioReadAndWrite() = runBlocking {
+        val c = ByteChannel(true)
+        c.writeFully(ABC)
+        c.readAvailable(buffer)
+        c.close()
+    }
+
+    @Benchmark
+    fun cioReadAndWriteUnintercepted() = runForSureNoSuspend {
         val c = ByteChannel(true)
         c.writeFully(ABC)
         c.readAvailable(buffer)
@@ -154,16 +188,20 @@ open class ChannelCopyBenchmark {
         yield()
     }
 
-//    @Benchmark
-    fun javaPipeConnectAfterWrite() {
-        val pipeIn = PipedInputStream()
-        val pipeOut = PipedOutputStream()
+    private fun runForSureNoSuspend(block: suspend () -> Unit) {
+        if (block.startCoroutineUninterceptedOrReturn(EmptyContinuation) === COROUTINE_SUSPENDED) {
+            throw IllegalStateException("Unexpected suspend")
+        }
+    }
 
-        pipeOut.write("ABC".toByteArray())
-        pipeIn.connect(pipeOut)
-        pipeIn.read(buffer)
+    object EmptyContinuation : Continuation<Unit> {
+        override val context: CoroutineContext
+            get() = EmptyCoroutineContext
 
-        pipeOut.close()
-        pipeIn.close()
+        override fun resume(value: Unit) {
+        }
+
+        override fun resumeWithException(exception: Throwable) {
+        }
     }
 }
