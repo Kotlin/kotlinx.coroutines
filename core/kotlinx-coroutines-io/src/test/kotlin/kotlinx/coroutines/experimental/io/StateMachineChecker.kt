@@ -116,7 +116,7 @@ class StateMachineChecker {
 
                     visitor.className = className
                     visitor.methodName = name ?: "?method"
-                    visitor.methodDesc = desc ?: "?desc"
+                    visitor.methodDesc = desc
                     visitor.access = access
 
                     return visitor
