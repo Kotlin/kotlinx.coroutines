@@ -32,7 +32,7 @@ class GuideTest {
 
 # Guide to kotlinx.coroutines by example
 
-This is a short guide on core features of `kotlinx.coroutines` with a series of examples.
+This is a guide on core features of `kotlinx.coroutines` with a series of examples.
 
 ## Introduction and setup
 
@@ -41,7 +41,7 @@ libraries to utilize coroutines. Unlike many other languages with similar capabi
 are not keywords in Kotlin and are not even part of its standard library.
 
 `kotlinx.coroutines` is one such rich library. It contains a number of high-level 
-coroutine-enabled primitives that this guide covers, including `async` and `await`. 
+coroutine-enabled primitives that this guide covers, including `launch`, `async` and others. 
 You need to add a dependency on `kotlinx-coroutines-core` module as explained 
 [here](README.md#using-in-your-projects) to use primitives from this guide in your projects.
 
@@ -117,11 +117,11 @@ Run the following code:
 
 ```kotlin
 fun main(args: Array<String>) {
-    launch { // launch new coroutine
+    launch { // launch new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }
-    println("Hello,") // main function continues while coroutine is delayed
+    println("Hello,") // main thread continues while coroutine is delayed
     Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
 }
 ```
@@ -153,18 +153,20 @@ coroutine and it can be only used from a coroutine.
 
 ### Bridging blocking and non-blocking worlds
 
-The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same
-code of `main` function. It is easy to get lost. Let's cleanly separate blocking and non-blocking
-worlds by using [runBlocking]:
+The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same code. 
+It is easy to get lost which one is blocking and which one is not. 
+Let's be explicit about blocking using [runBlocking] coroutine builder:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
-    launch { // launch new coroutine
+fun main(args: Array<String>) { 
+    launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
-    println("Hello,") // main coroutine continues while child is delayed
-    delay(2000L) // non-blocking delay for 2 seconds to keep JVM alive
+    println("Hello,") // main thread continues here immediately
+    runBlocking {     // but this expression blocks the main thread
+        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
+    } 
 }
 ```
 
@@ -176,9 +178,31 @@ World!
 -->
 
 The result is the same, but this code uses only non-blocking [delay]. 
+The the main thread, that invokes `runBlocking`, _blocks_ until the coroutine inside `runBlocking` is active. 
 
-`runBlocking { ... }` works as an adaptor that is used here to start the top-level main coroutine. 
-The regular code outside of `runBlocking` _blocks_, until the coroutine inside `runBlocking` is active. 
+This example can be also rewritten in a more idiomatic way, using `runBlocking` to wrap 
+the execution of the main function:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
+    launch { // launch new coroutine in background and continue
+        delay(1000L)
+        println("World!")
+    }
+    println("Hello,") // main coroutine continues here immediately
+    delay(2000L)      // delaying for 2 seconds to keep JVM alive
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02b.kt)
+
+<!--- TEST
+Hello,
+World!
+-->
+
+Here `runBlocking<Unit> { ... }` works as an adaptor that is used to start the top-level main coroutine. 
+We explicitly specify its `Unit` return type, because a well-formed `main` function in Kotlin has to return `Unit`.
 
 This is also a way to write unit-tests for suspending functions:
  

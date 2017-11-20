@@ -22,6 +22,14 @@ class GuideTest {
     }
 
     @Test
+    fun testGuideBasicExample02b() {
+        test("GuideBasicExample02b") { guide.basic.example02b.main(emptyArray()) }.verifyLines(
+            "Hello,",
+            "World!"
+        )
+    }
+
+    @Test
     fun testGuideBasicExample03() {
         test("GuideBasicExample03") { guide.basic.example03.main(emptyArray()) }.verifyLines(
             "Hello,",

@@ -15,17 +15,15 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.basic.example02
+package guide.basic.example02b
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) { 
+fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
     launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
-    println("Hello,") // main thread continues here immediately
-    runBlocking {     // but this expression blocks the main thread
-        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
-    } 
+    println("Hello,") // main coroutine continues here immediately
+    delay(2000L)      // delaying for 2 seconds to keep JVM alive
 }
