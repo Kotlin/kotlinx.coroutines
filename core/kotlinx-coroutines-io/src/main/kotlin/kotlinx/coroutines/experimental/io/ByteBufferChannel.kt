@@ -142,6 +142,7 @@ internal class ByteBufferChannel(
             }
         }
 
+        joining?.let { restoreStateAfterWrite(); tryCompleteJoining(it); return null }
         if (closed != null) {
             restoreStateAfterWrite()
             tryTerminate()
@@ -247,34 +248,44 @@ internal class ByteBufferChannel(
     }
 
     private fun tryCompleteJoining(joined: JoiningState): Boolean {
-        updateState { state ->
-            when {
-                state === ReadWriteBufferState.Terminated -> state
-                state === ReadWriteBufferState.IdleEmpty -> ReadWriteBufferState.Terminated
-                // we don't handle IdleNonEmpty as it should be switched to IdleEmpty in restoreStateAfterRead
-                else -> return false
-            }
-        }
-
+        if (!tryReleaseBuffer()) return false
         ensureClosedJoined(joined)
 
-        ReadOp.getAndSet(this, null)?.resumeWithException(IllegalStateException("Joining is in progress"))
-        WriteOp.getAndSet(this, null)?.resume(Unit)
+        resumeReadOp(IllegalStateException("Joining is in progress"))
+        resumeWriteOp() // here we don't resume it with exception because it should resume and delegate writing
 
         return true
     }
 
     private fun tryTerminate(): Boolean {
-        val closed = closed ?: return false
+        if (closed == null) return false
 
+        if (!tryReleaseBuffer()) return false
+
+        joining?.let { ensureClosedJoined(it) }
+
+        resumeReadOp()
+        resumeWriteOp()
+
+        return true
+    }
+
+    private fun tryReleaseBuffer(): Boolean {
         var toRelease: ReadWriteBufferState.Initial? = null
 
         updateState { state ->
+            toRelease?.let { buffer ->
+                toRelease = null
+                buffer.capacity.resetForWrite()
+                resumeWriteOp()
+            }
+            val closed = closed
+
             when {
                 state === ReadWriteBufferState.Terminated -> return true
                 state === ReadWriteBufferState.IdleEmpty -> ReadWriteBufferState.Terminated
-                closed.cause != null && state is ReadWriteBufferState.IdleNonEmpty -> {
-                    // here we don't need to tryLockForRelease as we already have closed state
+                closed != null && state is ReadWriteBufferState.IdleNonEmpty && (state.capacity.tryLockForRelease() || closed.cause != null) -> {
+                    if (closed.cause != null) state.capacity.forceLockForRelease()
                     toRelease = state.initial
                     ReadWriteBufferState.Terminated
                 }
@@ -286,13 +297,6 @@ internal class ByteBufferChannel(
             if (state === ReadWriteBufferState.Terminated) {
                 releaseBuffer(buffer)
             }
-        }
-
-        joining?.let { ensureClosedJoined(it) }
-
-        WriteOp.getAndSet(this, null)?.resumeWithException(closed.sendException)
-        ReadOp.getAndSet(this, null)?.apply {
-            if (closed.cause != null) resumeWithException(closed.cause) else resume(false)
         }
 
         return true
@@ -1795,7 +1799,17 @@ internal class ByteBufferChannel(
     suspend override fun <A : Appendable> readUTF8LineTo(out: A, limit: Int) = readUTF8LineToAscii(out, limit)
 
     private fun resumeReadOp() {
-        ReadOp.getAndSet(this, null)?.resume(true)
+        ReadOp.getAndSet(this, null)?.apply {
+            val closedCause = closed?.cause
+            when {
+                closedCause != null -> resumeWithException(closedCause)
+                else -> resume(true)
+            }
+        }
+    }
+
+    private fun resumeReadOp(result: Throwable) {
+        ReadOp.getAndSet(this, null)?.resumeWithException(result)
     }
 
     private fun resumeWriteOp() {
@@ -1803,6 +1817,10 @@ internal class ByteBufferChannel(
             val closed = closed
             if (closed == null) resume(Unit) else resumeWithException(closed.sendException)
         }
+    }
+
+    private fun resumeWriteOp(cause: Throwable) {
+        WriteOp.getAndSet(this, null)?.resumeWithException(cause)
     }
 
     private fun resumeClosed(cause: Throwable?) {
