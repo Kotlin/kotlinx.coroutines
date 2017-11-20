@@ -105,14 +105,6 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
         }
     }
 
-    /**
-     * Make all writers to fail to write any more bytes
-     * Use only during failure termination
-     */
-    fun forceLockForRelease() {
-        AvailableForWrite.getAndSet(this, 0)
-    }
-
     fun isEmpty(): Boolean = availableForWrite == totalCapacity
     fun isFull(): Boolean = availableForWrite == 0
 
