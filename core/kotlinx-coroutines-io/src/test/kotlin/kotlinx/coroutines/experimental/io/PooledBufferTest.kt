@@ -85,7 +85,7 @@ class PooledBufferTest {
     }
 
     @Test
-    fun testCloseWithEerror() {
+    fun testCloseWithError() {
         runBlocking {
             channel.writeFully("OK".toByteArray())
             assertEquals(1, allocated.size)
