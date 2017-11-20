@@ -142,6 +142,13 @@ internal class ByteBufferChannel(
             }
         }
 
+        if (closed != null) {
+            restoreStateAfterWrite()
+            tryTerminate()
+
+            throw closed!!.sendException
+        }
+
         val buffer = newState.writeBuffer
 
         _allocated?.let { allocated ->
