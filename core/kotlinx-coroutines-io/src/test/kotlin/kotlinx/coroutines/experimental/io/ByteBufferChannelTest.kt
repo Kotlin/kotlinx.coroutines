@@ -897,20 +897,56 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    @Ignore
+    fun writeThenReadStress() = runBlocking<Unit> {
+        for (i in 1..500_000) {
+            val a = ByteBufferChannel(false, pool)
+
+            val w = launch {
+                a.writeLong(1)
+                a.close()
+            }
+            val r = launch {
+                a.readLong()
+            }
+
+            w.join()
+            r.join()
+        }
+
+        ch.close()
+    }
+
+    @Test
+    fun joinToEmptyStress() = runBlocking<Unit> {
+        for (i in 1..500_000) {
+            val a = ByteBufferChannel(false, pool)
+
+            launch(coroutineContext) {
+                a.joinTo(ch, true)
+            }
+
+            yield()
+
+            a.close()
+        }
+    }
+
+    @Test
     fun testJoinToStress() = runBlocking<Unit> {
-        for (i in 1..10) {
-            println("Step $i")
+        for (i in 1..100000) {
             val child = ByteBufferChannel(false, pool)
             val writer = launch {
-                child.writeLong(999)
+                child.writeLong(999 + i.toLong())
                 child.close()
             }
 
             child.joinTo(ch, false)
-            assertEquals(999, ch.readLong())
-            assertTrue { writer.isCompleted }
+            assertEquals(999 + i.toLong(), ch.readLong())
+            writer.join()
         }
+
+        assertEquals(0, ch.availableForRead)
+        ch.close()
     }
 
     @Test
