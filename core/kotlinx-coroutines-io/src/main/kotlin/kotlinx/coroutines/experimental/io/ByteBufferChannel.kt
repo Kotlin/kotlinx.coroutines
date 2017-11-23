@@ -261,7 +261,7 @@ internal class ByteBufferChannel(
         if (!tryReleaseBuffer()) return false
         ensureClosedJoined(joined)
 
-        resumeReadOp(IllegalStateException("Joining is in progress"))
+        resumeReadOp { IllegalStateException("Joining is in progress") }
         resumeWriteOp() // here we don't resume it with exception because it should resume and delegate writing
 
         return true
@@ -1818,8 +1818,8 @@ internal class ByteBufferChannel(
         }
     }
 
-    private fun resumeReadOp(result: Throwable) {
-        ReadOp.getAndSet(this, null)?.resumeWithException(result)
+    private inline fun resumeReadOp(exception: () -> Throwable) {
+        ReadOp.getAndSet(this, null)?.resumeWithException(exception())
     }
 
     private fun resumeWriteOp() {

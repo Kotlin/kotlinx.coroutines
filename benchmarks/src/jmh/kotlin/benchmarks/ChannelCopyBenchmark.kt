@@ -33,6 +33,7 @@ ChannelCopyBenchmark.runBlockingAndLaunch          avgt    5   833,390 ±  14,96
 @State(Scope.Benchmark)
 @Fork(1)
 open class ChannelCopyBenchmark {
+    private val HelloWorld = "Hello, World!".toByteArray()
     private val ABC = "ABC".repeat(100).toByteArray()
     private val buffer = ByteArray(4096)
     private val ioe = IOException()
@@ -77,6 +78,26 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
+    fun cioChannelCopyHW() = runBlocking {
+        val pIn = ByteChannel(true)
+        val pOut = ByteChannel(true)
+
+        pOut.writeFully(HelloWorld)
+        pOut.close()
+
+        pOut.copyAndClose(pIn)
+
+        var read = 0
+        while (read < HelloWorld.size) {
+            val rc = pIn.readAvailable(buffer)
+            if (rc == -1) break
+            read += rc
+        }
+
+        read
+    }
+
+    @Benchmark
     fun cioJoinToClosed() = runBlocking {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
@@ -97,6 +118,53 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
+    fun cioJoinToClosedHW() = runBlocking {
+        val pIn = ByteChannel(true)
+        val pOut = ByteChannel(true)
+
+        pOut.writeFully(HelloWorld)
+        pOut.close()
+
+        pOut.joinTo(pIn, true)
+
+        var read = 0
+        while (read < HelloWorld.size) {
+            val rc = pIn.readAvailable(buffer)
+            if (rc == -1) break
+            read += rc
+        }
+
+        read
+    }
+
+
+    @Benchmark
+    fun cioCopyFromEmpty() = runCoroutineFast {
+        val from = ByteChannel(true)
+        val to = ByteChannel(true)
+
+        from.close()
+        from.copyAndClose(to)
+    }
+
+    @Benchmark
+    fun cioJoinFromEmpty() = runCoroutineFast {
+        val from = ByteChannel(true)
+        val to = ByteChannel(true)
+
+        from.close()
+        from.joinTo(to, true)
+    }
+
+    @Benchmark
+    fun cioJoinFromEmptyNonClosed() = runCoroutineFast(allowSuspend = true) {
+        val from = ByteChannel(true)
+        val to = ByteChannel(true)
+
+        from.joinTo(to, true) // should setup joining and suspend
+    }
+
+    @Benchmark
     fun cioJoinToBeforeWrite() = runBlocking {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
@@ -112,6 +180,30 @@ open class ChannelCopyBenchmark {
 
         var read = 0
         while (read < ABC.size) {
+            val rc = pIn.readAvailable(buffer)
+            if (rc == -1) break
+            read += rc
+        }
+
+        read
+    }
+
+    @Benchmark
+    fun cioJoinToHWBeforeWrite() = runBlocking {
+        val pIn = ByteChannel(true)
+        val pOut = ByteChannel(true)
+
+        launch(coroutineContext) {
+            pOut.joinTo(pIn, true)
+        }
+
+        yield()
+
+        pOut.writeFully(HelloWorld)
+        pOut.close()
+
+        var read = 0
+        while (read < HelloWorld.size) {
             val rc = pIn.readAvailable(buffer)
             if (rc == -1) break
             read += rc
@@ -146,6 +238,31 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
+    fun cioCopyToHWInLaunch() = runBlocking {
+        val pIn = ByteChannel(true)
+        val pOut = ByteChannel(true)
+
+        launch(coroutineContext) {
+            pOut.copyTo(pIn)
+            pIn.close()
+        }
+
+        yield()
+
+        pOut.writeFully(HelloWorld)
+        pOut.close()
+
+        var read = 0
+        while (read < HelloWorld.size) {
+            val rc = pIn.readAvailable(buffer)
+            if (rc == -1) break
+            read += rc
+        }
+
+        read
+    }
+
+    @Benchmark
     fun cioJustWrite() = runBlocking {
         val c = ByteChannel()
         c.writeFully(ABC)
@@ -153,7 +270,7 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
-    fun cioJustWriteUnintercepted() = runForSureNoSuspend {
+    fun cioJustWriteUnintercepted() = runCoroutineFast {
         val c = ByteChannel()
         c.writeFully(ABC)
         c.close(ioe)
@@ -168,7 +285,7 @@ open class ChannelCopyBenchmark {
     }
 
     @Benchmark
-    fun cioReadAndWriteUnintercepted() = runForSureNoSuspend {
+    fun cioReadAndWriteUnintercepted() = runCoroutineFast {
         val c = ByteChannel(true)
         c.writeFully(ABC)
         c.readAvailable(buffer)
@@ -188,9 +305,10 @@ open class ChannelCopyBenchmark {
         yield()
     }
 
-    private fun runForSureNoSuspend(block: suspend () -> Unit) {
+    private fun runCoroutineFast(allowSuspend: Boolean = false, block: suspend () -> Unit) {
         if (block.startCoroutineUninterceptedOrReturn(EmptyContinuation) === COROUTINE_SUSPENDED) {
-            throw IllegalStateException("Unexpected suspend")
+            if (!allowSuspend)
+                throw IllegalStateException("Unexpected suspend")
         }
     }
 
