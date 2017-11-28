@@ -24,4 +24,4 @@ import kotlin.coroutines.experimental.CoroutineContext
 fun <T> flux(
         context: CoroutineContext = DefaultDispatcher,
         block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> = Flux.from(publish(context, block))
+): Flux<T> = Flux.from(publish(context, block = block))

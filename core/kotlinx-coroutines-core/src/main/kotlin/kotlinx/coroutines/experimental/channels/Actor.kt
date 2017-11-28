@@ -60,6 +60,8 @@ interface ActorJob<in E> : SendChannel<E> {
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
@@ -77,23 +79,35 @@ interface ActorJob<in E> : SendChannel<E> {
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param block the coroutine code.
  */
 public fun <E> actor(
     context: CoroutineContext = DefaultDispatcher,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
     block: suspend ActorScope<E>.() -> Unit
 ): SendChannel<E> {
-    val newContext = newCoroutineContext(context)
+    val newContext = newCoroutineContext(context, parent)
     val channel = Channel<E>(capacity)
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
         ActorCoroutine(newContext, channel, active = true)
-    coroutine.initParentJob(context[Job])
+    coroutine.initParentJob(newContext[Job])
     start(block, coroutine, coroutine)
     return coroutine
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <E> actor(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend ActorScope<E>.() -> Unit
+): ActorJob<E> =
+    actor(context, capacity, start, block = block) as ActorJob<E>
 
 private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,

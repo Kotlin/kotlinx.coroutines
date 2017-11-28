@@ -92,10 +92,12 @@ public val DefaultDispatcher: CoroutineDispatcher = CommonPool
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
  */
-public fun newCoroutineContext(context: CoroutineContext): CoroutineContext {
+@JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
+public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
     val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
+    val wp = if (parent == null) debug else debug + parent
     return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
-        debug + DefaultDispatcher else debug
+        wp + DefaultDispatcher else wp
 }
 
 /**

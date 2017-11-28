@@ -24,7 +24,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // now launch ten coroutines for a demo, each working for a different time
     val coroutines = List(10) { i ->
         // they are all children of our job object
-        launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
+        launch(coroutineContext, parent = job) { // we use the context of main runBlocking thread, but with our parent job
             delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
             println("Coroutine $i is done")
         }

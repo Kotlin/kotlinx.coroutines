@@ -23,8 +23,9 @@ interface WriterScope : CoroutineScope {
 fun writer(coroutineContext: CoroutineContext,
            channel: ByteChannel,
            block: suspend WriterScope.() -> Unit): WriterJob {
-    val coroutine = WriterCoroutine(newCoroutineContext(coroutineContext), channel)
-    coroutine.initParentJob(coroutineContext[Job])
+    val newContext = newCoroutineContext(coroutineContext)
+    val coroutine = WriterCoroutine(newContext, channel)
+    coroutine.initParentJob(newContext[Job])
     block.startCoroutine(coroutine, coroutine)
     return coroutine
 }

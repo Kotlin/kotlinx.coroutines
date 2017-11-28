@@ -1182,8 +1182,10 @@ to avoid memory leaks.
   
 We can manage a lifecycle of our coroutines by creating an instance of [Job] that is tied to 
 the lifecycle of our activity. A job instance is created using [Job()] factory function
-as the following example shows. We need to make sure that all the coroutines are started 
-with this job in their context and then a single invocation of [Job.cancel] terminates them all.
+as the following example shows. For convenience, rather than using `launch(coroutineContext + job)` expression,
+we can write `launch(coroutineContext, parent = job)` to make explicit the fact that the parent job is being used.
+
+Now, a single invocation of [Job.cancel] cancels all the children we've launched. 
 Moreover, [Job.join] waits for all of them to complete, so we can also use [cancelAndJoin] here in
 this example:
 
@@ -1193,7 +1195,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // now launch ten coroutines for a demo, each working for a different time
     val coroutines = List(10) { i ->
         // they are all children of our job object
-        launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
+        launch(coroutineContext, parent = job) { // we use the context of main runBlocking thread, but with our parent job
             delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
             println("Coroutine $i is done")
         }

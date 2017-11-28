@@ -23,8 +23,9 @@ interface ReaderScope : CoroutineScope {
 fun reader(coroutineContext: CoroutineContext,
            channel: ByteChannel,
            block: suspend ReaderScope.() -> Unit): ReaderJob {
-    val coroutine = ReaderCoroutine(newCoroutineContext(coroutineContext), channel)
-    coroutine.initParentJob(coroutineContext[Job])
+    val newContext = newCoroutineContext(coroutineContext)
+    val coroutine = ReaderCoroutine(newContext, channel)
+    coroutine.initParentJob(newContext[Job])
     block.startCoroutine(coroutine, coroutine)
     return coroutine
 }
