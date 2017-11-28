@@ -22,15 +22,15 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
-    channel: Channel<E>,
+    private val _channel: Channel<E>,
     active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by channel {
+) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
     val channel: Channel<E>
         get() = this
 
     override fun onCancellation(exceptionally: CompletedExceptionally?) {
         val cause = exceptionally?.cause
-        if (!close(cause) && cause != null)
+        if (!_channel.cancel(cause) && cause != null)
             handleCoroutineException(context, cause)
     }
 
