@@ -13,6 +13,7 @@ buildscript {
     }
     repositories {
         jcenter()
+        maven { url "http://kotlin.bintray.com/kotlinx" }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -70,7 +71,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
     repositories {
         jcenter()
-        maven { url "http://jcenter.bintray.com" }
         maven { url "http://kotlin.bintray.com/kotlinx" }
         maven { url "https://dl.bintray.com/devexperts/Maven/" }
     }
