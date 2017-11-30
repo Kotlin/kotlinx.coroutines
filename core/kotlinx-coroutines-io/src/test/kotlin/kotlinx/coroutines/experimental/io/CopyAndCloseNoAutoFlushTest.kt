@@ -1,10 +1,15 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.io.internal.*
-import org.junit.*
-import org.junit.rules.*
-import kotlin.test.*
+import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.io.internal.BufferObjectPool
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.yield
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TestRule
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class CopyAndCloseNoAutoFlushTest : TestBase() {
     private val verifyingPool = VerifyingObjectPool(BufferObjectPool)

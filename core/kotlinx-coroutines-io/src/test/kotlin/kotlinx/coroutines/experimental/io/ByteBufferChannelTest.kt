@@ -2,19 +2,30 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.internal.*
-import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
+import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
+import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.io.core.*
-import kotlinx.io.pool.*
-import org.junit.*
+import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
+import kotlinx.io.core.BufferView
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.readUTF8Line
+import kotlinx.io.pool.DefaultPool
+import kotlinx.io.pool.NoPoolImpl
+import org.junit.After
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.ErrorCollector
 import org.junit.rules.Timeout
 import java.nio.CharBuffer
 import java.util.*
-import java.util.concurrent.*
-import java.util.concurrent.atomic.*
-import kotlin.test.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class ByteBufferChannelTest {
     @get:Rule
