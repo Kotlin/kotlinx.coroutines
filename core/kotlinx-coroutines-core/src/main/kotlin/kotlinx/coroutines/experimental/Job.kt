@@ -1128,8 +1128,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
 
         fun tryMakeActive(): Int {
             if (_active.value != 0) return FALSE
-            if (_active.compareAndSet(0, 1)) return RETRY
-            return TRUE
+            if (_active.compareAndSet(0, 1)) return TRUE
+            return RETRY
         }
 
         override fun toString(): String = buildString {
