@@ -1,5 +1,7 @@
 rootProject.name = 'kotlinx.coroutines'
 
+include 'kotlinx-coroutines-core-common'
+
 include 'kotlinx-coroutines-core'
 include 'kotlinx-coroutines-io'
 
@@ -18,10 +20,13 @@ include 'kotlinx-coroutines-android'
 include 'kotlinx-coroutines-javafx'
 include 'kotlinx-coroutines-swing'
 
+include 'kotlinx-coroutines-core-js'
+
 include 'benchmarks'
 include 'knit'
 include 'site'
 
+project(':kotlinx-coroutines-core-common').projectDir = file('common/kotlinx-coroutines-core-common')
 project(':kotlinx-coroutines-core').projectDir = file('core/kotlinx-coroutines-core')
 project(':kotlinx-coroutines-io').projectDir = file('core/kotlinx-coroutines-io')
 project(':kotlinx-coroutines-guava').projectDir = file('integration/kotlinx-coroutines-guava')
@@ -36,3 +41,4 @@ project(':kotlinx-coroutines-rx-example').projectDir = file('reactive/kotlinx-co
 project(':kotlinx-coroutines-android').projectDir = file('ui/kotlinx-coroutines-android')
 project(':kotlinx-coroutines-javafx').projectDir = file('ui/kotlinx-coroutines-javafx')
 project(':kotlinx-coroutines-swing').projectDir = file('ui/kotlinx-coroutines-swing')
+project(':kotlinx-coroutines-core-js').projectDir = file('js/kotlinx-coroutines-core-js')

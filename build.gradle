@@ -51,16 +51,30 @@ def pomConfig = {
 
 def sourceless = ['site']
 
-configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
-    apply plugin: 'kotlin'
+static def platformOf(project) {
+    if (project.name.endsWith("-common")) return "common"
+    if (project.name.endsWith("-js")) return "js"
+    return "jvm"
+}
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
-    
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
+static def platformLib(base, platform) {
+    if (platform == "jvm") return base
+    return "$base-$platform"
+}
+
+configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
+    def platform = platformOf(it)
+    apply plugin: "kotlin-platform-$platform"
+
+    if (platform == "jvm") {
+        sourceCompatibility = 1.6
+        targetCompatibility = 1.6
+
+        tasks.withType(JavaCompile) {
+            options.encoding = 'UTF-8'
+        }
     }
-    
+
     kotlin.experimental.coroutines "enable"
 
     tasks.withType(Test) {
@@ -75,8 +89,10 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
         maven { url "https://dl.bintray.com/devexperts/Maven/" }
     }
 
+    def kotlin_stdlib = platformLib("kotlin-stdlib", platform)
+
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compile "org.jetbrains.kotlin:$kotlin_stdlib:$kotlin_version"
         testCompile "junit:junit:$junit_version"
     }
 }
@@ -85,7 +101,8 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 def internal = sourceless + ['benchmarks', 'knit']
 
-configure(subprojects.findAll { !internal.contains(it.name) }) {
+// configure atomicfu for JVM modules
+configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {
     apply plugin: 'kotlinx-atomicfu'
 
     dependencies {
@@ -110,11 +127,21 @@ configure(subprojects.findAll { !internal.contains(it.name) }) {
     }
 }
 
-configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-core'}) {
-    dependencies {
-        compile project(':kotlinx-coroutines-core')
-        //the only way IDEA can resolve test classes
-        testCompile project(':kotlinx-coroutines-core').sourceSets.test.output
+// configure dependencies on core
+configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-core-common'}) {
+    def platform = platformOf(it)
+    def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
+
+    if (it.name == coroutines_core) {
+        dependencies {
+            expectedBy project(':kotlinx-coroutines-core-common')
+        }
+    } else {
+        dependencies {
+            compile project(":$coroutines_core")
+            //the only way IDEA can resolve test classes
+            testCompile project(":$coroutines_core").sourceSets.test.output
+        }
     }
 }
 
@@ -126,6 +153,8 @@ def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-corouti
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
+    def platform = platformOf(it)
+
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
     apply plugin: 'org.jetbrains.dokka'
@@ -135,9 +164,23 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
         outputFormat = 'kotlin-website'
     }
 
-    task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
-        outputFormat = 'javadoc'
-        outputDirectory = "$buildDir/javadoc"
+    if (platform == "jvm") {
+        // real xxx-javadoc.jar for JVM
+        task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
+            outputFormat = 'javadoc'
+            outputDirectory = "$buildDir/javadoc"
+        }
+
+        task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+            classifier = 'javadoc'
+            from "$buildDir/javadoc"
+        }
+    } else {
+        // empty xxx-javadoc.jar
+        task javadocJar(type: Jar) {
+            classifier = 'javadoc'
+            from "$buildDir/javadoc" // would not exist
+        }
     }
 
     tasks.withType(org.jetbrains.dokka.gradle.DokkaTask) {
@@ -149,11 +192,6 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
             suffix = "#L"
         }
-    }
-
-    task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-        classifier = 'javadoc'
-        from "$buildDir/javadoc"
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
@@ -199,9 +237,14 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     }
 }
 
-configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != 'kotlinx-coroutines-core' }) {
-    dokka.dependsOn project(':kotlinx-coroutines-core').dokka
-    dokkaJavadoc.dependsOn project(':kotlinx-coroutines-core').dokka
+configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != 'kotlinx-coroutines-core-common' }) {
+    def platform = platformOf(it)
+    def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
+
+    dokka.dependsOn project(":$coroutines_core").dokka
+    if (platform == "jvm") {
+        dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
+    }
 
     tasks.withType(org.jetbrains.dokka.gradle.DokkaTask) {
         externalDocumentationLink {

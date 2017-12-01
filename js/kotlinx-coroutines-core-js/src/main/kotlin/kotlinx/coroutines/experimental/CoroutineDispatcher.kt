@@ -1,19 +1,3 @@
-/*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
@@ -31,14 +15,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *   corresponding suspending function, without confining it to any specific thread or pool.
  *   This in an appropriate choice for IO-intensive coroutines that do not consume CPU resources.
  * * [DefaultDispatcher] -- is used by all standard builder if no dispatcher nor any other [ContinuationInterceptor]
- *   is specified in their context. It is currently equal to [CommonPool] (subject to change).
- * * [CommonPool] -- immediately returns from the coroutine builder and schedules coroutine execution to
- *   a common pool of shared background threads.
- *   This is an appropriate choice for compute-intensive coroutines that consume a lot of CPU resources.
- * * Private thread pools can be created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * * An arbitrary [Executor][java.util.concurrent.Executor] can be converted to dispatcher with [asCoroutineDispatcher] extension function.
- *
- * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
+ *   is specified in their context.
  */
 public actual abstract class CoroutineDispatcher :
         AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
@@ -85,61 +62,40 @@ public actual abstract class CoroutineDispatcher :
      */
     public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
             DispatchedContinuation(this, continuation)
-
-    /**
-     * @suppress **Error**: Operator '+' on two CoroutineDispatcher objects is meaningless.
-     * CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts.
-     * The dispatcher to the right of `+` just replaces the dispatcher the left of `+`.
-     */
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated(message = "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
-            "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
-            "The dispatcher to the right of `+` just replaces the dispatcher the left of `+`.",
-            level = DeprecationLevel.ERROR)
-    public operator fun plus(other: CoroutineDispatcher) = other
-
-    // for nicer debugging
-    override fun toString(): String =
-        "${this::class.java.simpleName}@${Integer.toHexString(System.identityHashCode(this))}"
-
 }
 
 /**
  * A runnable task for [CoroutineDispatcher.dispatch].
  */
-public actual typealias Runnable = java.lang.Runnable
+public actual interface Runnable {
+    public actual fun run()
+}
 
-// named class for ease of debugging, better stack-traces and optimize the number of anonymous classes
 internal class DispatchTask<in T>(
-    private val continuation: Continuation<T>,
-    private val value: Any?, // T | Throwable
-    private val exception: Boolean,
-    private val cancellable: Boolean
+        private val continuation: Continuation<T>,
+        private val value: Any?, // T | Throwable
+        private val exception: Boolean,
+        private val cancellable: Boolean
 ) : Runnable {
     @Suppress("UNCHECKED_CAST")
     override fun run() {
         try {
             val context = continuation.context
             val job = if (cancellable) context[Job] else null
-            withCoroutineContext(context) {
-                when {
-                    job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
-                    exception -> continuation.resumeWithException(value as Throwable)
-                    else -> continuation.resume(value as T)
-                }
+            when {
+                job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
+                exception -> continuation.resumeWithException(value as Throwable)
+                else -> continuation.resume(value as T)
             }
         } catch (e: Throwable) {
-            throw RuntimeException("Unexpected exception running $this", e)
+            throw RuntimeException("Unexpected exception running $this: $e")
         }
     }
-
-    override fun toString(): String =
-        "DispatchTask[${continuation.toDebugString()}, cancellable=$cancellable, value=${value.toSafeString()}]"
 }
 
 internal class DispatchedContinuation<in T>(
-    @JvmField val dispatcher: CoroutineDispatcher,
-    @JvmField val continuation: Continuation<T>
+    val dispatcher: CoroutineDispatcher,
+    val continuation: Continuation<T>
 ): Continuation<T> by continuation {
     override fun resume(value: T) {
         val context = continuation.context
@@ -177,16 +133,12 @@ internal class DispatchedContinuation<in T>(
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatched(value: T) {
-        withCoroutineContext(context) {
-            continuation.resume(value)
-        }
+        continuation.resume(value)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWithException(exception: Throwable) {
-        withCoroutineContext(context) {
-            continuation.resumeWithException(exception)
-        }
+        continuation.resumeWithException(exception)
     }
 
     // used by "yield" implementation
@@ -194,9 +146,6 @@ internal class DispatchedContinuation<in T>(
         val context = continuation.context
         dispatcher.dispatch(context, DispatchTask(continuation, value,false, true))
     }
-
-    override fun toString(): String =
-        "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
 }
 
 internal fun <T> Continuation<T>.resumeCancellable(value: T) = when (this) {

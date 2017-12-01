@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
@@ -58,24 +57,24 @@ import kotlin.coroutines.experimental.suspendCoroutine
  *
  * ```
  */
-public actual interface CancellableContinuation<in T> : Continuation<T>, Job {
+public actual interface CancellableContinuation<in T> : Continuation<T> {
     /**
      * Returns `true` when this continuation is active -- it has not completed or cancelled yet.
      */
-    public actual override val isActive: Boolean
+    public actual val isActive: Boolean
 
     /**
      * Returns `true` when this continuation has completed for any reason. A continuation
      * that was cancelled is also considered complete.
      */
-    public actual override val isCompleted: Boolean
+    public actual val isCompleted: Boolean
 
     /**
      * Returns `true` if this continuation was [cancelled][cancel].
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    public actual override val isCancelled: Boolean
+    public actual val isCancelled: Boolean
 
     /**
      * Tries to resume this continuation with a given value and returns non-null object token if it was successful,
@@ -115,8 +114,7 @@ public actual interface CancellableContinuation<in T> : Continuation<T>, Job {
      * Cancels this continuation with an optional cancellation [cause]. The result is `true` if this continuation was
      * cancelled as a result of this invocation and `false` otherwise.
      */
-    @Suppress("DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE")
-    public actual override fun cancel(cause: Throwable? = null): Boolean
+    public actual fun cancel(cause: Throwable? = null): Boolean
 
     /**
      * Registers handler that is **synchronously** invoked once on completion of this continuation.
@@ -132,7 +130,7 @@ public actual interface CancellableContinuation<in T> : Continuation<T>, Job {
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
      */
-    public actual override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+    public actual fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
 
     /**
      * Resumes this continuation with a given [value] in the invoker thread without going though
@@ -190,25 +188,7 @@ public actual inline suspend fun <T> suspendAtomicCancellableCoroutine(
         cancellable.getResult()
     }
 
-/**
- * Removes a given node on cancellation.
- * @suppress **This is unstable API and it is subject to change.**
- */
-public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle =
-    invokeOnCompletion(handler = RemoveOnCancel(this, node))
-
 // --------------- implementation details ---------------
-
-private class RemoveOnCancel(
-    cont: CancellableContinuation<*>,
-    val node: LockFreeLinkedListNode
-) : JobNode<CancellableContinuation<*>>(cont)  {
-    override fun invoke(reason: Throwable?) {
-        if (job.isCancelled)
-            node.remove()
-    }
-    override fun toString() = "RemoveOnCancel[$node]"
-}
 
 @PublishedApi
 internal class CancellableContinuationImpl<in T>(
@@ -226,41 +206,42 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
-            when (state) {
-                is Incomplete -> {
-                    val update: Any? = if (idempotent == null) value else
-                        CompletedIdempotentResult(idempotent, value, state)
-                    if (tryUpdateState(state, update)) return state
-                }
-                is CompletedIdempotentResult -> {
-                    if (state.idempotentResume === idempotent) {
-                        check(state.result === value) { "Non-idempotent resume" }
-                        return state.token
-                    } else
-                        return null
-                }
-                else -> return null // cannot resume -- not active anymore
+        val state = this.state
+        return when (state) {
+            is Incomplete -> {
+                val update: Any? = if (idempotent == null) value else
+                    CompletedIdempotentResult(idempotent, value, state)
+                tryUpdateState(update)
+                state
             }
+            is CompletedIdempotentResult -> {
+                if (state.idempotentResume === idempotent) {
+                    check(state.result === value) { "Non-idempotent resume" }
+                    state.token
+                } else
+                    null
+            }
+            else -> null // cannot resume -- not active anymore
         }
     }
 
     override fun tryResumeWithException(exception: Throwable): Any? {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
-            when (state) {
-                is Incomplete -> {
-                    if (tryUpdateState(state, CompletedExceptionally(exception))) return state
-                }
-                else -> return null // cannot resume -- not active anymore
+        val state = this.state
+        return when (state) {
+            is Incomplete -> {
+                tryUpdateState(CompletedExceptionally(exception))
+                state
             }
+            else -> null // cannot resume -- not active anymore
         }
     }
 
     override fun completeResume(token: Any) {
         completeUpdateState(token as Incomplete, state, resumeMode)
     }
+
+    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
+        invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation
@@ -275,15 +256,12 @@ internal class CancellableContinuationImpl<in T>(
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
         if (state is CompletedIdempotentResult) state.result as T else state as T
-
-    override fun nameString(): String =
-        "CancellableContinuation(${delegate.toDebugString()})"
 }
 
 private class CompletedIdempotentResult(
-    @JvmField val idempotentResume: Any?,
-    @JvmField val result: Any?,
-    @JvmField val token: JobSupport.Incomplete
+    val idempotentResume: Any?,
+    val result: Any?,
+    val token: JobSupport.Incomplete
 ) {
     override fun toString(): String = "CompletedIdempotentResult[$result]"
 }

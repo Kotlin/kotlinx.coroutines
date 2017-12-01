@@ -35,7 +35,7 @@ public interface CoroutineScope {
      *
      * This property is a shortcut for `coroutineContext[Job]!!.isActive`. See [coroutineContext] and [Job].
      */
-    public val isActive: Boolean
+    public actual val isActive: Boolean
 
     /**
      * Returns the context of this coroutine.
@@ -47,6 +47,6 @@ public interface CoroutineScope {
     /**
      * Returns the context of this coroutine.
      */
-    @Suppress("DEPRECATION")
-    public val coroutineContext: CoroutineContext get() = context
+    @Suppress("DEPRECATION", "ACTUAL_WITHOUT_EXPECT")
+    public actual val coroutineContext: CoroutineContext get() = context
 }

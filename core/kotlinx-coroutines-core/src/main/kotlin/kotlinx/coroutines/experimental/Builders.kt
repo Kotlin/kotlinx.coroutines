@@ -52,7 +52,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
-public fun launch(
+public actual fun launch(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
