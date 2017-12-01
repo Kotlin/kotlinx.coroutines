@@ -60,7 +60,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *
  * A job can be _cancelled_ at any time with [cancel] function that forces it to transition to
  * _cancelling_ state immediately. Job that is not backed by a coroutine and does not have
- * [children][attachChild] becomes _cancelled_ on [cancel] immediately.
+ * children becomes _cancelled_ on [cancel] immediately.
  * Otherwise, job becomes _cancelled_  when it finishes executing its code and
  * when all its children [complete][isCompleted].
  *
@@ -83,7 +83,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException].
  *
  * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled or completes exceptionally.
- * Parent job waits for all its [children][attachChild] to complete in _completing_ or _cancelling_ state.
+ * Parent job waits for all its children to complete in _completing_ or _cancelling_ state.
  * _Completing_ state is purely internal to the job. For an outside observer a _completing_ job is still active,
  * while internally it is waiting for its children.
  *
@@ -117,7 +117,7 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed or cancelled yet.
-     * The job that is waiting for its [children][attachChild] to complete is still considered to be active if it
+     * The job that is waiting for its children to complete is still considered to be active if it
      * was not cancelled.
      */
     public val isActive: Boolean
@@ -125,7 +125,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Returns `true` when this job has completed for any reason. A job that was cancelled and has
      * finished its execution is also considered complete. Job becomes complete only after
-     * all its [children][attachChild] complete.
+     * all its children complete.
      */
     public val isCompleted: Boolean
 
@@ -190,17 +190,20 @@ public interface Job : CoroutineContext.Element {
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
      *
-     * A child must store the resulting [DisposableHandle] and [dispose][DisposableHandle.dispose] the attachment
-     * to its parent on its own completion.
+     * **A child must store the resulting [DisposableHandle] and [dispose][DisposableHandle.dispose] the attachment
+     * to its parent on its own completion.**
      *
      * Coroutine builders and job factory functions that accept `parent` [CoroutineContext] parameter
      * lookup a [Job] instance in the parent context and use this function to attach themselves as a child.
      * They also store a reference to the resulting [DisposableHandle] and dispose a handle when they complete.
+     *
+     * @suppress This is an internal API. This method is too error prone for public API.
      */
+    @Deprecated(message = "Start child coroutine with 'parent' parameter", level = DeprecationLevel.WARNING)
     public fun attachChild(child: Job): DisposableHandle
 
     /**
-     * Cancels all [children][attachChild] jobs of this coroutine with the given [cause]. Unlike [cancel],
+     * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
      * the state of this job itself is not affected.
      */
     public fun cancelChildren(cause: Throwable? = null)
@@ -212,7 +215,7 @@ public interface Job : CoroutineContext.Element {
      * when the job is complete for any reason and the [Job] of the invoking coroutine is still [active][isActive].
      * This function also [starts][Job.start] the corresponding coroutine if the [Job] was still in _new_ state.
      *
-     * Note, that the job becomes complete only when all its [children][attachChild] are complete.
+     * Note, that the job becomes complete only when all its children are complete.
      *
      * This suspending function is cancellable and **always** checks for the cancellation of invoking coroutine's Job.
      * If the [Job] of the invoking coroutine is cancelled or completed when this
@@ -273,6 +276,12 @@ public interface Job : CoroutineContext.Element {
     public fun invokeOnCompletion(onCancelling: Boolean = false, handler: CompletionHandler): DisposableHandle
 
     // ------------ unstable internal API ------------
+
+    /**
+     * @return `true` when Job was not complete and handler was installed, `false` otherwise (and handler is not invoked).
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun invokeOnCompletionIfNotComplete(handler: CompletionHandler): Boolean
 
     /**
      * @suppress **Error**: Operator '+' on two Job objects is meaningless.
@@ -568,7 +577,10 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         val handle = parent.attachChild(this)
         parentHandle = handle
         // now check our state _after_ registering (see updateState order of actions)
-        if (isCompleted) handle.dispose()
+        if (isCompleted) {
+            handle.dispose()
+            parentHandle = NonDisposableHandle // release it just in case, to aid GC
+        }
     }
 
     // ------------ state query ------------
@@ -647,7 +659,10 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         require(update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!_state.compareAndSet(expect, update)) return false
         // Unregister from parent job
-        parentHandle?.dispose() // volatile read parentHandle _after_ state was updated
+        parentHandle?.let {
+            it.dispose() // volatile read parentHandle _after_ state was updated
+            parentHandle = NonDisposableHandle // release it just in case, to aid GC
+        }
         return true // continues in completeUpdateState
     }
 
@@ -763,16 +778,19 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
 
     @Suppress("OverridingDeprecatedMember")
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
-        installHandler(handler, onCancelling = false)
+        invokeOnCompletion(false,  handler)
 
     @Suppress("OverridingDeprecatedMember")
     public final override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
-        installHandler(handler, onCancelling = onCancelling && hasCancellingState)
+        invokeOnCompletion(onCancelling,  handler)
 
     public final override fun invokeOnCompletion(onCancelling: Boolean, handler: CompletionHandler): DisposableHandle =
-        installHandler(handler, onCancelling = onCancelling && hasCancellingState)
+        installHandler(handler, onCancelling = onCancelling && hasCancellingState, invokeNow = true) ?: NonDisposableHandle
 
-    private fun installHandler(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle {
+    override fun invokeOnCompletionIfNotComplete(handler: CompletionHandler): Boolean =
+        installHandler(handler, false, invokeNow = false) != null
+
+    private fun installHandler(handler: CompletionHandler, onCancelling: Boolean, invokeNow: Boolean): DisposableHandle? {
         var nodeCache: JobNode<*>? = null
         loopOnState { state ->
             when (state) {
@@ -791,16 +809,16 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
                             // installing cancellation handler on job that is being cancelled
-                            handler((state as? CompletedExceptionally)?.exception)
-                            return NonDisposableHandle
+                            if (invokeNow) handler(state.cancelled.cause)
+                            return null
                         }
                         val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
                         if (addLastAtomic(state, list, node)) return node
                     }
                 }
                 else -> { // is complete
-                    handler((state as? CompletedExceptionally)?.exception)
-                    return NonDisposableHandle
+                    if (invokeNow) handler((state as? CompletedExceptionally)?.cause)
+                    return null
                 }
             }
         }
@@ -988,8 +1006,10 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
             // switch to completing state
             val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
             if (_state.compareAndSet(state, completing)) {
-                waitForChild(child, proposedUpdate)
-                return false
+                if (tryWaitForChild(child, proposedUpdate))
+                    return false
+                if (updateState(completing, proposedUpdate, MODE_ATOMIC_DEFAULT))
+                    return true
             }
         }
     }
@@ -1005,8 +1025,12 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     private fun firstChild(state: Incomplete) =
         state as? Child ?: state.list?.nextChild()
 
-    private fun waitForChild(child: Child, proposedUpdate: Any?) {
-        child.childJob.invokeOnCompletion(handler = ChildCompletion(this, child, proposedUpdate))
+    // return false when there is no more incomplete children to wait
+    private tailrec fun tryWaitForChild(child: Child, proposedUpdate: Any?): Boolean {
+        if (child.childJob.invokeOnCompletionIfNotComplete(ChildCompletion(this, child, proposedUpdate)))
+            return true
+        val nextChild = child.nextChild() ?: return false
+        return tryWaitForChild(nextChild, proposedUpdate)
     }
 
     internal fun continueCompleting(lastChild: Child, proposedUpdate: Any?) {
@@ -1014,11 +1038,11 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
             if (state !is Finishing)
                 throw IllegalStateException("Job $this is found in expected state while completing with $proposedUpdate", proposedUpdate.exceptionOrNull)
             // figure out if we need to wait for next child
-            val waitChild = lastChild.nextChild() ?: // or else no more children
-                if (updateState(state, proposedUpdate, MODE_ATOMIC_DEFAULT)) return else return@loopOnState
-            // wait for next child
-            waitForChild(waitChild, proposedUpdate)
-            return
+            val waitChild = lastChild.nextChild()
+            // try wait for next child
+            if (waitChild != null && tryWaitForChild(waitChild, proposedUpdate)) return // waiting for next child
+            // no more children to wait -- try update state
+            if (updateState(state, proposedUpdate, MODE_ATOMIC_DEFAULT)) return
         }
     }
 

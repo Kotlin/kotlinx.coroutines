@@ -66,6 +66,9 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /** Always returns [NonDisposableHandle]. */
     override fun invokeOnCompletion(onCancelling: Boolean, handler: CompletionHandler): DisposableHandle = NonDisposableHandle
 
+    /** @suppress **This is unstable API and it is subject to change. */
+    override fun invokeOnCompletionIfNotComplete(handler: CompletionHandler): Boolean = false
+
     /** Always returns `false`. */
     override fun cancel(cause: Throwable?): Boolean = false
 

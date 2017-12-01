@@ -346,5 +346,18 @@ class CoroutinesTest : TestBase() {
         d.await()
     }
 
+    @Test
+    fun testCancelManyCompletedAttachedChildren() = runTest {
+        val parent = launch(coroutineContext) { /* do nothing */ }
+        val n = 10_000 * stressTestMultiplier
+        repeat(n) {
+            // create a child that already completed
+            val child = launch(coroutineContext, CoroutineStart.UNDISPATCHED) { /* do nothing */ }
+            // attach it manually
+            parent.attachChild(child)
+        }
+        parent.cancelAndJoin() // cancel parent, make sure no stack overflow
+    }
+
     private fun throwIOException() { throw IOException() }
 }
