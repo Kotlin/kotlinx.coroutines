@@ -71,19 +71,30 @@ public interface CompletableDeferred<T> : Deferred<T> {
 
 /**
  * Creates a [CompletableDeferred] in an _active_ state.
+ * It is optionally a child of a [parent] job.
  */
-public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl()
+@Suppress("FunctionName")
+public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
+
+/** @suppress **Deprecated:** Binary compatibility only */
+@Deprecated(message = "Binary compatibility only", level = DeprecationLevel.HIDDEN)
+@Suppress("FunctionName")
+public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl(null)
 
 /**
  * Creates an already _completed_ [CompletableDeferred] with a given [value].
  */
-public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>().apply { complete(value) }
+@Suppress("FunctionName")
+public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>(null).apply { complete(value) }
 
 /**
  * Concrete implementation of [CompletableDeferred].
  */
 @Suppress("UNCHECKED_CAST")
-private class CompletableDeferredImpl<T> : JobSupport(true), CompletableDeferred<T> {
+private class CompletableDeferredImpl<T>(
+    parent: Job?
+) : JobSupport(true), CompletableDeferred<T> {
+    init { initParentJob(parent) }
     override fun getCompleted(): T = getCompletedInternal() as T
     suspend override fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T>
