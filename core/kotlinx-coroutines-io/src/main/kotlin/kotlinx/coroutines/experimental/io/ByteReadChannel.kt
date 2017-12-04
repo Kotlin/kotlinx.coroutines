@@ -127,11 +127,20 @@ public interface ByteReadChannel {
      * up to [ByteBuffer.remaining] bytes. If there are no [min] bytes available then the invocation could
      * suspend until the requirement will be met.
      *
+     * If [min] is zero then the invocation will suspend until at least one byte available.
+     *
      * Warning: it is not guaranteed that all of remaining bytes will be represented as a single byte buffer
      * eg: it could be 4 bytes available for read but the provided byte buffer could have only 2 remaining bytes:
      * in this case you have to invoke read again (with decreased [min] accordingly).
      *
-     * @param min amount of bytes available for read, should be positive
+     * It will fail with [EOFException] if not enough bytes ([availableForRead] < [min]) available
+     * in the channel after it is closed.
+     *
+     * [block] lambda should modify buffer's position accordingly. It also could temporarily modify limit however
+     * it should restore it before return. It is not recommended to access any bytes of the buffer outside of the
+     * provided byte range [position(); limit()) as there could be any garbage or incomplete data.
+     *
+     * @param min amount of bytes available for read, should be positive or zero
      * @param block to be invoked when at least [min] bytes available for read
      */
     suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)

@@ -1426,10 +1426,11 @@ internal class ByteBufferChannel(
     }
 
     override suspend fun read(min: Int, block: (ByteBuffer) -> Unit) {
-        require(min > 0) { "min should be positive" }
+        require(min >= 0) { "min should be positive or zero" }
 
         val read = reading {
-            if (it.availableForRead >= min) {
+            val av = it.availableForRead
+            if (av > 0 && av >= min) {
                 val position = this.position()
                 val l = this.limit()
                 block(this)
@@ -1450,7 +1451,12 @@ internal class ByteBufferChannel(
     }
 
     private suspend fun readBlockSuspend(min: Int, block: (ByteBuffer) -> Unit) {
-        if (!readSuspend(min)) throw EOFException("Got EOF but at least $min bytes were expected")
+        if (!readSuspend(min.coerceAtLeast(1))) {
+            if (min > 0)
+                throw EOFException("Got EOF but at least $min bytes were expected")
+            else return
+        }
+
         read(min, block)
     }
 
