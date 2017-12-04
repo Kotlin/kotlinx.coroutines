@@ -101,11 +101,6 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
         subscription?.unsubscribe()
     }
 
-    // Subscription overrides
-    override fun close() {
-        close(cause = null)
-    }
-
     inner class ChannelSubscriber: Subscriber<T>() {
         fun requestOne() {
             request(1)

@@ -31,6 +31,8 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
@@ -44,24 +46,35 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * the context of another coroutine, then any uncaught exception leads to the cancellation of parent coroutine.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
-
+ *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
 public fun launch(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
     block: suspend CoroutineScope.() -> Unit
 ): Job {
-    val newContext = newCoroutineContext(context)
+    val newContext = newCoroutineContext(context, parent)
     val coroutine = if (start.isLazy)
         LazyStandaloneCoroutine(newContext, block) else
         StandaloneCoroutine(newContext, active = true)
-    coroutine.initParentJob(context[Job])
+    coroutine.initParentJob(newContext[Job])
     start(block, coroutine, coroutine)
     return coroutine
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun launch(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
+): Job =
+    launch(context, start, block = block)
 
 /**
  * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
@@ -69,7 +82,7 @@ public fun launch(
 @Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
     replaceWith = ReplaceWith("launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
 public fun launch(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> Unit): Job =
-    launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)
+    launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
@@ -147,7 +160,7 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop(currentThread) else null
     val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop = eventLoop != null)
-    coroutine.initParentJob(context[Job])
+    coroutine.initParentJob(newContext[Job])
     block.startCoroutine(coroutine, coroutine)
     return coroutine.joinBlocking()
 }

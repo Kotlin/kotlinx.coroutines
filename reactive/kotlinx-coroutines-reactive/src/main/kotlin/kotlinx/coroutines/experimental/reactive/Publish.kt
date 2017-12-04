@@ -48,22 +48,34 @@ import kotlin.coroutines.experimental.startCoroutine
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
+public fun <T> publish(
+    context: CoroutineContext = DefaultDispatcher,
+    parent: Job? = null,
+    block: suspend ProducerScope<T>.() -> Unit
+): Publisher<T> = Publisher { subscriber ->
+    val newContext = newCoroutineContext(context, parent)
+    val coroutine = PublisherCoroutine(newContext, subscriber)
+    coroutine.initParentJob(newContext[Job])
+    subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
+    block.startCoroutine(coroutine, coroutine)
+}
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 public fun <T> publish(
     context: CoroutineContext = DefaultDispatcher,
     block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = Publisher { subscriber ->
-    val newContext = newCoroutineContext(context)
-    val coroutine = PublisherCoroutine(newContext, subscriber)
-    coroutine.initParentJob(context[Job])
-    subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
-    block.startCoroutine(coroutine, coroutine)
-}
+): Publisher<T> =
+    publish(context, block = block)
 
 private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet

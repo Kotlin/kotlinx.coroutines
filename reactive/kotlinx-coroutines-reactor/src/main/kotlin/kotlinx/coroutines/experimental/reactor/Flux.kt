@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.reactor
 
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.channels.ProducerScope
 import kotlinx.coroutines.experimental.reactive.publish
 import reactor.core.publisher.Flux
@@ -19,7 +20,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  */
+@JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> flux(
-        context: CoroutineContext,
+        context: CoroutineContext = DefaultDispatcher,
         block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> = Flux.from(publish(context, block))
+): Flux<T> = Flux.from(publish(context, block = block))

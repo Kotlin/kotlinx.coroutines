@@ -20,7 +20,7 @@ import org.junit.Test
 
 class LaunchLazyTest : TestBase() {
     @Test
-    fun testLaunchAndYieldJoin() = runBlocking {
+    fun testLaunchAndYieldJoin() = runTest {
         expect(1)
         val job = launch(coroutineContext, CoroutineStart.LAZY) {
             expect(4)
@@ -37,7 +37,7 @@ class LaunchLazyTest : TestBase() {
     }
 
     @Test
-    fun testStart() = runBlocking {
+    fun testStart() = runTest {
         expect(1)
         val job = launch(coroutineContext, CoroutineStart.LAZY) {
             expect(5)
@@ -61,5 +61,23 @@ class LaunchLazyTest : TestBase() {
         expect(8)
         job.join() // immediately returns
         finish(9)
+    }
+
+    @Test
+    fun testInvokeOnCompletionAndStart() = runTest {
+        expect(1)
+        val job = launch(coroutineContext, CoroutineStart.LAZY) {
+            expect(5)
+        }
+        yield() // no started yet!
+        expect(2)
+        job.invokeOnCompletion {
+            expect(6)
+        }
+        expect(3)
+        job.start()
+        expect(4)
+        yield()
+        finish(7)
     }
 }

@@ -37,4 +37,16 @@ class LinkedListChannelTest : TestBase() {
         assertThat(c.receiveOrNull(), IsEqual(3))
         assertThat(c.receiveOrNull(), IsNull())
     }
+
+    @Test
+    fun testConsumeAll() = runBlocking {
+        val q = LinkedListChannel<Int>()
+        for (i in 1..10) {
+            q.send(i) // buffers
+        }
+        q.cancel()
+        check(q.isClosedForSend)
+        check(q.isClosedForReceive)
+        check(q.receiveOrNull() == null)
+    }
 }

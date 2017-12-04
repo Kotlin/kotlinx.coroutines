@@ -30,6 +30,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
         // and the other inherits the parent context
         val job2 = launch(coroutineContext) {
+            delay(100)
             println("job2: I am a child of the request coroutine")
             delay(1000)
             println("job2: I will not execute this line if my parent request is cancelled")

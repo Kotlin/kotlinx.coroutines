@@ -32,7 +32,7 @@ class GuideTest {
 
 # Guide to kotlinx.coroutines by example
 
-This is a short guide on core features of `kotlinx.coroutines` with a series of examples.
+This is a guide on core features of `kotlinx.coroutines` with a series of examples.
 
 ## Introduction and setup
 
@@ -41,7 +41,7 @@ libraries to utilize coroutines. Unlike many other languages with similar capabi
 are not keywords in Kotlin and are not even part of its standard library.
 
 `kotlinx.coroutines` is one such rich library. It contains a number of high-level 
-coroutine-enabled primitives that this guide covers, including `async` and `await`. 
+coroutine-enabled primitives that this guide covers, including `launch`, `async` and others. 
 You need to add a dependency on `kotlinx-coroutines-core` module as explained 
 [here](README.md#using-in-your-projects) to use primitives from this guide in your projects.
 
@@ -117,11 +117,11 @@ Run the following code:
 
 ```kotlin
 fun main(args: Array<String>) {
-    launch { // launch new coroutine
+    launch { // launch new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
     }
-    println("Hello,") // main function continues while coroutine is delayed
+    println("Hello,") // main thread continues while coroutine is delayed
     Thread.sleep(2000L) // block main thread for 2 seconds to keep JVM alive
 }
 ```
@@ -153,18 +153,20 @@ coroutine and it can be only used from a coroutine.
 
 ### Bridging blocking and non-blocking worlds
 
-The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same
-code of `main` function. It is easy to get lost. Let's cleanly separate blocking and non-blocking
-worlds by using [runBlocking]:
+The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same code. 
+It is easy to get lost which one is blocking and which one is not. 
+Let's be explicit about blocking using [runBlocking] coroutine builder:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
-    launch { // launch new coroutine
+fun main(args: Array<String>) { 
+    launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
-    println("Hello,") // main coroutine continues while child is delayed
-    delay(2000L) // non-blocking delay for 2 seconds to keep JVM alive
+    println("Hello,") // main thread continues here immediately
+    runBlocking {     // but this expression blocks the main thread
+        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
+    } 
 }
 ```
 
@@ -176,9 +178,31 @@ World!
 -->
 
 The result is the same, but this code uses only non-blocking [delay]. 
+The the main thread, that invokes `runBlocking`, _blocks_ until the coroutine inside `runBlocking` is active. 
 
-`runBlocking { ... }` works as an adaptor that is used here to start the top-level main coroutine. 
-The regular code outside of `runBlocking` _blocks_, until the coroutine inside `runBlocking` is active. 
+This example can be also rewritten in a more idiomatic way, using `runBlocking` to wrap 
+the execution of the main function:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
+    launch { // launch new coroutine in background and continue
+        delay(1000L)
+        println("World!")
+    }
+    println("Hello,") // main coroutine continues here immediately
+    delay(2000L)      // delaying for 2 seconds to keep JVM alive
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02b.kt)
+
+<!--- TEST
+Hello,
+World!
+-->
+
+Here `runBlocking<Unit> { ... }` works as an adaptor that is used to start the top-level main coroutine. 
+We explicitly specify its `Unit` return type, because a well-formed `main` function in Kotlin has to return `Unit`.
 
 This is also a way to write unit-tests for suspending functions:
  
@@ -1004,6 +1028,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         }
         // and the other inherits the parent context
         val job2 = launch(coroutineContext) {
+            delay(100)
             println("job2: I am a child of the request coroutine")
             delay(1000)
             println("job2: I will not execute this line if my parent request is cancelled")
@@ -1157,8 +1182,10 @@ to avoid memory leaks.
   
 We can manage a lifecycle of our coroutines by creating an instance of [Job] that is tied to 
 the lifecycle of our activity. A job instance is created using [Job()] factory function
-as the following example shows. We need to make sure that all the coroutines are started 
-with this job in their context and then a single invocation of [Job.cancel] terminates them all.
+as the following example shows. For convenience, rather than using `launch(coroutineContext + job)` expression,
+we can write `launch(coroutineContext, parent = job)` to make explicit the fact that the parent job is being used.
+
+Now, a single invocation of [Job.cancel] cancels all the children we've launched. 
 Moreover, [Job.join] waits for all of them to complete, so we can also use [cancelAndJoin] here in
 this example:
 
@@ -1168,7 +1195,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // now launch ten coroutines for a demo, each working for a different time
     val coroutines = List(10) { i ->
         // they are all children of our job object
-        launch(coroutineContext + job) { // we use the context of main runBlocking thread, but with our own job object
+        launch(coroutineContext, parent = job) { // we use the context of main runBlocking thread, but with our parent job
             delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
             println("Coroutine $i is done")
         }
@@ -1398,7 +1425,8 @@ The following example prints the first ten prime numbers,
 running the whole pipeline in the context of the main thread. Since all the coroutines are launched as
 children of the main [runBlocking] coroutine in its [coroutineContext][CoroutineScope.coroutineContext],
 we don't have to keep an explicit list of all the coroutine we have started. 
-We use [cancelChildren] extension function to cancel all the children coroutines. 
+We use [cancelChildren][kotlin.coroutines.experimental.CoroutineContext.cancelChildren] 
+extension function to cancel all the children coroutines. 
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -2344,7 +2372,7 @@ Channel was closed
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html
-[cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
+[kotlin.coroutines.experimental.CoroutineContext.cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-completable-deferred/index.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->

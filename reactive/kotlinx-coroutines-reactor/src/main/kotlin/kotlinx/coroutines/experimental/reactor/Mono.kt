@@ -38,22 +38,34 @@ import kotlin.coroutines.experimental.startCoroutine
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
+fun <T> mono(
+    context: CoroutineContext = DefaultDispatcher,
+    parent: Job? = null,
+    block: suspend CoroutineScope.() -> T?
+): Mono<T> = Mono.create { sink ->
+    val newContext = newCoroutineContext(context, parent)
+    val coroutine = MonoCoroutine(newContext, sink)
+    coroutine.initParentJob(newContext[Job])
+    sink.onDispose(coroutine)
+    block.startCoroutine(coroutine, coroutine)
+}
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> mono(
     context: CoroutineContext = DefaultDispatcher,
     block: suspend CoroutineScope.() -> T?
-): Mono<T> = Mono.create { sink ->
-    val newContext = newCoroutineContext(context)
-    val coroutine = MonoCoroutine(newContext, sink)
-    coroutine.initParentJob(context[Job])
-    sink.onDispose(coroutine)
-    block.startCoroutine(coroutine, coroutine)
-}
+): Mono<T> =
+    mono(context, block = block)
 
 private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,

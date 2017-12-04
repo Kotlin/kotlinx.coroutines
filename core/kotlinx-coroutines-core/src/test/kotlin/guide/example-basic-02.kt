@@ -19,11 +19,13 @@ package guide.basic.example02
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
-    launch { // launch new coroutine
+fun main(args: Array<String>) { 
+    launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
     }
-    println("Hello,") // main coroutine continues while child is delayed
-    delay(2000L) // non-blocking delay for 2 seconds to keep JVM alive
+    println("Hello,") // main thread continues here immediately
+    runBlocking {     // but this expression blocks the main thread
+        delay(2000L)  // ... while we delay for 2 seconds to keep JVM alive
+    } 
 }

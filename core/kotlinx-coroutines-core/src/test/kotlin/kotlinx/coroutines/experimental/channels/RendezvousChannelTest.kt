@@ -16,10 +16,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNull
 import org.junit.Assert.*
@@ -292,5 +289,23 @@ class RendezvousChannelTest : TestBase() {
         }
         assertTrue(c.receive() === bad)
         finish(2)
+    }
+
+    @Test
+    fun testConsumeAll() = runBlocking {
+        val q = RendezvousChannel<Int>()
+        for (i in 1..10) {
+            launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+                expect(i)
+                q.send(i) // suspends
+                expectUnreached() // will get cancelled by cancel
+            }
+        }
+        expect(11)
+        q.cancel()
+        check(q.isClosedForSend)
+        check(q.isClosedForReceive)
+        check(q.receiveOrNull() == null)
+        finish(12)
     }
 }

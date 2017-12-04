@@ -231,4 +231,18 @@ public open class ArrayChannel<E>(
             send!!.completeResumeSend(token!!)
         return result
     }
+
+    // Note: this function is invoked when channel is already closed
+    override fun cleanupSendQueueOnCancel() {
+        // clear buffer first
+        lock.withLock {
+            repeat(size) {
+                buffer[head] = 0
+                head = (head + 1) % capacity
+            }
+            size = 0
+        }
+        // then clean all queued senders
+        super.cleanupSendQueueOnCancel()
+    }
 }

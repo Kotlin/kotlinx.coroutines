@@ -36,44 +36,32 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
 }
 
 /**
- * @suppress **Deprecated**: Renamed to `ProducerScope`.
+ * @suppress **Deprecated**: Use `ReceiveChannel`.
  */
-@Deprecated(message = "Renamed to `ProducerScope`", replaceWith = ReplaceWith("ProducerScope"))
-typealias ChannelBuilder<E> = ProducerScope<E>
-
-/**
- * Return type for [produce] coroutine builder.
- */
-public interface ProducerJob<out E> : Job, ReceiveChannel<E> {
-    /**
-     * A reference to the channel that this coroutine is producing.
-     * All the [ReceiveChannel] functions on this interface delegate to
-     * the channel instance returned by this function.
-     */
+@Deprecated(message = "Use `ReceiveChannel`", replaceWith = ReplaceWith("ReceiveChannel"))
+@Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE")
+interface ProducerJob<out E> : ReceiveChannel<E>, Job {
+    @Deprecated(message = "Use ReceiveChannel itself")
     val channel: ReceiveChannel<E>
 }
 
 /**
- * @suppress **Deprecated**: Renamed to `ProducerJob`.
- */
-@Deprecated(message = "Renamed to `ProducerJob`", replaceWith = ReplaceWith("ProducerJob"))
-typealias ChannelJob<E> = ProducerJob<E>
-
-/**
  * Launches new coroutine to produce a stream of values by sending them to a channel
- * and returns a reference to the coroutine as a [ProducerJob]. This resulting
+ * and returns a reference to the coroutine as a [ReceiveChannel]. This resulting
  * object can be used to [receive][ReceiveChannel.receive] elements produced by this coroutine.
  *
  * The scope of the coroutine contains [ProducerScope] interface, which implements
  * both [CoroutineScope] and [SendChannel], so that coroutine can invoke
  * [send][SendChannel.send] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
- * The running coroutine is cancelled when the its job is [cancelled][Job.cancel].
+ * The running coroutine is cancelled when its receive channel is [cancelled][ReceiveChannel.cancel].
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
@@ -83,19 +71,31 @@ typealias ChannelJob<E> = ProducerJob<E>
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param capacity capacity of the channel's buffer (no buffer by default).
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param block the coroutine code.
  */
 public fun <E> produce(
     context: CoroutineContext = DefaultDispatcher,
     capacity: Int = 0,
+    parent: Job? = null,
     block: suspend ProducerScope<E>.() -> Unit
-): ProducerJob<E> {
+): ReceiveChannel<E> {
     val channel = Channel<E>(capacity)
-    return ProducerCoroutine(newCoroutineContext(context), channel).apply {
-        initParentJob(context[Job])
-        block.startCoroutine(this, this)
-    }
+    val newContext = newCoroutineContext(context, parent)
+    val coroutine = ProducerCoroutine(newContext, channel)
+    coroutine.initParentJob(newContext[Job])
+    block.startCoroutine(coroutine, coroutine)
+    return coroutine
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <E> produce(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    block: suspend ProducerScope<E>.() -> Unit
+): ProducerJob<E> =
+    produce(context, capacity, block = block) as ProducerJob<E>
 
 /**
  * @suppress **Deprecated**: Renamed to `produce`.
@@ -106,7 +106,7 @@ public fun <E> buildChannel(
     capacity: Int = 0,
     block: suspend ProducerScope<E>.() -> Unit
 ): ProducerJob<E> =
-    produce(context, capacity, block)
+    produce(context, capacity, block = block) as ProducerJob<E>
 
 private class ProducerCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
     ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E>

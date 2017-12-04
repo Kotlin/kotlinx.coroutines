@@ -209,10 +209,10 @@ class ArrayBroadcastChannel<E>(
         override val isBufferAlwaysFull: Boolean get() = error("Should not be used")
         override val isBufferFull: Boolean get() = error("Should not be used")
 
-        override fun close() {
-            if (close(cause = null))
-                broadcastChannel.updateHead(removeSub = this)
-        }
+        override fun cancel(cause: Throwable?): Boolean =
+            close(cause).also { closed ->
+                if (closed) broadcastChannel.updateHead(removeSub = this)
+            }
 
         // returns true if subHead was updated and broadcast channel's head must be checked
         // this method is lock-free (it never waits on lock)

@@ -107,11 +107,6 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
         subscription?.cancel()
     }
 
-    // Subscription overrides
-    override fun close() {
-        close(cause = null)
-    }
-
     // Subscriber overrides
     override fun onSubscribe(s: Subscription) {
         subscription = s

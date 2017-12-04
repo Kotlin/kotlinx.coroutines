@@ -1,5 +1,4 @@
 dependencies {
-    ext.lincheck_version = '1.8.1'
     testCompile "com.devexperts.lincheck:core:$lincheck_version"
 }
 

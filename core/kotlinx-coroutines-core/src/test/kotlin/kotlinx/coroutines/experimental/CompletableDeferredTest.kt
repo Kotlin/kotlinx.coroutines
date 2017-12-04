@@ -27,6 +27,10 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testFresh() {
         val c = CompletableDeferred<String>()
+        checkFresh(c)
+    }
+
+    private fun checkFresh(c: CompletableDeferred<String>) {
         assertThat(c.isActive, IsEqual(true))
         assertThat(c.isCancelled, IsEqual(false))
         assertThat(c.isCompleted, IsEqual(false))
@@ -110,6 +114,50 @@ class CompletableDeferredTest : TestBase() {
         assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
         assertThrows<TestException> { c.getCompleted() }
         assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(TestException::class.java))
+    }
+
+    @Test
+    fun testParentCancelsChild() {
+        val parent = Job()
+        val c = CompletableDeferred<String>(parent)
+        checkFresh(c)
+        parent.cancel()
+        assertThat(parent.isActive, IsEqual(false))
+        assertThat(parent.isCancelled, IsEqual(true))
+        checkCancel(c)
+    }
+
+    @Test
+    fun testParentActiveOnChildCompletion() {
+        val parent = Job()
+        val c = CompletableDeferred<String>(parent)
+        checkFresh(c)
+        assertThat(parent.isActive, IsEqual(true))
+        assertThat(c.complete("OK"), IsEqual(true))
+        checkCompleteOk(c)
+        assertThat(parent.isActive, IsEqual(true))
+    }
+
+    @Test
+    fun testParentActiveOnChildException() {
+        val parent = Job()
+        val c = CompletableDeferred<String>(parent)
+        checkFresh(c)
+        assertThat(parent.isActive, IsEqual(true))
+        assertThat(c.completeExceptionally(TestException()), IsEqual(true))
+        checkCompleteTestException(c)
+        assertThat(parent.isActive, IsEqual(true))
+    }
+
+    @Test
+    fun testParentActiveOnChildCancellation() {
+        val parent = Job()
+        val c = CompletableDeferred<String>(parent)
+        checkFresh(c)
+        assertThat(parent.isActive, IsEqual(true))
+        assertThat(c.cancel(), IsEqual(true))
+        checkCancel(c)
+        assertThat(parent.isActive, IsEqual(true))
     }
 
     @Test

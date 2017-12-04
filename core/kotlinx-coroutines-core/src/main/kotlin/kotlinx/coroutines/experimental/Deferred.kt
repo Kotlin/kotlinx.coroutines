@@ -48,7 +48,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * _cancelling_ state immediately. A simple implementation of deferred -- [CompletableDeferred],
  * that is not backed by a coroutine, does not have a _cancelling_ state, but becomes _cancelled_
  * on [cancel] immediately. Coroutines, on the other hand, become _cancelled_ only when they finish
- * executing their code and after all their [children][attachChild] complete.
+ * executing their code and after all their [children] complete.
  *
  * ```
  *                                                     wait children
@@ -71,7 +71,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * or the cancellation cause inside the coroutine.
  *
  * A deferred value can have a _parent_ job. A deferred value with a parent is cancelled when its parent is
- * cancelled or completes. Parent waits for all its [children][attachChild] to complete in _completing_ or
+ * cancelled or completes. Parent waits for all its [children] to complete in _completing_ or
  * _cancelling_ state. _Completing_ state is purely internal. For an outside observer a _completing_
  * deferred is still active, while internally it is waiting for its children.
  *
@@ -143,6 +143,8 @@ public interface Deferred<out T> : Job {
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
@@ -153,21 +155,32 @@ public interface Deferred<out T> : Job {
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param block the coroutine code.
  */
 public fun <T> async(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> {
-    val newContext = newCoroutineContext(context)
+    val newContext = newCoroutineContext(context, parent)
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
         DeferredCoroutine<T>(newContext, active = true)
-    coroutine.initParentJob(context[Job])
+    coroutine.initParentJob(newContext[Job])
     start(block, coroutine, coroutine)
     return coroutine
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <T> async(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> =
+    async(context, start, block = block)
 
 /**
  * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
@@ -175,7 +188,7 @@ public fun <T> async(
 @Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
     replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
 public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)
+    async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
 
 /**
  * @suppress **Deprecated**: `defer` was renamed to `async`.

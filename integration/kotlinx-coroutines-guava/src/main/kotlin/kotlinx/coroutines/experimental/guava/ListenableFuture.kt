@@ -35,6 +35,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
  * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * The parent job may be also explicitly specified using [parent] parameter.
+ *
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
  *
  * By default, the coroutine is immediately scheduled for execution.
@@ -47,21 +49,32 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
 public fun <T> future(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
     block: suspend CoroutineScope.() -> T
 ): ListenableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
-    val newContext = newCoroutineContext(context)
+    val newContext = newCoroutineContext(context, parent)
     val job = Job(newContext[Job])
     val future = ListenableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
     start(block, receiver=future, completion=future) // use the specified start strategy
     return future
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): ListenableFuture<T> =
+    future(context, start, block = block)
 
 private class ListenableFutureCoroutine<T>(
     override val context: CoroutineContext

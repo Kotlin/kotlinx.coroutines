@@ -10,8 +10,14 @@ dependencies {
     jmh 'com.typesafe.akka:akka-actor:2.0.2'
     jmh project(':kotlinx-coroutines-core')
     jmh project(':kotlinx-coroutines-core').sourceSets.test.output
+    jmh project(':kotlinx-coroutines-io')
 }
 
 jmh.jmhVersion = '1.19'
 
 jmhJar.archiveName = 'benchmarks.jar'
+
+//jmh {
+//    include = ['.*Channel.*Benchmark']
+//    exclude = ['.*Guice.*', '.*PingPong.*']
+//}

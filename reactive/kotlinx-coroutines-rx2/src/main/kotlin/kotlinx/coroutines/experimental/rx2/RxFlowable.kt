@@ -53,4 +53,4 @@ import kotlin.coroutines.experimental.CoroutineContext
 public fun <T> rxFlowable(
     context: CoroutineContext = DefaultDispatcher,
     block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = Flowable.fromPublisher(publish(context, block))
+): Flowable<T> = Flowable.fromPublisher(publish(context, block = block))

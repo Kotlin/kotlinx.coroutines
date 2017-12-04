@@ -80,4 +80,18 @@ class ConflatedChannelTest : TestBase() {
         yield() // to receiver
         finish(10)
     }
+
+    @Test
+    fun testConsumeAll() = runBlocking {
+        val q = ConflatedChannel<Int>()
+        expect(1)
+        for (i in 1..10) {
+            q.send(i) // stores as last
+        }
+        q.cancel()
+        check(q.isClosedForSend)
+        check(q.isClosedForReceive)
+        check(q.receiveOrNull() == null)
+        finish(2)
+    }
 }

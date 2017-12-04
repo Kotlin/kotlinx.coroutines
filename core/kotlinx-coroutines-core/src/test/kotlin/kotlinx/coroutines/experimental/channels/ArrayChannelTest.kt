@@ -17,8 +17,8 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class ArrayChannelTest : TestBase() {
     @Test
@@ -142,6 +142,29 @@ class ArrayChannelTest : TestBase() {
         expect(8)
         assertFalse(q.offer(4))
         yield()
+        finish(12)
+    }
+
+    @Test
+    fun testConsumeAll() = runBlocking {
+        val q = ArrayChannel<Int>(5)
+        for (i in 1..10) {
+            if (i <= 5) {
+                expect(i)
+                q.send(i) // shall buffer
+            } else {
+                launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+                    expect(i)
+                    q.send(i) // suspends
+                    expectUnreached() // will get cancelled by cancel
+                }
+            }
+        }
+        expect(11)
+        q.cancel()
+        check(q.isClosedForSend)
+        check(q.isClosedForReceive)
+        check(q.receiveOrNull() == null)
         finish(12)
     }
 }

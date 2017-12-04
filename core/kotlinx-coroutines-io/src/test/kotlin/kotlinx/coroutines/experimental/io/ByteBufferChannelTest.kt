@@ -1,23 +1,27 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CoroutineName
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.buffers.*
 import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
-import kotlinx.coroutines.experimental.io.internal.BufferObjectNoPool
 import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
-import kotlinx.coroutines.experimental.io.packet.*
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
+import kotlinx.io.core.BufferView
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.readUTF8Line
+import kotlinx.io.pool.DefaultPool
+import kotlinx.io.pool.NoPoolImpl
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ErrorCollector
 import org.junit.rules.Timeout
-import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
@@ -25,19 +29,28 @@ import kotlin.test.fail
 
 class ByteBufferChannelTest {
     @get:Rule
-    val timeout = Timeout(10, TimeUnit.SECONDS)
+    val timeout = Timeout(100, TimeUnit.SECONDS)
 
     @get:Rule
     private val failures = ErrorCollector()
 
     @get:Rule
-    internal val pool = VerifyingObjectPool(BufferObjectNoPool)
+    internal val pool = VerifyingObjectPool(object : NoPoolImpl<ReadWriteBufferState.Initial>() {
+        override fun borrow(): ReadWriteBufferState.Initial {
+            return ReadWriteBufferState.Initial(java.nio.ByteBuffer.allocate(4096))
+        }
+    })
 
     @get:Rule
     internal val pktPool = VerifyingObjectPool(BufferView.Pool)
 
     private val Size = BUFFER_SIZE - RESERVED_SIZE
     private val ch = ByteBufferChannel(autoFlush = false, pool = pool)
+
+    @After
+    fun finish() {
+        ch.close(InterruptedException())
+    }
 
     @Test
     fun testBoolean() {
@@ -561,27 +574,6 @@ class ByteBufferChannelTest {
     }
 
     @Test
-    fun testPacketMultipleBufferOfOne() = runBlocking {
-        val packet0 = buildPacket {
-            writeInt(0xffee)
-            writeStringUtf8("Hello")
-        } as ByteReadPacketViewBased
-
-        val packet = ByteReadPacketViewBased(packet0.steal()!!, pktPool)
-
-        ch.writeInt(packet.remaining)
-        ch.writePacket(packet)
-
-        ch.flush()
-
-        val size = ch.readInt()
-        val readed = ch.readPacket(size)
-
-        assertEquals(0xffee, readed.readInt())
-        assertEquals("Hello", readed.readUTF8Line())
-    }
-
-    @Test
     fun testBigPacket() = runBlocking {
         launch(CommonPool + CoroutineName("writer")) {
             val packet = buildPacket {
@@ -640,5 +632,393 @@ class ByteBufferChannelTest {
         assertEquals("abc", ch.readASCIILine())
     }
 
-    private inline fun buildPacket(block: ByteWritePacket.() -> Unit) = buildPacket(pktPool, 0, block)
+    @Test
+    fun testCopyLarge() {
+        val count = 1024 * 256 // * 8192 = 2Gb
+
+        launch {
+            val bb = ByteBuffer.allocate(8192)
+            for (i in 0 until bb.capacity()) {
+                bb.put((i and 0xff).toByte())
+            }
+
+            for (i in 1..count) {
+                bb.clear()
+                val split = i and 0x1fff
+
+                bb.limit(split)
+                ch.writeFully(bb)
+                yield()
+                bb.limit(bb.capacity())
+                ch.writeFully(bb)
+            }
+
+            ch.close()
+        }
+
+        val dest = ByteBufferChannel(true, pool)
+
+        val joinerJob = launch {
+            ch.copyAndClose(dest)
+        }
+
+        val reader = launch {
+            val bb = ByteBuffer.allocate(8192)
+
+            for (i in 1..count) {
+                bb.clear()
+                dest.readFully(bb)
+                bb.flip()
+
+                if (i and 0x1fff == 0) {
+                    for (idx in 0 until bb.capacity()) {
+                        assertEquals((idx and 0xff).toByte(), bb.get())
+                    }
+                }
+            }
+
+            yield()
+            assertTrue(dest.isClosedForRead)
+        }
+
+        runBlocking {
+            reader.join()
+            joinerJob.join()
+            dest.close()
+            ch.close()
+        }
+    }
+
+    @Test
+    fun testJoinToLarge() {
+        val count = 1024 * 256 // * 8192 = 2Gb
+
+        val writerJob = launch {
+            val bb = ByteBuffer.allocate(8192)
+            for (i in 0 until bb.capacity()) {
+                bb.put((i and 0xff).toByte())
+            }
+
+            for (i in 1..count) {
+                bb.clear()
+                val split = i and 0x1fff
+
+                bb.limit(split)
+                ch.writeFully(bb)
+                yield()
+                bb.limit(bb.capacity())
+                ch.writeFully(bb)
+            }
+
+            ch.close()
+        }
+
+        val dest = ByteBufferChannel(true, pool)
+
+        val joinerJob = launch {
+            ch.joinTo(dest, true)
+        }
+
+        val reader = launch {
+            val bb = ByteBuffer.allocate(8192)
+
+            for (i in 1..count) {
+                bb.clear()
+                dest.readFully(bb)
+                bb.flip()
+
+                if (i and 0x1fff == 0) {
+                    for (idx in 0 until bb.capacity()) {
+                        assertEquals((idx and 0xff).toByte(), bb.get())
+                    }
+                }
+            }
+
+            bb.clear()
+            assertEquals(-1, dest.readAvailable(bb))
+            assertTrue(dest.isClosedForRead)
+        }
+
+        val latch = CountDownLatch(1)
+        val r = AtomicInteger(3)
+
+        val handler: CompletionHandler = { t ->
+            t?.let { failures.addError(it); latch.countDown() }
+            if (r.decrementAndGet() == 0) latch.countDown()
+        }
+
+        reader.invokeOnCompletion(true, handler)
+        writerJob.invokeOnCompletion(true, handler)
+        joinerJob.invokeOnCompletion(true, handler)
+
+        latch.await()
+    }
+
+    private fun launch(block: suspend () -> Unit): Job {
+        return launch(DefaultDispatcher) {
+            try {
+                block()
+            } catch (t: Throwable) {
+                failures.addError(t)
+            }
+        }
+    }
+
+    @Test
+    fun testStressReadWriteFully() = runBlocking {
+        val size = 100
+        val data = ByteArray(size) { it.toByte() }
+        val exec = newFixedThreadPoolContext(8, "testStressReadFully")
+        val buffers = object : DefaultPool<ByteArray>(10) {
+            override fun produceInstance(): ByteArray {
+                return ByteArray(size)
+            }
+        }
+
+        try {
+            (1..1_000_000).map {
+                async(exec) {
+                    val channel = ByteBufferChannel(autoFlush = false, pool = pool)
+                    val job = launch(exec) {
+                        try {
+                            channel.writeFully(data)
+                        } finally {
+                            channel.close()
+                        }
+                    }
+
+                    yield()
+                    val buffer = buffers.borrow()
+                    channel.readFully(buffer)
+                    buffers.recycle(buffer)
+                    job.cancel()
+                }
+            }.forEach {
+                it.await()
+            }
+        } finally {
+            exec.close()
+        }
+    }
+
+    @Test
+    fun testJoinToSmokeTest() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+        launch(coroutineContext) {
+            ch.joinTo(other, false)
+        }
+        yield()
+
+        ch.writeInt(0x11223344)
+        ch.flush()
+        assertEquals(0x11223344, other.readInt())
+
+        ch.close()
+    }
+
+    @Test
+    fun testJoinToResumeRead() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = true, pool = pool)
+        val result = async(coroutineContext) {
+            other.readLong()
+        }
+        yield()
+
+        launch(coroutineContext) {
+            ch.joinTo(other, true)
+        }
+        yield()
+        yield()
+
+        ch.writeLong(0x1122334455667788L)
+        yield()
+        assertEquals(0x1122334455667788L, result.await())
+
+        ch.close()
+    }
+
+    @Test
+    fun testJoinToAfterWrite() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        ch.writeInt(0x12345678)
+        launch(coroutineContext) {
+            ch.joinTo(other, false)
+        }
+
+        ch.writeInt(0x11223344)
+        ch.flush()
+
+        yield()
+
+        assertEquals(0x12345678, other.readInt())
+        assertEquals(0x11223344, other.readInt())
+        ch.close()
+    }
+
+    @Test
+    fun testJoinToClosed() = runBlocking<Unit> {
+        val other = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        ch.writeInt(0x11223344)
+        ch.close()
+
+        ch.joinTo(other, true)
+        yield()
+
+        assertEquals(0x11223344, other.readInt())
+        assertTrue { other.isClosedForRead }
+    }
+
+    @Test
+    fun testReadThenRead() = runBlocking<Unit> {
+        val phase = AtomicInteger(0)
+
+        val first = launch(coroutineContext) {
+            try {
+                ch.readInt()
+                fail("EOF expected")
+            } catch (expected: ClosedReceiveChannelException) {
+                assertEquals(1, phase.get())
+            }
+        }
+
+        yield()
+
+        val second = launch(coroutineContext) {
+            try {
+                ch.readInt()
+                fail("Should fail with ISE")
+            } catch (expected: IllegalStateException) {
+            }
+        }
+
+        yield()
+        phase.set(1)
+        ch.close()
+
+        yield()
+
+        first.invokeOnCompletion { t ->
+            t?.let { throw it }
+        }
+        second.invokeOnCompletion { t ->
+            t?.let { throw it }
+        }
+    }
+
+    @Test
+    fun writeThenReadStress() = runBlocking<Unit> {
+        for (i in 1..500_000) {
+            val a = ByteBufferChannel(false, pool)
+
+            val w = launch {
+                a.writeLong(1)
+                a.close()
+            }
+            val r = launch {
+                a.readLong()
+            }
+
+            w.join()
+            r.join()
+        }
+
+        ch.close()
+    }
+
+    @Test
+    fun joinToEmptyStress() = runBlocking<Unit> {
+        for (i in 1..500_000) {
+            val a = ByteBufferChannel(false, pool)
+
+            launch(coroutineContext) {
+                a.joinTo(ch, true)
+            }
+
+            yield()
+
+            a.close()
+        }
+    }
+
+    @Test
+    fun testJoinToStress() = runBlocking<Unit> {
+        for (i in 1..100000) {
+            val child = ByteBufferChannel(false, pool)
+            val writer = launch {
+                child.writeLong(999 + i.toLong())
+                child.close()
+            }
+
+            child.joinTo(ch, false)
+            assertEquals(999 + i.toLong(), ch.readLong())
+            writer.join()
+        }
+
+        assertEquals(0, ch.availableForRead)
+        ch.close()
+    }
+
+    @Test
+    fun testSequentialJoin() = runBlocking<Unit> {
+        val steps = 200_000
+
+        val pipeline = launch(coroutineContext) {
+            for (i in 1..steps) {
+                val child = ByteBufferChannel(false, pool)
+                launch(coroutineContext) {
+                    child.writeInt(i)
+                    child.close()
+                }
+                child.joinTo(ch, false)
+            }
+        }
+
+        for (i in 1..steps) {
+            assertEquals(i, ch.readInt())
+        }
+
+        pipeline.join()
+        pipeline.invokeOnCompletion { cause ->
+            cause?.let { throw it }
+        }
+    }
+
+    @Test
+    fun testSequentialJoinYield() = runBlocking<Unit> {
+        val steps = 200_000
+
+        val pipeline = launch(coroutineContext) {
+            for (i in 1..steps) {
+                val child = ByteBufferChannel(false, pool)
+                launch(coroutineContext) {
+                    child.writeInt(i)
+                    child.close()
+                }
+                yield()
+                child.joinTo(ch, false)
+            }
+        }
+
+        for (i in 1..steps) {
+            assertEquals(i, ch.readInt())
+        }
+
+        pipeline.join()
+        pipeline.invokeOnCompletion { cause ->
+            cause?.let { throw it }
+        }
+    }
+
+    private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
+        val builder = BytePacketBuilder(0, pktPool)
+        try {
+            block(builder)
+            return builder.build()
+        } catch (t: Throwable) {
+            builder.release()
+            throw t
+        }
+    }
 }

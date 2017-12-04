@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -30,14 +31,15 @@ class ActorTest : TestBase() {
         val actor = actor<String>(coroutineContext) {
             expect(3)
         }
+        actor as Job // type assertion
         assertThat(actor.isActive, IsEqual(true))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(2)
         yield() // to actor code
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(true))
-        assertThat(actor.channel.isClosedForSend, IsEqual(true))
+        assertThat(actor.isClosedForSend, IsEqual(true))
         finish(4)
     }
 
@@ -49,14 +51,15 @@ class ActorTest : TestBase() {
             assertThat(receive(), IsEqual("OK"))
             expect(6)
         }
+        actor as Job // type assertion
         assertThat(actor.isActive, IsEqual(true))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(2)
         yield() // to actor code
         assertThat(actor.isActive, IsEqual(true))
         assertThat(actor.isCompleted, IsEqual(false))
-        assertThat(actor.channel.isClosedForSend, IsEqual(false))
+        assertThat(actor.isClosedForSend, IsEqual(false))
         expect(4)
         // send message to actor
         actor.send("OK")
@@ -64,7 +67,7 @@ class ActorTest : TestBase() {
         yield() // to actor code
         assertThat(actor.isActive, IsEqual(false))
         assertThat(actor.isCompleted, IsEqual(true))
-        assertThat(actor.channel.isClosedForSend, IsEqual(true))
+        assertThat(actor.isClosedForSend, IsEqual(true))
         finish(7)
     }
 }

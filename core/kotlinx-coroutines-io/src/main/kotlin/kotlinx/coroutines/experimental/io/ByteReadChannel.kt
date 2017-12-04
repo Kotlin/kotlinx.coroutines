@@ -2,6 +2,8 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
+import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
+import kotlinx.io.core.*
 
 /**
  * Channel for asynchronous reading of sequences of bytes.
@@ -43,6 +45,7 @@ public interface ByteReadChannel {
     suspend fun readAvailable(dst: ByteArray, offset: Int, length: Int): Int
     suspend fun readAvailable(dst: ByteArray) = readAvailable(dst, 0, dst.size)
     suspend fun readAvailable(dst: ByteBuffer): Int
+    suspend fun readAvailable(dst: BufferView): Int
 
     /**
      * Reads all [length] bytes to [dst] buffer or fails if channel has been closed.
@@ -134,20 +137,55 @@ public interface ByteReadChannel {
     suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)
 }
 
+suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
+    require(dst !== this)
+
+    if (this is ByteBufferChannel && dst is ByteBufferChannel) {
+        return dst.joinFrom(this, closeOnEnd)
+    }
+
+    return joinToImplSuspend(dst, closeOnEnd)
+}
+
+private suspend fun ByteReadChannel.joinToImplSuspend(dst: ByteWriteChannel, close: Boolean) {
+    copyToImpl(dst, Long.MAX_VALUE)
+    if (close) {
+        dst.close()
+    } else {
+        dst.flush()
+    }
+}
+
 /**
  * Reads up to [limit] bytes from receiver channel and writes them to [dst] channel.
  * Closes [dst] channel if fails to read or write with cause exception.
  * @return a number of copied bytes
  */
 suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX_VALUE): Long {
+    require(this !== dst)
+    require(limit >= 0L)
+
+    if (this is ByteBufferChannel && dst is ByteBufferChannel) {
+        return dst.copyDirect(this, limit, null)
+    }
+
+    return copyToImpl(dst, limit)
+}
+
+private suspend fun ByteReadChannel.copyToImpl(dst: ByteWriteChannel, limit: Long): Long {
     val buffer = BufferPool.borrow()
+    val dstNeedsFlush = !dst.autoFlush
+
     try {
         var copied = 0L
 
-        while (copied < limit) {
+        while (true) {
             buffer.clear()
-            if (limit - copied < buffer.limit()) {
-                buffer.limit((limit - copied).toInt())
+
+            val bufferLimit = limit - copied
+            if (bufferLimit <= 0) break
+            if (bufferLimit < buffer.limit()) {
+                buffer.limit(bufferLimit.toInt())
             }
             val size = readAvailable(buffer)
             if (size == -1) break
@@ -155,6 +193,10 @@ suspend fun ByteReadChannel.copyTo(dst: ByteWriteChannel, limit: Long = Long.MAX
             buffer.flip()
             dst.writeFully(buffer)
             copied += size
+
+            if (dstNeedsFlush && availableForRead == 0) {
+                dst.flush()
+            }
         }
         return copied
     } catch (t: Throwable) {

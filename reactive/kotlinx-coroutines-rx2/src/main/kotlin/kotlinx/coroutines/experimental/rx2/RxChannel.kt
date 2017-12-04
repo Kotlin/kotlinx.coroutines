@@ -102,11 +102,6 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
         subscription?.dispose()
     }
 
-    // Subscription overrides
-    override fun close() {
-        close(cause = null)
-    }
-
     // Observer overrider
     override fun onSubscribe(sub: Disposable) {
         subscription = sub

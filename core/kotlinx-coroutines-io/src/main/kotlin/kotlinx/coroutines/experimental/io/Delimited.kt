@@ -32,11 +32,9 @@ suspend fun ByteReadChannel.readUntilDelimiter(delimiter: ByteBuffer, dst: ByteB
         } while (dst.hasRemaining() && !endFound)
     }
 
-    return when {
-        copied == 0 && isClosedForRead -> -1
-        !dst.hasRemaining() || endFound -> copied
-        else -> readUntilDelimiterSuspend(delimiter, dst, copied)
-    }
+    return if (copied == 0 && isClosedForRead) -1
+    else if (!dst.hasRemaining() || endFound) copied
+    else readUntilDelimiterSuspend(delimiter, dst, copied)
 }
 
 suspend fun ByteReadChannel.skipDelimiter(delimiter: ByteBuffer) {

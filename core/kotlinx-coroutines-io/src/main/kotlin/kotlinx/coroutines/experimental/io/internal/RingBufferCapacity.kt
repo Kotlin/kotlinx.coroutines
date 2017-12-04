@@ -40,6 +40,14 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
         }
     }
 
+    fun tryWriteAtLeast(n: Int): Int {
+        while (true) {
+            val remaining = availableForWrite
+            if (remaining < n) return 0
+            if (AvailableForWrite.compareAndSet(this, remaining, 0)) return remaining
+        }
+    }
+
     fun tryWriteExact(n: Int): Boolean {
         while (true) {
             val remaining = availableForWrite
@@ -95,6 +103,14 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
             if (pendingToFlush > 0 || availableForRead > 0 || remaining != totalCapacity) return false
             if (AvailableForWrite.compareAndSet(this, remaining, 0)) return true
         }
+    }
+
+    /**
+     * Make all writers to fail to write any more bytes
+     * Use only during failure termination
+     */
+    fun forceLockForRelease() {
+        AvailableForWrite.getAndSet(this, 0)
     }
 
     fun isEmpty(): Boolean = availableForWrite == totalCapacity

@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.*
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -29,7 +30,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  *   (because that is the supposed mechanism to cancel the running coroutine)
  * * Otherwise:
  *     * if there is a [Job] in the context, then [Job.cancel] is invoked;
- *     * and current thread's [Thread.uncaughtExceptionHandler] is invoked.
+ *     * all instances of [CoroutineExceptionHandler] found via [ServiceLoader] are invoked;
+ *     * current thread's [Thread.uncaughtExceptionHandler] is invoked.
  */
 fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
     context[CoroutineExceptionHandler]?.let {
@@ -40,6 +42,10 @@ fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
     if (exception is CancellationException) return
     // try cancel job in the context
     context[Job]?.cancel(exception)
+    // use additional extension handlers
+    ServiceLoader.load(CoroutineExceptionHandler::class.java).forEach { handler ->
+        handler.handleException(context, exception)
+    }
     // use thread's handler
     val currentThread = Thread.currentThread()
     currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)

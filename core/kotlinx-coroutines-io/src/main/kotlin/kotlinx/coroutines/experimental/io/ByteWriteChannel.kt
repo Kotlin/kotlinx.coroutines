@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
-import kotlinx.coroutines.experimental.io.packet.buildPacket
+import kotlinx.io.core.*
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
@@ -50,6 +50,7 @@ public interface ByteWriteChannel {
     suspend fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int
     suspend fun writeAvailable(src: ByteArray) = writeAvailable(src, 0, src.size)
     suspend fun writeAvailable(src: ByteBuffer): Int
+    suspend fun writeAvailable(src: BufferView): Int
 
     /**
      * Writes all [src] bytes and suspends until all bytes written. Causes flush if buffer filled up or when [autoFlush]
@@ -58,6 +59,7 @@ public interface ByteWriteChannel {
     suspend fun writeFully(src: ByteArray, offset: Int, length: Int)
     suspend fun writeFully(src: ByteArray) = writeFully(src, 0, src.size)
     suspend fun writeFully(src: ByteBuffer)
+    suspend fun writeFully(src: BufferView)
 
     /**
      * Invokes [block] when it will be possible to write at least [min] bytes
@@ -140,55 +142,58 @@ public interface ByteWriteChannel {
 }
 
 suspend fun ByteWriteChannel.writeShort(s: Int) {
-    writeShort((s and 0xffff).toShort())
+    return writeShort((s and 0xffff).toShort())
 }
 
 suspend fun ByteWriteChannel.writeByte(b: Int) {
-    writeByte((b and 0xff).toByte())
+    return writeByte((b and 0xff).toByte())
 }
 
 suspend fun ByteWriteChannel.writeInt(i: Long) {
-    writeInt(i.toInt())
+    return writeInt(i.toInt())
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharSequence) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: CharBuffer) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeStringUtf8(s: String) {
     val packet = buildPacket {
         writeStringUtf8(s)
     }
-    writePacket(packet)
+
+    return writePacket(packet)
 }
 
 suspend fun ByteWriteChannel.writeBoolean(b: Boolean) {
-    writeByte(if (b) 1 else 0)
+    return writeByte(if (b) 1 else 0)
 }
 
 /**
  * Writes UTF16 character
  */
 suspend fun ByteWriteChannel.writeChar(ch: Char) {
-    writeShort(ch.toInt())
+    return writeShort(ch.toInt())
 }
 
 inline suspend fun ByteWriteChannel.writePacket(headerSizeHint: Int = 0, builder: ByteWritePacket.() -> Unit) {
-    writePacket(buildPacket(headerSizeHint, builder))
+    return writePacket(buildPacket(headerSizeHint, builder))
 }
 
 suspend fun ByteWriteChannel.writePacketSuspend(builder: suspend ByteWritePacket.() -> Unit) {
-    writePacket(buildPacket { builder() })
+    return writePacket(buildPacket { builder() })
 }
 
 /**

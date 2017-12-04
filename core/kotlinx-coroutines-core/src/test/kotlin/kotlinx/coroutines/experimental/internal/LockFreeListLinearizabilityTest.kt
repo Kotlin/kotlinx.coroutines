@@ -17,15 +17,15 @@
 package kotlinx.coroutines.experimental.internal
 
 import com.devexperts.dxlab.lincheck.LinChecker
-import com.devexperts.dxlab.lincheck.annotations.CTest
 import com.devexperts.dxlab.lincheck.annotations.Operation
 import com.devexperts.dxlab.lincheck.annotations.Param
 import com.devexperts.dxlab.lincheck.annotations.Reset
-import com.devexperts.dxlab.lincheck.generators.IntGen
+import com.devexperts.dxlab.lincheck.paramgen.IntGen
+import com.devexperts.dxlab.lincheck.stress.StressCTest
 import org.junit.Test
 
 
-@CTest(iterations = 100, actorsPerThread = arrayOf("1:2", "1:2", "1:2", "1:2"))
+@StressCTest(iterations = 100, actorsPerThread = arrayOf("1:2", "1:2", "1:2", "1:2"))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
 class LockFreeListLinearizabilityTest {
     class Node(val value: Int): LockFreeLinkedListNode()
@@ -63,6 +63,6 @@ class LockFreeListLinearizabilityTest {
 
     @Test
     fun testAddRemoveLinearizability() {
-        LinChecker.check(this)
+        LinChecker.check(LockFreeListLinearizabilityTest::class.java)
     }
 }

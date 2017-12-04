@@ -1,10 +1,15 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.io.internal.*
-import org.junit.*
-import java.io.*
-import kotlin.test.*
+import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
+import kotlinx.coroutines.experimental.io.internal.asByteBuffer
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import java.io.IOException
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class ReadUntilDelimiterTest : TestBase() {
     private val source = ByteChannel(true)

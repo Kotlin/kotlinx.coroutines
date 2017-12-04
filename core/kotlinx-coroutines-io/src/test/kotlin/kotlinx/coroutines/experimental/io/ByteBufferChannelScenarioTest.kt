@@ -5,13 +5,18 @@ import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
-import org.junit.Test
+import org.junit.*
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class ByteBufferChannelScenarioTest : TestBase() {
     private val ch = ByteBufferChannel(true)
+
+    @After
+    fun finish() {
+        ch.close(InterruptedException())
+    }
 
     @Test
     fun testReadBeforeAvailable() {
@@ -338,4 +343,105 @@ class ByteBufferChannelScenarioTest : TestBase() {
 
         finish(5)
     }
+
+    @Test
+    fun testWriteByteSuspend() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeByte(1)
+            ch.writeFully(ByteArray(ch.availableForWrite))
+            expect(2)
+            ch.writeByte(1)
+            expect(5)
+            ch.close()
+        }
+
+        yield()
+        expect(3)
+        yield()
+        expect(4)
+        yield()
+
+        ch.readByte()
+        yield()
+
+        ch.readRemaining()
+        finish(6)
+    }
+
+    @Test
+    fun testWriteShortSuspend() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeByte(1)
+            ch.writeFully(ByteArray(ch.availableForWrite))
+            expect(2)
+            ch.writeShort(1)
+            expect(5)
+            ch.close()
+        }
+
+        yield()
+        expect(3)
+        yield()
+        expect(4)
+        yield()
+
+        ch.readShort()
+        yield()
+
+        ch.readRemaining()
+        finish(6)
+    }
+
+    @Test
+    fun testWriteIntSuspend() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeByte(1)
+            ch.writeFully(ByteArray(ch.availableForWrite))
+            expect(2)
+            ch.writeInt(1)
+            expect(5)
+            ch.close()
+        }
+
+        yield()
+        expect(3)
+        yield()
+        expect(4)
+        yield()
+
+        ch.readInt()
+        yield()
+
+        ch.readRemaining()
+        finish(6)
+    }
+
+    @Test
+    fun testWriteLongSuspend() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeByte(1)
+            ch.writeFully(ByteArray(ch.availableForWrite))
+            expect(2)
+            ch.writeLong(1)
+            expect(5)
+            ch.close()
+        }
+
+        yield()
+        expect(3)
+        yield()
+        expect(4)
+        yield()
+
+        ch.readLong()
+        yield()
+
+        ch.readRemaining()
+        finish(6)
+    }
+
 }
