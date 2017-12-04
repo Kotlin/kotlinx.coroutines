@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>associateByTo - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/associate-by-to.html">
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental.channels</a> / <a href=".">associateByTo</a></div>
+
+<h1 id="associatebyto">associateByTo</h1>
+
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channels.kt#L759">(source)</a></div>
+
+  <p>Populates and returns the <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/destination">destination</a> mutable map with key-value pairs,
+where key is provided by the <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/keySelector">keySelector</a> function applied to each element of the given channel
+and value is the element itself.</p>
+
+  <p>If any two elements would have the same key returned by <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/keySelector">keySelector</a> the last one gets added to the map.</p>
+
+  <p>The operation is <em>terminal</em>.
+This function <a href="consume.html">consumes</a> all elements of the original <a href="-receive-channel/index.html">ReceiveChannel</a>.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/valueTransform">valueTransform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channels.kt#L776">(source)</a></div>
+
+  <p>Populates and returns the <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/destination">destination</a> mutable map with key-value pairs,
+where key is provided by the <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/keySelector">keySelector</a> function and
+and value is provided by the <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/valueTransform">valueTransform</a> function applied to elements of the given channel.</p>
+
+  <p>If any two elements would have the same key returned by <a href="associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/keySelector">keySelector</a> the last one gets added to the map.</p>
+
+  <p>The operation is <em>terminal</em>.
+This function <a href="consume.html">consumes</a> all elements of the original <a href="-receive-channel/index.html">ReceiveChannel</a>.</p>
+
+</div>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

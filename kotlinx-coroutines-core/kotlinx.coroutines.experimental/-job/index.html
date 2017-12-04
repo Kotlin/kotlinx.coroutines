@@ -31,11 +31,11 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L93">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L94">(source)</a></div>
 
 <p>A background job. Conceptually, a job is a cancellable thing with a simple life-cycle that
 culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
-or completion of parent immediately cancels all its children.</p>
+or completion of parent immediately cancels all its <a href="children.html">children</a>.</p>
 
 <p>The most basic instances of Job are created with <a href="../launch.html">launch</a> coroutine builder or with a
 <code>Job()</code> factory function.  Other coroutine builders and primitives like
@@ -98,7 +98,7 @@ that provide an optional <code>start</code> parameter create a coroutine in <em>
 
 <p>A job can be <em>cancelled</em> at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
 <em>cancelling</em> state immediately. Job that is not backed by a coroutine and does not have
-<a href="attach-child.html">children</a> becomes <em>cancelled</em> on <a href="cancel.html">cancel</a> immediately.
+<a href="children.html">children</a> becomes <em>cancelled</em> on <a href="cancel.html">cancel</a> immediately.
 Otherwise, job becomes <em>cancelled</em>  when it finishes executing its code and
 when all its children <a href="is-completed.html">complete</a>.</p>
 
@@ -120,7 +120,7 @@ A job is active while the coroutine is working and job’s cancellation aborts t
 the coroutine is suspended on a <em>cancellable</em> suspension point by throwing <a href="../-cancellation-exception.html">CancellationException</a>.</p>
 
 <p>A job can have a <em>parent</em> job. A job with a parent is cancelled when its parent is cancelled or completes exceptionally.
-Parent job waits for all its <a href="attach-child.html">children</a> to complete in <em>completing</em> or <em>cancelling</em> state.
+Parent job waits for all its children to complete in <em>completing</em> or <em>cancelling</em> state.
 <em>Completing</em> state is purely internal to the job. For an outside observer a <em>completing</em> job is still active,
 while internally it is waiting for its children.</p>
 
@@ -134,6 +134,19 @@ be safely invoked from concurrent coroutines without external synchronization.</
 <tr>
 <td>
 
+        <p><a href="children.html">children</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">children</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html"><span class="identifier">Sequence</span></a><span class="symbol">&lt;</span><span class="identifier">Job</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a sequence of this job’s children.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="is-active.html">isActive</a></p>
 
       </td>
@@ -141,7 +154,7 @@ be safely invoked from concurrent coroutines without external synchronization.</
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Returns <code>true</code> when this job is active – it was already started and has not completed or cancelled yet.
-The job that is waiting for its <a href="attach-child.html">children</a> to complete is still considered to be active if it
+The job that is waiting for its <a href="children.html">children</a> to complete is still considered to be active if it
 was not cancelled.</p>
 
       </td>
@@ -171,7 +184,7 @@ job has already <a href="is-completed.html">completed</a> (it may still be cance
 
         <p>Returns <code>true</code> when this job has completed for any reason. A job that was cancelled and has
 finished its execution is also considered complete. Job becomes complete only after
-all its <a href="attach-child.html">children</a> complete.</p>
+all its <a href="children.html">children</a> complete.</p>
 
       </td>
 </tr>
@@ -199,20 +212,6 @@ This clause never fails, even if the job completes exceptionally.</p>
 <tr>
 <td>
 
-        <p><a href="attach-child.html">attachChild</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">attachChild</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$attachChild(kotlinx.coroutines.experimental.Job)/child">child</span><span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
-
-        <p>Attaches child job so that this job becomes its parent and
-returns a handle that should be used to detach it.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="cancel.html">cancel</a></p>
 
       </td>
@@ -223,20 +222,6 @@ returns a handle that should be used to detach it.</p>
 cancelled as a result of this invocation and <code>false</code> otherwise
 (if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
 Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="cancel-children.html">cancelChildren</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancelChildren(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Cancels all <a href="attach-child.html">children</a> jobs of this coroutine with the given <a href="cancel-children.html#kotlinx.coroutines.experimental.Job$cancelChildren(kotlin.Throwable)/cause">cause</a>. Unlike <a href="cancel.html">cancel</a>,
-the state of this job itself is not affected.</p>
 
       </td>
 </tr>
@@ -340,15 +325,14 @@ cancelled or completed. See <a href="cancel.html">Job.cancel</a> for details.</p
 <tr>
 <td>
 
-        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html">cancelChildren</a></p>
+        <p><a href="../cancel-children.html">cancelChildren</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlinx.coroutines.experimental.Job, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels all children of the Job in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
-It does not do anything if there is no job in the context or it has no children.
-See <a href="cancel-children.html">Job.cancelChildren</a> for details.</p>
+        <p>Cancels all <a href="children.html">children</a> jobs of this coroutine with the given <a href="../cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlinx.coroutines.experimental.Job, kotlin.Throwable)/cause">cause</a> using <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html">cancel</a>
+for all of them. Unlike <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html">cancel</a> on this job as a whole, the state of this job itself is not affected.</p>
 
       </td>
 </tr>
@@ -378,6 +362,21 @@ See <a href="cancel-children.html">Job.cancelChildren</a> for details.</p>
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="../join-children.html">joinChildren</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">.</span><span class="identifier">joinChildren</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Suspends coroutine until all <a href="children.html">children</a> of this job are complete using
+<a href="#">join</a> for all of them. Unlike <a href="#">join</a> on this job as a whole, it does not wait until
+this job is complete.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -385,19 +384,6 @@ See <a href="cancel-children.html">Job.cancelChildren</a> for details.</p>
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines.experimental.channels/-actor-job/index.html">ActorJob</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Return type for <a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a> coroutine builder.</p>
-
-      </td>
-</tr>
 <tr>
 <td>
 
@@ -437,19 +423,6 @@ with the specified cancel cause.</p>
 
         <p>A non-cancelable job that is always <a href="../-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="../run.html">run</a> builder
 to prevent cancellation of code blocks that need to run without cancellation.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../../kotlinx.coroutines.experimental.channels/-producer-job/index.html">ProducerJob</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerJob</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Job</span><span class="symbol">, </span><a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Return type for <a href="../../kotlinx.coroutines.experimental.channels/produce.html">produce</a> coroutine builder.</p>
 
       </td>
 </tr>

@@ -100,10 +100,7 @@ is passed into the corresponding block.</p>
 
         <p>Closes this channel with an optional exceptional <a href="close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special “close token” over this channel. Immediately after invocation of this function
-<a href="is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
-on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
-are received.</p>
+Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
 </tr>
@@ -139,6 +136,27 @@ or throws exception if the channel <a href="is-closed-for-send.html">isClosedFor
 </tbody>
 </table>
 
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../send-blocking.html">sendBlocking</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Adds <a href="../send-blocking.html#kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="is-full.html">Channel.isFull</a>,
+or throws exception if the channel <a href="is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="close.html">Channel.close</a> for details).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="inheritors">Inheritors</h3>
 
 <table class="api-docs-table">
@@ -153,19 +171,6 @@ or throws exception if the channel <a href="is-closed-for-send.html">isClosedFor
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
 
         <p>Abstract send channel. It is a base class for all send channel implementations.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="../-actor-job/index.html">ActorJob</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">ActorJob</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
-
-        <p>Return type for <a href="../actor.html">actor</a> coroutine builder.</p>
 
       </td>
 </tr>

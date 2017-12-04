@@ -31,7 +31,7 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L253">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L270">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="#">BlockingQueue</a>,
@@ -159,6 +159,21 @@ is passed into the corresponding block.</p>
 <tr>
 <td>
 
+        <p><a href="../-receive-channel/cancel.html">cancel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels reception of remaining elements from this channel. This function closes the channel with
+the specified cause (unless it was already closed) and removes all buffered sent elements from it.
+This function returns <code>true</code> if the channel was not closed previously, or <code>false</code> otherwise.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../-send-channel/close.html">close</a></p>
 
       </td>
@@ -167,10 +182,7 @@ is passed into the corresponding block.</p>
 
         <p>Closes this channel with an optional exceptional <a href="../-send-channel/close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
-Conceptually, its sends a special “close token” over this channel. Immediately after invocation of this function
-<a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> starts returning <code>true</code>. However, <a href="../-receive-channel/is-closed-for-receive.html">isClosedForReceive</a>
-on the side of <a href="../-receive-channel/index.html">ReceiveChannel</a> starts returning <code>true</code> only after all previously sent elements
-are received.</p>
+Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
 </tr>
@@ -280,6 +292,117 @@ the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets crea
 <tr>
 <td>
 
+        <p><a href="../all.html">all</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">all</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$all(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.all.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.all.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if all elements match the given <a href="../all.html#kotlinx.coroutines.experimental.channels$all(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.all.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.all.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../any.html">any</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">any</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if channel has at least one element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">any</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$any(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.any.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.any.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if at least one element matches the given <a href="../any.html#kotlinx.coroutines.experimental.channels$any(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.any.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.any.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../associate.html">associate</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associate</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associate(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associate.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associate.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associate.K, kotlinx.coroutines.experimental.channels.associate.V)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><span class="identifier">Pair</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a> containing key-value pairs provided by <a href="../associate.html#kotlinx.coroutines.experimental.channels$associate(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associate.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associate.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associate.K, kotlinx.coroutines.experimental.channels.associate.V)))))/transform">transform</a> function
+applied to elements of the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../associate-by.html">associateBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a> containing the elements from the given channel indexed by the key
+returned from <a href="../associate-by.html#kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)))/keySelector">keySelector</a> function applied to each element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/valueTransform">valueTransform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a> containing the values provided by <a href="../associate-by.html#kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/valueTransform">valueTransform</a> and indexed by <a href="../associate-by.html#kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/keySelector">keySelector</a> functions applied to elements of the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../associate-by-to.html">associateByTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code></div>
+
+        <p>Populates and returns the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/destination">destination</a> mutable map with key-value pairs,
+where key is provided by the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)))/keySelector">keySelector</a> function applied to each element of the given channel
+and value is the element itself.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/valueTransform">valueTransform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code></div>
+
+        <p>Populates and returns the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/destination">destination</a> mutable map with key-value pairs,
+where key is provided by the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/keySelector">keySelector</a> function and
+and value is provided by the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/valueTransform">valueTransform</a> function applied to elements of the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../associate-to.html">associateTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">associateTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateTo.E)), kotlinx.coroutines.experimental.channels.associateTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateTo.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associateTo.K, kotlinx.coroutines.experimental.channels.associateTo.V)))))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$associateTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateTo.E)), kotlinx.coroutines.experimental.channels.associateTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateTo.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associateTo.K, kotlinx.coroutines.experimental.channels.associateTo.V)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><span class="identifier">Pair</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<span class="identifier">V</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code></div>
+
+        <p>Populates and returns the <a href="../associate-to.html#kotlinx.coroutines.experimental.channels$associateTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateTo.E)), kotlinx.coroutines.experimental.channels.associateTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateTo.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associateTo.K, kotlinx.coroutines.experimental.channels.associateTo.V)))))/destination">destination</a> mutable map with key-value pairs
+provided by <a href="../associate-to.html#kotlinx.coroutines.experimental.channels$associateTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateTo.E)), kotlinx.coroutines.experimental.channels.associateTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateTo.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associateTo.K, kotlinx.coroutines.experimental.channels.associateTo.V)))))/transform">transform</a> function applied to each element of the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../consume.html">consume</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</span><span class="symbol">:</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+
+        <p>Makes sure that the given <a href="../consume.html#kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</a> consumes all elements from the given channel
+by always invoking <a href="../-receive-channel/cancel.html">cancel</a> after the execution of the block.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../consume-each.html">consumeEach</a></p>
 
       </td>
@@ -287,6 +410,904 @@ the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets crea
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEach</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../consume-each-indexed.html">consumeEachIndexed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumeEachIndexed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumeEachIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Function1((kotlin.collections.IndexedValue((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Unit)))/action">action</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-indexed-value/index.html"><span class="identifier">IndexedValue</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Performs the given <a href="../consume-each-indexed.html#kotlinx.coroutines.experimental.channels$consumeEachIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Function1((kotlin.collections.IndexedValue((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Unit)))/action">action</a> for each received element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../count.html">count</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the number of elements in this channel.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">count</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$count(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.count.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.count.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the number of elements matching the given <a href="../count.html#kotlinx.coroutines.experimental.channels$count(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.count.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.count.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../distinct.html">distinct</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinct</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only distinct elements from the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../distinct-by.html">distinctBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">distinctBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$distinctBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.distinctBy.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.distinctBy.E, kotlinx.coroutines.experimental.channels.distinctBy.K)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$distinctBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.distinctBy.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.distinctBy.E, kotlinx.coroutines.experimental.channels.distinctBy.K)))/selector">selector</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only elements from the given channel
+having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.coroutines.experimental.channels$distinctBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.distinctBy.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.distinctBy.E, kotlinx.coroutines.experimental.channels.distinctBy.K)))/selector">selector</a> function.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../drop.html">drop</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">drop</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$drop(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.drop.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$drop(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.drop.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing all elements except first <a href="../drop.html#kotlinx.coroutines.experimental.channels$drop(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.drop.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</a> elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../drop-while.html">dropWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">dropWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$dropWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.dropWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.dropWhile.E, kotlin.Boolean)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$dropWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.dropWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.dropWhile.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing all elements except first elements that satisfy the given <a href="../drop-while.html#kotlinx.coroutines.experimental.channels$dropWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.dropWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.dropWhile.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../element-at.html">elementAt</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">elementAt</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$elementAt(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAt.E)), kotlin.Int)/index">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns an element at the given <a href="../element-at.html#kotlinx.coroutines.experimental.channels$elementAt(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAt.E)), kotlin.Int)/index">index</a> or throws an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-index-out-of-bounds-exception/index.html">IndexOutOfBoundsException</a> if the <a href="../element-at.html#kotlinx.coroutines.experimental.channels$elementAt(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAt.E)), kotlin.Int)/index">index</a> is out of bounds of this channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../element-at-or-else.html">elementAtOrElse</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">elementAtOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/index">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">E</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns an element at the given <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/index">index</a> or the result of calling the <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/defaultValue">defaultValue</a> function if the <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/index">index</a> is out of bounds of this channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../element-at-or-null.html">elementAtOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">elementAtOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$elementAtOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrNull.E)), kotlin.Int)/index">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns an element at the given <a href="../element-at-or-null.html#kotlinx.coroutines.experimental.channels$elementAtOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrNull.E)), kotlin.Int)/index">index</a> or <code>null</code> if the <a href="../element-at-or-null.html#kotlinx.coroutines.experimental.channels$elementAtOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrNull.E)), kotlin.Int)/index">index</a> is out of bounds of this channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter.html">filter</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filter</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filter(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filter.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filter.E, kotlin.Boolean)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filter(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filter.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filter.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only elements matching the given <a href="../filter.html#kotlinx.coroutines.experimental.channels$filter(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filter.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filter.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-indexed.html">filterIndexed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterIndexed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexed.E, kotlin.Boolean)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexed.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only elements matching the given <a href="../filter-indexed.html#kotlinx.coroutines.experimental.channels$filterIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexed.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-indexed-to.html">filterIndexedTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterIndexedTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Appends all elements matching the given <a href="../filter-indexed-to.html#kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-indexed-to.html#kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-not.html">filterNot</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNot</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing all elements not matching the given <a href="../filter-not.html#kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-not-null.html">filterNotNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">?</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNotNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing all elements that are not <code>null</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-not-null-to.html">filterNotNullTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">?</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNotNullTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotNullTo.E)), kotlinx.coroutines.experimental.channels.filterNotNullTo.C)/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Appends all elements that are not <code>null</code> to the given <a href="../filter-not-null-to.html#kotlinx.coroutines.experimental.channels$filterNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotNullTo.E)), kotlinx.coroutines.experimental.channels.filterNotNullTo.C)/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-not-to.html">filterNotTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNotTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Appends all elements not matching the given <a href="../filter-not-to.html#kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-not-to.html#kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../filter-to.html">filterTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Appends all elements matching the given <a href="../filter-to.html#kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-to.html#kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../find.html">find</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">find</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$find(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.find.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.find.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element matching the given <a href="../find.html#kotlinx.coroutines.experimental.channels$find(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.find.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.find.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../find-last.html">findLast</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">findLast</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$findLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.findLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.findLast.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the last element matching the given <a href="../find-last.html#kotlinx.coroutines.experimental.channels$findLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.findLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.findLast.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../first.html">first</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">first</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns first element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">first</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$first(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.first.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.first.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns the first element matching the given <a href="../first.html#kotlinx.coroutines.experimental.channels$first(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.first.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.first.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../first-or-null.html">firstOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element, or <code>null</code> if the channel is empty.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">firstOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$firstOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.firstOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.firstOrNull.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element matching the given <a href="../first-or-null.html#kotlinx.coroutines.experimental.channels$firstOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.firstOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.firstOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if element was not found.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../flat-map.html">flatMap</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">flatMap</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$flatMap(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.flatMap.E, kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.R)))))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$flatMap(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.flatMap.E, kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.R)))))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a single channel of all elements from results of <a href="../flat-map.html#kotlinx.coroutines.experimental.channels$flatMap(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.flatMap.E, kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.R)))))/transform">transform</a> function being invoked on each element of original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../fold.html">fold</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">fold</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/initial">initial</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+
+        <p>Accumulates value starting with <a href="../fold.html#kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/initial">initial</a> value and applying <a href="../fold.html#kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/operation">operation</a> from left to right to current accumulator value and each element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../fold-indexed.html">foldIndexed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">foldIndexed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$foldIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.foldIndexed.E)), kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlinx.coroutines.experimental.channels.foldIndexed.E, )))/initial">initial</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$foldIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.foldIndexed.E)), kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlinx.coroutines.experimental.channels.foldIndexed.E, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+
+        <p>Accumulates value starting with <a href="../fold-indexed.html#kotlinx.coroutines.experimental.channels$foldIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.foldIndexed.E)), kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlinx.coroutines.experimental.channels.foldIndexed.E, )))/initial">initial</a> value and applying <a href="../fold-indexed.html#kotlinx.coroutines.experimental.channels$foldIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.foldIndexed.E)), kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.foldIndexed.R, kotlinx.coroutines.experimental.channels.foldIndexed.E, )))/operation">operation</a> from left to right
+to current accumulator value and each element with its index in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../group-by.html">groupBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">groupBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Groups elements of the original channel by the key returned by the given <a href="../group-by.html#kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)))/keySelector">keySelector</a> function
+applied to each element and returns a map where each group key is associated with a list of corresponding elements.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">groupBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.V)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.V)))/valueTransform">valueTransform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><span class="identifier">K</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><span class="identifier">V</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Groups values returned by the <a href="../group-by.html#kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.V)))/valueTransform">valueTransform</a> function applied to each element of the original channel
+by the key returned by the given <a href="../group-by.html#kotlinx.coroutines.experimental.channels$groupBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupBy.E, kotlinx.coroutines.experimental.channels.groupBy.V)))/keySelector">keySelector</a> function applied to the element
+and returns a map where each group key is associated with a list of corresponding values.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../group-by-to.html">groupByTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><span class="identifier">MutableList</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">groupByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code></div>
+
+        <p>Groups elements of the original channel by the key returned by the given <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)))/keySelector">keySelector</a> function
+applied to each element and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)))/destination">destination</a> map each group key associated with a list of corresponding elements.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">K</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">, </span><span class="identifier">M</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html"><span class="identifier">MutableMap</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">K</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><span class="identifier">MutableList</span></a><span class="symbol">&lt;</span><span class="identifier">V</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">groupByTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">M</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/keySelector">keySelector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">K</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/valueTransform">valueTransform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">M</span></code></div>
+
+        <p>Groups values returned by the <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/valueTransform">valueTransform</a> function applied to each element of the original channel
+by the key returned by the given <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/keySelector">keySelector</a> function applied to the element
+and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/destination">destination</a> map each group key associated with a list of corresponding values.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../index-of.html">indexOf</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">indexOf</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$indexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOf.E)), kotlinx.coroutines.experimental.channels.indexOf.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns first index of <a href="../index-of.html#kotlinx.coroutines.experimental.channels$indexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOf.E)), kotlinx.coroutines.experimental.channels.indexOf.E)/element">element</a>, or -1 if the channel does not contain element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../index-of-first.html">indexOfFirst</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">indexOfFirst</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$indexOfFirst(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfFirst.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfFirst.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns index of the first element matching the given <a href="../index-of-first.html#kotlinx.coroutines.experimental.channels$indexOfFirst(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfFirst.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfFirst.E, kotlin.Boolean)))/predicate">predicate</a>, or -1 if the channel does not contain such element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../index-of-last.html">indexOfLast</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">indexOfLast</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$indexOfLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfLast.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns index of the last element matching the given <a href="../index-of-last.html#kotlinx.coroutines.experimental.channels$indexOfLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfLast.E, kotlin.Boolean)))/predicate">predicate</a>, or -1 if the channel does not contain such element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../last.html">last</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">last</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns the last element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">last</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$last(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.last.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.last.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns the last element matching the given <a href="../last.html#kotlinx.coroutines.experimental.channels$last(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.last.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.last.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../last-index-of.html">lastIndexOf</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">lastIndexOf</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$lastIndexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastIndexOf.E)), kotlinx.coroutines.experimental.channels.lastIndexOf.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns last index of <a href="../last-index-of.html#kotlinx.coroutines.experimental.channels$lastIndexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastIndexOf.E)), kotlinx.coroutines.experimental.channels.lastIndexOf.E)/element">element</a>, or -1 if the channel does not contain element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../last-or-null.html">lastOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">lastOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the last element, or <code>null</code> if the channel is empty.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">lastOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$lastOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.lastOrNull.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the last element matching the given <a href="../last-or-null.html#kotlinx.coroutines.experimental.channels$lastOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.lastOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map.html">map</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">map</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$map(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.map.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.map.E, kotlinx.coroutines.experimental.channels.map.R)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$map(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.map.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.map.E, kotlinx.coroutines.experimental.channels.map.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing the results of applying the given <a href="../map.html#kotlinx.coroutines.experimental.channels$map(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.map.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.map.E, kotlinx.coroutines.experimental.channels.map.R)))/transform">transform</a> function
+to each element in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-indexed.html">mapIndexed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapIndexed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexed.E, kotlinx.coroutines.experimental.channels.mapIndexed.R)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexed.E, kotlinx.coroutines.experimental.channels.mapIndexed.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing the results of applying the given <a href="../map-indexed.html#kotlinx.coroutines.experimental.channels$mapIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexed.E, kotlinx.coroutines.experimental.channels.mapIndexed.R)))/transform">transform</a> function
+to each element and its index in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-indexed-not-null.html">mapIndexedNotNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapIndexedNotNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.R)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only the non-null results of applying the given <a href="../map-indexed-not-null.html#kotlinx.coroutines.experimental.channels$mapIndexedNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNull.R)))/transform">transform</a> function
+to each element and its index in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-indexed-not-null-to.html">mapIndexedNotNullTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapIndexedNotNullTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.R)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Applies the given <a href="../map-indexed-not-null-to.html#kotlinx.coroutines.experimental.channels$mapIndexedNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.R)))/transform">transform</a> function to each element and its index in the original channel
+and appends only the non-null results to the given <a href="../map-indexed-not-null-to.html#kotlinx.coroutines.experimental.channels$mapIndexedNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.R)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-indexed-to.html">mapIndexedTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapIndexedTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedTo.E, kotlinx.coroutines.experimental.channels.mapIndexedTo.R)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedTo.E, kotlinx.coroutines.experimental.channels.mapIndexedTo.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Applies the given <a href="../map-indexed-to.html#kotlinx.coroutines.experimental.channels$mapIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedTo.E, kotlinx.coroutines.experimental.channels.mapIndexedTo.R)))/transform">transform</a> function to each element and its index in the original channel
+and appends the results to the given <a href="../map-indexed-to.html#kotlinx.coroutines.experimental.channels$mapIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedTo.E, kotlinx.coroutines.experimental.channels.mapIndexedTo.R)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-not-null.html">mapNotNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapNotNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.mapNotNull.E, kotlinx.coroutines.experimental.channels.mapNotNull.R)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.mapNotNull.E, kotlinx.coroutines.experimental.channels.mapNotNull.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing only the non-null results of applying the given <a href="../map-not-null.html#kotlinx.coroutines.experimental.channels$mapNotNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNull.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.mapNotNull.E, kotlinx.coroutines.experimental.channels.mapNotNull.R)))/transform">transform</a> function
+to each element in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-not-null-to.html">mapNotNullTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapNotNullTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapNotNullTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapNotNullTo.E, kotlinx.coroutines.experimental.channels.mapNotNullTo.R)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapNotNullTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapNotNullTo.E, kotlinx.coroutines.experimental.channels.mapNotNullTo.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><span class="symbol">?</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Applies the given <a href="../map-not-null-to.html#kotlinx.coroutines.experimental.channels$mapNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapNotNullTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapNotNullTo.E, kotlinx.coroutines.experimental.channels.mapNotNullTo.R)))/transform">transform</a> function to each element in the original channel
+and appends only the non-null results to the given <a href="../map-not-null-to.html#kotlinx.coroutines.experimental.channels$mapNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapNotNullTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapNotNullTo.E, kotlinx.coroutines.experimental.channels.mapNotNullTo.R)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../map-to.html">mapTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">mapTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapTo.E)), kotlinx.coroutines.experimental.channels.mapTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapTo.E, kotlinx.coroutines.experimental.channels.mapTo.R)))/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$mapTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapTo.E)), kotlinx.coroutines.experimental.channels.mapTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapTo.E, kotlinx.coroutines.experimental.channels.mapTo.R)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Applies the given <a href="../map-to.html#kotlinx.coroutines.experimental.channels$mapTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapTo.E)), kotlinx.coroutines.experimental.channels.mapTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapTo.E, kotlinx.coroutines.experimental.channels.mapTo.R)))/transform">transform</a> function to each element of the original channel
+and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.experimental.channels$mapTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapTo.E)), kotlinx.coroutines.experimental.channels.mapTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapTo.E, kotlinx.coroutines.experimental.channels.mapTo.R)))/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../max-by.html">maxBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.html"><span class="identifier">Comparable</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">maxBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$maxBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.maxBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.maxBy.E, kotlinx.coroutines.experimental.channels.maxBy.R)))/selector">selector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element yielding the largest value of the given function or <code>null</code> if there are no elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../max-with.html">maxWith</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">maxWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$maxWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.maxWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.maxWith.E)))/comparator">comparator</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparator/index.html"><span class="identifier">Comparator</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element having the largest value according to the provided <a href="../max-with.html#kotlinx.coroutines.experimental.channels$maxWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.maxWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.maxWith.E)))/comparator">comparator</a> or <code>null</code> if there are no elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../min-by.html">minBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparable/index.html"><span class="identifier">Comparable</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">minBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$minBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.minBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.minBy.E, kotlinx.coroutines.experimental.channels.minBy.R)))/selector">selector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">R</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element yielding the smallest value of the given function or <code>null</code> if there are no elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../min-with.html">minWith</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">minWith</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$minWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.minWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.minWith.E)))/comparator">comparator</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-comparator/index.html"><span class="identifier">Comparator</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the first element having the smallest value according to the provided <a href="../min-with.html#kotlinx.coroutines.experimental.channels$minWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.minWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.minWith.E)))/comparator">comparator</a> or <code>null</code> if there are no elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../none.html">none</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">none</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if the channel has no elements.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">none</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$none(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.none.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.none.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> if no elements match the given <a href="../none.html#kotlinx.coroutines.experimental.channels$none(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.none.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.none.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../partition.html">partition</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">partition</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$partition(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.partition.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><span class="identifier">Pair</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Splits the original channel into pair of lists,
+where <em>first</em> list contains elements for which <a href="../partition.html#kotlinx.coroutines.experimental.channels$partition(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.partition.E, kotlin.Boolean)))/predicate">predicate</a> yielded <code>true</code>,
+while <em>second</em> list contains elements for which <a href="../partition.html#kotlinx.coroutines.experimental.channels$partition(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.partition.E, kotlin.Boolean)))/predicate">predicate</a> yielded <code>false</code>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../reduce.html">reduce</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">S</span><span class="symbol">, </span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">S</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">reduce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$reduce(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.reduce.E)), kotlin.Function2((kotlinx.coroutines.experimental.channels.reduce.S, kotlinx.coroutines.experimental.channels.reduce.E, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<span class="identifier">S</span><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">S</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">S</span></code></div>
+
+        <p>Accumulates value starting with the first element and applying <a href="../reduce.html#kotlinx.coroutines.experimental.channels$reduce(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.reduce.E)), kotlin.Function2((kotlinx.coroutines.experimental.channels.reduce.S, kotlinx.coroutines.experimental.channels.reduce.E, )))/operation">operation</a> from left to right to current accumulator value and each element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../reduce-indexed.html">reduceIndexed</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">S</span><span class="symbol">, </span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">S</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">reduceIndexed</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$reduceIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.reduceIndexed.E)), kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.reduceIndexed.S, kotlinx.coroutines.experimental.channels.reduceIndexed.E, )))/operation">operation</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">acc</span><span class="symbol">:</span>&nbsp;<span class="identifier">S</span><span class="symbol">,</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">S</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">S</span></code></div>
+
+        <p>Accumulates value starting with the first element and applying <a href="../reduce-indexed.html#kotlinx.coroutines.experimental.channels$reduceIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.reduceIndexed.E)), kotlin.Function3((kotlin.Int, kotlinx.coroutines.experimental.channels.reduceIndexed.S, kotlinx.coroutines.experimental.channels.reduceIndexed.E, )))/operation">operation</a> from left to right
+to current accumulator value and each element with its index in the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../require-no-nulls.html">requireNoNulls</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">?</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">requireNoNulls</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns an original collection containing all the non-<code>null</code> elements, throwing an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if there are any <code>null</code> elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../send-blocking.html">sendBlocking</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Adds <a href="../send-blocking.html#kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="../-send-channel/is-full.html">Channel.isFull</a>,
+or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="../-send-channel/close.html">Channel.close</a> for details).</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../single.html">single</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns the single element, or throws an exception if the channel is empty or has more than one element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">single</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$single(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.single.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.single.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span></code></div>
+
+        <p>Returns the single element matching the given <a href="../single.html#kotlinx.coroutines.experimental.channels$single(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.single.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.single.E, kotlin.Boolean)))/predicate">predicate</a>, or throws exception if there is no or more than one matching element.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../single-or-null.html">singleOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">singleOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns single element, or <code>null</code> if the channel is empty or has more than one element.</p>
+
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">singleOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$singleOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.singleOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.singleOrNull.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">E</span><span class="symbol">?</span></code></div>
+
+        <p>Returns the single element matching the given <a href="../single-or-null.html#kotlinx.coroutines.experimental.channels$singleOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.singleOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.singleOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if element was not found or more than one element was found.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../sum-by.html">sumBy</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sumBy</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$sumBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumBy.E, kotlin.Int)))/selector">selector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Returns the sum of all values produced by <a href="../sum-by.html#kotlinx.coroutines.experimental.channels$sumBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumBy.E, kotlin.Int)))/selector">selector</a> function applied to each element in the channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../sum-by-double.html">sumByDouble</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sumByDouble</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$sumByDouble(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumByDouble.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumByDouble.E, kotlin.Double)))/selector">selector</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.html"><span class="identifier">Double</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-double/index.html"><span class="identifier">Double</span></a></code></div>
+
+        <p>Returns the sum of all values produced by <a href="../sum-by-double.html#kotlinx.coroutines.experimental.channels$sumByDouble(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumByDouble.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumByDouble.E, kotlin.Double)))/selector">selector</a> function applied to each element in the channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../take.html">take</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">take</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$take(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.take.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$take(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.take.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing first <a href="../take.html#kotlinx.coroutines.experimental.channels$take(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.take.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</a> elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../take-while.html">takeWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">takeWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$takeWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.takeWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.takeWhile.E, kotlin.Boolean)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$takeWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.takeWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.takeWhile.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="identifier">E</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel containing first elements satisfying the given <a href="../take-while.html#kotlinx.coroutines.experimental.channels$takeWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.takeWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.takeWhile.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-channel.html">toChannel</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toChannel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$toChannel(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toChannel.E)), kotlinx.coroutines.experimental.channels.toChannel.C)/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Send each element of the original channel
+and appends the results to the given <a href="../to-channel.html#kotlinx.coroutines.experimental.channels$toChannel(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toChannel.E)), kotlinx.coroutines.experimental.channels.toChannel.C)/destination">destination</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-collection.html">toCollection</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">C</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-collection/index.html"><span class="identifier">MutableCollection</span></a><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toCollection</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$toCollection(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toCollection.E)), kotlinx.coroutines.experimental.channels.toCollection.C)/destination">destination</span><span class="symbol">:</span>&nbsp;<span class="identifier">C</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">C</span></code></div>
+
+        <p>Appends all elements to the given <a href="../to-collection.html#kotlinx.coroutines.experimental.channels$toCollection(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toCollection.E)), kotlinx.coroutines.experimental.channels.toCollection.C)/destination">destination</a> collection.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-list.html">toList</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toList</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a> containing all elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-mutable-list.html">toMutableList</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toMutableList</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><span class="identifier">MutableList</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html">MutableList</a> filled with all elements of this channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-mutable-set.html">toMutableSet</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toMutableSet</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-set/index.html"><span class="identifier">MutableSet</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a mutable set containing all distinct elements from the given channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../to-set.html">toSet</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toSet</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html"><span class="identifier">Set</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a> of all elements.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../with-index.html">withIndex</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">withIndex</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$withIndex(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.withIndex.E)), kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-indexed-value/index.html"><span class="identifier">IndexedValue</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-indexed-value/index.html">IndexedValue</a> for each element of the original channel.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../zip.html">zip</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">infix</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">zip</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><span class="identifier">Pair</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">,</span>&nbsp;<span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel of pairs built from elements of both channels with same indexes.
+Resulting channel has length of shortest input channel.</p>
+
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">zip</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">a</span><span class="symbol">:</span>&nbsp;<span class="identifier">E</span><span class="symbol">,</span>&nbsp;<span class="parameterName">b</span><span class="symbol">:</span>&nbsp;<span class="identifier">R</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">V</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">V</span><span class="symbol">&gt;</span></code></div>
+
+        <p>Returns a channel of values built from elements of both collections with same indexes using provided <a href="../zip.html#kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/transform">transform</a>. Resulting channel has length of shortest input channels.</p>
 
       </td>
 </tr>

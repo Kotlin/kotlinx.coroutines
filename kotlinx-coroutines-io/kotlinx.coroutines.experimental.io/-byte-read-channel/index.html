@@ -31,7 +31,7 @@
 
 <h1 id="bytereadchannel">ByteReadChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ByteReadChannel</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-io/src/main/kotlin/kotlinx/coroutines/experimental/io/ByteReadChannel.kt#L12">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ByteReadChannel</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-io/src/main/kotlin/kotlinx/coroutines/experimental/io/ByteReadChannel.kt#L14">(source)</a></div>
 
 <p>Channel for asynchronous reading of sequences of bytes.
 This is a <strong>single-reader channel</strong>.</p>
@@ -182,6 +182,8 @@ suspend until the requirement will be met.</p>
 
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readAvailable(java.nio.ByteBuffer)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readAvailable(kotlinx.io.core.BufferView)/dst">dst</span><span class="symbol">:</span>&nbsp;<span class="identifier">BufferView</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
       </td>
 </tr>
 <tr>
@@ -293,7 +295,7 @@ and not enough bytes.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readPacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/size">size</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.io.packet/-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">readPacket</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/size">size</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/headerSizeHint">headerSizeHint</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.io.packet/-byte-read-packet.html"><span class="identifier">ByteReadPacket</span></a></code></div>
 
         <p>Reads the specified amount of bytes and makes a byte packet from them. Fails if channel has been closed
 and not enough bytes available. Accepts <a href="read-packet.html#kotlinx.coroutines.experimental.io.ByteReadChannel$readPacket(kotlin.Int, kotlin.Int)/headerSizeHint">headerSizeHint</a> to be provided, see <a href="../../kotlinx.coroutines.experimental.io.packet/-write-packet.html">WritePacket</a>.</p>
@@ -367,6 +369,17 @@ Closes <a href="../copy-to.html#kotlinx.coroutines.experimental.io$copyTo(kotlin
 <tr>
 <td>
 
+        <p><a href="../join-to.html">joinTo</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">ByteReadChannel</span><span class="symbol">.</span><span class="identifier">joinTo</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$joinTo(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Boolean)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$joinTo(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Boolean)/closeOnEnd">closeOnEnd</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="../read-a-s-c-i-i-line.html">readASCIILine</a></p>
 
       </td>
@@ -393,7 +406,7 @@ Closes <a href="../copy-to.html#kotlinx.coroutines.experimental.io$copyTo(kotlin
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">ByteReadChannel</span><span class="symbol">.</span><span class="identifier">readRemaining</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$readRemaining(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlin.Int)/limit">limit</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.io.packet/-byte-read-packet/index.html"><span class="identifier">ByteReadPacket</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">ByteReadChannel</span><span class="symbol">.</span><span class="identifier">readRemaining</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$readRemaining(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlin.Int)/limit">limit</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Int.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.io.packet/-byte-read-packet.html"><span class="identifier">ByteReadPacket</span></a></code></div>
 
         <p>Reads all the bytes from receiver channel and builds a packet that is returned unless the specified <a href="../read-remaining.html#kotlinx.coroutines.experimental.io$readRemaining(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlin.Int)/limit">limit</a> exceeded.
 It will simply stop reading and return packet of size <a href="../read-remaining.html#kotlinx.coroutines.experimental.io$readRemaining(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlin.Int)/limit">limit</a> in this case</p>
