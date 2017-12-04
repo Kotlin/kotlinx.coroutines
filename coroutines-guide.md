@@ -1425,7 +1425,8 @@ The following example prints the first ten prime numbers,
 running the whole pipeline in the context of the main thread. Since all the coroutines are launched as
 children of the main [runBlocking] coroutine in its [coroutineContext][CoroutineScope.coroutineContext],
 we don't have to keep an explicit list of all the coroutine we have started. 
-We use [cancelChildren] extension function to cancel all the children coroutines. 
+We use [cancelChildren][kotlin.coroutines.experimental.CoroutineContext.cancelChildren] 
+extension function to cancel all the children coroutines. 
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -2371,7 +2372,7 @@ Channel was closed
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html
-[cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
+[kotlin.coroutines.experimental.CoroutineContext.cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-completable-deferred/index.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->

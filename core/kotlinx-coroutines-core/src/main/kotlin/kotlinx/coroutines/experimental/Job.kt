@@ -30,6 +30,7 @@ import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.buildSequence
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 // --------------- core job interfaces ---------------
@@ -37,7 +38,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 /**
  * A background job. Conceptually, a job is a cancellable thing with a simple life-cycle that
  * culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
- * or completion of parent immediately cancels all its children.
+ * or completion of parent immediately cancels all its [children].
  *
  * The most basic instances of [Job] are created with [launch] coroutine builder or with a
  * `Job()` factory function.  Other coroutine builders and primitives like
@@ -60,7 +61,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *
  * A job can be _cancelled_ at any time with [cancel] function that forces it to transition to
  * _cancelling_ state immediately. Job that is not backed by a coroutine and does not have
- * children becomes _cancelled_ on [cancel] immediately.
+ * [children] becomes _cancelled_ on [cancel] immediately.
  * Otherwise, job becomes _cancelled_  when it finishes executing its code and
  * when all its children [complete][isCompleted].
  *
@@ -117,7 +118,7 @@ public interface Job : CoroutineContext.Element {
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed or cancelled yet.
-     * The job that is waiting for its children to complete is still considered to be active if it
+     * The job that is waiting for its [children] to complete is still considered to be active if it
      * was not cancelled.
      */
     public val isActive: Boolean
@@ -125,7 +126,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * Returns `true` when this job has completed for any reason. A job that was cancelled and has
      * finished its execution is also considered complete. Job becomes complete only after
-     * all its children complete.
+     * all its [children] complete.
      */
     public val isCompleted: Boolean
 
@@ -181,6 +182,25 @@ public interface Job : CoroutineContext.Element {
     // ------------ parent-child ------------
 
     /**
+     * Returns a sequence of this job's children.
+     *
+     * A job becomes a child of this job when it is constructed with this job in its
+     * [CoroutineContext] or using an explicit `parent` parameter.
+     *
+     * A parent-child relation has the following effect:
+     *
+     * * Cancellation of parent with [cancel] or its exceptional completion (failure)
+     *   immediately cancels all its children.
+     * * Parent cannot complete until all its children are complete. Parent waits for all its children to
+     *   complete in _completing_ or _cancelling_ state.
+     * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
+     *   children created with [launch] coroutine builder. Note, that [async] and other future-like
+     *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
+     *   caught and are encapsulated in their result.
+     */
+    public val children: Sequence<Job>
+
+    /**
      * Attaches child job so that this job becomes its parent and
      * returns a handle that should be used to detach it.
      *
@@ -205,7 +225,9 @@ public interface Job : CoroutineContext.Element {
     /**
      * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
      * the state of this job itself is not affected.
+     * @suppress **Deprecated**: Binary compatibility, it is an extension now
      */
+    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
     public fun cancelChildren(cause: Throwable? = null)
 
     // ------------ state waiting ------------
@@ -385,6 +407,8 @@ public class JobCancellationException(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
+// -------------------- Job extensions --------------------
+
 /**
  * Unregisters a specified [registration] when this job is complete.
  *
@@ -439,6 +463,25 @@ public suspend fun Job.cancelAndJoin() {
     cancel()
     return join()
 }
+
+/**
+ * Cancels all [children][Job.children] jobs of this coroutine with the given [cause] using [cancel]
+ * for all of them. Unlike [cancel] on this job as a whole, the state of this job itself is not affected.
+ */
+public fun Job.cancelChildren(cause: Throwable? = null) {
+    children.forEach { it.cancel(cause) }
+}
+
+/**
+ * Suspends coroutine until all [children][Job.children] of this job are complete using
+ * [join] for all of them. Unlike [join] on this job as a whole, it does not wait until
+ * this job is complete.
+ */
+public suspend fun Job.joinChildren() {
+    children.forEach { it.join() }
+}
+
+// -------------------- CoroutineContext extensions --------------------
 
 /**
  * Cancels [Job] of this context with an optional cancellation [cause]. The result is `true` if the job was
@@ -1057,19 +1100,21 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         }
     }
 
+    override val children: Sequence<Job> get() = buildSequence<Job> {
+        val state = this@JobSupport.state
+        when (state) {
+            is Child -> yield(state.childJob)
+            is Incomplete -> state.list?.let { list ->
+                list.forEach<Child> { yield(it.childJob) }
+            }
+        }
+    }
+
     override fun attachChild(child: Job): DisposableHandle =
         invokeOnCompletion(onCancelling = true, handler = Child(this, child))
 
     public override fun cancelChildren(cause: Throwable?) {
-        val state = this.state
-        when (state) {
-            is Child -> state.childJob.cancel(cause)
-            is Incomplete -> state.list?.cancelChildrenList(cause)
-        }
-    }
-
-    private fun NodeList.cancelChildrenList(cause: Throwable?) {
-        forEach<Child> { it.childJob.cancel(cause) }
+        this.cancelChildren(cause) // use extension function
     }
 
     /**

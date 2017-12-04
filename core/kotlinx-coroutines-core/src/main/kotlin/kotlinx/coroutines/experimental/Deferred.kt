@@ -48,7 +48,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * _cancelling_ state immediately. A simple implementation of deferred -- [CompletableDeferred],
  * that is not backed by a coroutine, does not have a _cancelling_ state, but becomes _cancelled_
  * on [cancel] immediately. Coroutines, on the other hand, become _cancelled_ only when they finish
- * executing their code and after all their children complete.
+ * executing their code and after all their [children] complete.
  *
  * ```
  *                                                     wait children
@@ -71,7 +71,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * or the cancellation cause inside the coroutine.
  *
  * A deferred value can have a _parent_ job. A deferred value with a parent is cancelled when its parent is
- * cancelled or completes. Parent waits for all its children to complete in _completing_ or
+ * cancelled or completes. Parent waits for all its [children] to complete in _completing_ or
  * _cancelling_ state. _Completing_ state is purely internal. For an outside observer a _completing_
  * deferred is still active, while internally it is waiting for its children.
  *

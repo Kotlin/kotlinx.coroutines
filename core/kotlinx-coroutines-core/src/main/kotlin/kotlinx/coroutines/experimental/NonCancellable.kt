@@ -72,9 +72,15 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /** Always returns `false`. */
     override fun cancel(cause: Throwable?): Boolean = false
 
+    /** Always returns [emptySequence]. */
+    override val children: Sequence<Job>
+        get() = emptySequence()
+
     /** Always returns [NonDisposableHandle] and does not do anything. */
+    @Suppress("OverridingDeprecatedMember")
     override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
 
     /** Does not do anything. */
+    @Suppress("OverridingDeprecatedMember")
     override fun cancelChildren(cause: Throwable?) {}
 }
