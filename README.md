@@ -60,7 +60,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.1.51</kotlin.version>
+    <kotlin.version>1.2.0</kotlin.version>
 </properties>
 ```
 
@@ -76,7 +76,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.1.51'
+    ext.kotlin_version = '1.2.0'
 }
 ```
 
