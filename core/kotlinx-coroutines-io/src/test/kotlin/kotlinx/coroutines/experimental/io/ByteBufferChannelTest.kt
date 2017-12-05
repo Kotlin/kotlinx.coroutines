@@ -1037,6 +1037,58 @@ class ByteBufferChannelTest {
         }
     }
 
+    @Test
+    fun testReadBlock() = runBlocking<Unit> {
+        var bytesRead = 0L
+
+        val r: (ByteBuffer) -> Unit = { bb ->
+            bytesRead += bb.remaining()
+            bb.position(bb.limit())
+        }
+
+        val j = launch(coroutineContext) {
+            while (!ch.isClosedForRead) {
+                ch.read(0, r)
+            }
+        }
+
+        yield()
+
+        ch.writeStringUtf8("OK\n")
+        ch.close()
+
+        j.join()
+        j.invokeOnCompletion {
+            it?.let { throw it }
+        }
+    }
+
+    @Test
+    fun testReadBlock2() = runBlocking<Unit> {
+        var bytesRead = 0L
+
+        val r: (ByteBuffer) -> Unit = { bb ->
+            bytesRead += bb.remaining()
+            bb.position(bb.limit())
+        }
+
+        val j = launch(coroutineContext) {
+            while (!ch.isClosedForRead) {
+                ch.read(0, r)
+            }
+        }
+
+        ch.writeStringUtf8("OK\n")
+        yield()
+        ch.close()
+
+        j.join()
+        j.invokeOnCompletion {
+            it?.let { throw it }
+        }
+    }
+
+
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
         val builder = BytePacketBuilder(0, pktPool)
         try {
