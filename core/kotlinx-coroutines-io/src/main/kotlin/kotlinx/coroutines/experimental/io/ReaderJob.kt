@@ -22,8 +22,9 @@ interface ReaderScope : CoroutineScope {
 
 fun reader(coroutineContext: CoroutineContext,
            channel: ByteChannel,
+           parent: Job? = null,
            block: suspend ReaderScope.() -> Unit): ReaderJob {
-    val newContext = newCoroutineContext(coroutineContext)
+    val newContext = newCoroutineContext(coroutineContext, parent)
     val coroutine = ReaderCoroutine(newContext, channel)
     coroutine.initParentJob(newContext[Job])
     block.startCoroutine(coroutine, coroutine)
@@ -32,7 +33,8 @@ fun reader(coroutineContext: CoroutineContext,
 
 fun reader(coroutineContext: CoroutineContext,
            autoFlush: Boolean = false,
-           block: suspend ReaderScope.() -> Unit): ReaderJob = reader(coroutineContext, ByteChannel(autoFlush), block)
+           parent: Job? = null,
+           block: suspend ReaderScope.() -> Unit): ReaderJob = reader(coroutineContext, ByteChannel(autoFlush), parent, block)
 
 private class ReaderCoroutine(context: CoroutineContext, channel: ByteChannel)
     : ByteChannelCoroutine(context, channel), ReaderJob, ReaderScope
