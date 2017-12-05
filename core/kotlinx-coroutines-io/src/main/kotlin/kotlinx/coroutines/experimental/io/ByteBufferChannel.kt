@@ -52,6 +52,12 @@ internal class ByteBufferChannel(
 
     override var readByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
     override var writeByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
+        set(newOrder) {
+            if (field != newOrder) {
+                field = newOrder
+                joining?.delegatedTo?.writeByteOrder = newOrder
+            }
+        }
 
     override val availableForRead: Int
         get() = state.capacity.availableForRead
@@ -244,6 +250,7 @@ internal class ByteBufferChannel(
         require(this !== delegate)
 
         val joined = JoiningState(delegate, delegateClose)
+        delegate.writeByteOrder = writeByteOrder
         this.joining = joined
 
         val alreadyClosed = closed

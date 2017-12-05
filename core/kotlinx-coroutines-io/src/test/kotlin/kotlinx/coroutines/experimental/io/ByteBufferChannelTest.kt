@@ -871,6 +871,32 @@ class ByteBufferChannelTest {
     }
 
     @Test
+    fun testJoinToDifferentEndian() = runBlocking {
+        val other = ByteBufferChannel(autoFlush = true, pool = pool)
+        other.writeByteOrder = ByteOrder.LITTLE_ENDIAN
+        ch.writeByteOrder = ByteOrder.BIG_ENDIAN
+
+        ch.writeInt(0x11223344) // BE
+
+        launch(coroutineContext) {
+            ch.joinTo(other, true)
+        }
+
+        yield()
+
+        ch.writeInt(0x55667788) // BE
+        ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
+        ch.writeInt(0x0abbccdd) // LE
+        ch.close()
+
+        other.readByteOrder = ByteOrder.BIG_ENDIAN
+        assertEquals(0x11223344, other.readInt()) // BE
+        assertEquals(0x55667788, other.readInt()) // BE
+        other.readByteOrder = ByteOrder.LITTLE_ENDIAN
+        assertEquals(0x0abbccdd, other.readInt()) // LE
+    }
+
+    @Test
     fun testReadThenRead() = runBlocking<Unit> {
         val phase = AtomicInteger(0)
 
