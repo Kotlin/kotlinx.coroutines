@@ -34,8 +34,10 @@ suspend fun ReadableByteChannel.copyTo(ch: ByteWriteChannel, limit: Long = Long.
         }
     }
 
+    val needFlush = !ch.autoFlush
     while (copied < limit && !eof) {
         ch.write(1, copy)
+        if (needFlush) ch.flush()
     }
 
     return copied
