@@ -5,6 +5,7 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.io.core.*
@@ -50,6 +51,17 @@ internal class ByteBufferChannel(
     private var readPosition = 0
     private var writePosition = 0
 
+    @Volatile
+    private var attachedJob: Job? = null
+
+    internal fun attachJob(job: Job) {
+        attachedJob?.cancel()
+        attachedJob = job
+        job.invokeOnCompletion {
+            attachedJob = null
+        }
+    }
+
     override var readByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
     override var writeByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
         set(newOrder) {
@@ -92,10 +104,12 @@ internal class ByteBufferChannel(
             joining?.let { ensureClosedJoined(it) }
         }
 
+        if (cause != null) attachedJob?.cancel(cause)
+
         return true
     }
 
-    suspend override fun cancel(cause: Throwable?): Boolean {
+    override fun cancel(cause: Throwable?): Boolean {
         return close(cause ?: CancellationException("Channel has been cancelled"))
     }
 

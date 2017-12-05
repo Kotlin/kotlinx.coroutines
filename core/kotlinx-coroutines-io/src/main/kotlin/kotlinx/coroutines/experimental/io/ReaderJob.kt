@@ -34,7 +34,12 @@ fun reader(coroutineContext: CoroutineContext,
 fun reader(coroutineContext: CoroutineContext,
            autoFlush: Boolean = false,
            parent: Job? = null,
-           block: suspend ReaderScope.() -> Unit): ReaderJob = reader(coroutineContext, ByteChannel(autoFlush), parent, block)
+           block: suspend ReaderScope.() -> Unit): ReaderJob {
+    val channel = ByteChannel(autoFlush) as ByteBufferChannel
+    val job = reader(coroutineContext, channel, parent, block)
+    channel.attachJob(job)
+    return job
+}
 
 private class ReaderCoroutine(context: CoroutineContext, channel: ByteChannel)
     : ByteChannelCoroutine(context, channel), ReaderJob, ReaderScope

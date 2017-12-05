@@ -1088,6 +1088,25 @@ class ByteBufferChannelTest {
         }
     }
 
+    @Test
+    fun testCancelWriter() = runBlocking {
+        val sub = writer(DefaultDispatcher) {
+            delay(1000000L)
+        }
+
+        sub.channel.cancel()
+        sub.join()
+    }
+
+    @Test
+    fun testCancelReader() = runBlocking {
+        val sub = reader(DefaultDispatcher) {
+            delay(10000000L)
+        }
+
+        sub.channel.close(CancellationException())
+        sub.join()
+    }
 
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
         val builder = BytePacketBuilder(0, pktPool)

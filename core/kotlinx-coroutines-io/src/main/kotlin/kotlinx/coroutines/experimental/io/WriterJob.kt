@@ -34,7 +34,12 @@ fun writer(coroutineContext: CoroutineContext,
 fun writer(coroutineContext: CoroutineContext,
            autoFlush: Boolean = false,
            parent: Job? = null,
-           block: suspend WriterScope.() -> Unit): WriterJob = writer(coroutineContext, ByteChannel(autoFlush), parent, block)
+           block: suspend WriterScope.() -> Unit): WriterJob {
+    val channel = ByteChannel(autoFlush) as ByteBufferChannel
+    val job = writer(coroutineContext, channel, parent, block)
+    channel.attachJob(job)
+    return job
+}
 
 private class WriterCoroutine(ctx: CoroutineContext, channel: ByteChannel)
     : ByteChannelCoroutine(ctx, channel), WriterScope, WriterJob

@@ -145,7 +145,7 @@ public interface ByteReadChannel {
      */
     suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)
 
-    suspend fun cancel(cause: Throwable?): Boolean
+    fun cancel(cause: Throwable? = null): Boolean
 }
 
 suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
