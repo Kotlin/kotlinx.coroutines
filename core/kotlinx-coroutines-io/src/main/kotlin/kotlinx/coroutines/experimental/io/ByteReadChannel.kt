@@ -156,6 +156,13 @@ public interface ByteReadChannel {
      * @see ByteWriteChannel.close
      */
     fun cancel(cause: Throwable? = null): Boolean
+
+    /**
+     * Discard up to [max] bytes
+     *
+     * @return number of bytes were discarded
+     */
+    suspend fun discard(max: Long = Long.MAX_VALUE): Long
 }
 
 suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {

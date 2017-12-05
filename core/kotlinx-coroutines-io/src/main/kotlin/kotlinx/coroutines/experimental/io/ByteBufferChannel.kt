@@ -1477,6 +1477,43 @@ internal class ByteBufferChannel(
         }
     }
 
+    override suspend fun discard(max: Long): Long {
+        require(max >= 0) { "max shouldn't be negative: $max" }
+
+        var discarded = 0L
+
+        reading {
+            val n = it.tryReadAtMost(minOf(Int.MAX_VALUE.toLong(), max).toInt())
+            bytesRead(it, n)
+            discarded += n
+            true
+        }
+
+        if (discarded == max || isClosedForRead) return discarded
+
+        return discardSuspend(discarded, max)
+    }
+
+    private suspend fun discardSuspend(discarded0: Long, max: Long): Long {
+        var discarded = discarded0
+
+        while (discarded < max) {
+            val rc = reading {
+                val n = it.tryReadAtMost(minOf(Int.MAX_VALUE.toLong(), max - discarded).toInt())
+                bytesRead(it, n)
+                discarded += n
+
+                true
+            }
+
+            if (!rc) {
+                if (isClosedForRead || !readSuspend(1)) break
+            }
+        }
+
+        return discarded
+    }
+
     private suspend fun readBlockSuspend(min: Int, block: (ByteBuffer) -> Unit) {
         if (!readSuspend(min.coerceAtLeast(1))) {
             if (min > 0)

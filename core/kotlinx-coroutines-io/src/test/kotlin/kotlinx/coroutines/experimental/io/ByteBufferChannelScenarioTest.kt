@@ -469,4 +469,88 @@ class ByteBufferChannelScenarioTest : TestBase() {
         finish(6)
     }
 
+    @Test
+    fun testDiscardExisting() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeInt(1)
+            ch.writeInt(2)
+            expect(2)
+        }
+
+        yield()
+        expect(3)
+
+        assertEquals(4, ch.discard(4))
+        assertEquals(2, ch.readInt())
+
+        finish(4)
+    }
+
+    @Test
+    fun testDiscardPartiallyExisting() = runBlocking {
+        ch.writeInt(1)
+
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard(8))
+            expect(3)
+        }
+
+        yield()
+        expect(2)
+
+        ch.writeInt(2)
+        yield()
+
+        expect(4)
+        assertEquals(0, ch.availableForRead)
+        finish(5)
+    }
+
+    @Test
+    fun testDiscardPartiallyExisting2() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard(8))
+            expect(4)
+        }
+
+        yield()
+
+        expect(2)
+        ch.writeInt(1)
+        yield()
+        expect(3)
+        assertEquals(0, ch.availableForRead)
+
+        ch.writeInt(2)
+        yield()
+        expect(5)
+        assertEquals(0, ch.availableForRead)
+        finish(6)
+    }
+
+    @Test
+    fun testDiscardClose() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard())
+            expect(4)
+        }
+
+        yield()
+
+        expect(2)
+        ch.writeInt(1)
+        yield()
+        ch.writeInt(2)
+        yield()
+
+        expect(3)
+        ch.close()
+        yield()
+
+        finish(5)
+    }
 }
