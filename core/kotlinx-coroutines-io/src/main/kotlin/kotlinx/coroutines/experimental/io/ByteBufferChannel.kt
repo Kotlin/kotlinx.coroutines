@@ -1454,6 +1454,7 @@ internal class ByteBufferChannel(
         }
 
         if (!read) {
+            if (isClosedForRead) return
             return readBlockSuspend(min, block)
         }
     }
