@@ -95,6 +95,10 @@ internal class ByteBufferChannel(
         return true
     }
 
+    suspend override fun cancel(cause: Throwable?): Boolean {
+        return close(cause ?: CancellationException("Channel has been cancelled"))
+    }
+
     private fun flushImpl(minReadSize: Int, minWriteSize: Int) {
         joining?.delegatedTo?.flush()
 

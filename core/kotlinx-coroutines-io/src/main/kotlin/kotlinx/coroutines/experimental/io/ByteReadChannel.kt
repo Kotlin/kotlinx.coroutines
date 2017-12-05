@@ -144,6 +144,8 @@ public interface ByteReadChannel {
      * @param block to be invoked when at least [min] bytes available for read
      */
     suspend fun read(min: Int = 1, block: (ByteBuffer) -> Unit)
+
+    suspend fun cancel(cause: Throwable?): Boolean
 }
 
 suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
