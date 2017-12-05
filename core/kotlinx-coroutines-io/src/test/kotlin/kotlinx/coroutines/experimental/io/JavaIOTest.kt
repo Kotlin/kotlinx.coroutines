@@ -98,11 +98,12 @@ class JavaIOTest {
     @Test
     fun testPiped() = runBlocking {
         val pipe = Pipe.open()
+        val exec = newFixedThreadPoolContext(2, "blocking-io")
 
-        val channel1 = ByteChannel()
-        val channel2 = ByteChannel()
+        val channel1 = ByteChannel(autoFlush = false)
+        val channel2 = ByteChannel(autoFlush = false)
 
-        launch {
+        val j1 = launch(exec) {
             try {
                 channel1.copyTo(pipe)
             } finally {
@@ -110,26 +111,50 @@ class JavaIOTest {
             }
         }
 
-        launch {
+        j1.invokeOnCompletion {
+            it?.let { println("j1 failed with $it"); it.printStackTrace() }
+        }
+
+        val j2 = launch(exec) {
             pipe.copyTo(channel2)
             channel2.close()
         }
 
-        channel1.writeStringUtf8("OK")
+        j2.invokeOnCompletion {
+            it?.let { println("j2 failed with $it"); it.printStackTrace() }
+        }
+
+        channel1.writeStringUtf8("OK\n")
         channel1.close()
 
-        assertEquals("OK", channel2.readUTF8Line())
+        try {
+            assertEquals("OK", channel2.readUTF8Line())
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            j1.cancel()
+            j2.cancel()
+            channel1.close(t)
+            channel2.close(t)
+            throw t
+        }
+
+        j1.join()
+        j2.join()
+
+
+        exec.close()
     }
 
     @Test
     fun testPipedALot() = runBlocking {
+        val exec = newFixedThreadPoolContext(2, "blocking-io")
         val numberOfLines = 10000
         val pipe = Pipe.open()
 
         val channel1 = ByteChannel()
         val channel2 = ByteChannel()
 
-        launch {
+        launch(exec, parent = coroutineContext[Job]!!) {
             try {
                 channel1.copyTo(pipe)
             } finally {
@@ -137,7 +162,7 @@ class JavaIOTest {
             }
         }
 
-        launch {
+        launch(exec, parent = coroutineContext[Job]!!) {
             pipe.copyTo(channel2)
             channel2.close()
         }
@@ -156,16 +181,17 @@ class JavaIOTest {
 
     @Test
     fun testPipedLimited() = runBlocking {
+        val exec = newFixedThreadPoolContext(2, "blocking-io")
         val pipe = Pipe.open()
 
         val channel1 = ByteChannel()
         val channel2 = ByteChannel()
 
-        launch {
+        launch(exec, parent = coroutineContext[Job]!!) {
             channel1.copyTo(pipe, limit = 1)
         }
 
-        launch {
+        launch(exec, parent = coroutineContext[Job]!!) {
             pipe.copyTo(channel2, limit = 1)
             channel2.close()
         }
