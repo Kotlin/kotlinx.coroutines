@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -416,6 +417,30 @@ class ByteBufferChannelScenarioTest : TestBase() {
         yield()
 
         ch.readRemaining()
+        finish(6)
+    }
+
+    @Test
+    fun testWriteIntThenRead() = runBlocking {
+        val size = BUFFER_SIZE - RESERVED_SIZE - 3
+
+        expect(1)
+        ch.writeFully(java.nio.ByteBuffer.allocate(size))
+        ch.flush()
+        expect(2)
+
+        launch(coroutineContext) {
+            expect(4)
+            ch.readPacket(size).release()
+        }
+
+        // coroutine is pending
+        expect(3)
+        ch.writeInt(0x11223344)
+        expect(5)
+
+        assertEquals(0x11223344, ch.readInt())
+
         finish(6)
     }
 

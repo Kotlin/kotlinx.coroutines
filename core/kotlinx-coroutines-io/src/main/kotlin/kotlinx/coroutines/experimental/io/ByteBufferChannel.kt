@@ -89,28 +89,29 @@ internal class ByteBufferChannel(
         return true
     }
 
-    override fun flush() {
+    private fun flushImpl(minReadSize: Int, minWriteSize: Int) {
         joining?.delegatedTo?.flush()
 
         val avw: Int
-        val flushed: Boolean
+        val avr: Int
 
         while (true) {
             val s = state
             if (s === ReadWriteBufferState.Terminated) return
-            val f = s.capacity.flush()
+            s.capacity.flush()
             if (s === state) {
                 avw = s.capacity.availableForWrite
-                flushed = f
+                avr = s.capacity.availableForRead
                 break
             }
         }
 
+        if (avr >= minReadSize) resumeReadOp()
+        if (avw >= minWriteSize) resumeWriteOp()
+    }
 
-//        println("flushed $flushed, avw $avw")
-
-        if (flushed) resumeReadOp()
-        if (avw > 0) resumeWriteOp()
+    override fun flush() {
+        flushImpl(1, 1)
     }
 
     private fun ByteBuffer.prepareBuffer(order: ByteOrder, position: Int, available: Int) {
@@ -1917,7 +1918,7 @@ internal class ByteBufferChannel(
                     }
                 } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
 
-                flush()
+                flushImpl(1, minWriteSize = size)
 //                println("Write suspend (loop), op = ${writeOp}, state = $state, joined = $joining")
             }
         }
