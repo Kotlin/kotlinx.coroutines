@@ -1911,7 +1911,7 @@ internal class ByteBufferChannel(
                 c.resume(state.capacity.availableForRead > 0)
         }
 
-        WriteOp.getAndSet(this, null)?.tryResumeWithException(cause ?:
+        WriteOp.getAndSet(this, null)?.resumeWithException(cause ?:
             ClosedWriteChannelException(DEFAULT_CLOSE_MESSAGE))
     }
 
