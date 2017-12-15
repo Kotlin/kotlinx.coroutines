@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.20
+
+* Migrated to Kotlin 1.2.0.
+* Channels:
+  * Sequence-like `filter`, `map`, etc extensions on `ReceiveChannel` are introduced (see #88 by @fvasco and #69 by @konrad-kaminski).
+  * Introduced `ReceiveChannel.cancel` method.
+  * All operators on `ReceiveChannel` fully consume the original channel (`cancel` it when they are done) using a helper `consume` extension.
+  * Deprecated `ActorJob` and `ProducerJob`; `actor` now returns `SendChannel` and `produce` returns `ReceiveChannel` (see #127).
+  * `SendChannel.sendBlocking` extension method (see #157 by @@fvasco).
+* Parent-child relations between coroutines:
+  * Introduced an optional `parent` job parameter for all coroutine builders so that code with an explict parent `Job` is more natural.
+  * Added `parent` parameter to `CompletableDeferred` constructor.
+  * Introduced `Job.children` property.
+  * `Job.cancelChildren` is now an extension (member is deprecated and hidden).
+  * `Job.joinChildren` extension is introduced.
+  * Deprecated `Job.attachChild` as a error-prone API.
+  * Fixed StackOverflow when waiting for a lot of completed children that did not remove their handlers from the parent.
+* Use `java.util.ServiceLoader` to find default instances of `CoroutineExceptionHandler`.
+* Android UI integration:
+  * Use `Thread.getUncaughtExceptionPreHandler` to make sure that exceptions are logged before crash (see #148).
+  * Introduce `UI.awaitFrame` for animation; added sample coroutine-based animation application for Android [here](ui/kotlinx-coroutines-android/animation-app).
+  * Fixed `delay(Long.MAX_VALUE)` (see #161)  
+* Added missing `DefaultDispatcher` on some reactive operators (see #174 by @fvasco)
+* Fixed `actor` and `produce` so that a cancellation of a Job cancels the underlying channel (closes and removes all the pending messages).  
+* Fixed sporadic failure of `example-context-06` (see #160)
+* Fixed hang of `Job.start` on lazy coroutine with attached `invokeOnCompletion` handler.
+* A more gradual introduction to `runBlocking` and coroutines in the [guide](coroutines-guide.md) (see #166).
+
 ## Version 0.19.3
 
 * Fixed `send`/`openSubscription` race in `ArrayBroadcastChannel`.

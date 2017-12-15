@@ -178,7 +178,7 @@ World!
 -->
 
 The result is the same, but this code uses only non-blocking [delay]. 
-The the main thread, that invokes `runBlocking`, _blocks_ until the coroutine inside `runBlocking` is active. 
+The the main thread, that invokes `runBlocking`, _blocks_ until the coroutine inside `runBlocking` completes. 
 
 This example can be also rewritten in a more idiomatic way, using `runBlocking` to wrap 
 the execution of the main function:
