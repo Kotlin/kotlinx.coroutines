@@ -24,6 +24,7 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryReadExact(n: Int): Boolean {
+        val AvailableForRead = AvailableForRead
         while (true) {
             val remaining = availableForRead
             if (remaining < n) return false
@@ -32,6 +33,7 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryReadAtMost(n: Int): Int {
+        val AvailableForRead = AvailableForRead
         while (true) {
             val remaining = availableForRead
             val delta = minOf(n, remaining)
@@ -41,6 +43,7 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryWriteAtLeast(n: Int): Int {
+        val AvailableForWrite = AvailableForWrite
         while (true) {
             val remaining = availableForWrite
             if (remaining < n) return 0
@@ -49,6 +52,7 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryWriteExact(n: Int): Boolean {
+        val AvailableForWrite = AvailableForWrite
         while (true) {
             val remaining = availableForWrite
             if (remaining < n) return false
@@ -57,6 +61,8 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryWriteAtMost(n: Int): Int {
+        val AvailableForWrite = AvailableForWrite
+
         while (true) {
             val remaining = availableForWrite
             val delta = minOf(n, remaining)
@@ -66,27 +72,42 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun completeRead(n: Int) {
+        val totalCapacity = totalCapacity
+        val AvailableForWrite = AvailableForWrite
+
         while (true) {
             val remaining = availableForWrite
             val update = remaining + n
-            require(update <= totalCapacity) { "Completed read overflow: $remaining + $n = $update > $totalCapacity" }
+            if (update > totalCapacity) completeReadOverflow(remaining, update, n)
             if (AvailableForWrite.compareAndSet(this, remaining, update)) break
         }
     }
 
+    private fun completeReadOverflow(remaining: Int, update: Int, n: Int): Nothing {
+        throw IllegalArgumentException("Completed read overflow: $remaining + $n = $update > $totalCapacity")
+    }
+
     fun completeWrite(n: Int) {
+        val totalCapacity = totalCapacity
+        val PendingToFlush = PendingToFlush
+
         while (true) {
             val pending = pendingToFlush
             val update = pending + n
-            require(update <= totalCapacity) { "Complete write overflow: $pending + $n > $totalCapacity" }
+            if (update > totalCapacity) completeReadOverflow(pending, n)
             if (PendingToFlush.compareAndSet(this, pending, update)) break
         }
+    }
+
+    private fun completeReadOverflow(pending: Int, n: Int): Nothing {
+        throw IllegalArgumentException("Complete write overflow: $pending + $n > $totalCapacity")
     }
 
     /**
      * @return true if there are bytes available for read after flush
      */
     fun flush(): Boolean {
+        val AvailableForRead = AvailableForRead
         val pending = PendingToFlush.getAndSet(this, 0)
         while (true) {
             val remaining = availableForRead
@@ -98,6 +119,7 @@ internal class RingBufferCapacity(private val totalCapacity: Int) {
     }
 
     fun tryLockForRelease(): Boolean {
+        val AvailableForWrite = AvailableForWrite
         while (true) {
             val remaining = availableForWrite
             if (pendingToFlush > 0 || availableForRead > 0 || remaining != totalCapacity) return false
