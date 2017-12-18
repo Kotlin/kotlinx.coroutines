@@ -747,9 +747,9 @@ class ByteBufferChannelTest {
             if (r.decrementAndGet() == 0) latch.countDown()
         }
 
-        reader.invokeOnCompletion(true, handler)
-        writerJob.invokeOnCompletion(true, handler)
-        joinerJob.invokeOnCompletion(true, handler)
+        reader.invokeOnCompletion(onCancelling = true, handler = handler)
+        writerJob.invokeOnCompletion(onCancelling = true, handler = handler)
+        joinerJob.invokeOnCompletion(onCancelling = true, handler = handler)
 
         latch.await()
     }

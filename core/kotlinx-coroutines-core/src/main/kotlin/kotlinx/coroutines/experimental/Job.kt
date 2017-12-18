@@ -267,8 +267,9 @@ public actual interface Job : CoroutineContext.Element {
     @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
     public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    public fun invokeOnCompletion(onCancelling: Boolean = false, handler: CompletionHandler): DisposableHandle
+    @Deprecated(message = "Use with named `onCancelling` and `handler` parameters", level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancelling = onCancelling_, handler = handler)"))
+    public fun invokeOnCompletion(onCancelling_: Boolean = false, handler: CompletionHandler): DisposableHandle
 
     /**
      * Registers handler that is **synchronously** invoked once on completion of this job.
@@ -843,8 +844,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = true, handler = handler)
 
     @Suppress("OverridingDeprecatedMember")
-    public final override fun invokeOnCompletion(onCancelling: Boolean, handler: CompletionHandler): DisposableHandle =
-        invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = true, handler = handler)
+    public final override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
+        invokeOnCompletion(onCancelling = onCancelling_, invokeImmediately = true, handler = handler)
 
     public override fun invokeOnCompletion(
         onCancelling: Boolean,
