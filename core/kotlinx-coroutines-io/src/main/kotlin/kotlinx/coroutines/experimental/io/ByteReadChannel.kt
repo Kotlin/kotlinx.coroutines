@@ -240,8 +240,8 @@ private suspend fun ByteReadChannel.copyToImpl(dst: ByteWriteChannel, limit: Lon
  * Closes [dst] channel if fails to read or write with cause exception.
  * @return a number of copied bytes
  */
-suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel): Long {
-    val count = copyTo(dst)
+suspend fun ByteReadChannel.copyAndClose(dst: ByteWriteChannel, limit: Long = Long.MAX_VALUE): Long {
+    val count = copyTo(dst, limit)
     dst.close()
     return count
 }
