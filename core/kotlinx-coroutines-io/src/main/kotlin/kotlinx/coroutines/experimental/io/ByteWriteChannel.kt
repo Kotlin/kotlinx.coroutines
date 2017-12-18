@@ -3,7 +3,6 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
 import kotlinx.io.core.*
-import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.concurrent.CancellationException
 
@@ -75,6 +74,14 @@ public interface ByteWriteChannel {
      * @param block to be invoked when at least [min] bytes free capacity available
      */
     suspend fun write(min: Int = 1, block: (ByteBuffer) -> Unit)
+
+    /**
+     * Invokes [block] for every free buffer until it return `false`. It will also suspend every time when no free
+     * space available for write.
+     *
+     * @param block to be invoked when there is free space available for write
+     */
+    suspend fun writeWhile(block: (ByteBuffer) -> Boolean)
 
     /**
      * Writes a [packet] fully or fails if channel get closed before the whole packet has been written

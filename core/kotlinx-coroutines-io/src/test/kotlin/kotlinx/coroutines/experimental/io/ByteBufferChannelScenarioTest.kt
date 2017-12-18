@@ -7,9 +7,9 @@ import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 import org.junit.*
+import org.junit.Test
 import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import kotlin.test.*
 
 class ByteBufferChannelScenarioTest : TestBase() {
     private val ch = ByteBufferChannel(true)
@@ -552,5 +552,45 @@ class ByteBufferChannelScenarioTest : TestBase() {
         yield()
 
         finish(5)
+    }
+
+    @Test
+    fun testWriteWhile() = runBlocking {
+        val size = 16384
+
+        launch(coroutineContext) {
+            expect(1)
+            var b: Byte = 0
+            var count = 0
+
+            ch.writeWhile { buffer ->
+                while (buffer.hasRemaining() && count < size) {
+                    buffer.put(b++)
+                    count++
+                }
+                count < size
+            }
+            expect(3)
+            ch.close()
+        }
+
+        yield()
+
+        expect(2)
+
+        val buffer = ByteArray(size)
+        ch.readFully(buffer)
+
+        var expectedB: Byte = 0
+        for (i in buffer.indices) {
+            assertEquals(expectedB, buffer[i])
+            expectedB++
+        }
+
+        yield()
+        yield()
+
+        finish(4)
+        assertTrue(ch.isClosedForRead)
     }
 }

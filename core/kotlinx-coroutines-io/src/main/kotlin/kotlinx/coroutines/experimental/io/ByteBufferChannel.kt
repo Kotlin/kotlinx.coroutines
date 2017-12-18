@@ -5,7 +5,6 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.io.core.*
@@ -368,30 +367,35 @@ internal class ByteBufferChannel(
         }
     }
 
-    private tailrec fun readAsMuchAsPossible(dst: ByteBuffer, consumed0: Int = 0): Int {
+    private fun readAsMuchAsPossible(dst: ByteBuffer): Int {
         var consumed = 0
 
-        val rc = reading {
-            val position = position()
-            val remaining = limit() - position
+        reading { state ->
+            val buffer = this
+            val bufferLimit = buffer.capacity() - reservedSize
 
-            val part = it.tryReadAtMost(minOf(remaining, dst.remaining()))
-            if (part > 0) {
+            while (true) {
+                val dstRemaining = dst.remaining()
+                if (dstRemaining == 0) break
+
+                val position = readPosition
+                val bufferRemaining = bufferLimit - position
+
+                val part = state.tryReadAtMost(minOf(bufferRemaining, dstRemaining))
+                if (part == 0) break
+
+                buffer.limit(position + part)
+                buffer.position(position)
+                dst.put(buffer)
+
+                bytesRead(state, part)
                 consumed += part
-
-                limit(position + part)
-                dst.put(this)
-
-                bytesRead(it, part)
-                true
-            } else {
-                false
             }
+
+            false
         }
 
-        return if (rc && dst.hasRemaining() && state.capacity.availableForRead > 0)
-            readAsMuchAsPossible(dst, consumed0 + consumed)
-        else consumed + consumed0
+        return consumed
     }
 
     private tailrec fun readAsMuchAsPossible(dst: BufferView, consumed0: Int = 0): Int {
@@ -421,25 +425,34 @@ internal class ByteBufferChannel(
     }
 
 
-    private tailrec fun readAsMuchAsPossible(dst: ByteArray, offset: Int, length: Int, consumed0: Int = 0): Int {
+    private fun readAsMuchAsPossible(dst: ByteArray, offset: Int, length: Int): Int {
         var consumed = 0
 
-        val rc = reading {
-            val part = it.tryReadAtMost(minOf(remaining(), length))
-            if (part > 0) {
-                consumed += part
-                get(dst, offset, part)
+        reading { state ->
+            val buffer = this
+            val bufferLimit = buffer.capacity() - reservedSize
 
-                bytesRead(it, part)
-                true
-            } else {
-                false
+            while (true) {
+                val lengthRemaining = length - consumed
+                if (lengthRemaining == 0) break
+                val position = readPosition
+                val bufferRemaining = bufferLimit - position
+
+                val part = state.tryReadAtMost(minOf(bufferRemaining, lengthRemaining))
+                if (part == 0) break
+
+                buffer.limit(position + part)
+                buffer.position(position)
+                buffer.get(dst, offset + consumed, part)
+
+                bytesRead(state, part)
+                consumed += part
             }
+
+            false
         }
 
-        return if (rc && consumed < length && state.capacity.availableForRead > 0)
-            readAsMuchAsPossible(dst, offset + consumed, length - consumed, consumed0 + consumed)
-        else consumed + consumed0
+        return consumed
     }
 
     final suspend override fun readFully(dst: ByteArray, offset: Int, length: Int) {
@@ -1449,6 +1462,78 @@ internal class ByteBufferChannel(
         writeSuspend(min)
         joining?.let { resolveDelegation(this, it)?.let { return it.write(min, block) } }
         return write(min, block)
+    }
+
+    override suspend fun writeWhile(block: (ByteBuffer) -> Boolean) {
+        if (!writeWhileNoSuspend(block)) return
+        closed?.let { throw it.sendException }
+        return writeWhileSuspend(block)
+    }
+
+    private fun writeWhileNoSuspend(block: (ByteBuffer) -> Boolean): Boolean {
+        var continueWriting = true
+
+        writing { dst, capacity ->
+            continueWriting = writeWhileLoop(dst, capacity, block)
+        }
+
+        return continueWriting
+    }
+
+    private suspend fun writeWhileSuspend(block: (ByteBuffer) -> Boolean) {
+        var continueWriting = true
+
+        writing { dst, capacity ->
+            while (true) {
+                writeSuspend(1)
+                if (joining != null) break
+                if (!writeWhileLoop(dst, capacity, block)) {
+                    continueWriting = false
+                    break
+                }
+                if (closed != null) break
+            }
+        }
+
+        if (!continueWriting) return
+        closed?.let { throw it.sendException }
+        joining?.let { return writeWhile(block) }
+    }
+
+    // it should be writing state set to use this function
+    private fun writeWhileLoop(dst: ByteBuffer, capacity: RingBufferCapacity, block: (ByteBuffer) -> Boolean): Boolean {
+        var continueWriting = true
+        val bufferLimit = dst.capacity() - reservedSize
+
+        while (continueWriting) {
+            val locked = capacity.tryWriteAtLeast(1) // see comments in [write]
+            if (locked == 0) break
+
+            val position = writePosition
+            val l = (position + locked).coerceAtMost(bufferLimit)
+            dst.limit(l)
+            dst.position(position)
+
+            continueWriting = try {
+                block(dst)
+            } catch (t: Throwable) {
+                capacity.completeRead(locked)
+                throw t
+            }
+
+            if (dst.limit() != l) throw IllegalStateException("buffer limit modified")
+            val actuallyWritten = dst.position() - position
+            if (actuallyWritten < 0) throw IllegalStateException("position has been moved backward: pushback is not supported")
+
+            dst.bytesWritten(capacity, actuallyWritten)
+            if (actuallyWritten < locked) {
+                capacity.completeRead(locked - actuallyWritten) // return back extra bytes
+                // it is important to use completeRead in spite of that we are writing here
+                // no need to resume read here
+            }
+        }
+
+        return continueWriting
     }
 
     override suspend fun read(min: Int, block: (ByteBuffer) -> Unit) {
