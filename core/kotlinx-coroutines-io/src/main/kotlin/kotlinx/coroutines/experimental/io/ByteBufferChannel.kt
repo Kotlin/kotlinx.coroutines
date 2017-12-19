@@ -215,9 +215,7 @@ internal class ByteBufferChannel(
     }
 
     private fun setupStateForRead(): ByteBuffer? {
-        if (readOp != null) throw IllegalStateException("Read operation is already in progress")
-
-        val (_, newState) = updateState { state ->
+        val newState = updateStateAndGet { state ->
             when (state) {
                 ReadWriteBufferState.Terminated -> closed?.cause?.let { throw it } ?: return null
                 ReadWriteBufferState.IdleEmpty -> closed?.cause?.let { throw it } ?: return null
@@ -236,7 +234,7 @@ internal class ByteBufferChannel(
     private fun restoreStateAfterRead() {
         var toRelease: ReadWriteBufferState.IdleNonEmpty? = null
 
-        val (_, newState) = updateState { state ->
+        val newState = updateStateAndGet { state ->
             toRelease?.let {
                 it.capacity.resetForWrite()
                 resumeWriteOp()
@@ -2040,17 +2038,14 @@ internal class ByteBufferChannel(
     }
 
     private fun writeSuspendPredicate(size: Int): Boolean {
-        if (closed != null) return false
         val joined = joining
         val state = state
         val closed = closed
 
-//        println("writeSuspend? $joined, $state, ${state.capacity.availableForWrite}, $closed")
-
-        return if (joined == null) {
-            state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty && closed == null
-        } else {
-            state !== ReadWriteBufferState.Terminated
+        return when {
+            closed != null -> false
+            joined == null -> state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty
+            else -> state !== ReadWriteBufferState.Terminated
         }
     }
 
@@ -2107,6 +2102,15 @@ internal class ByteBufferChannel(
 
     private fun releaseBuffer(buffer: ReadWriteBufferState.Initial) {
         pool.recycle(buffer)
+    }
+
+    private inline fun updateStateAndGet(block: (ReadWriteBufferState) -> ReadWriteBufferState?): ReadWriteBufferState {
+        val updater = State
+        while (true) {
+            val old = state
+            val newState = block(old) ?: continue
+            if (old === newState || updater.compareAndSet(this, old, newState)) return newState
+        }
     }
 
     // todo: replace with atomicfu
