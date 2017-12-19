@@ -6,6 +6,7 @@ import kotlinx.coroutines.experimental.io.jvm.nio.*
 import org.junit.Test
 import java.io.*
 import java.nio.channels.*
+import java.util.*
 import kotlin.test.*
 
 class JavaIOTest : TestBase() {
@@ -206,5 +207,73 @@ class JavaIOTest : TestBase() {
         pipe.source().close()
         pipe.sink().close()
         exec.close()
+    }
+
+    @Test
+    fun testInputAdapter() {
+        newFixedThreadPoolContext(2, "blocking-io").use { exec ->
+            val input = channel.toInputStream()
+            val data = ByteArray(100)
+            Random().nextBytes(data)
+            launch(exec) {
+                channel.writeFully(data)
+                channel.close()
+            }
+
+            val result = ByteArray(100)
+            assertEquals(100, input.read(result))
+            assertEquals(-1, input.read(result))
+
+            assertTrue(result.contentEquals(data))
+        }
+    }
+
+    @Test
+    fun testInputAdapter2() {
+        newFixedThreadPoolContext(2, "blocking-io").use { exec ->
+            val count = 100
+            val data = ByteArray(4096)
+            Random().nextBytes(data)
+
+            repeat(10000) {
+                val channel = ByteChannel(false)
+                launch(exec) {
+                    for (i in 1..count) {
+                        channel.writeFully(data)
+                    }
+                    channel.close()
+                }
+
+                val result = channel.toInputStream().readBytes()
+                assertEquals(4096 * count, result.size)
+            }
+        }
+    }
+
+    @Test
+    fun testOutputAdapter() {
+        newFixedThreadPoolContext(2, "blocking-io").use { exec ->
+            val output = channel.toOutputStream()
+            val data = ByteArray(100)
+            Random().nextBytes(data)
+
+            val j = launch(exec) {
+                val result = ByteArray(100)
+                assertEquals(100, channel.readAvailable(result))
+                assertEquals(-1, channel.readAvailable(result))
+                assertTrue(result.contentEquals(data))
+            }
+
+            output.write(data)
+            output.flush()
+            output.close()
+
+            runBlocking {
+                j.join()
+            }
+            j.invokeOnCompletion { cause ->
+                if (cause != null) throw cause
+            }
+        }
     }
 }
