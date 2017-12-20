@@ -267,6 +267,9 @@ public actual interface Job : CoroutineContext.Element {
     @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
     public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 
+    /**
+     * @suppress **Deprecated**: Use with named `onCancelling` and `handler` parameters.
+     */
     @Deprecated(message = "Use with named `onCancelling` and `handler` parameters", level = DeprecationLevel.WARNING,
         replaceWith = ReplaceWith("this.invokeOnCompletion(onCancelling = onCancelling_, handler = handler)"))
     public fun invokeOnCompletion(onCancelling_: Boolean = false, handler: CompletionHandler): DisposableHandle

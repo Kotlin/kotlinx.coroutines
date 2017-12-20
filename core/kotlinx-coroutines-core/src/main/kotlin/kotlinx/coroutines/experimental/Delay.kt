@@ -30,7 +30,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * Implementation of this interface affects operation of
  * [delay][kotlinx.coroutines.experimental.delay] and [withTimeout] functions.
  */
-public interface Delay {
+public actual interface Delay {
     /**
      * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
      * This suspending function is cancellable.
@@ -81,8 +81,32 @@ public interface Delay {
  *
  * This function delegates to [Delay.scheduleResumeAfterDelay] if the context [CoroutineDispatcher]
  * implements [Delay] interface, otherwise it resumes using a built-in single-threaded scheduled executor service.
+ *
+ * @param time time in milliseconds.
  */
-suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
+public actual suspend fun delay(time: Long) {
+    kotlin.require(time >= 0) { "Delay time $time cannot be negative" }
+    if (time <= 0) return // don't delay
+    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
+        cont.context.delay.scheduleResumeAfterDelay(time, TimeUnit.MILLISECONDS, cont)
+    }
+}
+
+/**
+ * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ *
+ * Note, that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
+ *
+ * This function delegates to [Delay.scheduleResumeAfterDelay] if the context [CoroutineDispatcher]
+ * implements [Delay] interface, otherwise it resumes using a built-in single-threaded scheduled executor service.
+ *
+ * @param time time in the specified [unit].
+ * @param unit time unit.
+ */
+public suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
     require(time >= 0) { "Delay time $time cannot be negative" }
     if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->

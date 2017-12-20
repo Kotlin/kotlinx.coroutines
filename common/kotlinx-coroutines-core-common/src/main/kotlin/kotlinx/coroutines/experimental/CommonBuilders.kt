@@ -1,6 +1,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
 public expect fun launch(
@@ -9,3 +10,8 @@ public expect fun launch(
     parent: Job? = null,
     block: suspend CoroutineScope.() -> Unit
 ): Job
+
+@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
+public expect fun <T> runBlocking(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> T): T

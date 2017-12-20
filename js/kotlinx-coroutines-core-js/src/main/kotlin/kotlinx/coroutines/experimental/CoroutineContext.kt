@@ -26,12 +26,38 @@ public actual object Unconfined : CoroutineDispatcher() {
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher = DefaultDispatcherImpl
+public actual val DefaultDispatcher: CoroutineDispatcher = DefaultExecutor
 
-private object DefaultDispatcherImpl : CoroutineDispatcher() {
+internal object DefaultExecutor : CoroutineDispatcher(), Delay {
+    fun enqueue(block: Runnable) {
+        window.setTimeout({ block.run() }, 0)
+    }
+
+    fun schedule(time: Double, block: Runnable): Int =
+        window.setTimeout({ block.run() }, time.timeToInt())
+
+    fun removeScheduled(handle: Int) {
+        window.clearTimeout(handle)
+    }
+
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         window.setTimeout({ block.run() }, 0)
     }
+
+    override fun scheduleResumeAfterDelay(time: Double, continuation: CancellableContinuation<Unit>) {
+        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.timeToInt())
+    }
+
+    override fun invokeOnTimeout(time: Double, block: Runnable): DisposableHandle {
+        val handle = window.setTimeout({ block.run() }, time.timeToInt())
+        return object : DisposableHandle {
+            override fun dispose() {
+                window.clearTimeout(handle)
+            }
+        }
+    }
+
+    private fun Double.timeToInt(): Int = coerceIn(0.0..Int.MAX_VALUE.toDouble()).toInt()
 }
 
 /**

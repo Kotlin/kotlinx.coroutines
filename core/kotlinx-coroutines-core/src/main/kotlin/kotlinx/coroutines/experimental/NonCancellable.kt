@@ -67,7 +67,7 @@ public actual object NonCancellable : AbstractCoroutineContextElement(Job), Job 
 
     /** Always returns [NonDisposableHandle]. */
     @Suppress("OverridingDeprecatedMember")
-    override fun invokeOnCompletion(onCancelling: Boolean, handler: CompletionHandler): DisposableHandle =
+    override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
         NonDisposableHandle
 
     /** Always returns [NonDisposableHandle]. */

@@ -9,6 +9,7 @@ public open class LinkedListNode {
         private set
     public var isRemoved: Boolean = false
         private set
+    public val isFresh: Boolean = next === this
 
     public fun addLast(node: Node) {
         val prev = this.prev
@@ -18,16 +19,20 @@ public open class LinkedListNode {
         this.prev = node
     }
 
-    public open fun remove() {
+    public open fun remove(): Boolean {
+        if (isRemoved) return false
         val prev = this.prev
         val next = this.next
         prev.next = next
         next.prev = prev
         isRemoved = true
+        return true
     }
 }
 
 public open class LinkedListHead : LinkedListNode() {
+    public val isEmpty get() = next === this
+
     /**
      * Iterates over all elements in this list of a specified type.
      */
@@ -41,5 +46,12 @@ public open class LinkedListHead : LinkedListNode() {
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
     public final override fun remove() = throw UnsupportedOperationException()
+
+    fun removeFirstOrNull(): Node? {
+        val node = next
+        if (node === this) return null
+        node.remove()
+        return node
+    }
 }
 

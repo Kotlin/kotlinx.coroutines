@@ -43,7 +43,7 @@ public expect class JobCancellationException(
 
 public expect fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
 public expect suspend fun Job.cancelAndJoin()
-@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
+@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER", "EXTENSION_SHADOWED_BY_MEMBER") // See KT-21598
 public expect fun Job.cancelChildren(cause: Throwable? = null)
 public expect suspend fun Job.joinChildren()
 

@@ -164,7 +164,7 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
  * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)
-public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+public actual fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
     val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop(currentThread) else null
     val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
