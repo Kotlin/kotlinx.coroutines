@@ -24,15 +24,15 @@ task lockFreedomTest(type: Test, dependsOn: testClasses) {
     include '**/*LFTest.*'
 }
 
-build.dependsOn lockFreedomTest
-
 task jdk16Test(type: Test, dependsOn: testClasses) {
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LinearizabilityTest.*'
     exclude '**/*LFTest.*'
 }
 
-build.dependsOn jdk16Test
+task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+
+build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: testClasses) {
     classifier = 'tests'
