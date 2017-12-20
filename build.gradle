@@ -90,10 +90,24 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
     }
 
     def kotlin_stdlib = platformLib("kotlin-stdlib", platform)
+    def kotlin_test = platformLib("kotlin-test", platform)
 
     dependencies {
         compile "org.jetbrains.kotlin:$kotlin_stdlib:$kotlin_version"
-        testCompile "junit:junit:$junit_version"
+        testCompile "org.jetbrains.kotlin:$kotlin_test:$kotlin_version"
+    }
+
+    if (platform == "common") {
+        dependencies {
+            testCompile "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
+        }
+    }
+
+    if (platform == "jvm") {
+        dependencies {
+            testCompile "junit:junit:$junit_version"
+            testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+        }
     }
 }
 
