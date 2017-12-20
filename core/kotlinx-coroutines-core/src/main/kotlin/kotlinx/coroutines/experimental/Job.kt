@@ -137,17 +137,18 @@ public interface Job : CoroutineContext.Element {
     public val isCancelled: Boolean
 
     /**
-     * Returns [CancellationException] that signals the completion of this job.
+     * Returns [CancellationException] that signals the completion of this job. This function is
+     * used by [cancellable][suspendCancellableCoroutine] suspending functions. They throw exception
+     * returned by this function when they suspend in the context of this job and this job becomes _complete_.
      *
-     * It returns the original [cancel] cause if it is an instance of [CancellationException] or
-     * an instance of [JobCancellationException] if this job was cancelled with a cause of
-     * different type, was cancelled without a cause or had completed normally.
+     * This function returns the original [cancel] cause of this job if that `cause` was an instance of
+     * [CancellationException]. Otherwise (if this job was cancelled with a cause of a different type, or
+     * was cancelled without a cause, or had completed normally), an instance of [JobCancellationException] is
+     * returned. The [JobCancellationException.cause] of the resulting [JobCancellationException] references
+     * the original cancellation cause that was passed to [cancel] function.
      *
-     * This function throws [IllegalStateException] when invoked for an job that has not
+     * This function throws [IllegalStateException] when invoked on a job that has not
      * [completed][isCompleted] nor [cancelled][isCancelled] yet.
-     *
-     * The [cancellable][suspendCancellableCoroutine] suspending functions throw this exception
-     * when trying to suspend in the context of this job.
      */
     public fun getCancellationException(): CancellationException
 
