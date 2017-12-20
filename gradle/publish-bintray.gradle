@@ -1,0 +1,47 @@
+// Configures publishing of Maven artifacts to Bintray
+
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', project.name)
+                root.appendNode('description', 'Coroutines support libraries for Kotlin')
+                root.appendNode('url', 'https://github.com/Kotlin/kotlinx.coroutines')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['maven']
+    pkg {
+        userOrg = 'kotlin'
+        repo = 'kotlinx'
+        name = 'kotlinx.coroutines'
+        version {
+            name = project.version
+            vcsTag = project.version
+            released  = new Date()
+        }
+    }
+}
+
+bintrayUpload.doLast {
+    println("Uploaded $project.name version $project.version")
+}

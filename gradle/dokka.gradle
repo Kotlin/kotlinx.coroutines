@@ -1,0 +1,39 @@
+// Configures generation of JavaDoc & Dokka artifacts
+
+def platform = platformOf(project)
+
+apply plugin: 'org.jetbrains.dokka'
+
+dokka {
+    outputFormat = 'kotlin-website'
+}
+
+if (platform == "jvm") {
+    // real xxx-javadoc.jar for JVM
+    task dokkaJavadoc(type: dokka.getClass()) {
+        outputFormat = 'javadoc'
+        outputDirectory = "$buildDir/javadoc"
+    }
+
+    task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+        classifier = 'javadoc'
+        from "$buildDir/javadoc"
+    }
+} else {
+    // empty xxx-javadoc.jar
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from "$buildDir/javadoc" // would not exist
+    }
+}
+
+tasks.withType(dokka.getClass()) {
+    jdkVersion = 8
+    includes = ['README.md']
+    linkMapping {
+        def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
+        dir = "$projectDir/src/main/kotlin"
+        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
+        suffix = "#L"
+    }
+}
