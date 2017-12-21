@@ -308,6 +308,33 @@ class CommonCoroutinesTest : TestBase() {
         finish(6)
     }
 
+    @Test
+    fun testParentCrashCancelsChildren() = runTest(
+        unhandled = listOf({ it -> it is TestException })
+    ) {
+        expect(1)
+        val parent = launch(coroutineContext + Job()) {
+            expect(4)
+            throw TestException("Crashed")
+        }
+        launch(coroutineContext + parent, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            try {
+                yield() // to test
+            } finally {
+                expect(5)
+                withContext(NonCancellable) { yield() } // to test
+                expect(7)
+            }
+            expectUnreached() // will get cancelled, because parent crashes
+        }
+        expect(3)
+        yield() // to parent
+        expect(6)
+        parent.join() // make sure crashed parent still waits for its child
+        finish(8)
+    }
+
     private fun throwTestException() { throw TestException() }
 
     private class TestException : Exception {

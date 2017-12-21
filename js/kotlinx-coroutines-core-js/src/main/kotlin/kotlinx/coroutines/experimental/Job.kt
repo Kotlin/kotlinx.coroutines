@@ -379,7 +379,7 @@ public open class JobSupport(active: Boolean) : Job {
      * It shall be invoked at most once after construction after all other initialization.
      */
     public fun initParentJob(parent: Job?) {
-        check(parentHandle == null)
+        check(parentHandle == null) { "Shall be invoked at most once" }
         if (parent == null) {
             parentHandle = NonDisposableHandle
             return
@@ -501,6 +501,7 @@ public open class JobSupport(active: Boolean) : Job {
         when (state) {
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return false // already active
+                this.state = EmptyActive
                 onStart()
                 return true
             }
@@ -576,7 +577,8 @@ public open class JobSupport(active: Boolean) : Job {
                         promoteSingleToNodeList(state as JobNode<*>)
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
-                            check(hasCancellingState) // cannot be in this state unless were support cancelling state
+                            // cannot be in this state unless were support cancelling state
+                            check(hasCancellingState) { "Must have cancelling state" } 
                             // installing cancellation handler on job that is being cancelled
                             if (invokeImmediately) node.invoke(state.cancelled.cause)
                             return NonDisposableHandle
@@ -601,13 +603,13 @@ public open class JobSupport(active: Boolean) : Job {
 
 
     private fun promoteEmptyToNodeList(state: Empty) {
-        check(state === this.state)
+        check(state === this.state) { "Expected empty state"}
         // promote it to list in new state
         this.state = NodeList(state.isActive)
     }
 
     private fun promoteSingleToNodeList(state: JobNode<*>) {
-        check(state === this.state)
+        check(state === this.state) { "Expected single state" }
         // promote it to list (SINGLE+ state)
         val list = NodeList(isActive = true)
         list.addLast(state)
@@ -986,7 +988,7 @@ public open class JobSupport(active: Boolean) : Job {
     private suspend fun awaitSuspend(): Any? = suspendCancellableCoroutine { cont ->
         val handle = invokeOnCompletion {
             val state = this.state
-            check(state !is Incomplete)
+            check(state !is Incomplete) { "State should be complete "}
             if (state is CompletedExceptionally)
                 cont.resumeWithException(state.exception)
             else

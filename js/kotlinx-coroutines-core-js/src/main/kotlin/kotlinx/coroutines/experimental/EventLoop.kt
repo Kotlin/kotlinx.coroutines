@@ -190,7 +190,7 @@ internal class BlockingEventLoop() : EventLoopBase() {
     public override var isCompleted: Boolean = false
 
     fun shutdown() {
-        check(isCompleted)
+        check(isCompleted) { "Shall be completed" }
         // complete processing of all queued tasks
         while (processNextEvent() <= 0) { /* spin */ }
         // reschedule the rest of delayed tasks

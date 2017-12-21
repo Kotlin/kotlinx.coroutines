@@ -65,7 +65,7 @@ public class Heap<T> where T: HeapNode, T: Comparable<T> {
 
     @PublishedApi
     internal fun removeAtImpl(index: Int): T {
-        check(size > 0)
+        check(size > 0) { "Size must be positive" }
         val a = this.a!!
         size--
         if (index < size) {

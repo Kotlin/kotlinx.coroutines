@@ -12,6 +12,13 @@ public expect fun launch(
 ): Job
 
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
+public expect suspend fun <T> withContext(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend () -> T
+): T
+
+@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
 public expect fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T): T

@@ -29,7 +29,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -100,7 +100,7 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
-public suspend fun <T> withContext(
+public actual suspend fun <T> withContext(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T

@@ -16,14 +16,32 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.test.*
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.core.IsEqual
+import org.junit.Test
 
-class JobTest : TestBase() {
+class WithContextTest : TestBase() {
     @Test
-    fun testMemoryRelease() {
-        val job = Job()
-        val n = 10_000_000 * stressTestMultiplier
-        var fireCount = 0
-        for (i in 0 until n) job.invokeOnCompletion { fireCount++ }.dispose()
+    fun testCommonPoolNoSuspend() = runTest {
+        expect(1)
+        val result = withContext(CommonPool) {
+            expect(2)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(3)
+    }
+
+    @Test
+    fun testCommonPoolWithSuspend() = runTest {
+        expect(1)
+        val result = withContext(CommonPool) {
+            expect(2)
+            delay(100)
+            expect(3)
+            "OK"
+        }
+        assertThat(result, IsEqual("OK"))
+        finish(4)
     }
 }

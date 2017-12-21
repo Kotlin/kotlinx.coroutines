@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental
 
-import org.junit.Test
+import kotlin.test.*
 
-class CoroutineExceptionHandlerTest : TestBase() {
+class CommonCoroutineExceptionHandlerTest : TestBase() {
     @Test
     fun testCoroutineExceptionHandlerCreator() = runBlocking {
         expect(1)
@@ -19,6 +19,6 @@ class CoroutineExceptionHandlerTest : TestBase() {
         finish(4)
         check(coroutineException is TestException)
     }
-}
 
-private class TestException: RuntimeException()
+    private class TestException: RuntimeException()
+}

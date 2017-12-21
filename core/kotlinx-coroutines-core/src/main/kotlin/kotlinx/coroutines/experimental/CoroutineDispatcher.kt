@@ -40,7 +40,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * This class ensures that debugging facilities in [newCoroutineContext] function work properly.
  */
-public actual abstract class CoroutineDispatcher :
+public actual abstract class CoroutineDispatcher actual constructor() :
         AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     /**
      * Returns `true` if execution shall be dispatched onto another thread.
@@ -83,7 +83,7 @@ public actual abstract class CoroutineDispatcher :
     /**
      * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
      */
-    public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+    public actual override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
             DispatchedContinuation(this, continuation)
 
     /**
