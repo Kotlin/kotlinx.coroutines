@@ -157,7 +157,7 @@ class CommonCompletableDeferredTest : TestBase() {
     }
 
     @Test
-    fun testAwait() = runBlocking {
+    fun testAwait() = runTest {
         expect(1)
         val c = CompletableDeferred<String>()
         launch(coroutineContext, CoroutineStart.UNDISPATCHED) {

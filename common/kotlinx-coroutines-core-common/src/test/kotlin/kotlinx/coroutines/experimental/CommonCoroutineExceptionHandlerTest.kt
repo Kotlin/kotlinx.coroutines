@@ -4,7 +4,7 @@ import kotlin.test.*
 
 class CommonCoroutineExceptionHandlerTest : TestBase() {
     @Test
-    fun testCoroutineExceptionHandlerCreator() = runBlocking {
+    fun testCoroutineExceptionHandlerCreator() = runTest {
         expect(1)
         var coroutineException: Throwable? = null
         val handler = CoroutineExceptionHandler { _, ex ->
@@ -17,7 +17,7 @@ class CommonCoroutineExceptionHandlerTest : TestBase() {
         expect(2)
         job.join()
         finish(4)
-        check(coroutineException is TestException)
+        assertTrue(coroutineException is TestException)
     }
 
     private class TestException: RuntimeException()

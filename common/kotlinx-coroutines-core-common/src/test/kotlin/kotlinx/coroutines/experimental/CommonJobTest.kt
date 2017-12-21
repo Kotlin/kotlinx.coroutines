@@ -6,9 +6,9 @@ class CommonJobTest : TestBase() {
     @Test
     fun testState() {
         val job = Job()
-        check(job.isActive)
+        assertTrue(job.isActive)
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
     }
 
     @Test
@@ -16,15 +16,15 @@ class CommonJobTest : TestBase() {
         val job = Job()
         var fireCount = 0
         job.invokeOnCompletion { fireCount++ }
-        check(job.isActive)
+        assertTrue(job.isActive)
         assertEquals(0, fireCount)
         // cancel once
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         assertEquals(1, fireCount)
         // cancel again
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         assertEquals(1, fireCount)
     }
 
@@ -34,15 +34,15 @@ class CommonJobTest : TestBase() {
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
         for (i in 0 until n) job.invokeOnCompletion { fireCount[i]++ }
-        check(job.isActive)
+        assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         // cancel once
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
         // cancel again
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
     }
 
@@ -58,15 +58,15 @@ class CommonJobTest : TestBase() {
                 registration!!.dispose()
             }
         }
-        check(job.isActive)
+        assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         // cancel once
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
         // cancel again
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
     }
 
@@ -76,12 +76,12 @@ class CommonJobTest : TestBase() {
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
         val registrations = Array<DisposableHandle>(n) { i -> job.invokeOnCompletion { fireCount[i]++ } }
-        check(job.isActive)
+        assertTrue(job.isActive)
         fun unreg(i: Int) = i % 4 <= 1
         for (i in 0 until n) if (unreg(i)) registrations[i].dispose()
         for (i in 0 until n) assertEquals(0, fireCount[i])
         job.cancel()
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(if (unreg(i)) 0 else 1, fireCount[i])
     }
 
@@ -95,22 +95,22 @@ class CommonJobTest : TestBase() {
             fireCount[i]++
             throw TestException()
         }
-        check(job.isActive)
+        assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
         val tryCancel = Try<Unit> { job.cancel() }
-        check(!job.isActive)
+        assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
-        check(tryCancel.exception is CompletionHandlerException)
-        check(tryCancel.exception!!.cause is TestException)
+        assertTrue(tryCancel.exception is CompletionHandlerException)
+        assertTrue(tryCancel.exception!!.cause is TestException)
     }
 
     @Test
     fun testCancelledParent() {
         val parent = Job()
         parent.cancel()
-        check(!parent.isActive)
+        assertTrue(!parent.isActive)
         val child = Job(parent)
-        check(!child.isActive)
+        assertTrue(!child.isActive)
     }
 
     @Test

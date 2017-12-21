@@ -29,11 +29,11 @@ class CommonAsyncTest : TestBase() {
             42
         }
         expect(2)
-        check(d.isActive)
-        check(d.await() == 42)
-        check(!d.isActive)
+        assertTrue(d.isActive)
+        assertTrue(d.await() == 42)
+        assertTrue(!d.isActive)
         expect(4)
-        check(d.await() == 42) // second await -- same result
+        assertTrue(d.await() == 42) // second await -- same result
         finish(5)
     }
 
@@ -45,8 +45,8 @@ class CommonAsyncTest : TestBase() {
             42
         }
         expect(3)
-        check(!d.isActive)
-        check(d.await() == 42)
+        assertTrue(!d.isActive)
+        assertTrue(d.await() == 42)
         finish(4)
     }
 
@@ -90,13 +90,13 @@ class CommonAsyncTest : TestBase() {
         expect(2)
         launch(coroutineContext) {
             expect(6)
-            check(d.await() == 42)
+            assertTrue(d.await() == 42)
             expect(11)
         }
         expect(3)
         launch(coroutineContext) {
             expect(7)
-            check(d.await() == 42)
+            assertTrue(d.await() == 42)
             expect(12)
         }
         expect(4)

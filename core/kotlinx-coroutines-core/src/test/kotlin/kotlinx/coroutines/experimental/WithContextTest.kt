@@ -16,9 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.junit.Test
+import kotlin.test.*
 
 class WithContextTest : TestBase() {
     @Test
@@ -28,7 +26,7 @@ class WithContextTest : TestBase() {
             expect(2)
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         finish(3)
     }
 
@@ -41,7 +39,7 @@ class WithContextTest : TestBase() {
             expect(3)
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         finish(4)
     }
 }

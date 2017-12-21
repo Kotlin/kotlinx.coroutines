@@ -16,11 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNull
-import org.junit.After
-import org.junit.Assert
-import org.junit.Test
+import kotlin.test.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -30,7 +26,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 class WithTimeoutOrNullThreadDispatchTest : TestBase() {
     var executor: ExecutorService? = null
 
-    @After
+    @AfterTest
     fun tearDown() {
         executor?.shutdown()
     }
@@ -78,7 +74,7 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
         val dispatcher = factory(ThreadFactory { Thread(it).also { thread = it } })
         withContext(dispatcher) {
             expect(2)
-            Assert.assertThat(Thread.currentThread(), IsEqual(thread))
+            assertEquals(thread, Thread.currentThread())
             val result = withTimeoutOrNull(100) {
                 try {
                     expect(3)
@@ -86,12 +82,12 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
                     expectUnreached()
                 } catch (e: CancellationException) {
                     expect(4)
-                    Assert.assertThat(Thread.currentThread(), IsEqual(thread))
+                    assertEquals(thread, Thread.currentThread())
                     throw e // rethrow
                 }
             }
-            Assert.assertThat(Thread.currentThread(), IsEqual(thread))
-            Assert.assertThat(result, IsNull())
+            assertEquals(thread, Thread.currentThread())
+            assertEquals(null, result)
             expect(5)
         }
         finish(6)

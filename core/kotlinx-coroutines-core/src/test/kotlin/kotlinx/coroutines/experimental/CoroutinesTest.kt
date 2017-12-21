@@ -1,6 +1,6 @@
 package kotlinx.coroutines.experimental
 
-import org.junit.Test
+import kotlin.test.*
 
 class CoroutinesTest : TestBase() {
     @Test
@@ -18,25 +18,6 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testNotCancellableChildWithExceptionCancelled() = runTest(
-        expected = { it is TestException }
-    ) {
-        expect(1)
-        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
-        val d = async(coroutineContext, start = CoroutineStart.ATOMIC) {
-            finish(4)
-            throwTestException() // will throw
-            expectUnreached()
-        }
-        expect(2)
-        // now cancel with some other exception
-        d.cancel(IllegalArgumentException())
-        // now await to see how it got crashed -- IAE should have been suppressed by TestException
-        expect(3)
-        d.await()
-    }
-
-    @Test
     fun testCancelManyCompletedAttachedChildren() = runTest {
         val parent = launch(coroutineContext) { /* do nothing */ }
         val n = 10_000 * stressTestMultiplier
@@ -51,8 +32,5 @@ class CoroutinesTest : TestBase() {
 
     private fun throwTestException(): Unit = throw TestException()
 
-    private class TestException : Exception {
-        constructor(message: String): super(message)
-        constructor(): super()
-    }
+    private class TestException() : Exception()
 }

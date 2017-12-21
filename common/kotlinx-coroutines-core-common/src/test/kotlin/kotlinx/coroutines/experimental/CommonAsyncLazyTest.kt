@@ -29,11 +29,11 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
-        check(d.await() == 42)
-        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && !d.isCompleted)
+        assertTrue(d.await() == 42)
+        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         expect(4)
-        check(d.await() == 42) // second await -- same result
+        assertTrue(d.await() == 42) // second await -- same result
         finish(5)
     }
 
@@ -47,11 +47,11 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
-        check(d.await() == 42)
-        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && !d.isCompleted)
+        assertTrue(d.await() == 42)
+        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         expect(5)
-        check(d.await() == 42) // second await -- same result
+        assertTrue(d.await() == 42) // second await -- same result
         finish(6)
     }
 
@@ -63,22 +63,22 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
         launch(coroutineContext) { // see how it looks from another coroutine
             expect(4)
-            check(!d.isActive && !d.isCompleted)
+            assertTrue(!d.isActive && !d.isCompleted)
             yield() // yield back to main
             expect(6)
-            check(d.isActive && !d.isCompleted) // implicitly started by main's await
+            assertTrue(d.isActive && !d.isCompleted) // implicitly started by main's await
             yield() // yield to d
         }
         expect(3)
-        check(!d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
         yield() // yield to second child (lazy async is not computing yet)
         expect(5)
-        check(!d.isActive && !d.isCompleted)
-        check(d.await() == 42) // starts computing
-        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && !d.isCompleted)
+        assertTrue(d.await() == 42) // starts computing
+        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
         finish(8)
     }
 
@@ -92,7 +92,7 @@ class CommonAsyncLazyTest : TestBase() {
             throw TestException()
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
         d.await() // will throw IOException
     }
 
@@ -108,7 +108,7 @@ class CommonAsyncLazyTest : TestBase() {
             throw TestException()
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
         d.await() // will throw IOException
     }
 
@@ -120,11 +120,11 @@ class CommonAsyncLazyTest : TestBase() {
             throw TestException()
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
         try {
             d.await() // will throw IOException
         } catch (e: TestException) {
-            check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && !d.isCancelled)
+            assertTrue(!d.isActive && d.isCompleted && d.isCompletedExceptionally && !d.isCancelled)
             expect(4)
         }
         finish(5)
@@ -138,15 +138,15 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
-        check(d.start())
-        check(d.isActive && !d.isCompleted)
+        assertTrue(!d.isActive && !d.isCompleted)
+        assertTrue(d.start())
+        assertTrue(d.isActive && !d.isCompleted)
         expect(3)
-        check(!d.start())
+        assertTrue(!d.start())
         yield() // yield to started coroutine
-        check(!d.isActive && d.isCompleted && !d.isCompletedExceptionally) // and it finishes
+        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally) // and it finishes
         expect(5)
-        check(d.await() == 42) // await sees result
+        assertTrue(d.await() == 42) // await sees result
         finish(6)
     }
 
@@ -160,13 +160,13 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted)
-        check(d.cancel())
-        check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
-        check(!d.cancel())
-        check(!d.start())
+        assertTrue(!d.isActive && !d.isCompleted)
+        assertTrue(d.cancel())
+        assertTrue(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
+        assertTrue(!d.cancel())
+        assertTrue(!d.start())
         finish(3)
-        check(d.await() == 42) // await shall throw CancellationException
+        assertTrue(d.await() == 42) // await shall throw CancellationException
         expectUnreached()
     }
 
@@ -182,19 +182,19 @@ class CommonAsyncLazyTest : TestBase() {
             42
         }
         expect(2)
-        check(!d.isActive && !d.isCompleted && !d.isCancelled)
-        check(d.start())
-        check(d.isActive && !d.isCompleted && !d.isCancelled)
+        assertTrue(!d.isActive && !d.isCompleted && !d.isCancelled)
+        assertTrue(d.start())
+        assertTrue(d.isActive && !d.isCompleted && !d.isCancelled)
         expect(3)
         yield() // yield to d
         expect(5)
-        check(d.isActive && !d.isCompleted && !d.isCancelled)
-        check(d.cancel())
-        check(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // cancelling !
-        check(!d.cancel())
-        check(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // still cancelling
+        assertTrue(d.isActive && !d.isCompleted && !d.isCancelled)
+        assertTrue(d.cancel())
+        assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // cancelling !
+        assertTrue(!d.cancel())
+        assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // still cancelling
         finish(6)
-        check(d.await() == 42) // await shall throw CancellationException
+        assertTrue(d.await() == 42) // await shall throw CancellationException
         expectUnreached()
     }
 

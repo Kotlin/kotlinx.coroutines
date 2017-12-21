@@ -43,9 +43,9 @@ class CommonCoroutinesTest : TestBase() {
             expect(4)
         }
         expect(2)
-        check(job.isActive && !job.isCompleted)
+        assertTrue(job.isActive && !job.isCompleted)
         job.join()
-        check(!job.isActive && job.isCompleted)
+        assertTrue(!job.isActive && job.isCompleted)
         finish(5)
     }
 
@@ -58,9 +58,9 @@ class CommonCoroutinesTest : TestBase() {
             expect(4)
         }
         expect(3)
-        check(job.isActive && !job.isCompleted)
+        assertTrue(job.isActive && !job.isCompleted)
         job.join()
-        check(!job.isActive && job.isCompleted)
+        assertTrue(!job.isActive && job.isCompleted)
         finish(5)
     }
 
@@ -218,15 +218,15 @@ class CommonCoroutinesTest : TestBase() {
         expect(2)
         yield() // to job
         expect(4)
-        check(job.isActive && !job.isCompleted && !job.isCancelled)
-        check(job.cancel())  // cancels job
+        assertTrue(job.isActive && !job.isCompleted && !job.isCancelled)
+        assertTrue(job.cancel())  // cancels job
         expect(5) // still here
-        check(!job.isActive && !job.isCompleted && job.isCancelled)
-        check(!job.cancel()) // second attempt returns false
+        assertTrue(!job.isActive && !job.isCompleted && job.isCancelled)
+        assertTrue(!job.cancel()) // second attempt returns false
         expect(6) // we're still here
         job.join() // join the job, let job complete its "finally" section
         expect(8)
-        check(!job.isActive && job.isCompleted && job.isCancelled)
+        assertTrue(!job.isActive && job.isCompleted && job.isCancelled)
         finish(9)
     }
 
@@ -264,8 +264,8 @@ class CommonCoroutinesTest : TestBase() {
             job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into JobCancellationException
         } catch (e: Throwable) {
             e as JobCancellationException // type assertion
-            check(e.cause is TestException)
-            check(e.job === coroutineContext[Job])
+            assertTrue(e.cause is TestException)
+            assertTrue(e.job === coroutineContext[Job])
             throw e
         }
         expectUnreached()
@@ -304,7 +304,7 @@ class CommonCoroutinesTest : TestBase() {
         parent.cancelChildren()
         expect(4)
         parent.joinChildren() // will yield to child
-        check(parent.isActive) // make sure it did not cancel parent
+        assertTrue(parent.isActive) // make sure it did not cancel parent
         finish(6)
     }
 
@@ -333,6 +333,25 @@ class CommonCoroutinesTest : TestBase() {
         expect(6)
         parent.join() // make sure crashed parent still waits for its child
         finish(8)
+    }
+
+    @Test
+    fun testNotCancellableChildWithExceptionCancelled() = runTest(
+        expected = { it is TestException }
+    ) {
+        expect(1)
+        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
+        val d = async(coroutineContext, start = CoroutineStart.ATOMIC) {
+            finish(4)
+            throwTestException() // will throw
+            expectUnreached()
+        }
+        expect(2)
+        // now cancel with some other exception
+        d.cancel(IllegalArgumentException())
+        // now await to see how it got crashed -- IAE should have been suppressed by TestException
+        expect(3)
+        d.await()
     }
 
     private fun throwTestException() { throw TestException() }
