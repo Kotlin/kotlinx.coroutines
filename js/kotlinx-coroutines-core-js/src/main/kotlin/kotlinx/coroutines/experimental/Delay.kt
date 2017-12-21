@@ -42,14 +42,14 @@ public actual interface Delay {
      * with(continuation) { resumeUndispatched(Unit) }
      * ```
      */
-    fun scheduleResumeAfterDelay(time: Double, continuation: CancellableContinuation<Unit>)
+    fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>)
 
     /**
      * Schedules invocation of a specified [block] after a specified delay [time].
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] of this invocation
      * request if it is not needed anymore.
      */
-    fun invokeOnTimeout(time: Double, block: Runnable): DisposableHandle
+    fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle
 }
 
 /**
@@ -63,12 +63,11 @@ public actual interface Delay {
  *
  * @param time time in milliseconds.
  */
-public actual suspend fun delay(time: Long) {
-    val dt = time.toDouble()
-    kotlin.require(dt >= 0) { "Delay time $time cannot be negative" }
-    if (dt <= 0) return // don't delay
+public actual suspend fun delay(time: Int) {
+    kotlin.require(time >= 0) { "Delay time $time cannot be negative" }
+    if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        cont.context.delay.scheduleResumeAfterDelay(dt, cont)
+        cont.context.delay.scheduleResumeAfterDelay(time, cont)
     }
 }
 

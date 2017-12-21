@@ -84,13 +84,8 @@ public actual interface Delay {
  *
  * @param time time in milliseconds.
  */
-public actual suspend fun delay(time: Long) {
-    kotlin.require(time >= 0) { "Delay time $time cannot be negative" }
-    if (time <= 0) return // don't delay
-    return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
-        cont.context.delay.scheduleResumeAfterDelay(time, TimeUnit.MILLISECONDS, cont)
-    }
-}
+public actual suspend fun delay(time: Int) =
+    delay(time.toLong(), TimeUnit.MILLISECONDS)
 
 /**
  * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.

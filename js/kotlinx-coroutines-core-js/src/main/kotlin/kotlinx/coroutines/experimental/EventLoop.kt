@@ -58,10 +58,10 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         enqueue(block.toQueuedTask())
 
-    override fun scheduleResumeAfterDelay(time: Double, continuation: CancellableContinuation<Unit>) =
+    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) =
         schedule(DelayedResumeTask(time, continuation))
 
-    override fun invokeOnTimeout(time: Double, block: Runnable): DisposableHandle =
+    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle =
         DelayedRunnableTask(time, block).also { schedule(it) }
 
     override fun processNextEvent(): Double {
@@ -129,7 +129,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     internal abstract inner class DelayedTask(
-        delay: Double
+        delay: Int
     ) : QueuedTask(), Comparable<DelayedTask>, DisposableHandle, HeapNode {
         override var index: Int = -1
         var state = DELAYED
@@ -169,7 +169,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     private inner class DelayedResumeTask(
-        time: Double,
+        time: Int,
         private val cont: CancellableContinuation<Unit>
     ) : DelayedTask(time) {
         override fun run() {
@@ -178,7 +178,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     private inner class DelayedRunnableTask(
-        time: Double,
+        time: Int,
         private val block: Runnable
     ) : DelayedTask(time) {
         override fun run() { block.run() }

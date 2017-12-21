@@ -44,12 +44,12 @@ internal object DefaultExecutor : CoroutineDispatcher(), Delay {
         window.setTimeout({ block.run() }, 0)
     }
 
-    override fun scheduleResumeAfterDelay(time: Double, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.timeToInt())
+    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
+        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
     }
 
-    override fun invokeOnTimeout(time: Double, block: Runnable): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, time.timeToInt())
+    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
+        val handle = window.setTimeout({ block.run() }, time.coerceAtLeast(0))
         return object : DisposableHandle {
             override fun dispose() {
                 window.clearTimeout(handle)
