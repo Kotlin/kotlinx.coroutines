@@ -105,8 +105,10 @@ private class BlockingCoroutine<T>(
         while (true) {
             val delay = eventLoop?.processNextEvent() ?: Double.MAX_VALUE
             if (isCompleted) break
-            if (delay > 0) throw IllegalStateException("JS thread cannot be blocked, " +
-                "runBlocking { ... } cannot be waiting for its completion with timeout")
+            if (delay > 0) {
+                throw IllegalStateException("JS thread cannot be blocked, " +
+                    "runBlocking { ... } cannot be waiting for its completion with timeout")
+            }
         }
         // process queued events (that could have been added after last processNextEvent and before cancel
         if (privateEventLoop) (eventLoop as BlockingEventLoop).apply {

@@ -72,10 +72,10 @@ public actual interface Runnable {
 }
 
 internal class DispatchTask<in T>(
-        private val continuation: Continuation<T>,
-        private val value: Any?, // T | Throwable
-        private val exception: Boolean,
-        private val cancellable: Boolean
+    private val continuation: Continuation<T>,
+    private val value: Any?, // T | Throwable
+    private val exception: Boolean,
+    private val cancellable: Boolean
 ) : Runnable {
     @Suppress("UNCHECKED_CAST")
     override fun run() {
@@ -91,6 +91,9 @@ internal class DispatchTask<in T>(
             throw RuntimeException("Unexpected exception running $this: $e")
         }
     }
+
+    override fun toString(): String =
+        "DispatchTask[$continuation, cancellable=$cancellable]"
 }
 
 internal class DispatchedContinuation<in T>(

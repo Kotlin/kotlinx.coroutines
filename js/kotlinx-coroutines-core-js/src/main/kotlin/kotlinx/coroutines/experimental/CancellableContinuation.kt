@@ -256,6 +256,9 @@ internal class CancellableContinuationImpl<in T>(
     @Suppress("UNCHECKED_CAST")
     override fun <T> getSuccessfulResult(state: Any?): T =
         if (state is CompletedIdempotentResult) state.result as T else state as T
+
+    override fun toString(): String =
+        "CancellableContinuation{${stateString()}}[$delegate]"
 }
 
 private class CompletedIdempotentResult(

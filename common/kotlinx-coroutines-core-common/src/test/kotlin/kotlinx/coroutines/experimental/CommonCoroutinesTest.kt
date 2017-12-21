@@ -288,19 +288,6 @@ class CommonCoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testCancelManyCompletedAttachedChildren() = runTest {
-        val parent = launch(coroutineContext) { /* do nothing */ }
-        val n = 10_000 * stressTestMultiplier
-        repeat(n) {
-            // create a child that already completed
-            val child = launch(coroutineContext, CoroutineStart.UNDISPATCHED) { /* do nothing */ }
-            // attach it manually
-            parent.attachChild(child)
-        }
-        parent.cancelAndJoin() // cancel parent, make sure no stack overflow
-    }
-
-    @Test
     fun testCancelAndJoinChildren() = runTest {
         expect(1)
         val parent = Job()

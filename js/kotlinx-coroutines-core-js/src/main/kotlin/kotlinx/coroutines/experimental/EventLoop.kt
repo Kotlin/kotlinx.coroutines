@@ -44,14 +44,14 @@ private const val RESCHEDULED = 2
 
 internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     private val queue = LinkedListHead()
-    private val delayed = Heap<DelayedTask>()
+    private var delayed: Heap<DelayedTask>? = null
 
     protected abstract val isCompleted: Boolean
 
     private val nextTime: Double
         get() {
             if (!queue.isEmpty) return 0.0
-            val nextDelayedTask = delayed.peek() ?: return Double.MAX_VALUE
+            val nextDelayedTask = delayed?.peek() ?: return Double.MAX_VALUE
             return (nextDelayedTask.time - now()).coerceAtLeast(0.0)
         }
 
@@ -66,7 +66,8 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     override fun processNextEvent(): Double {
         // queue all delayed tasks that are due to be executed
-        if (!delayed.isEmpty) {
+        val delayed = this.delayed
+        if (delayed?.isEmpty == false) {
             val now = now()
             while (true) {
                 delayed.removeFirstIf {
@@ -106,13 +107,14 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     private fun scheduleImpl(delayedTask: DelayedTask): Boolean {
         if (isCompleted) return false
+        val delayed = delayed ?: Heap<DelayedTask>().also { this.delayed = it }
         delayed.addLast(delayedTask)
         return true
     }
 
     protected fun rescheduleAllDelayed() {
         while (true) {
-            val delayedTask = delayed.removeFirstOrNull() ?: break
+            val delayedTask = delayed?.removeFirstOrNull() ?: break
             delayedTask.rescheduleOnShutdown()
         }
     }
@@ -147,16 +149,16 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
         fun rescheduleOnShutdown() {
             if (state != DELAYED) return
-            if (delayed.remove(this)) {
+            if (delayed?.remove(this) == true) {
                 state = RESCHEDULED
                 handle = DefaultExecutor.schedule(time,this)
             } else
                 state = REMOVED
         }
 
-        override final fun dispose() {
+        final override fun dispose() {
             when (state) {
-                DELAYED -> delayed.remove(this)
+                DELAYED -> delayed?.remove(this)
                 RESCHEDULED -> DefaultExecutor.removeScheduled(handle)
                 else -> return
             }

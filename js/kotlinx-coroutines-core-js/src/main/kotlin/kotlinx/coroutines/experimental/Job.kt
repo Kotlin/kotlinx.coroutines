@@ -352,6 +352,7 @@ public actual object NonDisposableHandle : DisposableHandle {
 
 // --------------- helper classes to simplify job implementation
 
+
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
  * This job is cancelled when the parent is complete, but not vise-versa.
@@ -741,7 +742,7 @@ public open class JobSupport(active: Boolean) : Job {
             // must promote to list to correct operate on child lists
             if (state is JobNode<*>) {
                 promoteSingleToNodeList(state)
-                return@loop // retry
+                continue@loop // retry
             }
             // cancel all children in list on exceptional completion
             if (proposedUpdate is CompletedExceptionally)
@@ -839,9 +840,9 @@ public open class JobSupport(active: Boolean) : Job {
     protected open fun afterCompletion(state: Any?, mode: Int) {}
 
     // for nicer debugging
-    override final fun toString(): String = "Job{${stateString()}}"
+    override fun toString(): String = "Job{${stateString()}}"
 
-    private fun stateString(): String {
+    protected fun stateString(): String {
         val state = this.state
         return when (state) {
             is Finishing -> buildString {

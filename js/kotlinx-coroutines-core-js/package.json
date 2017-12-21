@@ -1,0 +1,6 @@
+{
+  "name" : "kotlinx-coroutines-core-js",
+  "devDependencies": {
+      "mocha" : "4.0.1"
+  }
+}
