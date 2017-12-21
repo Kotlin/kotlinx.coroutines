@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
-import kotlinx.coroutines.experimental.selects.select
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -94,18 +92,8 @@ public actual interface Deferred<out T> : Job {
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException].
-     *
-     * This function can be used in [select] invocation with [onAwait] clause.
-     * Use [isCompleted] to check for completion of this deferred value without waiting.
      */
     public actual suspend fun await(): T
-
-    /**
-     * Clause for [select] expression of [await] suspending function that selects with the deferred value when it is
-     * resolved. The [select] invocation fails if the deferred value completes exceptionally (either fails or
-     * it cancelled).
-     */
-    public val onAwait: SelectClause1<T>
 
     /**
      * Returns *completed* result or throws [IllegalStateException] if this deferred value has not
@@ -126,12 +114,6 @@ public actual interface Deferred<out T> : Job {
      * the value is already complete. See also [getCompleted].
      */
     public actual fun getCompletionExceptionOrNull(): Throwable?
-
-    /**
-     * @suppress **Deprecated**: Use `isActive`.
-     */
-    @Deprecated(message = "Use `isActive`", replaceWith = ReplaceWith("isActive"))
-    public val isComputing: Boolean get() = isActive
 }
 
 /**
@@ -173,31 +155,6 @@ public actual fun <T> async(
     return coroutine
 }
 
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    async(context, start, block = block)
-
-/**
- * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
- */
-@Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
-    replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
-public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
-
-/**
- * @suppress **Deprecated**: `defer` was renamed to `async`.
- */
-@Deprecated(message = "`defer` was renamed to `async`", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("async(context, block = block)"))
-public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    async(context, block = block)
-
 @Suppress("UNCHECKED_CAST")
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
@@ -205,8 +162,6 @@ private open class DeferredCoroutine<T>(
 ) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T>
-        get() = this as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(

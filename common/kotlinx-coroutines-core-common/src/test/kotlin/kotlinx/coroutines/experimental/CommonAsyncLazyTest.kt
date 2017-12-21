@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
+
 package kotlinx.coroutines.experimental
 
-import org.junit.Test
-import java.io.IOException
+import kotlin.test.*
 
-class AsyncLazyTest : TestBase() {
+class CommonAsyncLazyTest : TestBase() {
     @Test
-    fun testSimple(): Unit = runBlocking {
+    fun testSimple() = runTest {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(3)
@@ -37,7 +38,7 @@ class AsyncLazyTest : TestBase() {
     }
 
     @Test
-    fun testLazyDeferAndYield(): Unit = runBlocking {
+    fun testLazyDeferAndYield() = runTest {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(3)
@@ -55,7 +56,7 @@ class AsyncLazyTest : TestBase() {
     }
 
     @Test
-    fun testLazyDeferAndYield2(): Unit = runBlocking {
+    fun testLazyDeferAndYield2() = runTest {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(7)
@@ -81,26 +82,14 @@ class AsyncLazyTest : TestBase() {
         finish(8)
     }
 
-    @Test(expected = IOException::class)
-    fun testSimpleException(): Unit = runBlocking {
+    @Test
+    fun testSimpleException() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             finish(3)
-            throw IOException()
-        }
-        expect(2)
-        check(!d.isActive && !d.isCompleted)
-        d.await() // will throw IOException
-    }
-
-    @Test(expected = IOException::class)
-    fun testLazyDeferAndYieldException(): Unit = runBlocking {
-        expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
-            expect(3)
-            yield() // this has not effect, because parent coroutine is waiting
-            finish(4)
-            throw IOException()
+            throw TestException()
         }
         expect(2)
         check(!d.isActive && !d.isCompleted)
@@ -108,17 +97,33 @@ class AsyncLazyTest : TestBase() {
     }
 
     @Test
-    fun testCatchException(): Unit = runBlocking {
+    fun testLazyDeferAndYieldException() =  runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(3)
-            throw IOException()
+            yield() // this has not effect, because parent coroutine is waiting
+            finish(4)
+            throw TestException()
+        }
+        expect(2)
+        check(!d.isActive && !d.isCompleted)
+        d.await() // will throw IOException
+    }
+
+    @Test
+    fun testCatchException() = runTest {
+        expect(1)
+        val d = async(coroutineContext, CoroutineStart.LAZY) {
+            expect(3)
+            throw TestException()
         }
         expect(2)
         check(!d.isActive && !d.isCompleted)
         try {
             d.await() // will throw IOException
-        } catch (e: IOException) {
+        } catch (e: TestException) {
             check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && !d.isCancelled)
             expect(4)
         }
@@ -126,7 +131,7 @@ class AsyncLazyTest : TestBase() {
     }
 
     @Test
-    fun testStart(): Unit = runBlocking {
+    fun testStart() = runTest {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(4)
@@ -145,8 +150,10 @@ class AsyncLazyTest : TestBase() {
         finish(6)
     }
 
-    @Test(expected = CancellationException::class)
-    fun testCancelBeforeStart(): Unit = runBlocking {
+    @Test
+    fun testCancelBeforeStart() = runTest(
+        expected = { it is JobCancellationException }
+    ) {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expectUnreached()
@@ -163,8 +170,10 @@ class AsyncLazyTest : TestBase() {
         expectUnreached()
     }
 
-    @Test(expected = CancellationException::class)
-    fun testCancelWhileComputing(): Unit = runBlocking {
+    @Test
+    fun testCancelWhileComputing() = runTest(
+        expected = { it is CancellationException }
+    ) {
         expect(1)
         val d = async(coroutineContext, CoroutineStart.LAZY) {
             expect(4)
@@ -188,4 +197,6 @@ class AsyncLazyTest : TestBase() {
         check(d.await() == 42) // await shall throw CancellationException
         expectUnreached()
     }
+
+    private class TestException : Exception()
 }

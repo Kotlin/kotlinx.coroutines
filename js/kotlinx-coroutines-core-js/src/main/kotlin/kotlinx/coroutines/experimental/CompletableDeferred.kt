@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
-
 /**
  * A [Deferred] that can be completed via public functions
  * [complete], [completeExceptionally], and [cancel].
@@ -76,11 +74,6 @@ public actual interface CompletableDeferred<T> : Deferred<T> {
 @Suppress("FunctionName")
 public actual fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
 
-/** @suppress **Deprecated:** Binary compatibility only */
-@Deprecated(message = "Binary compatibility only", level = DeprecationLevel.HIDDEN)
-@Suppress("FunctionName")
-public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl(null)
-
 /**
  * Creates an already _completed_ [CompletableDeferred] with a given [value].
  */
@@ -97,32 +90,22 @@ private class CompletableDeferredImpl<T>(
     init { initParentJob(parent) }
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T>
-        get() = this as SelectClause1<T>
 
-    override fun complete(value: T): Boolean {
-        loopOnState { state ->
-            when (state) {
-                is Incomplete -> {
-                    // actually, we don't care about the mode here at all, so just use a default
-                    if (updateState(state, value, mode = MODE_ATOMIC_DEFAULT))
-                        return true
-                }
-                else -> return false
-            }
+    override fun complete(value: T): Boolean = when (state) {
+        is Incomplete -> {
+            // actually, we don't care about the mode here at all, so just use a default
+            updateState(value, mode = MODE_ATOMIC_DEFAULT)
+            true
         }
+        else -> false
     }
 
-    override fun completeExceptionally(exception: Throwable): Boolean {
-        loopOnState { state ->
-            when (state) {
-                is Incomplete -> {
-                    // actually, we don't care about the mode here at all, so just use a default
-                    if (updateState(state, CompletedExceptionally(exception), mode = MODE_ATOMIC_DEFAULT))
-                        return true
-                }
-                else -> return false
-            }
+    override fun completeExceptionally(exception: Throwable): Boolean = when (state) {
+        is Incomplete -> {
+            // actually, we don't care about the mode here at all, so just use a default
+            updateState(CompletedExceptionally(exception), mode = MODE_ATOMIC_DEFAULT)
+            true
         }
+        else -> false
     }
 }
