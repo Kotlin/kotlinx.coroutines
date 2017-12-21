@@ -58,7 +58,7 @@ class ExecutorsTest : TestBase() {
         val ctx2 = newSingleThreadContext("Ctx2")
         runBlocking(ctx1) {
             checkThreadName("Ctx1")
-            run(ctx2) {
+            withContext(ctx2) {
                 checkThreadName("Ctx2")
             }
             checkThreadName("Ctx1")

@@ -178,7 +178,7 @@ class WithTimeoutOrNullTest : TestBase() {
     fun testOuterTimeoutFiredBeforeInner() = runBlocking<Unit> {
         val result = withTimeoutOrNull(100) {
             Thread.sleep(200) // wait enough for outer timeout to fire
-            run(NonCancellable) { yield() } // give an event loop a chance to run and process that cancellation
+            withContext(NonCancellable) { yield() } // give an event loop a chance to run and process that cancellation
             withTimeoutOrNull(100) {
                 yield() // will cancel because of outer timeout
                 expectUnreached()

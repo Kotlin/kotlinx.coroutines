@@ -34,7 +34,7 @@ class SchedulerTest : TestBase() {
     fun testSingleScheduler(): Unit = runBlocking {
         expect(1)
         val mainThread = Thread.currentThread()
-        run(Schedulers.single().asCoroutineDispatcher()) {
+        withContext(Schedulers.single().asCoroutineDispatcher()) {
             val t1 = Thread.currentThread()
             println(t1)
             assertThat(t1, IsNot(IsEqual(mainThread)))

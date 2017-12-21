@@ -478,7 +478,7 @@ during UI freeze.
 
 The fix for the blocking operations on the UI thread is quite straightforward with coroutines. We'll 
 convert our "blocking" `fib` function to a non-blocking suspending function that runs the computation in 
-the background thread by using [run] function to change its execution context to [CommonPool] of background
+the background thread by using [withContext] function to change its execution context to [CommonPool] of background
 threads. Notice, that `fib` function is now marked with `suspend` modifier. It does not block the coroutine that
 it is invoked from anymore, but suspends its execution when the computation in the background thread is working:
 
@@ -504,7 +504,7 @@ fun setup(hello: Text, fab: Circle) {
 -->
 
 ```kotlin
-suspend fun fib(x: Int): Int = run(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(CommonPool) {
     if (x <= 1) 1 else fib(x - 1) + fib(x - 2)
 }
 ```
@@ -520,10 +520,10 @@ in between invocations to `run`. For some more substantial code, the overhead of
 not going to be significant.
 
 Still, this particular `fib` implementation can be made to run as fast as before, but in the background thread, by renaming
-the original `fib` function to `fibBlocking` and defining `fib` with `run` wrapper on top of `fibBlocking`:
+the original `fib` function to `fibBlocking` and defining `fib` with `withContext` wrapper on top of `fibBlocking`:
 
 ```kotlin
-suspend fun fib(x: Int): Int = run(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(CommonPool) {
     fibBlocking(x)
 }
 
@@ -533,7 +533,7 @@ fun fibBlocking(x: Int): Int =
 
 > You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-03.kt).
 
-You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `run(CommonPool)`.
+You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `withContext(CommonPool)`.
 
 Note, that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
@@ -700,7 +700,7 @@ After delay
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
+[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html

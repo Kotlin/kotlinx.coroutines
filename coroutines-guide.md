@@ -504,7 +504,7 @@ Any attempt to use a suspending function in the `finally` block of the previous 
 problem, since all well-behaving closing operations (closing a file, cancelling a job, or closing any kind of a 
 communication channel) are usually non-blocking and do not involve any suspending functions. However, in the 
 rare case when you need to suspend in the cancelled coroutine you can wrap the corresponding code in
-`run(NonCancellable) {...}` using [run] function and [NonCancellable] context as the following example shows:
+`withContext(NonCancellable) {...}` using [withContext] function and [NonCancellable] context as the following example shows:
  
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
@@ -515,7 +515,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
                 delay(500L)
             }
         } finally {
-            run(NonCancellable) {
+            withContext(NonCancellable) {
                 println("I'm running finally")
                 delay(1000L)
                 println("And I've just delayed for 1 sec because I'm non-cancellable")
@@ -957,7 +957,7 @@ fun main(args: Array<String>) {
         newSingleThreadContext("Ctx2").use { ctx2 ->
             runBlocking(ctx1) {
                 log("Started in ctx1")
-                run(ctx2) {
+                withContext(ctx2) {
                     log("Working in ctx2")
                 }
                 log("Back to ctx1")
@@ -970,7 +970,7 @@ fun main(args: Array<String>) {
 > You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-04.kt)
 
 It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
-the other one is using [run] function to change a context of a coroutine while still staying in the 
+the other one is using [withContext] function to change a context of a coroutine while still staying in the
 same coroutine as you can see in the output below:
 
 ```text
@@ -1832,7 +1832,7 @@ var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     massiveRun(CommonPool) { // run each coroutine in CommonPool
-        run(counterContext) { // but confine each increment to the single-threaded context
+        withContext(counterContext) { // but confine each increment to the single-threaded context
             counter++
         }
     }
@@ -1848,7 +1848,7 @@ Counter = 1000000
 -->
 
 This code works very slowly, because it does _fine-grained_ thread-confinement. Each individual increment switches 
-from multi-threaded `CommonPool` context to the single-threaded context using [run] block. 
+from multi-threaded `CommonPool` context to the single-threaded context using [withContext] block.
 
 ### Thread confinement coarse-grained
 
@@ -2353,7 +2353,7 @@ Channel was closed
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [CoroutineScope.isActive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/is-active.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[run]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run.html
+[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
 [withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html

@@ -76,7 +76,7 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
         expect(1)
         var thread: Thread? = null
         val dispatcher = factory(ThreadFactory { Thread(it).also { thread = it } })
-        run(dispatcher) {
+        withContext(dispatcher) {
             expect(2)
             Assert.assertThat(Thread.currentThread(), IsEqual(thread))
             val result = withTimeoutOrNull(100) {

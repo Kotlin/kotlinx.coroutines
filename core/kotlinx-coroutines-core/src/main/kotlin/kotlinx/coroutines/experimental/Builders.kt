@@ -100,7 +100,7 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
-public suspend fun <T> run(
+public suspend fun <T> withContext(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
@@ -131,11 +131,20 @@ public suspend fun <T> run(
     completion.getResult()
 }
 
+/** @suppress **Deprecated**: Renamed to [withContext]. */
+@Deprecated(message = "Renamed to `withContext`", level=DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("withContext(context, start, block)"))
+public suspend fun <T> run(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend () -> T
+): T =
+    withContext(context, start, block)
+
 /** @suppress **Deprecated** */
-@Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated(message = "It is here for binary compatibility only", level=DeprecationLevel.HIDDEN)
 public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
-    run(context, start = CoroutineStart.ATOMIC, block = block)
+    withContext(context, start = CoroutineStart.ATOMIC, block = block)
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.

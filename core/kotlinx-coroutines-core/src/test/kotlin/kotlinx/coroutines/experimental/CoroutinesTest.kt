@@ -285,7 +285,7 @@ class CoroutinesTest : TestBase() {
                 yield() // to test
             } finally {
                 expect(5)
-                run(NonCancellable) { yield() } // to test
+                withContext(NonCancellable) { yield() } // to test
                 expect(7)
             }
             expectUnreached() // will get cancelled, because parent crashes

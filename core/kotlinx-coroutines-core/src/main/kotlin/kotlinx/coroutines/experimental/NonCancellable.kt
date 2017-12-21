@@ -21,12 +21,12 @@ import kotlinx.coroutines.experimental.selects.SelectClause0
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 
 /**
- * A non-cancelable job that is always [active][isActive]. It is designed to be used with [run] builder
- * to prevent cancellation of code blocks that need to run without cancellation.
+ * A non-cancelable job that is always [active][isActive]. It is designed for [withContext] function
+ * to prevent cancellation of code blocks that need to be executed without cancellation.
  *
  * Use it like this:
  * ```
- * run(NonCancellable) {
+ * withContext(NonCancellable) {
  *     // this code will not be cancelled
  * }
  * ```
