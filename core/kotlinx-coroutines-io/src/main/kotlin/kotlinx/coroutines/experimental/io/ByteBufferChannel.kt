@@ -13,6 +13,8 @@ import kotlinx.io.pool.*
 import java.io.EOFException
 import java.nio.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Byte channel was closed"
 
@@ -42,10 +44,10 @@ internal class ByteBufferChannel(
     private var joining: JoiningState? = null
 
     @Volatile
-    private var readOp: CancellableContinuation<Boolean>? = null
+    private var readOp: Continuation<Boolean>? = null
 
     @Volatile
-    private var writeOp: CancellableContinuation<Unit>? = null
+    private var writeOp: Continuation<Unit>? = null
 
     private var readPosition = 0
     private var writePosition = 0
@@ -56,8 +58,9 @@ internal class ByteBufferChannel(
     internal fun attachJob(job: Job) {
         attachedJob?.cancel()
         attachedJob = job
-        job.invokeOnCompletion {
+        job.invokeOnCompletion(onCancelling = true) { cause ->
             attachedJob = null
+            if (cause != null) cancel(cause)
         }
     }
 
@@ -104,6 +107,8 @@ internal class ByteBufferChannel(
         }
 
         if (cause != null) attachedJob?.cancel(cause)
+        readSuspendContinuationCache.close()
+        writeSuspendContinuationCache.close()
 
         return true
     }
@@ -150,7 +155,9 @@ internal class ByteBufferChannel(
     }
 
     private fun setupStateForWrite(): ByteBuffer? {
-        if (writeOp != null) throw IllegalStateException("Write operation is already in progress")
+        if (writeOp != null) {
+            throw IllegalStateException("Write operation is already in progress")
+        }
 
         var _allocated: ReadWriteBufferState.Initial? = null
         val (old, newState) = updateState { state ->
@@ -1116,7 +1123,7 @@ internal class ByteBufferChannel(
 
     private suspend fun writeFullySuspend(src: ByteBuffer) {
         while (src.hasRemaining()) {
-            writeSuspend(1)
+            tryWriteSuspend(1)
 
             joining?.let { resolveDelegation(this, it)?.let { return it.writeFully(src) } }
 
@@ -1126,7 +1133,7 @@ internal class ByteBufferChannel(
 
     private suspend fun writeFullySuspend(src: BufferView) {
         while (src.canRead()) {
-            writeSuspend(1)
+            tryWriteSuspend(1)
 
             joining?.let { resolveDelegation(this, it)?.let { return it.writeFully(src) } }
 
@@ -1197,7 +1204,7 @@ internal class ByteBufferChannel(
                     while (copied < limit) {
                         var avWBefore = state.availableForWrite
                         if (avWBefore == 0) {
-                            writeSuspend(1)
+                            tryWriteSuspend(1)
                             if (joining != null) break
                             avWBefore = state.availableForWrite
                         }
@@ -1256,7 +1263,7 @@ internal class ByteBufferChannel(
 //                println("readSuspend?")
                 flush()
 
-                if (src.availableForRead == 0 && !src.readSuspend(1))  {
+                if (src.availableForRead == 0 && !src.readSuspendImpl(1))  {
 //                    println("readSuspend failed")
                     if (joined == null || src.tryCompleteJoining(joined)) break
                 }
@@ -1406,7 +1413,7 @@ internal class ByteBufferChannel(
 
     private suspend fun writeSuspend(src: ByteArray, offset: Int, length: Int): Int {
         while (true) {
-            writeSuspend(1)
+            tryWriteSuspend(1)
 
             joining?.let { resolveDelegation(this, it)?.let { return it.writeSuspend(src, offset, length) } }
 
@@ -1704,6 +1711,49 @@ internal class ByteBufferChannel(
         return result!!
     }
 
+    override suspend fun writeSuspendSession(visitor: suspend WriterSuspendSession.() -> Unit) {
+        writing { byteBuffer, ringBufferCapacity ->
+            var locked = 0
+
+            val session = object : WriterSuspendSession {
+                override fun request(min: Int): ByteBuffer? {
+                    locked += ringBufferCapacity.tryWriteAtLeast(0)
+                    if (locked < min) return null
+                    byteBuffer.prepareBuffer(writeByteOrder, writePosition, locked)
+                    if (byteBuffer.remaining() < min) return null
+                    if (joining != null) return null
+
+                    return byteBuffer
+                }
+
+                override fun written(n: Int) {
+                    require(n >= 0)
+                    if (n > locked) throw IllegalStateException()
+                    locked -= n
+                    byteBuffer.bytesWritten(ringBufferCapacity, n)
+                }
+
+                override suspend fun tryAwait(n: Int) {
+                    if (locked >= n) return
+                    if (locked > 0) {
+                        ringBufferCapacity.completeRead(locked)
+                        locked = 0
+                    }
+
+                    return tryWriteSuspend(n)
+                }
+            }
+
+            try {
+                visitor(session)
+            } finally {
+                if (locked > 0) {
+                    ringBufferCapacity.completeRead(locked)
+                }
+            }
+        }
+    }
+
     override fun consumed(n: Int) {
         require(n >= 0)
 
@@ -1713,19 +1763,23 @@ internal class ByteBufferChannel(
         }
     }
 
-    final suspend override fun awaitAtLeast(n: Int) {
+    final override suspend fun awaitAtLeast(n: Int): Boolean {
         if (state.capacity.availableForRead >= n) {
-            if (state.idle) setupStateForRead()
-            return
+            if (state.idle || state is ReadWriteBufferState.Writing) setupStateForRead()
+            return true
         }
 
-        return awaitAtLeastSuspend(n)
+        if (state.idle || state is ReadWriteBufferState.Writing) return awaitAtLeastSuspend(n)
+        else if (n == 1) return readSuspendImpl(1)
+        else return readSuspend(n)
     }
 
-    private suspend fun awaitAtLeastSuspend(n: Int) {
-        if (readSuspend(n) && state.idle) {
+    private suspend fun awaitAtLeastSuspend(n: Int): Boolean {
+        val rc = readSuspend(n)
+        if (rc && state.idle) {
             setupStateForRead()
         }
+        return rc
     }
 
     override fun request(skip: Int, atLeast: Int): ByteBuffer? {
@@ -1746,32 +1800,37 @@ internal class ByteBufferChannel(
     }
 
     private inline fun consumeEachBufferRangeFast(last: Boolean, visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean): Boolean {
-        if (state === ReadWriteBufferState.Terminated && !last) return false
-
         val rc = reading {
             do {
-                val available = state.capacity.availableForRead
-
-                val rem = if (available > 0 || last) {
-                    if (!visitor(this, last)) {
-                        afterBufferVisited(this, it)
-                        return true
-                    }
-
-                    val consumed = afterBufferVisited(this, it)
-                    available - consumed
-                } else 0
-            } while (rem > 0 && !last)
+                if (hasRemaining() || last) {
+                    val rc = visitor(this, last)
+                    afterBufferVisited(this, it)
+                    if (!rc || (last && !hasRemaining())) return true
+                } else break
+            } while (true)
 
             last
         }
 
         if (!rc && closed != null) {
             visitor(EmptyByteBuffer, true)
+            return true
         }
 
         return rc
     }
+
+//    private suspend fun consumeEachBufferRangeSuspendLoop(visitor: RendezvousChannel<ConsumeEachBufferVisitor>) {
+//        var last = false
+//
+//        do {
+//            if (consumeEachBufferRangeFast(last, visitor)) return
+//            if (last) return
+//            if (!readSuspend(1)) {
+//                last = true
+//            }
+//        } while (true)
+//    }
 
     private suspend fun consumeEachBufferRangeSuspend(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean) {
         var last = false
@@ -1998,7 +2057,23 @@ internal class ByteBufferChannel(
             ClosedWriteChannelException(DEFAULT_CLOSE_MESSAGE))
     }
 
-    private tailrec suspend fun readSuspend(size: Int): Boolean {
+    private suspend fun readSuspend(size: Int): Boolean {
+        val capacity = state.capacity
+        if (capacity.availableForRead >= size) return true
+
+        closed?.let { c ->
+            if (c.cause != null) throw c.cause
+            val afterCapacity = state.capacity
+            val result = afterCapacity.flush() && afterCapacity.availableForRead >= size
+            if (readOp != null) throw IllegalStateException("Read operation is already in progress")
+            return result
+        }
+
+        if (size == 1) return readSuspendImpl(1)
+        return readSuspendLoop(size)
+    }
+
+    private tailrec suspend fun readSuspendLoop(size: Int): Boolean {
         val capacity = state.capacity
         if (capacity.availableForRead >= size) return true
 
@@ -2012,28 +2087,38 @@ internal class ByteBufferChannel(
 
         if (!readSuspendImpl(size)) return false
 
-        return readSuspend(size)
+        return readSuspendLoop(size)
+    }
+
+    private val readSuspendContinuationCache = MutableDelegateContinuation<Boolean>()
+
+    private fun suspensionForSize(size: Int, c: Continuation<Boolean>): Any {
+        do {
+            if (this.state.capacity.availableForRead >= size) {
+                c.resume(true)
+                break
+            }
+
+            closed?.let {
+                if (it.cause != null) {
+                    c.resumeWithException(it.cause)
+                } else {
+                    c.resume(state.capacity.flush() && state.capacity.availableForRead >= size)
+                }
+                return COROUTINE_SUSPENDED
+            }
+        } while (!setContinuation({ readOp }, ReadOp, c, { closed == null && state.capacity.availableForRead < size }))
+
+        return COROUTINE_SUSPENDED
     }
 
     private suspend fun readSuspendImpl(size: Int): Boolean {
         if (state.capacity.availableForRead >= size) return true
 
-        return suspendCancellableCoroutine(holdCancellability = true) { c ->
-            do {
-                if (state.capacity.availableForRead >= size) {
-                    c.resume(true)
-                    break
-                }
-
-                closed?.let {
-                    if (it.cause != null) {
-                        c.resumeWithException(it.cause)
-                    } else {
-                        c.resume(state.capacity.flush() && state.capacity.availableForRead >= size)
-                    }
-                    return@suspendCancellableCoroutine
-                }
-            } while (!setContinuation({ readOp }, ReadOp, c, { closed == null && state.capacity.availableForRead < size }))
+        return suspendCoroutineOrReturn { raw ->
+            val c = readSuspendContinuationCache
+            suspensionForSize(size, c)
+            c.swap(raw)
         }
     }
 
@@ -2049,8 +2134,44 @@ internal class ByteBufferChannel(
         }
     }
 
+    private val writeSuspendContinuationCache = MutableDelegateContinuation<Unit>()
+    @Volatile
+    private var writeSuspensionSize: Int = 0
+    private val writeSuspension = { c: Continuation<Unit> ->
+        val size = writeSuspensionSize
+
+        do {
+            closed?.sendException?.let { throw it }
+            if (!writeSuspendPredicate(size)) {
+                c.resume(Unit)
+                break
+            }
+        } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
+
+        flushImpl(1, minWriteSize = size)
+
+        COROUTINE_SUSPENDED
+    }
+
+    private suspend fun tryWriteSuspend(size: Int) {
+        if (!writeSuspendPredicate(size)) {
+            closed?.sendException?.let { throw it }
+            return
+        }
+
+        writeSuspensionSize = size
+        if (attachedJob != null) {
+            return suspendCoroutineOrReturn(writeSuspension)
+        }
+
+        return suspendCoroutineOrReturn { raw ->
+            val c = writeSuspendContinuationCache
+            writeSuspension(c)
+            c.swap(raw)
+        }
+    }
+
     private suspend fun writeSuspend(size: Int) {
-//        println("Write suspend (enter)")
         while (writeSuspendPredicate(size)) {
             suspendCancellableCoroutine<Unit>(holdCancellability = true) { c ->
                 do {
@@ -2062,15 +2183,13 @@ internal class ByteBufferChannel(
                 } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
 
                 flushImpl(1, minWriteSize = size)
-//                println("Write suspend (loop), op = ${writeOp}, state = $state, joined = $joining")
             }
         }
 
         closed?.sendException?.let { throw it }
-//        println("Write suspend (leave)")
     }
 
-    private inline fun <T, C : CancellableContinuation<T>> setContinuation(getter: () -> C?, updater: AtomicReferenceFieldUpdater<ByteBufferChannel, C?>, continuation: C, predicate: () -> Boolean): Boolean {
+    private inline fun <T, C : Continuation<T>> setContinuation(getter: () -> C?, updater: AtomicReferenceFieldUpdater<ByteBufferChannel, C?>, continuation: C, predicate: () -> Boolean): Boolean {
         while (true) {
             val current = getter()
             if (current != null) throw IllegalStateException("Operation is already in progress")
@@ -2081,7 +2200,9 @@ internal class ByteBufferChannel(
 
             if (updater.compareAndSet(this, null, continuation)) {
                 if (predicate() || !updater.compareAndSet(this, continuation, null)) {
-                    continuation.initCancellability()
+                    if (attachedJob == null && continuation is CancellableContinuation<*>) {
+                        continuation.initCancellability()
+                    }
                     return true
                 }
 
@@ -2144,7 +2265,8 @@ internal class ByteBufferChannel(
 
         override fun request(skip: Int, atLeast: Int) = null
 
-        suspend override fun awaitAtLeast(n: Int) {
+        suspend override fun awaitAtLeast(n: Int): Boolean {
+            return false
         }
     }
 

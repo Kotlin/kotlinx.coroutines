@@ -83,6 +83,8 @@ public interface ByteWriteChannel {
      */
     suspend fun writeWhile(block: (ByteBuffer) -> Boolean)
 
+    suspend fun writeSuspendSession(visitor: suspend WriterSuspendSession.() -> Unit)
+
     /**
      * Writes a [packet] fully or fails if channel get closed before the whole packet has been written
      */

@@ -23,7 +23,7 @@ interface LookAheadSuspendSession : LookAheadSession {
     /**
      * Suspend until [n] bytes become available or end of stream encountered (possibly due to exceptional close)
      */
-    suspend fun awaitAtLeast(n: Int)
+    suspend fun awaitAtLeast(n: Int): Boolean
 }
 
 inline fun LookAheadSession.consumeEachRemaining(visitor: (ByteBuffer) -> Boolean) {

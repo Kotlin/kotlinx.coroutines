@@ -106,7 +106,7 @@ public interface ByteReadChannel {
     /**
      * For every available bytes range invokes [visitor] function until it return false or end of stream encountered
      */
-    suspend fun consumeEachBufferRange(visitor: (buffer: ByteBuffer, last: Boolean) -> Boolean)
+    suspend fun consumeEachBufferRange(visitor: ConsumeEachBufferVisitor)
 
     fun <R> lookAhead(visitor: LookAheadSession.() -> R): R
     suspend fun <R> lookAheadSuspend(visitor: suspend LookAheadSuspendSession.() -> R): R
@@ -164,6 +164,8 @@ public interface ByteReadChannel {
      */
     suspend fun discard(max: Long = Long.MAX_VALUE): Long
 }
+
+typealias ConsumeEachBufferVisitor = (buffer: java.nio.ByteBuffer, last: Boolean) -> Boolean
 
 suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
     require(dst !== this)
