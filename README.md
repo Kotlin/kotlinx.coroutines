@@ -5,7 +5,7 @@
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.20) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.20)
 
 Library support for Kotlin coroutines. 
-This is a companion version for Kotlin 1.2.0 release. 
+This is a companion version for Kotlin 1.2.10 release.
 
 ## Modules
 
@@ -60,7 +60,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.0</kotlin.version>
+    <kotlin.version>1.2.10</kotlin.version>
 </properties>
 ```
 
@@ -76,7 +76,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.0'
+    ext.kotlin_version = '1.2.10'
 }
 ```
 
