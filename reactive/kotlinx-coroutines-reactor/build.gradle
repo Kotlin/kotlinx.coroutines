@@ -12,7 +12,8 @@ dependencies {
     compile 'io.projectreactor:reactor-core'
     compile project(':kotlinx-coroutines-reactive')
 }
-dokka {
+
+tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL('https://projectreactor.io/docs/core/release/api/')
     }

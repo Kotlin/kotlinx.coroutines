@@ -2,7 +2,8 @@ dependencies {
     compile project(':kotlinx-coroutines-reactive')
     compile 'io.reactivex.rxjava2:rxjava:2.0.6'
 }
-dokka {
+
+tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL('http://reactivex.io/RxJava/javadoc/')
     }

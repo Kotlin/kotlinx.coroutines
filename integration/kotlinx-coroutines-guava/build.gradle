@@ -2,7 +2,8 @@ ext.guava_version = '21.0'
 dependencies {
     compile "com.google.guava:guava:$guava_version"
 }
-dokka {
+
+tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("https://google.github.io/guava/releases/$guava_version/api/docs/")
     }

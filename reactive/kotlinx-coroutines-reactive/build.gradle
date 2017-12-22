@@ -2,7 +2,8 @@ ext.reactive_streams_version = '1.0.0'
 dependencies {
     compile "org.reactivestreams:reactive-streams:$reactive_streams_version"
 }
-dokka {
+
+tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
     }

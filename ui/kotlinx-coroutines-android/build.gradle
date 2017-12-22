@@ -1,7 +1,8 @@
 dependencies {
     compileOnly 'com.google.android:android:4.1.1.4'
 }
-dokka {
+
+tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("https://developer.android.com/reference/")
     }
