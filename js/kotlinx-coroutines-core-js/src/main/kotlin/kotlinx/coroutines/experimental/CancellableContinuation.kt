@@ -259,6 +259,10 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun toString(): String =
         "CancellableContinuation{${stateString()}}[$delegate]"
+
+    // todo: This workaround for KT-21968, should be removed in the future
+    public override fun cancel(cause: Throwable?): Boolean =
+        super.cancel(cause)
 }
 
 private class CompletedIdempotentResult(

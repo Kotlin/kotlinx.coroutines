@@ -27,14 +27,14 @@ import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
- * Starts new coroutine and returns its results an an implementation of [CompletableFuture].
+ * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
  * This coroutine builder uses [CommonPool] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *

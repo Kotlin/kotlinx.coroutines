@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.browser.window
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -46,29 +45,29 @@ public actual val DefaultDispatcher: CoroutineDispatcher = DefaultExecutor
 
 internal object DefaultExecutor : CoroutineDispatcher(), Delay {
     fun enqueue(block: Runnable) {
-        window.setTimeout({ block.run() }, 0)
+        setTimeout({ block.run() }, 0)
     }
 
     fun schedule(time: Double, block: Runnable): Int =
-        window.setTimeout({ block.run() }, time.timeToInt())
+        setTimeout({ block.run() }, time.timeToInt())
 
     fun removeScheduled(handle: Int) {
-        window.clearTimeout(handle)
+        clearTimeout(handle)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        window.setTimeout({ block.run() }, 0)
+        setTimeout({ block.run() }, 0)
     }
 
     override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
+        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
     }
 
     override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, time.coerceAtLeast(0))
+        val handle = setTimeout({ block.run() }, time.coerceAtLeast(0))
         return object : DisposableHandle {
             override fun dispose() {
-                window.clearTimeout(handle)
+                clearTimeout(handle)
             }
         }
     }
@@ -85,3 +84,9 @@ public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): 
     return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
         wp + DefaultDispatcher else wp
 }
+
+// We need to reference global setTimeout and clearTimeout so that it works on Node.JS as opposed to
+// using them via "window" (which only works in browser)
+
+private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
+private external fun clearTimeout(handle: Int = definedExternally): Unit
