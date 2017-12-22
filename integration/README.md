@@ -1,6 +1,7 @@
 # Coroutines integration
 
-This directory contains modules that provide integration with various asynchronous callback- and future-based libraries:
+This directory contains modules that provide integration with various asynchronous callback- and future-based libraries.
+Module name below corresponds to the artifact name in Maven/Gradle.
 
 ## Modules
 

@@ -264,6 +264,9 @@ public actual interface Job : CoroutineContext.Element {
 
     // ------------ low-level state-notification ------------
 
+    /**
+     * @suppress **Deprecated**: For binary compatibility
+     */
     @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
     public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 

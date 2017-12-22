@@ -4,17 +4,29 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.20) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.20)
 
-Library support for Kotlin coroutines. 
+Library support for Kotlin coroutines in
+[Kotlin/JVM](core/README.md) and
+[Kotlin/JS](js/README.md).
 This is a companion version for Kotlin 1.2.10 release.
+
+```kotlin
+launch {
+    delay(1000)
+    println("Hello from Kotlin Coroutine!")
+}
+```
 
 ## Modules
 
-* [core](core/README.md) -- core primitives to work with coroutines:
-  * `launch`, `async`, `produce`, `actor`, etc coroutine builders;
+* [common](common/README.md) - common coroutines across all backends:
+  * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
-  * `CommonPool` and other coroutine contexts;
+  * `delay` and `yield` top-level suspending functions.
+* [js](js/README.md) - Kotlin/JS implementation of common coroutines with `Promise` support.
+* [core](core/README.md) -- Kotlin/JVM implementation of common coroutines with additional features:
+  * `CommonPool` coroutine context (default on JVM);
   * `Channel` and `Mutex` communication and synchronization primitives;
-  * `delay`, `yield`, etc top-level suspending functions;
+  * `produce` and `actor` coroutine builders;
   * `select` expression support and more.
 * [reactive](reactive/README.md) -- modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
@@ -79,6 +91,10 @@ buildscript {
     ext.kotlin_version = '1.2.10'
 }
 ```
+
+### Kotlin/JS
+
+Use `kotlinx-coroutines-core-js` artifact in your dependencies.
 
 ### ProGuard
 
