@@ -41,14 +41,18 @@ if (platform != "common") {
             suffix = "#L"
         }
         kotlinTasks { [] }
-        impliedPlatforms = [platform]
-        sourceRoot {
-            path = project.file('src/main/kotlin')
-            platforms = [platform]
-        }
         if (project.name == coroutines_core) {
+            impliedPlatforms = [platform]
+            sourceRoot {
+                path = project.file('src/main/kotlin')
+                platforms = [platform]
+            }
             sourceRoot {
                 path = rootProject.file('common/kotlinx-coroutines-core-common/src/main/kotlin')
+            }
+        } else {
+            sourceRoot {
+                path = project.file('src/main/kotlin')
             }
         }
         afterEvaluate {
