@@ -1,6 +1,8 @@
-/.idea
+.idea
 *.iml
 .gradle
+.gradletasknamecache
 build
 out
 target
+node_modules
