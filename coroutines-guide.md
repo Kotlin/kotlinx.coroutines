@@ -639,7 +639,7 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 What do we do if need to invoke them _sequentially_ -- first `doSomethingUsefulOne` _and then_ 
 `doSomethingUsefulTwo` and compute the sum of their results? 
-In practise we do this if we use the results of the first function to make a decision on whether we need 
+In practice we do this if we use the results of the first function to make a decision on whether we need 
 to invoke the second one or to decide on how to invoke it.
 
 We just use a normal sequential invocation, because the code in the coroutine, just like in the regular 
