@@ -18,6 +18,9 @@ package kotlinx.coroutines.experimental.internal
 
 private typealias Node = LinkedListNode
 
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
 public open class LinkedListNode {
     public var next = this
         private set
@@ -46,6 +49,9 @@ public open class LinkedListNode {
     }
 }
 
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
 public open class LinkedListHead : LinkedListNode() {
     public val isEmpty get() = next === this
 

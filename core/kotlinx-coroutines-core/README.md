@@ -1,6 +1,6 @@
 # Module kotlinx-coroutines-core
 
-Core primitives to work with coroutines on Kotlin/JVM.
+Core primitives to work with coroutines.
 
 Coroutine builder functions:
 

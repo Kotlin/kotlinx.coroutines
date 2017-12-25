@@ -111,6 +111,7 @@ public suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
 
 /**
  * An implementation of [DisposableHandle] that cancels the specified future on dispose.
+ * @suppress **This is unstable API and it is subject to change.**
  */
 public class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
     override fun dispose() {

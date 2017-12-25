@@ -57,6 +57,11 @@ public expect class JobCancellationException(
     val job: Job
 }
 
+@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
+public expect fun CoroutineContext.cancel(cause: Throwable? = null): Boolean
+@Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
+public expect fun CoroutineContext.cancelChildren(cause: Throwable? = null)
+
 public expect fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle
 public expect suspend fun Job.cancelAndJoin()
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER", "EXTENSION_SHADOWED_BY_MEMBER") // See KT-21598

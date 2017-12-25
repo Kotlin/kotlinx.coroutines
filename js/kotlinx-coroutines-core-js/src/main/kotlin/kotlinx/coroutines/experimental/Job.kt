@@ -306,6 +306,25 @@ private fun IllegalStateException(message: String, cause: Throwable?) =
 private fun String.withCause(cause: Throwable?) =
     if (cause == null) this else "$this; caused by $cause"
 
+// -------------------- CoroutineContext extensions --------------------
+
+/**
+ * Cancels [Job] of this context with an optional cancellation [cause]. The result is `true` if the job was
+ * cancelled as a result of this invocation and `false` if there is no job in the context or if it was already
+ * cancelled or completed. See [Job.cancel] for details.
+ */
+public actual fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
+    this[Job]?.cancel(cause) ?: false
+
+/**
+ * Cancels all children of the [Job] in this context with an optional cancellation [cause].
+ * It does not do anything if there is no job in the context or it has no children.
+ * See [Job.cancelChildren] for details.
+ */
+public actual fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
+    this[Job]?.cancelChildren(cause)
+}
+
 // -------------------- Job extensions --------------------
 
 /**

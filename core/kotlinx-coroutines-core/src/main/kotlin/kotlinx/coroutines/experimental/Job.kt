@@ -509,7 +509,7 @@ public actual suspend fun Job.joinChildren() {
  * cancelled as a result of this invocation and `false` if there is no job in the context or if it was already
  * cancelled or completed. See [Job.cancel] for details.
  */
-public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
+public actual fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
     this[Job]?.cancel(cause) ?: false
 
 /**
@@ -517,7 +517,7 @@ public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
  * It does not do anything if there is no job in the context or it has no children.
  * See [Job.cancelChildren] for details.
  */
-public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
+public actual fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
    this[Job]?.cancelChildren(cause)
 }
 
@@ -530,6 +530,7 @@ public suspend fun Job.join() = this.join()
 
 /**
  * No-op implementation of [Job.Registration].
+ * @suppress: **Deprecated**: Replace with [NonDisposableHandle]
  */
 @Deprecated(message = "Replace with `NonDisposableHandle`",
     replaceWith = ReplaceWith("NonDisposableHandle"))
@@ -1170,7 +1171,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     protected open fun afterCompletion(state: Any?, mode: Int) {}
 
     // for nicer debugging
-    override final fun toString(): String =
+    final override fun toString(): String =
         "${nameString()}{${stateString()}}@$hexAddress"
 
     /**
@@ -1400,7 +1401,7 @@ internal abstract class JobNode<out J : Job>(
     final override val isActive: Boolean get() = true
     final override val list: JobSupport.NodeList? get() = null
     final override fun dispose() = (job as JobSupport).removeNode(this)
-    override abstract fun invoke(reason: Throwable?)
+    abstract override fun invoke(reason: Throwable?)
 }
 
 private class InvokeOnCompletion(
