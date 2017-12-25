@@ -31,7 +31,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
  */
-public actual interface EventLoop {
+public interface EventLoop {
     /**
      * Processes next event in this event loop.
      *

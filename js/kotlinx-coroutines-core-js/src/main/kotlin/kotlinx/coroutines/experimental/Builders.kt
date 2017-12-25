@@ -122,8 +122,9 @@ public actual suspend fun <T> withContext(
  *
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
+ * @suppress JS Platform: **This is unstable API and it is subject to change.**
  */
-public actual fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop() else null
     val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, privateEventLoop = eventLoop != null)
