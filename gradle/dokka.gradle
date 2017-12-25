@@ -3,11 +3,61 @@
 def platform = platformOf(project)
 def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 
-if (platform != "common") {
-    apply plugin: 'org.jetbrains.dokka'
+def makeLinkMapping(dokka, projectDir) {
+    dokka.linkMapping {
+        def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
+        dir = "$projectDir/src/main/kotlin"
+        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
+        suffix = "#L"
+    }
 }
 
 if (platform == "jvm") {
+    apply plugin: 'org.jetbrains.dokka'
+
+    tasks.withType(dokka.getClass()) {
+        jdkVersion = 8
+        includes = ['README.md']
+    }
+
+    dokka {
+        outputFormat = 'kotlin-website'
+    }
+
+    if (project.name == coroutines_core) {
+        // Configuration for MPP module
+        dokka {
+            kotlinTasks { [] }
+            suppressedModifiers = ['actual']
+            // map for JS & Common sources
+            makeLinkMapping(it, projectDir)
+            makeLinkMapping(it, rootProject.file('js/kotlinx-coroutines-core-js'))
+            makeLinkMapping(it, rootProject.file('common/kotlinx-coroutines-core-common'))
+            // source roots
+            impliedPlatforms = ['JVM', 'JS']
+            sourceRoot {
+                path = rootProject.file('core/kotlinx-coroutines-core/src/main/kotlin')
+                platforms = ['JVM']
+            }
+            sourceRoot {
+                path = rootProject.file('js/kotlinx-coroutines-core-js/src/main/kotlin')
+                platforms = ['JS']
+            }
+            sourceRoot {
+                path = rootProject.file('common/kotlinx-coroutines-core-common/src/main/kotlin')
+            }
+            // depends on JS & Common, too
+            afterEvaluate {
+                dependsOn(tasks.getByPath(":kotlinx-coroutines-core-js:classes"))
+                dependsOn(tasks.getByPath(":kotlinx-coroutines-core-common:classes"))
+            }
+            afterEvaluate {
+                classpath = project.configurations.compileClasspath.files
+                dependsOn(project.configurations.compileClasspath)
+            }
+        }
+    }
+
     // real xxx-javadoc.jar for JVM
     task dokkaJavadoc(type: dokka.getClass()) {
         outputFormat = 'javadoc'
@@ -19,49 +69,9 @@ if (platform == "jvm") {
         from "$buildDir/javadoc"
     }
 } else {
-    // empty xxx-javadoc.jar
+    // empty xxx-javadoc.jar for JS and Common modules
     task javadocJar(type: Jar) {
         classifier = 'javadoc'
         from "$buildDir/javadoc" // would not exist
-    }
-}
-
-if (platform != "common") {
-    dokka {
-        outputFormat = 'kotlin-website'
-    }
-
-    tasks.withType(dokka.getClass()) {
-        jdkVersion = 8
-        includes = ['README.md']
-        linkMapping {
-            def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
-            dir = "$projectDir/src/main/kotlin"
-            url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
-            suffix = "#L"
-        }
-        kotlinTasks { [] }
-        if (project.name == coroutines_core) {
-            impliedPlatforms = [platform]
-            sourceRoot {
-                path = project.file('src/main/kotlin')
-                platforms = [platform]
-            }
-            sourceRoot {
-                path = rootProject.file('common/kotlinx-coroutines-core-common/src/main/kotlin')
-            }
-        } else {
-            sourceRoot {
-                path = project.file('src/main/kotlin')
-            }
-        }
-        afterEvaluate {
-            classpath = project.configurations.compileClasspath.files
-            dependsOn(project.configurations.compileClasspath)
-            if (platform == "js") {
-                def jvmlib = project.dependencies.create("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
-                classpath += project.configurations.detachedConfiguration(jvmlib).files
-            }
-        }
     }
 }
