@@ -95,7 +95,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 // --------------- Configure sub-projects that are part of the library ---------------
 
-def internal = sourceless + ['benchmarks', 'knit']
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
 
 // configure atomicfu for JVM modules
 configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {

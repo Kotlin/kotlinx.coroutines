@@ -25,35 +25,38 @@ if (platform == "jvm") {
     }
 
     if (project.name == coroutines_core) {
-        // Configuration for MPP module
+        // Custom configuration for MPP modules
+        dependencies {
+            compileOnly project(":js-stub") // so that JS library reference can resolve properly
+        }
+        
         dokka {
             kotlinTasks { [] }
             suppressedModifiers = ['actual']
             // map for JS & Common sources
             makeLinkMapping(it, projectDir)
-            makeLinkMapping(it, rootProject.file('js/kotlinx-coroutines-core-js'))
-            makeLinkMapping(it, rootProject.file('common/kotlinx-coroutines-core-common'))
+            makeLinkMapping(it, rootProject.file("js/$project.name-js"))
+            makeLinkMapping(it, rootProject.file("common/$project.name-common"))
             // source roots
             impliedPlatforms = ['JVM', 'JS']
             sourceRoot {
-                path = rootProject.file('core/kotlinx-coroutines-core/src/main/kotlin')
+                path = rootProject.file("core/$project.name/src/main/kotlin")
                 platforms = ['JVM']
             }
             sourceRoot {
-                path = rootProject.file('js/kotlinx-coroutines-core-js/src/main/kotlin')
+                path = rootProject.file("js/$project.name-js/src/main/kotlin")
                 platforms = ['JS']
             }
             sourceRoot {
-                path = rootProject.file('common/kotlinx-coroutines-core-common/src/main/kotlin')
+                path = rootProject.file("common/$project.name-common/src/main/kotlin")
             }
             // depends on JS & Common, too
             afterEvaluate {
-                dependsOn(tasks.getByPath(":kotlinx-coroutines-core-js:classes"))
-                dependsOn(tasks.getByPath(":kotlinx-coroutines-core-common:classes"))
-            }
-            afterEvaluate {
-                classpath = project.configurations.compileClasspath.files
+                dependsOn(tasks.getByPath(":$project.name-js:classes"))
+                dependsOn(tasks.getByPath(":$project.name-common:classes"))
+//                dependsOn(tasks.getByPath(":js-stub:classes"))
                 dependsOn(project.configurations.compileClasspath)
+                classpath = project.configurations.compileClasspath.files
             }
         }
     }
