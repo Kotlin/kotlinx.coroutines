@@ -54,7 +54,6 @@ if (platform == "jvm") {
             afterEvaluate {
                 dependsOn(tasks.getByPath(":$project.name-js:classes"))
                 dependsOn(tasks.getByPath(":$project.name-common:classes"))
-//                dependsOn(tasks.getByPath(":js-stub:classes"))
                 dependsOn(project.configurations.compileClasspath)
                 classpath = project.configurations.compileClasspath.files
             }
