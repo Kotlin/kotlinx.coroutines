@@ -4,6 +4,32 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+// --------------- pom configuration ---------------
+
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "JetBrains"
+            name "JetBrains Team"
+            organization "JetBrains"
+            organizationUrl "http://www.jetbrains.com"
+        }
+    }
+
+    scm {
+        url "https://github.com/Kotlin/kotlinx.coroutines"
+    }
+}
+
+// ------------- tasks
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
