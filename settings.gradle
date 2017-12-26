@@ -22,6 +22,7 @@ include 'kotlinx-coroutines-swing'
 
 include 'kotlinx-coroutines-core-js'
 include 'js-stub'
+include 'example-frontend-js'
 
 include 'benchmarks'
 include 'knit'
@@ -44,3 +45,4 @@ project(':kotlinx-coroutines-javafx').projectDir = file('ui/kotlinx-coroutines-j
 project(':kotlinx-coroutines-swing').projectDir = file('ui/kotlinx-coroutines-swing')
 project(':kotlinx-coroutines-core-js').projectDir = file('js/kotlinx-coroutines-core-js')
 project(':js-stub').projectDir = file('js/js-stub')
+project(':example-frontend-js').projectDir = file('js/example-frontend-js')

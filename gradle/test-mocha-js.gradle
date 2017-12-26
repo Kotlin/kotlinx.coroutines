@@ -2,14 +2,6 @@
 
 apply plugin: 'com.moowork.node'
 
-tasks.withType(compileKotlin2Js.getClass()) {
-    kotlinOptions {
-        moduleKind = "umd"
-        sourceMap = true
-        metaInfo = true
-    }
-}
-
 task populateNodeModules(type: Copy, dependsOn: compileKotlin2Js) {
     from compileKotlin2Js.destinationDir
     into "${buildDir}/node_modules"
@@ -25,6 +17,8 @@ task populateNodeModules(type: Copy, dependsOn: compileKotlin2Js) {
 }
 
 node {
+    version = "$node_version"
+    npmVersion = "$npm_version"
     download = true
 }
 

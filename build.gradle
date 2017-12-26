@@ -52,6 +52,16 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
     kotlin.experimental.coroutines "enable"
 
+    if (platform == "js") {
+        tasks.withType(compileKotlin2Js.getClass()) {
+            kotlinOptions {
+                moduleKind = "umd"
+                sourceMap = true
+                metaInfo = true
+            }
+        }
+    }
+    
     tasks.withType(Test) {
         testLogging {
             showStandardStreams = true
@@ -86,10 +96,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
             testCompile "junit:junit:$junit_version"
             testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
         }
-    }
-
-    if (platform == "js") {
-        apply from: rootProject.file('gradle/test-js.gradle')
     }
 }
 
@@ -143,7 +149,7 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 
 // --------------- Configure sub-projects that are published ---------------
 
-def unpublished = internal + 'kotlinx-coroutines-rx-example'
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
