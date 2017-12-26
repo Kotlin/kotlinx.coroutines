@@ -20,7 +20,7 @@ import kotlin.test.*
 
 class CommonAtomicCancellationTest : TestBase() {
     @Test
-    fun testCancellableLaunch() = runBlocking {
+    fun testCancellableLaunch() = runTest {
         expect(1)
         val job = launch(coroutineContext) {
             expectUnreached() // will get cancelled before start
@@ -31,7 +31,7 @@ class CommonAtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testAtomicLaunch() = runBlocking {
+    fun testAtomicLaunch() = runTest {
         expect(1)
         val job = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
             finish(4) // will execute even after it was cancelled
@@ -42,7 +42,7 @@ class CommonAtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testDeferredAwaitCancellable() = runBlocking {
+    fun testDeferredAwaitCancellable() = runTest {
         expect(1)
         val deferred = async(coroutineContext) { // deferred, not yet complete
             expect(4)
@@ -70,7 +70,7 @@ class CommonAtomicCancellationTest : TestBase() {
     }
 
     @Test
-    fun testJobJoinCancellable() = runBlocking {
+    fun testJobJoinCancellable() = runTest {
         expect(1)
         val jobToJoin = launch(coroutineContext) { // not yet complete
             expect(4)
