@@ -16,13 +16,11 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import kotlinx.coroutines.experimental.internal.ThreadSafeHeap
-import kotlinx.coroutines.experimental.internal.ThreadSafeHeapNode
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.internal.*
+import java.util.concurrent.*
+import java.util.concurrent.locks.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -67,6 +65,7 @@ public interface EventLoop {
  * }
  * ```
  */
+@Suppress("FunctionName")
 public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
     EventLoopImpl(thread).apply {
         if (parentJob != null) initParentJob(parentJob)
@@ -76,30 +75,49 @@ private const val DELAYED = 0
 private const val REMOVED = 1
 private const val RESCHEDULED = 2
 
-internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
-    private val queue = LockFreeLinkedListHead()
-    private val delayed = ThreadSafeHeap<DelayedTask>()
+@Suppress("PrivatePropertyName")
+private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
-    protected abstract val canComplete: Boolean
+private typealias Queue<T> = LockFreeMPSCQueueCore<T>
+
+internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
+    // null | CLOSED_EMPTY | task | Queue<Runnable>
+    private val _queue = atomic<Any?>(null)
+
+    // Allocated only only once
+    private val _delayed = atomic<ThreadSafeHeap<DelayedTask>?>(null)
+
     protected abstract val isCompleted: Boolean
     protected abstract fun unpark()
     protected abstract fun isCorrectThread(): Boolean
 
     protected val isEmpty: Boolean
-        get() = queue.isEmpty && delayed.isEmpty
+        get() = isQueueEmpty && isDelayedEmpty
+
+    private val isQueueEmpty: Boolean get() {
+        val queue = _queue.value
+        return when (queue) {
+            null -> true
+            is Queue<*> -> queue.isEmpty
+            else -> queue === CLOSED_EMPTY
+        }
+    }
+
+    private val isDelayedEmpty: Boolean get() {
+        val delayed = _delayed.value
+        return delayed == null || delayed.isEmpty
+    }
 
     private val nextTime: Long
         get() {
-            if (!queue.isEmpty) return 0
+            if (!isQueueEmpty) return 0
+            val delayed = _delayed.value ?: return Long.MAX_VALUE
             val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
             return (nextDelayedTask.nanoTime - timeSource.nanoTime()).coerceAtLeast(0)
         }
 
-    fun execute(block: Runnable) =
-        enqueue(block.toQueuedTask())
-
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        enqueue(block.toQueuedTask())
+        execute(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
         schedule(DelayedResumeTask(time, unit, continuation))
@@ -110,7 +128,8 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     override fun processNextEvent(): Long {
         if (!isCorrectThread()) return Long.MAX_VALUE
         // queue all delayed tasks that are due to be executed
-        if (!delayed.isEmpty) {
+        val delayed = _delayed.value
+        if (delayed != null && !delayed.isEmpty) {
             val now = timeSource.nanoTime()
             while (true) {
                 // make sure that moving from delayed to queue removes from delayed only after it is added to queue
@@ -118,35 +137,92 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
                 // do not transiently report that both delayed and queue are empty during move
                 delayed.removeFirstIf {
                     if (it.timeToExecute(now)) {
-                        queue.addLast(it)
-                        true // proceed with remove
+                        enqueueImpl(it)
                     } else
                         false
-                } ?: break // quit loop when nothing more to remove
+                } ?: break // quit loop when nothing more to remove or enqueueImpl returns false on "isComplete"
             }
         }
         // then process one event from queue
-        (queue.removeFirstOrNull() as? QueuedTask)?.run()
+        dequeue()?.run()
         return nextTime
     }
 
-    private fun Runnable.toQueuedTask(): QueuedTask =
-        if (this is QueuedTask && isFresh) this else QueuedRunnableTask(this)
-
-    internal fun enqueue(queuedTask: QueuedTask) {
-        if (enqueueImpl(queuedTask)) {
+    @Suppress("MemberVisibilityCanBePrivate") // todo: remove suppress when KT-22030 is fixed
+    internal fun execute(task: Runnable) {
+        if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
         } else
-            DefaultExecutor.enqueue(queuedTask)
+            DefaultExecutor.execute(task)
     }
 
-    private fun enqueueImpl(queuedTask: QueuedTask): Boolean {
-        if (!canComplete) {
-            queue.addLast(queuedTask)
-            return true
+    @Suppress("UNCHECKED_CAST")
+    private fun enqueueImpl(task: Runnable): Boolean {
+        _queue.loop { queue ->
+            if (isCompleted) return false // fail fast if already completed, may still add, but queues will close
+            when (queue) {
+                null -> if (_queue.compareAndSet(null, task)) return true
+                is Queue<*> -> {
+                    when ((queue as Queue<Runnable>).addLast(task)) {
+                        Queue.ADD_SUCCESS -> return true
+                        Queue.ADD_CLOSED -> return false
+                        Queue.ADD_FROZEN -> _queue.compareAndSet(queue, queue.next())
+                    }
+                }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return false
+                    else -> {
+                        // update to full-blown queue to add one more
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY)
+                        newQueue.addLast(queue as Runnable)
+                        newQueue.addLast(task)
+                        if (_queue.compareAndSet(queue, newQueue)) return true
+                    }
+                }
+            }
         }
-        return queue.addLastIf(queuedTask) { !isCompleted }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun dequeue(): Runnable? {
+        _queue.loop { queue ->
+            when (queue) {
+                null -> return null
+                is Queue<*> -> {
+                    val result = (queue as Queue<Runnable>).removeFirstOrNull()
+                    if (result !== Queue.REMOVE_FROZEN) return result as Runnable?
+                    _queue.compareAndSet(queue, queue.next())
+                }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return null
+                    else -> if (_queue.compareAndSet(queue, null)) return queue as Runnable
+                }
+            }
+        }
+    }
+
+    protected fun closeQueue() {
+        assert(isCompleted)
+        _queue.loop { queue ->
+            when (queue) {
+                null -> if (_queue.compareAndSet(null, CLOSED_EMPTY)) return
+                is Queue<*> -> {
+                    queue.close()
+                    return
+                }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return
+                    else -> {
+                        // update to full-blown queue to close
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY)
+                        newQueue.addLast(queue as Runnable)
+                        if (_queue.compareAndSet(queue, newQueue)) return
+                    }
+                }
+            }
+        }
+
     }
 
     internal fun schedule(delayedTask: DelayedTask) {
@@ -158,43 +234,37 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     private fun scheduleImpl(delayedTask: DelayedTask): Boolean {
-        if (!canComplete) {
-            delayed.addLast(delayedTask)
-            return true
+        if (isCompleted) return false
+        val delayed = _delayed.value ?: run {
+            _delayed.compareAndSet(null, ThreadSafeHeap())
+            _delayed.value!!
         }
         return delayed.addLastIf(delayedTask) { !isCompleted }
     }
 
     internal fun removeDelayedImpl(delayedTask: DelayedTask) {
-        delayed.remove(delayedTask)
+        _delayed.value?.remove(delayedTask)
     }
 
-    protected fun clearAll() {
-        while (true) queue.removeFirstOrNull() ?: break
-        while (true) delayed.removeFirstOrNull() ?: break
+    // It performs "hard" shutdown for test cleanup purposes
+    protected fun resetAll() {
+        _queue.value = null
+        _delayed.value = null
     }
 
+    // This is a "soft" (normal) shutdown
     protected fun rescheduleAllDelayed() {
         while (true) {
-            val delayedTask = delayed.removeFirstOrNull() ?: break
+            val delayedTask = _delayed.value?.removeFirstOrNull() ?: break
             delayedTask.rescheduleOnShutdown()
         }
     }
 
-    internal abstract class QueuedTask : LockFreeLinkedListNode(), Runnable
-
-    private class QueuedRunnableTask(
-        private val block: Runnable
-    ) : QueuedTask() {
-        override fun run() { block.run() }
-        override fun toString(): String = block.toString()
-    }
-
     internal abstract inner class DelayedTask(
         time: Long, timeUnit: TimeUnit
-    ) : QueuedTask(), Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+    ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         override var index: Int = -1
-        var state = DELAYED
+        var state = DELAYED // Guarded by by lock on this task for reschedule/dispose purposes
         @JvmField val nanoTime: Long = timeSource.nanoTime() + timeUnit.toNanos(time)
 
         override fun compareTo(other: DelayedTask): Int {
@@ -208,18 +278,18 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
-        fun rescheduleOnShutdown() = synchronized(delayed) {
+        fun rescheduleOnShutdown() = synchronized(this) {
             if (state != DELAYED) return
-            if (delayed.remove(this)) {
+            if (_delayed.value!!.remove(this)) {
                 state = RESCHEDULED
                 DefaultExecutor.schedule(this)
             } else
                 state = REMOVED
         }
 
-        override final fun dispose() = synchronized(delayed) {
+        final override fun dispose() = synchronized(this) {
             when (state) {
-                DELAYED -> delayed.remove(this)
+                DELAYED -> _delayed.value?.remove(this)
                 RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
                 else -> return
             }
@@ -258,7 +328,7 @@ internal abstract class ThreadEventLoop(
     }
 
     fun shutdown() {
-        assert(isCompleted)
+        closeQueue()
         assert(isCorrectThread())
         // complete processing of all queued tasks
         while (processNextEvent() <= 0) { /* spin */ }
@@ -270,7 +340,6 @@ internal abstract class ThreadEventLoop(
 private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
     private var parentJob: Job? = null
 
-    override val canComplete: Boolean get() = parentJob != null
     override val isCompleted: Boolean get() = parentJob?.isCompleted == true
 
     fun initParentJob(parentJob: Job) {
@@ -280,7 +349,6 @@ private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
 }
 
 internal class BlockingEventLoop(thread: Thread) : ThreadEventLoop(thread) {
-    override val canComplete: Boolean get() = true
     @Volatile
     public override var isCompleted: Boolean = false
 }
