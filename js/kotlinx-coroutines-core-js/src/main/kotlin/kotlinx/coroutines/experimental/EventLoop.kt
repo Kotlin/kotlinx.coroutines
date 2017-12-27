@@ -90,7 +90,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     private fun enqueue(queuedTask: QueuedTask) {
         if (!enqueueImpl(queuedTask))
-            DefaultExecutor.enqueue(queuedTask)
+            JSDispatcher.enqueue(queuedTask)
     }
 
     private fun enqueueImpl(queuedTask: QueuedTask): Boolean {
@@ -102,7 +102,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     private fun schedule(delayedTask: DelayedTask) {
         if (!scheduleImpl(delayedTask)) {
             val remaining = delayedTask.time - now()
-            DefaultExecutor.schedule(remaining, delayedTask)
+            JSDispatcher.schedule(remaining, delayedTask)
         }
     }
 
@@ -152,7 +152,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
             if (state != DELAYED) return
             if (delayed?.remove(this) == true) {
                 state = RESCHEDULED
-                handle = DefaultExecutor.schedule(time,this)
+                handle = JSDispatcher.schedule(time,this)
             } else
                 state = REMOVED
         }
@@ -160,7 +160,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         final override fun dispose() {
             when (state) {
                 DELAYED -> delayed?.remove(this)
-                RESCHEDULED -> DefaultExecutor.removeScheduled(handle)
+                RESCHEDULED -> JSDispatcher.removeScheduled(handle)
                 else -> return
             }
             state = REMOVED

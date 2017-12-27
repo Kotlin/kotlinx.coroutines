@@ -41,9 +41,9 @@ public actual object Unconfined : CoroutineDispatcher() {
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher = DefaultExecutor
+public actual val DefaultDispatcher: CoroutineDispatcher = JSDispatcher
 
-internal object DefaultExecutor : CoroutineDispatcher(), Delay {
+internal object JSDispatcher : CoroutineDispatcher(), Delay {
     fun enqueue(block: Runnable) {
         setTimeout({ block.run() }, 0)
     }
