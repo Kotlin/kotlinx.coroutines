@@ -110,6 +110,7 @@ public actual abstract class CoroutineDispatcher actual constructor() :
 public actual typealias Runnable = java.lang.Runnable
 
 // named class for ease of debugging, better stack-traces and optimize the number of anonymous classes
+// note that CancellableContinuationImpl directly works as DispatchTask
 internal class DispatchTask<in T>(
     private val continuation: Continuation<T>,
     private val value: Any?, // T | Throwable

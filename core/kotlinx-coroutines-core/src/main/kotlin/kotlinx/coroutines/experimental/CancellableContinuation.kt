@@ -214,7 +214,7 @@ private class RemoveOnCancel(
 internal class CancellableContinuationImpl<in T>(
     delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T> {
+) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable {
     @Volatile // just in case -- we don't want an extra data race, even benign one
     private var _context: CoroutineContext? = null // created on first need
 
