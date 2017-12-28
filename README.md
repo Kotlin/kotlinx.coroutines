@@ -12,7 +12,7 @@ This is a companion version for Kotlin 1.2.10 release.
 ```kotlin
 launch {
     delay(1000)
-    println("Hello from Kotlin Coroutine!")
+    println("Hello from Kotlin Coroutines!")
 }
 ```
 

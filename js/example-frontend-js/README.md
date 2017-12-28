@@ -3,7 +3,7 @@
 Build application with
 
 ```
-gradlew :example-frontend-js:build
+gradlew :example-frontend-js:bundle
 ```
 
 The resulting application can be found in `build/dist` subdirectory.
