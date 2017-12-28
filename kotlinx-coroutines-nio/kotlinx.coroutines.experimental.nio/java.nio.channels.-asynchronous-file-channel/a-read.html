@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-nio/kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-read.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,16 +29,16 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-nio</a> / <a href="../index.html">kotlinx.coroutines.experimental.nio</a> / <a href="index.html">java.nio.channels.AsynchronousFileChannel</a> / <a href=".">aRead</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-nio</a> / <a href="../index.html">kotlinx.coroutines.experimental.nio</a> / <a href="index.html">java.nio.channels.AsynchronousFileChannel</a> / <a href="./a-read.html">aRead</a></div>
 
 <h1 id="aread">aRead</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">AsynchronousFileChannel</span><span class="symbol">.</span><span class="identifier">aRead</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/buf">buf</span><span class="symbol">:</span>&nbsp;<span class="identifier">ByteBuffer</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/position">position</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/integration/kotlinx-coroutines-nio/src/main/kotlin/kotlinx/coroutines/experimental/nio/Nio.kt#L60">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html"><span class="identifier">AsynchronousFileChannel</span></a><span class="symbol">.</span><span class="identifier">aRead</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/buf">buf</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)/position">position</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-<p>Performs <a href="#">AsynchronousFileChannel.read</a> without blocking a thread and resumes when asynchronous operation completes.
+<p>Performs <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html#read(java.nio.ByteBuffer, long, A, java.nio.channels.CompletionHandler&lt;java.lang.Integer,? super A&gt;)">AsynchronousFileChannel.read</a> without blocking a thread and resumes when asynchronous operation completes.
 This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-<em>closes the underlying channel</em> and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>.</p>
+<em>closes the underlying channel</em> and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>.</p>
 
 
       </div>

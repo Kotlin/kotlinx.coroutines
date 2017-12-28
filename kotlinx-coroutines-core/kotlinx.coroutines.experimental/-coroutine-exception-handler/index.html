@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-exception-handler/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href=".">CoroutineExceptionHandler</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="./index.html">CoroutineExceptionHandler</a></div>
 
 <h1 id="coroutineexceptionhandler">CoroutineExceptionHandler</h1>
 
@@ -38,17 +40,38 @@
 <p>By default, when no handler is installed, uncaught exception are handled in the following way:</p>
 
 <ul>
-  <li>If exception is <a href="../-cancellation-exception.html">CancellationException</a> then it is ignored
+  <li>If exception is <a href="../-cancellation-exception/index.html">CancellationException</a> then it is ignored
 (because that is the supposed mechanism to cancel the running coroutine)</li>
   <li>Otherwise:
     <ul>
       <li>if there is a <a href="../-job/index.html">Job</a> in the context, then <a href="../-job/cancel.html">Job.cancel</a> is invoked;</li>
-      <li>and current thread’s <a href="#">Thread.uncaughtExceptionHandler</a> is invoked.</li>
+      <li>all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> are invoked;</li>
+      <li>and current thread’s <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#uncaughtExceptionHandler">Thread.uncaughtExceptionHandler</a> is invoked.</li>
     </ul>
   </li>
 </ul>
 
 <p>See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+
+<h3 id="types">Types</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="-key.html">Key</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="./index.md"><span class="identifier">CoroutineExceptionHandler</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Key for <a href="./index.md">CoroutineExceptionHandler</a> instance in the coroutine context.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="functions">Functions</h3>
 

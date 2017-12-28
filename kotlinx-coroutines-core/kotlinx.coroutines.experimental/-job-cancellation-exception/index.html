@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job-cancellation-exception/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,14 +29,14 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href=".">JobCancellationException</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="./index.html">JobCancellationException</a></div>
 
 <h1 id="jobcancellationexception">JobCancellationException</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L393">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L413">(source)</a></div>
 
 <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled or completed
-without cause, or with a cause or exception that is not <a href="../-cancellation-exception.html">CancellationException</a>
+without cause, or with a cause or exception that is not <a href="../-cancellation-exception/index.html">CancellationException</a>
 (see <a href="../-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
 
 <h3 id="constructors">Constructors</h3>
@@ -51,7 +53,7 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
         <div class="signature"><code><span class="identifier">JobCancellationException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/job">job</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span></code></div>
 
         <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled or completed
-without cause, or with a cause or exception that is not <a href="../-cancellation-exception.html">CancellationException</a>
+without cause, or with a cause or exception that is not <a href="../-cancellation-exception/index.html">CancellationException</a>
 (see <a href="../-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
 
       </td>
@@ -63,7 +65,16 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
 
 <table class="api-docs-table">
 <tbody>
-<tr>
+<tr data-platform="JS"><td>
+
+        <p><a href="cause.html">cause</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">cause</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
+
+      </td>
+</tr><tr>
 <td>
 
         <p><a href="job.html">job</a></p>

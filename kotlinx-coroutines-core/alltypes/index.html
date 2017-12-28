@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/alltypes/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -105,18 +107,8 @@ function.</p>
 <td>
 
         <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
-When <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a> or
+When <a href="../kotlinx.coroutines.experimental/-cancellable-continuation/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a> or
 with the specified cancel cause.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">kotlinx.coroutines.experimental.CancellationException</a></p>
-      </td>
-<td>
-
-        <p>Thrown by cancellable suspending functions if the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.</p>
 
       </td>
 </tr>
@@ -127,7 +119,7 @@ with the specified cancel cause.</p>
 <td>
 
         <p>Channel is a non-blocking primitive for communication between sender using <a href="../kotlinx.coroutines.experimental.channels/-send-channel/index.html">SendChannel</a> and receiver using <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>.
-Conceptually, a channel is similar to <a href="#">BlockingQueue</a>,
+Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>
@@ -174,7 +166,7 @@ exception on send attempts.</p>
 <td>
 
         <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
-It uses <a href="#">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
+It uses <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
 coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
 When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
 
@@ -197,7 +189,7 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
       </td>
 <td>
 
-        <p>Handler for <a href="../kotlinx.coroutines.experimental/-job/invoke-on-completion.html">Job.invokeOnCompletion</a>.</p>
+        <p>Handler for <a href="#">Job.invokeOnCompletion</a>.</p>
 
       </td>
 </tr>
@@ -207,7 +199,7 @@ When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a sim
       </td>
 <td>
 
-        <p>This exception gets thrown if an exception is caught while processing <a href="../kotlinx.coroutines.experimental/-completion-handler.html">CompletionHandler</a> invocation for <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a>.</p>
+        <p>This exception gets thrown if an exception is caught while processing <a href="#">CompletionHandler</a> invocation for <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a>.</p>
 
       </td>
 </tr>
@@ -232,14 +224,6 @@ so that the receiver always gets the most recently sent element.
 Back-to-send sent elements are <em>conflated</em> – only the the most recently sent element is received,
 while previously sent elements <strong>are lost</strong>.
 Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-continuation/index.html">kotlin.coroutines.experimental.Continuation</a> (extensions in package kotlinx.coroutines.experimental)</p>
-      </td>
-<td>
 
       </td>
 </tr>
@@ -328,31 +312,11 @@ scheduled execution of tasks.</p>
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-disposable-future-handle/index.html">kotlinx.coroutines.experimental.DisposableFutureHandle</a></p>
-      </td>
-<td>
-
-        <p>An implementation of <a href="../kotlinx.coroutines.experimental/-disposable-handle/index.html">DisposableHandle</a> that cancels the specified future on dispose.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental/-disposable-handle/index.html">kotlinx.coroutines.experimental.DisposableHandle</a></p>
       </td>
 <td>
 
         <p>A handle to an allocated object that can be disposed to make it eligible for garbage collection.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/-empty-registration.html">kotlinx.coroutines.experimental.EmptyRegistration</a></p>
-      </td>
-<td>
-
-        <p>No-op implementation of <a href="#">Job.Registration</a>.</p>
 
       </td>
 </tr>
@@ -402,7 +366,7 @@ or completion of parent immediately cancels all its <a href="../kotlinx.coroutin
 <td>
 
         <p>Thrown by cancellable suspending functions if the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the coroutine is cancelled or completed
-without cause, or with a cause or exception that is not <a href="../kotlinx.coroutines.experimental/-cancellation-exception.html">CancellationException</a>
+without cause, or with a cause or exception that is not <a href="../kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>
 (see <a href="../kotlinx.coroutines.experimental/-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
 
       </td>
@@ -434,8 +398,8 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
       </td>
 <td>
 
-        <p>A non-cancelable job that is always <a href="../kotlinx.coroutines.experimental/-non-cancellable/is-active.html">active</a>. It is designed to be used with <a href="../kotlinx.coroutines.experimental/run.html">run</a> builder
-to prevent cancellation of code blocks that need to run without cancellation.</p>
+        <p>A non-cancelable job that is always <a href="../kotlinx.coroutines.experimental/-non-cancellable/is-active.html">active</a>. It is designed for <a href="../kotlinx.coroutines.experimental/with-context.html">withContext</a> function
+to prevent cancellation of code blocks that need to be executed without cancellation.</p>
 
       </td>
 </tr>
@@ -456,6 +420,14 @@ to prevent cancellation of code blocks that need to run without cancellation.</p
 <td>
 
         <p>Scope for <a href="../kotlinx.coroutines.experimental.channels/produce.html">produce</a> coroutine builder.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/kotlin.js.-promise/index.html">kotlin.js.Promise</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
 
       </td>
 </tr>
@@ -507,7 +479,7 @@ until another coroutine invokes <a href="../kotlinx.coroutines.experimental.chan
       </td>
 <td>
 
-        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression without additional parameters that selects value of type <a href="#">Q</a>.</p>
+        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression without additional parameters that selects value of type <a href="../kotlinx.coroutines.experimental.selects/-select-clause1.html#Q">Q</a>.</p>
 
       </td>
 </tr>
@@ -517,7 +489,7 @@ until another coroutine invokes <a href="../kotlinx.coroutines.experimental.chan
       </td>
 <td>
 
-        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression with additional parameter of type <a href="#">P</a> that selects value of type <a href="#">Q</a>.</p>
+        <p>Clause for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> expression with additional parameter of type <a href="../kotlinx.coroutines.experimental.selects/-select-clause2.html#P">P</a> that selects value of type <a href="../kotlinx.coroutines.experimental.selects/-select-clause2.html#Q">Q</a>.</p>
 
       </td>
 </tr>
@@ -581,6 +553,14 @@ created with <a href="../kotlinx.coroutines.experimental/new-single-thread-conte
 It executes initial continuation of the coroutine <em>right here</em> in the current call-frame
 and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
 mandating any specific threading policy.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/org.w3c.dom.-window/index.html">org.w3c.dom.Window</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
 
       </td>
 </tr>

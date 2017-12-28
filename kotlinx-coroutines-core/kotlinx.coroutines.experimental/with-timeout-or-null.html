@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,31 +29,60 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental</a> / <a href=".">withTimeoutOrNull</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental</a> / <a href="./with-timeout-or-null.html">withTimeoutOrNull</a></div>
 
 <h1 id="withtimeoutornull">withTimeoutOrNull</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<span class="identifier">TimeUnit</span>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<span class="identifier">T</span><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">T</span><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Scheduled.kt#L128">(source)</a></div>
+<div class="overload-group">
 
-<p>Runs a given suspending block of code inside a coroutine with a specified timeout and returns
+  <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Scheduled.kt#L147">(source)</a></div>
+
+  <p>Runs a given suspending block of code inside a coroutine with a specified timeout and returns
 <code>null</code> if this timeout was exceeded.</p>
 
-<p>The code that is executing inside the <a href="with-timeout-or-null.html#kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</a> is cancelled on timeout and the active or next invocation of
+  <p>The code that is executing inside the <a href="with-timeout-or-null.html#kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Int, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</a> is cancelled on timeout and the active or next invocation of
 cancellable suspending function inside the block throws <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a>.
 Even if the code in the block suppresses <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a>, this
 invocation of <code>withTimeoutOrNull</code> still returns <code>null</code>.</p>
 
-<p>The sibling function that throws exception on timeout is <a href="with-timeout.html">withTimeout</a>.
+  <p>The sibling function that throws exception on timeout is <a href="with-timeout.html">withTimeout</a>.
 Note, that timeout action can be specified for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
 
-<p>This function delegates to <a href="-delay/invoke-on-timeout.html">Delay.invokeOnTimeout</a> if the context <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a>
+  <p>This function delegates to <a href="-delay/invoke-on-timeout.html">Delay.invokeOnTimeout</a> if the context <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a>
 implements <a href="-delay/index.html">Delay</a> interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.</p>
 
-<h3 id="parameters">Parameters</h3>
+  <h3 id="parameters">Parameters</h3>
 
-<p><code>time</code> - timeout time</p>
+  <p><code>time</code> - timeout time in milliseconds.</p>
 
-<p><code>unit</code> - timeout unit (milliseconds by default)</p>
+</div>
+<div class="overload-group" data-platform="JVM">
+
+  <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">withTimeoutOrNull</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TimeUnit.MILLISECONDS<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="with-timeout-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Scheduled.kt#L168">(source)</a></div>
+
+  <p><strong>Platform and version requirements:</strong> JVM</p>
+
+  <p>Runs a given suspending block of code inside a coroutine with a specified timeout and returns
+<code>null</code> if this timeout was exceeded.</p>
+
+  <p>The code that is executing inside the <a href="with-timeout-or-null.html#kotlinx.coroutines.experimental$withTimeoutOrNull(kotlin.Long, java.util.concurrent.TimeUnit, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.withTimeoutOrNull.T)))/block">block</a> is cancelled on timeout and the active or next invocation of
+cancellable suspending function inside the block throws <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a>.
+Even if the code in the block suppresses <a href="-timeout-cancellation-exception/index.html">TimeoutCancellationException</a>, this
+invocation of <code>withTimeoutOrNull</code> still returns <code>null</code>.</p>
+
+  <p>The sibling function that throws exception on timeout is <a href="with-timeout.html">withTimeout</a>.
+Note, that timeout action can be specified for <a href="../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="../kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html">onTimeout</a> clause.</p>
+
+  <p>This function delegates to <a href="-delay/invoke-on-timeout.html">Delay.invokeOnTimeout</a> if the context <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a>
+implements <a href="-delay/index.html">Delay</a> interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.</p>
+
+  <h3 id="parameters-1">Parameters</h3>
+
+  <p><code>time</code> - timeout time</p>
+
+  <p><code>unit</code> - timeout unit (milliseconds by default)</p>
+
+</div>
 
       </div>
     </main>

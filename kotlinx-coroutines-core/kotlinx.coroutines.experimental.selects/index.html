@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,9 +29,11 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href=".">kotlinx.coroutines.experimental.selects</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="./index.html">kotlinx.coroutines.experimental.selects</a></div>
 
 <h2 id="package-kotlinxcoroutinesexperimentalselects">Package kotlinx.coroutines.experimental.selects</h2>
+
+<p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>Select expression to perform multiple suspending operations simultaneously until one of them succeeds.</p>
 
@@ -37,8 +41,7 @@
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
+<tr data-platform="JVM"><td>
 
         <p><a href="-select-builder/index.html">SelectBuilder</a></p>
 
@@ -49,9 +52,7 @@
         <p>Scope for <a href="select.html">select</a> invocation.</p>
 
       </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JVM"><td>
 
         <p><a href="-select-clause0.html">SelectClause0</a></p>
 
@@ -62,9 +63,7 @@
         <p>Clause for <a href="select.html">select</a> expression without additional parameters that does not select any value.</p>
 
       </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JVM"><td>
 
         <p><a href="-select-clause1.html">SelectClause1</a></p>
 
@@ -72,12 +71,10 @@
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectClause1</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">Q</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="select.html">select</a> expression without additional parameters that selects value of type <a href="#">Q</a>.</p>
+        <p>Clause for <a href="select.html">select</a> expression without additional parameters that selects value of type <a href="-select-clause1.html#Q">Q</a>.</p>
 
       </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JVM"><td>
 
         <p><a href="-select-clause2.html">SelectClause2</a></p>
 
@@ -85,48 +82,42 @@
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SelectClause2</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">P</span><span class="symbol">, </span><span class="keyword">out</span>&nbsp;<span class="identifier">Q</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="select.html">select</a> expression with additional parameter of type <a href="#">P</a> that selects value of type <a href="#">Q</a>.</p>
+        <p>Clause for <a href="select.html">select</a> expression with additional parameter of type <a href="-select-clause2.html#P">P</a> that selects value of type <a href="-select-clause2.html#Q">Q</a>.</p>
 
       </td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
+<tr data-platform="JVM"><td>
 
         <p><a href="select.html">select</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">select</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="select.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="select.html#R"><span class="identifier">R</span></a></code></div>
 
         <p>Waits for the result of multiple suspending functions simultaneously, which are specified using <em>clauses</em>
 in the <a href="select.html#kotlinx.coroutines.experimental.selects$select(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.select.R)), kotlin.Unit)))/builder">builder</a> scope of this select invocation. The caller is suspended until one of the clauses
 is either <em>selected</em> or <em>fails</em>.</p>
 
       </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JVM"><td>
 
         <p><a href="select-unbiased.html">selectUnbiased</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">selectUnbiased</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$selectUnbiased(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.selectUnbiased.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">R</span></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">selectUnbiased</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$selectUnbiased(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.selects.selectUnbiased.R)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="select-unbiased.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="select-unbiased.html#R"><span class="identifier">R</span></a></code></div>
 
         <p>Waits for the result of multiple suspending functions simultaneously like <a href="select.html">select</a>, but in an <em>unbiased</em>
 way when multiple clauses are selectable at the same time.</p>
 
       </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JVM"><td>
 
         <p><a href="while-select.html">whileSelect</a></p>
 
@@ -137,8 +128,7 @@ way when multiple clauses are selectable at the same time.</p>
         <p>Loops while <a href="select.html">select</a> expression returns <code>true</code>.</p>
 
       </td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 
       </div>

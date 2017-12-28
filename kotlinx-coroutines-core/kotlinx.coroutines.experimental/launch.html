@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,7 +29,7 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental</a> / <a href=".">launch</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental</a> / <a href="./launch.html">launch</a></div>
 
 <h1 id="launch">launch</h1>
 
@@ -38,7 +40,7 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 
 <p>The <a href="launch.html#kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlinx.coroutines.experimental.Job, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</a> for the new coroutine can be explicitly specified.
 See <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the standard context implementations that are provided by <code>kotlinx.coroutines</code>.
-The <a href="#">context</a> of the parent coroutine from its <a href="-coroutine-scope/index.html">scope</a> may be used,
+The <a href="-coroutine-scope/coroutine-context.html">context</a> of the parent coroutine from its <a href="-coroutine-scope/index.html">scope</a> may be used,
 in which case the <a href="-job/index.html">Job</a> of the resulting coroutine is a child of the job of the parent coroutine.
 The parent job may be also explicitly specified using <a href="launch.html#kotlinx.coroutines.experimental$launch(kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlinx.coroutines.experimental.Job, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/parent">parent</a> parameter.</p>
 

@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-io/kotlinx.coroutines.experimental.io/-byte-write-channel/close.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,11 +29,11 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-io</a> / <a href="../index.html">kotlinx.coroutines.experimental.io</a> / <a href="index.html">ByteWriteChannel</a> / <a href=".">close</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-io</a> / <a href="../index.html">kotlinx.coroutines.experimental.io</a> / <a href="index.html">ByteWriteChannel</a> / <a href="./close.html">close</a></div>
 
 <h1 id="close">close</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-io/src/main/kotlin/kotlinx/coroutines/experimental/io/ByteWriteChannel.kt#L133">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
 <p>Closes this channel with an optional exceptional <a href="close.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</a>.
 It flushes all pending write bytes (via <a href="flush.html">flush</a>).
@@ -43,8 +45,12 @@ write on a failed channel throw this cause exception.</p>
 
 <p>After invocation of this operation <a href="is-closed-for-write.html">isClosedForWrite</a> starts returning <code>true</code> and
 all subsequent write operations throw <a href="../-closed-write-channel-exception/index.html">ClosedWriteChannelException</a> or the specified <a href="close.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</a>.
-However, <a href="../-byte-read-channel/is-closed-for-read.html">isClosedForRead</a> on the side of <a href="../-byte-read-channel.html">ByteReadChannel</a>
+However, <a href="../-byte-read-channel/is-closed-for-read.html">isClosedForRead</a> on the side of <a href="../-byte-read-channel/index.html">ByteReadChannel</a>
 starts returning <code>true</code> only after all written bytes have been read.</p>
+
+<p>Please note that if the channel has been closed with cause and it has been provided by <a href="../reader.html">reader</a> or <a href="../writer.html">writer</a>
+coroutine then the corresponding coroutine will be cancelled with <a href="close.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</a>. If no <a href="close.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$close(kotlin.Throwable)/cause">cause</a> provided then no
+cancellation will be propagated.</p>
 
 
       </div>

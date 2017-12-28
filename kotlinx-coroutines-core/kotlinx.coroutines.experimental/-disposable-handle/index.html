@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-disposable-handle/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,11 +29,11 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href=".">DisposableHandle</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="./index.html">DisposableHandle</a></div>
 
 <h1 id="disposablehandle">DisposableHandle</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Registration</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L349">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">Registration</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L379">(source)</a></div>
 
 <p>A handle to an allocated object that can be disposed to make it eligible for garbage collection.</p>
 
@@ -63,26 +65,13 @@ Repeated invocation of this function has no effect.</p>
 <tr>
 <td>
 
-        <p><a href="../-disposable-future-handle/index.html">DisposableFutureHandle</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">DisposableFutureHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">DisposableHandle</span></code></div>
-
-        <p>An implementation of DisposableHandle that cancels the specified future on dispose.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="../-non-disposable-handle/index.html">NonDisposableHandle</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonDisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">DisposableHandle</span></code></div>
+        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonDisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>No-op implementation of DisposableHandle.</p>
+        <p>No-op implementation of <a href="./index.md">DisposableHandle</a>.</p>
 
       </td>
 </tr>

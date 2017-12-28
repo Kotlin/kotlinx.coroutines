@@ -8,6 +8,8 @@
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
             (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -27,11 +29,11 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Job</a> / <a href=".">join</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Job</a> / <a href="./join.html">join</a></div>
 
 <h1 id="join">join</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L256">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">join</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L257">(source)</a></div>
 
 <p>Suspends coroutine until this job is complete. This invocation resumes normally (without exception)
 when the job is complete for any reason and the <a href="index.html">Job</a> of the invoking coroutine is still <a href="is-active.html">active</a>.
@@ -42,10 +44,10 @@ This function also <a href="start.html">starts</a> the corresponding coroutine i
 <p>This suspending function is cancellable and <strong>always</strong> checks for the cancellation of invoking coroutine’s Job.
 If the <a href="index.html">Job</a> of the invoking coroutine is cancelled or completed when this
 suspending function is invoked or while it is suspended, this function
-throws <a href="../-cancellation-exception.html">CancellationException</a>.</p>
+throws <a href="../-cancellation-exception/index.html">CancellationException</a>.</p>
 
 <p>In particular, it means that a parent coroutine invoking <code>join</code> on a child coroutine that was started using
-<code>launch(coroutineContext) { ... }</code> builder throws <a href="../-cancellation-exception.html">CancellationException</a> if the child
+<code>launch(coroutineContext) { ... }</code> builder throws <a href="../-cancellation-exception/index.html">CancellationException</a> if the child
 had crashed, unless a non-standard <a href="../-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> if installed in the context.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="on-join.html">onJoin</a> clause.
