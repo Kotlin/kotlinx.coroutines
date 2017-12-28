@@ -135,16 +135,17 @@ internal abstract class AbstractContinuation<in T>(
 
     // see all DispatchTask.run with the same logic
     override fun run() {
-        check(delegate is DispatchedContinuation)
+        delegate as DispatchedContinuation // type assertion
         try {
             val context = delegate.context
             val job = if (resumeMode.isCancellableMode) context[Job] else null
             val state = this.state
+            val continuation = delegate.continuation
             withCoroutineContext(context) {
                 when {
-                    job != null && !job.isActive -> delegate.resumeWithException(job.getCancellationException())
-                    state is CompletedExceptionally -> delegate.resumeWithException(state.exception)
-                    else -> delegate.resume(getSuccessfulResult(state))
+                    job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
+                    state is CompletedExceptionally -> continuation.resumeWithException(state.exception)
+                    else -> continuation.resume(getSuccessfulResult(state))
                 }
             }
         } catch (e: Throwable) {
