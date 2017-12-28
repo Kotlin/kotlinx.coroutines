@@ -28,5 +28,5 @@ Library support for Kotlin coroutines. This reference is a companion to
 
 ## Examples
 
-* [example-frontend-js](example-frontend-js) -- frontend application written in Kotlin/JS
+* [example-frontend-js](example-frontend-js/index.html) -- frontend application written in Kotlin/JS
 that uses coroutines to implement animations in imperative style.
