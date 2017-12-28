@@ -13,3 +13,6 @@ You can start application with webpack-dev-server using:
 ```
 gradlew :example-frontend-js:start
 ```
+
+Built and deployed application is available at the library documentation site
+[here](http://kotlin.github.io/kotlinx.coroutines/example-frontend-js).
