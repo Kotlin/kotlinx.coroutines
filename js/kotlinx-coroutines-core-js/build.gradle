@@ -1,0 +1,1 @@
+apply from: rootProject.file('gradle/test-mocha-js.gradle')

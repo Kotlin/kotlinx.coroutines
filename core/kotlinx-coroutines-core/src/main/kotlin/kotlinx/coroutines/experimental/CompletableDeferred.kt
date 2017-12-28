@@ -51,14 +51,14 @@ import kotlinx.coroutines.experimental.selects.SelectClause1
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
-public interface CompletableDeferred<T> : Deferred<T> {
+public actual interface CompletableDeferred<T> : Deferred<T> {
     /**
      * Completes this deferred value with a given [value]. The result is `true` if this deferred was
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    public fun complete(value: T): Boolean
+    public actual fun complete(value: T): Boolean
 
     /**
      * Completes this deferred value exceptionally with a given [exception]. The result is `true` if this deferred was
@@ -66,7 +66,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    public fun completeExceptionally(exception: Throwable): Boolean
+    public actual fun completeExceptionally(exception: Throwable): Boolean
 }
 
 /**
@@ -74,7 +74,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * It is optionally a child of a [parent] job.
  */
 @Suppress("FunctionName")
-public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
+public actual fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
 
 /** @suppress **Deprecated:** Binary compatibility only */
 @Deprecated(message = "Binary compatibility only", level = DeprecationLevel.HIDDEN)
@@ -85,7 +85,7 @@ public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferr
  * Creates an already _completed_ [CompletableDeferred] with a given [value].
  */
 @Suppress("FunctionName")
-public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>(null).apply { complete(value) }
+public actual fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>(null).apply { complete(value) }
 
 /**
  * Concrete implementation of [CompletableDeferred].
@@ -96,7 +96,7 @@ private class CompletableDeferredImpl<T>(
 ) : JobSupport(true), CompletableDeferred<T> {
     init { initParentJob(parent) }
     override fun getCompleted(): T = getCompletedInternal() as T
-    suspend override fun await(): T = awaitInternal() as T
+    override suspend fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T>
         get() = this as SelectClause1<T>
 

@@ -58,13 +58,24 @@ import kotlin.coroutines.experimental.suspendCoroutine
  *
  * ```
  */
-public interface CancellableContinuation<in T> : Continuation<T>, Job {
+public actual interface CancellableContinuation<in T> : Continuation<T>, Job {
+    /**
+     * Returns `true` when this continuation is active -- it has not completed or cancelled yet.
+     */
+    public actual override val isActive: Boolean
+
+    /**
+     * Returns `true` when this continuation has completed for any reason. A continuation
+     * that was cancelled is also considered complete.
+     */
+    public actual override val isCompleted: Boolean
+
     /**
      * Returns `true` if this continuation was [cancelled][cancel].
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    public override val isCancelled: Boolean
+    public actual override val isCancelled: Boolean
 
     /**
      * Tries to resume this continuation with a given value and returns non-null object token if it was successful,
@@ -76,7 +87,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    public fun tryResume(value: T, idempotent: Any? = null): Any?
+    public actual fun tryResume(value: T, idempotent: Any? = null): Any?
 
     /**
      * Tries to resume this continuation with a given exception and returns non-null object token if it was successful,
@@ -92,13 +103,36 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    public fun completeResume(token: Any)
+    public actual fun completeResume(token: Any)
 
     /**
      * Makes this continuation cancellable. Use it with `holdCancellability` optional parameter to
      * [suspendCancellableCoroutine] function. It throws [IllegalStateException] if invoked more than once.
      */
-    public fun initCancellability()
+    public actual fun initCancellability()
+
+    /**
+     * Cancels this continuation with an optional cancellation [cause]. The result is `true` if this continuation was
+     * cancelled as a result of this invocation and `false` otherwise.
+     */
+    @Suppress("DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE")
+    public actual override fun cancel(cause: Throwable? = null): Boolean
+
+    /**
+     * Registers handler that is **synchronously** invoked once on completion of this continuation.
+     * When continuation is already complete, then the handler is immediately invoked
+     * with continuation's exception or `null`. Otherwise, handler will be invoked once when this
+     * continuation is complete.
+     *
+     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
+     * registration of this handler and release its memory if its invocation is no longer needed.
+     * There is no need to dispose the handler after completion of this continuation. The references to
+     * all the handlers are released when this continuation completes.
+     *
+     * Installed [handler] should not throw any exceptions. If it does, they will get caught,
+     * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
+     */
+    public actual override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
 
     /**
      * Resumes this continuation with a given [value] in the invoker thread without going though
@@ -106,7 +140,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
      */
-    public fun CoroutineDispatcher.resumeUndispatched(value: T)
+    public actual fun CoroutineDispatcher.resumeUndispatched(value: T)
 
     /**
      * Resumes this continuation with a given [exception] in the invoker thread without going though
@@ -114,7 +148,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
      */
-    public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
+    public actual fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
 }
 
 /**
@@ -126,7 +160,7 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
  *
  * See [suspendAtomicCancellableCoroutine] for suspending functions that need *atomic cancellation*.
  */
-public inline suspend fun <T> suspendCancellableCoroutine(
+public actual inline suspend fun <T> suspendCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
@@ -135,7 +169,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
-    }
+}
 
 /**
  * Suspends coroutine similar to [suspendCancellableCoroutine], but with *atomic cancellation*.
@@ -145,7 +179,7 @@ public inline suspend fun <T> suspendCancellableCoroutine(
  * continue to execute even after it was cancelled from the same thread in the case when the continuation
  * was already resumed and was posted for execution to the thread's queue.
  */
-public inline suspend fun <T> suspendAtomicCancellableCoroutine(
+public actual inline suspend fun <T> suspendAtomicCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
@@ -180,7 +214,7 @@ private class RemoveOnCancel(
 internal class CancellableContinuationImpl<in T>(
     delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T> {
+) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable {
     @Volatile // just in case -- we don't want an extra data race, even benign one
     private var _context: CoroutineContext? = null // created on first need
 

@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -420,6 +421,30 @@ class ByteBufferChannelScenarioTest : TestBase() {
     }
 
     @Test
+    fun testWriteIntThenRead() = runBlocking {
+        val size = BUFFER_SIZE - RESERVED_SIZE - 3
+
+        expect(1)
+        ch.writeFully(java.nio.ByteBuffer.allocate(size))
+        ch.flush()
+        expect(2)
+
+        launch(coroutineContext) {
+            expect(4)
+            ch.readPacket(size).release()
+        }
+
+        // coroutine is pending
+        expect(3)
+        ch.writeInt(0x11223344)
+        expect(5)
+
+        assertEquals(0x11223344, ch.readInt())
+
+        finish(6)
+    }
+
+    @Test
     fun testWriteLongSuspend() = runBlocking {
         launch(coroutineContext) {
             expect(1)
@@ -444,4 +469,88 @@ class ByteBufferChannelScenarioTest : TestBase() {
         finish(6)
     }
 
+    @Test
+    fun testDiscardExisting() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeInt(1)
+            ch.writeInt(2)
+            expect(2)
+        }
+
+        yield()
+        expect(3)
+
+        assertEquals(4, ch.discard(4))
+        assertEquals(2, ch.readInt())
+
+        finish(4)
+    }
+
+    @Test
+    fun testDiscardPartiallyExisting() = runBlocking {
+        ch.writeInt(1)
+
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard(8))
+            expect(3)
+        }
+
+        yield()
+        expect(2)
+
+        ch.writeInt(2)
+        yield()
+
+        expect(4)
+        assertEquals(0, ch.availableForRead)
+        finish(5)
+    }
+
+    @Test
+    fun testDiscardPartiallyExisting2() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard(8))
+            expect(4)
+        }
+
+        yield()
+
+        expect(2)
+        ch.writeInt(1)
+        yield()
+        expect(3)
+        assertEquals(0, ch.availableForRead)
+
+        ch.writeInt(2)
+        yield()
+        expect(5)
+        assertEquals(0, ch.availableForRead)
+        finish(6)
+    }
+
+    @Test
+    fun testDiscardClose() = runBlocking {
+        launch(coroutineContext) {
+            expect(1)
+            assertEquals(8, ch.discard())
+            expect(4)
+        }
+
+        yield()
+
+        expect(2)
+        ch.writeInt(1)
+        yield()
+        ch.writeInt(2)
+        yield()
+
+        expect(3)
+        ch.close()
+        yield()
+
+        finish(5)
+    }
 }

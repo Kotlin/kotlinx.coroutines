@@ -1,5 +1,21 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.21
+
+* Migrated to Kotlin 1.2.10.
+* Coroutines library for [Kotlin/JS](js/README.md) and [multiplatform projects](https://kotlinlang.org/docs/reference/multiplatform.html) (see #33):
+  * `launch` and `async` coroutine builders.
+  * `Job` and `Deferred` light-weight future with cancellation support.
+  * `delay` and `yield` top-level suspending functions.
+  * `await` extension for JS `Promise` and `asPromise`/`asDeferred` conversions.
+  * `promise` coroutine builder.
+  * `Job()` and `CompletableDeferred()` factories.
+  * Full support for parent-child coroutine hierarchies.
+  * `Window.awaitAnimationFrame` extension function.
+  * [Sample frontend Kotlin/JS application](js/example-frontend-js/README.md) with coroutine-driven animations.
+* `run` is deprecated and renamed to `withContext` (see #134).
+* `runBlocking` and `EventLoop` implementations optimized (see #190).
+
 ## Version 0.20
 
 * Migrated to Kotlin 1.2.0.

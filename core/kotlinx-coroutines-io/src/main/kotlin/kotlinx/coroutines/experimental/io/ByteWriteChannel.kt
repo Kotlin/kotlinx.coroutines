@@ -129,6 +129,10 @@ public interface ByteWriteChannel {
      * all subsequent write operations throw [ClosedWriteChannelException] or the specified [cause].
      * However, [isClosedForRead][ByteReadChannel.isClosedForRead] on the side of [ByteReadChannel]
      * starts returning `true` only after all written bytes have been read.
+     *
+     * Please note that if the channel has been closed with cause and it has been provided by [reader] or [writer]
+     * coroutine then the corresponding coroutine will be cancelled with [cause]. If no [cause] provided then no
+     * cancellation will be propagated.
      */
     public fun close(cause: Throwable? = null): Boolean
 

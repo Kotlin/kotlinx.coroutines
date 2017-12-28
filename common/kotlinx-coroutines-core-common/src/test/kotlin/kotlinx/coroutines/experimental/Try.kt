@@ -23,7 +23,11 @@ public class Try<out T> private constructor(private val _value: Any?) {
 
     public companion object {
         public operator fun <T> invoke(block: () -> T): Try<T> =
-                try { Success(block()) } catch(e: Throwable) { Failure<T>(e) }
+                try {
+                    Success(block())
+                } catch(e: Throwable) {
+                    Failure<T>(e)
+                }
         public fun <T> Success(value: T) = Try<T>(value)
         public fun <T> Failure(exception: Throwable) = Try<T>(Fail(exception))
     }

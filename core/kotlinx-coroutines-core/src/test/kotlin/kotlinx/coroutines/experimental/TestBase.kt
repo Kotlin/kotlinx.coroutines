@@ -41,16 +41,16 @@ import java.util.concurrent.atomic.AtomicReference
  * }
  * ```
  */
-open class TestBase {
+public actual open class TestBase actual constructor() {
     /**
      * Is `true` when nightly stress test is done.
      */
-    val isStressTest = System.getProperty("stressTest") != null
+    public actual val isStressTest = System.getProperty("stressTest") != null
 
     /**
      * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
      */
-    val stressTestMultiplier = if (isStressTest) 30 else 1
+    public actual val stressTestMultiplier = if (isStressTest) 30 else 1
 
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
@@ -60,7 +60,7 @@ open class TestBase {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
-    public fun error(message: Any, cause: Throwable? = null): Nothing {
+    public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         val exception = IllegalStateException(message.toString(), cause)
         error.compareAndSet(null, exception)
         throw exception
@@ -77,7 +77,7 @@ open class TestBase {
     /**
      * Asserts that this invocation is `index`-th in the execution sequence (counting from one).
      */
-    fun expect(index: Int) {
+    public actual fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
@@ -85,14 +85,14 @@ open class TestBase {
     /**
      * Asserts that this line is never executed.
      */
-    fun expectUnreached() {
+    public actual fun expectUnreached() {
         error("Should not be reached")
     }
 
     /**
      * Asserts that this it the last action in the test. It must be invoked by any test that used [expect].
      */
-    fun finish(index: Int) {
+    public actual fun finish(index: Int) {
         expect(index)
         check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
     }
@@ -115,7 +115,7 @@ open class TestBase {
         checkTestThreads(threadsBefore)
     }
 
-    fun runTest(
+    public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
@@ -142,7 +142,7 @@ open class TestBase {
         } finally {
             if (ex == null && expected != null) error("Exception was expected but none produced")
         }
-        if (unhandled != null && exCount < unhandled.size)
+        if (exCount < unhandled.size)
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }

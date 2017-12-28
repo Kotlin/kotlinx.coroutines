@@ -1,0 +1,79 @@
+// Configures generation of JavaDoc & Dokka artifacts
+
+def platform = platformOf(project)
+def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
+
+def makeLinkMapping(dokka, projectDir) {
+    dokka.linkMapping {
+        def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
+        dir = "$projectDir/src/main/kotlin"
+        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
+        suffix = "#L"
+    }
+}
+
+if (platform == "jvm") {
+    apply plugin: 'org.jetbrains.dokka'
+
+    tasks.withType(dokka.getClass()) {
+        jdkVersion = 8
+        includes = ['README.md']
+    }
+
+    dokka {
+        outputFormat = 'kotlin-website'
+    }
+
+    if (project.name == coroutines_core) {
+        // Custom configuration for MPP modules
+        dependencies {
+            compileOnly project(":js-stub") // so that JS library reference can resolve properly
+        }
+        
+        dokka {
+            kotlinTasks { [] }
+            suppressedModifiers = ['actual']
+            // map for JS & Common sources
+            makeLinkMapping(it, projectDir)
+            makeLinkMapping(it, rootProject.file("js/$project.name-js"))
+            makeLinkMapping(it, rootProject.file("common/$project.name-common"))
+            // source roots
+            impliedPlatforms = ['JVM', 'JS']
+            sourceRoot {
+                path = rootProject.file("core/$project.name/src/main/kotlin")
+                platforms = ['JVM']
+            }
+            sourceRoot {
+                path = rootProject.file("js/$project.name-js/src/main/kotlin")
+                platforms = ['JS']
+            }
+            sourceRoot {
+                path = rootProject.file("common/$project.name-common/src/main/kotlin")
+            }
+            // depends on JS & Common, too
+            afterEvaluate {
+                dependsOn(tasks.getByPath(":$project.name-js:classes"))
+                dependsOn(tasks.getByPath(":$project.name-common:classes"))
+                dependsOn(project.configurations.compileClasspath)
+                classpath = project.configurations.compileClasspath.files
+            }
+        }
+    }
+
+    // real xxx-javadoc.jar for JVM
+    task dokkaJavadoc(type: dokka.getClass()) {
+        outputFormat = 'javadoc'
+        outputDirectory = "$buildDir/javadoc"
+    }
+
+    task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
+        classifier = 'javadoc'
+        from "$buildDir/javadoc"
+    }
+} else {
+    // empty xxx-javadoc.jar for JS and Common modules
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from "$buildDir/javadoc" // would not exist
+    }
+}

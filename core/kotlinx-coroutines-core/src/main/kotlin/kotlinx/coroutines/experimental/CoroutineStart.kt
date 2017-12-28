@@ -32,7 +32,7 @@ import kotlin.coroutines.experimental.startCoroutine
  * * [ATOMIC] -- atomically (non-cancellably) schedules coroutine for execution according to its context;
  * * [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
  */
-public enum class CoroutineStart {
+public actual enum class CoroutineStart {
     /**
      * Default -- immediately schedules coroutine for execution according to its context.
      *
@@ -92,7 +92,7 @@ public enum class CoroutineStart {
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
      */
-    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
+    public actual operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
             CoroutineStart.ATOMIC -> block.startCoroutine(completion)
@@ -108,7 +108,7 @@ public enum class CoroutineStart {
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
      */
-    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
+    public actual operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
             CoroutineStart.ATOMIC -> block.startCoroutine(receiver, completion)
@@ -119,5 +119,5 @@ public enum class CoroutineStart {
     /**
      * Returns `true` when [LAZY].
      */
-    public val isLazy: Boolean get() = this === LAZY
+    public actual val isLazy: Boolean get() = this === LAZY
 }

@@ -1,0 +1,16 @@
+{
+  "name": "example-frontend-js",
+  "dependencies": {
+    "webpack": "^3.10.0"
+  },
+  "devDependencies": {
+    "html-webpack-plugin": "^2.30.1",
+    "webpack-dev-server": "^2.9.7",
+    "style-loader": "^0.19.1",
+    "css-loader": "^0.28.7"
+  },
+  "scripts": {
+    "bundle": "webpack",
+    "start": "webpack-dev-server --open --no-inline"
+  }
+}

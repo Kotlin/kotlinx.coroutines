@@ -5,6 +5,7 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.io.internal.*
 import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.io.core.*
@@ -50,8 +51,25 @@ internal class ByteBufferChannel(
     private var readPosition = 0
     private var writePosition = 0
 
+    @Volatile
+    private var attachedJob: Job? = null
+
+    internal fun attachJob(job: Job) {
+        attachedJob?.cancel()
+        attachedJob = job
+        job.invokeOnCompletion {
+            attachedJob = null
+        }
+    }
+
     override var readByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
     override var writeByteOrder: ByteOrder = ByteOrder.BIG_ENDIAN
+        set(newOrder) {
+            if (field != newOrder) {
+                field = newOrder
+                joining?.delegatedTo?.writeByteOrder = newOrder
+            }
+        }
 
     override val availableForRead: Int
         get() = state.capacity.availableForRead
@@ -86,31 +104,38 @@ internal class ByteBufferChannel(
             joining?.let { ensureClosedJoined(it) }
         }
 
+        if (cause != null) attachedJob?.cancel(cause)
+
         return true
     }
 
-    override fun flush() {
+    override fun cancel(cause: Throwable?): Boolean {
+        return close(cause ?: CancellationException("Channel has been cancelled"))
+    }
+
+    private fun flushImpl(minReadSize: Int, minWriteSize: Int) {
         joining?.delegatedTo?.flush()
 
         val avw: Int
-        val flushed: Boolean
+        val avr: Int
 
         while (true) {
             val s = state
             if (s === ReadWriteBufferState.Terminated) return
-            val f = s.capacity.flush()
+            s.capacity.flush()
             if (s === state) {
                 avw = s.capacity.availableForWrite
-                flushed = f
+                avr = s.capacity.availableForRead
                 break
             }
         }
 
+        if (avr >= minReadSize) resumeReadOp()
+        if (avw >= minWriteSize) resumeWriteOp()
+    }
 
-//        println("flushed $flushed, avw $avw")
-
-        if (flushed) resumeReadOp()
-        if (avw > 0) resumeWriteOp()
+    override fun flush() {
+        flushImpl(1, 1)
     }
 
     private fun ByteBuffer.prepareBuffer(order: ByteOrder, position: Int, available: Int) {
@@ -243,6 +268,7 @@ internal class ByteBufferChannel(
         require(this !== delegate)
 
         val joined = JoiningState(delegate, delegateClose)
+        delegate.writeByteOrder = writeByteOrder
         this.joining = joined
 
         val alreadyClosed = closed
@@ -1426,10 +1452,11 @@ internal class ByteBufferChannel(
     }
 
     override suspend fun read(min: Int, block: (ByteBuffer) -> Unit) {
-        require(min > 0) { "min should be positive" }
+        require(min >= 0) { "min should be positive or zero" }
 
         val read = reading {
-            if (it.availableForRead >= min) {
+            val av = it.availableForRead
+            if (av > 0 && av >= min) {
                 val position = this.position()
                 val l = this.limit()
                 block(this)
@@ -1445,12 +1472,55 @@ internal class ByteBufferChannel(
         }
 
         if (!read) {
+            if (isClosedForRead) return
             return readBlockSuspend(min, block)
         }
     }
 
+    override suspend fun discard(max: Long): Long {
+        require(max >= 0) { "max shouldn't be negative: $max" }
+
+        var discarded = 0L
+
+        reading {
+            val n = it.tryReadAtMost(minOf(Int.MAX_VALUE.toLong(), max).toInt())
+            bytesRead(it, n)
+            discarded += n
+            true
+        }
+
+        if (discarded == max || isClosedForRead) return discarded
+
+        return discardSuspend(discarded, max)
+    }
+
+    private suspend fun discardSuspend(discarded0: Long, max: Long): Long {
+        var discarded = discarded0
+
+        while (discarded < max) {
+            val rc = reading {
+                val n = it.tryReadAtMost(minOf(Int.MAX_VALUE.toLong(), max - discarded).toInt())
+                bytesRead(it, n)
+                discarded += n
+
+                true
+            }
+
+            if (!rc) {
+                if (isClosedForRead || !readSuspend(1)) break
+            }
+        }
+
+        return discarded
+    }
+
     private suspend fun readBlockSuspend(min: Int, block: (ByteBuffer) -> Unit) {
-        if (!readSuspend(min)) throw EOFException("Got EOF but at least $min bytes were expected")
+        if (!readSuspend(min.coerceAtLeast(1))) {
+            if (min > 0)
+                throw EOFException("Got EOF but at least $min bytes were expected")
+            else return
+        }
+
         read(min, block)
     }
 
@@ -1841,7 +1911,7 @@ internal class ByteBufferChannel(
                 c.resume(state.capacity.availableForRead > 0)
         }
 
-        WriteOp.getAndSet(this, null)?.tryResumeWithException(cause ?:
+        WriteOp.getAndSet(this, null)?.resumeWithException(cause ?:
             ClosedWriteChannelException(DEFAULT_CLOSE_MESSAGE))
     }
 
@@ -1911,7 +1981,7 @@ internal class ByteBufferChannel(
                     }
                 } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
 
-                flush()
+                flushImpl(1, minWriteSize = size)
 //                println("Write suspend (loop), op = ${writeOp}, state = $state, joined = $joining")
             }
         }

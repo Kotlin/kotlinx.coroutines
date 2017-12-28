@@ -22,8 +22,9 @@ interface WriterScope : CoroutineScope {
 
 fun writer(coroutineContext: CoroutineContext,
            channel: ByteChannel,
+           parent: Job? = null,
            block: suspend WriterScope.() -> Unit): WriterJob {
-    val newContext = newCoroutineContext(coroutineContext)
+    val newContext = newCoroutineContext(coroutineContext, parent)
     val coroutine = WriterCoroutine(newContext, channel)
     coroutine.initParentJob(newContext[Job])
     block.startCoroutine(coroutine, coroutine)
@@ -32,7 +33,13 @@ fun writer(coroutineContext: CoroutineContext,
 
 fun writer(coroutineContext: CoroutineContext,
            autoFlush: Boolean = false,
-           block: suspend WriterScope.() -> Unit): WriterJob = writer(coroutineContext, ByteChannel(autoFlush), block)
+           parent: Job? = null,
+           block: suspend WriterScope.() -> Unit): WriterJob {
+    val channel = ByteChannel(autoFlush) as ByteBufferChannel
+    val job = writer(coroutineContext, channel, parent, block)
+    channel.attachJob(job)
+    return job
+}
 
 private class WriterCoroutine(ctx: CoroutineContext, channel: ByteChannel)
     : ByteChannelCoroutine(ctx, channel), WriterScope, WriterJob

@@ -16,10 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNull
-import org.junit.Assert.assertThat
-import org.junit.Test
+import kotlin.test.*
 import java.util.*
 
 class ThreadSafeHeapTest {
@@ -34,33 +31,33 @@ class ThreadSafeHeapTest {
     @Test
     fun testBasic() {
         val h = ThreadSafeHeap<Node>()
-        assertThat(h.peek(), IsNull())
+        assertEquals(null, h.peek())
         val n1 = Node(1)
         h.addLast(n1)
-        assertThat(h.peek(), IsEqual(n1))
+        assertEquals(n1, h.peek())
         val n2 = Node(2)
         h.addLast(n2)
-        assertThat(h.peek(), IsEqual(n1))
+        assertEquals(n1, h.peek())
         val n3 = Node(3)
         h.addLast(n3)
-        assertThat(h.peek(), IsEqual(n1))
+        assertEquals(n1, h.peek())
         val n4 = Node(4)
         h.addLast(n4)
-        assertThat(h.peek(), IsEqual(n1))
+        assertEquals(n1, h.peek())
         val n5 = Node(5)
         h.addLast(n5)
-        assertThat(h.peek(), IsEqual(n1))
-        assertThat(h.removeFirstOrNull(), IsEqual(n1))
-        assertThat(n1.index, IsEqual(-1))
-        assertThat(h.peek(), IsEqual(n2))
+        assertEquals(n1, h.peek())
+        assertEquals(n1, h.removeFirstOrNull())
+        assertEquals(-1, n1.index)
+        assertEquals(n2, h.peek())
         h.remove(n2)
-        assertThat(h.peek(), IsEqual(n3))
+        assertEquals(n3, h.peek())
         h.remove(n4)
-        assertThat(h.peek(), IsEqual(n3))
+        assertEquals(n3, h.peek())
         h.remove(n3)
-        assertThat(h.peek(), IsEqual(n5))
+        assertEquals(n5, h.peek())
         h.remove(n5)
-        assertThat(h.peek(), IsNull())
+        assertEquals(null, h.peek())
     }
 
     @Test
@@ -71,7 +68,7 @@ class ThreadSafeHeapTest {
         val a = IntArray(n) { r.nextInt() }
         repeat(n) { h.addLast(Node(a[it])) }
         a.sort()
-        repeat(n) { assertThat(h.removeFirstOrNull(), IsEqual(Node(a[it]))) }
-        assertThat(h.peek(), IsNull())
+        repeat(n) { assertEquals(Node(a[it]), h.removeFirstOrNull()) }
+        assertEquals(null, h.peek())
     }
 }

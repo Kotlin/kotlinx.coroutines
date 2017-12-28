@@ -27,7 +27,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
                 delay(500L)
             }
         } finally {
-            run(NonCancellable) {
+            withContext(NonCancellable) {
                 println("I'm running finally")
                 delay(1000L)
                 println("And I've just delayed for 1 sec because I'm non-cancellable")

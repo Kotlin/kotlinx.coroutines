@@ -29,7 +29,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -52,7 +52,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param block the coroutine code.
  */
-public fun launch(
+public actual fun launch(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
@@ -100,7 +100,7 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
-public suspend fun <T> run(
+public actual suspend fun <T> withContext(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
@@ -131,11 +131,20 @@ public suspend fun <T> run(
     completion.getResult()
 }
 
+/** @suppress **Deprecated**: Renamed to [withContext]. */
+@Deprecated(message = "Renamed to `withContext`", level=DeprecationLevel.WARNING,
+    replaceWith = ReplaceWith("withContext(context, start, block)"))
+public suspend fun <T> run(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend () -> T
+): T =
+    withContext(context, start, block)
+
 /** @suppress **Deprecated** */
-@Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated(message = "It is here for binary compatibility only", level=DeprecationLevel.HIDDEN)
 public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
-    run(context, start = CoroutineStart.ATOMIC, block = block)
+    withContext(context, start = CoroutineStart.ATOMIC, block = block)
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.

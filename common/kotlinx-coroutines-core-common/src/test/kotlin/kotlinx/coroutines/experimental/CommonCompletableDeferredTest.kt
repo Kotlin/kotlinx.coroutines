@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
+
 package kotlinx.coroutines.experimental
 
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.hamcrest.core.IsNull
-import org.junit.Assert.assertThat
-import org.junit.Assert.fail
-import org.junit.Test
+import kotlin.test.*
 
-class CompletableDeferredTest : TestBase() {
+class CommonCompletableDeferredTest : TestBase() {
     @Test
     fun testFresh() {
         val c = CompletableDeferred<String>()
@@ -31,10 +28,10 @@ class CompletableDeferredTest : TestBase() {
     }
 
     private fun checkFresh(c: CompletableDeferred<String>) {
-        assertThat(c.isActive, IsEqual(true))
-        assertThat(c.isCancelled, IsEqual(false))
-        assertThat(c.isCompleted, IsEqual(false))
-        assertThat(c.isCompletedExceptionally, IsEqual(false))
+        assertEquals(true, c.isActive)
+        assertEquals(false, c.isCancelled)
+        assertEquals(false, c.isCompleted)
+        assertEquals(false, c.isCompletedExceptionally)
         assertThrows<IllegalStateException> { c.getCancellationException() }
         assertThrows<IllegalStateException> { c.getCompleted() }
         assertThrows<IllegalStateException> { c.getCompletionExceptionOrNull() }
@@ -43,77 +40,76 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testComplete() {
         val c = CompletableDeferred<String>()
-        assertThat(c.complete("OK"), IsEqual(true))
+        assertEquals(true, c.complete("OK"))
         checkCompleteOk(c)
-        assertThat(c.complete("OK"), IsEqual(false))
+        assertEquals(false, c.complete("OK"))
         checkCompleteOk(c)
     }
 
     private fun checkCompleteOk(c: CompletableDeferred<String>) {
-        assertThat(c.isActive, IsEqual(false))
-        assertThat(c.isCancelled, IsEqual(false))
-        assertThat(c.isCompleted, IsEqual(true))
-        assertThat(c.isCompletedExceptionally, IsEqual(false))
-        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
-        assertThat(c.getCompleted(), IsEqual("OK"))
-        assertThat(c.getCompletionExceptionOrNull(), IsNull())
+        assertEquals(false, c.isActive)
+        assertEquals(false, c.isCancelled)
+        assertEquals(true, c.isCompleted)
+        assertEquals(false, c.isCompletedExceptionally)
+        assertTrue(c.getCancellationException() is JobCancellationException)
+        assertEquals("OK", c.getCompleted())
+        assertEquals(null, c.getCompletionExceptionOrNull())
     }
 
     @Test
     fun testCompleteWithException() {
         val c = CompletableDeferred<String>()
-        assertThat(c.completeExceptionally(TestException()), IsEqual(true))
+        assertEquals(true, c.completeExceptionally(TestException()))
         checkCompleteTestException(c)
-        assertThat(c.completeExceptionally(TestException()), IsEqual(false))
+        assertEquals(false, c.completeExceptionally(TestException()))
         checkCompleteTestException(c)
     }
 
     private fun checkCompleteTestException(c: CompletableDeferred<String>) {
-        assertThat(c.isActive, IsEqual(false))
-        assertThat(c.isCancelled, IsEqual(false))
-        assertThat(c.isCompleted, IsEqual(true))
-        assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
+        assertEquals(false, c.isActive)
+        assertEquals(false, c.isCancelled)
+        assertEquals(true, c.isCompleted)
+        assertEquals(true, c.isCompletedExceptionally)
+        assertTrue(c.getCancellationException() is JobCancellationException)
         assertThrows<TestException> { c.getCompleted() }
-        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(TestException::class.java))
+        assertTrue(c.getCompletionExceptionOrNull() is TestException)
     }
 
     @Test
     fun testCancel() {
         val c = CompletableDeferred<String>()
-        assertThat(c.cancel(), IsEqual(true))
+        assertEquals(true, c.cancel())
         checkCancel(c)
-        assertThat(c.cancel(), IsEqual(false))
+        assertEquals(false, c.cancel())
         checkCancel(c)
     }
 
     private fun checkCancel(c: CompletableDeferred<String>) {
-        assertThat(c.isActive, IsEqual(false))
-        assertThat(c.isCancelled, IsEqual(true))
-        assertThat(c.isCompleted, IsEqual(true))
-        assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCancellationException(), IsInstanceOf(CancellationException::class.java))
+        assertEquals(false, c.isActive)
+        assertEquals(true, c.isCancelled)
+        assertEquals(true, c.isCompleted)
+        assertEquals(true, c.isCompletedExceptionally)
         assertThrows<CancellationException> { c.getCompleted() }
-        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(CancellationException::class.java))
+        assertTrue(c.getCompletionExceptionOrNull() is CancellationException)
     }
 
     @Test
     fun testCancelWithException() {
         val c = CompletableDeferred<String>()
-        assertThat(c.cancel(TestException()), IsEqual(true))
+        assertEquals(true, c.cancel(TestException()))
         checkCancelWithException(c)
-        assertThat(c.cancel(TestException()), IsEqual(false))
+        assertEquals(false, c.cancel(TestException()))
         checkCancelWithException(c)
     }
 
     private fun checkCancelWithException(c: CompletableDeferred<String>) {
-        assertThat(c.isActive, IsEqual(false))
-        assertThat(c.isCancelled, IsEqual(true))
-        assertThat(c.isCompleted, IsEqual(true))
-        assertThat(c.isCompletedExceptionally, IsEqual(true))
-        assertThat(c.getCancellationException(), IsInstanceOf(JobCancellationException::class.java))
+        assertEquals(false, c.isActive)
+        assertEquals(true, c.isCancelled)
+        assertEquals(true, c.isCompleted)
+        assertEquals(true, c.isCompletedExceptionally)
+        assertTrue(c.getCancellationException() is JobCancellationException)
         assertThrows<TestException> { c.getCompleted() }
-        assertThat(c.getCompletionExceptionOrNull(), IsInstanceOf(TestException::class.java))
+        assertTrue(c.getCompletionExceptionOrNull() is TestException)
     }
 
     @Test
@@ -122,8 +118,8 @@ class CompletableDeferredTest : TestBase() {
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
         parent.cancel()
-        assertThat(parent.isActive, IsEqual(false))
-        assertThat(parent.isCancelled, IsEqual(true))
+        assertEquals(false, parent.isActive)
+        assertEquals(true, parent.isCancelled)
         checkCancel(c)
     }
 
@@ -132,10 +128,10 @@ class CompletableDeferredTest : TestBase() {
         val parent = Job()
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
-        assertThat(parent.isActive, IsEqual(true))
-        assertThat(c.complete("OK"), IsEqual(true))
+        assertEquals(true, parent.isActive)
+        assertEquals(true, c.complete("OK"))
         checkCompleteOk(c)
-        assertThat(parent.isActive, IsEqual(true))
+        assertEquals(true, parent.isActive)
     }
 
     @Test
@@ -143,10 +139,10 @@ class CompletableDeferredTest : TestBase() {
         val parent = Job()
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
-        assertThat(parent.isActive, IsEqual(true))
-        assertThat(c.completeExceptionally(TestException()), IsEqual(true))
+        assertEquals(true, parent.isActive)
+        assertEquals(true, c.completeExceptionally(TestException()))
         checkCompleteTestException(c)
-        assertThat(parent.isActive, IsEqual(true))
+        assertEquals(true, parent.isActive)
     }
 
     @Test
@@ -154,21 +150,21 @@ class CompletableDeferredTest : TestBase() {
         val parent = Job()
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
-        assertThat(parent.isActive, IsEqual(true))
-        assertThat(c.cancel(), IsEqual(true))
+        assertEquals(true, parent.isActive)
+        assertEquals(true, c.cancel())
         checkCancel(c)
-        assertThat(parent.isActive, IsEqual(true))
+        assertEquals(true, parent.isActive)
     }
 
     @Test
-    fun testAwait() = runBlocking {
+    fun testAwait() = runTest {
         expect(1)
         val c = CompletableDeferred<String>()
         launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
-            assertThat(c.await(), IsEqual("OK")) // suspends
+            assertEquals("OK", c.await()) // suspends
             expect(5)
-            assertThat(c.await(), IsEqual("OK")) // does not suspend
+            assertEquals("OK", c.await()) // does not suspend
             expect(6)
         }
         expect(3)
@@ -183,7 +179,7 @@ class CompletableDeferredTest : TestBase() {
             block()
             fail("Should not complete normally")
         } catch (e: Throwable) {
-            assertThat(e, IsInstanceOf(T::class.java))
+            assertTrue(e is T)
         }
     }
 

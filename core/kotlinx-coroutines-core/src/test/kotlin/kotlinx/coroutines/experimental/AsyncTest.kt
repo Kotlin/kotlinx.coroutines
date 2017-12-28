@@ -16,96 +16,12 @@
 
 package kotlinx.coroutines.experimental
 
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import java.io.IOException
+import kotlin.test.*
 
 class AsyncTest : TestBase() {
+    // This must be a common test but it fails on JS because of KT-21961
     @Test
-    fun testSimple(): Unit = runBlocking {
-        expect(1)
-        val d = async(coroutineContext) {
-            expect(3)
-            42
-        }
-        expect(2)
-        check(d.isActive)
-        check(d.await() == 42)
-        check(!d.isActive)
-        expect(4)
-        check(d.await() == 42) // second await -- same result
-        finish(5)
-    }
-
-    @Test
-    fun testUndispatched(): Unit = runBlocking {
-        expect(1)
-        val d = async(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            42
-        }
-        expect(3)
-        check(!d.isActive)
-        check(d.await() == 42)
-        finish(4)
-    }
-
-    @Test(expected = IOException::class)
-    fun testSimpleException(): Unit = runBlocking {
-        expect(1)
-        val d = async(coroutineContext) {
-            finish(3)
-            throw IOException()
-        }
-        expect(2)
-        d.await() // will throw IOException
-    }
-
-    @Test(expected = IOException::class)
-    fun testDeferAndYieldException(): Unit = runBlocking {
-        expect(1)
-        val d = async(coroutineContext) {
-            expect(3)
-            yield() // no effect, parent waiting
-            finish(4)
-            throw IOException()
-        }
-        expect(2)
-        d.await() // will throw IOException
-    }
-
-    @Test
-    fun testDeferWithTwoWaiters() = runBlocking {
-        expect(1)
-        val d = async(coroutineContext) {
-            expect(5)
-            yield()
-            expect(9)
-            42
-        }
-        expect(2)
-        launch(coroutineContext) {
-            expect(6)
-            check(d.await() == 42)
-            expect(11)
-        }
-        expect(3)
-        launch(coroutineContext) {
-            expect(7)
-            check(d.await() == 42)
-            expect(12)
-        }
-        expect(4)
-        yield() // this actually yields control to async, which produces results and resumes both waiters (in order)
-        expect(8)
-        yield() // yield again to "d", which completes
-        expect(10)
-        yield() // yield to both waiters
-        finish(13)
-    }
-
-    @Test
-    fun testAsyncWithFinally() = runBlocking {
+    fun testAsyncWithFinally() = runTest {
         expect(1)
         val d = async<String>(coroutineContext) {
             expect(3)
@@ -136,22 +52,5 @@ class AsyncTest : TestBase() {
         }
         check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
         finish(8)
-    }
-
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("equals")
-        override fun hashCode(): Int = error("hashCode")
-        override fun toString(): String = error("toString")
-    }
-
-    @Test
-    fun testDeferBadClass() = runBlocking {
-        val bad = BadClass()
-        val d = async(coroutineContext) {
-            expect(1)
-            bad
-        }
-        assertTrue(d.await() === bad)
-        finish(2)
     }
 }

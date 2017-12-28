@@ -205,3 +205,21 @@ code :target {
 .parameterName {
   font-weight: bold;
 }
+
+// MPP projects
+
+.tags {
+  display: flex;
+}
+
+.tags__tag {
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  background: #a7a7a7;
+  padding: 0 7px;
+  font-size: 10px;
+  border-radius: 9px;
+  line-height: 18px;
+  margin-right: 5px;
+}

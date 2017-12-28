@@ -21,31 +21,31 @@ import kotlinx.coroutines.experimental.selects.SelectClause0
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 
 /**
- * A non-cancelable job that is always [active][isActive]. It is designed to be used with [run] builder
- * to prevent cancellation of code blocks that need to run without cancellation.
+ * A non-cancelable job that is always [active][isActive]. It is designed for [withContext] function
+ * to prevent cancellation of code blocks that need to be executed without cancellation.
  *
  * Use it like this:
  * ```
- * run(NonCancellable) {
+ * withContext(NonCancellable) {
  *     // this code will not be cancelled
  * }
  * ```
  */
-object NonCancellable : AbstractCoroutineContextElement(Job), Job {
+public actual object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /** Always returns `true`. */
-    override val isActive: Boolean  get() = true
+    actual override val isActive: Boolean  get() = true
 
     /** Always returns `false`. */
-    override val isCompleted: Boolean get() = false
+    actual override val isCompleted: Boolean get() = false
 
     /** Always returns `false`. */
-    override val isCancelled: Boolean get() = false
+    actual override val isCancelled: Boolean get() = false
 
     /** Always returns `false`. */
-    override fun start(): Boolean = false
+    actual override fun start(): Boolean = false
 
     /** Always throws [UnsupportedOperationException]. */
-    suspend override fun join() {
+    actual suspend override fun join() {
         throw UnsupportedOperationException("This job is always active")
     }
 
@@ -53,32 +53,37 @@ object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         get() = throw UnsupportedOperationException("This job is always active")
 
     /** Always throws [IllegalStateException]. */
-    override fun getCancellationException(): CancellationException = throw IllegalStateException("This job is always active")
+    actual override fun getCancellationException(): CancellationException = throw IllegalStateException("This job is always active")
 
     /** Always returns [NonDisposableHandle]. */
     @Suppress("OverridingDeprecatedMember")
-    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle = NonDisposableHandle
+    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
+        NonDisposableHandle
 
     /** Always returns [NonDisposableHandle]. */
     @Suppress("OverridingDeprecatedMember")
-    override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle = NonDisposableHandle
+    override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
+        NonDisposableHandle
 
     /** Always returns [NonDisposableHandle]. */
-    override fun invokeOnCompletion(onCancelling: Boolean, handler: CompletionHandler): DisposableHandle = NonDisposableHandle
+    @Suppress("OverridingDeprecatedMember")
+    override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
+        NonDisposableHandle
 
-    /** @suppress **This is unstable API and it is subject to change. */
-    override fun invokeOnCompletionIfNotComplete(handler: CompletionHandler): Boolean = false
+    /** Always returns [NonDisposableHandle]. */
+    actual override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
+        NonDisposableHandle
 
     /** Always returns `false`. */
-    override fun cancel(cause: Throwable?): Boolean = false
+    actual override fun cancel(cause: Throwable?): Boolean = false
 
     /** Always returns [emptySequence]. */
-    override val children: Sequence<Job>
+    actual override val children: Sequence<Job>
         get() = emptySequence()
 
     /** Always returns [NonDisposableHandle] and does not do anything. */
     @Suppress("OverridingDeprecatedMember")
-    override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
+    actual override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
 
     /** Does not do anything. */
     @Suppress("OverridingDeprecatedMember")

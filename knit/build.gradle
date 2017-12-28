@@ -9,6 +9,8 @@ sourceSets {
 FileTree mdFiles = fileTree(project.rootDir) {
     include '**/*.md'
     exclude '**/build/**'
+    exclude '**/.gradle/**'
+    exclude '**/node_modules/**'
 }
 
 mainClassName = "KnitKt"

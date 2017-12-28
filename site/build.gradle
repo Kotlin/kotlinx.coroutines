@@ -7,7 +7,13 @@ task copyDocs(type: Copy, dependsOn: rootProject.getTasksByName("dokka", true)) 
     into "$buildDir/gh-pages"
 }
 
-task site(type: Exec, description: 'Generate github pages', dependsOn: copyDocs) {
+task copyExampleFrontendJs(type: Copy, dependsOn: ':example-frontend-js:bundle') {
+    def srcBuildDir = project(':example-frontend-js').buildDir
+    from "$srcBuildDir/dist"
+    into "$buildDir/gh-pages/example-frontend-js"
+}
+
+task site(type: Exec, description: 'Generate github pages', dependsOn: [copyDocs, copyExampleFrontendJs]) {
     workingDir "$buildDir/gh-pages"
     commandLine 'jekyll', 'build'
 }
@@ -15,3 +21,4 @@ task site(type: Exec, description: 'Generate github pages', dependsOn: copyDocs)
 task clean(type: Delete) {
     delete buildDir
 }
+

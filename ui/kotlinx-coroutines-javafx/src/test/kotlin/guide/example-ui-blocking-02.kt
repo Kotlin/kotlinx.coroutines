@@ -89,6 +89,6 @@ fun setup(hello: Text, fab: Circle) {
     }
 }
 
-suspend fun fib(x: Int): Int = run(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(CommonPool) {
     if (x <= 1) 1 else fib(x - 1) + fib(x - 2)
 }

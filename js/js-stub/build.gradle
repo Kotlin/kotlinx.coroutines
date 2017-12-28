@@ -1,0 +1,5 @@
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs += "-Xallow-kotlin-package"
+    }
+}

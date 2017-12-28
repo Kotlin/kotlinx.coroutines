@@ -747,9 +747,9 @@ class ByteBufferChannelTest {
             if (r.decrementAndGet() == 0) latch.countDown()
         }
 
-        reader.invokeOnCompletion(true, handler)
-        writerJob.invokeOnCompletion(true, handler)
-        joinerJob.invokeOnCompletion(true, handler)
+        reader.invokeOnCompletion(onCancelling = true, handler = handler)
+        writerJob.invokeOnCompletion(onCancelling = true, handler = handler)
+        joinerJob.invokeOnCompletion(onCancelling = true, handler = handler)
 
         latch.await()
     }
@@ -868,6 +868,32 @@ class ByteBufferChannelTest {
 
         assertEquals(0x11223344, other.readInt())
         assertTrue { other.isClosedForRead }
+    }
+
+    @Test
+    fun testJoinToDifferentEndian() = runBlocking {
+        val other = ByteBufferChannel(autoFlush = true, pool = pool)
+        other.writeByteOrder = ByteOrder.LITTLE_ENDIAN
+        ch.writeByteOrder = ByteOrder.BIG_ENDIAN
+
+        ch.writeInt(0x11223344) // BE
+
+        launch(coroutineContext) {
+            ch.joinTo(other, true)
+        }
+
+        yield()
+
+        ch.writeInt(0x55667788) // BE
+        ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
+        ch.writeInt(0x0abbccdd) // LE
+        ch.close()
+
+        other.readByteOrder = ByteOrder.BIG_ENDIAN
+        assertEquals(0x11223344, other.readInt()) // BE
+        assertEquals(0x55667788, other.readInt()) // BE
+        other.readByteOrder = ByteOrder.LITTLE_ENDIAN
+        assertEquals(0x0abbccdd, other.readInt()) // LE
     }
 
     @Test
@@ -1009,6 +1035,77 @@ class ByteBufferChannelTest {
         pipeline.invokeOnCompletion { cause ->
             cause?.let { throw it }
         }
+    }
+
+    @Test
+    fun testReadBlock() = runBlocking<Unit> {
+        var bytesRead = 0L
+
+        val r: (ByteBuffer) -> Unit = { bb ->
+            bytesRead += bb.remaining()
+            bb.position(bb.limit())
+        }
+
+        val j = launch(coroutineContext) {
+            while (!ch.isClosedForRead) {
+                ch.read(0, r)
+            }
+        }
+
+        yield()
+
+        ch.writeStringUtf8("OK\n")
+        ch.close()
+
+        j.join()
+        j.invokeOnCompletion {
+            it?.let { throw it }
+        }
+    }
+
+    @Test
+    fun testReadBlock2() = runBlocking<Unit> {
+        var bytesRead = 0L
+
+        val r: (ByteBuffer) -> Unit = { bb ->
+            bytesRead += bb.remaining()
+            bb.position(bb.limit())
+        }
+
+        val j = launch(coroutineContext) {
+            while (!ch.isClosedForRead) {
+                ch.read(0, r)
+            }
+        }
+
+        ch.writeStringUtf8("OK\n")
+        yield()
+        ch.close()
+
+        j.join()
+        j.invokeOnCompletion {
+            it?.let { throw it }
+        }
+    }
+
+    @Test
+    fun testCancelWriter() = runBlocking {
+        val sub = writer(DefaultDispatcher) {
+            delay(1000000L)
+        }
+
+        sub.channel.cancel()
+        sub.join()
+    }
+
+    @Test
+    fun testCancelReader() = runBlocking {
+        val sub = reader(DefaultDispatcher) {
+            delay(10000000L)
+        }
+
+        sub.channel.close(CancellationException())
+        sub.join()
     }
 
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {

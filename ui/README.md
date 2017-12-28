@@ -1,6 +1,7 @@
 # Coroutines for UI
 
-This directory contains modules for coroutine programming with various single-threaded UI libraries:
+This directory contains modules for coroutine programming with various single-threaded UI libraries.
+Module name below corresponds to the artifact name in Maven/Gradle.
 
 ## Modules
 

@@ -1,0 +1,1 @@
+This is a workaround for Dokka to generate proper references for JS modules.

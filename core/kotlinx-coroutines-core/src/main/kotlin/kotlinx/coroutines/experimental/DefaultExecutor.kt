@@ -16,12 +16,11 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal object DefaultExecutor : EventLoopBase(), Runnable {
 
-    override val canComplete: Boolean get() = false
     override val isCompleted: Boolean get() = false
 
     private const val DEFAULT_KEEP_ALIVE = 1000L // in milliseconds
@@ -134,7 +133,7 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     @Synchronized
     private fun acknowledgeShutdown() {
         debugStatus = SHUTDOWN_ACK
-        clearAll() // clear queues
+        resetAll() // clear queues
         (this as Object).notifyAll()
     }
 }

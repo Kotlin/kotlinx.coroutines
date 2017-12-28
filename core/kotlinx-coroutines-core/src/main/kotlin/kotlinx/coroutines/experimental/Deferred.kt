@@ -64,7 +64,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *  +-----------+
  * ```
  *
- * A deferred value is a [Job]. A job in the coroutine [context][CoroutineScope.context] of [async] builder
+ * A deferred value is a [Job]. A job in the coroutine [context][CoroutineScope.coroutineContext] of [async] builder
  * represents the coroutine itself.
  * A deferred value is active while the coroutine is working and cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
@@ -78,14 +78,14 @@ import kotlin.coroutines.experimental.CoroutineContext
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
-public interface Deferred<out T> : Job {
+public actual interface Deferred<out T> : Job {
     /**
      * Returns `true` if computation of this deferred value has _completed exceptionally_ -- it had
      * either _failed_ with exception during computation or was [cancelled][cancel].
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    val isCompletedExceptionally: Boolean
+    public actual val isCompletedExceptionally: Boolean
 
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
@@ -98,7 +98,7 @@ public interface Deferred<out T> : Job {
      * This function can be used in [select] invocation with [onAwait] clause.
      * Use [isCompleted] to check for completion of this deferred value without waiting.
      */
-    public suspend fun await(): T
+    public actual suspend fun await(): T
 
     /**
      * Clause for [select] expression of [await] suspending function that selects with the deferred value when it is
@@ -115,7 +115,7 @@ public interface Deferred<out T> : Job {
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete. See also [getCompletionExceptionOrNull].
      */
-    public fun getCompleted(): T
+    public actual fun getCompleted(): T
 
     /**
      * Returns *completion exception* result if this deferred [completed exceptionally][isCompletedExceptionally],
@@ -125,7 +125,7 @@ public interface Deferred<out T> : Job {
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete. See also [getCompleted].
      */
-    public fun getCompletionExceptionOrNull(): Throwable?
+    public actual fun getCompletionExceptionOrNull(): Throwable?
 
     /**
      * @suppress **Deprecated**: Use `isActive`.
@@ -141,7 +141,7 @@ public interface Deferred<out T> : Job {
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -158,7 +158,7 @@ public interface Deferred<out T> : Job {
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param block the coroutine code.
  */
-public fun <T> async(
+public actual fun <T> async(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
@@ -204,7 +204,7 @@ private open class DeferredCoroutine<T>(
     active: Boolean
 ) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
-    suspend override fun await(): T = awaitInternal() as T
+    override suspend fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T>
         get() = this as SelectClause1<T>
 }

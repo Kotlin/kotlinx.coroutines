@@ -89,7 +89,7 @@ fun setup(hello: Text, fab: Circle) {
     }
 }
 
-suspend fun fib(x: Int): Int = run(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(CommonPool) {
     fibBlocking(x)
 }
 

@@ -52,9 +52,9 @@ internal fun resetCoroutineId() {
  * an optional [CoroutineStart] parameter in coroutine builders like [launch] and [async] setting it to the
  * the value of [CoroutineStart.UNDISPATCHED].
  */
-public object Unconfined : CoroutineDispatcher() {
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
-    override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
+public actual object Unconfined : CoroutineDispatcher() {
+    actual override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
+    actual override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
     override fun toString(): String = "Unconfined"
 }
 
@@ -71,7 +71,8 @@ public typealias Here = Unconfined
  *
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
  */
-public val DefaultDispatcher: CoroutineDispatcher = CommonPool
+@Suppress("PropertyName")
+public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor

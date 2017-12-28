@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2016-2017 JetBrains s.r.o.
  *
@@ -14,16 +15,15 @@
  * limitations under the License.
  */
 
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
+
 package kotlinx.coroutines.experimental
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.junit.Test
-import java.io.IOException
+import kotlin.test.*
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
-class RunTest : TestBase() {
+class CommonWithContextTest : TestBase() {
     @Test
     fun testSameContextNoSuspend() = runTest {
         expect(1)
@@ -31,11 +31,11 @@ class RunTest : TestBase() {
             finish(5) // after main exits
         }
         expect(2)
-        val result = run(coroutineContext) { // same context!
+        val result = withContext(coroutineContext) { // same context!
             expect(3) // still here
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         expect(4)
         // will wait for the first coroutine
     }
@@ -47,13 +47,13 @@ class RunTest : TestBase() {
             expect(4)
         }
         expect(2)
-        val result = run(coroutineContext) { // same context!
+        val result = withContext(coroutineContext) { // same context!
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         finish(6)
     }
 
@@ -65,7 +65,7 @@ class RunTest : TestBase() {
         }
         expect(2)
         val job = Job()
-        val result = run(coroutineContext + job) { // same context + new job
+        val result = withContext(coroutineContext + job) { // same context + new job
             expect(3) // still here
             job.cancel() // cancel out job!
             try {
@@ -76,7 +76,7 @@ class RunTest : TestBase() {
             }
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         expect(5)
         // will wait for the first coroutine
     }
@@ -89,45 +89,21 @@ class RunTest : TestBase() {
         }
         expect(2)
         val job = Job()
-        val result = run(coroutineContext + job) { // same context + new job
+        val result = withContext(coroutineContext + job) { // same context + new job
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
             job.cancel() // cancel out job!
             try {
-                yield() // shall throw CancellationExpcetion
+                yield() // shall throw CancellationException
                 expectUnreached()
             } catch (e: CancellationException) {
                 expect(6)
             }
             "OK"
         }
-        assertThat(result, IsEqual("OK"))
+        assertEquals("OK", result)
         finish(7)
-    }
-
-    @Test
-    fun testCommonPoolNoSuspend() = runTest {
-        expect(1)
-        val result = run(CommonPool) {
-            expect(2)
-            "OK"
-        }
-        assertThat(result, IsEqual("OK"))
-        finish(3)
-    }
-
-    @Test
-    fun testCommonPoolWithSuspend() = runTest {
-        expect(1)
-        val result = run(CommonPool) {
-            expect(2)
-            delay(100)
-            expect(3)
-            "OK"
-        }
-        assertThat(result, IsEqual("OK"))
-        finish(4)
     }
 
     @Test
@@ -136,7 +112,7 @@ class RunTest : TestBase() {
     ) {
         val job = Job()
         job.cancel() // cancel before it has a chance to run
-        run(job + wrapperDispatcher(coroutineContext)) {
+        withContext(job + wrapperDispatcher(coroutineContext)) {
             expectUnreached() // will get cancelled
         }
     }
@@ -148,7 +124,7 @@ class RunTest : TestBase() {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
-        run(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) { // but start atomically
+        withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) { // but start atomically
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -162,7 +138,7 @@ class RunTest : TestBase() {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
-        run(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
+        withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -176,15 +152,15 @@ class RunTest : TestBase() {
         job = launch(coroutineContext) {
             try {
                 expect(3)
-                run(wrapperDispatcher(coroutineContext)) {
+                withContext(wrapperDispatcher(coroutineContext)) {
                     expect(5)
                     job!!.cancel() // cancel itself
-                    throw IOException() // but throw a different exception
+                    throw TestException() // but throw a different exception
                 }
             } catch (e: Throwable) {
                 expect(7)
                 // make sure IOException, not CancellationException is thrown!
-                check(e is IOException)
+                assertTrue(e is TestException)
             }
         }
         expect(2)
@@ -204,4 +180,6 @@ class RunTest : TestBase() {
             }
         }
     }
+
+    private class TestException : Exception()
 }
