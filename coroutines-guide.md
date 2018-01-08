@@ -841,7 +841,7 @@ It produces the following output (maybe in different order):
 
 The default dispatcher that we've used in previous sections is representend by [DefaultDispatcher], which 
 is equal to [CommonPool] in the current implementation. So, `launch { ... }` is the same 
-as `launch(DefaultDispather) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
+as `launch(DefaultDispatcher) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
 
 The difference between parent [coroutineContext][CoroutineScope.coroutineContext] and
 [Unconfined] context will be shown later.
