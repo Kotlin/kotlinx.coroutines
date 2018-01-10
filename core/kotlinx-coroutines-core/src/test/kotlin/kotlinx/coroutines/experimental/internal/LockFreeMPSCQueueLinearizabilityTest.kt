@@ -39,14 +39,18 @@ class LockFreeMPSCQueueLinearizabilityTest : TestBase() {
     @Operation
     fun addLast(@Param(name = "value") value: Int) = q.addLast(value)
 
-    @Operation(group = "consumer")
-    fun removeFirstOrNull() = q.removeFirstOrNull()
+    /**
+     * Note, that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
+     * we test only linearizability of close.
+     */
+//    @Operation(group = "consumer")
+//    fun removeFirstOrNull() = q.removeFirstOrNull()
 
     @Test
     fun testLinearizability() {
         val options = StressOptions()
-            .iterations(100)
-            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .iterations(100 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .addThread(1, 3)
             .addThread(1, 3)
             .addThread(1, 3)

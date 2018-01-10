@@ -22,6 +22,16 @@ import java.util.concurrent.atomic.*
 private typealias Core<E> = LockFreeMPSCQueueCore<E>
 
 /**
+ * Lock-free Multiply-Producer Single-Consumer Queue.
+ * *Note: This queue is NOT linearizable. It provides only quiescent consistency for its operations.*
+ *
+ * In particular, the following execution is permitted for this queue, but is not permitted for a linearizable queue:
+ *
+ * ```
+ * Thread 1: addLast(1) = true, removeFirstOrNull() = null
+ * Thread 2: addLast(2) = 2 // this operation is concurrent with both operations in the first thread
+ * ```
+ *
  * @suppress **This is unstable API and it is subject to change.**
  */
 internal class LockFreeMPSCQueue<E : Any> {
@@ -58,6 +68,10 @@ internal class LockFreeMPSCQueue<E : Any> {
 }
 
 /**
+ * Lock-free Multiply-Producer Single-Consumer Queue core.
+ * *Note: This queue is NOT linearizable. It provides only quiescent consistency for its operations.*
+ *
+ * @see LockFreeMPSCQueue
  * @suppress **This is unstable API and it is subject to change.**
  */
 internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
