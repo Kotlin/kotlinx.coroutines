@@ -16,7 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.JobSupport.CompletedExceptionally
 import kotlinx.coroutines.experimental.selects.SelectBuilder
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.TimeUnit
@@ -117,7 +116,8 @@ private open class TimeoutCoroutine<U, in T: U>(
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally)
+        if (state is CompletedExceptionally
+        )
             cont.resumeWithExceptionMode(state.exception, mode)
         else
             cont.resumeMode(state as T, mode)
@@ -187,7 +187,8 @@ private class TimeoutOrNullCoroutine<T>(
 ) : TimeoutCoroutine<T?, T>(time, unit, cont) {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally) {
+        if (state is CompletedExceptionally
+        ) {
             val exception = state.exception
             if (exception is TimeoutCancellationException && exception.coroutine === this)
                 cont.resumeMode(null, mode) else

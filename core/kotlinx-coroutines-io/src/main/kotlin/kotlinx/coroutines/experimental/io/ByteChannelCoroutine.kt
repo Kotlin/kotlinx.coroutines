@@ -1,8 +1,6 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.AbstractCoroutine
-import kotlinx.coroutines.experimental.JobSupport
-import kotlinx.coroutines.experimental.handleCoroutineException
+import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.CoroutineContext
 
 internal open class ByteChannelCoroutine(
@@ -10,7 +8,7 @@ internal open class ByteChannelCoroutine(
     open val channel: ByteChannel
 ) : AbstractCoroutine<Unit>(parentContext, active = true) {
     override fun afterCompletion(state: Any?, mode: Int) {
-        val cause = (state as? JobSupport.CompletedExceptionally)?.cause
+        val cause = (state as? CompletedExceptionally)?.cause
         if (!channel.close(cause) && cause != null)
             handleCoroutineException(context, cause)
 

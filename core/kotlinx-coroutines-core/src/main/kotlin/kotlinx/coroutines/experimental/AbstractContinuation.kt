@@ -28,11 +28,10 @@ private const val RESUMED = 2
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-// Note: it also works directly as DispatchTask for this delegate
 internal abstract class AbstractContinuation<in T>(
-    @JvmField protected val delegate: Continuation<T>,
-    @JvmField protected val resumeMode: Int
-) : JobSupport(true), Continuation<T>, Runnable {
+    public final override val delegate: Continuation<T>,
+    public final override val resumeMode: Int
+) : JobSupport(true), Continuation<T>, DispatchedTask<T> {
     private val _decision = atomic(UNDECIDED)
 
     /* decision state machine
@@ -49,6 +48,8 @@ internal abstract class AbstractContinuation<in T>(
 
         Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
      */
+
+    override fun takeState(): Any? = state
 
     private fun trySuspend(): Boolean {
         _decision.loop { decision ->
@@ -82,29 +83,8 @@ internal abstract class AbstractContinuation<in T>(
     override fun afterCompletion(state: Any?, mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        var useMode = mode
-        if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
-            // dispatch directly using this instance's Runnable implementation
-            val dispatcher = delegate.dispatcher
-            val context = delegate.context
-            if (dispatcher.isDispatchNeeded(context)) {
-                dispatcher.dispatch(context, this)
-                return // and that's it -- dispatched via fast-path
-            } else {
-                useMode = MODE_UNDISPATCHED
-            }
-        }
-        // slow-path - use delegate
-        if (state is CompletedExceptionally) {
-            delegate.resumeWithExceptionMode(state.exception, useMode)
-        } else {
-            delegate.resumeMode(getSuccessfulResult(state), useMode)
-        }
+        dispatch(mode)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    protected open fun <T> getSuccessfulResult(state: Any?): T =
-        state as T
 
     override fun resume(value: T) =
         resumeImpl(value, resumeMode)
@@ -131,25 +111,5 @@ internal abstract class AbstractContinuation<in T>(
 
     override fun handleException(exception: Throwable) {
         handleCoroutineException(context, exception)
-    }
-
-    // see all DispatchTask.run with the same logic
-    override fun run() {
-        delegate as DispatchedContinuation // type assertion
-        try {
-            val context = delegate.context
-            val job = if (resumeMode.isCancellableMode) context[Job] else null
-            val state = this.state
-            val continuation = delegate.continuation
-            withCoroutineContext(context) {
-                when {
-                    job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
-                    state is CompletedExceptionally -> continuation.resumeWithException(state.exception)
-                    else -> continuation.resume(getSuccessfulResult(state))
-                }
-            }
-        } catch (e: Throwable) {
-            throw RuntimeException("Unexpected exception running $this", e)
-        }
     }
 }

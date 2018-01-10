@@ -1244,42 +1244,6 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     }
 
     /**
-     * Class for a [state] of a job that had completed exceptionally, including cancellation.
-     *
-     * @param cause the exceptional completion cause. If `cause` is null, then an exception is
-     *        if created via [createException] on first get from [exception] property.
-     * @param allowNullCause if `null` cause is allowed.
-     */
-    public open class CompletedExceptionally protected constructor(
-        public @JvmField val cause: Throwable?,
-        allowNullCause: Boolean
-    ) {
-        /**
-         * Creates exceptionally completed state.
-         * @param cause the exceptional completion cause.
-         */
-        public constructor(cause: Throwable) : this(cause, false)
-
-        @Volatile
-        private var _exception: Throwable? = cause // will materialize JobCancellationException on first need
-
-        init {
-            require(allowNullCause || cause != null) { "Null cause is not allowed" }
-        }
-
-        /**
-         * Returns completion exception.
-         */
-        public val exception: Throwable get() =
-            _exception ?: // atomic read volatile var or else create new
-                createException().also { _exception = it }
-
-        protected open fun createException(): Throwable = error("Completion exception was not specified")
-
-        override fun toString(): String = "${this::class.java.simpleName}[$exception]"
-    }
-
-    /**
      * A specific subclass of [CompletedExceptionally] for cancelled jobs.
      *
      * @param job the job that was cancelled.
@@ -1335,7 +1299,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         cont.disposeOnCompletion(invokeOnCompletion {
             val state = this.state
             check(state !is Incomplete)
-            if (state is CompletedExceptionally)
+            if (state is CompletedExceptionally
+            )
                 cont.resumeWithException(state.exception)
             else
                 cont.resume(state)
@@ -1350,7 +1315,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
             if (state !is Incomplete) {
                 // already complete -- select result
                 if (select.trySelect(null)) {
-                    if (state is CompletedExceptionally)
+                    if (state is CompletedExceptionally
+                    )
                         select.resumeSelectCancellableWithException(state.exception)
                     else
                         block.startCoroutineUndispatched(state, select.completion)
@@ -1368,7 +1334,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     internal fun <R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (Any?) -> R) {
         val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
-        if (state is CompletedExceptionally)
+        if (state is CompletedExceptionally
+        )
             select.resumeSelectCancellableWithException(state.exception)
         else
             block.startCoroutineCancellable(state, select.completion)

@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
@@ -109,70 +110,65 @@ public actual abstract class CoroutineDispatcher actual constructor() :
  */
 public actual typealias Runnable = java.lang.Runnable
 
-// named class for ease of debugging, better stack-traces and optimize the number of anonymous classes
-// note that CancellableContinuationImpl directly works as DispatchTask
-internal class DispatchTask<in T>(
-    private val continuation: Continuation<T>,
-    private val value: Any?, // T | Throwable
-    private val exception: Boolean,
-    private val cancellable: Boolean
-) : Runnable {
-    @Suppress("UNCHECKED_CAST")
-    override fun run() {
-        try {
-            val context = continuation.context
-            val job = if (cancellable) context[Job] else null
-            withCoroutineContext(context) {
-                when {
-                    job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
-                    exception -> continuation.resumeWithException(value as Throwable)
-                    else -> continuation.resume(value as T)
-                }
-            }
-        } catch (e: Throwable) {
-            throw RuntimeException("Unexpected exception running $this", e)
-        }
-    }
-
-    override fun toString(): String =
-        "DispatchTask[${continuation.toDebugString()}, cancellable=$cancellable, value=${value.toSafeString()}]"
-}
+@Suppress("PrivatePropertyName")
+private val UNDEFINED = Symbol("UNDEFINED")
 
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-): Continuation<T> by continuation {
+): Continuation<T> by continuation, DispatchedTask<T> {
+    private var _state: Any? = UNDEFINED
+    public override var resumeMode: Int = 0
+
+    override fun takeState(): Any? {
+        val state = _state
+        check(state !== UNDEFINED) // fail-fast if repeatedly invoked
+        _state = UNDEFINED
+        return state
+    }
+
+    override val delegate: Continuation<T>
+        get() = this
+
     override fun resume(value: T) {
         val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = false))
-        else
+        if (dispatcher.isDispatchNeeded(context)) {
+            _state = value
+            resumeMode = MODE_ATOMIC_DEFAULT
+            dispatcher.dispatch(context, this)
+        } else
             resumeUndispatched(value)
     }
 
     override fun resumeWithException(exception: Throwable) {
         val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = false))
-        else
+        if (dispatcher.isDispatchNeeded(context)) {
+            _state = CompletedExceptionally(exception)
+            resumeMode = MODE_ATOMIC_DEFAULT
+            dispatcher.dispatch(context, this)
+        } else
             resumeUndispatchedWithException(exception)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeCancellable(value: T) {
         val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = true))
-        else
+        if (dispatcher.isDispatchNeeded(context)) {
+            _state = value
+            resumeMode = MODE_CANCELLABLE
+            dispatcher.dispatch(context, this)
+        } else
             resumeUndispatched(value)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeCancellableWithException(exception: Throwable) {
         val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = true))
-        else
+        if (dispatcher.isDispatchNeeded(context)) {
+            _state = CompletedExceptionally(exception)
+            resumeMode = MODE_CANCELLABLE
+            dispatcher.dispatch(context, this)
+        } else
             resumeUndispatchedWithException(exception)
     }
 
@@ -193,7 +189,9 @@ internal class DispatchedContinuation<in T>(
     // used by "yield" implementation
     internal fun dispatchYield(value: T) {
         val context = continuation.context
-        dispatcher.dispatch(context, DispatchTask(continuation, value,false, true))
+        _state = value
+        resumeMode = MODE_CANCELLABLE
+        dispatcher.dispatch(context, this)
     }
 
     override fun toString(): String =
@@ -218,4 +216,71 @@ internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {
 internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable) = when (this) {
     is DispatchedContinuation -> continuation.resumeWithException(exception)
     else -> resumeWithException(exception)
+}
+
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public interface DispatchedTask<in T> : Runnable {
+    public val delegate: Continuation<T>
+    public val resumeMode: Int get() = MODE_CANCELLABLE
+
+    public fun takeState(): Any?
+
+    @Suppress("UNCHECKED_CAST")
+    public fun <T> getSuccessfulResult(state: Any?): T =
+        state as T
+
+    public fun getExceptionalResult(state: Any?): Throwable? =
+        (state as? CompletedExceptionally)?.exception
+
+    public override fun run() {
+        try {
+            val delegate = delegate as DispatchedContinuation<T>
+            val continuation = delegate.continuation
+            val context = continuation.context
+            val job = if (resumeMode.isCancellableMode) context[Job] else null
+            val state = takeState() // NOTE: Must take state in any case, even if cancelled
+            withCoroutineContext(context) {
+                if (job != null && !job.isActive)
+                    continuation.resumeWithException(job.getCancellationException())
+                else {
+                    val exception = getExceptionalResult(state)
+                    if (exception != null)
+                        continuation.resumeWithException(exception)
+                    else
+                        continuation.resume(getSuccessfulResult(state))
+                }
+            }
+        } catch (e: Throwable) {
+            throw RuntimeException("Unexpected exception running $this", e)
+        }
+    }
+}
+
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
+    var useMode = mode
+    val delegate = this.delegate
+    if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
+        // dispatch directly using this instance's Runnable implementation
+        val dispatcher = delegate.dispatcher
+        val context = delegate.context
+        if (dispatcher.isDispatchNeeded(context)) {
+            dispatcher.dispatch(context, this)
+            return // and that's it -- dispatched via fast-path
+        } else {
+            useMode = MODE_UNDISPATCHED
+        }
+    }
+    // slow-path - use delegate
+    val state = takeState()
+    val exception = getExceptionalResult(state)
+    if (exception != null) {
+        delegate.resumeWithExceptionMode(exception, useMode)
+    } else {
+        delegate.resumeMode(getSuccessfulResult(state), useMode)
+    }
 }
