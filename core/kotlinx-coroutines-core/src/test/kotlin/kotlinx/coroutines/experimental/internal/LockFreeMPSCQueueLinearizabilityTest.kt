@@ -20,12 +20,12 @@ import com.devexperts.dxlab.lincheck.*
 import com.devexperts.dxlab.lincheck.annotations.*
 import com.devexperts.dxlab.lincheck.paramgen.*
 import com.devexperts.dxlab.lincheck.stress.*
+import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
-@StressCTest(iterations = 100, actorsPerThread = ["1:3", "1:3", "1:3"])
 @OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeMPSCQueueLinearizabilityTest {
+class LockFreeMPSCQueueLinearizabilityTest : TestBase() {
     private lateinit var q: LockFreeMPSCQueue<Int>
 
     @Reset
@@ -44,6 +44,12 @@ class LockFreeMPSCQueueLinearizabilityTest {
 
     @Test
     fun testLinearizability() {
-        LinChecker.check(LockFreeMPSCQueueLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 3)
+            .addThread(1, 3)
+            .addThread(1, 3)
+        LinChecker.check(LockFreeMPSCQueueLinearizabilityTest::class.java, options)
     }
 }

@@ -7,13 +7,12 @@ import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 
-@StressCTest(iterations = 100, actorsPerThread = arrayOf("1:1", "1:1", "1:1"), verifier = LinVerifier::class)
 @Param(name = "value", gen = IntGen::class, conf = "1:8192")
 @OpGroupConfigs(
         OpGroupConfig(name = "write", nonParallel = true),
         OpGroupConfig(name = "read", nonParallel = true)
 )
-class ByteChannelLinearizabilityTest {
+class ByteChannelLinearizabilityTest : TestBase() {
     private lateinit var channel: ByteChannel
     private val lr = LinTesting()
 
@@ -54,6 +53,13 @@ class ByteChannelLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(ByteChannelLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 1)
+            .addThread(1, 1)
+            .addThread(1, 1)
+            .verifier(LinVerifier::class.java)
+        LinChecker.check(ByteChannelLinearizabilityTest::class.java, options)
     }
 }

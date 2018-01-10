@@ -20,11 +20,11 @@ import com.devexperts.dxlab.lincheck.*
 import com.devexperts.dxlab.lincheck.annotations.*
 import com.devexperts.dxlab.lincheck.paramgen.*
 import com.devexperts.dxlab.lincheck.stress.*
+import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
-@StressCTest(iterations = 100, actorsPerThread = ["1:2", "1:2", "1:2", "1:2"])
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeListLinearizabilityTest {
+class LockFreeListLinearizabilityTest : TestBase() {
     class Node(val value: Int): LockFreeLinkedListNode()
 
     lateinit var q: LockFreeLinkedListHead
@@ -60,6 +60,13 @@ class LockFreeListLinearizabilityTest {
 
     @Test
     fun testAddRemoveLinearizability() {
-        LinChecker.check(LockFreeListLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 2)
+            .addThread(1, 2)
+            .addThread(1, 2)
+            .addThread(1, 2)
+        LinChecker.check(LockFreeListLinearizabilityTest::class.java, options)
     }
 }

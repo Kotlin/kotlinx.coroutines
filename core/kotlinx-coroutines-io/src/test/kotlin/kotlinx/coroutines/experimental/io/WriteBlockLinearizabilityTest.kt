@@ -6,12 +6,11 @@ import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 
-@StressCTest(iterations = 200, invocationsPerIteration = 2_000, actorsPerThread = arrayOf("1:1", "1:1"), verifier = LinVerifier::class)
 @OpGroupConfigs(
         OpGroupConfig(name = "write", nonParallel = true),
         OpGroupConfig(name = "read", nonParallel = true)
 )
-class WriteBlockLinearizabilityTest {
+class WriteBlockLinearizabilityTest : TestBase() {
     private lateinit var ch: ByteChannel
 
     private val lr = LinTesting()
@@ -38,6 +37,12 @@ class WriteBlockLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(WriteBlockLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 1)
+            .addThread(1, 1)
+            .verifier(LinVerifier::class.java)
+        LinChecker.check(WriteBlockLinearizabilityTest::class.java, options)
     }
 }

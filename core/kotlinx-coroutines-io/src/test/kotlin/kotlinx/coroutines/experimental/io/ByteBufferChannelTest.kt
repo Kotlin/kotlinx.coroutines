@@ -27,7 +27,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class ByteBufferChannelTest {
+class ByteBufferChannelTest : TestBase() {
     @get:Rule
     val timeout = Timeout(100, TimeUnit.SECONDS)
 
@@ -634,7 +634,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun testCopyLarge() {
-        val count = 1024 * 256 // * 8192 = 2Gb
+        val count = 100 * 256 * stressTestMultiplier // * 8192
 
         launch {
             val bb = ByteBuffer.allocate(8192)
@@ -691,7 +691,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun testJoinToLarge() {
-        val count = 1024 * 256 // * 8192 = 2Gb
+        val count = 100 * 256 * stressTestMultiplier // * 8192
 
         val writerJob = launch {
             val bb = ByteBuffer.allocate(8192)
@@ -776,7 +776,7 @@ class ByteBufferChannelTest {
         }
 
         try {
-            (1..1_000_000).map {
+            (1..100_000 * stressTestMultiplier).map {
                 async(exec) {
                     val channel = ByteBufferChannel(autoFlush = false, pool = pool)
                     val job = launch(exec) {
@@ -935,7 +935,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun writeThenReadStress() = runBlocking<Unit> {
-        for (i in 1..500_000) {
+        for (i in 1..50_000 * stressTestMultiplier) {
             val a = ByteBufferChannel(false, pool)
 
             val w = launch {
@@ -955,7 +955,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun joinToEmptyStress() = runBlocking<Unit> {
-        for (i in 1..500_000) {
+        for (i in 1..50_000 * stressTestMultiplier) {
             val a = ByteBufferChannel(false, pool)
 
             launch(coroutineContext) {
@@ -970,7 +970,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun testJoinToStress() = runBlocking<Unit> {
-        for (i in 1..100000) {
+        for (i in 1..10000 * stressTestMultiplier) {
             val child = ByteBufferChannel(false, pool)
             val writer = launch {
                 child.writeLong(999 + i.toLong())
@@ -988,7 +988,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun testSequentialJoin() = runBlocking<Unit> {
-        val steps = 200_000
+        val steps = 20_000 * stressTestMultiplier
 
         val pipeline = launch(coroutineContext) {
             for (i in 1..steps) {
@@ -1013,7 +1013,7 @@ class ByteBufferChannelTest {
 
     @Test
     fun testSequentialJoinYield() = runBlocking<Unit> {
-        val steps = 200_000
+        val steps = 20_000 * stressTestMultiplier
 
         val pipeline = launch(coroutineContext) {
             for (i in 1..steps) {

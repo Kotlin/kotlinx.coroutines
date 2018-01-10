@@ -6,13 +6,12 @@ import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 
-@StressCTest(iterations = 200, invocationsPerIteration = 2_000, actorsPerThread = arrayOf("1:2", "1:1", "1:1"), verifier = LinVerifier::class)
 @OpGroupConfigs(
         OpGroupConfig(name = "write", nonParallel = true),
         OpGroupConfig(name = "read1", nonParallel = true),
         OpGroupConfig(name = "read2", nonParallel = true)
 )
-class ByteChannelJoinNoAutoFlushLinearizabilityTest {
+class ByteChannelJoinNoAutoFlushLinearizabilityTest : TestBase() {
     private lateinit var from: ByteChannel
     private lateinit var to: ByteChannel
 
@@ -42,6 +41,13 @@ class ByteChannelJoinNoAutoFlushLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(ByteChannelJoinNoAutoFlushLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 2)
+            .addThread(1, 1)
+            .addThread(1, 1)
+            .verifier(LinVerifier::class.java)
+        LinChecker.check(ByteChannelJoinNoAutoFlushLinearizabilityTest::class.java, options)
     }
 }

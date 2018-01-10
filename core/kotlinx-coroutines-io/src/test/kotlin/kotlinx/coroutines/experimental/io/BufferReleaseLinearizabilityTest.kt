@@ -6,12 +6,11 @@ import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 
-@StressCTest(iterations = 200, invocationsPerIteration = 20_000, actorsPerThread = arrayOf("1:2", "1:2"), verifier = LinVerifier::class)
 @OpGroupConfigs(
         OpGroupConfig(name = "write", nonParallel = true),
         OpGroupConfig(name = "read", nonParallel = true)
 )
-class BufferReleaseLinearizabilityTest {
+class BufferReleaseLinearizabilityTest : TestBase() {
     private lateinit var ch: ByteChannel
 
     private val lr = LinTesting()
@@ -38,6 +37,11 @@ class BufferReleaseLinearizabilityTest {
 
     @Test
     fun test() {
-        LinChecker.check(BufferReleaseLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 2)
+            .addThread(1, 2)
+        LinChecker.check(BufferReleaseLinearizabilityTest::class.java, options)
     }
 }

@@ -21,14 +21,12 @@ import com.devexperts.dxlab.lincheck.annotations.Operation
 import com.devexperts.dxlab.lincheck.annotations.Param
 import com.devexperts.dxlab.lincheck.annotations.Reset
 import com.devexperts.dxlab.lincheck.paramgen.IntGen
-import com.devexperts.dxlab.lincheck.stress.StressCTest
-import kotlinx.coroutines.experimental.LinTesting
-import kotlinx.coroutines.experimental.LinVerifier
+import com.devexperts.dxlab.lincheck.stress.*
+import kotlinx.coroutines.experimental.*
 import org.junit.Test
 
-@StressCTest(iterations = 100, actorsPerThread = arrayOf("1:3", "1:3", "1:3"), verifier = LinVerifier::class)
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class ChannelLinearizabilityTest {
+class ChannelLinearizabilityTest : TestBase() {
     private val lt = LinTesting()
     private lateinit var channel: Channel<Int>
 
@@ -63,6 +61,13 @@ class ChannelLinearizabilityTest {
 
     @Test
     fun testLinearizability() {
-        LinChecker.check(ChannelLinearizabilityTest::class.java)
+        val options = StressOptions()
+            .iterations(100)
+            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .addThread(1, 3)
+            .addThread(1, 3)
+            .addThread(1, 3)
+            .verifier(LinVerifier::class.java)
+        LinChecker.check(ChannelLinearizabilityTest::class.java, options)
     }
 }
