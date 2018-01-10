@@ -84,14 +84,12 @@ public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
         size--
         if (index < size) {
             swap(index, size)
-            var i = index
-            while (true) {
-                var j = 2 * i + 1
-                if (j >= size) break
-                if (j + 1 < size && a[j + 1]!! < a[j]!!) j++
-                if (a[i]!! <= a[j]!!) break
-                swap(i, j)
-                i = j
+            val j = (index - 1) / 2
+            if (index > 0 && a[index]!! < a[j]!!) {
+                swap(index, j)
+                siftUpFrom(j)
+            } else {
+                siftDownFrom(index)
             }
         }
         val result = a[size]!!
@@ -106,14 +104,27 @@ public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
         var i = size++
         a[i] = node
         node.index = i
-        while (i > 0) {
-            val j = (i - 1) / 2
-            if (a[j]!! <= a[i]!!) break
-            swap(i, j)
-            i = j
-        }
+        siftUpFrom(i)
     }
 
+    private tailrec fun siftUpFrom(i: Int) {
+        if (i <= 0) return
+        val a = a!!
+        val j = (i - 1) / 2
+        if (a[j]!! <= a[i]!!) return
+        swap(i, j)
+        siftUpFrom(j)
+    }
+
+    private tailrec fun siftDownFrom(i: Int) {
+        var j = 2 * i + 1
+        if (j >= size) return
+        val a = a!!
+        if (j + 1 < size && a[j + 1]!! < a[j]!!) j++
+        if (a[i]!! <= a[j]!!) return
+        swap(i, j)
+        siftDownFrom(j)
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun realloc(): Array<T?> {

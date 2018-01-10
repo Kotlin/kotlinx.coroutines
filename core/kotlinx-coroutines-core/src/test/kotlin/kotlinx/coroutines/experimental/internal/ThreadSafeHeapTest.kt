@@ -16,10 +16,11 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 import java.util.*
 
-class ThreadSafeHeapTest {
+class ThreadSafeHeapTest : TestBase() {
     class Node(val value: Int) : ThreadSafeHeapNode, Comparable<Node> {
         override var index = -1
         override fun compareTo(other: Node): Int = value.compareTo(other.value)
@@ -62,7 +63,7 @@ class ThreadSafeHeapTest {
 
     @Test
     fun testRandomSort() {
-        val n = 1000
+        val n = 1000 * stressTestMultiplier
         val r = Random(1)
         val h = ThreadSafeHeap<Node>()
         val a = IntArray(n) { r.nextInt() }
@@ -70,5 +71,37 @@ class ThreadSafeHeapTest {
         a.sort()
         repeat(n) { assertEquals(Node(a[it]), h.removeFirstOrNull()) }
         assertEquals(null, h.peek())
+    }
+
+    @Test
+    fun testRandomRemove() {
+        val n = 1000 * stressTestMultiplier
+        check(n % 2 == 0) { "Must be even" }
+        val r = Random(1)
+        val h = ThreadSafeHeap<Node>()
+        val set = TreeSet<Node>()
+        repeat(n) {
+            val node = Node(r.nextInt())
+            h.addLast(node)
+            assertTrue(set.add(node))
+        }
+        while (!h.isEmpty) {
+            // pick random node to remove
+            val rndNode: Node
+            while (true) {
+                val tail = set.tailSet(Node(r.nextInt()))
+                if (!tail.isEmpty()) {
+                    rndNode = tail.first()
+                    break
+                }
+            }
+            assertTrue(set.remove(rndNode))
+            assertTrue(h.remove(rndNode))
+            // remove head and validate
+            val headNode = h.removeFirstOrNull()!! // must not be null!!!
+            assertTrue(headNode === set.first(), "Expected ${set.first()}, but found $headNode, remaining size ${h.size}")
+            assertTrue(set.remove(headNode))
+            assertEquals(set.size, h.size)
+        }
     }
 }
