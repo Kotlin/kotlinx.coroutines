@@ -111,28 +111,6 @@ public actual suspend fun <T> withContext(
     completion.getResult()
 }
 
-/**
- * Runs new coroutine with the private event loop until its completion.
- * This function should not be used from coroutine. It is designed to bridge regular code
- * to libraries that are written in suspending style, to be used in `main` functions and in tests.
- *
- * The default [CoroutineDispatcher] for this builder in an implementation of [EventLoop] that processes continuations
- * in this blocked thread until the completion of this coroutine.
- * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
- *
- * @param context context of the coroutine. The default value is an implementation of [EventLoop].
- * @param block the coroutine code.
- * @suppress JS Platform: **This is unstable API and it is subject to change.**
- */
-public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
-    val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop() else null
-    val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
-    val coroutine = BlockingCoroutine<T>(newContext, privateEventLoop = eventLoop != null)
-    coroutine.initParentJob(newContext[Job])
-    block.startCoroutine(coroutine, coroutine)
-    return coroutine.joinBlocking()
-}
-
 // --------------- implementation ---------------
 
 private open class StandaloneCoroutine(
@@ -168,40 +146,6 @@ private class RunCompletion<in T>(
 ) : AbstractContinuation<T>(delegate, resumeMode) {
     override val hasCancellingState: Boolean
         get() = true
-}
-
-private class BlockingCoroutine<T>(
-    parentContext: CoroutineContext,
-    private val privateEventLoop: Boolean
-) : AbstractCoroutine<T>(parentContext, true) {
-    private val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
-
-    init {
-        if (privateEventLoop) require(eventLoop is BlockingEventLoop)
-    }
-
-    fun joinBlocking(): T {
-        while (true) {
-            val delay = eventLoop?.processNextEvent() ?: Double.MAX_VALUE
-            if (isCompleted) break
-            if (delay > 0) {
-                throw IllegalStateException("JS thread cannot be blocked, " +
-                    "runBlocking { ... } cannot be waiting for its completion with timeout")
-            }
-        }
-        // process queued events (that could have been added after last processNextEvent and before cancel
-        if (privateEventLoop) (eventLoop as BlockingEventLoop).apply {
-            // We exit the "while" loop above when this coroutine's state "isCompleted",
-            // Here we should signal that BlockingEventLoop should not accept any more tasks
-            isCompleted = true
-            shutdown()
-        }
-        // now return result
-        val state = this.state
-        (state as? CompletedExceptionally)?.let { throw it.exception }
-        @Suppress("UNCHECKED_CAST")
-        return state as T
-    }
 }
 
 
