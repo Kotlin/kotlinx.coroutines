@@ -71,7 +71,7 @@ public fun <T> Deferred<T>.asPromise(): Promise<T> {
 public fun <T> Promise<T>.asDeferred(): Deferred<T> {
     val deferred = asDynamic().deferred
     @Suppress("UnsafeCastFromDynamic")
-    return deferred ?: async { await() }
+    return deferred ?: async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
 /**
