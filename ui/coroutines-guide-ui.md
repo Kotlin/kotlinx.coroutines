@@ -440,7 +440,7 @@ perform naive computation of [Fibonacci numbers](https://en.wikipedia.org/wiki/F
  
 ```kotlin
 fun fib(x: Int): Int =
-    if (x <= 1) 1 else fib(x - 1) + fib(x - 2)
+    if (x <= 1) x else fib(x - 1) + fib(x - 2)
 ``` 
  
 We'll be computing larger and larger Fibonacci number each time the circle is clicked. 
@@ -505,7 +505,7 @@ fun setup(hello: Text, fab: Circle) {
 
 ```kotlin
 suspend fun fib(x: Int): Int = withContext(CommonPool) {
-    if (x <= 1) 1 else fib(x - 1) + fib(x - 2)
+    if (x <= 1) x else fib(x - 1) + fib(x - 2)
 }
 ```
 
@@ -528,7 +528,7 @@ suspend fun fib(x: Int): Int = withContext(CommonPool) {
 }
 
 fun fibBlocking(x: Int): Int = 
-    if (x <= 1) 1 else fibBlocking(x - 1) + fibBlocking(x - 2)
+    if (x <= 1) x else fibBlocking(x - 1) + fibBlocking(x - 2)
 ```
 
 > You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-03.kt).
