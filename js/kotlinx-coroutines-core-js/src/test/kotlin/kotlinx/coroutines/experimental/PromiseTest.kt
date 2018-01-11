@@ -19,8 +19,6 @@ package kotlinx.coroutines.experimental
 import kotlin.js.Promise
 import kotlin.test.*
 
-// :todo: This test does not actually test anything because of KT-21970 JS: Support async tests in Mocha and others
-// One should watch for errors in the console to see if there were any failures (the test would still pass)
 class PromiseTest : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = promise {
@@ -33,10 +31,13 @@ class PromiseTest : TestBase() {
     
     @Test
     fun testPromiseRejectedAsDeferred() = promise {
+        lateinit var promiseReject: (Throwable) -> Unit
         val promise = Promise<String> { _, reject ->
-            reject(TestException("Rejected"))
+            promiseReject = reject
         }
         val deferred = promise.asDeferred()
+        // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
+        promiseReject(TestException("Rejected"))
         try {
             deferred.await()
             expectUnreached()

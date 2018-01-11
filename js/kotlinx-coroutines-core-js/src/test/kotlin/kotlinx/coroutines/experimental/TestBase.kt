@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.js.*
+
 public actual open class TestBase actual constructor() {
     public actual val isStressTest: Boolean = false
     public actual val stressTestMultiplier: Int = 1
@@ -66,29 +68,33 @@ public actual open class TestBase actual constructor() {
     ) {
         var exCount = 0
         var ex: Throwable? = null
-        try {
-            runBlocking(block = block, context = CoroutineExceptionHandler { context, e ->
-                if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
-                exCount++
-                if (exCount > unhandled.size)
-                    error("Too many unhandled exceptions $exCount, expected ${unhandled.size}", e)
-                if (!unhandled[exCount - 1](e))
-                    error("Unhandled exception was unexpected", e)
-                context[Job]?.cancel(e)
-            })
-        } catch (e: Throwable) {
+        val promise = promise(block = block, context = CoroutineExceptionHandler { context, e ->
+            if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
+            exCount++
+            if (exCount > unhandled.size)
+                error("Too many unhandled exceptions $exCount, expected ${unhandled.size}", e)
+            if (!unhandled[exCount - 1](e))
+                error("Unhandled exception was unexpected", e)
+            context[Job]?.cancel(e)
+        }).catch { e ->
             ex = e
             if (expected != null) {
                 if (!expected(e))
                     error("Unexpected exception", e)
             } else
                 throw e
-        } finally {
+        }.finally {
             if (ex == null && expected != null) error("Exception was expected but none produced")
+            if (exCount < unhandled.size)
+                error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
+            error?.let { throw it }
+            check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
-        if (exCount < unhandled.size)
-            error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
-        error?.let { throw it }
-        check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        // todo: This is a work-around for missing suspend tests, see KT-22228
+        @Suppress("UnsafeCastFromDynamic")
+        return promise.asDynamic()
     }
 }
+
+private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
+    then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
