@@ -177,8 +177,7 @@ public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
         // dispatch directly using this instance's Runnable implementation
         val dispatcher = delegate.dispatcher
         val context = delegate.context
-        if (dispatcher.isDispatchNeeded(context)
-        ) {
+        if (dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
             return // and that's it -- dispatched via fast-path
         } else {
