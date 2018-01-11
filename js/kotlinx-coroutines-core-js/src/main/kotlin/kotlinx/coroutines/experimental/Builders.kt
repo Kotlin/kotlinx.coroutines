@@ -143,9 +143,6 @@ private class RunCompletion<in T>(
     override val context: CoroutineContext,
     delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode) {
-    override val hasCancellingState: Boolean
-        get() = true
-}
+) : AbstractContinuation<T>(delegate, resumeMode)
 
 

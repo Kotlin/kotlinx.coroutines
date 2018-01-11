@@ -38,17 +38,14 @@ public abstract class AbstractCoroutine<in T>(
     public final override val context: CoroutineContext = parentContext + this
     public final override val coroutineContext: CoroutineContext get() = context
 
-    // all coroutines are cancelled through an intermediate cancelling state
-    final override val hasCancellingState: Boolean get() = true
-
     protected open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
 
     final override fun resume(value: T) {
-        makeCompleting(value, defaultResumeMode)
+        makeCompletingOnce(value, defaultResumeMode)
     }
 
     final override fun resumeWithException(exception: Throwable) {
-        makeCompleting(CompletedExceptionally(exception), defaultResumeMode)
+        makeCompletingOnce(CompletedExceptionally(exception), defaultResumeMode)
     }
 
     final override fun handleException(exception: Throwable) {

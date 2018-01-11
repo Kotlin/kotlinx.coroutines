@@ -90,9 +90,5 @@ class JobDisposeTest: TestBase() {
         exception?.let { throw it }
     }
 
-    class TestJob : JobSupport(active = true) {
-        // The bug was triggering only with cancelling state
-        override val hasCancellingState: Boolean
-            get() = true
-    }
+    class TestJob : JobSupport(active = true)
 }

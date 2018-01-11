@@ -60,7 +60,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
  * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
  *
  * A job can be _cancelled_ at any time with [cancel] function that forces it to transition to
- * _cancelling_ state immediately. Job that is not backed by a coroutine and does not have
+ * _cancelling_ state immediately. Job that is not backed by a coroutine (see `Job()` function) and does not have
  * [children] becomes _cancelled_ on [cancel] immediately.
  * Otherwise, job becomes _cancelled_  when it finishes executing its code and
  * when all its children [complete][isCompleted].
@@ -841,7 +841,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
                         promoteSingleToNodeList(state as JobNode<*>)
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
-                            check(hasCancellingState) // cannot be in this state unless were support cancelling state
+                            check(onCancelMode != ON_CANCEL_MAKE_CANCELLED) // cannot be in this state unless were support cancelling state
                             // installing cancellation handler on job that is being cancelled
                             if (invokeImmediately) handler(state.cancelled.cause)
                             return NonDisposableHandle
@@ -858,14 +858,15 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         }
     }
 
-    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> =
-        if (onCancelling && hasCancellingState)
+    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
+        val hasCancellingState = onCancelMode != ON_CANCEL_MAKE_CANCELLED
+        return if (onCancelling && hasCancellingState)
             (handler as? JobCancellationNode<*>)?.also { require(it.job === this) }
                 ?: InvokeOnCancellation(this, handler)
         else
             (handler as? JobNode<*>)?.also { require(it.job === this && (!hasCancellingState || it !is JobCancellationNode)) }
                 ?: InvokeOnCompletion(this, handler)
-
+    }
 
     private fun addLastAtomic(expect: Any, list: NodeList, node: JobNode<*>) =
         list.addLastIf(node) { this.state === expect }
@@ -948,12 +949,14 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         }
     }
 
-    protected open val hasCancellingState: Boolean get() = false
+    protected open val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLING
 
-    public override fun cancel(cause: Throwable?): Boolean =
-        if (hasCancellingState)
-            makeCancelling(cause) else
-            makeCancelled(cause)
+    public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
+        ON_CANCEL_MAKE_CANCELLED -> makeCancelled(cause)
+        ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
+        ON_CANCEL_MAKE_COMPLETING -> makeCompletingOnCancel(cause)
+        else -> error("Invalid onCancelMode $onCancelMode")
+    }
 
     // we will be dispatching coroutine to process its cancellation exception, so there is no need for
     // an extra check for Job status in MODE_CANCELLABLE
@@ -1013,6 +1016,15 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         return true
     }
 
+    private fun makeCompletingOnCancel(cause: Throwable?): Boolean =
+        makeCompleting(Cancelled(this, cause))
+    
+    internal fun makeCompleting(proposedUpdate: Any?): Boolean =
+        when (makeCompletingInternal(proposedUpdate, mode = MODE_ATOMIC_DEFAULT)) {
+            COMPLETING_ALREADY_COMPLETING -> false
+            else -> true
+        }
+
     /**
      * Returns:
      * * `true` if state was updated to completed/cancelled;
@@ -1021,30 +1033,38 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
      * @throws IllegalStateException if job is already complete or completing
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun makeCompleting(proposedUpdate: Any?, mode: Int): Boolean {
+    internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean =
+        when (makeCompletingInternal(proposedUpdate, mode)) {
+            COMPLETING_COMPLETED -> true
+            COMPLETING_WAITING_CHILDREN -> false
+            else -> throw IllegalStateException("Job $this is already complete or completing, " +
+                "but is being completed with $proposedUpdate", proposedUpdate.exceptionOrNull)
+        }
+
+    private fun makeCompletingInternal(proposedUpdate: Any?, mode: Int): Int {
         loopOnState { state ->
             if (state !is Incomplete)
-                throw IllegalStateException("Job $this is already complete, but is being completed with $proposedUpdate", proposedUpdate.exceptionOrNull)
+                return COMPLETING_ALREADY_COMPLETING
             if (state is Finishing && state.completing)
-                throw IllegalStateException("Job $this is already completing, but is being completed with $proposedUpdate", proposedUpdate.exceptionOrNull)
+                return COMPLETING_ALREADY_COMPLETING
             val child: Child = firstChild(state) ?: // or else complete immediately w/o children
-                if (updateState(state, proposedUpdate, mode)) return true else return@loopOnState
+                if (updateState(state, proposedUpdate, mode)) return COMPLETING_COMPLETED else return@loopOnState
             // must promote to list to correct operate on child lists
             if (state is JobNode<*>) {
                 promoteSingleToNodeList(state)
                 return@loopOnState // retry
             }
             // cancel all children in list on exceptional completion
-            if (proposedUpdate is CompletedExceptionally
-            )
+            if (proposedUpdate is CompletedExceptionally)
                 child.cancelChildrenInternal(proposedUpdate.exception)
             // switch to completing state
-            val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
+            val cancelled = (state as? Finishing)?.cancelled ?: (proposedUpdate as? Cancelled)
+            val completing = Finishing(state.list!!, cancelled, true)
             if (_state.compareAndSet(state, completing)) {
                 if (tryWaitForChild(child, proposedUpdate))
-                    return false
-                if (updateState(completing, proposedUpdate, MODE_ATOMIC_DEFAULT))
-                    return true
+                    return COMPLETING_WAITING_CHILDREN
+                if (updateState(completing, proposedUpdate, mode = MODE_ATOMIC_DEFAULT))
+                    return COMPLETING_COMPLETED
             }
         }
     }
@@ -1251,8 +1271,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
         cont.disposeOnCompletion(invokeOnCompletion {
             val state = this.state
             check(state !is Incomplete)
-            if (state is CompletedExceptionally
-            )
+            if (state is CompletedExceptionally)
                 cont.resumeWithException(state.exception)
             else
                 cont.resume(state)
@@ -1267,8 +1286,7 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
             if (state !is Incomplete) {
                 // already complete -- select result
                 if (select.trySelect(null)) {
-                    if (state is CompletedExceptionally
-                    )
+                    if (state is CompletedExceptionally)
                         select.resumeSelectCancellableWithException(state.exception)
                     else
                         block.startCoroutineUndispatched(state, select.completion)
@@ -1286,13 +1304,20 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
     internal fun <R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (Any?) -> R) {
         val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
-        if (state is CompletedExceptionally
-        )
+        if (state is CompletedExceptionally)
             select.resumeSelectCancellableWithException(state.exception)
         else
             block.startCoroutineCancellable(state, select.completion)
     }
 }
+
+internal const val ON_CANCEL_MAKE_CANCELLED = 0
+internal const val ON_CANCEL_MAKE_CANCELLING = 1
+internal const val ON_CANCEL_MAKE_COMPLETING = 2
+
+private const val COMPLETING_ALREADY_COMPLETING = 0
+private const val COMPLETING_COMPLETED = 1
+private const val COMPLETING_WAITING_CHILDREN = 2
 
 private const val RETRY = -1
 private const val FALSE = 0
@@ -1310,6 +1335,7 @@ private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {
     init { initParentJob(parent) }
+    override val onCancelMode: Int get() = ON_CANCEL_MAKE_COMPLETING
 }
 
 // -------- invokeOnCompletion nodes

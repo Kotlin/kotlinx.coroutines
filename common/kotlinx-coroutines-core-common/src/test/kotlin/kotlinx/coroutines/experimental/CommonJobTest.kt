@@ -149,4 +149,23 @@ class CommonJobTest : TestBase() {
         job.cancel()
         assertEquals(0, fireCount)
     }
+
+    @Test
+    fun testCancelAndJoinParentWaitChildren() = runTest {
+        expect(1)
+        val parent = Job()
+        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+            expect(2)
+            try {
+                yield() // will get cancelled
+            } finally {
+                expect(5)
+            }
+        }
+        expect(3)
+        parent.cancel()
+        expect(4)
+        parent.join()
+        finish(6)
+    }
 }

@@ -205,6 +205,8 @@ internal class CancellableContinuationImpl<in T>(
         initParentJob(delegate.context[Job])
     }
 
+    override val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLED
+    
     override fun tryResume(value: T, idempotent: Any?): Any? {
         val state = this.state
         return when (state) {

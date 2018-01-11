@@ -174,6 +174,47 @@ class CommonCompletableDeferredTest : TestBase() {
         finish(7)
     }
 
+    @Test
+    fun testCancelAndAwaitParentWaitChildren() = runTest {
+        expect(1)
+        val parent = CompletableDeferred<String>()
+        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+            expect(2)
+            try {
+                yield() // will get cancelled
+            } finally {
+                expect(5)
+            }
+        }
+        expect(3)
+        parent.cancel()
+        expect(4)
+        try {
+            parent.await()
+        } catch (e: CancellationException) {
+            finish(6)
+        }
+    }
+
+    @Test
+    fun testCompleteAndAwaitParentWaitChildren() = runTest {
+        expect(1)
+        val parent = CompletableDeferred<String>()
+        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+            expect(2)
+            try {
+                yield() // will get cancelled
+            } finally {
+                expect(5)
+            }
+        }
+        expect(3)
+        parent.complete("OK")
+        expect(4)
+        assertEquals("OK", parent.await())
+        finish(6)
+    }
+
     private inline fun <reified T: Throwable> assertThrows(block: () -> Unit) {
         try {
             block()

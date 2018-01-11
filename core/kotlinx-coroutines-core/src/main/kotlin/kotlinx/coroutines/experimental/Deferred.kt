@@ -45,10 +45,10 @@ import kotlin.coroutines.experimental.CoroutineContext
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  *
  * A deferred can be _cancelled_ at any time with [cancel] function that forces it to transition to
- * _cancelling_ state immediately. A simple implementation of deferred -- [CompletableDeferred],
- * that is not backed by a coroutine, does not have a _cancelling_ state, but becomes _cancelled_
- * on [cancel] immediately. Coroutines, on the other hand, become _cancelled_ only when they finish
- * executing their code and after all their [children] complete.
+ * _cancelling_ state immediately. Deferred that is not backed by a coroutine (see [CompletableDeferred]) and does not have
+ * [children] becomes _cancelled_ on [cancel] immediately.
+ * Otherwise, deferred becomes _cancelled_  when it finishes executing its code and
+ * when all its children [complete][isCompleted].
  *
  * ```
  *                                                     wait children

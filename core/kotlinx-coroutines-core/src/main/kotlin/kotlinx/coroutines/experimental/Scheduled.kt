@@ -88,7 +88,7 @@ private fun <U, T: U> setupTimeout(
     }
     return when {
         result == COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
-        coroutine.makeCompleting(result, MODE_IGNORE) -> {
+        coroutine.makeCompletingOnce(result, MODE_IGNORE) -> {
             if (result is CompletedExceptionally) throw result.exception else result
         }
         else -> COROUTINE_SUSPENDED
