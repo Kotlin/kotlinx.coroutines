@@ -44,31 +44,32 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     private var debugStatus: Int = FRESH
 
     override fun run() {
-        var shutdownNanos = Long.MAX_VALUE
         timeSource.registerTimeLoopThread()
-        notifyStartup()
         try {
-            runLoop@ while (true) {
-                Thread.interrupted() // just reset interruption flag
-                var parkNanos = processNextEvent()
-                if (parkNanos == Long.MAX_VALUE) {
-                    // nothing to do, initialize shutdown timeout
-                    if (shutdownNanos == Long.MAX_VALUE) {
-                        val now = timeSource.nanoTime()
-                        if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
-                        val tillShutdown = shutdownNanos - now
-                        if (tillShutdown <= 0) break@runLoop // shut thread down
-                        parkNanos = parkNanos.coerceAtMost(tillShutdown)
-                    } else
-                        parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
-                }
-                if (parkNanos > 0) {
-                    // check if shutdown was requested and bail out in this case
-                    if (debugStatus == SHUTDOWN_REQ) {
-                        acknowledgeShutdown()
-                        break@runLoop
-                    } else {
-                        timeSource.parkNanos(this, parkNanos)
+            var shutdownNanos = Long.MAX_VALUE
+            if (notifyStartup()) {
+                runLoop@ while (true) {
+                    Thread.interrupted() // just reset interruption flag
+                    var parkNanos = processNextEvent()
+                    if (parkNanos == Long.MAX_VALUE) {
+                        // nothing to do, initialize shutdown timeout
+                        if (shutdownNanos == Long.MAX_VALUE) {
+                            val now = timeSource.nanoTime()
+                            if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
+                            val tillShutdown = shutdownNanos - now
+                            if (tillShutdown <= 0) break@runLoop // shut thread down
+                            parkNanos = parkNanos.coerceAtMost(tillShutdown)
+                        } else
+                            parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
+                    }
+                    if (parkNanos > 0) {
+                        // check if shutdown was requested and bail out in this case
+                        if (debugStatus == SHUTDOWN_REQ) {
+                            acknowledgeShutdown()
+                            break@runLoop
+                        } else {
+                            timeSource.parkNanos(this, parkNanos)
+                        }
                     }
                 }
             }
@@ -101,15 +102,18 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     @Synchronized
     internal fun ensureStarted() {
         assert(_thread == null) // ensure we are at a clean state
+        assert(debugStatus == FRESH || debugStatus == SHUTDOWN_ACK)
         debugStatus = FRESH
         createThreadSync() // create fresh thread
         while (debugStatus == FRESH) (this as Object).wait()
     }
 
     @Synchronized
-    private fun notifyStartup() {
+    private fun notifyStartup(): Boolean {
+        if (debugStatus == SHUTDOWN_REQ) return false
         debugStatus = ACTIVE
         (this as Object).notifyAll()
+        return true
     }
 
     // used for tests
@@ -117,7 +121,7 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     internal fun shutdown(timeout: Long) {
         if (_thread != null) {
             val deadline = System.currentTimeMillis() + timeout
-            if (debugStatus == ACTIVE) debugStatus = SHUTDOWN_REQ
+            if (debugStatus == ACTIVE || debugStatus == FRESH) debugStatus = SHUTDOWN_REQ
             unpark()
             // loop while there is anything to do immediately or deadline passes
             while (debugStatus != SHUTDOWN_ACK && _thread != null) {
