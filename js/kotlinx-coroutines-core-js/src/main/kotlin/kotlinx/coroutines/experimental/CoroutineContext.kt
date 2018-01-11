@@ -16,8 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
  * A coroutine dispatcher that is not confined to any specific thread.
@@ -44,17 +43,6 @@ public actual object Unconfined : CoroutineDispatcher() {
 public actual val DefaultDispatcher: CoroutineDispatcher = JSDispatcher
 
 internal object JSDispatcher : CoroutineDispatcher(), Delay {
-    fun enqueue(block: Runnable) {
-        setTimeout({ block.run() }, 0)
-    }
-
-    fun schedule(time: Double, block: Runnable): Int =
-        setTimeout({ block.run() }, time.timeToInt())
-
-    fun removeScheduled(handle: Int) {
-        clearTimeout(handle)
-    }
-
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         setTimeout({ block.run() }, 0)
     }
@@ -85,8 +73,13 @@ public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): 
         wp + DefaultDispatcher else wp
 }
 
+
+// No debugging facilities on JS
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T = block()
+internal actual fun Continuation<*>.toDebugString(): String = toString()
+
 // We need to reference global setTimeout and clearTimeout so that it works on Node.JS as opposed to
 // using them via "window" (which only works in browser)
 
 private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
-private external fun clearTimeout(handle: Int = definedExternally): Unit
+private external fun clearTimeout(handle: Int = definedExternally)

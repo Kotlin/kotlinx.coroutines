@@ -45,18 +45,6 @@ public expect interface DisposableHandle {
     public fun dispose()
 }
 
-public expect class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException
-
-public open expect class CancellationException(message: String) : IllegalStateException
-
-public expect class JobCancellationException(
-    message: String,
-    cause: Throwable?,
-    job: Job
-) : CancellationException {
-    val job: Job
-}
-
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
 public expect fun CoroutineContext.cancel(cause: Throwable? = null): Boolean
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")

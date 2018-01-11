@@ -59,12 +59,12 @@ private fun <U, T: U> setupTimeout(
     val result = try {
         block.startCoroutineUninterceptedOrReturn(receiver = coroutine, completion = coroutine)
     } catch (e: Throwable) {
-        JobSupport.CompletedExceptionally(e)
+        CompletedExceptionally(e)
     }
     return when {
         result == COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
         coroutine.makeCompleting(result, MODE_IGNORE) -> {
-            if (result is JobSupport.CompletedExceptionally) throw result.exception else result
+            if (result is CompletedExceptionally) throw result.exception else result
         }
         else -> COROUTINE_SUSPENDED
     }
@@ -135,25 +135,4 @@ private class TimeoutOrNullCoroutine<T>(
     override fun toString(): String  =
         "TimeoutOrNullCoroutine($time)"
 }
-
-/**
- * This exception is thrown by [withTimeout] to indicate timeout.
- */
-@Suppress("DEPRECATION")
-public actual class TimeoutCancellationException internal constructor(
-    message: String,
-    internal val coroutine: Job?
-) : CancellationException(message) {
-    /**
-     * Creates timeout exception with a given message.
-     */
-    public actual constructor(message: String) : this(message, null)
-}
-
-@Suppress("FunctionName")
-private fun TimeoutCancellationException(
-    time: Int,
-    coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time", coroutine)
-
 

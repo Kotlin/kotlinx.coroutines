@@ -27,9 +27,9 @@ private const val RESUMED = 2
  * @suppress **This is unstable API and it is subject to change.**
  */
 internal abstract class AbstractContinuation<in T>(
-    protected val delegate: Continuation<T>,
-    protected val resumeMode: Int
-) : JobSupport(true), Continuation<T> {
+    public final override val delegate: Continuation<T>,
+    public final override val resumeMode: Int
+) : JobSupport(true), Continuation<T>, DispatchedTask<T> {
     private var decision = UNDECIDED
 
     /* decision state machine
@@ -46,6 +46,8 @@ internal abstract class AbstractContinuation<in T>(
 
         Note: both tryResume and trySuspend can be invoked at most once, first invocation wins
      */
+
+    override fun takeState(): Any? = state
 
     private fun trySuspend(): Boolean = when (decision) {
         UNDECIDED -> { decision = SUSPENDED; true }
@@ -71,16 +73,8 @@ internal abstract class AbstractContinuation<in T>(
     override fun afterCompletion(state: Any?, mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
-        if (state is CompletedExceptionally) {
-            delegate.resumeWithExceptionMode(state.exception, mode)
-        } else {
-            delegate.resumeMode(getSuccessfulResult(state), mode)
-        }
+        dispatch(mode)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    protected open fun <T> getSuccessfulResult(state: Any?): T =
-        state as T
 
     override fun resume(value: T) =
         resumeImpl(value, resumeMode)

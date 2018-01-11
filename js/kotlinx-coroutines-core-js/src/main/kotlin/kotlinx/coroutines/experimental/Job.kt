@@ -268,44 +268,6 @@ public actual interface DisposableHandle {
     public actual fun dispose()
 }
 
-/**
- * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
- */
-public actual class CompletionHandlerException public actual constructor(
-    message: String,
-    public override val cause: Throwable
-) : RuntimeException(message.withCause(cause))
-
-public actual open class CancellationException actual constructor(message: String) : IllegalStateException(message)
-
-/**
- * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
- * without cause, or with a cause or exception that is not [CancellationException]
- * (see [Job.getCancellationException]).
- */
-public actual class JobCancellationException public actual constructor(
-    message: String,
-    public override val cause: Throwable?,
-    /**
-     * The job that was cancelled.
-     */
-    public actual val job: Job
-) : CancellationException(message.withCause(cause)) {
-    override fun toString(): String = "${super.toString()}; job=$job"
-    override fun equals(other: Any?): Boolean =
-            other === this ||
-                    other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
-    override fun hashCode(): Int =
-            (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
-}
-
-@Suppress("FunctionName")
-private fun IllegalStateException(message: String, cause: Throwable?) =
-    IllegalStateException(message.withCause(cause))
-
-private fun String.withCause(cause: Throwable?) =
-    if (cause == null) this else "$this; caused by $cause"
-
 // -------------------- CoroutineContext extensions --------------------
 
 /**
@@ -938,52 +900,6 @@ public open class JobSupport(active: Boolean) : Job {
             }
             append("]")
         }
-    }
-
-    /**
-     * Class for a [state] of a job that had completed exceptionally, including cancellation.
-     *
-     * @param cause the exceptional completion cause. If `cause` is null, then an exception is
-     *        if created via [createException] on first get from [exception] property.
-     * @param allowNullCause if `null` cause is allowed.
-     */
-    public open class CompletedExceptionally protected constructor(
-        public val cause: Throwable?,
-        allowNullCause: Boolean
-    ) {
-        /**
-         * Creates exceptionally completed state.
-         * @param cause the exceptional completion cause.
-         */
-        public constructor(cause: Throwable) : this(cause, false)
-
-        private var _exception: Throwable? = cause // will materialize JobCancellationException on first need
-
-        init {
-            require(allowNullCause || cause != null) { "Null cause is not allowed" }
-        }
-
-        /**
-         * Returns completion exception.
-         */
-        public val exception: Throwable get() =
-            _exception ?: createException().also { _exception = it }
-
-        protected open fun createException(): Throwable = error("Completion exception was not specified")
-    }
-
-    /**
-     * A specific subclass of [CompletedExceptionally] for cancelled jobs.
-     *
-     * @param job the job that was cancelled.
-     * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
-     *        if created on first get from [exception] property.
-     */
-    public class Cancelled(
-        private val job: Job,
-        cause: Throwable?
-    ) : CompletedExceptionally(cause, true) {
-        override fun createException(): Throwable = JobCancellationException("Job was cancelled normally", null, job)
     }
 
     /*

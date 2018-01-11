@@ -14,9 +14,20 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.experimental
 
-/** @suppress **This is unstable API and it is subject to change.** */
-public class Symbol(val symbol: String) {
-    override fun toString(): String = symbol
+public expect class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException
+
+public expect open class CancellationException(message: String) : IllegalStateException
+
+public expect class JobCancellationException(
+    message: String,
+    cause: Throwable?,
+    job: Job
+) : CancellationException {
+    val job: Job
 }
+
+public expect class TimeoutCancellationException public constructor(message: String)
+
+internal expect class DispatchException(message: String, cause: Throwable) : RuntimeException

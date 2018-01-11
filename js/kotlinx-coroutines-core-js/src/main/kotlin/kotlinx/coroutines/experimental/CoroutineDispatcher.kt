@@ -34,7 +34,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *   is specified in their context.
  */
 public actual abstract class CoroutineDispatcher actual constructor() :
-        AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+    AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     /**
      * Returns `true` if execution shall be dispatched onto another thread.
      * The default behaviour for most dispatchers is to return `true`.
@@ -77,7 +77,7 @@ public actual abstract class CoroutineDispatcher actual constructor() :
      * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
      */
     public actual override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
-            DispatchedContinuation(this, continuation)
+        DispatchedContinuation(this, continuation)
 }
 
 /**
@@ -87,102 +87,3 @@ public actual interface Runnable {
     public actual fun run()
 }
 
-internal class DispatchTask<in T>(
-    private val continuation: Continuation<T>,
-    private val value: Any?, // T | Throwable
-    private val exception: Boolean,
-    private val cancellable: Boolean
-) : Runnable {
-    @Suppress("UNCHECKED_CAST")
-    override fun run() {
-        try {
-            val context = continuation.context
-            val job = if (cancellable) context[Job] else null
-            when {
-                job != null && !job.isActive -> continuation.resumeWithException(job.getCancellationException())
-                exception -> continuation.resumeWithException(value as Throwable)
-                else -> continuation.resume(value as T)
-            }
-        } catch (e: Throwable) {
-            throw RuntimeException("Unexpected exception running $this: $e")
-        }
-    }
-
-    override fun toString(): String =
-        "DispatchTask[$continuation, cancellable=$cancellable]"
-}
-
-internal class DispatchedContinuation<in T>(
-    val dispatcher: CoroutineDispatcher,
-    val continuation: Continuation<T>
-): Continuation<T> by continuation {
-    override fun resume(value: T) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = false))
-        else
-            resumeUndispatched(value)
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = false))
-        else
-            resumeUndispatchedWithException(exception)
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellable(value: T) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, value, exception = false, cancellable = true))
-        else
-            resumeUndispatched(value)
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeCancellableWithException(exception: Throwable) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context))
-            dispatcher.dispatch(context, DispatchTask(continuation, exception, exception = true, cancellable = true))
-        else
-            resumeUndispatchedWithException(exception)
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatched(value: T) {
-        continuation.resume(value)
-    }
-
-    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatchedWithException(exception: Throwable) {
-        continuation.resumeWithException(exception)
-    }
-
-    // used by "yield" implementation
-    internal fun dispatchYield(value: T) {
-        val context = continuation.context
-        dispatcher.dispatch(context, DispatchTask(continuation, value,false, true))
-    }
-}
-
-internal fun <T> Continuation<T>.resumeCancellable(value: T) = when (this) {
-    is DispatchedContinuation -> resumeCancellable(value)
-    else -> resume(value)
-}
-
-internal fun <T> Continuation<T>.resumeCancellableWithException(exception: Throwable) = when (this) {
-    is DispatchedContinuation -> resumeCancellableWithException(exception)
-    else -> resumeWithException(exception)
-}
-
-internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {
-    is DispatchedContinuation -> continuation.resume(value)
-    else -> resume(value)
-}
-
-internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable) = when (this) {
-    is DispatchedContinuation -> continuation.resumeWithException(exception)
-    else -> resumeWithException(exception)
-}

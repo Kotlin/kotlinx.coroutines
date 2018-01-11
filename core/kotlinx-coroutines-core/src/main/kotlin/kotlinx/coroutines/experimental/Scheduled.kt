@@ -198,29 +198,3 @@ private class TimeoutOrNullCoroutine<T>(
     }
 }
 
-/**
- * This exception is thrown by [withTimeout] to indicate timeout.
- */
-@Suppress("DEPRECATION")
-public actual class TimeoutCancellationException internal constructor(
-    message: String,
-    @JvmField internal val coroutine: Job?
-) : TimeoutException(message) {
-    /**
-     * Creates timeout exception with a given message.
-     */
-    public actual constructor(message: String) : this(message, null)
-}
-
-/**
- * @suppress **Deprecated**: Renamed to TimeoutCancellationException
- */
-@Deprecated("Renamed to TimeoutCancellationException", replaceWith = ReplaceWith("TimeoutCancellationException"))
-public open class TimeoutException(message: String) : CancellationException(message)
-
-@Suppress("FunctionName")
-private fun TimeoutCancellationException(
-    time: Long,
-    unit: TimeUnit,
-    coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time $unit", coroutine)

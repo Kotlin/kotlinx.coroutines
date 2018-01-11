@@ -104,7 +104,7 @@ public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): 
 /**
  * Executes a block using a given coroutine context.
  */
-internal inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
     val oldName = context.updateThreadContext()
     try {
         return block()

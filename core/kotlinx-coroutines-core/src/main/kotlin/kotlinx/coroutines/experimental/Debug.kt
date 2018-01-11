@@ -31,7 +31,7 @@ internal fun Any?.toSafeString(): String =
 // KT-18986 Debug-friendly toString implementation for CoroutineImpl
 // (the current string representation of continuation is useless and uses buggy reflection internals)
 // So, this function is a replacement that extract a usable information from continuation -> its class name, at least
-internal fun Continuation<*>.toDebugString(): String = when (this) {
+internal actual fun Continuation<*>.toDebugString(): String = when (this) {
     is DispatchedContinuation -> toString()
     else -> "${this::class.java.name}@$hexAddress"
 }

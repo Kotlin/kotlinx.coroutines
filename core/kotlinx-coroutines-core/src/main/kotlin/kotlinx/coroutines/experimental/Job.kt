@@ -392,41 +392,6 @@ public actual interface DisposableHandle : Job.Registration {
     public override fun unregister() = dispose()
 }
 
-/**
- * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
- */
-public actual class CompletionHandlerException actual constructor(
-    message: String,
-    cause: Throwable
-) : RuntimeException(message, cause)
-
-/**
- * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
- */
-public actual typealias CancellationException = java.util.concurrent.CancellationException
-
-/**
- * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
- * without cause, or with a cause or exception that is not [CancellationException]
- * (see [Job.getCancellationException]).
- */
-public actual class JobCancellationException public actual constructor(
-    message: String,
-    cause: Throwable?,
-    /**
-     * The job that was cancelled.
-     */
-    public actual val job: Job
-) : CancellationException(message) {
-    init { if (cause != null) initCause(cause) }
-    override fun toString(): String = "${super.toString()}; job=$job"
-    override fun equals(other: Any?): Boolean =
-        other === this ||
-            other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
-    override fun hashCode(): Int =
-        (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
-}
-
 // -------------------- Job extensions --------------------
 
 /**
@@ -1070,7 +1035,8 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
                 return@loopOnState // retry
             }
             // cancel all children in list on exceptional completion
-            if (proposedUpdate is CompletedExceptionally)
+            if (proposedUpdate is CompletedExceptionally
+            )
                 child.cancelChildrenInternal(proposedUpdate.exception)
             // switch to completing state
             val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
@@ -1241,20 +1207,6 @@ public open class JobSupport(active: Boolean) : Job, SelectClause0, SelectClause
             }
             append("]")
         }
-    }
-
-    /**
-     * A specific subclass of [CompletedExceptionally] for cancelled jobs.
-     *
-     * @param job the job that was cancelled.
-     * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
-     *        if created on first get from [exception] property.
-     */
-    public class Cancelled(
-        private val job: Job,
-        cause: Throwable?
-    ) : CompletedExceptionally(cause, true) {
-        override fun createException(): Throwable = JobCancellationException("Job was cancelled normally", null, job)
     }
 
     /*

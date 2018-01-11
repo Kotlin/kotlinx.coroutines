@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.internal
 
-import kotlin.coroutines.experimental.*
-
-public expect object Unconfined : CoroutineDispatcher {
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean
-    override fun dispatch(context: CoroutineContext, block: Runnable)
+/**
+ * A symbol class that is used to define unique constants that are self-explanatory in debugger.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public class Symbol(val symbol: String) {
+    override fun toString(): String = symbol
 }
-
-internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T
-internal expect fun Continuation<*>.toDebugString(): String
