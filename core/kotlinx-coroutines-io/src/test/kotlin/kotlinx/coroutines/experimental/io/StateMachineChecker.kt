@@ -1,9 +1,10 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.*
 import org.objectweb.asm.*
 import java.io.*
 
-class StateMachineChecker {
+class StateMachineChecker : TestBase() {
     private interface Filter {
         fun nonSuspend(className: String, methodName: String): Boolean
         fun suspend(className: String, methodName: String, hasStateMachine: Boolean): Boolean

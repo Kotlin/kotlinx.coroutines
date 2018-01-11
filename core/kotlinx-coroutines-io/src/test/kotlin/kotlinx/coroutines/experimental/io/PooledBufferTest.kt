@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental.io
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
-import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.io.pool.*
 import org.junit.After
 import org.junit.Test
@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class PooledBufferTest {
+class PooledBufferTest : TestBase() {
     private val allocated = CopyOnWriteArrayList<ByteBuffer>()
 
     private inner class TestPool : ObjectPool<ReadWriteBufferState.Initial> {

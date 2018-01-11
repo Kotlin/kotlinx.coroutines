@@ -11,7 +11,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
 
-class StringsTest {
+class StringsTest : TestBase() {
     @get:Rule
     val timeout = Timeout(10, TimeUnit.SECONDS)
 

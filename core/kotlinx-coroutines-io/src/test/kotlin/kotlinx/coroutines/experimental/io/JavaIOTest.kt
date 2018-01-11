@@ -8,7 +8,7 @@ import java.io.*
 import java.nio.channels.*
 import kotlin.test.*
 
-class JavaIOTest {
+class JavaIOTest : TestBase() {
     private val channel = ByteChannel()
 
     @Test
@@ -177,6 +177,8 @@ class JavaIOTest {
         for (i in 1..numberOfLines) {
             assertEquals("OK $i", channel2.readUTF8Line())
         }
+
+        exec.close()
     }
 
     @Test
@@ -203,5 +205,6 @@ class JavaIOTest {
 
         pipe.source().close()
         pipe.sink().close()
+        exec.close()
     }
 }

@@ -1,13 +1,13 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ContentByteBufferTest {
+class ContentByteBufferTest : TestBase() {
     @Test
     fun testEmptyContent() = runBlocking {
         val ch = ByteReadChannel(ByteArray(0))
