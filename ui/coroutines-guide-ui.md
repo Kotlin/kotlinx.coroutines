@@ -512,11 +512,11 @@ suspend fun fib(x: Int): Int = withContext(CommonPool) {
 > You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-02.kt).
 
 You can run this code and verify that UI is not frozen while large Fibonacci numbers are being computed. 
-However, this code computes `fib` somewhat slower, because every recursive call to `fib` goes via `run`. This is 
-not a big problem in practice, because `run` is smart enough to check that the coroutine is already running
+However, this code computes `fib` somewhat slower, because every recursive call to `fib` goes via `withContext`. This is 
+not a big problem in practice, because `withContext` is smart enough to check that the coroutine is already running
 in the required context and avoids overhead of dispatching coroutine to a different thread again. It is an 
 overhead nonetheless, which is visible on this primitive code that does nothing else, but only adds integers 
-in between invocations to `run`. For some more substantial code, the overhead of an extra `run` invocation is 
+in between invocations to `withContext`. For some more substantial code, the overhead of an extra `withContext` invocation is 
 not going to be significant.
 
 Still, this particular `fib` implementation can be made to run as fast as before, but in the background thread, by renaming
