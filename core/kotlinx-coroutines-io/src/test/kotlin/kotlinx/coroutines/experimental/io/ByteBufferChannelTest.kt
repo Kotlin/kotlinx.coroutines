@@ -29,7 +29,7 @@ import kotlin.test.fail
 
 class ByteBufferChannelTest : TestBase() {
     @get:Rule
-    val timeout = Timeout(100, TimeUnit.SECONDS)
+    val timeout = Timeout(100L * stressTestMultiplier, TimeUnit.SECONDS)
 
     @get:Rule
     private val failures = ErrorCollector()
