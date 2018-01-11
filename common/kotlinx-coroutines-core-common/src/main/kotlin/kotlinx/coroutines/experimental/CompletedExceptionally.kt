@@ -52,7 +52,7 @@ public open class CompletedExceptionally protected constructor(
 
     protected open fun createException(): Throwable = error("Completion exception was not specified")
 
-    override fun toString(): String = "${this::class.simpleName}[$exception]"
+    override fun toString(): String = "$classSimpleName[$exception]"
 }
 
 /**

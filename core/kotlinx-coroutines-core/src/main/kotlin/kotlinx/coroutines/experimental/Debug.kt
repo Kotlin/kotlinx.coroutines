@@ -36,3 +36,4 @@ internal actual fun Continuation<*>.toDebugString(): String = when (this) {
     else -> "${this::class.java.name}@$hexAddress"
 }
 
+internal actual val Any.classSimpleName: String get() = this::class.java.simpleName
