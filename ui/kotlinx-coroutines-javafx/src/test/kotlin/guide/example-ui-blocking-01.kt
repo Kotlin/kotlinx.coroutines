@@ -72,7 +72,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 
 fun fib(x: Int): Int =
-    if (x <= 1) 1 else fib(x - 1) + fib(x - 2)
+    if (x <= 1) x else fib(x - 1) + fib(x - 2)
 
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
