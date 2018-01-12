@@ -11,9 +11,19 @@ import kotlin.coroutines.experimental.intrinsics.*
  * - [T] should be neither [Throwable] nor [Continuation]
  * - value shouldn't be null
  */
-internal class MutableDelegateContinuation<T : Any> : Continuation<T> {
+internal class MutableDelegateContinuation<T : Any> : Continuation<T>, DispatchedTask<T> {
+    private var _delegate: Continuation<T>? = null
     private val state = atomic<Any?>(null)
     private val handler = atomic<JobRelation?>(null)
+
+    override val delegate: Continuation<T>
+        get() = _delegate!!
+
+    override fun takeState(): Any? {
+        val value = state.getAndSet(null)
+        _delegate = null
+        return value
+    }
 
     fun swap(actual: Continuation<T>): Any {
         loop@while (true) {
@@ -72,10 +82,11 @@ internal class MutableDelegateContinuation<T : Any> : Continuation<T> {
                     return
                 }
                 is Continuation<*> -> {
-                    if (!state.compareAndSet(before, null)) continue@loop
+                    if (!state.compareAndSet(before, value)) continue@loop
                     @Suppress("UNCHECKED_CAST")
                     val cont = before as Continuation<T>
-                    return cont.resume(value)
+                    _delegate = cont
+                    return dispatch(1)
                 }
                 else -> return
             }
@@ -92,10 +103,11 @@ internal class MutableDelegateContinuation<T : Any> : Continuation<T> {
                     return
                 }
                 is Continuation<*> -> {
-                    if (!state.compareAndSet(before, null)) continue@loop
+                    if (!state.compareAndSet(before, CompletedExceptionally(exception))) continue@loop
                     @Suppress("UNCHECKED_CAST")
                     val cont = before as Continuation<T>
-                    return cont.resumeWithException(exception)
+                    _delegate = cont
+                    return dispatch(1)
                 }
                 else -> return
             }

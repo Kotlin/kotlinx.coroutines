@@ -107,8 +107,8 @@ internal class ByteBufferChannel(
         }
 
         if (cause != null) attachedJob?.cancel(cause)
-        readSuspendContinuationCache.close()
-        writeSuspendContinuationCache.close()
+//        readSuspendContinuationCache.close()
+//        writeSuspendContinuationCache.close()
 
         return true
     }
@@ -155,8 +155,8 @@ internal class ByteBufferChannel(
     }
 
     private fun setupStateForWrite(): ByteBuffer? {
-        if (writeOp != null) {
-            throw IllegalStateException("Write operation is already in progress")
+        writeOp?.let { existing ->
+            throw IllegalStateException("Write operation is already in progress: $existing")
         }
 
         var _allocated: ReadWriteBufferState.Initial? = null
@@ -183,7 +183,6 @@ internal class ByteBufferChannel(
             }
         }
 
-//        joining?.let { restoreStateAfterWrite(); return null }
         if (closed != null) {
             restoreStateAfterWrite()
             tryTerminate()
@@ -348,12 +347,16 @@ internal class ByteBufferChannel(
         val current = joining?.let { resolveDelegation(this, it) } ?: this
         val buffer = current.setupStateForWrite() ?: return
         val capacity = current.state.capacity
+        val before = current.totalBytesWritten
 
         try {
             current.closed?.let { throw it.sendException }
             block(current, buffer, capacity)
         } finally {
             if (capacity.isFull() || current.autoFlush) current.flush()
+            if (current !== this) {
+                totalBytesWritten += current.totalBytesWritten - before
+            }
             current.restoreStateAfterWrite()
             current.tryTerminate()
         }
@@ -692,7 +695,7 @@ internal class ByteBufferChannel(
         return readShort()
     }
 
-    final suspend override fun readInt(): Int {
+    final override suspend fun readInt(): Int {
         var i = 0
 
         val rc = reading {
@@ -716,7 +719,7 @@ internal class ByteBufferChannel(
         return readInt()
     }
 
-    final suspend override fun readLong(): Long {
+    final override suspend fun readLong(): Long {
         var i = 0L
 
         val rc = reading {
@@ -740,7 +743,7 @@ internal class ByteBufferChannel(
         return readLong()
     }
 
-    final suspend override fun readDouble(): Double {
+    final override suspend fun readDouble(): Double {
         var d = 0.0
 
         val rc = reading {
@@ -764,7 +767,7 @@ internal class ByteBufferChannel(
         return readDouble()
     }
 
-    final suspend override fun readFloat(): Float {
+    final override suspend fun readFloat(): Float {
         var f = 0.0f
 
         val rc = reading {
@@ -1182,7 +1185,6 @@ internal class ByteBufferChannel(
     }
 
     internal suspend fun copyDirect(src: ByteBufferChannel, limit: Long, joined: JoiningState?): Long {
-//        println("enter copyDirect")
         if (limit == 0L) return 0L
         if (src.isClosedForRead) {
             if (joined != null) {
@@ -1234,13 +1236,11 @@ internal class ByteBufferChannel(
                             true
                         }
 
-//                        println("rc = $rc, partSize = $partSize")
                         if (rc) {
                             dstBuffer.bytesWritten(state, partSize)
                             copied += partSize
 
                             if (avWBefore - partSize == 0 || autoFlush) {
-//                                println("flush")
                                 flush()
                             }
                         } else {
@@ -1257,28 +1257,21 @@ internal class ByteBufferChannel(
                     }
                 }
 
-                if (joining != null) break // TODO think of joining chain
                 if (copied >= limit) break
 
-//                println("readSuspend?")
                 flush()
 
                 if (src.availableForRead == 0 && !src.readSuspendImpl(1))  {
-//                    println("readSuspend failed")
                     if (joined == null || src.tryCompleteJoining(joined)) break
                 }
-//                println("next loop")
+
+                if (joining != null) {
+                    yield()
+                }
             }
 
             if (autoFlush) {
-//                println("final flush")
                 flush()
-            }
-
-            if (joined == null) {
-                joining?.let { thisJoined ->
-                    return copied + thisJoined.delegatedTo.copyDirect(src, limit - copied, null)
-                }
             }
 
             return copied
@@ -1293,7 +1286,17 @@ internal class ByteBufferChannel(
         this.joining = null
 
         if (joined.delegateClose) {
-            joined.delegatedTo.close(closed.cause)
+            // writing state could be if we are inside of copyDirect loop
+            // so in this case we shouldn't close channel
+            // otherwise few bytes could be lost
+            // it will be closed later in copyDirect's finalization
+            // so we only do flush
+            val writing = joined.delegatedTo.state.let { it is ReadWriteBufferState.Writing || it is ReadWriteBufferState.ReadingWriting }
+            if (closed.cause != null || !writing) {
+                joined.delegatedTo.close(closed.cause)
+            } else {
+                joined.delegatedTo.flush()
+            }
         } else {
             joined.delegatedTo.flush()
         }

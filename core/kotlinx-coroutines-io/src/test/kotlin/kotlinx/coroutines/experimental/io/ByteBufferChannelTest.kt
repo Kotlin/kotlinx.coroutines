@@ -12,9 +12,7 @@ import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.readUTF8Line
 import kotlinx.io.pool.DefaultPool
 import kotlinx.io.pool.NoPoolImpl
-import org.junit.After
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.rules.ErrorCollector
 import org.junit.rules.Timeout
 import java.nio.CharBuffer
@@ -817,6 +815,163 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
+    fun testJoinToChainSmokeTest1() = runBlocking<Unit> {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        launch(coroutineContext) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+        launch(coroutineContext) {
+            A.joinTo(B, closeOnEnd = true)
+        }
+
+        yield()
+        A.writeStringUtf8("OK")
+        A.close()
+
+        assertEquals("OK", C.readUTF8Line())
+    }
+
+    @Test
+    fun testJoinToChainSmokeTest2() = runBlocking<Unit> {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        launch(coroutineContext) {
+            A.joinTo(B, closeOnEnd = true)
+        }
+        launch(coroutineContext) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        yield()
+        A.writeStringUtf8("OK")
+        A.close()
+
+        assertEquals("OK", C.readUTF8Line())
+    }
+
+    @Test
+    fun testJoinToChainSmokeTest3() = runBlocking<Unit> {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.joinTo(B, closeOnEnd = true)
+        }
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("OK\n")
+//        A.close()
+        A.flush()
+        yield()
+        yield()
+        yield()
+        A.close()
+
+        assertEquals("OK", C.readUTF8Line())
+    }
+
+    @Test
+    fun testJoinToChainSmokeTest4() = runBlocking<Unit> {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.joinTo(B, closeOnEnd = true)
+        }
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+
+        assertEquals("OK", C.readUTF8Line())
+    }
+
+    @Test
+    fun testJoinToFull() = runBlocking<Unit>() {
+        val D = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        var written = 0
+        D.writeByte(1)
+        written++
+        while (D.availableForWrite > 0) {
+            D.writeByte(1)
+            written++
+        }
+
+        ch.writeInt(777)
+        ch.close()
+
+        launch(coroutineContext) {
+            ch.joinTo(D, true)
+        }
+
+        yield()
+
+        repeat(written) {
+            D.readByte()
+        }
+
+        assertEquals(777, D.readInt())
+    }
+
+    @Test
+    fun testJoinToChainNonEmpty() = runBlocking<Unit> {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+        yield()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.joinTo(B, closeOnEnd = true)
+        }
+
+        yield()
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+        yield()
+
+
+        yield()
+        yield()
+        yield()
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testJoinClosed() = runBlocking<Unit> {
+        ch.writeInt(777)
+        ch.close()
+
+        val bc = ByteBufferChannel(autoFlush = false, pool = pool)
+        ch.joinTo(bc, closeOnEnd = true)
+
+        assertEquals(777, bc.readInt())
+        assertEquals(0, bc.readRemaining().remaining)
+    }
+
+    @Test
     fun testJoinToResumeRead() = runBlocking<Unit> {
         val other = ByteBufferChannel(autoFlush = true, pool = pool)
         val result = async(coroutineContext) {
@@ -935,6 +1090,8 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun writeThenReadStress() = runBlocking<Unit> {
+        ch.close()
+
         for (i in 1..50_000 * stressTestMultiplier) {
             val a = ByteBufferChannel(false, pool)
 
@@ -949,8 +1106,6 @@ class ByteBufferChannelTest : TestBase() {
             w.join()
             r.join()
         }
-
-        ch.close()
     }
 
     @Test

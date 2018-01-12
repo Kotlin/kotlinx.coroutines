@@ -3,9 +3,11 @@ package kotlinx.coroutines.experimental.io
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.*
 
+@Ignore
 class InlineRendezvousSwapTest : TestBase() {
     @Test
     fun smokeTest1() = runTest {
@@ -58,6 +60,7 @@ class InlineRendezvousSwapTest : TestBase() {
     }
 
     @Test
+    @Ignore
     fun testLoop2() = runTest {
         val swap = InlineRendezvousSwap<String>()
         val received = Channel<String>(1)
