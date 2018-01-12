@@ -34,7 +34,7 @@ private typealias Core<E> = LockFreeMPSCQueueCore<E>
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-internal class LockFreeMPSCQueue<E : Any> {
+class LockFreeMPSCQueue<E : Any> {
     private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY))
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
