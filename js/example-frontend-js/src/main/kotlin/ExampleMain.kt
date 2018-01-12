@@ -47,7 +47,7 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
 }
 
 @Suppress("DEPRECATION")
-fun random() = kotlin.js.Math.random()
+private fun random() = kotlin.js.Math.random()
 
 class Application {
     private val body get() = document.body!!
@@ -140,7 +140,6 @@ class Application {
                     println("Delayed #$index for a while at ${timer.time}, resumed and turned")
                 }
             }
-
         }
     }
 
@@ -190,7 +189,7 @@ class AnimationTimer {
         val newTime = window.awaitAnimationFrame()
         val dt = newTime - time
         time = newTime
-        return dt
+        return dt.coerceAtMost(500.0) // at most half a second
     }
 
     fun reset(): Double {
