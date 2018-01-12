@@ -42,27 +42,6 @@ public actual object Unconfined : CoroutineDispatcher() {
 @Suppress("PropertyName")
 public actual val DefaultDispatcher: CoroutineDispatcher = JSDispatcher
 
-internal object JSDispatcher : CoroutineDispatcher(), Delay {
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        setTimeout({ block.run() }, 0)
-    }
-
-    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
-    }
-
-    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = setTimeout({ block.run() }, time.coerceAtLeast(0))
-        return object : DisposableHandle {
-            override fun dispose() {
-                clearTimeout(handle)
-            }
-        }
-    }
-
-    private fun Double.timeToInt(): Int = coerceIn(0.0..Int.MAX_VALUE.toDouble()).toInt()
-}
-
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
  * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
@@ -73,13 +52,6 @@ public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): 
         wp + DefaultDispatcher else wp
 }
 
-
 // No debugging facilities on JS
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
-
-// We need to reference global setTimeout and clearTimeout so that it works on Node.JS as opposed to
-// using them via "window" (which only works in browser)
-
-private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
-private external fun clearTimeout(handle: Int = definedExternally)
