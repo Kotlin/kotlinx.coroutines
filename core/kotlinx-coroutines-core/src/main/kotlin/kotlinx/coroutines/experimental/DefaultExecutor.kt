@@ -43,38 +43,39 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     @Volatile
     private var debugStatus: Int = FRESH
 
+    private val isShutdownRequested: Boolean get() {
+        val debugStatus = debugStatus
+        return debugStatus == SHUTDOWN_REQ || debugStatus == SHUTDOWN_ACK
+    }
+
     override fun run() {
         timeSource.registerTimeLoopThread()
         try {
             var shutdownNanos = Long.MAX_VALUE
-            if (notifyStartup()) {
-                runLoop@ while (true) {
-                    Thread.interrupted() // just reset interruption flag
-                    var parkNanos = processNextEvent()
-                    if (parkNanos == Long.MAX_VALUE) {
-                        // nothing to do, initialize shutdown timeout
-                        if (shutdownNanos == Long.MAX_VALUE) {
-                            val now = timeSource.nanoTime()
-                            if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
-                            val tillShutdown = shutdownNanos - now
-                            if (tillShutdown <= 0) break@runLoop // shut thread down
-                            parkNanos = parkNanos.coerceAtMost(tillShutdown)
-                        } else
-                            parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
-                    }
-                    if (parkNanos > 0) {
-                        // check if shutdown was requested and bail out in this case
-                        if (debugStatus == SHUTDOWN_REQ) {
-                            acknowledgeShutdown()
-                            break@runLoop
-                        } else {
-                            timeSource.parkNanos(this, parkNanos)
-                        }
-                    }
+            if (!notifyStartup()) return
+            while (true) {
+                Thread.interrupted() // just reset interruption flag
+                var parkNanos = processNextEvent()
+                if (parkNanos == Long.MAX_VALUE) {
+                    // nothing to do, initialize shutdown timeout
+                    if (shutdownNanos == Long.MAX_VALUE) {
+                        val now = timeSource.nanoTime()
+                        if (shutdownNanos == Long.MAX_VALUE) shutdownNanos = now + KEEP_ALIVE_NANOS
+                        val tillShutdown = shutdownNanos - now
+                        if (tillShutdown <= 0) return // shut thread down
+                        parkNanos = parkNanos.coerceAtMost(tillShutdown)
+                    } else
+                        parkNanos = parkNanos.coerceAtMost(KEEP_ALIVE_NANOS) // limit wait time anyway
+                }
+                if (parkNanos > 0) {
+                    // check if shutdown was requested and bail out in this case
+                    if (isShutdownRequested) return
+                    timeSource.parkNanos(this, parkNanos)
                 }
             }
         } finally {
             _thread = null // this thread is dead
+            acknowledgeShutdownIfNeeded()
             timeSource.unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
             if (!isEmpty) thread() // recreate thread if it is needed
@@ -110,7 +111,7 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
 
     @Synchronized
     private fun notifyStartup(): Boolean {
-        if (debugStatus == SHUTDOWN_REQ) return false
+        if (isShutdownRequested) return false
         debugStatus = ACTIVE
         (this as Object).notifyAll()
         return true
@@ -118,24 +119,23 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
 
     // used for tests
     @Synchronized
-    internal fun shutdown(timeout: Long) {
-        if (_thread != null) {
-            val deadline = System.currentTimeMillis() + timeout
-            if (debugStatus == ACTIVE || debugStatus == FRESH) debugStatus = SHUTDOWN_REQ
-            unpark()
-            // loop while there is anything to do immediately or deadline passes
-            while (debugStatus != SHUTDOWN_ACK && _thread != null) {
-                val remaining = deadline - System.currentTimeMillis()
-                if (remaining <= 0) break
-                (this as Object).wait(timeout)
-            }
+    fun shutdown(timeout: Long) {
+        val deadline = System.currentTimeMillis() + timeout
+        if (!isShutdownRequested) debugStatus = SHUTDOWN_REQ
+        // loop while there is anything to do immediately or deadline passes
+        while (debugStatus != SHUTDOWN_ACK && _thread != null) {
+            _thread?.let { timeSource.unpark(it) } // wake up thread if present
+            val remaining = deadline - System.currentTimeMillis()
+            if (remaining <= 0) break
+            (this as Object).wait(timeout)
         }
         // restore fresh status
         debugStatus = FRESH
     }
 
     @Synchronized
-    private fun acknowledgeShutdown() {
+    private fun acknowledgeShutdownIfNeeded() {
+        if (!isShutdownRequested) return
         debugStatus = SHUTDOWN_ACK
         resetAll() // clear queues
         (this as Object).notifyAll()

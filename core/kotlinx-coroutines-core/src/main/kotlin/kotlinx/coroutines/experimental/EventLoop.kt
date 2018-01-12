@@ -288,13 +288,13 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
 
         final override fun dispose() = synchronized(this) {
-            when (state) {
-                DELAYED -> _delayed.value?.remove(this)
-                RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
-                else -> return
+                when (state) {
+                    DELAYED -> _delayed.value?.remove(this)
+                    RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
+                    else -> return
+                }
+                state = REMOVED
             }
-            state = REMOVED
-        }
 
         override fun toString(): String = "Delayed[nanos=$nanoTime]"
     }
