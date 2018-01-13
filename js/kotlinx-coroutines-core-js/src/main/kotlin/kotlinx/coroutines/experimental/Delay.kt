@@ -72,4 +72,5 @@ public actual suspend fun delay(time: Int) {
 }
 
 /** Returns [Delay] implementation of the given context */
-internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: JSDispatcher
+internal val CoroutineContext.delay: Delay get() =
+    get(ContinuationInterceptor) as? Delay ?: (DefaultDispatcher as Delay)

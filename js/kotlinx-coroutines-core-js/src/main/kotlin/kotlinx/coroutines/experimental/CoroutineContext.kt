@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.browser.*
 import kotlin.coroutines.experimental.*
 
 /**
@@ -40,7 +41,11 @@ public actual object Unconfined : CoroutineDispatcher() {
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher = JSDispatcher
+public actual val DefaultDispatcher: CoroutineDispatcher = when {
+    // Check if we are in the browser and must use window.postMessage to avoid setTimeout throttling
+    jsTypeOf(window) != "undefined" -> window.asCoroutineDispatcher()
+    else -> NodeDispatcher()
+}
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor

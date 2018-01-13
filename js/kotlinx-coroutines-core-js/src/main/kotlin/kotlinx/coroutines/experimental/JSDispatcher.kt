@@ -16,20 +16,12 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.browser.*
 import kotlin.coroutines.experimental.*
+import org.w3c.dom.*
 
-internal object JSDispatcher : CoroutineDispatcher(), Delay {
-    // Check if we are in the browser and must use postMessage to avoid setTimeout throttling
-    private val messageQueue =
-        if (jsTypeOf(window) != "undefined") MessageQueue().apply { register() } else null
-
+internal class NodeDispatcher : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (messageQueue != null) {
-            messageQueue.enqueue(block)
-        } else {
-            setTimeout({ block.run() }, 0)
-        }
+        setTimeout({ block.run() }, 0)
     }
 
     override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
@@ -46,60 +38,105 @@ internal object JSDispatcher : CoroutineDispatcher(), Delay {
     }
 }
 
-// it is open for tests
-internal open class MessageQueue {
-    val yieldEvery = 16 // yield to JS event loop after this many processed messages
+internal class WindowDispatcher(private val window: Window) : CoroutineDispatcher(), Delay {
+    private val messageName = "dispatchCoroutine"
 
-    private val messageName = "JSDispatcher.dispatch"
-    private var scheduled = false
+    private val queue = object : MessageQueue() {
+        override fun schedule() {
+            window.postMessage(messageName, "*")
+        }
+    }
 
-    private var queue = arrayOfNulls<Runnable>(8)
-    private var head = 0
-    private var tail = 0
-
-    fun register() {
+    init {
         window.addEventListener("message", { event: dynamic ->
             if (event.source == window && event.data == messageName) {
                 event.stopPropagation()
-                process()
+                queue.process()
             }
         }, true)
     }
 
-    // it is open for tests
-    open fun schedule() {
-        window.postMessage(messageName, "*")
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        queue.enqueue(block)
     }
 
-    val isEmpty get() = head == tail
-
-    fun poll(): Runnable? {
-        if (isEmpty) return null
-        val result = queue[head]!!
-        queue[head] = null
-        head = head.next()
-        return result
+    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
+        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
     }
 
-    tailrec fun enqueue(block: Runnable) {
-        val newTail = tail.next()
-        if (newTail == head) {
-            resize()
-            enqueue(block) // retry with larger size
-            return
+    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
+        val handle = window.setTimeout({ block.run() }, time.coerceAtLeast(0))
+        return object : DisposableHandle {
+            override fun dispose() {
+                window.clearTimeout(handle)
+            }
         }
-        queue[tail] = block
-        tail = newTail
+    }
+}
+
+internal abstract class MessageQueue : Queue<Runnable>() {
+    val yieldEvery = 16 // yield to JS event loop after this many processed messages
+
+    private var scheduled = false
+    
+    abstract fun schedule()
+
+    fun enqueue(element: Runnable) {
+        add(element)
         if (!scheduled) {
             scheduled = true
             schedule()
         }
     }
 
-    fun resize() {
+    fun process() {
+        try {
+            // limit number of processed messages
+            repeat(yieldEvery) {
+                val element = poll() ?: return@process
+                element.run()
+            }
+        } finally {
+            if (isEmpty) {
+                scheduled = false
+            } else {
+                schedule()
+            }
+        }
+    }
+}
+
+internal open class Queue<T : Any> {
+    private var queue = arrayOfNulls<Any?>(8)
+    private var head = 0
+    private var tail = 0
+
+    val isEmpty get() = head == tail
+
+    fun poll(): T? {
+        if (isEmpty) return null
+        val result = queue[head]!!
+        queue[head] = null
+        head = head.next()
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
+
+    tailrec fun add(element: T) {
+        val newTail = tail.next()
+        if (newTail == head) {
+            resize()
+            add(element) // retry with larger size
+            return
+        }
+        queue[tail] = element
+        tail = newTail
+    }
+
+    private fun resize() {
         var i = head
         var j = 0
-        val a = arrayOfNulls<Runnable>(queue.size * 2)
+        val a = arrayOfNulls<Any?>(queue.size * 2)
         while (i != tail) {
             a[j++] = queue[i]
             i = i.next()
@@ -112,22 +149,6 @@ internal open class MessageQueue {
     private fun Int.next(): Int {
         val j = this + 1
         return if (j == queue.size) 0 else j
-    }
-
-    fun process() {
-        try {
-            // limit number of processed messages
-            repeat(yieldEvery) {
-                val block = poll() ?: return@process
-                block.run()
-            }
-        } finally {
-            if (isEmpty) {
-                scheduled = false
-            } else {
-                schedule()
-            }
-        }
     }
 }
 
