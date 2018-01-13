@@ -15,7 +15,7 @@ task copyExampleFrontendJs(type: Copy, dependsOn: ':example-frontend-js:bundle')
 
 task site(type: Exec, description: 'Generate github pages', dependsOn: [copyDocs, copyExampleFrontendJs]) {
     workingDir "$buildDir/gh-pages"
-    commandLine 'jekyll', 'build'
+    commandLine 'bundle', 'exec', 'jekyll', 'build'
 }
 
 task clean(type: Delete) {
