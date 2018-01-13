@@ -283,7 +283,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Retrieves first receiving waiter from the queue or returns closed token.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
+    protected open fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
         queue.removeFirstIfIsInstanceOfOrPeekIf<ReceiveOrClosed<E>>({ it is Closed<*> })
 
     // ------ registerSelectSend ------
@@ -520,7 +520,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         val result = if (isBufferAlwaysEmpty)
             queue.addLastIfPrev(receive, { it !is Send }) else
             queue.addLastIfPrevAndIf(receive, { it !is Send }, { isBufferEmpty })
-        if (result) onEnqueuedReceive()
+        if (result) onReceiveEnqueued()
         return result
     }
 
@@ -640,7 +640,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) {
             super.finishOnSuccess(affected, next)
             // notify the there is one more receiver
-            onEnqueuedReceive()
+            onReceiveEnqueued()
             // we can actually remove on select start, but this is also Ok (it'll get removed if discovered there)
             node.removeOnSelectCompletion()
         }
@@ -724,29 +724,36 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
     // ------ protected ------
 
-    /**
-     * Invoked when receiver is successfully enqueued to the queue of waiting receivers.
-     */
-    protected open fun onEnqueuedReceive() {}
+    override fun takeFirstReceiveOrPeekClosed(): ReceiveOrClosed<E>? =
+        super.takeFirstReceiveOrPeekClosed().also {
+            if (it != null && it !is Closed<*>) onReceiveDequeued()
+        }
 
     /**
-     * Invoked when enqueued receiver was successfully cancelled.
+     * Invoked when receiver is successfully enqueued to the queue of waiting receivers.
+     * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun onCancelledReceive() {}
+    protected open fun onReceiveEnqueued() {}
+
+    /**
+     * Invoked when enqueued receiver was successfully removed from the queue of waiting receivers.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    protected open fun onReceiveDequeued() {}
 
     // ------ private ------
 
     private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
         cont.invokeOnCompletion {
             if (cont.isCancelled && receive.remove())
-                onCancelledReceive()
+                onReceiveDequeued()
         }
     }
 
     private class Itr<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
         var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
 
-        suspend override fun hasNext(): Boolean {
+        override suspend fun hasNext(): Boolean {
             // check for repeated hasNext
             if (result !== POLL_FAILED) return hasNextResult(result)
             // fast path -- try poll non-blocking
@@ -790,7 +797,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         }
 
         @Suppress("UNCHECKED_CAST")
-        suspend override fun next(): E {
+        override suspend fun next(): E {
             val result = this.result
             if (result is Closed<*>) throw result.receiveException
             if (result !== POLL_FAILED) {
@@ -889,7 +896,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
         override fun dispose() { // invoked on select completion
             if (remove())
-                onCancelledReceive() // notify cancellation of receive
+                onReceiveDequeued() // notify cancellation of receive
         }
 
         override fun toString(): String = "ReceiveSelect[$select,nullOnClose=$nullOnClose]"

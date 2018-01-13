@@ -27,9 +27,11 @@ import org.reactivestreams.Subscription
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this publisher.
+ * @param request how many items to request from publisher in advance (optional, on-demand request by default).
  */
-public fun <T> Publisher<T>.openSubscription(): SubscriptionReceiveChannel<T> {
-    val channel = SubscriptionChannel<T>()
+@JvmOverloads // for binary compatibility
+public fun <T> Publisher<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> {
+    val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
@@ -47,7 +49,6 @@ public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> = openSubscrip
  * This is a shortcut for `open().iterator()`. See [openSubscription] if you need an ability to manually
  * unsubscribe from the observable.
  */
-
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated(message =
     "This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
@@ -58,7 +59,7 @@ public operator fun <T> Publisher<T>.iterator() = openSubscription().iterator()
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
-public inline suspend fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
+public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
     openSubscription().use { channel ->
         for (x in channel) action(x)
     }
@@ -71,36 +72,39 @@ public inline suspend fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
 public suspend fun <T> Publisher<T>.consumeEach(action: suspend (T) -> Unit) =
     consumeEach { action(it) }
 
-private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionReceiveChannel<T>, Subscriber<T> {
-    @Volatile
-    @JvmField
-    var subscription: Subscription? = null
+private class SubscriptionChannel<T>(
+    private val request: Int
+) : LinkedListChannel<T>(), SubscriptionReceiveChannel<T>, Subscriber<T> {
+    init {
+        require(request >= 0) { "Invalid request size: $request" }
+    }
 
-    // request balance from cancelled receivers, balance is negative if we have receivers, but no subscription yet
-    val _balance = atomic(0)
+    @Volatile
+    private var subscription: Subscription? = null
+
+    // requested from subscription minus number of received minus number of enqueued receivers,
+    // can be negative if we have receivers, but no subscription yet
+    private val _requested = atomic(0)
 
     // AbstractChannel overrides
-    override fun onEnqueuedReceive() {
-        _balance.loop { balance ->
+    override fun onReceiveEnqueued() {
+        _requested.loop { wasRequested ->
             val subscription = this.subscription
-            if (subscription != null) {
-                if (balance < 0) { // receivers came before we had subscription
-                    // try to fixup by making request
-                    if (!_balance.compareAndSet(balance, 0)) return@loop // continue looping
-                    subscription.request(-balance.toLong())
-                    return
-                }
-                if (balance == 0) { // normal story
-                    subscription.request(1)
-                    return
-                }
+            val needRequested = wasRequested - 1
+            if (subscription != null && needRequested < 0) { // need to request more from subscription
+                // try to fixup by making request
+                if (wasRequested != request && !_requested.compareAndSet(wasRequested, request))
+                    return@loop // continue looping if failed
+                subscription.request((request - needRequested).toLong())
+                return
             }
-            if (_balance.compareAndSet(balance, balance - 1)) return
+            // just do book-keeping
+            if (_requested.compareAndSet(wasRequested, needRequested)) return
         }
     }
 
-    override fun onCancelledReceive() {
-        _balance.incrementAndGet()
+    override fun onReceiveDequeued() {
+        _requested.incrementAndGet()
     }
 
     override fun afterClose(cause: Throwable?) {
@@ -110,22 +114,23 @@ private class SubscriptionChannel<T> : LinkedListChannel<T>(), SubscriptionRecei
     // Subscriber overrides
     override fun onSubscribe(s: Subscription) {
         subscription = s
-        while (true) { // lock-free loop on balance
+        while (true) { // lock-free loop on _requested
             if (isClosedForSend) {
                 s.cancel()
                 return
             }
-            val balance = _balance.value
-            if (balance >= 0) return // ok -- normal story
-            // otherwise, receivers came before we had subscription
+            val wasRequested = _requested.value
+            if (wasRequested >= request) return // ok -- normal story
+            // otherwise, receivers came before we had subscription or need to make initial request
             // try to fixup by making request
-            if (!_balance.compareAndSet(balance, 0)) continue
-            s.request(-balance.toLong())
+            if (!_requested.compareAndSet(wasRequested, request)) continue
+            s.request((request - wasRequested).toLong())
             return
         }
     }
 
     override fun onNext(t: T) {
+        _requested.decrementAndGet()
         offer(t)
     }
 
