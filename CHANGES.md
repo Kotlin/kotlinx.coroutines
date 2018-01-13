@@ -1,5 +1,16 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.21.1
+
+* Improved performance of coroutine dispatching (`DispatchTask` instance is no longer allocated).
+* Fixed `Job.cancel` and `CompletableDeferred.complete` to support cancelling/completing states and properly wait for their children to complete on join/await (see #199).
+* Fixed a bug in binary heap implementation (used internally by `delay`) which could have resulted in wrong delay time in rare circumstances.
+* Coroutines library for [Kotlin/JS](js/README.md):
+  * `Promise.asDeferred` immediately installs handlers to avoid "Unhandled promise rejection" warning.
+  * Use `window.setMessage` instead of `setTimeout` for coroutines inside the browser to avoid timeout throttling (see #194).
+  * Use custom queue in `Window.awaitAnimationFrame` to align all animations and reduce overhead.
+  * Introduced `Window.asCoroutineDispatcher()` extension function.
+
 ## Version 0.21
 
 * Migrated to Kotlin 1.2.10.
