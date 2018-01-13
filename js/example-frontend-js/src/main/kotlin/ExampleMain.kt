@@ -101,10 +101,13 @@ class Application {
         val speed = 0.3
         val rs = 20.0
         val turnAfter = 5000.0 // seconds
+        var maxX = sw - rs
+        val maxY = sh - rs
         animation("rect", rs) { rect ->
             println("Started new 'rect' coroutine #$index")
             val timer = AnimationTimer()
-            var turnAt = timer.time + turnAfter
+            var turnTime = timer.time + turnAfter
+            val turnTimePhase = turnTime - floor(turnTime / turnAfter) * turnAfter
             var vx = speed
             var vy = speed
             var x = 0.0
@@ -113,19 +116,25 @@ class Application {
                 val dt = timer.await()
                 x += vx * dt
                 y += vy * dt
-                val xRange = 0.0 .. sw - rs
-                val yRange = 0.0 .. sh - rs
-                if (x !in xRange ) {
-                    x = x.coerceIn(xRange)
+                if (x > maxX) {
+                    x = 2 * maxX - x
                     vx = -vx
                 }
-                if (y !in yRange) {
-                    y = y.coerceIn(yRange)
+                if (x < 0) {
+                    x = -x
+                    vx = -vx
+                }
+                if (y > maxY) {
+                    y = 2 * maxY - y
+                    vy = -vy
+                }
+                if (y < 0) {
+                    y = -y
                     vy = -vy
                 }
                 rect.setPosition(x, y)
-                if (timer.time >= turnAt) {
-                    delay(1000) // pause a bit
+                if (timer.time >= turnTime) {
+                    timer.delay(1000) // pause a bit
                     // flip direction
                     val t = vx
                     if (random() > 0.5) {
@@ -135,8 +144,8 @@ class Application {
                         vx = -vy
                         vy = t
                     }
-                    // reset time
-                    turnAt = timer.reset() + turnAfter
+                    // reset time, but keep turning time phase
+                    turnTime = ceil(timer.reset() / turnAfter) * turnAfter + turnTimePhase
                     println("Delayed #$index for a while at ${timer.time}, resumed and turned")
                 }
             }
@@ -189,11 +198,18 @@ class AnimationTimer {
         val newTime = window.awaitAnimationFrame()
         val dt = newTime - time
         time = newTime
-        return dt.coerceAtMost(500.0) // at most half a second
+        return dt.coerceAtMost(200.0) // at most 200ms
     }
 
     fun reset(): Double {
         time = window.performance.now()
         return time
+    }
+
+    suspend fun delay(i: Int) {
+        var dt = 0.0
+        while (dt < i) {
+            dt += await()
+        }
     }
 }
