@@ -7,7 +7,7 @@
 * Fixed a bug in binary heap implementation (used internally by `delay`) which could have resulted in wrong delay time in rare circumstances.
 * Coroutines library for [Kotlin/JS](js/README.md):
   * `Promise.asDeferred` immediately installs handlers to avoid "Unhandled promise rejection" warning.
-  * Use `window.setMessage` instead of `setTimeout` for coroutines inside the browser to avoid timeout throttling (see #194).
+  * Use `window.postMessage` instead of `setTimeout` for coroutines inside the browser to avoid timeout throttling (see #194).
   * Use custom queue in `Window.awaitAnimationFrame` to align all animations and reduce overhead.
   * Introduced `Window.asCoroutineDispatcher()` extension function.
 
