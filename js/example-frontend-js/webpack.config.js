@@ -16,6 +16,7 @@
 
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const path = require("path");
 
 const dist = path.resolve(__dirname, "build/dist");
@@ -49,10 +50,13 @@ module.exports = {
             path.resolve(__dirname, "src/main/web/")
         ]
     },
+    devtool: 'source-map',
     plugins: [
         new HtmlWebpackPlugin({
             title: 'Kotlin Coroutines JS Example'
         }),
-        new webpack.optimize.UglifyJsPlugin()
+        new UglifyJSPlugin({
+            sourceMap: true
+        })
     ]
 };
