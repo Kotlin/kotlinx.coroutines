@@ -99,7 +99,7 @@ that provide an optional <code>start</code> parameter create a coroutine in <em>
 <a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>. Such a job can be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
 
 <p>A job can be <em>cancelled</em> at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
-<em>cancelling</em> state immediately. Job that is not backed by a coroutine and does not have
+<em>cancelling</em> state immediately. Job that is not backed by a coroutine (see <code>Job()</code> function) and does not have
 <a href="children.html">children</a> becomes <em>cancelled</em> on <a href="cancel.html">cancel</a> immediately.
 Otherwise, job becomes <em>cancelled</em>  when it finishes executing its code and
 when all its children <a href="is-completed.html">complete</a>.</p>

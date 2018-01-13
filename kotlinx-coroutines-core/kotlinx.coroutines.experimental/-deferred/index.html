@@ -111,10 +111,10 @@ when this parameter is set to <a href="../-coroutine-start/-l-a-z-y.html">Corout
 Such a deferred can be be made <em>active</em> by invoking <a href="../-job/start.html">start</a>, <a href="../-job/join.html">join</a>, or <a href="await.html">await</a>.</p>
 
 <p>A deferred can be <em>cancelled</em> at any time with <a href="../-job/cancel.html">cancel</a> function that forces it to transition to
-<em>cancelling</em> state immediately. A simple implementation of deferred – <a href="../-completable-deferred/index.html">CompletableDeferred</a>,
-that is not backed by a coroutine, does not have a <em>cancelling</em> state, but becomes <em>cancelled</em>
-on <a href="../-job/cancel.html">cancel</a> immediately. Coroutines, on the other hand, become <em>cancelled</em> only when they finish
-executing their code and after all their <a href="../-job/children.html">children</a> complete.</p>
+<em>cancelling</em> state immediately. Deferred that is not backed by a coroutine (see <a href="../-completable-deferred/index.html">CompletableDeferred</a>) and does not have
+<a href="../-job/children.html">children</a> becomes <em>cancelled</em> on <a href="../-job/cancel.html">cancel</a> immediately.
+Otherwise, deferred becomes <em>cancelled</em>  when it finishes executing its code and
+when all its children <a href="../-job/is-completed.html">complete</a>.</p>
 
 <pre>                                                       wait children
       +-----+       start      +--------+   complete  +-------------+ finish +-----------+
