@@ -135,7 +135,8 @@ internal class ByteBufferChannel(
         }
 
         if (avr >= minReadSize) resumeReadOp()
-        if (avw >= minWriteSize) resumeWriteOp()
+        val joining = joining
+        if (avw >= minWriteSize && (joining == null || state === ReadWriteBufferState.Terminated)) resumeWriteOp()
     }
 
     override fun flush() {
@@ -1215,7 +1216,7 @@ internal class ByteBufferChannel(
 
                         var partSize = 0
 
-                        val rc = src.reading { srcState ->
+                        src.reading { srcState ->
                             val srcBuffer = this
 
                             val rem = minOf(srcBuffer.remaining().toLong(), dstBuffer.remaining().toLong(), limit - copied).toInt()
@@ -1236,7 +1237,7 @@ internal class ByteBufferChannel(
                             true
                         }
 
-                        if (rc) {
+                        if (partSize > 0) {
                             dstBuffer.bytesWritten(state, partSize)
                             copied += partSize
 
@@ -1266,7 +1267,7 @@ internal class ByteBufferChannel(
                 }
 
                 if (joining != null) {
-                    yield()
+                    tryWriteSuspend(1)
                 }
             }
 
@@ -2038,14 +2039,15 @@ internal class ByteBufferChannel(
     }
 
     private fun resumeWriteOp() {
-        WriteOp.getAndSet(this, null)?.apply {
+        while (true) {
+            val writeOp = writeOp ?: return
             val closed = closed
-            if (closed == null) resume(Unit) else resumeWithException(closed.sendException)
+            if (closed == null && joining != null && state !== ReadWriteBufferState.Terminated) return
+            if (WriteOp.compareAndSet(this, writeOp, null)) {
+                if (closed == null) writeOp.resume(Unit) else writeOp.resumeWithException(closed.sendException)
+                return
+            }
         }
-    }
-
-    private fun resumeWriteOp(cause: Throwable) {
-        WriteOp.getAndSet(this, null)?.resumeWithException(cause)
     }
 
     private fun resumeClosed(cause: Throwable?) {
