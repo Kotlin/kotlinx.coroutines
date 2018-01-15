@@ -2042,7 +2042,11 @@ internal class ByteBufferChannel(
         while (true) {
             val writeOp = writeOp ?: return
             val closed = closed
-            if (closed == null && joining != null && state !== ReadWriteBufferState.Terminated) return
+            if (closed == null && joining != null) {
+                val state = state
+                if (state is ReadWriteBufferState.Writing || state is ReadWriteBufferState.ReadingWriting) {
+                } else if (state !== ReadWriteBufferState.Terminated) return
+            }
             if (WriteOp.compareAndSet(this, writeOp, null)) {
                 if (closed == null) writeOp.resume(Unit) else writeOp.resumeWithException(closed.sendException)
                 return
@@ -2135,7 +2139,7 @@ internal class ByteBufferChannel(
         return when {
             closed != null -> false
             joined == null -> state.capacity.availableForWrite < size && state !== ReadWriteBufferState.IdleEmpty
-            else -> state !== ReadWriteBufferState.Terminated
+            else -> state !== ReadWriteBufferState.Terminated && state !is ReadWriteBufferState.Writing && state !is ReadWriteBufferState.ReadingWriting
         }
     }
 
