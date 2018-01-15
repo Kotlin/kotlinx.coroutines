@@ -16,9 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.runBlocking
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 
@@ -884,9 +883,7 @@ public suspend fun <E> ReceiveChannel<E>.toSet(): Set<E> =
 public fun <E, R> ReceiveChannel<E>.flatMap(context: CoroutineContext = Unconfined, transform: suspend (E) -> ReceiveChannel<R>): ReceiveChannel<R> =
     produce(context) {
         consumeEach {
-            transform(it).consumeEach {
-                send(it)
-            }
+            transform(it).toChannel(this)
         }
     }
 
