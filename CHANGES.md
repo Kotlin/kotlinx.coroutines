@@ -1,5 +1,10 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.21.2
+
+* Fixed `openSubscription` extension for reactive `Publisher`/`Observable`/`Flowable` when used with `select { ... }` and added an optional `request` parameter to specify how many elements are requested from publisher in advance on subscription (see #197).
+* Simplified implementation of `Channel.flatMap` using `toChannel` function to work around Android 5.0 APK install SIGSEGV (see #205).
+
 ## Version 0.21.1
 
 * Improved performance of coroutine dispatching (`DispatchTask` instance is no longer allocated).
