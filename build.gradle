@@ -26,6 +26,9 @@ buildscript {
     }
 }
 
+// Report Kotlin compiler version when building project
+println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
+
 // --------------- Configure sub-projects with Kotlin sources ---------------
 
 def sourceless = ['site']
