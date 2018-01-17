@@ -7,7 +7,7 @@
 Library support for Kotlin coroutines in
 [Kotlin/JVM](core/README.md) and
 [Kotlin/JS](js/README.md).
-This is a companion version for Kotlin 1.2.10 release.
+This is a companion version for Kotlin 1.2.20 release.
 
 ```kotlin
 launch {
@@ -72,7 +72,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.10</kotlin.version>
+    <kotlin.version>1.2.20</kotlin.version>
 </properties>
 ```
 
@@ -88,7 +88,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.10'
+    ext.kotlin_version = '1.2.20'
 }
 ```
 
