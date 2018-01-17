@@ -7,11 +7,8 @@ internal open class ByteChannelCoroutine(
     parentContext: CoroutineContext,
     open val channel: ByteChannel
 ) : AbstractCoroutine<Unit>(parentContext, active = true) {
-    override fun afterCompletion(state: Any?, mode: Int) {
-        val cause = (state as? CompletedExceptionally)?.cause
+    override fun onCancellation(cause: Throwable?) {
         if (!channel.close(cause) && cause != null)
             handleCoroutineException(context, cause)
-
-        super.afterCompletion(state, mode)
     }
 }

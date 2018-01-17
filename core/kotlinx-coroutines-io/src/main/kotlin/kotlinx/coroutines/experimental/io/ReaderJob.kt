@@ -26,7 +26,7 @@ fun reader(coroutineContext: CoroutineContext,
            block: suspend ReaderScope.() -> Unit): ReaderJob {
     val newContext = newCoroutineContext(coroutineContext, parent)
     val coroutine = ReaderCoroutine(newContext, channel)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     block.startCoroutine(coroutine, coroutine)
     return coroutine
 }

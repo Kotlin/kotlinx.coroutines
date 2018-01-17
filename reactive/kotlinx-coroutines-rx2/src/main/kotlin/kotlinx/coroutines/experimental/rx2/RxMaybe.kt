@@ -54,7 +54,7 @@ public fun <T> rxMaybe(
 ): Maybe<T> = Maybe.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.setCancellable(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
@@ -72,14 +72,14 @@ private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true), Cancellable {
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (subscriber.isDisposed) return
-        when {
-            state is CompletedExceptionally -> subscriber.onError(state.exception)
-            state != null                   -> subscriber.onSuccess(state as T)
-            else                            -> subscriber.onComplete()
+    override fun onCompleted(value: T) {
+        if (!subscriber.isDisposed) {
+            if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
         }
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        if (!subscriber.isDisposed) subscriber.onError(exception)
     }
 
     // Cancellable impl

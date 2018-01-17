@@ -64,7 +64,7 @@ public fun <T> rxObservable(
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.setProducer(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     subscriber.add(coroutine)
     block.startCoroutine(coroutine, coroutine)
@@ -103,7 +103,7 @@ private class RxObservableCoroutine<in T>(
         return true
     }
 
-    public suspend override fun send(element: T) {
+    public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
         if (offer(element)) return
         // slow-path does suspend
@@ -214,7 +214,7 @@ private class RxObservableCoroutine<in T>(
         }
     }
 
-    override fun onCancellation(exceptionally: CompletedExceptionally?) {
+    override fun onCancellation(cause: Throwable?) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion

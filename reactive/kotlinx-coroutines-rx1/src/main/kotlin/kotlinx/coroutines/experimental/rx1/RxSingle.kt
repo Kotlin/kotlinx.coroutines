@@ -53,7 +53,7 @@ public fun <T> rxSingle(
 ): Single<T> = Single.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.add(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
@@ -71,12 +71,12 @@ private class RxSingleCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: SingleSubscriber<T>
 ) : AbstractCoroutine<T>(parentContext, true), Subscription {
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally)
-            subscriber.onError(state.exception)
-        else
-            subscriber.onSuccess(state as T)
+    override fun onCompleted(value: T) {
+        subscriber.onSuccess(value)
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        subscriber.onError(exception)
     }
 
     // Subscription impl

@@ -78,7 +78,7 @@ private fun <U, T: U> setupTimeout(
     val cont = coroutine.cont
     val context = cont.context
     coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine.unit, coroutine))
-    coroutine.initParentJob(context[Job])
+    coroutine.initParentJob()
     // restart block using new coroutine with new job,
     // however start it as undispatched coroutine, because we are already in the proper context
     val result = try {
@@ -116,8 +116,7 @@ private open class TimeoutCoroutine<U, in T: U>(
 
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally
-        )
+        if (state is CompletedExceptionally)
             cont.resumeWithExceptionMode(state.exception, mode)
         else
             cont.resumeMode(state as T, mode)
@@ -187,8 +186,7 @@ private class TimeoutOrNullCoroutine<T>(
 ) : TimeoutCoroutine<T?, T>(time, unit, cont) {
     @Suppress("UNCHECKED_CAST")
     override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally
-        ) {
+        if (state is CompletedExceptionally) {
             val exception = state.exception
             if (exception is TimeoutCancellationException && exception.coroutine === this)
                 cont.resumeMode(null, mode) else

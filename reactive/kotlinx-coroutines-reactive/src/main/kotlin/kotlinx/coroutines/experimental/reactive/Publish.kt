@@ -63,7 +63,7 @@ public fun <T> publish(
 ): Publisher<T> = Publisher { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = PublisherCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     block.startCoroutine(coroutine, coroutine)
 }
@@ -77,7 +77,6 @@ public fun <T> publish(
 ): Publisher<T> =
     publish(context, block = block)
 
-private const val CLOSED_MESSAGE = "This subscription had already closed (completed or failed)"
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
@@ -102,7 +101,7 @@ private class PublisherCoroutine<in T>(
         return true
     }
 
-    public suspend override fun send(element: T) {
+    public override suspend fun send(element: T) {
         // fast-path -- try send without suspension
         if (offer(element)) return
         // slow-path does suspend
@@ -213,7 +212,7 @@ private class PublisherCoroutine<in T>(
         }
     }
 
-    override fun onCancellation(exceptionally: CompletedExceptionally?) {
+    override fun onCancellation(cause: Throwable?) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion

@@ -16,8 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
-import kotlinx.coroutines.experimental.selects.select
+import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -168,7 +167,7 @@ public actual fun <T> async(
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
         DeferredCoroutine<T>(newContext, active = true)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     start(block, coroutine, coroutine)
     return coroutine
 }
@@ -202,11 +201,12 @@ public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.()
 private open class DeferredCoroutine<T>(
     parentContext: CoroutineContext,
     active: Boolean
-) : AbstractCoroutine<T>(parentContext, active), Deferred<T> {
+) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T>
-        get() = this as SelectClause1<T>
+    override val onAwait: SelectClause1<T> get() = this
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
+        registerSelectClause1Internal(select, block)
 }
 
 private class LazyDeferredCoroutine<T>(

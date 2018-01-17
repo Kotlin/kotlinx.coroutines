@@ -53,7 +53,7 @@ fun <T> mono(
 ): Mono<T> = Mono.create { sink ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = MonoCoroutine(newContext, sink)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     sink.onDispose(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
@@ -73,16 +73,16 @@ private class MonoCoroutine<in T>(
 ) : AbstractCoroutine<T>(parentContext, true), Disposable {
     var disposed = false
 
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
-        when {
-            disposed                        -> {}
-            state is CompletedExceptionally -> sink.error(state.exception)
-            state != null                   -> sink.success(state as T)
-            else                            -> sink.success()
+    override fun onCompleted(value: T) {
+        if (!disposed) {
+            if (value == null) sink.success() else sink.success(value)
         }
     }
 
+    override fun onCompletedExceptionally(exception: Throwable) {
+        if (!disposed) sink.error(exception)
+    }
+    
     override fun dispose() {
         disposed = true
         cancel(cause = null)

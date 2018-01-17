@@ -90,5 +90,5 @@ class JobDisposeTest: TestBase() {
         exception?.let { throw it }
     }
 
-    class TestJob : JobSupport(active = true)
+    private class TestJob : JobSupport(active = true)
 }

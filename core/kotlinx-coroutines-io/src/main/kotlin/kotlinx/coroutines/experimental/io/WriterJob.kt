@@ -26,7 +26,7 @@ fun writer(coroutineContext: CoroutineContext,
            block: suspend WriterScope.() -> Unit): WriterJob {
     val newContext = newCoroutineContext(coroutineContext, parent)
     val coroutine = WriterCoroutine(newContext, channel)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     block.startCoroutine(coroutine, coroutine)
     return coroutine
 }

@@ -53,7 +53,7 @@ public fun rxCompletable(
 ): Completable = Completable.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxCompletableCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.onSubscribe(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
@@ -71,12 +71,12 @@ private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableSubscriber
 ) : AbstractCoroutine<Unit>(parentContext, true), Subscription {
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally)
-            subscriber.onError(state.exception)
-        else
-            subscriber.onCompleted()
+    override fun onCompleted(value: Unit) {
+        subscriber.onCompleted()
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        subscriber.onError(exception)
     }
 
     // Subscription impl

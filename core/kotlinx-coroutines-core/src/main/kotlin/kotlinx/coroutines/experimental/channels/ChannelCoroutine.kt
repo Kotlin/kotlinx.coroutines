@@ -27,8 +27,7 @@ internal open class ChannelCoroutine<E>(
     val channel: Channel<E>
         get() = this
 
-    override fun onCancellation(exceptionally: CompletedExceptionally?) {
-        val cause = exceptionally?.cause
+    override fun onCancellation(cause: Throwable?) {
         if (!_channel.cancel(cause) && cause != null)
             handleCoroutineException(context, cause)
     }

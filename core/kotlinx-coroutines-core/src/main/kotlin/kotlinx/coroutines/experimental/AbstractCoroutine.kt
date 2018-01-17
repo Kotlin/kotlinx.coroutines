@@ -16,43 +16,107 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
- * Abstract class for coroutines.
+ * Abstract base class for implementation of coroutines in coroutine builders.
  *
  *  * Coroutines implement completion [Continuation], [Job], and [CoroutineScope] interfaces.
  *  * Coroutine stores the result of continuation in the state of the job.
  *  * Coroutine waits for children coroutines to finish before completing.
  *  * Coroutines are cancelled through an intermediate _cancelling_ state.
  *
- * @param active when `true` coroutine is created in _active_ state, when `false` in _new_ state. See [Job] for details.
- * @suppress **This is unstable API and it is subject to change.**
+ * @param parentContext context of the parent coroutine.
+ * @param active when `true` (by default) coroutine is created in _active_ state, when `false` in _new_ state.
+ *               See [Job] for details.
  */
+@Suppress("EXPOSED_SUPER_CLASS")
 public abstract class AbstractCoroutine<in T>(
     private val parentContext: CoroutineContext,
-    active: Boolean
-) : JobSupport(active), Continuation<T>, CoroutineScope {
+    active: Boolean = true
+) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
     public final override val coroutineContext: CoroutineContext get() = context
 
-    protected open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
+    /**
+     * Initializes parent job from the `parentContext` of this coroutine that was passed to it during construction.
+     * It shall be invoked at most once after construction after all other initialization.
+     * 
+     * Invocation of this function may cause this coroutine to become cancelled if parent is already cancelled,
+     * in which case it synchronously invokes all the corresponding handlers.
+     */
+    public fun initParentJob() {
+        initParentJobInternal(parentContext[Job])
+    }
 
-    final override fun resume(value: T) {
+    /**
+     * This function is invoked once when non-active coroutine (constructed with `active` set to `false)
+     * is [started][start].
+     */
+    protected open fun onStart() {}
+
+    internal final override fun onStartInternal() {
+        onStart()
+    }
+
+    /**
+     * This function is invoked once when this coroutine is cancelled or is completed,
+     * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
+     *
+     * @param cause the cause that was passed to [Job.cancel] function or `null` if coroutine was cancelled
+     *              without cause or is completing normally.
+     */
+    protected open fun onCancellation(cause: Throwable?) {}
+
+    internal final override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
+        onCancellation(exceptionally?.cause)
+    }
+
+    /**
+     * This function is invoked once when job is completed normally with the specified [value].
+     */
+    protected open fun onCompleted(value: T) {}
+
+    /**
+     * This function is invoked once when job is completed exceptionally with the specified [exception].
+     */
+    protected open fun onCompletedExceptionally(exception: Throwable) {}
+
+    /**
+     * Override for post-completion actions that need to do something with the state.
+     * @param mode completion mode.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    @Suppress("UNCHECKED_CAST")
+    internal override fun afterCompletion(state: Any?, mode: Int) {
+        if (state is CompletedExceptionally)
+            onCompletedExceptionally(state.exception)
+        else
+            onCompleted(state as T)
+    }
+
+    internal open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
+
+    /**
+     * Completes execution of this coroutine normally with the specified [value].
+     */
+    public final override fun resume(value: T) {
         makeCompletingOnce(value, defaultResumeMode)
     }
 
-    final override fun resumeWithException(exception: Throwable) {
+    /**
+     * Completes execution of this with coroutine exceptionally with the specified [exception].
+     */
+    public final override fun resumeWithException(exception: Throwable) {
         makeCompletingOnce(CompletedExceptionally(exception), defaultResumeMode)
     }
 
-    final override fun handleException(exception: Throwable) {
+    internal final override fun handleException(exception: Throwable) {
         handleCoroutineException(parentContext, exception)
     }
 
-    override fun nameString(): String {
+    internal override fun nameString(): String {
         val coroutineName = context.coroutineName ?: return super.nameString()
         return "\"$coroutineName\":${super.nameString()}"
     }

@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * A [Deferred] that can be completed via public functions
@@ -71,18 +71,17 @@ public actual fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Co
 @Suppress("UNCHECKED_CAST")
 private class CompletableDeferredImpl<T>(
     parent: Job?
-) : JobSupport(true), CompletableDeferred<T> {
-    init { initParentJob(parent) }
+) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
+    init { initParentJobInternal(parent) }
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_COMPLETING
-
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T>
-        get() = this as SelectClause1<T>
+    override val onAwait: SelectClause1<T> get() = this
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
+        registerSelectClause1Internal(select, block)
 
     override fun complete(value: T): Boolean =
         makeCompleting(value)
-
     override fun completeExceptionally(exception: Throwable): Boolean =
         makeCompleting(CompletedExceptionally(exception))
 }

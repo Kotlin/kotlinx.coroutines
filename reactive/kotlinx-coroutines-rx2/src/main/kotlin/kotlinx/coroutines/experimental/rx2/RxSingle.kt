@@ -53,7 +53,7 @@ public fun <T> rxSingle(
 ): Single<T> = Single.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     subscriber.setCancellable(coroutine)
     block.startCoroutine(coroutine, coroutine)
 }
@@ -71,13 +71,12 @@ private class RxSingleCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true), Cancellable {
-    @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
-        if (subscriber.isDisposed) return
-        if (state is CompletedExceptionally)
-            subscriber.onError(state.exception)
-        else
-            subscriber.onSuccess(state as T)
+    override fun onCompleted(value: T) {
+        if (!subscriber.isDisposed) subscriber.onSuccess(value)
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        if (!subscriber.isDisposed) subscriber.onError(exception)
     }
 
     // Cancellable impl

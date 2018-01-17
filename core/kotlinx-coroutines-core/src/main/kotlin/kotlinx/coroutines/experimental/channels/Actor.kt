@@ -94,7 +94,7 @@ public fun <E> actor(
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
         ActorCoroutine(newContext, channel, active = true)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     start(block, coroutine, coroutine)
     return coroutine
 }

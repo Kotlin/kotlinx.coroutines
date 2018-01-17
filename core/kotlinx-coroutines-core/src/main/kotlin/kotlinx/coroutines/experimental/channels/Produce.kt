@@ -83,7 +83,7 @@ public fun <E> produce(
     val channel = Channel<E>(capacity)
     val newContext = newCoroutineContext(context, parent)
     val coroutine = ProducerCoroutine(newContext, channel)
-    coroutine.initParentJob(newContext[Job])
+    coroutine.initParentJob()
     block.startCoroutine(coroutine, coroutine)
     return coroutine
 }

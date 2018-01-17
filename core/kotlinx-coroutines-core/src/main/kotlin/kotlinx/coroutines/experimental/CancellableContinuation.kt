@@ -222,7 +222,7 @@ internal class CancellableContinuationImpl<in T>(
         get() = _context ?: (delegate.context + this).also { _context = it }
 
     override fun initCancellability() {
-        initParentJob(delegate.context[Job])
+        initParentJobInternal(delegate.context[Job])
     }
 
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLED
