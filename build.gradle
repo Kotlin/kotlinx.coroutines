@@ -5,7 +5,7 @@ allprojects {
 }
 
 buildscript {
-    if (System.properties['kotlinSnapshot'] != null) {
+    if (rootProject.properties['kotlinSnapshot'] != null) {
         ext.kotlin_version = '1.2-SNAPSHOT'
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }

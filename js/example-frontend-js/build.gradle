@@ -44,5 +44,7 @@ task start(type: NpmTask, dependsOn: bundle) {
 // we have not tests but kotlin-dce-js still tries to work with them and crashed.
 // todo: Remove when KT-22028 is fixed
 afterEvaluate {
-    tasks.unpackDependenciesTestKotlinJs.enabled = false
+    if (tasks.findByName('unpackDependenciesTestKotlinJs')) {
+        tasks.unpackDependenciesTestKotlinJs.enabled = false
+    }
 }
