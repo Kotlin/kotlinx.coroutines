@@ -52,7 +52,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testBoolean() {
-        runBlocking {
+        runTest {
             ch.writeBoolean(true)
             ch.flush()
             assertEquals(true, ch.readBoolean())
@@ -65,7 +65,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testByte() {
-        runBlocking {
+        runTest {
             assertEquals(0, ch.availableForRead)
             ch.writeByte(-1)
             ch.flush()
@@ -77,7 +77,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testShortB() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
@@ -93,7 +93,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testShortL() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
@@ -109,7 +109,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testShortEdge() {
-        runBlocking {
+        runTest {
             ch.writeByte(1)
 
             for (i in 2 until Size step 2) {
@@ -133,7 +133,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testIntB() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
@@ -148,7 +148,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testIntL() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
@@ -163,7 +163,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testIntEdge() {
-        runBlocking {
+        runTest {
             for (shift in 1..3) {
                 for (i in 1..shift) {
                     ch.writeByte(1)
@@ -194,7 +194,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testLongB() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
@@ -209,7 +209,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testLongL() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
@@ -224,7 +224,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testLongEdge() {
-        runBlocking {
+        runTest {
             for (shift in 1..7) {
                 for (i in 1..shift) {
                     ch.writeByte(1)
@@ -253,7 +253,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testDoubleB() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
@@ -269,7 +269,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testDoubleL() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
@@ -285,7 +285,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testFloatB() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
             ch.writeByteOrder = ByteOrder.BIG_ENDIAN
 
@@ -301,7 +301,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testFloatL() {
-        runBlocking {
+        runTest {
             ch.readByteOrder = ByteOrder.LITTLE_ENDIAN
             ch.writeByteOrder = ByteOrder.LITTLE_ENDIAN
 
@@ -320,7 +320,7 @@ class ByteBufferChannelTest : TestBase() {
     @Test
     fun testEndianMix() {
         val byteOrders = listOf(ByteOrder.BIG_ENDIAN, ByteOrder.LITTLE_ENDIAN)
-        runBlocking {
+        runTest {
             for (writeOrder in byteOrders) {
                 ch.writeByteOrder = writeOrder
 
@@ -373,7 +373,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testClose() {
-        runBlocking {
+        runTest {
             ch.writeByte(1)
             ch.writeByte(2)
             ch.writeByte(3)
@@ -395,7 +395,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testReadAndWriteFully() {
-        runBlocking {
+        runTest {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
             val dst = ByteArray(5)
 
@@ -426,7 +426,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testReadAndWriteFullyByteBuffer() {
-        runBlocking {
+        runTest {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
             val dst = ByteArray(5)
 
@@ -457,7 +457,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testReadAndWritePartially() {
-        runBlocking {
+        runTest {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
 
             assertEquals(5, ch.writeAvailable(bytes))
@@ -478,7 +478,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testReadAndWritePartiallyByteBuffer() {
-        runBlocking {
+        runTest {
             val bytes = byteArrayOf(1, 2, 3, 4, 5)
 
             assertEquals(5, ch.writeAvailable(ByteBuffer.wrap(bytes)))
@@ -515,7 +515,7 @@ class ByteBufferChannelTest : TestBase() {
             }
         }
 
-        runBlocking(CoroutineName("reader")) {
+        runTest {
             val dst = ByteArray(bytes.size)
             for (i in 1..count) {
                 ch.readFully(dst)
@@ -542,7 +542,7 @@ class ByteBufferChannelTest : TestBase() {
             }
         }
 
-        runBlocking(CoroutineName("reader")) {
+        runTest {
             val dst = ByteArray(bytes.size)
             for (i in 1..count) {
                 ch.readFully(ByteBuffer.wrap(dst))
@@ -553,7 +553,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testPacket() = runBlocking {
+    fun testPacket() = runTest {
         val packet = buildPacket {
             writeInt(0xffee)
             writeStringUtf8("Hello")
@@ -572,7 +572,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testBigPacket() = runBlocking {
+    fun testBigPacket() = runTest {
         launch(CommonPool + CoroutineName("writer")) {
             val packet = buildPacket {
                 writeInt(0xffee)
@@ -593,7 +593,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testWriteString() = runBlocking {
+    fun testWriteString() = runTest {
         ch.writeStringUtf8("abc")
         ch.close()
 
@@ -601,7 +601,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testWriteCharSequence() = runBlocking {
+    fun testWriteCharSequence() = runTest {
         ch.writeStringUtf8("abc" as CharSequence)
         ch.close()
 
@@ -609,7 +609,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testWriteCharBuffer() = runBlocking {
+    fun testWriteCharBuffer() = runTest {
         val cb = CharBuffer.allocate(6)
 
         for (i in 0 until cb.remaining()) {
@@ -679,7 +679,7 @@ class ByteBufferChannelTest : TestBase() {
             assertTrue(dest.isClosedForRead)
         }
 
-        runBlocking {
+        runTest {
             reader.join()
             joinerJob.join()
             dest.close()
@@ -763,7 +763,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testStressReadWriteFully() = runBlocking {
+    fun testStressReadWriteFully() = runTest {
         val size = 100
         val data = ByteArray(size) { it.toByte() }
         val exec = newFixedThreadPoolContext(8, "testStressReadFully")
@@ -800,7 +800,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToSmokeTest() = runBlocking<Unit> {
+    fun testJoinToSmokeTest() = runTest {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
         launch(coroutineContext) {
             ch.joinTo(other, false)
@@ -815,7 +815,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToChainSmokeTest1() = runBlocking<Unit> {
+    fun testJoinToChainSmokeTest1() = runTest {
         val A = ByteBufferChannel(autoFlush = false, pool = pool)
         val B = ByteBufferChannel(autoFlush = false, pool = pool)
         val C = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -835,7 +835,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToChainSmokeTest2() = runBlocking<Unit> {
+    fun testJoinToChainSmokeTest2() = runTest {
         val A = ByteBufferChannel(autoFlush = false, pool = pool)
         val B = ByteBufferChannel(autoFlush = false, pool = pool)
         val C = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -855,7 +855,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToChainSmokeTest3() = runBlocking<Unit> {
+    fun testJoinToChainSmokeTest3() = runTest {
         val A = ByteBufferChannel(autoFlush = false, pool = pool)
         val B = ByteBufferChannel(autoFlush = false, pool = pool)
         val C = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -879,7 +879,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToChainSmokeTest4() = runBlocking<Unit> {
+    fun testJoinToChainSmokeTest4() = runTest {
         val A = ByteBufferChannel(autoFlush = false, pool = pool)
         val B = ByteBufferChannel(autoFlush = false, pool = pool)
         val C = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -898,7 +898,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToFull() = runBlocking<Unit>() {
+    fun testJoinToFull() = runTest() {
         val D = ByteBufferChannel(autoFlush = false, pool = pool)
 
         var written = 0
@@ -926,7 +926,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToChainNonEmpty() = runBlocking<Unit> {
+    fun testJoinToChainNonEmpty() = runTest {
         val A = ByteBufferChannel(autoFlush = false, pool = pool)
         val B = ByteBufferChannel(autoFlush = false, pool = pool)
         val C = ByteBufferChannel(autoFlush = false, pool = pool)
@@ -960,7 +960,167 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinClosed() = runBlocking<Unit> {
+    fun testCopyToThenJoinTo() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+//        A.writeStringUtf8("1")
+//        A.flush()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("1OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testCopyToThenJoinTo2() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testCopyToThenJoinTo3() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        yield()
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testCopyToThenJoinTo4() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+
+        yield()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testCopyToThenJoinTo5() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        yield()
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+        yield()
+
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testCopyToThenJoinTo6() = runTest {
+        val A = ByteBufferChannel(autoFlush = false, pool = pool)
+        val B = ByteBufferChannel(autoFlush = false, pool = pool)
+        val C = ByteBufferChannel(autoFlush = false, pool = pool)
+
+        A.writeStringUtf8("1")
+        A.flush()
+
+        launch(coroutineContext + CoroutineName("B->C")) {
+            B.joinTo(C, closeOnEnd = true)
+        }
+
+        yield()
+        launch(coroutineContext + CoroutineName("A->B")) {
+            A.copyAndClose(B)
+        }
+
+        yield()
+
+        launch(coroutineContext + CoroutineName("Reader")) {
+            assertEquals("1OK", C.readUTF8Line())
+        }
+
+        A.writeStringUtf8("OK\n")
+        A.close()
+    }
+
+    @Test
+    fun testJoinClosed() = runTest {
         ch.writeInt(777)
         ch.close()
 
@@ -972,7 +1132,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToResumeRead() = runBlocking<Unit> {
+    fun testJoinToResumeRead() = runTest {
         val other = ByteBufferChannel(autoFlush = true, pool = pool)
         val result = async(coroutineContext) {
             other.readLong()
@@ -993,7 +1153,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToAfterWrite() = runBlocking<Unit> {
+    fun testJoinToAfterWrite() = runTest {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
 
         ch.writeInt(0x12345678)
@@ -1012,7 +1172,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToClosed() = runBlocking<Unit> {
+    fun testJoinToClosed() = runTest {
         val other = ByteBufferChannel(autoFlush = false, pool = pool)
 
         ch.writeInt(0x11223344)
@@ -1026,7 +1186,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToDifferentEndian() = runBlocking {
+    fun testJoinToDifferentEndian() = runTest {
         val other = ByteBufferChannel(autoFlush = true, pool = pool)
         other.writeByteOrder = ByteOrder.LITTLE_ENDIAN
         ch.writeByteOrder = ByteOrder.BIG_ENDIAN
@@ -1052,7 +1212,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testReadThenRead() = runBlocking<Unit> {
+    fun testReadThenRead() = runTest {
         val phase = AtomicInteger(0)
 
         val first = launch(coroutineContext) {
@@ -1089,7 +1249,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun writeThenReadStress() = runBlocking<Unit> {
+    fun writeThenReadStress() = runTest {
         ch.close()
 
         for (i in 1..50_000 * stressTestMultiplier) {
@@ -1109,7 +1269,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun joinToEmptyStress() = runBlocking<Unit> {
+    fun joinToEmptyStress() = runTest {
         for (i in 1..50_000 * stressTestMultiplier) {
             val a = ByteBufferChannel(false, pool)
 
@@ -1124,7 +1284,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testJoinToStress() = runBlocking<Unit> {
+    fun testJoinToStress() = runTest {
         for (i in 1..10000 * stressTestMultiplier) {
             val child = ByteBufferChannel(false, pool)
             val writer = launch {
@@ -1142,7 +1302,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testSequentialJoin() = runBlocking<Unit> {
+    fun testSequentialJoin() = runTest {
         val steps = 20_000 * stressTestMultiplier
 
         val pipeline = launch(coroutineContext) {
@@ -1167,7 +1327,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testSequentialJoinYield() = runBlocking<Unit> {
+    fun testSequentialJoinYield() = runTest {
         val steps = 20_000 * stressTestMultiplier
 
         val pipeline = launch(coroutineContext) {
@@ -1193,7 +1353,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testReadBlock() = runBlocking<Unit> {
+    fun testReadBlock() = runTest {
         var bytesRead = 0L
 
         val r: (ByteBuffer) -> Unit = { bb ->
@@ -1219,7 +1379,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testReadBlock2() = runBlocking<Unit> {
+    fun testReadBlock2() = runTest {
         var bytesRead = 0L
 
         val r: (ByteBuffer) -> Unit = { bb ->
@@ -1244,7 +1404,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWriter() = runBlocking {
+    fun testCancelWriter() = runTest {
         val sub = writer(DefaultDispatcher) {
             delay(1000000L)
         }
@@ -1254,7 +1414,7 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelReader() = runBlocking {
+    fun testCancelReader() = runTest {
         val sub = reader(DefaultDispatcher) {
             delay(10000000L)
         }
