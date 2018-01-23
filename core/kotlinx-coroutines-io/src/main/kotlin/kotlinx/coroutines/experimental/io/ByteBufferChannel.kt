@@ -265,6 +265,14 @@ internal class ByteBufferChannel(
         if (newState === ReadWriteBufferState.IdleEmpty) {
             toRelease?.let { releaseBuffer(it.initial) }
             resumeWriteOp()
+        } else {
+            if (newState is ReadWriteBufferState.IdleNonEmpty && newState.capacity.isEmpty()) {
+                if (newState.capacity.tryLockForRelease() && State.compareAndSet(this, newState, ReadWriteBufferState.IdleEmpty)) {
+                    newState.capacity.resetForWrite()
+                    releaseBuffer(newState.initial)
+                    resumeWriteOp()
+                }
+            }
         }
     }
 
@@ -288,7 +296,7 @@ internal class ByteBufferChannel(
     }
 
     private fun tryCompleteJoining(joined: JoiningState): Boolean {
-        if (!tryReleaseBuffer()) return false
+        if (!tryReleaseBuffer(true)) return false
         ensureClosedJoined(joined)
 
         resumeReadOp { IllegalStateException("Joining is in progress") }
@@ -300,7 +308,7 @@ internal class ByteBufferChannel(
     private fun tryTerminate(): Boolean {
         if (closed == null) return false
 
-        if (!tryReleaseBuffer()) return false
+        if (!tryReleaseBuffer(false)) return false
 
         joining?.let { ensureClosedJoined(it) }
 
@@ -310,7 +318,7 @@ internal class ByteBufferChannel(
         return true
     }
 
-    private fun tryReleaseBuffer(): Boolean {
+    private fun tryReleaseBuffer(forceTermination: Boolean): Boolean {
         var toRelease: ReadWriteBufferState.Initial? = null
 
         updateState { state ->
@@ -326,6 +334,10 @@ internal class ByteBufferChannel(
                 state === ReadWriteBufferState.IdleEmpty -> ReadWriteBufferState.Terminated
                 closed != null && state is ReadWriteBufferState.IdleNonEmpty && (state.capacity.tryLockForRelease() || closed.cause != null) -> {
                     if (closed.cause != null) state.capacity.forceLockForRelease()
+                    toRelease = state.initial
+                    ReadWriteBufferState.Terminated
+                }
+                forceTermination && state is ReadWriteBufferState.IdleNonEmpty && state.capacity.tryLockForRelease() -> {
                     toRelease = state.initial
                     ReadWriteBufferState.Terminated
                 }
@@ -464,7 +476,7 @@ internal class ByteBufferChannel(
         return consumed
     }
 
-    final suspend override fun readFully(dst: ByteArray, offset: Int, length: Int) {
+    final override suspend fun readFully(dst: ByteArray, offset: Int, length: Int) {
         val consumed = readAsMuchAsPossible(dst, offset, length)
 
         if (consumed < length) {
@@ -472,7 +484,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    final suspend override fun readFully(dst: ByteBuffer): Int {
+    final override suspend fun readFully(dst: ByteBuffer): Int {
         val rc = readAsMuchAsPossible(dst)
         if (!dst.hasRemaining()) return rc
 
@@ -490,7 +502,7 @@ internal class ByteBufferChannel(
         return copied
     }
 
-    private suspend tailrec fun readFullySuspend(dst: ByteArray, offset: Int, length: Int) {
+    private tailrec suspend fun readFullySuspend(dst: ByteArray, offset: Int, length: Int) {
         if (!readSuspend(1)) throw ClosedReceiveChannelException("Unexpected EOF: expected $length more bytes")
 
         val consumed = readAsMuchAsPossible(dst, offset, length)
@@ -560,7 +572,7 @@ internal class ByteBufferChannel(
         return readAvailable(dst)
     }
 
-    final suspend override fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
+    final override suspend fun readPacket(size: Int, headerSizeHint: Int): ByteReadPacket {
         closed?.cause?.let { throw it }
 
         if (size == 0) return ByteReadPacket.Empty
@@ -626,7 +638,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    final suspend override fun readByte(): Byte {
+    final override suspend fun readByte(): Byte {
         var b: Byte = 0
 
         val rc = reading {
@@ -649,7 +661,7 @@ internal class ByteBufferChannel(
         return readByte()
     }
 
-    final suspend override fun readBoolean(): Boolean {
+    final override suspend fun readBoolean(): Boolean {
         var b = false
 
         val rc = reading {
@@ -672,7 +684,7 @@ internal class ByteBufferChannel(
         return readBoolean()
     }
 
-    final suspend override fun readShort(): Short {
+    final override suspend fun readShort(): Short {
         var sh: Short = 0
 
         val rc = reading {
@@ -1262,8 +1274,10 @@ internal class ByteBufferChannel(
 
                 flush()
 
-                if (src.availableForRead == 0 && !src.readSuspendImpl(1))  {
-                    if (joined == null || src.tryCompleteJoining(joined)) break
+                if (src.availableForRead == 0)  {
+                    if (src.readSuspendImpl(1)) {
+                        if (joined != null && src.tryCompleteJoining(joined)) break
+                    } else if (joined == null || src.tryCompleteJoining(joined)) break
                 }
 
                 if (joining != null) {
@@ -1618,7 +1632,7 @@ internal class ByteBufferChannel(
         read(min, block)
     }
 
-    suspend override fun writePacket(packet: ByteReadPacket) {
+    override suspend fun writePacket(packet: ByteReadPacket) {
         joining?.let { resolveDelegation(this, it)?.let { return it.writePacket(packet) } }
 
         try {
@@ -1753,6 +1767,7 @@ internal class ByteBufferChannel(
             } finally {
                 if (locked > 0) {
                     ringBufferCapacity.completeRead(locked)
+                    locked = 0
                 }
             }
         }
@@ -2101,9 +2116,20 @@ internal class ByteBufferChannel(
 
     private val readSuspendContinuationCache = MutableDelegateContinuation<Boolean>()
 
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun readSuspendPredicate(size: Int): Boolean {
+        val state = state
+
+        if (state.capacity.availableForRead >= size) return false
+        if (joining != null && writeOp != null &&
+                (state === ReadWriteBufferState.IdleEmpty || state is ReadWriteBufferState.IdleNonEmpty)) return false
+
+        return true
+    }
+
     private fun suspensionForSize(size: Int, c: Continuation<Boolean>): Any {
         do {
-            if (this.state.capacity.availableForRead >= size) {
+            if (!readSuspendPredicate(size)) {
                 c.resume(true)
                 break
             }
@@ -2116,13 +2142,13 @@ internal class ByteBufferChannel(
                 }
                 return COROUTINE_SUSPENDED
             }
-        } while (!setContinuation({ readOp }, ReadOp, c, { closed == null && state.capacity.availableForRead < size }))
+        } while (!setContinuation({ readOp }, ReadOp, c, { closed == null && readSuspendPredicate(size) }))
 
         return COROUTINE_SUSPENDED
     }
 
     private suspend fun readSuspendImpl(size: Int): Boolean {
-        if (state.capacity.availableForRead >= size) return true
+        if (!readSuspendPredicate(size)) return true
 
         return suspendCoroutineOrReturn { raw ->
             val c = readSuspendContinuationCache
@@ -2130,6 +2156,9 @@ internal class ByteBufferChannel(
             c.swap(raw)
         }
     }
+
+    private fun shouldResumeReadOp() = joining != null &&
+            (state === ReadWriteBufferState.IdleEmpty || state is ReadWriteBufferState.IdleNonEmpty)
 
     private fun writeSuspendPredicate(size: Int): Boolean {
         val joined = joining
@@ -2158,6 +2187,10 @@ internal class ByteBufferChannel(
         } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
 
         flushImpl(1, minWriteSize = size)
+
+        if (shouldResumeReadOp()) {
+            resumeReadOp()
+        }
 
         COROUTINE_SUSPENDED
     }
@@ -2192,6 +2225,10 @@ internal class ByteBufferChannel(
                 } while (!setContinuation({ writeOp }, WriteOp, c, { writeSuspendPredicate(size) }))
 
                 flushImpl(1, minWriteSize = size)
+
+                if (shouldResumeReadOp()) {
+                    resumeReadOp()
+                }
             }
         }
 
