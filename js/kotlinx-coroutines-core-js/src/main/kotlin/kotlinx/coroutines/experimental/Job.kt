@@ -555,7 +555,8 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
         }
     }
 
-    public actual final override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler) =
+    // todo: non-final as a workaround for KT-21968, should be final in the future
+    public actual override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler) =
         installNode(onCancelling, invokeImmediately, makeNode(handler, onCancelling))
 
     private fun installNode(
@@ -944,9 +945,9 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
      * =================================================================================================
      */
 
-    public val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
+    public actual val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
 
-    public fun getCompletionExceptionOrNull(): Throwable? {
+    public actual fun getCompletionExceptionOrNull(): Throwable? {
         val state = this.state
         check(state !is Incomplete) { "This job has not completed yet" }
         return state.exceptionOrNull

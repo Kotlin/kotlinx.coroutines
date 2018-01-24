@@ -68,16 +68,22 @@ internal expect open class JobSupport(active: Boolean) : Job {
 
     public final override fun getCancellationException(): CancellationException
     public final override fun start(): Boolean
-    public final override fun cancel(cause: Throwable?): Boolean
     public final override val children: Sequence<Job>
+
+    public override fun cancel(cause: Throwable?): Boolean
 
     public final override fun attachChild(child: Job): DisposableHandle
     public final override suspend fun join()
-    public final override fun invokeOnCompletion(
+
+    // todo: non-final as a workaround for KT-21968, should be final in the future
+    public override fun invokeOnCompletion(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
         handler: CompletionHandler
     ): DisposableHandle
+
+    public val isCompletedExceptionally: Boolean
+    public fun getCompletionExceptionOrNull(): Throwable?
 
     internal fun initParentJobInternal(parent: Job?)
     internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean

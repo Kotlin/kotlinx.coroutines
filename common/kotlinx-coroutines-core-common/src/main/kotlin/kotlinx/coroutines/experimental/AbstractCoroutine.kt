@@ -167,5 +167,17 @@ public abstract class AbstractCoroutine<in T>(
         @Suppress("DEPRECATION")
         start(block, receiver, this)
     }
+
+    // todo: This workaround for KT-21968, should be removed in the future
+    override fun invokeOnCompletion(
+        onCancelling: Boolean,
+        invokeImmediately: Boolean,
+        handler: CompletionHandler
+    ): DisposableHandle =
+        super.invokeOnCompletion(onCancelling, invokeImmediately, handler)
+
+    // todo: This workaround for KT-21968, should be removed in the future
+    override fun cancel(cause: Throwable?) =
+        super.cancel(cause)
 }
 
