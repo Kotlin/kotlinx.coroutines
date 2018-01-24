@@ -80,7 +80,7 @@ public abstract class AbstractCoroutine<in T>(
      */
     protected open fun onCancellation(cause: Throwable?) {}
 
-    internal final override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
+    internal override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
         onCancellation(exceptionally?.cause)
     }
 
@@ -94,13 +94,8 @@ public abstract class AbstractCoroutine<in T>(
      */
     protected open fun onCompletedExceptionally(exception: Throwable) {}
 
-    /**
-     * Override for post-completion actions that need to do something with the state.
-     * @param mode completion mode.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
     @Suppress("UNCHECKED_CAST")
-    internal override fun afterCompletion(state: Any?, mode: Int) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
             onCompletedExceptionally(state.exception)
         else

@@ -101,7 +101,7 @@ private open class TimeoutCoroutine<U, in T: U>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
             cont.resumeWithExceptionMode(state.exception, mode)
         else
@@ -171,7 +171,7 @@ private class TimeoutOrNullCoroutine<T>(
     cont: Continuation<T?>
 ) : TimeoutCoroutine<T?, T>(time, unit, cont) {
     @Suppress("UNCHECKED_CAST")
-    override fun afterCompletion(state: Any?, mode: Int) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally) {
             val exception = state.exception
             if (exception is TimeoutCancellationException && exception.coroutine === this)

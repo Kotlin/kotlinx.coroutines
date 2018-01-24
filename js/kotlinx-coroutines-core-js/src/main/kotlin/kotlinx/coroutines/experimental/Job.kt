@@ -461,8 +461,11 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal fun completeUpdateState(expect: Incomplete, update: Any?, mode: Int) {
-        // Invoke completion handlers
         val exceptionally = update as? CompletedExceptionally
+        // Do overridable processing before completion handlers
+        if (!expect.isCancelling) onCancellationInternal(exceptionally) // only notify when was not cancelling before
+        onCompletionInternal(update, mode)
+        // Invoke completion handlers
         val cause = exceptionally?.cause
         if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
             try {
@@ -473,9 +476,6 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
         } else {
             expect.list?.notifyCompletion(cause)
         }
-        // Do overridable processing after completion handlers
-        if (!expect.isCancelling) onCancellationInternal(exceptionally) // only notify when was not cancelling before
-        afterCompletion(update, mode)
     }
 
     private inline fun <reified T: JobNode<*>> notifyHandlers(list: NodeList, cause: Throwable?) {
@@ -861,11 +861,11 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
     internal actual open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
 
     /**
-     * Override for post-completion actions that need to do something with the state.
+     * Override for completion actions that need to do something with the state.
      * @param mode completion mode.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal actual open fun afterCompletion(state: Any?, mode: Int) {}
+    internal actual open fun onCompletionInternal(state: Any?, mode: Int) {}
 
     // for nicer debugging
     public override fun toString(): String =

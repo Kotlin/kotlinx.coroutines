@@ -74,13 +74,13 @@ internal abstract class AbstractContinuation<in T>(
     @PublishedApi
     internal fun getResult(): Any? {
         if (trySuspend()) return COROUTINE_SUSPENDED
-        // otherwise, afterCompletion was already invoked & invoked tryResume, and the result is in the state
+        // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
         if (state is CompletedExceptionally) throw state.exception
         return getSuccessfulResult(state)
     }
 
-    override fun afterCompletion(state: Any?, mode: Int) {
+    internal final override fun onCompletionInternal(state: Any?, mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
         dispatch(mode)
