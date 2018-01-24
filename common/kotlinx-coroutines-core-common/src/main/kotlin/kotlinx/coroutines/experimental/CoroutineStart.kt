@@ -22,16 +22,15 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Defines start option for coroutines builders.
- * It is used in `start` parameter of [launch], [async], and [actor][kotlinx.coroutines.experimental.channels.actor]
- * coroutine builder functions.
+ * It is used in `start` parameter of [launch], [async], and other coroutine builder functions.
  *
  * The summary of coroutine start options is:
  * * [DEFAULT] -- immediately schedules coroutine for execution according to its context;
  * * [LAZY] -- starts coroutine lazily, only when it is needed;
- * * [ATOMIC] -- atomically (non-cancellably) schedules coroutine for execution according to its context;
+ * * [ATOMIC] -- atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
  * * [UNDISPATCHED] -- immediately executes coroutine until its first suspension point _in the current thread_.
  */
-public actual enum class CoroutineStart {
+public enum class CoroutineStart {
     /**
      * Default -- immediately schedules coroutine for execution according to its context.
      *
@@ -53,8 +52,8 @@ public actual enum class CoroutineStart {
     /**
      * Starts coroutine lazily, only when it is needed.
      *
-     * See the documentation for the corresponding coroutine builders for details:
-     * [launch], [async], and [actor][kotlinx.coroutines.experimental.channels.actor].
+     * See the documentation for the corresponding coroutine builders for details
+     * (like [launch] and [async]).
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but complete with an exception.
@@ -62,7 +61,7 @@ public actual enum class CoroutineStart {
     LAZY,
 
     /**
-     * Atomically (non-cancellably) schedules coroutine for execution according to its context.
+     * Atomically (in non-cancellable way) schedules coroutine for execution according to its context.
      * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
@@ -94,7 +93,7 @@ public actual enum class CoroutineStart {
      * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
     @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
-    public actual operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
+    public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
             CoroutineStart.ATOMIC -> block.startCoroutine(completion)
@@ -113,7 +112,7 @@ public actual enum class CoroutineStart {
      * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
     @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
-    public actual operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
+    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
             CoroutineStart.ATOMIC -> block.startCoroutine(receiver, completion)
@@ -124,5 +123,5 @@ public actual enum class CoroutineStart {
     /**
      * Returns `true` when [LAZY].
      */
-    public actual val isLazy: Boolean get() = this === LAZY
+    public val isLazy: Boolean get() = this === LAZY
 }

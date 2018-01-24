@@ -16,21 +16,13 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListHead
-import kotlinx.coroutines.experimental.internal.LockFreeLinkedListNode
-import kotlinx.coroutines.experimental.internal.OpDescriptor
-import kotlinx.coroutines.experimental.internal.unwrap
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.selects.SelectClause0
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import kotlinx.coroutines.experimental.selects.select
-import java.util.concurrent.Future
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.buildSequence
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 // --------------- core job interfaces ---------------
 

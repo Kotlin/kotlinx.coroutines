@@ -16,9 +16,9 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].

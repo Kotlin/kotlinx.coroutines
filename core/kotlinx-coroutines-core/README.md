@@ -83,6 +83,10 @@ Channels -- non-blocking primitives for communicating a stream of elements betwe
 
 Select expression to perform multiple suspending operations simultaneously until one of them succeeds.
 
+# Package kotlinx.coroutines.experimental.intrinsics
+
+Low-level primitives for finer-grained control of coroutines.
+
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html

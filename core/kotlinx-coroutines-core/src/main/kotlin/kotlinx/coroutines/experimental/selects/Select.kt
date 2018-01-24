@@ -16,19 +16,15 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.sync.Mutex
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.sync.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Scope for [select] invocation.

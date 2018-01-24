@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.intrinsics.*
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*

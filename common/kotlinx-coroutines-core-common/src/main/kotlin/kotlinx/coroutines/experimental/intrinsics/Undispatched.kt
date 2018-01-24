@@ -21,12 +21,10 @@ import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
 /**
- * Use this function to restart coroutine directly from inside of [suspendCoroutine].
- *
- * @suppress **This is unstable API and it is subject to change.**
+ * Use this function to restart coroutine directly from inside of [suspendCoroutine] in the same context.
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
+public fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
     val value = try {
         startCoroutineUninterceptedOrReturn(completion)
     } catch (e: Throwable) {
@@ -38,12 +36,10 @@ internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Contin
 }
 
 /**
- * Use this function to restart coroutine directly from inside of [suspendCoroutine].
- *
- * @suppress **This is unstable API and it is subject to change.**
+ * Use this function to restart coroutine directly from inside of [suspendCoroutine] in the same context.
  */
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
-internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
+public fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     val value = try {
         startCoroutineUninterceptedOrReturn(receiver, completion)
     } catch (e: Throwable) {
@@ -55,14 +51,12 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, c
 }
 
 /**
- * Starts the corresponding block as a coroutine with this coroutine start strategy.
+ * Starts this coroutine with the given code [block] in the same context and returns result when it
+ * completes without suspnesion.
+ * This function shall be invoked at most once on this coroutine.
  *
  * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
- *
- * This function shall be invoked at most once.
- *
- * @suppress **This is unstable API and it is subject to change.**
  */
 public fun <T> AbstractCoroutine<T>.startUndispatchedOrReturn(block: suspend () -> T): Any? {
     initParentJob()
@@ -70,14 +64,12 @@ public fun <T> AbstractCoroutine<T>.startUndispatchedOrReturn(block: suspend () 
 }
 
 /**
- * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
+ * Starts this coroutine with the given code [block] in the same context and returns result when it
+ * completes without suspnesion.
+ * This function shall be invoked at most once on this coroutine.
  *
  * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
- *
- * This function shall be invoked at most once.
- * 
- * @suppress **This is unstable API and it is subject to change.**
  */
 public fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()

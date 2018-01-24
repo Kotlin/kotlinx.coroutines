@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
 

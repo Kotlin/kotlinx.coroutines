@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.intrinsics
 
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.createCoroutineUnchecked
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
-internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) =
+public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) =
     createCoroutineUnchecked(completion).resumeCancellable(Unit)
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
-internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
+public fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
     createCoroutineUnchecked(receiver, completion).resumeCancellable(Unit)
-

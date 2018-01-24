@@ -16,8 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Deferred value is a non-blocking cancellable future.
