@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.CoroutineStart.*
+import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
 /**
@@ -46,7 +48,7 @@ public abstract class AbstractCoroutine<in T>(
      * Invocation of this function may cause this coroutine to become cancelled if parent is already cancelled,
      * in which case it synchronously invokes all the corresponding handlers.
      */
-    public fun initParentJob() {
+    internal fun initParentJob() {
         initParentJobInternal(parentContext[Job])
     }
 
@@ -119,6 +121,44 @@ public abstract class AbstractCoroutine<in T>(
     internal override fun nameString(): String {
         val coroutineName = context.coroutineName ?: return super.nameString()
         return "\"$coroutineName\":${super.nameString()}"
+    }
+
+    /**
+     * Starts the corresponding block as a coroutine with this coroutine start strategy.
+     *
+     * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
+     * during construction. Second, it starts the coroutine based on [start] parameter:
+     *
+     * * [DEFAULT] uses [startCoroutineCancellable].
+     * * [ATOMIC] uses [startCoroutine].
+     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
+     * * [LAZY] does nothing.
+     *
+     * This function shall be invoked at most once.
+     */
+    public fun start(start: CoroutineStart, block: suspend () -> T) {
+        initParentJob()
+        @Suppress("DEPRECATION")
+        start(block, this)
+    }
+
+    /**
+     * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
+     *
+     * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
+     * during construction. Second, it starts the coroutine based on [start] parameter:
+     * 
+     * * [DEFAULT] uses [startCoroutineCancellable].
+     * * [ATOMIC] uses [startCoroutine].
+     * * [UNDISPATCHED] uses [startCoroutineUndispatched].
+     * * [LAZY] does nothing.
+     *
+     * This function shall be invoked at most once.
+     */
+    public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
+        initParentJob()
+        @Suppress("DEPRECATION")
+        start(block, receiver, this)
     }
 }
 

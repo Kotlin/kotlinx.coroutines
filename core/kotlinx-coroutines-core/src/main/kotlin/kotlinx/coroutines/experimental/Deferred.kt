@@ -17,8 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
  * Deferred value is a non-blocking cancellable future.
@@ -167,8 +166,7 @@ public actual fun <T> async(
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
         DeferredCoroutine<T>(newContext, active = true)
-    coroutine.initParentJob()
-    start(block, coroutine, coroutine)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 

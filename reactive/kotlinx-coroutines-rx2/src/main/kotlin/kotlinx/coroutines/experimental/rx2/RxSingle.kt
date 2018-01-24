@@ -16,13 +16,10 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Single
-import io.reactivex.SingleEmitter
-import io.reactivex.functions.Cancellable
+import io.reactivex.*
+import io.reactivex.functions.*
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [single][Single] that will run a given [block] in a coroutine.
@@ -53,9 +50,8 @@ public fun <T> rxSingle(
 ): Single<T> = Single.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
-    coroutine.initParentJob()
     subscriber.setCancellable(coroutine)
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

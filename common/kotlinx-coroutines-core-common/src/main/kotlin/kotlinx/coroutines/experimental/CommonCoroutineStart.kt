@@ -16,14 +16,16 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.*
 
 public expect enum class CoroutineStart {
     DEFAULT,
     LAZY,
     ATOMIC,
     UNDISPATCHED;
+    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>)
+    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>)
     public val isLazy: Boolean
 }

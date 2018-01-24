@@ -17,9 +17,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.*
 
 /**
  * Scope for [produce] coroutine builder.
@@ -83,8 +81,7 @@ public fun <E> produce(
     val channel = Channel<E>(capacity)
     val newContext = newCoroutineContext(context, parent)
     val coroutine = ProducerCoroutine(newContext, channel)
-    coroutine.initParentJob()
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine
 }
 

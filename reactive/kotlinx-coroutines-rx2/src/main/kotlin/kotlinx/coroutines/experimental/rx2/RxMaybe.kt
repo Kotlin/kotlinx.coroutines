@@ -16,13 +16,10 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Maybe
-import io.reactivex.MaybeEmitter
-import io.reactivex.functions.Cancellable
+import io.reactivex.*
+import io.reactivex.functions.*
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine.
@@ -54,9 +51,8 @@ public fun <T> rxMaybe(
 ): Maybe<T> = Maybe.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
-    coroutine.initParentJob()
     subscriber.setCancellable(coroutine)
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

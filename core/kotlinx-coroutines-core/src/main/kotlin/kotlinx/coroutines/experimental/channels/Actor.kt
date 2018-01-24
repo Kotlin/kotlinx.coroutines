@@ -17,10 +17,8 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.selects.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Scope for [actor] coroutine builder.
@@ -94,8 +92,7 @@ public fun <E> actor(
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
         ActorCoroutine(newContext, channel, active = true)
-    coroutine.initParentJob()
-    start(block, coroutine, coroutine)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 

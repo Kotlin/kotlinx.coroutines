@@ -16,20 +16,13 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ProducerScope
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import kotlinx.coroutines.experimental.sync.Mutex
-import rx.Observable
-import rx.Producer
-import rx.Subscriber
-import rx.Subscription
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.sync.*
+import rx.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [Observable] that runs a given [block] in a coroutine.
@@ -64,10 +57,9 @@ public fun <T> rxObservable(
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
-    coroutine.initParentJob()
     subscriber.setProducer(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     subscriber.add(coroutine)
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

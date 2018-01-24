@@ -1,10 +1,7 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.newCoroutineContext
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 
 /**
  * A coroutine job that is reading from a byte channel
@@ -26,8 +23,7 @@ fun reader(coroutineContext: CoroutineContext,
            block: suspend ReaderScope.() -> Unit): ReaderJob {
     val newContext = newCoroutineContext(coroutineContext, parent)
     val coroutine = ReaderCoroutine(newContext, channel)
-    coroutine.initParentJob()
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine
 }
 

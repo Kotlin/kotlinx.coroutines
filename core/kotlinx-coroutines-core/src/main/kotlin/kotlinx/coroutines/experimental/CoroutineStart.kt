@@ -17,9 +17,8 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.CoroutineStart.*
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Defines start option for coroutines builders.
@@ -91,7 +90,10 @@ public actual enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
+     *
+     * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
+    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public actual operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
@@ -107,7 +109,10 @@ public actual enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
+     *
+     * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
+    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public actual operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)

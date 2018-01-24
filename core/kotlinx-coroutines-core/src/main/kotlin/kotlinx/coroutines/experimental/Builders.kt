@@ -16,10 +16,9 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.locks.LockSupport
+import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.intrinsics.*
 
 // --------------- basic coroutine builders ---------------
 
@@ -62,8 +61,7 @@ public actual fun launch(
     val coroutine = if (start.isLazy)
         LazyStandaloneCoroutine(newContext, block) else
         StandaloneCoroutine(newContext, active = true)
-    coroutine.initParentJob()
-    start(block, coroutine, coroutine)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 
@@ -127,6 +125,7 @@ public actual suspend fun <T> withContext(
         delegate = cont,
         resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE)
     completion.initParentJobInternal(newContext[Job]) // attach to job
+    @Suppress("DEPRECATION")
     start(block, completion)
     completion.getResult()
 }
@@ -169,8 +168,7 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop(currentThread) else null
     val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop = eventLoop != null)
-    coroutine.initParentJob()
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
 }
 

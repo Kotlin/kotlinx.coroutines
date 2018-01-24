@@ -16,19 +16,14 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
-import io.reactivex.ObservableEmitter
-import io.reactivex.functions.Cancellable
-import kotlinx.atomicfu.atomic
+import io.reactivex.*
+import io.reactivex.functions.*
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ProducerScope
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.sync.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
@@ -63,9 +58,8 @@ public fun <T> rxObservable(
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
-    coroutine.initParentJob()
     subscriber.setCancellable(coroutine) // do it first (before starting coroutine), to await unnecessary suspensions
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

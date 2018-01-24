@@ -16,12 +16,9 @@
 package kotlinx.coroutines.experimental.reactor
 
 import kotlinx.coroutines.experimental.*
-import reactor.core.Disposable
-import reactor.core.publisher.Mono
-import reactor.core.publisher.MonoSink
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import reactor.core.*
+import reactor.core.publisher.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
@@ -53,9 +50,8 @@ fun <T> mono(
 ): Mono<T> = Mono.create { sink ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = MonoCoroutine(newContext, sink)
-    coroutine.initParentJob()
     sink.onDispose(coroutine)
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

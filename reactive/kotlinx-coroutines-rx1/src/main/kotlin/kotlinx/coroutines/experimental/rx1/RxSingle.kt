@@ -17,12 +17,8 @@
 package kotlinx.coroutines.experimental.rx1
 
 import kotlinx.coroutines.experimental.*
-import rx.Single
-import rx.SingleSubscriber
-import rx.Subscription
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import rx.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates cold [Single] that runs a given [block] in a coroutine.
@@ -53,9 +49,8 @@ public fun <T> rxSingle(
 ): Single<T> = Single.create { subscriber ->
     val newContext = newCoroutineContext(context, parent)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
-    coroutine.initParentJob()
     subscriber.add(coroutine)
-    block.startCoroutine(coroutine, coroutine)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
 /** @suppress **Deprecated**: Binary compatibility */

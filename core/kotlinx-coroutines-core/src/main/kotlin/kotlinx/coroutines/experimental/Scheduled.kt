@@ -16,13 +16,11 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.selects.SelectBuilder
-import kotlinx.coroutines.experimental.selects.select
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
@@ -78,21 +76,9 @@ private fun <U, T: U> setupTimeout(
     val cont = coroutine.cont
     val context = cont.context
     coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine.unit, coroutine))
-    coroutine.initParentJob()
     // restart block using new coroutine with new job,
     // however start it as undispatched coroutine, because we are already in the proper context
-    val result = try {
-        block.startCoroutineUninterceptedOrReturn(receiver = coroutine, completion = coroutine)
-    } catch (e: Throwable) {
-        CompletedExceptionally(e)
-    }
-    return when {
-        result == COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
-        coroutine.makeCompletingOnce(result, MODE_IGNORE) -> {
-            if (result is CompletedExceptionally) throw result.exception else result
-        }
-        else -> COROUTINE_SUSPENDED
-    }
+    return coroutine.startUndispatchedOrReturn(coroutine, block)
 }
 
 /**
