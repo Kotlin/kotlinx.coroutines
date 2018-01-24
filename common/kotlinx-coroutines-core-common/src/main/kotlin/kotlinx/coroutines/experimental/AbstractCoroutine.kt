@@ -141,7 +141,6 @@ public abstract class AbstractCoroutine<in T>(
      */
     public fun start(start: CoroutineStart, block: suspend () -> T) {
         initParentJob()
-        @Suppress("DEPRECATION")
         start(block, this)
     }
 
@@ -159,7 +158,6 @@ public abstract class AbstractCoroutine<in T>(
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
         initParentJob()
-        @Suppress("DEPRECATION")
         start(block, receiver, this)
     }
 

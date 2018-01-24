@@ -89,10 +89,7 @@ public enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
-     *
-     * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
-    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
@@ -108,10 +105,7 @@ public enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
-     *
-     * @suppress **Deprecated**: Use [AbstractCoroutine.start]
      */
-    @Deprecated(message = "Use AbstractCoroutine.start") // todo: make it internal & rename
     public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
