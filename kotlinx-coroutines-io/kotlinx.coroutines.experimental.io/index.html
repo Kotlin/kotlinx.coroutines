@@ -151,6 +151,28 @@ This is a <strong>single-writer channel</strong>.</p>
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="-writer-session/index.html">WriterSession</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">WriterSession</span></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-writer-suspend-session/index.html">WriterSuspendSession</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">WriterSuspendSession</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-writer-session/index.html"><span class="identifier">WriterSession</span></a></code></div>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -203,6 +225,17 @@ exception on send attempts.</p>
         <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">ByteOrder</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="identifier">ByteOrder</span></code></div>
 
         <p>Byte order.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-consume-each-buffer-visitor.html">ConsumeEachBufferVisitor</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">ConsumeEachBufferVisitor</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><span class="parameterName">buffer</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">last</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
       </td>
 </tr>
@@ -281,10 +314,10 @@ exception on send attempts.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-byte-read-channel/index.html"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">copyAndClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-byte-read-channel/index.html"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">copyAndClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/limit">limit</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Long.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
 
-        <p>Reads all the bytes from receiver channel and writes them to <a href="copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</a> channel and then closes it.
-Closes <a href="copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</a> channel if fails to read or write with cause exception.</p>
+        <p>Reads all the bytes from receiver channel and writes them to <a href="copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</a> channel and then closes it.
+Closes <a href="copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</a> channel if fails to read or write with cause exception.</p>
 
       </td>
 </tr>

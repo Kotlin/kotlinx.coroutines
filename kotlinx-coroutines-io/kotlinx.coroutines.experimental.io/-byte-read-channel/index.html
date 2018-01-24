@@ -140,7 +140,7 @@ and all suspensions will be resumed with exception.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">consumeEachBufferRange</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$consumeEachBufferRange(kotlin.Function2((java.nio.ByteBuffer, kotlin.Boolean, )))/visitor">visitor</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">last</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">consumeEachBufferRange</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteReadChannel$consumeEachBufferRange(kotlin.Function2((java.nio.ByteBuffer, kotlin.Boolean, )))/visitor">visitor</span><span class="symbol">:</span>&nbsp;<a href="../-consume-each-buffer-visitor.html"><span class="identifier">ConsumeEachBufferVisitor</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>For every available bytes range invokes <a href="consume-each-buffer-range.html#kotlinx.coroutines.experimental.io.ByteReadChannel$consumeEachBufferRange(kotlin.Function2((java.nio.ByteBuffer, kotlin.Boolean, )))/visitor">visitor</a> function until it return false or end of stream encountered</p>
 
@@ -375,10 +375,10 @@ Throws an exception if the specified <a href="read-u-t-f8-line-to.html#kotlinx.c
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">copyAndClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">copyAndClose</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</span><span class="symbol">:</span>&nbsp;<a href="../-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/limit">limit</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Long.MAX_VALUE<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
 
-        <p>Reads all the bytes from receiver channel and writes them to <a href="../copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</a> channel and then closes it.
-Closes <a href="../copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel)/dst">dst</a> channel if fails to read or write with cause exception.</p>
+        <p>Reads all the bytes from receiver channel and writes them to <a href="../copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</a> channel and then closes it.
+Closes <a href="../copy-and-close.html#kotlinx.coroutines.experimental.io$copyAndClose(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)/dst">dst</a> channel if fails to read or write with cause exception.</p>
 
       </td>
 </tr>
@@ -507,6 +507,20 @@ It will simply stop reading and return packet of size <a href="../read-remaining
       </td>
 <td>
         <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="./index.md"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">skipDelimiter</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io$skipDelimiter(kotlinx.coroutines.experimental.io.ByteReadChannel, java.nio.ByteBuffer)/delimiter">delimiter</span><span class="symbol">:</span>&nbsp;<a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental.io.jvm.javaio/to-input-stream.html">toInputStream</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">toInputStream</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.jvm.javaio$toInputStream(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html"><span class="identifier">InputStream</span></a></code></div>
+
+        <p>Create blocking <a href="http://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html">java.io.InputStream</a> for this channel that does block every time the channel suspends at read
+Similar to do reading in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> however you can pass it to regular blocking API</p>
 
       </td>
 </tr>

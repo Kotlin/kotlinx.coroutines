@@ -33,18 +33,17 @@
 
 <h1 id="coroutinestart">CoroutineStart</h1>
 
-<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L35">(source)</a></div>
+<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L33">(source)</a></div>
 
 <p>Defines start option for coroutines builders.
-It is used in <code>start</code> parameter of <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and <a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a>
-coroutine builder functions.</p>
+It is used in <code>start</code> parameter of <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and other coroutine builder functions.</p>
 
 <p>The summary of coroutine start options is:</p>
 
 <ul>
   <li><a href="-d-e-f-a-u-l-t.html">DEFAULT</a> – immediately schedules coroutine for execution according to its context;</li>
   <li><a href="-l-a-z-y.html">LAZY</a> – starts coroutine lazily, only when it is needed;</li>
-  <li><a href="-a-t-o-m-i-c.html">ATOMIC</a> – atomically (non-cancellably) schedules coroutine for execution according to its context;</li>
+  <li><a href="-a-t-o-m-i-c.html">ATOMIC</a> – atomically (in a non-cancellable way) schedules coroutine for execution according to its context;</li>
   <li><a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a> – immediately executes coroutine until its first suspension point <em>in the current thread</em>.</li>
 </ul>
 
@@ -84,7 +83,7 @@ coroutine builder functions.</p>
       </td>
 <td>
 
-        <p>Atomically (non-cancellably) schedules coroutine for execution according to its context.
+        <p>Atomically (in non-cancellable way) schedules coroutine for execution according to its context.
 This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine cannot be cancelled before it starts executing.</p>
 
       </td>

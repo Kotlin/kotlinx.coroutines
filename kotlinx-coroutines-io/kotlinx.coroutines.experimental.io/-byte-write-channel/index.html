@@ -156,11 +156,11 @@ This is an idempotent operation – repeated invocations of this function have n
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">write</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">write</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Invokes <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/block">block</a> when it will be possible to write at least <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes
 providing byte buffer to it so lambda can write to the buffer
-up to <a href="http://docs.oracle.com/javase/8/docs/api/java/nio/Buffer.html#remaining()">ByteBuffer.remaining</a> bytes. If there are no <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes spaces available then the invocation could
+up to <a href="#">ByteBuffer.remaining</a> bytes. If there are no <a href="write.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$write(kotlin.Int, kotlin.Function1((java.nio.ByteBuffer, kotlin.Unit)))/min">min</a> bytes spaces available then the invocation could
 suspend until the requirement will be met.</p>
 
       </td>
@@ -178,7 +178,7 @@ suspend until the requirement will be met.</p>
 
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeAvailable(kotlin.ByteArray)/src">src</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeAvailable(java.nio.ByteBuffer)/src">src</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeAvailable(java.nio.ByteBuffer)/src">src</span><span class="symbol">:</span>&nbsp;<a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeAvailable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeAvailable(kotlinx.io.core.BufferView)/src">src</span><span class="symbol">:</span>&nbsp;<span class="identifier">BufferView</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
@@ -240,7 +240,7 @@ Crashes if channel get closed while writing.</p>
 
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeFully(kotlin.ByteArray)/src">src</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeFully(java.nio.ByteBuffer)/src">src</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeFully(java.nio.ByteBuffer)/src">src</span><span class="symbol">:</span>&nbsp;<a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeFully</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeFully(kotlinx.io.core.BufferView)/src">src</span><span class="symbol">:</span>&nbsp;<span class="identifier">BufferView</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
@@ -301,6 +301,31 @@ Crashes if channel get closed while writing.</p>
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="write-suspend-session.html">writeSuspendSession</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeSuspendSession</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeSuspendSession(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.io.WriterSuspendSession, kotlin.Unit)))/visitor">visitor</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-writer-suspend-session/index.html"><span class="identifier">WriterSuspendSession</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="write-while.html">writeWhile</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">writeWhile</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.ByteWriteChannel$writeWhile(kotlin.Function1((java.nio.ByteBuffer, kotlin.Boolean)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><a href="../-byte-buffer.html"><span class="identifier">ByteBuffer</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Invokes <a href="write-while.html#kotlinx.coroutines.experimental.io.ByteWriteChannel$writeWhile(kotlin.Function1((java.nio.ByteBuffer, kotlin.Boolean)))/block">block</a> for every free buffer until it return <code>false</code>. It will also suspend every time when no free
+space available for write.</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
@@ -308,6 +333,20 @@ Crashes if channel get closed while writing.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental.io.jvm.javaio/to-output-stream.html">toOutputStream</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">.</span><span class="identifier">toOutputStream</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.jvm.javaio$toOutputStream(kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html"><span class="identifier">OutputStream</span></a></code></div>
+
+        <p>Create blocking <a href="http://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html">java.io.OutputStream</a> for this channel that does block every time the channel suspends at write
+Similar to do reading in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> however you can pass it to regular blocking API</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

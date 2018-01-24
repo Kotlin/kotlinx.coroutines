@@ -33,12 +33,12 @@
 
 <h1 id="lazy">LAZY</h1>
 
-<div class="signature"><code><span class="identifier">LAZY</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L63">(source)</a></div>
+<div class="signature"><code><span class="identifier">LAZY</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L61">(source)</a></div>
 
 <p>Starts coroutine lazily, only when it is needed.</p>
 
-<p>See the documentation for the corresponding coroutine builders for details:
-<a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and <a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a>.</p>
+<p>See the documentation for the corresponding coroutine builders for details
+(like <a href="../launch.html">launch</a> and <a href="../async.html">async</a>).</p>
 
 <p>If coroutine <a href="../-job/index.html">Job</a> is cancelled before it even had a chance to start executing, then it will not start its
 execution at all, but complete with an exception.</p>

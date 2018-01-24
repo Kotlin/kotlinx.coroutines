@@ -68,6 +68,34 @@ and blocking on output</p>
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="to-input-stream.html">toInputStream</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../kotlinx.coroutines.experimental.io/-byte-read-channel/index.html"><span class="identifier">ByteReadChannel</span></a><span class="symbol">.</span><span class="identifier">toInputStream</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.jvm.javaio$toInputStream(kotlinx.coroutines.experimental.io.ByteReadChannel, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html"><span class="identifier">InputStream</span></a></code></div>
+
+        <p>Create blocking <a href="http://docs.oracle.com/javase/8/docs/api/java/io/InputStream.html">java.io.InputStream</a> for this channel that does block every time the channel suspends at read
+Similar to do reading in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> however you can pass it to regular blocking API</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="to-output-stream.html">toOutputStream</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../kotlinx.coroutines.experimental.io/-byte-write-channel/index.html"><span class="identifier">ByteWriteChannel</span></a><span class="symbol">.</span><span class="identifier">toOutputStream</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.io.jvm.javaio$toOutputStream(kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html"><span class="identifier">OutputStream</span></a></code></div>
+
+        <p>Create blocking <a href="http://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html">java.io.OutputStream</a> for this channel that does block every time the channel suspends at write
+Similar to do reading in <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> however you can pass it to regular blocking API</p>
+
+      </td>
+</tr>
 </tbody>
 </table>
 

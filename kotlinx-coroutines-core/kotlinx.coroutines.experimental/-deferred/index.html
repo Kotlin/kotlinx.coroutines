@@ -33,7 +33,7 @@
 
 <h1 id="deferred">Deferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L81">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L80">(source)</a></div>
 
 <p>Deferred value is a non-blocking cancellable future.</p>
 
@@ -107,7 +107,7 @@ It is in <a href="../-job/is-active.html">active</a> state while the value is be
 
 <p>Usually, a deferred value is created in <em>active</em> state (it is created and started).
 However, <a href="../async.html">async</a> coroutine builder has an optional <code>start</code> parameter that creates a deferred value in <em>new</em> state
-when this parameter is set to <a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>.
+when this parameter is set to <a href="#">CoroutineStart.LAZY</a>.
 Such a deferred can be be made <em>active</em> by invoking <a href="../-job/start.html">start</a>, <a href="../-job/join.html">join</a>, or <a href="await.html">await</a>.</p>
 
 <p>A deferred can be <em>cancelled</em> at any time with <a href="../-job/cancel.html">cancel</a> function that forces it to transition to

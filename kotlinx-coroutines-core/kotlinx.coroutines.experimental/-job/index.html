@@ -33,7 +33,7 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L94">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L85">(source)</a></div>
 
 <p>A background job. Conceptually, a job is a cancellable thing with a simple life-cycle that
 culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
@@ -96,7 +96,7 @@ or completion of parent immediately cancels all its <a href="children.html">chil
 
 <p>Usually, a job is created in <em>active</em> state (it is created and started). However, coroutine builders
 that provide an optional <code>start</code> parameter create a coroutine in <em>new</em> state when this parameter is set to
-<a href="../-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a>. Such a job can be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
+<a href="#">CoroutineStart.LAZY</a>. Such a job can be made <em>active</em> by invoking <a href="start.html">start</a> or <a href="join.html">join</a>.</p>
 
 <p>A job can be <em>cancelled</em> at any time with <a href="cancel.html">cancel</a> function that forces it to transition to
 <em>cancelling</em> state immediately. Job that is not backed by a coroutine (see <code>Job()</code> function) and does not have
@@ -423,6 +423,19 @@ this job is complete.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../-abstract-coroutine/index.html">AbstractCoroutine</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractCoroutine</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">JobSupport</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">Job</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="../-abstract-coroutine/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
+
+        <p>Abstract base class for implementation of coroutines in coroutine builders.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

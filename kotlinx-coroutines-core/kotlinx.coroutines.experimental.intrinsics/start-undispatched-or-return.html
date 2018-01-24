@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>startUndispatchedOrReturn - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.experimental.intrinsics</a> / <a href="./start-undispatched-or-return.html">startUndispatchedOrReturn</a></div>
+
+<h1 id="startundispatchedorreturn">startUndispatchedOrReturn</h1>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.experimental/-abstract-coroutine/index.html"><span class="identifier">AbstractCoroutine</span></a><span class="symbol">&lt;</span><a href="start-undispatched-or-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">startUndispatchedOrReturn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlin.SuspendFunction0((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="start-undispatched-or-return.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/intrinsics/Undispatched.kt#L61">(source)</a></div>
+
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines.experimental/-abstract-coroutine/index.html"><span class="identifier">AbstractCoroutine</span></a><span class="symbol">&lt;</span><a href="start-undispatched-or-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">startUndispatchedOrReturn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/receiver">receiver</span><span class="symbol">:</span>&nbsp;<a href="start-undispatched-or-return.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="start-undispatched-or-return.html#R"><span class="identifier">R</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="start-undispatched-or-return.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/intrinsics/Undispatched.kt#L74">(source)</a></div>
+
+<p>Starts this coroutine with the given code <a href="start-undispatched-or-return.html#kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlin.SuspendFunction0((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/block">block</a> in the same context and returns result when it
+completes without suspnesion.
+This function shall be invoked at most once on this coroutine.</p>
+
+<p>First, this function initializes parent job from the <code>parentContext</code> of this coroutine that was passed to it
+during construction. Second, it starts the coroutine using <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental.intrinsics/start-coroutine-unintercepted-or-return.html">startCoroutineUninterceptedOrReturn</a>.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+
