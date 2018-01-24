@@ -1,5 +1,14 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22
+
+* Migrated to Kotlin 1.2.20
+* Introduced stable public API for `AbstractCoroutine`:
+  * Implements `Job`, `Continuation`, and `CoroutineScope`.
+  * Has overridable `onStart`, `onCancellation`, `onCompleted` and `onCompletedExceptionally` functions.
+  * Reactive integration modules are now implemented using public API only.
+  * Notifies onXXX before all the installed handlers, so `launch` handles uncaught exceptions before "joining" coroutines wakeup (see #208).
+
 ## Version 0.21.2
 
 * Fixed `openSubscription` extension for reactive `Publisher`/`Observable`/`Flowable` when used with `select { ... }` and added an optional `request` parameter to specify how many elements are requested from publisher in advance on subscription (see #197).
