@@ -25,3 +25,4 @@ public expect object Unconfined : CoroutineDispatcher {
 
 internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
+internal expect val CoroutineContext.coroutineName: String?

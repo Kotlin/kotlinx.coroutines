@@ -202,7 +202,7 @@ internal class CancellableContinuationImpl<in T>(
         get() = _context ?: (delegate.context + this).also { _context = it }
 
     override fun initCancellability() {
-        initParentJob(delegate.context[Job])
+        initParentJobInternal(delegate.context[Job])
     }
 
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLED
@@ -259,8 +259,8 @@ internal class CancellableContinuationImpl<in T>(
     override fun <T> getSuccessfulResult(state: Any?): T =
         if (state is CompletedIdempotentResult) state.result as T else state as T
 
-    override fun toString(): String =
-        "CancellableContinuation{${stateString()}}[$delegate]"
+    override fun nameString(): String =
+        "CancellableContinuation(${delegate.toDebugString()})"
 
     // todo: This workaround for KT-21968, should be removed in the future
     public override fun cancel(cause: Throwable?): Boolean =

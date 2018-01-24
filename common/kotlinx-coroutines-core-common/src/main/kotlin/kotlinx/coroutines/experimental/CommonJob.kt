@@ -59,3 +59,31 @@ public expect suspend fun Job.joinChildren()
 public expect object NonDisposableHandle : DisposableHandle {
     override fun dispose()
 }
+
+internal expect open class JobSupport(active: Boolean) : Job {
+    public final override val key: CoroutineContext.Key<*>
+    public final override val isActive: Boolean
+    public final override val isCompleted: Boolean
+    public final override val isCancelled: Boolean
+
+    public final override fun getCancellationException(): CancellationException
+    public final override fun start(): Boolean
+    public final override fun cancel(cause: Throwable?): Boolean
+    public final override val children: Sequence<Job>
+
+    public final override fun attachChild(child: Job): DisposableHandle
+    public final override suspend fun join()
+    public final override fun invokeOnCompletion(
+        onCancelling: Boolean,
+        invokeImmediately: Boolean,
+        handler: CompletionHandler
+    ): DisposableHandle
+
+    internal fun initParentJobInternal(parent: Job?)
+    internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean
+    internal open fun afterCompletion(state: Any?, mode: Int)
+    internal open fun onStartInternal()
+    internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?)
+    internal open fun nameString(): String
+    internal open fun handleException(exception: Throwable)
+}

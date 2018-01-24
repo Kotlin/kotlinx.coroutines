@@ -24,7 +24,6 @@ import kotlinx.coroutines.experimental.internal.OpDescriptor
 import kotlinx.coroutines.experimental.internal.unwrap
 import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
 import kotlinx.coroutines.experimental.selects.SelectClause0
-import kotlinx.coroutines.experimental.selects.SelectClause1
 import kotlinx.coroutines.experimental.selects.SelectInstance
 import kotlinx.coroutines.experimental.selects.select
 import java.util.concurrent.Future
@@ -525,8 +524,8 @@ public actual object NonDisposableHandle : DisposableHandle {
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
-    override val key: CoroutineContext.Key<*> get() = Job
+internal actual open class JobSupport actual constructor(active: Boolean) : Job, SelectClause0 {
+    actual final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
        === Internal states ===
@@ -598,7 +597,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
      * It shall be invoked at most once after construction after all other initialization.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun initParentJobInternal(parent: Job?) {
+    internal actual fun initParentJobInternal(parent: Job?) {
         check(parentHandle == null)
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -637,14 +636,14 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
         }
     }
 
-    public final override val isActive: Boolean get() {
+    public actual final override val isActive: Boolean get() {
         val state = this.state
         return state is Incomplete && state.isActive
     }
 
-    public final override val isCompleted: Boolean get() = state !is Incomplete
+    public actual final override val isCompleted: Boolean get() = state !is Incomplete
 
-    public final override val isCancelled: Boolean get() {
+    public actual final override val isCancelled: Boolean get() {
         val state = this.state
         return state is Cancelled || (state is Finishing && state.cancelled != null)
     }
@@ -741,7 +740,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
     private fun notifyCancellation(list: NodeList, cause: Throwable?) =
         notifyHandlers<JobCancellationNode<*>>(list, cause)
 
-    public final override fun start(): Boolean {
+    public actual final override fun start(): Boolean {
         loopOnState { state ->
             when (startInternal(state)) {
                 FALSE -> return false
@@ -775,9 +774,9 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
      * Override to provide the actual [start] action.
      * This function is invoked exactly once when non-active coroutine is [started][start].
      */
-    internal open fun onStartInternal() {}
+    internal actual open fun onStartInternal() {}
 
-    public final override fun getCancellationException(): CancellationException {
+    public actual final override fun getCancellationException(): CancellationException {
         val state = this.state
         return when {
             state is Finishing && state.cancelled != null ->
@@ -822,7 +821,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
     public final override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
         invokeOnCompletion(onCancelling = onCancelling_, invokeImmediately = true, handler = handler)
 
-    public final override fun invokeOnCompletion(
+    public actual final override fun invokeOnCompletion(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
         handler: CompletionHandler
@@ -888,7 +887,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
         _state.compareAndSet(state, list)
     }
 
-    public final override suspend fun join() {
+    public actual final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
             return suspendCoroutineOrReturn { cont ->
                 cont.context.checkCompletion()
@@ -960,7 +959,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
      */
     internal open val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLING
 
-    public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
+    public actual override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
         ON_CANCEL_MAKE_CANCELLED -> makeCancelled(cause)
         ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
         ON_CANCEL_MAKE_COMPLETING -> makeCompletingOnCancel(cause)
@@ -1045,7 +1044,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
      * @throws IllegalStateException if job is already complete or completing
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean =
+    internal actual fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean =
         when (makeCompletingInternal(proposedUpdate, mode)) {
             COMPLETING_COMPLETED -> true
             COMPLETING_WAITING_CHILDREN -> false
@@ -1128,7 +1127,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
         }
     }
 
-    public final override val children: Sequence<Job> get() = buildSequence {
+    public actual final override val children: Sequence<Job> get() = buildSequence {
         val state = this@JobSupport.state
         when (state) {
             is Child -> yield(state.childJob)
@@ -1139,7 +1138,7 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
     }
 
     @Suppress("OverridingDeprecatedMember")
-    public final override fun attachChild(child: Job): DisposableHandle =
+    public actual final override fun attachChild(child: Job): DisposableHandle =
         invokeOnCompletion(onCancelling = true, handler = Child(this, child))
 
     @Suppress("OverridingDeprecatedMember")
@@ -1150,8 +1149,9 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
     /**
      * Override to process any exceptions that were encountered while invoking completion handlers
      * installed via [invokeOnCompletion].
+     * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun handleException(exception: Throwable) {
+    internal actual open fun handleException(exception: Throwable) {
         throw exception
     }
 
@@ -1162,23 +1162,23 @@ internal open class JobSupport(active: Boolean) : Job, SelectClause0 {
      *               null when it has completed normally.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
+    internal actual open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
 
     /**
      * Override for post-completion actions that need to do something with the state.
      * @param mode completion mode.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun afterCompletion(state: Any?, mode: Int) {}
+    internal actual open fun afterCompletion(state: Any?, mode: Int) {}
 
     // for nicer debugging
-    override fun toString(): String =
+    public override fun toString(): String =
         "${nameString()}{${stateString()}}@$hexAddress"
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun nameString(): String = this::class.java.simpleName
+    internal actual open fun nameString(): String = this::class.java.simpleName
 
     private fun stateString(): String {
         val state = this.state

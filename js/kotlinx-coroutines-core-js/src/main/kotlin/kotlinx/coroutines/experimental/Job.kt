@@ -360,11 +360,15 @@ public actual object NonDisposableHandle : DisposableHandle {
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public open class JobSupport(active: Boolean) : Job {
-    override val key: CoroutineContext.Key<*> get() = Job
+internal actual open class JobSupport actual constructor(active: Boolean) : Job {
+    public actual override val key: CoroutineContext.Key<*> get() = Job
 
+    /**
+     * Returns current state of this job.
+     * @suppress **This is unstable API and it is subject to change.**
+     */
     // Note: use shared objects while we have no listeners
-    protected var state: Any? = if (active) EmptyActive else EmptyNew
+    internal var state: Any? = if (active) EmptyActive else EmptyNew
         private set
 
     private var parentHandle: DisposableHandle? = null
@@ -374,8 +378,9 @@ public open class JobSupport(active: Boolean) : Job {
     /**
      * Initializes parent job.
      * It shall be invoked at most once after construction after all other initialization.
+     * @suppress **This is unstable API and it is subject to change.**
      */
-    public fun initParentJob(parent: Job?) {
+    internal actual fun initParentJobInternal(parent: Job?) {
         check(parentHandle == null) { "Shall be invoked at most once" }
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -394,14 +399,14 @@ public open class JobSupport(active: Boolean) : Job {
 
     // ------------ state query ------------
 
-    public final override val isActive: Boolean get() {
+    public actual final override val isActive: Boolean get() {
         val state = this.state
         return state is Incomplete && state.isActive
     }
 
-    public final override val isCompleted: Boolean get() = state !is Incomplete
+    public actual final override val isCompleted: Boolean get() = state !is Incomplete
 
-    public final override val isCancelled: Boolean get() {
+    public actual final override val isCancelled: Boolean get() {
         val state = this.state
         return state is Cancelled || (state is Finishing && state.cancelled != null)
     }
@@ -469,7 +474,7 @@ public open class JobSupport(active: Boolean) : Job {
             expect.list?.notifyCompletion(cause)
         }
         // Do overridable processing after completion handlers
-        if (!expect.isCancelling) onCancellation(exceptionally) // only notify when was not cancelling before
+        if (!expect.isCancelling) onCancellationInternal(exceptionally) // only notify when was not cancelling before
         afterCompletion(update, mode)
     }
 
@@ -493,18 +498,18 @@ public open class JobSupport(active: Boolean) : Job {
     private fun notifyCancellation(list: NodeList, cause: Throwable?) =
             notifyHandlers<JobCancellationNode<*>>(list, cause)
 
-    public final override fun start(): Boolean {
+    public actual final override fun start(): Boolean {
         val state = this.state
         when (state) {
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return false // already active
                 this.state = EmptyActive
-                onStart()
+                onStartInternal()
                 return true
             }
             is NodeList -> { // LIST -- a list of completion handlers (either new or active)
                 return state.makeActive().also { result ->
-                    if (result) onStart()
+                    if (result) onStartInternal()
                 }
             }
             else -> return false // not a new state
@@ -513,10 +518,11 @@ public open class JobSupport(active: Boolean) : Job {
 
     /**
      * Override to provide the actual [start] action.
+     * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun onStart() {}
+    internal actual open fun onStartInternal() {}
 
-    public final override fun getCancellationException(): CancellationException {
+    public actual final override fun getCancellationException(): CancellationException {
         val state = this.state
         return when {
             state is Finishing && state.cancelled != null ->
@@ -549,7 +555,7 @@ public open class JobSupport(active: Boolean) : Job {
         }
     }
 
-    public final override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler) =
+    public actual final override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler) =
         installNode(onCancelling, invokeImmediately, makeNode(handler, onCancelling))
 
     private fun installNode(
@@ -615,7 +621,7 @@ public open class JobSupport(active: Boolean) : Job {
         this.state = list
     }
 
-    final override suspend fun join() {
+    public actual final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
             return suspendCoroutineOrReturn { cont ->
                 cont.context.checkCompletion()
@@ -654,7 +660,7 @@ public open class JobSupport(active: Boolean) : Job {
 
     protected open val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLING
 
-    public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
+    public actual override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
         ON_CANCEL_MAKE_CANCELLED -> makeCancelled(cause)
         ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
         ON_CANCEL_MAKE_COMPLETING -> makeCompletingOnCancel(cause)
@@ -718,7 +724,7 @@ public open class JobSupport(active: Boolean) : Job {
         val cancelled = Cancelled(this, cause)
         state = Finishing(list, cancelled, false)
         notifyCancellation(list, cause)
-        onCancellation(cancelled)
+        onCancellationInternal(cancelled)
     }
 
     private fun makeCompletingOnCancel(cause: Throwable?): Boolean =
@@ -738,7 +744,7 @@ public open class JobSupport(active: Boolean) : Job {
      * @throws IllegalStateException if job is already complete or completing
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean =
+    internal actual fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean =
         when (makeCompletingInternal(proposedUpdate, mode)) {
             COMPLETING_COMPLETED -> true
             COMPLETING_WAITING_CHILDREN -> false
@@ -821,7 +827,7 @@ public open class JobSupport(active: Boolean) : Job {
         }
     }
 
-    override val children: Sequence<Job> get() = buildSequence<Job> {
+    public actual final override val children: Sequence<Job> get() = buildSequence<Job> {
         val state = this@JobSupport.state
         when (state) {
             is Child -> yield(state.childJob)
@@ -832,14 +838,15 @@ public open class JobSupport(active: Boolean) : Job {
     }
 
     @Suppress("OverridingDeprecatedMember")
-    override fun attachChild(child: Job): DisposableHandle =
+    public actual override fun attachChild(child: Job): DisposableHandle =
         installNode(onCancelling = true, invokeImmediately = true, node = Child(this, child))
 
     /**
      * Override to process any exceptions that were encountered while invoking completion handlers
      * installed via [invokeOnCompletion].
+     * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun handleException(exception: Throwable) {
+    internal actual open fun handleException(exception: Throwable) {
         throw exception
     }
 
@@ -850,19 +857,25 @@ public open class JobSupport(active: Boolean) : Job {
      *               null when it has completed normally.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun onCancellation(exceptionally: CompletedExceptionally?) {}
+    internal actual open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
 
     /**
      * Override for post-completion actions that need to do something with the state.
      * @param mode completion mode.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected open fun afterCompletion(state: Any?, mode: Int) {}
+    internal actual open fun afterCompletion(state: Any?, mode: Int) {}
 
     // for nicer debugging
-    override fun toString(): String = "Job{${stateString()}}"
+    public override fun toString(): String =
+        "${nameString()}{${stateString()}}"
 
-    protected fun stateString(): String {
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal actual open fun nameString(): String = classSimpleName
+
+    private fun stateString(): String {
         val state = this.state
         return when (state) {
             is Finishing -> buildString {
@@ -939,14 +952,20 @@ public open class JobSupport(active: Boolean) : Job {
         return state.exceptionOrNull
     }
 
-    protected fun getCompletedInternal(): Any? {
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal fun getCompletedInternal(): Any? {
         val state = this.state
         check(state !is Incomplete) { "This job has not completed yet" }
         if (state is CompletedExceptionally) throw state.exception
         return state
     }
 
-    protected suspend fun awaitInternal(): Any? {
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal suspend fun awaitInternal(): Any? {
         val state = this.state
         if (state !is Incomplete) {
             // already complete -- just return result
@@ -989,7 +1008,7 @@ private class Empty(override val isActive: Boolean) : JobSupport.Incomplete {
 }
 
 private class JobImpl(parent: Job? = null) : JobSupport(true) {
-    init { initParentJob(parent) }
+    init { initParentJobInternal(parent) }
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_COMPLETING
 }
 

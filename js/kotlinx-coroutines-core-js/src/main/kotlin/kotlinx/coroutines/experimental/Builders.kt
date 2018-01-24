@@ -59,8 +59,7 @@ public actual fun launch(
     val coroutine = if (start.isLazy)
         LazyStandaloneCoroutine(newContext, block) else
         StandaloneCoroutine(newContext, active = true)
-    coroutine.initParentJob(newContext[Job])
-    start(block, coroutine, coroutine)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 
@@ -106,7 +105,7 @@ public actual suspend fun <T> withContext(
         context = newContext,
         delegate = cont,
         resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE)
-    completion.initParentJob(newContext[Job]) // attach to job
+    completion.initParentJobInternal(newContext[Job]) // attach to job
     start(block, completion)
     completion.getResult()
 }
@@ -117,9 +116,9 @@ private open class StandaloneCoroutine(
         private val parentContext: CoroutineContext,
         active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override fun onCancellation(exceptionally: CompletedExceptionally?) {
+    override fun onCancellation(cause: Throwable?) {
         // note the use of the parent's job context below!
-        if (exceptionally != null) handleCoroutineException(parentContext, exceptionally.exception)
+        if (cause != null) handleCoroutineException(parentContext, cause)
     }
 }
 

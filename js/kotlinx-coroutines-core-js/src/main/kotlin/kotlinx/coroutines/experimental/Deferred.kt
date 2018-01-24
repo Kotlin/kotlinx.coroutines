@@ -150,8 +150,7 @@ public actual fun <T> async(
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
         DeferredCoroutine<T>(newContext, active = true)
-    coroutine.initParentJob(newContext[Job])
-    start(block, coroutine, coroutine)
+    coroutine.start(start, coroutine, block)
     return coroutine
 }
 

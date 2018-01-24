@@ -65,7 +65,7 @@ public actual fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Co
 private class CompletableDeferredImpl<T>(
     parent: Job?
 ) : JobSupport(true), CompletableDeferred<T> {
-    init { initParentJob(parent) }
+    init { initParentJobInternal(parent) }
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_COMPLETING
 
     override fun getCompleted(): T = getCompletedInternal() as T

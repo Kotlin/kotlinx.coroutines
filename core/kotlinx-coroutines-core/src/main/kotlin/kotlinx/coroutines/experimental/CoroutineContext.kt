@@ -130,7 +130,7 @@ internal fun CoroutineContext.updateThreadContext(): String? {
     return oldName
 }
 
-internal val CoroutineContext.coroutineName: String? get() {
+internal actual val CoroutineContext.coroutineName: String? get() {
     if (!DEBUG) return null
     val coroutineId = this[CoroutineId] ?: return null
     val coroutineName = this[CoroutineName]?.name ?: "coroutine"

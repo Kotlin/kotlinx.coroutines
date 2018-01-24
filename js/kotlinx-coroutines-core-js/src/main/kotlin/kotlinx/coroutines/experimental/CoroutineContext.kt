@@ -60,3 +60,4 @@ public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): 
 // No debugging facilities on JS
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
+internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on JS
