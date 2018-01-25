@@ -724,8 +724,8 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
     private fun makeCancellingList(list: NodeList, cause: Throwable?) {
         val cancelled = Cancelled(this, cause)
         state = Finishing(list, cancelled, false)
-        notifyCancellation(list, cause)
         onCancellationInternal(cancelled)
+        notifyCancellation(list, cause)
     }
 
     private fun makeCompletingOnCancel(cause: Throwable?): Boolean =
