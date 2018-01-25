@@ -1,5 +1,4 @@
 allprojects {
-    group = 'org.jetbrains.kotlinx'
     def deployVersion = properties['DeployVersion']
     if (deployVersion != null) version = deployVersion
 }
@@ -23,6 +22,7 @@ buildscript {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+        classpath "org.jetbrains.kotlinx:kotlinx-coroutines-debug-gradle-plugin"
     }
 }
 
@@ -67,7 +67,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
             }
         }
     }
-    
+
     tasks.withType(Test) {
         testLogging {
             showStandardStreams = true
@@ -112,10 +112,12 @@ def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
 // configure atomicfu for JVM modules
 configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {
     apply plugin: 'kotlinx-atomicfu'
+    apply plugin: 'kotlinx-coroutines-debug'
 
     dependencies {
         compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
         testCompile "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
+        testCompile "org.jetbrains.kotlinx:kotlinx-coroutines-debug-test"
     }
 
     atomicFU {
@@ -132,6 +134,16 @@ configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) ==
     test {
         classpath = files(configurations.testRuntime, atomicFU.outputs, sourceSets.test.output.classesDirs,
                 sourceSets.main.output.resourcesDir)
+    }
+
+    debuggerTransformMain {
+        inputFiles = atomicFU.outputs.files
+    }
+
+    testWithDebugger {
+        useJUnit {
+            includeCategories 'kotlinx.coroutines.debug.test.DebuggableTest'
+        }
     }
 }
 
@@ -179,7 +191,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             }
         }
     }
-    
+
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
     }

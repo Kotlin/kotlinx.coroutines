@@ -20,6 +20,22 @@ include 'kotlinx-coroutines-android'
 include 'kotlinx-coroutines-javafx'
 include 'kotlinx-coroutines-swing'
 
+includeBuild ('debug/kotlinx-coroutines-debug') {
+    dependencySubstitution {
+        substitute module('org.jetbrains.kotlinx:kotlinx-coroutines-debug') with project(':')
+    }
+}
+includeBuild ('debug/kotlinx-coroutines-debug-gradle-plugin') {
+    dependencySubstitution {
+        substitute module('org.jetbrains.kotlinx:kotlinx-coroutines-debug-gradle-plugin') with project(':')
+    }
+}
+includeBuild ('debug/kotlinx-coroutines-debug-test') {
+    dependencySubstitution {
+        substitute module('org.jetbrains.kotlinx:kotlinx-coroutines-debug-test') with project(':')
+    }
+}
+
 include 'kotlinx-coroutines-core-js'
 include 'js-stub'
 include 'example-frontend-js'

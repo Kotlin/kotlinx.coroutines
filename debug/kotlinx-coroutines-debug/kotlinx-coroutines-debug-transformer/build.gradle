@@ -1,0 +1,5 @@
+dependencies {
+    //compile 'org.ow2.asm:asm-all:5.2'
+    compile files('libs/asm-all-jb.jar') //workaround for https://youtrack.jetbrains.com/issue/KT-19766
+    compile project(':kotlinx-coroutines-debug-manager')
+}

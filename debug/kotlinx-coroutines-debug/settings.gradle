@@ -1,0 +1,4 @@
+rootProject.name = 'kotlinx-coroutines-debug'
+include 'kotlinx-coroutines-debug-agent'
+include 'kotlinx-coroutines-debug-transformer'
+include 'kotlinx-coroutines-debug-manager'

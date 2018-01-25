@@ -1,0 +1,82 @@
+buildscript {
+    apply from: file('../gradle/load-props.gradle')
+
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
+    id 'maven-publish'
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+    apply plugin: 'kotlin'
+
+    dependencies {
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    }
+}
+
+dependencies {
+    //compileOnly project(':kotlinx-coroutines-debug-agent')
+    compile project(':kotlinx-coroutines-debug-agent') //explained below
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version" //will be add to pom.xml when publish
+}
+
+jar {
+    enabled = false //prevent `build` task from empty jar creation
+    dependsOn shadowJar //real jar, will be resolved as artifact when depends on this module
+}
+
+
+shadowJar {
+    classifier = null
+
+    configurations = [project.configurations.compileOnly, project.configurations.compile]
+
+    dependencies {
+        include dependency('org.jetbrains.asm:asm-all.*') //from ":kotlinx-coroutines-debug-transformer"
+        include dependency(':kotlinx-coroutines-debug.*')
+    }
+
+    relocate 'org.jetbrains.org.objectweb.asm', 'kotlinx.coroutines.debug.org.objectweb.asm'
+}
+
+jar {
+    manifest {
+        attributes 'Premain-Class': 'kotlinx.coroutines.debug.agent.Agent'
+        attributes 'Agent-Class': 'kotlinx.coroutines.debug.agent.Agent'
+        attributes 'Can-Redefine-Classes': true
+        attributes 'Can-Retransform-Classes': true
+    }
+}
+
+// in ideal world we should make dependency on project(':kotlinx-coroutines-debug-agent') compileOnly
+// and remove shadow dependency on stdlib. after that we can publish artifact with correct pom.xml
+// (with dependency only on stdlib) with standard mavenJava publication
+//
+// The problem is: after making dependency on project(':kotlinx-coroutines-debug-agent') compileOnly
+// idea can't resolve dependencies for editor and code of 'kotlinx-coroutines-debug-test'
+// and 'kotlinx-coroutines-gradle-plugin' modules become very red
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+        /*mavenJava(MavenPublication) {
+            from components.java
+        }*/
+    }
+}
+
+//will be called as ':clean' from the root project, needed to clean this build's subprojects
+clean.dependsOn subprojects.collect { it.tasks.clean }

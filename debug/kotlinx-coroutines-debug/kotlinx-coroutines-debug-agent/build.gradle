@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":kotlinx-coroutines-debug-manager")
+    compile project(":kotlinx-coroutines-debug-transformer")
+}

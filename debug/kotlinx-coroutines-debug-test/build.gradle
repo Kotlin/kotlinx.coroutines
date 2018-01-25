@@ -1,0 +1,31 @@
+buildscript {
+    apply from: file('../gradle/load-props.gradle')
+
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'maven-publish'
+apply plugin: 'kotlin'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'junit:junit:4.12'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-debug"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
