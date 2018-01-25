@@ -149,6 +149,3 @@ public actual open class TestBase actual constructor() {
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }
-
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-actual typealias TestResult = Unit

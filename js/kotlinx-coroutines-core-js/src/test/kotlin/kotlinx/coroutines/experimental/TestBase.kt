@@ -61,11 +61,12 @@ public actual open class TestBase actual constructor() {
         finished = true
     }
 
+    // todo: The dynamic (promise) result is a work-around for missing suspend tests, see KT-22228
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ): TestResult {
+    ): dynamic {
         var exCount = 0
         var ex: Throwable? = null
         return promise(block = block, context = CoroutineExceptionHandler { context, e ->
@@ -95,7 +96,3 @@ public actual open class TestBase actual constructor() {
 
 private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
     then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
-
-// todo: This is a work-around for missing suspend tests, see KT-22228
-@Suppress("ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE", "ACTUAL_WITHOUT_EXPECT")
-actual typealias TestResult = Promise<Any?>
