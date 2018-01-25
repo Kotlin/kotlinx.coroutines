@@ -117,6 +117,7 @@ public actual open class TestBase actual constructor() {
         checkTestThreads(threadsBefore)
     }
 
+    @Suppress("ACTUAL_WITHOUT_EXPECT")
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
@@ -148,3 +149,6 @@ public actual open class TestBase actual constructor() {
             error("Too few unhandled exceptions $exCount, expected ${unhandled.size}")
     }
 }
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+actual typealias TestResult = Unit

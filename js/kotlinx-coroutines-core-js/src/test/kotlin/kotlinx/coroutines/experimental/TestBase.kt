@@ -65,10 +65,10 @@ public actual open class TestBase actual constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    ) {
+    ): TestResult {
         var exCount = 0
         var ex: Throwable? = null
-        val promise = promise(block = block, context = CoroutineExceptionHandler { context, e ->
+        return promise(block = block, context = CoroutineExceptionHandler { context, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
             if (exCount > unhandled.size)
@@ -90,11 +90,12 @@ public actual open class TestBase actual constructor() {
             error?.let { throw it }
             check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
         }
-        // todo: This is a work-around for missing suspend tests, see KT-22228
-        @Suppress("UnsafeCastFromDynamic")
-        return promise.asDynamic()
     }
 }
 
 private fun <T> Promise<T>.finally(block: () -> Unit): Promise<T> =
     then(onFulfilled = { value -> block(); value }, onRejected = { ex -> block(); throw ex })
+
+// todo: This is a work-around for missing suspend tests, see KT-22228
+@Suppress("ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE", "ACTUAL_WITHOUT_EXPECT")
+actual typealias TestResult = Promise<Any?>

@@ -31,5 +31,9 @@ public expect open class TestBase constructor() {
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
-    )
+    ): TestResult
 }
+
+// todo: This is a work-around for missing suspend tests, see KT-22228
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect class TestResult
