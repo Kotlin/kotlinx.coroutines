@@ -189,6 +189,29 @@ public open class LockFreeLinkedListNode {
 
     // ------ addXXX util ------
 
+    /**
+     * Given:
+     * ```
+     *                +-----------------------+
+     *          this  |         node          V  next
+     *          +---+---+     +---+---+     +---+---+
+     *  ... <-- | P | N |     | P | N |     | P | N | --> ....
+     *          +---+---+     +---+---+     +---+---+
+     *                ^                       |
+     *                +-----------------------+
+     * ```
+     * Produces:
+     * ```
+     *          this            node             next
+     *          +---+---+     +---+---+     +---+---+
+     *  ... <-- | P | N | ==> | P | N | --> | P | N | --> ....
+     *          +---+---+     +---+---+     +---+---+
+     *                ^         |   ^         |
+     *                +---------+   +---------+
+     * ```
+     *  Where `==>` denotes linearization point.
+     *  Returns `false` if `next` was not following `this` node.
+     */
     @PublishedApi
     internal fun addNext(node: Node, next: Node): Boolean {
         node._prev.lazySet(this)
@@ -462,6 +485,28 @@ public open class LockFreeLinkedListNode {
 
     // ------ other helpers ------
 
+    /**
+     * Given:
+     * ```
+     *
+     *          prev            this             next
+     *          +---+---+     +---+---+     +---+---+
+     *  ... <-- | P | N | --> | P | N | --> | P | N | --> ....
+     *          +---+---+     +---+---+     +---+---+
+     *              ^ ^         |             |
+     *              | +---------+             |
+     *              +-------------------------+
+     * ```
+     * Produces:
+     * ```
+     *          prev            this             next
+     *          +---+---+     +---+---+     +---+---+
+     *  ... <-- | P | N | --> | P | N | --> | P | N | --> ....
+     *          +---+---+     +---+---+     +---+---+
+     *                ^         |   ^         |
+     *                +---------+   +---------+
+     * ```
+     */
     private fun finishAdd(next: Node) {
         next._prev.loop { nextPrev ->
             if (nextPrev is Removed || this.next !== next) return // next was removed, remover fixes up links
@@ -483,6 +528,7 @@ public open class LockFreeLinkedListNode {
     private fun markPrev(): Node {
         _prev.loop { prev ->
             if (prev is Removed) return prev.ref
+            check(prev !== this) { "Cannot remove node that was not fully added" }
             val removedPrev = (prev as Node).removed()
             if (_prev.compareAndSet(prev, removedPrev)) return prev
         }
