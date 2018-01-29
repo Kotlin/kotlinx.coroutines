@@ -1,9 +1,9 @@
 {
   "name": "kotlinx-coroutines-core-js",
   "devDependencies": {
-    "mocha": "^4.1.0"
+    "mocha": "4.1.0"
   },
   "dependencies": {
-    "source-map-support": "^0.5.2"
+    "source-map-support": "0.5.3"
   }
 }
