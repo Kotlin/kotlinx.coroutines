@@ -55,7 +55,7 @@ if (platform == "jvm") {
                 dependsOn(tasks.getByPath(":$project.name-js:classes"))
                 dependsOn(tasks.getByPath(":$project.name-common:classes"))
                 dependsOn(project.configurations.compileClasspath)
-                classpath = project.configurations.compileClasspath.files
+                classpath = project.configurations.compileClasspath.files + project.sourceSets.main.output.files
             }
         }
     }
