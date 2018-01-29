@@ -46,14 +46,13 @@ interface ActorJob<in E> : SendChannel<E> {
 
 /**
  * Launches new coroutine that is receiving messages from its mailbox channel
- * and returns a reference to the coroutine as an [ActorJob]. The resulting
+ * and returns a reference to its mailbox channel as a [SendChannel]. The resulting
  * object can be used to [send][SendChannel.send] messages to this coroutine.
  *
  * The scope of the coroutine contains [ActorScope] interface, which implements
  * both [CoroutineScope] and [ReceiveChannel], so that coroutine can invoke
  * [receive][ReceiveChannel.receive] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
- * The running coroutine is cancelled when the its job is [cancelled][Job.cancel].
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
@@ -66,14 +65,52 @@ interface ActorJob<in E> : SendChannel<E> {
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
- * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
- * and will be started implicitly on the first invocation of [join][Job.join] or on a first message
- * [sent][SendChannel.send] to this coroutine's mailbox channel.
+ * it will be started implicitly on the first message
+ * [sent][SendChannel.send] to this actors's mailbox channel.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ *
+ * ### Using actors
+ *
+ * A typical usage of the actor builder looks like this:
+ *
+ * ```
+ * val c = actor {
+ *     // initialize actor's state
+ *     for (msg in channel) {
+ *         // process message here
+ *     }
+ * }
+ * // send messages to the actor
+ * c.send(...)
+ * ...
+ * // stop the actor when it is no longer needed
+ * c.close()
+ * ```
+ *
+ * ### Stopping and cancelling actors
+ *
+ * When the inbox channel of the actor is [closed][SendChannel.close] it sends a special "close token" to the actor.
+ * The actor still processes all the messages that were already sent and then "`for (msg in channel)`" loop terminates
+ * and the actor completes.
+ *
+ * If the actor needs to be aborted without processing all the messages that were already sent to it, then
+ * it shall be created with a parent job:
+ *
+ * ```
+ * val job = Job()
+ * val c = actor(parent = job) {  ... }
+ * ...
+ * // abort the actor
+ * job.cancel()
+ * ```
+ *
+ * When actor's parent job is [cancelled][Job.cancel], then actor's job becomes cancelled. It means that
+ * "`for (msg in channel)`" and other cancellable suspending functions throw [CancellationException] and actor
+ * completes without processing remaining messages.
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param capacity capacity of the channel's buffer (no buffer by default).
