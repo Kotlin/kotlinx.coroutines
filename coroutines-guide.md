@@ -741,17 +741,17 @@ the standard `lazy` function in cases when computation of the value involves sus
 
 We can define async-style functions that invoke `doSomethingUsefulOne` and `doSomethingUsefulTwo`
 _asynchronously_ using [async] coroutine builder. It is a good style to name such functions with 
-either "async" prefix of "Async" suffix to highlight the fact that they only start asynchronous 
-computation and one needs to use the resulting deferred value to get the result.
+"Async" suffix to highlight the fact that they only start asynchronous computation and one needs
+to use the resulting deferred value to get the result.
 
 ```kotlin
 // The result type of asyncSomethingUsefulOne is Deferred<Int>
-fun asyncSomethingUsefulOne() = async {
+fun somethingUsefulOneAsync() = async {
     doSomethingUsefulOne()
 }
 
 // The result type of asyncSomethingUsefulTwo is Deferred<Int>
-fun asyncSomethingUsefulTwo() = async {
+fun somethingUsefulTwoAsync() = async {
     doSomethingUsefulTwo()
 }
 ```
@@ -767,8 +767,8 @@ The following example shows their use outside of coroutine:
 fun main(args: Array<String>) {
     val time = measureTimeMillis {
         // we can initiate async actions outside of a coroutine
-        val one = asyncSomethingUsefulOne()
-        val two = asyncSomethingUsefulTwo()
+        val one = somethingUsefulOneAsync()
+        val two = somethingUsefulTwoAsync()
         // but waiting for a result must involve either suspending or blocking.
         // here we use `runBlocking { ... }` to block the main thread while waiting for the result
         runBlocking {
