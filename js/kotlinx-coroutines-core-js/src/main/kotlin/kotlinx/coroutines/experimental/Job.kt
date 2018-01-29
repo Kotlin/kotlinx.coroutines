@@ -724,6 +724,7 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
     private fun makeCancellingList(list: NodeList, cause: Throwable?) {
         val cancelled = Cancelled(this, cause)
         state = Finishing(list, cancelled, false)
+        onFinishingInternal(cancelled)
         onCancellationInternal(cancelled)
         notifyCancellation(list, cause)
     }
@@ -761,23 +762,34 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
                 return COMPLETING_ALREADY_COMPLETING
             if (state is Finishing && state.completing)
                 return COMPLETING_ALREADY_COMPLETING
-            val child: Child = firstChild(state) ?: run {
-                // or else complete immediately w/o children
-                updateState(proposedUpdate, mode)
-                return COMPLETING_COMPLETED
-            }
-            // must promote to list to correct operate on child lists
-            if (state is JobNode<*>) {
-                promoteSingleToNodeList(state)
-                continue@loop // retry
-            }
+            val child: Child? = firstChild(state) ?: // or else complete immediately w/o children
+                when {
+                    state !is Finishing && hasOnFinishingHandler(proposedUpdate) -> null // unless it has onCompleting handler
+                    else -> {
+                        updateState(proposedUpdate, mode)
+                        return COMPLETING_COMPLETED
+                    }
+                }
+            val list = state.list ?: // must promote to list to correctly operate on child lists
+                when (state) {
+                    is Empty -> {
+                        promoteEmptyToNodeList(state)
+                        continue@loop // retry
+                    }
+                    is JobNode<*> -> {
+                        promoteSingleToNodeList(state)
+                        continue@loop // retry
+                    }
+                    else -> error("Unexpected state with an empty list: $state")
+                }
             // cancel all children in list on exceptional completion
             if (proposedUpdate is CompletedExceptionally)
-                child.cancelChildrenInternal(proposedUpdate.exception)
+                child?.cancelChildrenInternal(proposedUpdate.exception)
             // switch to completing state
-            val completing = Finishing(state.list!!, (state as? Finishing)?.cancelled, true)
+            val completing = Finishing(list, (state as? Finishing)?.cancelled, true)
             this.state = completing
-            if (tryWaitForChild(child, proposedUpdate))
+            if (state !is Finishing) onFinishingInternal(proposedUpdate)
+            if (child != null && tryWaitForChild(child, proposedUpdate))
                 return COMPLETING_WAITING_CHILDREN
             updateState(proposedUpdate, mode = MODE_ATOMIC_DEFAULT)
             return COMPLETING_COMPLETED
@@ -859,6 +871,16 @@ internal actual open class JobSupport actual constructor(active: Boolean) : Job 
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal actual open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
+
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal actual open fun hasOnFinishingHandler(update: Any?) = false
+
+    /**
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    internal actual open fun onFinishingInternal(update: Any?) {}
 
     /**
      * Override for completion actions that need to do something with the state.

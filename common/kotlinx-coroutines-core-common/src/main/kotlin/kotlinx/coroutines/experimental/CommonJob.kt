@@ -87,6 +87,8 @@ internal expect open class JobSupport(active: Boolean) : Job {
 
     internal fun initParentJobInternal(parent: Job?)
     internal fun makeCompletingOnce(proposedUpdate: Any?, mode: Int): Boolean
+    internal open fun hasOnFinishingHandler(update: Any?): Boolean
+    internal open fun onFinishingInternal(update: Any?)
     internal open fun onCompletionInternal(state: Any?, mode: Int)
     internal open fun onStartInternal()
     internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?)

@@ -159,8 +159,8 @@ class CommonWithContextTest : TestBase() {
                 }
             } catch (e: Throwable) {
                 expect(7)
-                // make sure IOException, not CancellationException is thrown!
-                assertTrue(e is TestException)
+                // make sure TestException, not CancellationException is thrown!
+                assertTrue(e is TestException, "Caught $e")
             }
         }
         expect(2)

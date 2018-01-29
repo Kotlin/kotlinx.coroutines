@@ -188,9 +188,10 @@ private open class StandaloneCoroutine(
     private val parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override fun onCancellation(cause: Throwable?) {
+    override fun hasOnFinishingHandler(update: Any?) = update is CompletedExceptionally
+    override fun onFinishingInternal(update: Any?) {
         // note the use of the parent's job context below!
-        if (cause != null) handleCoroutineException(parentContext, cause)
+        if (update is CompletedExceptionally) handleCoroutineException(parentContext, update.exception)
     }
 }
 
