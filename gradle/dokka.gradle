@@ -52,6 +52,7 @@ if (platform == "jvm") {
             }
             // depends on JS & Common, too
             afterEvaluate {
+                dependsOn(tasks.getByPath(":$project.name:classes"))
                 dependsOn(tasks.getByPath(":$project.name-js:classes"))
                 dependsOn(tasks.getByPath(":$project.name-common:classes"))
                 dependsOn(project.configurations.compileClasspath)
