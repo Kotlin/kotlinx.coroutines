@@ -1,8 +1,17 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22.1
+
+* Migrated to Kotlin 1.2.21.
+* Improved `actor` builder documentation (see #210) and fixed bugs in rendered documentation due to multiplatform.
+* Fixed `runBlocking` to properly support specified dispatchers (see #209).
+* Fixed data race in `Job` implementation (it was hanging at `LockFreeLinkedList.helpDelete` on certain stress tests).
+* `AbstractCoroutine.onCancellation` is invoked before cancellation handler that is set via `invokeOnCompletion`.
+* Ensure that `launch` handles uncaught exception before another coroutine that uses `join` on it resumes (see #208).
+
 ## Version 0.22
 
-* Migrated to Kotlin 1.2.20
+* Migrated to Kotlin 1.2.20.
 * Introduced stable public API for `AbstractCoroutine`:
   * Implements `Job`, `Continuation`, and `CoroutineScope`.
   * Has overridable `onStart`, `onCancellation`, `onCompleted` and `onCompletedExceptionally` functions.
