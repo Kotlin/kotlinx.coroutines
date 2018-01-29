@@ -55,7 +55,7 @@ class JobHandlersUpgradeStressTest : TestBase() {
                 cyclicBarrier.await()
                 val job = job ?: break
                 // burn some time
-                repeat(rnd.nextInt(30)) { sink.incrementAndGet() }
+                repeat(rnd.nextInt(3000)) { sink.incrementAndGet() }
                 // cancel job
                 job.cancel()
                 cyclicBarrier.await()
@@ -72,14 +72,14 @@ class JobHandlersUpgradeStressTest : TestBase() {
                     val job = job ?: break
                     val state = State()
                     // burn some time
-                    repeat(rnd.nextInt(10)) { sink.incrementAndGet() }
+                    repeat(rnd.nextInt(1000)) { sink.incrementAndGet() }
                     val handle =
                         job.invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = invokeImmediately) {
                             if (!state.state.compareAndSet(0, 1))
                                 error("Fired more than once or too late: state=${state.state.value}")
                         }
                     // burn some time
-                    repeat(rnd.nextInt(10)) { sink.incrementAndGet() }
+                    repeat(rnd.nextInt(1000)) { sink.incrementAndGet() }
                     // dispose
                     handle.dispose()
                     cyclicBarrier.await()

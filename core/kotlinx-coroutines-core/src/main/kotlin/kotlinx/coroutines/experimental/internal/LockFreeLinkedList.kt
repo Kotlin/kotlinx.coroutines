@@ -528,9 +528,42 @@ public open class LockFreeLinkedListNode {
     private fun markPrev(): Node {
         _prev.loop { prev ->
             if (prev is Removed) return prev.ref
-            check(prev !== this) { "Cannot remove node that was not fully added" }
-            val removedPrev = (prev as Node).removed()
+            // See detailed comment in findHead on why `prev === this` is a special case for which we know that
+            // the prev should have being pointing to the head of list but finishAdd that was supposed
+            // to do that is not complete yet.
+            val removedPrev = (if (prev === this) findHead() else (prev as Node)).removed()
             if (_prev.compareAndSet(prev, removedPrev)) return prev
+        }
+    }
+
+    /**
+     * Finds the head of the list (implementing [LockFreeLinkedListHead]) by following [next] pointers.
+     *
+     * The code in [kotlinx.coroutines.experimental.JobSupport] performs upgrade of a single node to a list.
+     * It uses [addOneIfEmpty] to add the list head to "empty list of a single node" once.
+     * During upgrade a transient state of the list looks like this:
+     *
+     * ```
+     *                +-----------------+
+     *                |                 |
+     *          node  V       head      |
+     *          +---+---+     +---+---+ |
+     *      +-> | P | N | --> | P | N |-+
+     *      |   +---+---+     +---+---+
+     *      |     |   ^         |
+     *      +---- +   +---------+
+     * ```
+     *
+     * The [prev] pointer in `node` still points to itself when [finishAdd] (invoked inside [addOneIfEmpty])
+     * has not completed yet. If this state is observed, then we know that [prev] should have been pointing
+     * to the list head. This function is looking up the head by following consistent chain of [next] pointers.
+     */
+    private fun findHead(): Node {
+        var cur = this
+        while (true) {
+            if (cur is LockFreeLinkedListHead) return cur
+            cur = cur.next.unwrap()
+            check(cur !== this) { "Cannot loop to this while looking for list head" }
         }
     }
 
