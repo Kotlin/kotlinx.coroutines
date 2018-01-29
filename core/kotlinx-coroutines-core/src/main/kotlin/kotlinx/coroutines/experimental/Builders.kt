@@ -155,6 +155,11 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
  * in this blocked thread until the completion of this coroutine.
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
  *
+ * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
+ * the specified dispatcher while the current thread is blocked. If the specified dispatcher implements [EventLoop]
+ * interface and this `runBlocking` invocation is performed from inside of the this event loop's thread, then
+ * this event loop is processed using its [processNextEvent][EventLoop.processNextEvent] method until coroutine completes.
+ *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
  *
@@ -166,9 +171,13 @@ public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
-    val eventLoop = if (context[ContinuationInterceptor] == null) BlockingEventLoop(currentThread) else null
-    val newContext = newCoroutineContext(context + (eventLoop ?: EmptyCoroutineContext))
-    val coroutine = BlockingCoroutine<T>(newContext, currentThread, privateEventLoop = eventLoop != null)
+    val contextInterceptor = context[ContinuationInterceptor]
+    val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
+    val eventLoop = if (privateEventLoop) BlockingEventLoop(currentThread) else contextInterceptor as? EventLoop
+    val newContext = newCoroutineContext(
+        if (privateEventLoop) context + (eventLoop as ContinuationInterceptor) else context
+    )
+    val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop, privateEventLoop)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
 }
@@ -210,10 +219,9 @@ private class RunCompletion<in T>(
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val blockedThread: Thread,
+    private val eventLoop: EventLoop?,
     private val privateEventLoop: Boolean
 ) : AbstractCoroutine<T>(parentContext, true) {
-    private val eventLoop: EventLoop? = parentContext[ContinuationInterceptor] as? EventLoop
-
     init {
         if (privateEventLoop) require(eventLoop is BlockingEventLoop)
     }
