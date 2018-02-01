@@ -33,21 +33,31 @@ import kotlin.coroutines.experimental.CoroutineContext
  *     * current thread's [Thread.uncaughtExceptionHandler] is invoked.
  */
 public actual fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
-    context[CoroutineExceptionHandler]?.let {
-        it.handleException(context, exception)
-        return
+    // if exception handling fails, make sure the original exception is not lost
+    try {
+        context[CoroutineExceptionHandler]?.let {
+            it.handleException(context, exception)
+            return
+        }
+        // ignore CancellationException (they are normal means to terminate a coroutine)
+        if (exception is CancellationException) return
+        // try cancel job in the context
+        context[Job]?.cancel(exception)
+        // use additional extension handlers
+        ServiceLoader.load(CoroutineExceptionHandler::class.java).forEach { handler ->
+            handler.handleException(context, exception)
+        }
+        // use thread's handler
+        val currentThread = Thread.currentThread()
+        currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+    } catch (handlerException: Throwable) {
+        // simply rethrow if handler threw the original exception
+        if (handlerException === exception) throw exception
+        // handler itself crashed for some other reason -- that is bad -- keep both
+        throw RuntimeException("Exception while trying to handle coroutine exception", exception).apply {
+            addSuppressed(handlerException)
+        }
     }
-    // ignore CancellationException (they are normal means to terminate a coroutine)
-    if (exception is CancellationException) return
-    // try cancel job in the context
-    context[Job]?.cancel(exception)
-    // use additional extension handlers
-    ServiceLoader.load(CoroutineExceptionHandler::class.java).forEach { handler ->
-        handler.handleException(context, exception)
-    }
-    // use thread's handler
-    val currentThread = Thread.currentThread()
-    currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
 }
 
 /**

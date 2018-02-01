@@ -101,8 +101,15 @@ Use `kotlinx-coroutines-core-js` artifact in your dependencies.
 In obfuscated code, fields with different types can have the same names,
 and `AtomicReferenceFieldUpdater` may be unable to find the correct ones.
 To avoid field overloading by type during obfuscation, add this to your config:
+
 ```
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
+```
+
+You also need to keep this class if you build your Android releases with `minifyEnabled true`:
+
+```
+-keep class kotlinx.coroutines.experimental.android.AndroidExceptionPreHandler
 ```
