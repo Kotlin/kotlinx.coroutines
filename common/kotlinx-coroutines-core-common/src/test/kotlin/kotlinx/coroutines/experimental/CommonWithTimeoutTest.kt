@@ -109,5 +109,20 @@ class CommonWithTimeoutTest : TestBase() {
         }
         finish(5)
     }
+
+    @Test
+    fun testBadClass() = runTest {
+        val bad = BadClass()
+        val result = withTimeout(100) {
+            bad
+        }
+        assertSame(bad, result)
+    }
+
+    class BadClass {
+        override fun equals(other: Any?): Boolean = error("Should not be called")
+        override fun hashCode(): Int = error("Should not be called")
+        override fun toString(): String = error("Should not be called")
+    }
 }
 

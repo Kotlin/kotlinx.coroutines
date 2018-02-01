@@ -83,7 +83,7 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(startBlock: () ->
         CompletedExceptionally(e)
     }
     return when {
-        result == COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
+        result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
         makeCompletingOnce(result, MODE_IGNORE) -> {
             if (result is CompletedExceptionally) throw result.exception else result
         }
