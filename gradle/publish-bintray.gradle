@@ -4,6 +4,9 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+def platform = platformOf(project)
+def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
+
 // --------------- pom configuration ---------------
 
 def pomConfig = {
@@ -30,9 +33,13 @@ def pomConfig = {
 
 // ------------- tasks
 
-task sourcesJar(type: Jar, dependsOn: classes) {
+task sourcesJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
+    if (project.name == coroutines_core && platform != "common") {
+        // add common source, too
+        from rootProject.file("common/$project.name-common/src/main/kotlin")
+    }
 }
 
 publishing {
