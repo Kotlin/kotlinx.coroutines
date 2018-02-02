@@ -93,6 +93,9 @@ internal class ByteBufferChannel(
     override var totalBytesWritten: Long = 0L
         private set
 
+    override val closedCause: Throwable?
+        get() = closed?.cause
+
     override fun close(cause: Throwable?): Boolean {
         if (closed != null) return false
         val newClosed = if (cause == null) ClosedElement.EmptyCause else ClosedElement(cause)

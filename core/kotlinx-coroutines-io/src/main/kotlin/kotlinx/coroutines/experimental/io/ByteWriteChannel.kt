@@ -44,6 +44,11 @@ public interface ByteWriteChannel {
     public val totalBytesWritten: Long
 
     /**
+     * An closure cause exception or `null` if closed successfully or not yet closed
+     */
+    public val closedCause: Throwable?
+
+    /**
      * Writes as much as possible and only suspends if buffer is full
      */
     suspend fun writeAvailable(src: ByteArray, offset: Int, length: Int): Int
