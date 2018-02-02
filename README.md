@@ -107,9 +107,3 @@ To avoid field overloading by type during obfuscation, add this to your config:
     volatile <fields>;
 }
 ```
-
-You also need to keep this class if you build your Android releases with `minifyEnabled true`:
-
-```
--keep class kotlinx.coroutines.experimental.android.AndroidExceptionPreHandler
-```

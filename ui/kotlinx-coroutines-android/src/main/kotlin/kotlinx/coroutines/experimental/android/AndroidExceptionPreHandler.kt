@@ -1,9 +1,9 @@
 package kotlinx.coroutines.experimental.android
 
-import kotlinx.coroutines.experimental.CoroutineExceptionHandler
-import java.lang.reflect.Modifier
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.CoroutineContext
+import android.support.annotation.*
+import kotlinx.coroutines.experimental.*
+import java.lang.reflect.*
+import kotlin.coroutines.experimental.*
 
 private val getter =
     try {
@@ -20,6 +20,7 @@ private val getter =
  *
  * @suppress This is an internal impl class.
  */
+@Keep
 class AndroidExceptionPreHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {
