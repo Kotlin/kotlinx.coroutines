@@ -126,4 +126,19 @@ class CommonWithTimeoutOrNullTest : TestBase() {
         println("Executed: $counter times")
         check(counter in 1..2)
     }
+
+    @Test
+    fun testBadClass() = runTest {
+        val bad = BadClass()
+        val result = withTimeoutOrNull(100) {
+            bad
+        }
+        assertSame(bad, result)
+    }
+
+    class BadClass {
+        override fun equals(other: Any?): Boolean = error("Should not be called")
+        override fun hashCode(): Int = error("Should not be called")
+        override fun toString(): String = error("Should not be called")
+    }
 }
