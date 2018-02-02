@@ -67,16 +67,24 @@ private class OutputAdapter(parent: Job?, private val channel: ByteWriteChannel)
             try {
                 while (true) {
                     val task = rendezvous(0)
-                    if (task === CloseToken) break
-                    if (task === FlushToken) channel.flush()
+                    if (task === CloseToken) {
+                        break
+                    }
+                    else if (task === FlushToken) {
+                        channel.flush()
+                        channel.closedCause?.let { throw it }
+                    }
                     else if (task is ByteArray) channel.writeFully(task, offset, length)
                 }
             } catch (t: Throwable) {
                 if (t !is CancellationException) {
                     channel.close(t)
                 }
+                throw t
             } finally {
-                channel.close()
+                if (!channel.close()) {
+                    channel.closedCause?.let { throw it }
+                }
             }
         }
     }
@@ -102,8 +110,12 @@ private class OutputAdapter(parent: Job?, private val channel: ByteWriteChannel)
 
     @Synchronized
     override fun close() {
-        loop.submitAndAwait(CloseToken)
-        loop.shutdown()
+        try {
+            loop.submitAndAwait(CloseToken)
+            loop.shutdown()
+        } catch (t: Throwable) {
+            throw IOException(t)
+        }
     }
 }
 
@@ -222,6 +234,12 @@ private abstract class BlockingAdapter(val parent: Job? = null) {
 
         while (state.value === thread) {
             LockSupport.park()
+        }
+
+        state.value.let { state ->
+            if (state is Throwable) {
+                throw state
+            }
         }
 
         return result.value

@@ -149,7 +149,7 @@ class JavaIOTest : TestBase() {
     @Test
     fun testPipedALot() = runBlocking {
         val exec = newFixedThreadPoolContext(2, "blocking-io")
-        val numberOfLines = 10000
+        val numberOfLines = 1000 * stressTestMultiplier
         val pipe = Pipe.open()
 
         val channel1 = ByteChannel()
@@ -235,7 +235,7 @@ class JavaIOTest : TestBase() {
             val data = ByteArray(4096)
             Random().nextBytes(data)
 
-            repeat(10000) {
+            repeat(100 * stressTestMultiplier * stressTestMultiplierSqrt) {
                 val channel = ByteChannel(false)
                 launch(exec) {
                     for (i in 1..count) {
@@ -274,6 +274,84 @@ class JavaIOTest : TestBase() {
             j.invokeOnCompletion { cause ->
                 if (cause != null) throw cause
             }
+        }
+    }
+
+    @Test
+    fun testOutputAdapterExceptionFromWrite() = runTest {
+        val channel = ByteChannel(true)
+
+        val output = channel.toOutputStream()
+
+        launch(coroutineContext) {
+            channel.cancel()
+        }
+
+        yield()
+
+        try {
+            output.write(1)
+            fail("write() should fail")
+        } catch (expected: CancellationException) {
+        }
+    }
+
+    @Test
+    fun testOutputAdapterExceptionFromClose() = runTest {
+        val channel = ByteChannel(true)
+
+        val output = channel.toOutputStream()
+
+        launch(coroutineContext) {
+            channel.cancel()
+        }
+
+        yield()
+
+        try {
+            output.close()
+            fail("close() should fail")
+        } catch (expected: IOException) {
+        }
+    }
+
+    @Test
+    fun testOutputAdapterExceptionFromFlush() = runTest {
+        val channel = ByteChannel(true)
+
+        val output = channel.toOutputStream()
+
+        launch(coroutineContext) {
+            channel.cancel()
+        }
+
+        yield()
+
+        try {
+            output.flush()
+            fail("flush() should fail")
+        } catch (expected: CancellationException) {
+        }
+    }
+
+    @Test
+    fun testOutputAdapterExceptionFromUse() = runTest {
+        val channel = ByteChannel(true)
+
+        val output = channel.toOutputStream()
+
+        launch(coroutineContext) {
+            channel.cancel()
+        }
+
+        yield()
+
+        try {
+            output.use {
+                output.write(1)
+            }
+            fail("write() should fail")
+        } catch (expected: CancellationException) {
         }
     }
 }
