@@ -18,21 +18,21 @@ launch {
 
 ## Modules
 
-* [common](common/README.md) - common coroutines across all backends:
+* [common](common/README.md) &mdash; common coroutines across all backends:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `delay` and `yield` top-level suspending functions.
-* [js](js/README.md) - Kotlin/JS implementation of common coroutines with `Promise` support.
-* [core](core/README.md) -- Kotlin/JVM implementation of common coroutines with additional features:
+* [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
+* [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `CommonPool` coroutine context (default on JVM);
   * `Channel` and `Mutex` communication and synchronization primitives;
   * `produce` and `actor` coroutine builders;
   * `select` expression support and more.
-* [reactive](reactive/README.md) -- modules that provide builders and iteration support for various reactive streams libraries:
+* [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
-* [ui](ui/README.md) -- modules that provide coroutine dispatchers for various single-threaded UI libraries:
-  * Android, JavaFx, and Swing.
-* [integration](integration/README.md) -- modules that provide integration with various asynchronous callback- and future-based libraries.
+* [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
+  * Android, JavaFX, and Swing.
+* [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries.
   * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and synchronous networking/IO.
 
 ## Documentation
