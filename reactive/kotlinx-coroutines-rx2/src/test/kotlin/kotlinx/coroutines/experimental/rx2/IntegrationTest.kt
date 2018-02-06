@@ -21,6 +21,7 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
+import org.hamcrest.core.IsNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -58,6 +59,8 @@ class IntegrationTest(
         }
         assertNSE { observable.awaitFirst() }
         assertThat(observable.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertThat(observable.awaitFirstOrNull(), IsNull())
+        assertThat(observable.awaitFirstOrElse { "ELSE" }, IsEqual("ELSE"))
         assertNSE { observable.awaitLast() }
         assertNSE { observable.awaitSingle() }
         var cnt = 0
@@ -74,6 +77,9 @@ class IntegrationTest(
             send("OK")
         }
         assertThat(observable.awaitFirst(), IsEqual("OK"))
+        assertThat(observable.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertThat(observable.awaitFirstOrNull(), IsEqual("OK"))
+        assertThat(observable.awaitFirstOrElse { "ELSE" }, IsEqual("OK"))
         assertThat(observable.awaitLast(), IsEqual("OK"))
         assertThat(observable.awaitSingle(), IsEqual("OK"))
         var cnt = 0
@@ -94,6 +100,9 @@ class IntegrationTest(
             }
         }
         assertThat(observable.awaitFirst(), IsEqual(1))
+        assertThat(observable.awaitFirstOrDefault(0), IsEqual(1))
+        assertThat(observable.awaitFirstOrNull(), IsEqual(1))
+        assertThat(observable.awaitFirstOrElse { 0 }, IsEqual(1))
         assertThat(observable.awaitLast(), IsEqual(n))
         assertIAE { observable.awaitSingle() }
         checkNumbers(n, observable)
