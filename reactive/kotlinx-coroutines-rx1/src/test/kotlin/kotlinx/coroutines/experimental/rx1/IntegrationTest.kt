@@ -91,6 +91,26 @@ class IntegrationTest(
     }
 
     @Test
+    fun testObservableWithNull() = runBlocking<Unit> {
+        val observable = rxObservable<String?>(ctx(coroutineContext)) {
+            if (delay) delay(1)
+            send(null)
+        }
+        assertThat(observable.awaitFirst(), IsNull())
+        assertThat(observable.awaitFirstOrDefault("OK"), IsNull())
+        assertThat(observable.awaitFirstOrNull(), IsNull())
+        assertThat(observable.awaitFirstOrElse { "OK" }, IsNull())
+        assertThat(observable.awaitLast(), IsNull())
+        assertThat(observable.awaitSingle(), IsNull())
+        var cnt = 0
+        observable.consumeEach {
+            assertThat(it, IsNull())
+            cnt++
+        }
+        assertThat(cnt, IsEqual(1))
+    }
+
+    @Test
     fun testNumbers() = runBlocking<Unit> {
         val n = 100 * stressTestMultiplier
         val observable = rxObservable<Int>(ctx(coroutineContext)) {
