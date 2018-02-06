@@ -46,6 +46,26 @@ public suspend fun <T> Publisher<T>.awaitFirst(): T = awaitOne(Mode.FIRST)
 public suspend fun <T> Publisher<T>.awaitFirstOrDefault(default: T): T = awaitOne(Mode.FIRST_OR_DEFAULT, default)
 
 /**
+ * Awaits for the first value from the given observable or `null` value if none is emitted without blocking a
+ * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+public suspend fun <T> Publisher<T>.awaitFirstOrNull(): T? = awaitOne(Mode.FIRST_OR_DEFAULT)
+
+/**
+ * Awaits for the first value from the given observable or call [defaultValue] to get a value if none is emitted without blocking a
+ * thread and returns the resulting value or throws the corresponding exception if this observable had produced error.
+ *
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException].
+ */
+public suspend fun <T> Publisher<T>.awaitFirstOrElse(defaultValue: () -> T): T = awaitOne(Mode.FIRST_OR_DEFAULT) ?: defaultValue()
+
+/**
  * Awaits for the last value from the given publisher without blocking a thread and
  * returns the resulting value or throws the corresponding exception if this publisher had produced error.
  *

@@ -112,6 +112,50 @@ class FluxSingleTest {
     }
 
     @Test
+    fun testAwaitFirstOrNull() {
+        val flux = flux<String>(CommonPool) {
+            send(Flux.empty<String>().awaitFirstOrNull() ?: "OK")
+        }
+
+        checkSingleValue(flux) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAwaitFirstOrNullWithValues() {
+        val flux = flux(CommonPool) {
+            send((Flux.just("O", "#").awaitFirstOrNull() ?: "!") + "K")
+        }
+
+        checkSingleValue(flux) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAwaitFirstOrElse() {
+        val flux = flux(CommonPool) {
+            send(Flux.empty<String>().awaitFirstOrElse { "O" } + "K")
+        }
+
+        checkSingleValue(flux) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
+    fun testAwaitFirstOrElseWithValues() {
+        val flux = flux(CommonPool) {
+            send(Flux.just("O", "#").awaitFirstOrElse { "!" } + "K")
+        }
+
+        checkSingleValue(flux) {
+            assertEquals("OK", it)
+        }
+    }
+
+    @Test
     fun testAwaitLast() {
         val flux = flux(CommonPool) {
             send(Flux.just("#", "O").awaitLast() + "K")

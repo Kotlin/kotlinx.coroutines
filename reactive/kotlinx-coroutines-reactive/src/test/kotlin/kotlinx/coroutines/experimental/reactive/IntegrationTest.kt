@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsInstanceOf
+import org.hamcrest.core.IsNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -58,6 +59,8 @@ class IntegrationTest(
         }
         assertNSE { pub.awaitFirst() }
         assertThat(pub.awaitFirstOrDefault("OK"), IsEqual("OK"))
+        assertThat(pub.awaitFirstOrNull(), IsNull())
+        assertThat(pub.awaitFirstOrElse { "ELSE" }, IsEqual("ELSE"))
         assertNSE { pub.awaitLast() }
         assertNSE { pub.awaitSingle() }
         var cnt = 0
@@ -73,6 +76,8 @@ class IntegrationTest(
         }
         assertThat(pub.awaitFirst(), IsEqual("OK"))
         assertThat(pub.awaitFirstOrDefault("!"), IsEqual("OK"))
+        assertThat(pub.awaitFirstOrNull(), IsEqual("OK"))
+        assertThat(pub.awaitFirstOrElse { "ELSE" }, IsEqual("OK"))
         assertThat(pub.awaitLast(), IsEqual("OK"))
         assertThat(pub.awaitSingle(), IsEqual("OK"))
         var cnt = 0
@@ -95,6 +100,8 @@ class IntegrationTest(
         assertThat(pub.awaitFirst(), IsEqual(1))
         assertThat(pub.awaitFirstOrDefault(0), IsEqual(1))
         assertThat(pub.awaitLast(), IsEqual(n))
+        assertThat(pub.awaitFirstOrNull(), IsEqual(1))
+        assertThat(pub.awaitFirstOrElse { 0 }, IsEqual(1))
         assertIAE { pub.awaitSingle() }
         checkNumbers(n, pub)
         val channel = pub.openSubscription()

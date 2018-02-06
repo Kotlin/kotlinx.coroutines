@@ -18,6 +18,8 @@ Suspending extension functions and suspending iteration:
 | [Single.await][rx.Single.await] | Awaits for completion of the single value and returns it 
 | [Observable.awaitFirst][rx.Observable.awaitFirst] | Returns the first value from the given observable
 | [Observable.awaitFirstOrDefault][rx.Observable.awaitFirstOrDefault] | Returns the first value from the given observable or default
+| [Observable.awaitFirstOrElse][rx.Observable.awaitFirstOrElse] | Returns the first value from the given observable or default from a function
+| [Observable.awaitFirstOrNull][rx.Observable.awaitFirstOrNull] | Returns the first value from the given observable or null
 | [Observable.awaitLast][rx.Observable.awaitFirst] | Returns the last value from the given observable
 | [Observable.awaitSingle][rx.Observable.awaitSingle] | Returns the single value from the given observable
 | [Observable.openSubscription][rx.Observable.openSubscription] | Subscribes to observable and returns [ReceiveChannel] 
@@ -47,6 +49,8 @@ Conversion functions:
 [rx.Single.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-single/await.html
 [rx.Observable.awaitFirst]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html
 [rx.Observable.awaitFirstOrDefault]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-default.html
+[rx.Observable.awaitFirstOrElse]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-else.html
+[rx.Observable.awaitFirstOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-null.html
 [rx.Observable.awaitSingle]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-single.html
 [rx.Observable.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/open-subscription.html
 [rx.Observable.iterator]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/iterator.html
