@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// :todo: Remove after transition to Kotlin 1.2.30+
+@file:Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.Continuation
