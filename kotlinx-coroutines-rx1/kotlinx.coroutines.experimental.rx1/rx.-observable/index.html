@@ -66,6 +66,34 @@ thread and returns the resulting value or throws the corresponding exception if 
 <tr>
 <td>
 
+        <p><a href="await-first-or-else.html">awaitFirstOrElse</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrElse</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx1$awaitFirstOrElse(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)))/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="await-first-or-else.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-else.html#T"><span class="identifier">T</span></a></code></div>
+
+        <p>Awaits for the first value from the given observable or call <a href="await-first-or-else.html#kotlinx.coroutines.experimental.rx1$awaitFirstOrElse(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)))/defaultValue">defaultValue</a> to get a value if none is emitted without blocking a
+thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="await-first-or-null.html">awaitFirstOrNull</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html"><span class="identifier">Observable</span></a><span class="symbol">&lt;</span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">awaitFirstOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="await-first-or-null.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code></div>
+
+        <p>Awaits for the first value from the given observable or <code>null</code> value if none is emitted without blocking a
+thread and returns the resulting value or throws the corresponding exception if this observable had produced error.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
         <p><a href="await-last.html">awaitLast</a></p>
 
       </td>
