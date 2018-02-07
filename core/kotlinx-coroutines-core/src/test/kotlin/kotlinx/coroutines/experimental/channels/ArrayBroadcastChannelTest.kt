@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNull
-import org.junit.Assert.assertThat
+import org.junit.Assert.*
 import org.junit.Test
 
 class ArrayBroadcastChannelTest : TestBase() {
@@ -165,5 +165,17 @@ class ArrayBroadcastChannelTest : TestBase() {
             }
         }
         check(expected == 2)
+    }
+
+    @Test
+    fun testReceiveFromClosedSub() = runTest(
+        expected = { it is ClosedReceiveChannelException }
+    ) {
+        val channel = BroadcastChannel<Int>(1)
+        val sub = channel.openSubscription()
+        assertFalse(sub.isClosedForReceive)
+        sub.close()
+        assertTrue(sub.isClosedForReceive)
+        sub.receive()
     }
 }
