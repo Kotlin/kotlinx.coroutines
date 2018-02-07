@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22.2
+
+* Android: Use @Keep annotation on AndroidExceptionPreHandler to fix the problem on Android with minification enabled (see #214).
+* Reactive: Added `awaitFirstOrDefault` and `awaitFirstOrNull` extensions (see #224, PR by @konrad-kaminski).
+* Core: Fixed `withTimeout` and `withTimeoutOrNull` that should not use equals on result (see #212, PR by @konrad-kaminski).
+* Core: Fixed hanged receive from a closed subscription of BroadcastChannel (see #226).
+* IO: fixed error propagation (see https://github.com/ktorio/ktor/issues/301)
+* Include common sources into sources jar file to work around KT-20971.
+* Fixed bugs in documentation due to MPP.
+
 ## Version 0.22.1
 
 * Migrated to Kotlin 1.2.21.

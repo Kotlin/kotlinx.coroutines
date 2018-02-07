@@ -31,5 +31,5 @@ dependencies {
     compile 'com.android.support:design:25.4.0'
     testCompile 'junit:junit:4.12'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.1"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.2"
 }
