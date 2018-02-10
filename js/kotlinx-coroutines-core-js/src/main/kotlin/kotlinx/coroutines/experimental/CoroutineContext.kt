@@ -40,10 +40,10 @@ public actual object Unconfined : CoroutineDispatcher() {
  * This is the default [CoroutineDispatcher] that is used by all standard builders like
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  */
-@Suppress("PropertyName")
+@Suppress("PropertyName", "UnsafeCastFromDynamic")
 public actual val DefaultDispatcher: CoroutineDispatcher = when {
     // Check if we are in the browser and must use window.postMessage to avoid setTimeout throttling
-    jsTypeOf(window) != "undefined" -> window.asCoroutineDispatcher()
+    jsTypeOf(window) != "undefined" && jsTypeOf(window.asDynamic().addEventListener) != "undefined" -> window.asCoroutineDispatcher()
     else -> NodeDispatcher()
 }
 
