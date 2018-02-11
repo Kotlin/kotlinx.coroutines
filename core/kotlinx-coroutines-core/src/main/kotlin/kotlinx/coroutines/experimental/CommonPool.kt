@@ -22,9 +22,15 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
- * It uses [java.util.concurrent.ForkJoinPool] when available, which implements efficient work-stealing algorithm for its queues, so every
- * coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
- * When available, it wraps `ForkJoinPool.commonPool` and provides a similar shared pool where not.
+ *
+ * If there isn't a SecurityManager present it uses [java.util.concurrent.ForkJoinPool] when available, which implements
+ * efficient work-stealing algorithm for its queues, so every coroutine resumption is dispatched as a separate task even
+ * when it already executes inside the pool. When available, it wraps `ForkJoinPool.commonPool` and provides a similar
+ * shared pool where not.
+ * 
+ * If there is a SecurityManager present (as would be if running inside a Java Web Start context) then a plain thread
+ * pool is created. This is to work around the fact that ForkJoinPool creates threads that cannot perform
+ * privileged actions.
  */
 object CommonPool : CoroutineDispatcher() {
     private var usePrivatePool = false
@@ -35,6 +41,7 @@ object CommonPool : CoroutineDispatcher() {
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
 
     private fun createPool(): ExecutorService {
+        if (System.getSecurityManager() != null) return createPlainPool()
         val fjpClass = Try { Class.forName("java.util.concurrent.ForkJoinPool") }
             ?: return createPlainPool()
         if (!usePrivatePool) {
