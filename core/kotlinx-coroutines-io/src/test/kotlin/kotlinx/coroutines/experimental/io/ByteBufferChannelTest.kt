@@ -631,6 +631,76 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
+    fun testReadAndWriteLarge() = runTest {
+        val count = 128L * 1024 * stressTestMultiplier // * 8192 -> 1G * M
+        val data = ByteBuffer.allocate(8192)!!
+        Random().nextBytes(data.array())
+
+        launch("writer") {
+            repeat(count.toInt()) {
+                data.clear()
+                ch.writeFully(data)
+            }
+            ch.close()
+        }
+
+        launch("reader") {
+            val buffer = ByteBuffer.allocate(8192)!!
+            var read = 0L
+            val total = count * 8192
+
+            while (read < total) {
+                buffer.clear()
+                val rc = ch.readFully(buffer)
+                if (rc == -1) break
+                read += rc
+            }
+
+            assertEquals(total, read)
+
+            buffer.clear()
+            assertEquals(-1, ch.readAvailable(buffer))
+        }
+    }
+
+    @Test
+    fun testReadAndWriteLargeViaLookAheadSession() = runTest {
+        val count = 128L * 1024 * stressTestMultiplier // * 8192 -> 1G * M
+        val data = ByteBuffer.allocate(8192)!!
+        Random().nextBytes(data.array())
+
+        launch("writer") {
+            repeat(count.toInt()) {
+                data.clear()
+                ch.writeFully(data)
+            }
+            ch.close()
+        }
+
+        launch("reader") {
+            var read = 0L
+            val total = count * 8192
+
+            ch.lookAheadSuspend {
+                while (read < total) {
+                    val bb = request(0, 1)
+                    if (bb == null) {
+                        if (!awaitAtLeast(1)) break
+                        continue
+                    }
+                    val rc = bb.remaining()
+                    bb.position(bb.limit())
+                    read += rc
+                    consumed(rc)
+                }
+            }
+
+            assertEquals(total, read)
+            assertEquals(-1, ch.readAvailable(ByteBuffer.allocate(8192)))
+        }
+    }
+
+    @Test
     fun testCopyLarge() {
         val count = 100 * 256 * stressTestMultiplier // * 8192
 
@@ -750,6 +820,16 @@ class ByteBufferChannelTest : TestBase() {
         joinerJob.invokeOnCompletion(onCancelling = true, handler = handler)
 
         latch.await()
+    }
+
+    private fun CoroutineScope.launch(name: String = "child", block: suspend () -> Unit): Job {
+        return launch(context = DefaultDispatcher + CoroutineName(name), parent = coroutineContext[Job]) {
+            block()
+        }.apply {
+            invokeOnCompletion(true) { t ->
+                if (t != null) ch.cancel(t)
+            }
+        }
     }
 
     private fun launch(block: suspend () -> Unit): Job {
