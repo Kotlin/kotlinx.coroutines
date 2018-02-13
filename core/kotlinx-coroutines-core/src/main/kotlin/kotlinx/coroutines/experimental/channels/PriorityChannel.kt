@@ -43,35 +43,28 @@ public open class PriorityChannel<E>(
 
     private val lock = ReentrantLock()
     private val buffer = PriorityQueue<Any>(capacity)
-    @Volatile
-    private var size: Int = 0
 
     protected final override val isBufferAlwaysEmpty: Boolean get() = false
-    protected final override val isBufferEmpty: Boolean get() = size == 0
+    protected final override val isBufferEmpty: Boolean get() = buffer.isEmpty()
     protected final override val isBufferAlwaysFull: Boolean get() = false
-    protected final override val isBufferFull: Boolean get() = size == capacity
+    protected final override val isBufferFull: Boolean get() = buffer.size == capacity
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
     protected override fun offerInternal(element: E): Any {
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
         lock.withLock {
-            val size = this.size
             closedForSend?.let { return it }
-            if (size < capacity) {
-                // tentatively put element to buffer
-                this.size = size + 1 // update size before checking queue (!!!)
+            if (buffer.size < capacity) {
                 // check for receivers that were waiting on empty queue
-                if (size == 0) {
+                if (buffer.isEmpty()) {
                     loop@ while (true) {
                         receive = takeFirstReceiveOrPeekClosed() ?: break@loop // break when no receivers queued
                         if (receive is Closed) {
-                            this.size = size // restore size
                             return receive!!
                         }
                         token = receive!!.tryResumeReceive(element, idempotent = null)
                         if (token != null) {
-                            this.size = size // restore size
                             return@withLock
                         }
                     }
@@ -92,19 +85,15 @@ public open class PriorityChannel<E>(
         var receive: ReceiveOrClosed<E>? = null
         var token: Any? = null
         lock.withLock {
-            val size = this.size
             closedForSend?.let { return it }
-            if (size < capacity) {
-                // tentatively put element to buffer
-                this.size = size + 1 // update size before checking queue (!!!)
+            if (buffer.size < capacity) {
                 // check for receivers that were waiting on empty queue
-                if (size == 0) {
+                if (buffer.isEmpty()) {
                     loop@ while (true) {
                         val offerOp = describeTryOffer(element)
                         val failure = select.performAtomicTrySelect(offerOp)
                         when {
                             failure == null -> { // offered successfully
-                                this.size = size // restore size
                                 receive = offerOp.result
                                 token = offerOp.resumeToken
                                 check(token != null)
@@ -112,7 +101,6 @@ public open class PriorityChannel<E>(
                             }
                             failure === OFFER_FAILED -> break@loop // cannot offer -> Ok to queue to buffer
                             failure === ALREADY_SELECTED || failure is Closed<*> -> {
-                                this.size = size // restore size
                                 return failure
                             }
                             else -> error("performAtomicTrySelect(describeTryOffer) returned $failure")
@@ -121,7 +109,6 @@ public open class PriorityChannel<E>(
                 }
                 // let's try to select sending this element to buffer
                 if (!select.trySelect(null)) { // :todo: move trySelect completion outside of lock
-                    this.size = size // restore size
                     return ALREADY_SELECTED
                 }
                 buffer.add(element) // actually queue element
@@ -139,16 +126,13 @@ public open class PriorityChannel<E>(
     protected override fun pollInternal(): Any? {
         var send: Send? = null
         var token: Any? = null
-        var result: Any? = null
-        lock.withLock {
-            val size = this.size
-            if (size == 0) return closedForSend ?: POLL_FAILED // when nothing can be read from buffer
-            // size > 0: not empty -- retrieve element
-            result = buffer.remove()
-            this.size = size - 1 // update size before checking queue (!!!)
+        var result: Any? = lock.withLock {
+            if (buffer.isEmpty()){
+                return closedForSend ?: POLL_FAILED
+            }
             // check for senders that were waiting on full queue
             var replacement: Any? = POLL_FAILED
-            if (size == capacity) {
+            if (buffer.size == capacity) {
                 loop@ while (true) {
                     send = takeFirstSendOrPeekClosed() ?: break
                     token = send!!.tryResumeSend(idempotent = null)
@@ -159,13 +143,16 @@ public open class PriorityChannel<E>(
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
-                this.size = size // restore size
                 buffer.add(replacement)
             }
+            // when nothing can be read from buffer
+            // size > 0: not empty -- retrieve element
+            buffer.remove()
         }
         // complete send the we're taken replacement from
-        if (token != null)
+        if (token != null) {
             send!!.completeResumeSend(token!!)
+        }
         return result
     }
 
@@ -175,14 +162,12 @@ public open class PriorityChannel<E>(
         var token: Any? = null
         var result: Any? = null
         lock.withLock {
-            val size = this.size
-            if (size == 0) return closedForSend ?: POLL_FAILED
-            // size > 0: not empty -- retrieve element
-            result = buffer.remove()
-            this.size = size - 1 // update size before checking queue (!!!)
+            if (buffer.isEmpty()) {
+                return closedForSend ?: POLL_FAILED
+            }
             // check for senders that were waiting on full queue
             var replacement: Any? = POLL_FAILED
-            if (size == capacity) {
+            if (buffer.size == capacity) {
                 loop@ while (true) {
                     val pollOp = describeTryPoll()
                     val failure = select.performAtomicTrySelect(pollOp)
@@ -196,7 +181,6 @@ public open class PriorityChannel<E>(
                         }
                         failure === POLL_FAILED -> break@loop // cannot poll -> Ok to take from buffer
                         failure === ALREADY_SELECTED -> {
-                            this.size = size // restore size
                             buffer.add(result) // restore head
                             return failure
                         }
@@ -211,19 +195,20 @@ public open class PriorityChannel<E>(
                 }
             }
             if (replacement !== POLL_FAILED && replacement !is Closed<*>) {
-                this.size = size // restore size
                 buffer.add(replacement)
             }
             // NOTE: Something about the else in ArrayChannel made me do this..
             if ((replacement === POLL_FAILED || replacement is Closed<*>) && !select.trySelect(null)) {
-                this.size = size // restore size
                 buffer.add(result) // restore head
                 return ALREADY_SELECTED
             }
+            // size > 0: not empty -- retrieve element
+            result = buffer.remove()
         }
         // complete send the we're taken replacement from
-        if (token != null)
+        if (token != null) {
             send!!.completeResumeSend(token!!)
+        }
         return result
     }
 
@@ -232,7 +217,6 @@ public open class PriorityChannel<E>(
         // clear buffer first
         lock.withLock {
             buffer.clear()
-            size = 0
         }
         // then clean all queued senders
         super.cleanupSendQueueOnCancel()
