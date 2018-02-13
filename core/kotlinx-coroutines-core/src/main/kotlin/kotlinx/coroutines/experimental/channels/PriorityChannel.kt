@@ -23,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * Channel with array buffer of a fixed [capacity].
+ * Channel with priority queue of a fixed [capacity].
  * Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
  *
  * This channel is created by `Channel(capacity)` factory function invocation.
@@ -38,7 +38,7 @@ public open class PriorityChannel<E>(
         val capacity: Int
 ) : AbstractChannel<E>() {
     init {
-        require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
+        require(capacity >= 1) { "PriorityChannel capacity must be at least 1, but $capacity was specified" }
     }
 
     private val lock = ReentrantLock()
