@@ -1,9 +1,12 @@
 {
   "name": "kotlinx-coroutines-core-js",
-  "devDependencies": {
-    "mocha": "4.1.0"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kotlin/kotlinx.coroutines.git"
   },
   "dependencies": {
+    "mocha": "4.1.0",
     "source-map-support": "0.5.3"
   }
 }
