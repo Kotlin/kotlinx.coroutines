@@ -132,7 +132,7 @@ private class RxObservableCoroutine<in T>(
         } catch (e: Throwable) {
             try {
                 if (!cancel(e))
-                    handleCoroutineException(coroutineContext, e)
+                    handleCoroutineException(context, e)
             } finally {
                 doLockedSignalCompleted()
             }
@@ -173,7 +173,7 @@ private class RxObservableCoroutine<in T>(
                     else
                         subscriber.onCompleted()
                 } catch (e: Throwable) {
-                    handleCoroutineException(coroutineContext, e)
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {

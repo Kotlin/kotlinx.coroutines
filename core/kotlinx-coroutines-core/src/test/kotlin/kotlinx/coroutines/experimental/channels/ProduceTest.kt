@@ -16,10 +16,9 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.JobCancellationException
-import kotlinx.coroutines.experimental.TestBase
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import kotlin.coroutines.experimental.*
 
 class ProduceTest : TestBase() {
     @Test

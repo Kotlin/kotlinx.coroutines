@@ -16,11 +16,12 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
+import kotlin.internal.*
 
 /**
- * Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
- * to its [coroutineContext] and its cancellation status via [isActive].
+ * Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient
+ * and fast access to its own cancellation status via [isActive].
  */
 public interface CoroutineScope {
     /**
@@ -33,20 +34,22 @@ public interface CoroutineScope {
      * }
      * ```
      *
-     * This property is a shortcut for `coroutineContext[Job]!!.isActive`. See [coroutineContext] and [Job].
+     * This property is a shortcut for `coroutineContext.isActive` in the scope when
+     * [CoroutineScope] is available.
+     * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
+     * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
      */
-    public actual val isActive: Boolean
+    public val isActive: Boolean
 
     /**
      * Returns the context of this coroutine.
-     * @suppress **Deprecated**: Renamed to [coroutineContext]
+     *
+     * @suppress: **Deprecated**: Replaced with top-level [kotlin.coroutines.experimental.coroutineContext].
      */
-    @Deprecated("Renamed to `coroutineContext`", replaceWith = ReplaceWith("coroutineContext"))
-    public val context: CoroutineContext
-
-    /**
-     * Returns the context of this coroutine.
-     */
-    @Suppress("DEPRECATION", "ACTUAL_WITHOUT_EXPECT")
-    public actual val coroutineContext: CoroutineContext get() = context
+    @Deprecated("Replace with top-level coroutineContext",
+        replaceWith = ReplaceWith("coroutineContext",
+            imports = ["kotlin.coroutines.experimental.coroutineContext"]))
+    @LowPriorityInOverloadResolution
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    public val coroutineContext: CoroutineContext
 }

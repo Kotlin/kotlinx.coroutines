@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.selects.*
 import org.junit.*
 import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class ObservableSubscriptionSelectTest() : TestBase() {
     @Test

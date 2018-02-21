@@ -203,7 +203,7 @@ public interface SelectInstance<in R> {
  * Note, that this function does not check for cancellation when it is not suspended.
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
-public inline suspend fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
+public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
     suspendCoroutineOrReturn { cont ->
         val scope = SelectBuilderImpl(cont)
         try {

@@ -17,11 +17,12 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import org.junit.*
+import org.junit.runner.*
+import org.junit.runners.*
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it,

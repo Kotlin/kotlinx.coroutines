@@ -1,14 +1,12 @@
 package kotlinx.coroutines.experimental.io
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
 import org.junit.*
 import org.junit.Test
-import java.io.IOException
+import java.io.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ByteBufferChannelScenarioTest : TestBase() {

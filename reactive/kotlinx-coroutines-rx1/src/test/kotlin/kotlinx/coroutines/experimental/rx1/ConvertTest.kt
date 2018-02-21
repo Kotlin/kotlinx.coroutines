@@ -17,11 +17,11 @@
 package kotlinx.coroutines.experimental.rx1
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.produce
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert.assertThat
-import org.junit.Test
+import kotlinx.coroutines.experimental.channels.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)

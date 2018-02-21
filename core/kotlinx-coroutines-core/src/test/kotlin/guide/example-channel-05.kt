@@ -19,7 +19,7 @@ package guide.channel.example05
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 fun numbersFrom(context: CoroutineContext, start: Int) = produce<Int>(context) {
     var x = start

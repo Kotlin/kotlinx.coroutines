@@ -1,29 +1,22 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
-import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
-import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
+import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
-import kotlinx.io.core.BufferView
-import kotlinx.io.core.BytePacketBuilder
-import kotlinx.io.core.readUTF8Line
-import kotlinx.io.pool.DefaultPool
-import kotlinx.io.pool.NoPoolImpl
+import kotlinx.io.core.*
+import kotlinx.io.pool.*
 import org.junit.*
-import org.junit.rules.ErrorCollector
-import org.junit.rules.Timeout
+import org.junit.Test
+import org.junit.rules.*
 import java.nio.CharBuffer
 import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ByteBufferChannelTest : TestBase() {
     @get:Rule
@@ -822,7 +815,7 @@ class ByteBufferChannelTest : TestBase() {
         latch.await()
     }
 
-    private fun CoroutineScope.launch(name: String = "child", block: suspend () -> Unit): Job {
+    private suspend fun launch(name: String = "child", block: suspend () -> Unit): Job {
         return launch(context = DefaultDispatcher + CoroutineName(name), parent = coroutineContext[Job]) {
             block()
         }.apply {

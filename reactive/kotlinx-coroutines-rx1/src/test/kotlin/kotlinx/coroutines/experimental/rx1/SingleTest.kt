@@ -17,16 +17,13 @@
 package kotlinx.coroutines.experimental.rx1
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.hamcrest.core.IsNull
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThat
-import org.junit.Before
-import org.junit.Test
-import rx.Observable
-import rx.Single
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.experimental.CancellationException
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import rx.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Tests emitting single item with [rxSingle].

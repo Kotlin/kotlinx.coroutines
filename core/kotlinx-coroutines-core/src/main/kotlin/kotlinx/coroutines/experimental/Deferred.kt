@@ -66,8 +66,9 @@ import kotlin.coroutines.experimental.*
  *  +-----------+
  * ```
  *
- * A deferred value is a [Job]. A job in the coroutine [context][CoroutineScope.coroutineContext] of [async] builder
- * represents the coroutine itself.
+ * A deferred value is a [Job]. A job in the
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * of [async] builder represents the coroutine itself.
  * A deferred value is active while the coroutine is working and cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
  * or the cancellation cause inside the coroutine.
@@ -143,7 +144,8 @@ public actual interface Deferred<out T> : Job {
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * of the parent coroutine may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *

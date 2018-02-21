@@ -17,15 +17,13 @@
 package kotlinx.coroutines.experimental.reactive
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.hamcrest.core.IsNull
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.reactivestreams.Publisher
-import kotlin.coroutines.experimental.CoroutineContext
+import org.hamcrest.MatcherAssert.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.runner.*
+import org.junit.runners.*
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class IntegrationTest(

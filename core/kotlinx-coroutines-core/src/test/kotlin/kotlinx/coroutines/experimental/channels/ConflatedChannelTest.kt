@@ -16,14 +16,11 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNull
-import org.junit.Assert.assertThat
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class ConflatedChannelTest : TestBase() {
     @Test

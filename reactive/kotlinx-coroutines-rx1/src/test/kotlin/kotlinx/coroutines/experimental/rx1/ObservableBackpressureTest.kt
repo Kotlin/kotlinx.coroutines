@@ -16,11 +16,10 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.junit.Test
-import rx.Subscriber
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import rx.*
+import kotlin.coroutines.experimental.*
 
 class ObservableBackpressureTest : TestBase() {
     @Test

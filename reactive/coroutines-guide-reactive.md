@@ -101,6 +101,7 @@ Let us illustrate it with the following example:
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -157,6 +158,7 @@ type.
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -230,6 +232,7 @@ as shown in the following example:
 import io.reactivex.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -277,6 +280,7 @@ by the publisher, because it is being closed automatically by `consumeEach`:
 import io.reactivex.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -332,9 +336,10 @@ operator with a buffer of size 1.
 The subscriber is slow. It takes 500 ms to process each item, which is simulated using `Thread.sleep`.
 
 <!--- INCLUDE
+import io.reactivex.schedulers.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.rx2.rxFlowable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.experimental.rx2.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -463,11 +468,10 @@ consuming coroutine in the context of the main thread and use [yield] function t
 sequence of updates and to release the main thread:
 
 <!--- INCLUDE
-import io.reactivex.subjects.BehaviorSubject
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.rx2.consumeEach
-import kotlinx.coroutines.experimental.yield
+import io.reactivex.subjects.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.rx2.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -501,11 +505,9 @@ that provides the same logic on top of coroutine channels directly,
 without going through the bridge to the reactive streams:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -613,8 +615,8 @@ into the single `fusedFilterMap` operator:
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import org.reactivestreams.Publisher
-import kotlin.coroutines.experimental.CoroutineContext
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -671,9 +673,9 @@ emits anything. However, we have [select] expression to rescue us in coroutines 
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import org.reactivestreams.Publisher
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlinx.coroutines.experimental.selects.whileSelect
+import kotlinx.coroutines.experimental.selects.*
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -740,8 +742,8 @@ operator using the later approach:
 <!--- INCLUDE
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import org.reactivestreams.Publisher
-import kotlin.coroutines.experimental.CoroutineContext
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -754,8 +756,10 @@ fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(co
 }
 ```
 
-Notice, the use of `coroutineContext` in the invocation of [launch] coroutine builder. It is used to refer
-to the [CoroutineScope.coroutineContext] that is provided by [publish] builder. This way, all the coroutines that are
+Notice, the use of 
+[coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+in the invocation of [launch] coroutine builder. It is used to refer
+to the context of the enclosing `publish` coroutine. This way, all the coroutines that are
 being launched here are [children](../coroutines-guide.md#children-of-a-coroutine) of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
 Moreover, since parent coroutine waits until all children are complete, this implementation fully
@@ -1054,7 +1058,6 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[CoroutineScope.coroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->

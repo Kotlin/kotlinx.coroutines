@@ -16,14 +16,11 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.MutexImpl
-import kotlinx.coroutines.experimental.yield
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.sync.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class SelectMutexTest : TestBase() {
     @Test

@@ -73,7 +73,9 @@ import kotlin.coroutines.experimental.intrinsics.*
  *  +-----------+
  * ```
  *
- * A job in the [coroutineContext][CoroutineScope.coroutineContext] represents the coroutine itself.
+ * A job in the
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * represents the coroutine itself.
  * A job is active while the coroutine is working and job's cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException].
  *
@@ -462,6 +464,25 @@ public actual suspend fun Job.joinChildren() {
 }
 
 // -------------------- CoroutineContext extensions --------------------
+
+/**
+ * Returns `true` when the [Job] of the coroutine in this context is still active
+ * (has not completed and was not cancelled yet).
+ *
+ * Check this property in long-running computation loops to support cancellation
+ * when [CoroutineScope.isActive] is not available:
+ *
+ * ```
+ * while (coroutineContext.isActive) {
+ *     // do some computation
+ * }
+ * ```
+ *
+ * The `coroutineContext.isActive` expression is a shortcut for `coroutineContext[Job]?.isActive == true`.
+ * See [Job.isActive].
+ */
+public actual val CoroutineContext.isActive: Boolean
+    get() = this[Job]?.isActive == true
 
 /**
  * Cancels [Job] of this context with an optional cancellation [cause]. The result is `true` if the job was

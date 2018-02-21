@@ -21,6 +21,7 @@ import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
+import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class ProduceConsumeTest(

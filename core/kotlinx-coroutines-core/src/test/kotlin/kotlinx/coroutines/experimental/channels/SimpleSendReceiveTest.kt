@@ -16,15 +16,13 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import org.hamcrest.core.IsEqual
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import org.junit.runner.*
+import org.junit.runners.*
+import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class SimpleSendReceiveTest(

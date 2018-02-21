@@ -17,8 +17,9 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Test
+import kotlin.coroutines.experimental.*
 
 class ArrayChannelTest : TestBase() {
     @Test

@@ -16,16 +16,14 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
+import io.reactivex.*
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.hamcrest.core.IsNull
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import kotlin.coroutines.experimental.CoroutineContext
+import org.hamcrest.MatcherAssert.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.runner.*
+import org.junit.runners.*
+import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class IntegrationTest(

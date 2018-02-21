@@ -16,9 +16,10 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.selects.select
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.sync.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {

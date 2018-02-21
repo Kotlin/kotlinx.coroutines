@@ -19,9 +19,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
 
 class CommonWithContextTest : TestBase() {
     @Test

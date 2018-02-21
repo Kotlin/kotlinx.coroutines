@@ -17,10 +17,10 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsNull
+import org.hamcrest.core.*
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Test
+import kotlin.coroutines.experimental.*
 
 class ArrayBroadcastChannelTest : TestBase() {
     @Test

@@ -18,7 +18,7 @@
 package guide.compose.example03
 
 import kotlinx.coroutines.experimental.*
-import kotlin.system.measureTimeMillis
+import kotlin.system.*
 
 suspend fun doSomethingUsefulOne(): Int {
     delay(1000L) // pretend we are doing something useful here

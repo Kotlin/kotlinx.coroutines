@@ -48,6 +48,7 @@ public expect interface DisposableHandle {
     public fun dispose()
 }
 
+public expect val CoroutineContext.isActive: Boolean
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")
 public expect fun CoroutineContext.cancel(cause: Throwable? = null): Boolean
 @Suppress("EXPECTED_DECLARATION_WITH_DEFAULT_PARAMETER")

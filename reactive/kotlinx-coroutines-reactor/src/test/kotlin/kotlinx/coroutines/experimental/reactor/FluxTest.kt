@@ -16,13 +16,10 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.*
+import org.junit.*
+import kotlin.coroutines.experimental.*
 
 class FluxTest : TestBase() {
     @Test

@@ -19,9 +19,9 @@ package guide.reactive.operators.example03
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import org.reactivestreams.Publisher
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlinx.coroutines.experimental.selects.whileSelect
+import kotlinx.coroutines.experimental.selects.*
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
     this@takeUntil.openSubscription().use { thisChannel -> // explicitly open channel to Publisher<T>

@@ -17,9 +17,10 @@
 package kotlinx.coroutines.experimental.sync
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
+import org.hamcrest.core.*
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Test
+import kotlin.coroutines.experimental.*
 
 class MutexTest : TestBase() {
     @Test

@@ -16,15 +16,12 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.channels.ArrayChannel
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.intrinsics.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class SelectArrayChannelTest : TestBase() {
     @Test

@@ -16,11 +16,10 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class SelectBiasTest {
     val n = 10_000

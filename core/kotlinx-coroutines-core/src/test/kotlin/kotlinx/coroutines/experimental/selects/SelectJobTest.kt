@@ -17,8 +17,9 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class SelectJobTest : TestBase() {
     @Test

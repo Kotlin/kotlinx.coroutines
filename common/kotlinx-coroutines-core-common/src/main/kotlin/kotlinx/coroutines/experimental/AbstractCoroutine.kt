@@ -47,6 +47,7 @@ public abstract class AbstractCoroutine<in T>(
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
+    @Deprecated("Replaced with context", replaceWith = ReplaceWith("context"))
     public final override val coroutineContext: CoroutineContext get() = context
 
     /**

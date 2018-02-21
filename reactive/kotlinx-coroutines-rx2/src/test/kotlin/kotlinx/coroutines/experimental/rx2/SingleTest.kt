@@ -16,16 +16,13 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
-import io.reactivex.Single
+import io.reactivex.*
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
-import java.util.concurrent.TimeUnit
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Tests emitting single item with [rxSingle].

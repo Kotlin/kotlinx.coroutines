@@ -1,12 +1,12 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.io.internal.asByteBuffer
-import org.junit.After
+import kotlinx.coroutines.experimental.io.internal.*
+import org.junit.*
 import org.junit.Test
-import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import java.io.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class CopyAndCloseTest : TestBase() {
     private val from = ByteChannel(true)

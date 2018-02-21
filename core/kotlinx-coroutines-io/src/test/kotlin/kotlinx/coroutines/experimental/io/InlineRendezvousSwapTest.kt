@@ -5,6 +5,7 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.internal.*
 import org.junit.Ignore
 import org.junit.Test
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 @Ignore

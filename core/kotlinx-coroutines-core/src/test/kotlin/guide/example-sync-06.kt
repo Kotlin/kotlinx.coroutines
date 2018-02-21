@@ -18,10 +18,9 @@
 package guide.sync.example06
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.system.measureTimeMillis
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
+import kotlinx.coroutines.experimental.sync.*
+import kotlin.system.*
+import kotlin.coroutines.experimental.*
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch

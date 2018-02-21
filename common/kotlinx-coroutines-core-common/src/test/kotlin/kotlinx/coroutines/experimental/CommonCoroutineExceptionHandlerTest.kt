@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CommonCoroutineExceptionHandlerTest : TestBase() {

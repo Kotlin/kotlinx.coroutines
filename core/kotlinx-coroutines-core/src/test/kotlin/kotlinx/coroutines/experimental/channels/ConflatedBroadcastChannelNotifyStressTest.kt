@@ -17,10 +17,11 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.junit.Test
-import java.util.concurrent.atomic.AtomicInteger
+import org.hamcrest.MatcherAssert.*
+import org.hamcrest.core.*
+import org.junit.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
 
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     val nSenders = 2
