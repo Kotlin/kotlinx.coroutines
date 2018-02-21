@@ -23,7 +23,7 @@ node {
 }
 
 task installDependencies(type: NpmTask) {
-    args = ['install', 'mocha', 'source-map-support']
+    args = ['install', 'mocha', 'source-map-support', '--no-save']
     if (project.hasProperty("teamcity")) args += 'mocha-teamcity-reporter'
 }
 
