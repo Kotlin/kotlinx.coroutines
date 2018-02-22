@@ -148,7 +148,12 @@ private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     active: Boolean
-) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E>
+) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E> {
+    override fun onCancellation(cause: Throwable?) {
+        if (!_channel.cancel(cause) && cause != null)
+            handleCoroutineException(context, cause)
+    }
+}
 
 private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,

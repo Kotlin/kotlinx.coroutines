@@ -105,5 +105,16 @@ public fun <E> buildChannel(
 ): ProducerJob<E> =
     produce(context, capacity, block = block) as ProducerJob<E>
 
-private class ProducerCoroutine<E>(parentContext: CoroutineContext, channel: Channel<E>) :
-    ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E>
+private class ProducerCoroutine<E>(
+    parentContext: CoroutineContext, channel: Channel<E>
+) : ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E> {
+    override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
+        val cause = exceptionally?.cause
+        val processed = when (exceptionally) {
+            is Cancelled -> _channel.cancel(cause) // producer coroutine was cancelled -- cancel channel
+            else -> _channel.close(cause) // producer coroutine has completed -- close channel
+        }
+        if (!processed && cause != null)
+            handleCoroutineException(context, cause)
+    }
+}

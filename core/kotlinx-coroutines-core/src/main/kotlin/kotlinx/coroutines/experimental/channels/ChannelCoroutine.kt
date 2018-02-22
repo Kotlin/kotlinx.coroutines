@@ -17,20 +17,15 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
-    private val _channel: Channel<E>,
+    protected val _channel: Channel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
     val channel: Channel<E>
         get() = this
-
-    override fun onCancellation(cause: Throwable?) {
-        if (!_channel.cancel(cause) && cause != null)
-            handleCoroutineException(context, cause)
-    }
 
     override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
 }
