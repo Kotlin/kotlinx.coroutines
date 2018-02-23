@@ -1,12 +1,22 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22.3
+
+* Fixed `produce` builder to close the channel on completion instead of cancelling it, which lead to lost elements with buffered channels (see #256).
+* Don't use `ForkJoinPool` if there is a `SecurityManager` present to work around JNLP problems (see #216, PR by @NikolayMetchev). 
+* JS: Check for undefined `window.addEventListener` when choosing default coroutine dispatcher (see #230, PR by @ScottPierce).
+* Update 3rd party dependencies:
+  * [kotlinx-coroutines-rx1](reactive/kotlinx-coroutines-rx1) to RxJava version `1.3.6`.
+  * [kotlinx-coroutines-rx2](reactive/kotlinx-coroutines-rx2) to RxJava version `2.1.9`.
+  * [kotlinx-coroutines-guava](integration/kotlinx-coroutines-guava) to Guava version `24.0-jre`.
+  
 ## Version 0.22.2
 
 * Android: Use @Keep annotation on AndroidExceptionPreHandler to fix the problem on Android with minification enabled (see #214).
 * Reactive: Added `awaitFirstOrDefault` and `awaitFirstOrNull` extensions (see #224, PR by @konrad-kaminski).
 * Core: Fixed `withTimeout` and `withTimeoutOrNull` that should not use equals on result (see #212, PR by @konrad-kaminski).
 * Core: Fixed hanged receive from a closed subscription of BroadcastChannel (see #226).
-* IO: fixed error propagation (see https://github.com/ktorio/ktor/issues/301)
+* IO: fixed error propagation (see https://github.com/ktorio/ktor/issues/301).
 * Include common sources into sources jar file to work around KT-20971.
 * Fixed bugs in documentation due to MPP.
 
