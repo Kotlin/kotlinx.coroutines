@@ -75,10 +75,7 @@ with the specified cancel cause.</p>
 <td>
         <div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
-        <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
-It uses <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html">java.util.concurrent.ForkJoinPool</a> when available, which implements efficient work-stealing algorithm for its queues, so every
-coroutine resumption is dispatched as a separate task even when it already executes inside the pool.
-When available, it wraps <code>ForkJoinPool.commonPool</code> and provides a similar shared pool where not.</p>
+        <p>Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.</p>
 
       </td>
 </tr><tr>
