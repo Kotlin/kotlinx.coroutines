@@ -1,4 +1,5 @@
-ext.guava_version = '21.0'
+ext.guava_version = '24.0-jre'
+
 dependencies {
     compile "com.google.guava:guava:$guava_version"
 }
