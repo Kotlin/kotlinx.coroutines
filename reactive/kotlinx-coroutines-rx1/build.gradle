@@ -1,5 +1,5 @@
 dependencies {
-    compile "io.reactivex:rxjava:1.2.6"
+    compile "io.reactivex:rxjava:1.3.6"
 }
 
 tasks.withType(dokka.getClass()) {
