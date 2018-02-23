@@ -16,13 +16,11 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Test
-import java.util.concurrent.TimeUnit
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.junit.Assert.*
+import java.util.concurrent.*
 
 /**
  * Tests emitting single item with [rxObservable].
@@ -73,7 +71,7 @@ class ObservableSingleTest {
         }
 
         checkErroneous(observable) {
-            assert(it is IllegalArgumentException)
+            assertTrue(it is IllegalArgumentException)
         }
     }
 
@@ -187,7 +185,7 @@ class ObservableSingleTest {
         }
 
         checkErroneous(observable) {
-            assert(it is IllegalStateException)
+            assertTrue(it is IllegalStateException)
             assertEquals("OK", it.message)
         }
     }

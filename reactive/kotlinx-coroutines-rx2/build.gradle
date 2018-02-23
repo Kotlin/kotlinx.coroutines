@@ -1,6 +1,6 @@
 dependencies {
     compile project(':kotlinx-coroutines-reactive')
-    compile 'io.reactivex.rxjava2:rxjava:2.0.6'
+    compile 'io.reactivex.rxjava2:rxjava:2.1.9'
 }
 
 tasks.withType(dokka.getClass()) {

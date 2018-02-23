@@ -16,9 +16,7 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Maybe
-import io.reactivex.Observable
-import io.reactivex.Single
+import io.reactivex.*
 
 fun <T> checkSingleValue(
     observable: Observable<T>,
@@ -33,7 +31,8 @@ fun checkErroneous(
         checker: (Throwable) -> Unit
 ) {
     val singleNotification = observable.materialize().blockingSingle()
-    checker(singleNotification.error)
+    val error = singleNotification.error ?: error("Excepted error")
+    checker(error)
 }
 
 fun <T> checkSingleValue(
