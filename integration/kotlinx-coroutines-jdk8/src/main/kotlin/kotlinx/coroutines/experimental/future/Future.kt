@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
 import java.util.function.BiConsumer
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.ContinuationInterceptor
@@ -112,6 +113,34 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
  */
 public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: Continuation<T> ->
     whenComplete(ContinuationConsumer(cont))
+}
+
+/**
+ * Converts this future to an instance of [Deferred].
+ */
+public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
+
+    // Fast path if already completed
+    if (this is Future<*> && isDone()){
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            CompletableDeferred(get() as T)
+        } catch (t: Throwable) {
+            CompletableDeferred<T>().also { it.completeExceptionally(t) }
+        }
+    }
+
+    val result = CompletableDeferred<T>()
+
+    whenComplete { value, exception ->
+        if (exception == null) {
+            result.complete(value)
+        } else {
+            result.completeExceptionally(exception)
+        }
+    }
+
+    return result
 }
 
 /**

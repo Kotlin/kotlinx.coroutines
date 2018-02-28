@@ -25,6 +25,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.coroutines.experimental.CoroutineContext
 
 class FutureTest : TestBase() {
@@ -240,19 +242,76 @@ class FutureTest : TestBase() {
             assertEquals("Part before first suspension must be wrapped", 1, depth.get())
             val result =
                     CompletableFuture.supplyAsync {
-                        while (depth.get() > 0) ;
+                        while (depth.get() > 0);
                         assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                         "OK"
                     }.await()
             assertEquals("Part after first suspension should be wrapped", 1, depth.get())
             CompletableFuture.supplyAsync {
-                while (depth.get() > 0) ;
+                while (depth.get() > 0);
                 assertEquals("Part inside suspension point should not be wrapped", 0, depth.get())
                 "ignored"
             }.await()
             result
         }
         assertThat(future.get(), IsEqual("OK"))
+    }
+
+    @Test
+    fun testCompletableFutureStageAsDeferred() = runBlocking {
+        val lock = ReentrantLock().apply { lock() }
+
+        val deferred: Deferred<Int> = CompletableFuture.supplyAsync {
+            lock.withLock { 42 }
+        }.asDeferred()
+
+        assertFalse(deferred.isCompleted)
+        lock.unlock()
+
+        assertEquals(42, deferred.await())
+        assertTrue(deferred.isCompleted)
+    }
+
+    @Test
+    fun testCompletedFutureAsDeferred() = runBlocking {
+        val deferred: Deferred<Int> = CompletableFuture.completedFuture(42).asDeferred()
+        assertEquals(42, deferred.await())
+    }
+
+    @Test
+    fun testFailedFutureAsDeferred() = runBlocking {
+        val future = CompletableFuture<Int>().apply { completeExceptionally(Exception("something went wrong")) }
+        val deferred = future.asDeferred()
+
+        assertTrue(deferred.isCompletedExceptionally)
+        assertEquals("something went wrong", deferred.getCompletionExceptionOrNull()!!.cause!!.message)
+
+        try {
+            deferred.await()
+            fail("deferred.await() should throw an exception")
+        } catch (e: Exception) {
+            assertEquals("something went wrong", e.cause!!.message)
+        }
+    }
+
+    @Test
+    fun testCompletableFutureWithExceptionAsDeferred() = runBlocking {
+        val lock = ReentrantLock().apply { lock() }
+
+        val deferred: Deferred<Int> = CompletableFuture.supplyAsync {
+            lock.withLock { throw Exception("something went wrong") }
+        }.asDeferred()
+
+        assertFalse(deferred.isCompleted)
+        lock.unlock()
+
+        try {
+            deferred.await()
+            fail("deferred.await() should throw an exception")
+        } catch (e: Exception) {
+            assertTrue(deferred.isCompletedExceptionally)
+            assertEquals("something went wrong", e.cause!!.message)
+        }
     }
 
     private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {
