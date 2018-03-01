@@ -17,13 +17,12 @@
 package kotlinx.coroutines.experimental.future
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CancellationException
 import org.hamcrest.core.IsEqual
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -280,17 +279,22 @@ class FutureTest : TestBase() {
 
     @Test
     fun testFailedFutureAsDeferred() = runBlocking {
-        val future = CompletableFuture<Int>().apply { completeExceptionally(Exception("something went wrong")) }
+        val future = CompletableFuture<Int>().apply {
+            completeExceptionally(TestException("something went wrong"))
+        }
         val deferred = future.asDeferred()
 
         assertTrue(deferred.isCompletedExceptionally)
-        assertEquals("something went wrong", deferred.getCompletionExceptionOrNull()!!.cause!!.message)
+        val completionException = deferred.getCompletionExceptionOrNull()!!
+        assertTrue(completionException is TestException)
+        assertEquals("something went wrong", completionException.message)
 
         try {
             deferred.await()
             fail("deferred.await() should throw an exception")
         } catch (e: Exception) {
-            assertEquals("something went wrong", e.cause!!.message)
+            assertTrue(e is TestException)
+            assertEquals("something went wrong", e.message)
         }
     }
 
@@ -299,7 +303,7 @@ class FutureTest : TestBase() {
         val lock = ReentrantLock().apply { lock() }
 
         val deferred: Deferred<Int> = CompletableFuture.supplyAsync {
-            lock.withLock { throw Exception("something went wrong") }
+            lock.withLock { throw TestException("something went wrong") }
         }.asDeferred()
 
         assertFalse(deferred.isCompleted)
@@ -310,9 +314,15 @@ class FutureTest : TestBase() {
             fail("deferred.await() should throw an exception")
         } catch (e: Exception) {
             assertTrue(deferred.isCompletedExceptionally)
-            assertEquals("something went wrong", e.cause!!.message)
+            assertTrue(e is CompletionException) // that's how supplyAsync wraps it
+            val cause = e.cause!!
+            assertTrue(cause is TestException)
+            assertEquals("something went wrong", cause.message)
+            assertSame(e, deferred.getCompletionExceptionOrNull()) // same exception is returns as thrown
         }
     }
+
+    class TestException(message: String) : Exception(message)
 
     private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {

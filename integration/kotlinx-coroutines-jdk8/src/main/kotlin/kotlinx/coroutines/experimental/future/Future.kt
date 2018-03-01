@@ -119,19 +119,18 @@ public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: 
  * Converts this future to an instance of [Deferred].
  */
 public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
-
     // Fast path if already completed
     if (this is Future<*> && isDone()){
         return try {
             @Suppress("UNCHECKED_CAST")
             CompletableDeferred(get() as T)
-        } catch (t: Throwable) {
-            CompletableDeferred<T>().also { it.completeExceptionally(t) }
+        } catch (e: Throwable) {
+            // unwrap original cause from ExecutionException
+            val original = (e as? ExecutionException)?.cause ?: e
+            CompletableDeferred<T>().also { it.completeExceptionally(original) }
         }
     }
-
     val result = CompletableDeferred<T>()
-
     whenComplete { value, exception ->
         if (exception == null) {
             result.complete(value)
@@ -139,7 +138,6 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
             result.completeExceptionally(exception)
         }
     }
-
     return result
 }
 
