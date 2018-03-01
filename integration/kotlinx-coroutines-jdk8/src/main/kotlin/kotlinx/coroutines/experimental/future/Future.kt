@@ -106,17 +106,9 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
 }
 
 /**
- * Awaits for completion of the completion stage without blocking a thread.
- *
- * This suspending function is not cancellable, because there is no way to cancel a `CompletionStage`.
- * Use `CompletableFuture.await()` for cancellable wait.
- */
-public suspend fun <T> CompletionStage<T>.await(): T = suspendCoroutine { cont: Continuation<T> ->
-    whenComplete(ContinuationConsumer(cont))
-}
-
-/**
- * Converts this future to an instance of [Deferred].
+ * Converts this completion stage to an instance of [Deferred].
+ * When this completion stage is an instance of [Future], then it is cancelled when
+ * the resulting deferred is cancelled.
  */
 public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     // Fast path if already completed
@@ -138,26 +130,37 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
             result.completeExceptionally(exception)
         }
     }
+    if (this is Future<*>) result.cancelFutureOnCompletion(this)
     return result
 }
 
 /**
  * Awaits for completion of the future without blocking a thread.
  *
+ * @suppress **Deprecated**: For binary compatibility only
+ */
+@Deprecated("For binary compatibility only", level = DeprecationLevel.HIDDEN)
+public suspend fun <T> CompletableFuture<T>.await(): T =
+    (this as CompletionStage<T>).await()
+
+/**
+ * Awaits for completion of the completion stage without blocking a thread.
+ *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the future and immediately resumes with [CancellationException].
+ * stops waiting for the completion stage and immediately resumes with [CancellationException].
  *
- * Note, that `CompletableFuture` does not support prompt removal of installed listeners, so on cancellation of this wait
- * a few small objects will remain in the `CompletableFuture` stack of completion actions until the future completes.
+ * Note, that `CompletionStage` implementation does not support prompt removal of installed listeners, so on cancellation of this wait
+ * a few small objects will remain in the `CompletionStage` stack of completion actions until it completes itself.
  * However, the care is taken to clear the reference to the waiting coroutine itself, so that its memory can be
- * released even if the future never completes.
+ * released even if the completion stage never completes.
  */
-public suspend fun <T> CompletableFuture<T>.await(): T {
+public suspend fun <T> CompletionStage<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
-    if (isDone) {
+    if (this is Future<*> && isDone()) {
         try {
-            return get()
+            @Suppress("UNCHECKED")
+            return get() as T
         } catch (e: ExecutionException) {
             throw e.cause ?: e // unwrap original cause from ExecutionException
         }

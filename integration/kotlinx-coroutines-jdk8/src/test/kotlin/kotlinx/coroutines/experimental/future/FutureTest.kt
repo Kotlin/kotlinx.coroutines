@@ -213,24 +213,6 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testNonCancellableAwaitCompletionStage() = runBlocking {
-        expect(1)
-        val completable = CompletableFuture<String>()
-        val toAwait: CompletionStage<String> = completable
-        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            assertThat(toAwait.await(), IsEqual("OK")) // suspends
-            expect(5)
-        }
-        expect(3)
-        job.cancel() // cancel the job
-        completable.complete("OK") // ok, because await on completion stage is not cancellable
-        expect(4) // job processing of was scheduled, not executed yet
-        yield() // yield main thread to job
-        finish(6)
-    }
-
-    @Test
     fun testContinuationWrapped() {
         val depth = AtomicInteger()
         val future = future(wrapContinuation {
