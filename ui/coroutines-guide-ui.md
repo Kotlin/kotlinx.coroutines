@@ -306,7 +306,7 @@ update the text. Try it. It does not look very good. We'll fix it later.
 
 > On Android, the corresponding extension can be written for `View` class, so that the code
   in `setup` function that is shown above can be used without changes. There is no `MouseEvent`
-  on Android, so it is omitted.
+  used in OnClickListener on Android, so it is omitted.
 
 ```kotlin
 fun View.onClick(action: suspend () -> Unit) {
@@ -352,18 +352,18 @@ animation is running. This happens because the actor is busy with an animation a
 By default, an actor's mailbox is backed by [RendezvousChannel], whose `offer` operation succeeds only when 
 the `receive` is active. 
 
-> On Android, there is no `MouseEvent`, so we just send a `Unit` to the actor as a signal. 
+> On Android, there is `View` sent in OnClickListener, so we send the `View` to the actor as a signal. 
   The corresponding extension for `View` class looks like this:
 
 ```kotlin
-fun View.onClick(action: suspend () -> Unit) {
+fun View.onClick(action: suspend (View) -> Unit) {
     // launch one actor
-    val eventActor = actor<Unit>(UI) {
-        for (event in channel) action()
+    val eventActor = actor<View>(UI) {
+        for (event in channel) action(event)
     }
     // install a listener to activate this actor
     setOnClickListener { 
-        eventActor.offer(Unit)
+        eventActor.offer(it)
     }
 }
 ```
