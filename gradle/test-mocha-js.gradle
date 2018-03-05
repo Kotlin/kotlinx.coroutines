@@ -25,8 +25,12 @@ node {
 // -- Testing with Mocha under Node
 
 task installDependenciesMochaNode(type: NpmTask) {
-    args = ['install', 'mocha', 'source-map-support', '--no-save']
-    if (project.hasProperty("teamcity")) args += 'mocha-teamcity-reporter'
+    args = ['install',
+            "mocha@$mocha_version",
+            "source-map-support@$source_map_suport_version",
+            '--no-save']
+    if (project.hasProperty("teamcity")) args += [
+            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
 task prepareMochaNode(dependsOn: [compileTestKotlin2Js, populateNodeModules, installDependenciesMochaNode])
@@ -43,8 +47,14 @@ test.dependsOn testMochaNode
 // -- Testing with Mocha under headless Chrome
 
 task installDependenciesMochaChrome(type: NpmTask) {
-    args = ['install', 'mocha-headless-chrome', "kotlin@$kotlin_version", "kotlin-test@$kotlin_version", '--no-save']
-    if (project.hasProperty("teamcity")) args += 'mocha-teamcity-reporter'
+    args = ['install',
+            "mocha@$mocha_version",
+            "mocha-headless-chrome@$mocha_headless_chrome_version",
+            "kotlin@$kotlin_version",
+            "kotlin-test@$kotlin_version",
+            '--no-save']
+    if (project.hasProperty("teamcity")) args += [
+            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
 task prepareMochaChrome(dependsOn: [compileTestKotlin2Js, populateNodeModules, installDependenciesMochaChrome])
