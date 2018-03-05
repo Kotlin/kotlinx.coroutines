@@ -1,5 +1,13 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22.4
+
+* JS: Publish to NPM (see #229).
+* JS: Use node-style dispatcher on ReactNative (see #236).
+* [jdk8 integration](integration/kotlinx-coroutines-jdk8/README.md) improvements: 
+  * Added conversion from `CompletionStage` to `Deferred` (see #262, PR by @jcornaz).
+  * Use fast path in `CompletionStage.await` and make it cancellable.
+
 ## Version 0.22.3
 
 * Fixed `produce` builder to close the channel on completion instead of cancelling it, which lead to lost elements with buffered channels (see #256).
