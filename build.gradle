@@ -61,6 +61,9 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
                 moduleKind = "umd"
                 sourceMap = true
                 metaInfo = true
+                // drop -js suffix from outputFile
+                def baseName = project.name - "-js"
+                outputFile = new File(outputFile.parent, baseName + ".js")
             }
         }
     }
@@ -181,6 +184,9 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
     }
 }
+
+// main deployment task
+task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
 
 apply plugin: 'base'
 

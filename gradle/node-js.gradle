@@ -1,0 +1,8 @@
+
+apply plugin: 'com.moowork.node'
+
+node {
+    version = "$node_version"
+    npmVersion = "$npm_version"
+    download = true
+}

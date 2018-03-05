@@ -1,0 +1,40 @@
+
+def prop(name, defVal) {
+    def value = project.properties[name]
+    if (value == null) return defVal
+    return value
+}
+
+def distTag(version) {
+    def i = version.indexOf('-')
+    if (i > 0) return version.substring(i + 1)
+    return "latest"
+}
+
+def npmTemplateDir = file("$projectDir/npm")
+def npmDeployDir = file("$buildDir/npm")
+def npmDeployTag = distTag(version)
+
+def authToken = prop("kotlin.npmjs.auth.token", "")
+def dryRun = prop("dryRun", "false")
+
+task preparePublishNpm(type: Copy, dependsOn: [compileKotlin2Js]) {
+    from(npmTemplateDir) {
+        expand project.properties
+    }
+    from("$buildDir/classes/kotlin/main")
+    into npmDeployDir
+}
+
+task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
+    workingDir = npmDeployDir
+    def deployArgs = ['publish',
+        "--//registry.npmjs.org/:_authToken=$authToken",
+        "--tag=$npmDeployTag"]
+    if (dryRun == "true") {
+        println("$npmDeployDir \$ npm arguments: $deployArgs")
+        args = ['pack']
+    } else {
+        args = deployArgs
+    }
+}

@@ -16,5 +16,5 @@
 
 // ------ Main bundle for example application ------
 
-require("example-frontend-js");
+require("example-frontend");
 require("style.css");

@@ -15,7 +15,7 @@
  */
 
 apply plugin: 'kotlin-dce-js'
-apply plugin: 'com.moowork.node'
+apply from: rootProject.file('gradle/node-js.gradle')
 
 dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-html-js:$html_version"
@@ -25,12 +25,6 @@ compileKotlin2Js {
     kotlinOptions {
         main = "call"
     }
-}
-
-node {
-    version = "$node_version"
-    npmVersion = "$npm_version"
-    download = true
 }
 
 task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {

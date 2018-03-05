@@ -1,0 +1,26 @@
+{
+  "name": "kotlinx-coroutines-core",
+  "version" : "$version",
+  "description" : "Library support for Kotlin coroutines",
+  "main" : "kotlinx-coroutines-core-js.js",
+  "author": "JetBrains",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Kotlin/kotlinx.coroutines",
+  "bugs": {
+    "url": "https://github.com/Kotlin/kotlinx.coroutines/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kotlin/kotlinx.coroutines.git"
+  },
+  "keywords": [
+    "Kotlin",
+    "async",
+    "coroutines",
+    "JavaScript",
+    "JetBrains"
+  ],
+  "dependencies": {
+    "kotlin": "$kotlin_version"
+  }
+}
