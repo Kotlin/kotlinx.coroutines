@@ -81,7 +81,7 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.4'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-corekotlinx-coroutines-core:0.22.4'
 ```
 
 And make sure that you use the latest Kotlin version:
@@ -94,7 +94,8 @@ buildscript {
 
 ### Kotlin/JS
 
-Use `kotlinx-coroutines-core-js` artifact in your dependencies.
+Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
+or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
 
 ### ProGuard
 
