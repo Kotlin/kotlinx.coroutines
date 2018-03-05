@@ -80,7 +80,8 @@ task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-test.dependsOn testMochaChrome
+// todo: Commented out because mocha-headless-chrome does not work on TeamCity
+//test.dependsOn testMochaChrome
 
 // -- Remove node_modules on clean
 
