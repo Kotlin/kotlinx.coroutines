@@ -15,8 +15,7 @@
  */
 
 import io.reactivex.Single
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.await
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -38,7 +37,9 @@ interface GitHub {
 data class Contributor(val login: String, val contributions: Int)
 data class Repo(val name: String)
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = runBlocking {
+    println("Making GitHub API request")
+    
     val retrofit = Retrofit.Builder().apply {
         baseUrl("https://api.github.com")
         addConverterFactory(GsonConverterFactory.create())
@@ -47,19 +48,17 @@ fun main(args: Array<String>) {
 
     val github = retrofit.create(GitHub::class.java)
 
-    launch(CommonPool) {
-        val contributors =
-                github.contributors("JetBrains", "Kotlin")
-                      .await().take(10)
+    val contributors =
+            github.contributors("JetBrains", "Kotlin")
+                  .await().take(10)
 
-        for ((name, contributions) in contributors) {
-            println("$name has $contributions contributions, other repos: ")
+    for ((name, contributions) in contributors) {
+        println("$name has $contributions contributions, other repos: ")
 
-            val otherRepos =
-                    github.listRepos(name).await()
-                          .map(Repo::name).joinToString(", ")
+        val otherRepos =
+                github.listRepos(name).await()
+                      .map(Repo::name).joinToString(", ")
 
-            println(otherRepos)
-        }
+        println(otherRepos)
     }
 }
