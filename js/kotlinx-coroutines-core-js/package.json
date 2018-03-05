@@ -5,8 +5,10 @@
     "type": "git",
     "url": "https://github.com/Kotlin/kotlinx.coroutines.git"
   },
-  "dependencies": {
+  "devDependencies": {
     "mocha": "4.1.0",
+    "mocha-headless-chrome": "1.8.2",
+    "mocha-teamcity-reporter": "2.2.2",
     "source-map-support": "0.5.3"
   }
 }

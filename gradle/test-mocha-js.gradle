@@ -22,17 +22,68 @@ node {
     download = true
 }
 
-task installDependencies(type: NpmTask) {
+// -- Testing with Mocha under Node
+
+task installDependenciesMochaNode(type: NpmTask) {
     args = ['install', 'mocha', 'source-map-support', '--no-save']
     if (project.hasProperty("teamcity")) args += 'mocha-teamcity-reporter'
 }
 
-task prepareMocha(dependsOn: [compileTestKotlin2Js, populateNodeModules, installDependencies])
+task prepareMochaNode(dependsOn: [compileTestKotlin2Js, populateNodeModules, installDependenciesMochaNode])
 
-task runMocha(type: NodeTask, dependsOn: prepareMocha) {
+task testMochaNode(type: NodeTask, dependsOn: prepareMochaNode) {
     script = file('node_modules/mocha/bin/mocha')
-    args = [compileTestKotlin2Js.outputFile, '--require=source-map-support/register']
-    if (project.hasProperty("teamcity")) args += '--reporter=mocha-teamcity-reporter'
+    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register']
+    if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
 }
 
-test.dependsOn runMocha
+test.dependsOn testMochaNode
+
+
+// -- Testing with Mocha under headless Chrome
+
+task installDependenciesMochaChrome(type: NpmTask) {
+    args = ['install', 'mocha-headless-chrome', "kotlin@$kotlin_version", "kotlin-test@$kotlin_version", '--no-save']
+    if (project.hasProperty("teamcity")) args += 'mocha-teamcity-reporter'
+}
+
+task prepareMochaChrome(dependsOn: [compileTestKotlin2Js, populateNodeModules, installDependenciesMochaChrome])
+
+prepareMochaChrome.doLast {
+    file("$buildDir/test-page.html").text = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mocha Tests</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="$projectDir/node_modules/mocha/mocha.css">
+</head>
+<body>
+<div id="mocha"></div>
+<script src="$projectDir/node_modules/mocha/mocha.js"></script>
+<script>mocha.setup('bdd');</script>
+<script src="$projectDir/node_modules/kotlin/kotlin.js"></script>
+<script src="$projectDir/node_modules/kotlin-test/kotlin-test.js"></script>
+<script src="$compileKotlin2Js.outputFile"></script>
+<script src="$compileTestKotlin2Js.outputFile"></script>
+<script>mocha.run();</script>
+</body>
+</html>
+"""
+}
+
+task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
+    script = file('node_modules/mocha-headless-chrome/bin/start')
+    args = [compileTestKotlin2Js.outputFile, '--file', "$buildDir/test-page.html"]
+    if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
+}
+
+test.dependsOn testMochaChrome
+
+// -- Remove node_modules on clean
+
+task deleteNodeModules(type: Delete) {
+    delete 'node_modules'
+}
+
+clean.dependsOn deleteNodeModules
