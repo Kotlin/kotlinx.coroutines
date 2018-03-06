@@ -15,7 +15,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    * [`README.md`](README.md)
    * [`coroutines-guide.md`](coroutines-guide.md)
    * [`gradle.properties`](gradle.properties)
-   * [`ui/kotlinx-coroutines-android/example-app/app/build.gradle`](ui/kotlinx-coroutines-android/example-app/app/build.gradle)    
+   * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
    * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
    * Make sure to **exclude** `CHANGES.md` from replacements.
   

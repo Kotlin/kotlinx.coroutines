@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.22.5
+
+* JS: Fixed main file reference in [NPM package](https://www.npmjs.com/package/kotlinx-coroutines-core)
+* Added context argument to `Channel.filterNot` (PR by @jcornaz).
+* Implemented debug `toString` for channels (see #185).
+
 ## Version 0.22.4
 
 * JS: Publish to NPM (see #229).
