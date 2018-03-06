@@ -33,7 +33,7 @@
 
 <h1 id="arraybroadcastchannel">ArrayBroadcastChannel</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L39">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L38">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -76,6 +76,17 @@ receiver suspends only when buffer is empty.</p>
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="buffer-debug-string.html">bufferDebugString</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">bufferDebugString</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -128,7 +139,7 @@ This function returns <code>false</code> for <a href="../-abstract-send-channel/
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="../-abstract-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../-abstract-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="#">select</a> expression of <a href="../-abstract-send-channel/send.html">send</a> suspending function that selects when the element that is specified
+        <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="../-abstract-send-channel/send.html">send</a> suspending function that selects when the element that is specified
 as parameter is sent to the channel. When the clause is selected the reference to this channel
 is passed into the corresponding block.</p>
 
@@ -211,6 +222,15 @@ or throws exception if the channel <a href="../-abstract-send-channel/is-closed-
 
         <p>Adds <a href="../-abstract-send-channel/send.html#kotlinx.coroutines.experimental.channels.AbstractSendChannel$send(kotlinx.coroutines.experimental.channels.AbstractSendChannel.E)/element">element</a> into to this channel, suspending the caller while this channel <a href="../-abstract-send-channel/is-full.html">isFull</a>,
 or throws exception if the channel <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-abstract-send-channel/close.html">close</a> for details).</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="../-abstract-send-channel/to-string.html">toString</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
       </td>
 </tr></tbody>

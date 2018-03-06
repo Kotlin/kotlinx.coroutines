@@ -33,7 +33,7 @@
 
 <h1 id="arraychannel">ArrayChannel</h1>
 
-<div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayChannel.kt#L33">(source)</a></div>
+<div class="signature"><code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">ArrayChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-abstract-channel/index.html"><span class="identifier">AbstractChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayChannel.kt#L32">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -70,6 +70,17 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="buffer-debug-string.html">bufferDebugString</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">val </span><span class="identifier">bufferDebugString</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+
+      </td>
+</tr>
 <tr>
 <td>
 
@@ -125,9 +136,9 @@ This function returns <code>false</code> for <a href="../-abstract-channel/is-cl
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceive</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-abstract-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="#">select</a> expression of <a href="../-abstract-channel/receive.html">receive</a> suspending function that selects with the element that
+        <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="../-abstract-channel/receive.html">receive</a> suspending function that selects with the element that
 is received from the channel.
-The <a href="#">select</a> invocation fails with exception if the channel
+The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with exception if the channel
 <a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
 
       </td>
@@ -139,9 +150,9 @@ The <a href="#">select</a> invocation fails with exception if the channel
 <td>
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="../-abstract-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code></div>
 
-        <p>Clause for <a href="#">select</a> expression of <a href="../-abstract-channel/receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
+        <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="../-abstract-channel/receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
 is received from the channel or selects with <code>null</code> if if the channel
-<a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="#">select</a> invocation fails with
+<a href="../-abstract-channel/is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with
 the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
 
       </td>
@@ -494,9 +505,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNot</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">filterNot</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../filter-not.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
-        <p>Returns a channel containing all elements not matching the given <a href="../filter-not.html#kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
+        <p>Returns a channel containing all elements not matching the given <a href="../filter-not.html#kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
 </tr><tr data-platform="JVM"><td>
