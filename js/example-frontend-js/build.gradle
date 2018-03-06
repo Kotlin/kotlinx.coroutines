@@ -28,6 +28,10 @@ compileKotlin2Js {
 }
 
 task bundle(type: NpmTask, dependsOn: [npmInstall, runDceKotlinJs]) {
+    inputs.files(fileTree("$buildDir/kotlin-js-min/main"))
+    inputs.files(fileTree(file("src/main/web")))
+    inputs.file("webpack.config.js")
+    outputs.dir("$buildDir/dist")
     args = ["run", "bundle"]
 }
 

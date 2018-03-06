@@ -1,20 +1,24 @@
 
+def buildDocsDir = "$buildDir/docs"
+
 task copyDocs(type: Copy, dependsOn: rootProject.getTasksByName("dokka", true)) {
     from (rootProject.getTasksByName("dokka", true).collect { "$it.project.buildDir/dokka" }) {
         include "**/*.md"
     }
     from "docs"
-    into "$buildDir/gh-pages"
+    into buildDocsDir
 }
 
 task copyExampleFrontendJs(type: Copy, dependsOn: ':example-frontend-js:bundle') {
     def srcBuildDir = project(':example-frontend-js').buildDir
     from "$srcBuildDir/dist"
-    into "$buildDir/gh-pages/example-frontend-js"
+    into "$buildDocsDir/example-frontend-js"
 }
 
 task site(type: Exec, description: 'Generate github pages', dependsOn: [copyDocs, copyExampleFrontendJs]) {
-    workingDir "$buildDir/gh-pages"
+    inputs.files(fileTree(buildDocsDir))
+    outputs.dir("$buildDir/dist")
+    workingDir file(buildDocsDir)
     commandLine 'bundle', 'exec', 'jekyll', 'build'
 }
 

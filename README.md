@@ -108,3 +108,16 @@ To avoid field overloading by type during obfuscation, add this to your config:
     volatile <fields>;
 }
 ```
+
+## Contributions and releases
+
+All development (both new features and bug fixes) is performed in `develop` branch. 
+This way `master` sources always contain sources of the most recently released version.
+Please send PRs with bug fixes to `develop` branch
+Fixes to documentation in markdown files are an exception to this rule. They are updated directly in `master`.
+                                                                          
+The `develop` branch is pushed to `master` during release.
+
+* Full release procedure checklist is [here](RELEASE.md).
+* Steps for contributing new integration modules are explained [here](integration/README.md#Contributing).
+

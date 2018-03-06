@@ -4,6 +4,10 @@ description: Library support for kotlin coroutines
 baseurl: "/kotlinx.coroutines"
 url: "https://kotlin.github.io"
 
+# Dirs
+source: .
+destination: ../dist
+
 # Build settings
 markdown: kramdown
 exclude:
