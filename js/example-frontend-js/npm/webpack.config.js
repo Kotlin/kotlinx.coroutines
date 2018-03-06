@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+// This script is copied to "build" directory and run from there
+
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const path = require("path");
 
-const dist = path.resolve(__dirname, "build/dist");
+const dist = path.resolve(__dirname, "dist");
 
 module.exports = {
     entry: {
@@ -46,8 +48,8 @@ module.exports = {
     },
     resolve: {
         modules: [
-            path.resolve(__dirname, "build/kotlin-js-min/main"),
-            path.resolve(__dirname, "src/main/web/")
+            path.resolve(__dirname, "kotlin-js-min/main"),
+            path.resolve(__dirname, "../src/main/web/")
         ]
     },
     devtool: 'source-map',

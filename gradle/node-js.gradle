@@ -5,4 +5,38 @@ node {
     version = "$node_version"
     npmVersion = "$npm_version"
     download = true
+    nodeModulesDir = file(buildDir)
 }
+
+// Configures testing for JS modules
+
+task prepareNodePackage(type: Copy) {
+   from("npm") {
+       include 'package.json'
+       expand project.properties
+   }
+   from("npm") {
+       exclude 'package.json'
+   }
+   into "$node.nodeModulesDir"
+}
+
+npmInstall.dependsOn prepareNodePackage
+
+task populateNodeModules(type: Copy, dependsOn: [compileKotlin2Js]) {
+    from compileKotlin2Js.destinationDir
+    into "$node.nodeModulesDir/node_modules"
+
+    afterEvaluate {
+        configurations.testCompile.each {
+            if (it.absolutePath.endsWith(".jar")) {
+                from zipTree(it.absolutePath).matching {
+                    include '*.js'
+                    include '*.js.map'
+                }
+            }
+        }
+    }
+}
+
+npmInstall.dependsOn populateNodeModules
