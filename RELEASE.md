@@ -26,19 +26,22 @@ To release new `<version>` of `kotlinx-coroutines`:
 
 6. Commit updated files for new version: <br>
    `git commit -a -m "Version <version>"`
+   
+7. Push new version into `master`: <br>
+   `git push`   
 
-7. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
+8. On [TeamCity integration server](https://teamcity.jetbrains.com/project.html?projectId=KotlinTools_KotlinxCoroutines):
    * Wait until "Build" configuration for committed `master` branch passes tests.
    * Run "Deploy" configuration with the corresponding new version.    
 
-8. In [GitHub](http://github.com/kotlin/kotlinx.coroutines) interface:
+9. In [GitHub](http://github.com/kotlin/kotlinx.coroutines) interface:
    * Create new release named as `<version>`. 
    * Cut & paste lines from [`CHANGES.md`](CHANGES.md) into description.    
 
-9. Build and publish documentation for web-site: <br>
+0. Build and publish documentation for web-site: <br>
    `site/deploy.sh <version> push`
    
-0. In [Bintray](http://bintray.com) admin interface:
+1. In [Bintray](http://bintray.com) admin interface:
    * Publish artifacts of the new version.
    * Wait until newly published version becomes the most recent.
    * Sync to Maven Central.
