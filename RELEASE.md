@@ -41,7 +41,18 @@ To release new `<version>` of `kotlinx-coroutines`:
 0. Build and publish documentation for web-site: <br>
    `site/deploy.sh <version> push`
    
-1. In [Bintray](http://bintray.com) admin interface:
+1. In [Bintray](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) admin interface:
    * Publish artifacts of the new version.
    * Wait until newly published version becomes the most recent.
    * Sync to Maven Central.
+   
+2. Announce new release in [Slack](http://kotlinlang.slack.com)   
+
+3. Switch into `develop` branch: <br>
+   `git checkout develop`
+   
+4. Merge release from `master`: <br>
+   `git merge master`
+   
+5. Push updates to `develop`: <br>
+   `git push`      
