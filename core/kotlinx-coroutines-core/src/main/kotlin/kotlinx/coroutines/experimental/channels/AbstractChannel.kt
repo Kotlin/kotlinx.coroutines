@@ -16,17 +16,11 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.DisposableHandle
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.removeOnCancel
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectClause1
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import kotlinx.coroutines.experimental.suspendAtomicCancellableCoroutine
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Abstract send channel. It is a base class for all send channel implementations.
@@ -373,6 +367,37 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             }
         }
     }
+
+    // ------ debug ------
+
+    public override fun toString() =
+        "$classSimpleName@$hexAddress{$queueDebugStateString}$bufferDebugString"
+
+    private val queueDebugStateString: String
+        get() {
+            val head = queue.next
+            if (head === queue) return "EmptyQueue"
+            var result = when (head) {
+                is Closed<*> -> head.toString()
+                is Receive<*> -> "ReceiveQueued"
+                is Send -> "SendQueued"
+                else -> "UNEXPECTED:$head" // should not happen
+            }
+            val tail = queue.prev
+            if (tail !== head) {
+                result += ",queueSize=${countQueueSize()}"
+                if (tail is Closed<*>) result += ",closedForSend=$tail"
+            }
+            return result
+        }
+
+    private fun countQueueSize(): Int {
+        var size = 0
+        queue.forEach<LockFreeLinkedListNode> { size++ }
+        return size
+    }
+
+    protected open val bufferDebugString: String get() = ""
 
     // ------ private ------
 

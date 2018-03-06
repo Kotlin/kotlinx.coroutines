@@ -577,8 +577,19 @@ public inline suspend fun <E, C : SendChannel<E>> ReceiveChannel<E>.filterIndexe
  * This function [consumes][consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.filterNot(predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
-    filter { !predicate(it) }
+public fun <E> ReceiveChannel<E>.filterNot(context: CoroutineContext = Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+    filter(context) { !predicate(it) }
+
+/**
+ * Returns a channel containing all elements not matching the given [predicate].
+ *
+ * The operation is _intermediate_ and _stateless_.
+ * This function [consumes][consume] all elements of the original [ReceiveChannel].
+ *
+ * @suppress **Deprecated**: For binary compatibility only
+ */
+@Deprecated("For binary compatibility only", level = DeprecationLevel.HIDDEN)
+public fun <E> ReceiveChannel<E>.filterNot(predicate: suspend (E) -> Boolean): ReceiveChannel<E> = filterNot(predicate = predicate)
 
 /**
  * Returns a channel containing all elements that are not `null`.
