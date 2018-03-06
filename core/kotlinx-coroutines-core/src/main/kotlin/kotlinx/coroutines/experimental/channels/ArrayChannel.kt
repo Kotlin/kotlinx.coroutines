@@ -16,10 +16,9 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import kotlinx.coroutines.experimental.selects.*
+import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 
 /**
  * Channel with array buffer of a fixed [capacity].
@@ -245,4 +244,9 @@ public open class ArrayChannel<E>(
         // then clean all queued senders
         super.cleanupSendQueueOnCancel()
     }
+
+    // ------ debug ------
+
+    override val bufferDebugString: String
+        get() = "(buffer:capacity=${buffer.size},size=$size)"
 }

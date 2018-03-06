@@ -16,11 +16,10 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectInstance
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import kotlinx.coroutines.experimental.selects.*
+import java.util.concurrent.*
+import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].
@@ -353,4 +352,9 @@ class ArrayBroadcastChannel<E>(
             return result
         }
     }
+
+    // ------ debug ------
+
+    override val bufferDebugString: String
+        get() = "(buffer:capacity=${buffer.size},size=$size)"
 }
