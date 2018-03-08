@@ -18,7 +18,7 @@ import kotlinx.coroutines.experimental.internalAnnotations.*
  * See `BroadcastChannel()` factory function for the description of available
  * broadcast channel implementations.
  */
-public interface BroadcastChannel<E> : SendChannel<E> {
+public interface BroadcastChannel<E> : SendChannel<E>, Subscribable<E> {
     /**
      * Factory for broadcast channels.
      * @suppress **Deprecated**
@@ -37,7 +37,8 @@ public interface BroadcastChannel<E> : SendChannel<E> {
      * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this
      * broadcast channel.
      */
-    public fun openSubscription(): ReceiveChannel<E>
+    // TODO: Remove (already declared in Subscribable). Kept here only for binary compatibility
+    public override fun openSubscription(): ReceiveChannel<E>
 
     /**
      * @suppress **Deprecated**: Return type changed to `ReceiveChannel`, this one left here for binary compatibility.
