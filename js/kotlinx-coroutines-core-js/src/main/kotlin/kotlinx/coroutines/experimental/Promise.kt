@@ -16,9 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.js.Promise
+import kotlin.coroutines.experimental.*
+import kotlin.js.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].
@@ -37,15 +36,17 @@ import kotlin.js.Promise
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
+ * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
 public fun <T> promise(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): Promise<T> =
-    async(context, start, parent, block).asPromise()
+    async(context, start, parent, onCompletion, block = block).asPromise()
 
 /**
  * Converts this deferred value to the instance of [Promise].
