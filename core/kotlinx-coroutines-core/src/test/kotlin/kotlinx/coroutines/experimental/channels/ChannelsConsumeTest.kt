@@ -27,7 +27,7 @@ class ChannelsConsumeTest {
     private val sourceList = (1..10).toList()
 
     // test source with numbers 1..10
-    private fun testSource() = produce {
+    private fun testSource(context: CoroutineContext) = produce(context) {
         for (i in sourceList) {
             send(i)
         }
@@ -811,10 +811,10 @@ class ChannelsConsumeTest {
     fun testZip() {
         val expect = sourceList.zip(sourceList) { a, b -> a + 2 * b }
         checkTransform(expect) { ctx ->
-            zip(testSource(), ctx) { a, b -> a + 2*b }
+            zip(testSource(ctx), ctx) { a, b -> a + 2*b }
         }
         checkTransform(expect) { ctx ->
-            testSource().zip(this, ctx) { a, b -> a + 2*b }
+            testSource(ctx).zip(this, ctx) { a, b -> a + 2*b }
         }
     }
 
@@ -832,27 +832,28 @@ class ChannelsConsumeTest {
         expected: ((Throwable?) -> Unit)? = null,
         terminal: suspend ReceiveChannel<Int>.() -> Unit
     ) {
-        val src = testSource()
-        runBlocking {
+        val src = runBlocking {
+            val src = testSource(coroutineContext)
             try {
                 // terminal operation
                 terminal(src)
                 // source must be cancelled at the end of terminal op
-                assertTrue(src.isClosedForReceive, "Source must be closed")
                 if (expected != null) error("Exception was expected")
             } catch (e: Throwable) {
                 if (expected == null) throw e
                 expected(e)
             }
+            src
         }
+        assertTrue(src.isClosedForReceive, "Source must be closed")
     }
 
     private fun checkTerminalCancellation(
         expected: ((Throwable?) -> Unit)? = null,
         terminal: suspend ReceiveChannel<Int>.() -> Unit
     ) {
-        val src = testSource()
-        runBlocking {
+        val src = runBlocking {
+            val src = testSource(coroutineContext)
             // terminal operation in a separate async context started until the first suspension
             val d = async(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
                 terminal(src)
@@ -869,6 +870,7 @@ class ChannelsConsumeTest {
                 if (expected == null) throw e
                 expected(e)
             }
+            src
         }
         // source must be cancelled at the end of terminal op even if it was cancelled while in process
         assertTrue(src.isClosedForReceive, "Source must be closed")
@@ -889,8 +891,8 @@ class ChannelsConsumeTest {
         expect: List<R>,
         transform: ReceiveChannel<Int>.(CoroutineContext) -> ReceiveChannel<R>
     ) {
-        val src = testSource()
-        runBlocking {
+        val src = runBlocking {
+            val src = testSource(coroutineContext)
             // transform
             val res = transform(src, coroutineContext)
             // receive nReceive elements from the result
@@ -904,6 +906,7 @@ class ChannelsConsumeTest {
                 // then check that result is closed
                 assertEquals(null, res.receiveOrNull(), "Result has unexpected values")
             }
+            src
         }
         // source must be cancelled when runBlocking processes all the scheduled stuff
         assertTrue(src.isClosedForReceive, "Source must be closed")
