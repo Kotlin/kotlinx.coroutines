@@ -82,8 +82,8 @@ public suspend fun <E> BroadcastChannel<E>.consumeEach(action: suspend (E) -> Un
  * with the corresponding cause. See also [ReceiveChannel.consume].
  *
  * **WARNING**: It is planned that in the future a second invocation of this method
- * on an channel that is already being consumed is going to fail fast, that is
- * immediately throw an [IllegalStateException].
+ * on an channel that is already being consumed is going to fail fast, that it
+ * immediately throws an [IllegalStateException].
  * See [this issue](https://github.com/Kotlin/kotlinx.coroutines/issues/167)
  * for details.
  */
