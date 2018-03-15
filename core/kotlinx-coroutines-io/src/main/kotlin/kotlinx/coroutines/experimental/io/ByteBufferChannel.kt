@@ -164,7 +164,10 @@ internal class ByteBufferChannel(
         }
 
         var _allocated: ReadWriteBufferState.Initial? = null
-        val (old, newState) = updateState { state ->
+        var old: ReadWriteBufferState? = null
+
+        val newState = updateStateAndGet { state ->
+            old = state
             when {
                 joining != null -> {
                     _allocated?.let { releaseBuffer(it) }
@@ -209,7 +212,7 @@ internal class ByteBufferChannel(
     private fun restoreStateAfterWrite() {
         var toRelease: ReadWriteBufferState.IdleNonEmpty? = null
 
-        val (_, newState) = updateState {
+        val newState = updateStateAndGet {
             val writeStopped = it.stopWriting()
             if (writeStopped is ReadWriteBufferState.IdleNonEmpty && writeStopped.capacity.isEmpty()) {
                 toRelease = writeStopped
@@ -324,7 +327,7 @@ internal class ByteBufferChannel(
     private fun tryReleaseBuffer(forceTermination: Boolean): Boolean {
         var toRelease: ReadWriteBufferState.Initial? = null
 
-        updateState { state ->
+        updateStateAndGet { state ->
             toRelease?.let { buffer ->
                 toRelease = null
                 buffer.capacity.resetForWrite()
@@ -2280,19 +2283,6 @@ internal class ByteBufferChannel(
             val old = state
             val newState = block(old) ?: continue
             if (old === newState || updater.compareAndSet(this, old, newState)) return newState
-        }
-    }
-
-    // todo: replace with atomicfu
-    private inline fun updateState(block: (ReadWriteBufferState) -> ReadWriteBufferState?):
-        Pair<ReadWriteBufferState, ReadWriteBufferState> = update({ state }, State, block)
-
-    // todo: replace with atomicfu
-    private inline fun <T : Any> update(getter: () -> T, updater: AtomicReferenceFieldUpdater<ByteBufferChannel, T>, block: (old: T) -> T?): Pair<T, T> {
-        while (true) {
-            val old = getter()
-            val newValue = block(old) ?: continue
-            if (old === newValue || updater.compareAndSet(this, old, newValue)) return Pair(old, newValue)
         }
     }
 
