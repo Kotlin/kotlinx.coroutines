@@ -16,11 +16,27 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.Executor
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+import java.io.Closeable
+import java.util.concurrent.*
 import kotlin.coroutines.experimental.CoroutineContext
+
+/**
+ * [CoroutineDispatcher] that implements [Closeable]
+ */
+abstract class CloseableCoroutineDispatcher: CoroutineDispatcher(), Closeable
+
+/**
+ * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
+ */
+public fun ExecutorService.asCoroutineDispatcher(): CloseableCoroutineDispatcher {
+    return object : CloseableCoroutineDispatcher() {
+        val executorDispatcher = (this@asCoroutineDispatcher as Executor).asCoroutineDispatcher()
+
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean = executorDispatcher.isDispatchNeeded(context)
+        override fun dispatch(context: CoroutineContext, block: Runnable) = executorDispatcher.dispatch(context, block)
+        override fun close() = shutdown()
+    }
+}
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
