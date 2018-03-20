@@ -69,6 +69,10 @@ This module provides debugging facilities for coroutines (run JVM with `-ea` or 
 and [newCoroutineContext] function to write user-defined coroutine builders that work with these
 debugging facilities.
 
+This module provides a special CoroutineContext type [TestCoroutineCoroutineContext][kotlinx.coroutines.experimental.test.TestCoroutineContext] that
+allows the writer of code that contains Coroutines with delays and timeouts to write non-flaky unit-tests for that code allowing these tests to
+terminate in near zero time. See the documentation for this class for more information.
+
 # Package kotlinx.coroutines.experimental
 
 General-purpose coroutine builders, contexts, and helper functions.
@@ -92,6 +96,10 @@ Low-level primitives for finer-grained control of coroutines.
 # Package kotlinx.coroutines.experimental.timeunit
 
 Optional time unit support for multiplatform projects.
+
+# Package kotlinx.coroutines.experimental.test
+
+Components to ease writing unit-tests for code that contains coroutines with delays and timeouts.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
@@ -148,4 +156,6 @@ Optional time unit support for multiplatform projects.
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [kotlinx.coroutines.experimental.selects.select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html
+<!--- INDEX kotlinx.coroutines.experimental.test -->
+[kotlinx.coroutines.experimental.test.TestCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.test/-test-coroutine-context/index.html
 <!--- END -->
