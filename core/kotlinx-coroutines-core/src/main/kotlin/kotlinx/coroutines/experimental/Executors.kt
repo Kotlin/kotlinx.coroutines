@@ -17,7 +17,11 @@
 package kotlinx.coroutines.experimental
 
 import java.io.Closeable
-import java.util.concurrent.*
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
