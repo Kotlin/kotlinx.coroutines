@@ -30,7 +30,13 @@ task jdk16Test(type: Test, dependsOn: testClasses) {
     exclude '**/*LFTest.*'
 }
 
-task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+def moreTestItems = [lockFreedomTest]
+if (System.env.JDK_16)
+  moreTestItems += jdk16Test
+else
+  println("Skipping jdk16Test. JDK_16 not defined")
+  
+task moreTest(dependsOn: moreTestItems)
 
 build.dependsOn moreTest
 
