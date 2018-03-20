@@ -66,4 +66,15 @@ class ExecutorsTest : TestBase() {
         ctx1.close()
         ctx2.close()
     }
+
+    @Test
+    fun testShutdownExecutorService() {
+        val executorService = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
+        val dispatcher = executorService.asCoroutineDispatcher()
+        runBlocking (dispatcher) {
+            checkThreadName("TestExecutor")
+        }
+        dispatcher.close()
+        check(executorService.isShutdown)
+    }
 }
