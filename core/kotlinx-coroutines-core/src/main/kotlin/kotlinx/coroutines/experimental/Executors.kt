@@ -16,11 +16,25 @@
 
 package kotlinx.coroutines.experimental
 
+import java.io.Closeable
 import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
+
+/**
+ * [CoroutineDispatcher] that implements [Closeable]
+ */
+abstract class CloseableCoroutineDispatcher: CoroutineDispatcher(), Closeable
+
+/**
+ * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
+ */
+public fun ExecutorService.asCoroutineDispatcher(): CloseableCoroutineDispatcher =
+    // we know that an implementation of Executor.asCoroutineDispatcher actually returns a closeable one
+    (this as Executor).asCoroutineDispatcher() as CloseableCoroutineDispatcher
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
@@ -42,7 +56,7 @@ private class ExecutorCoroutineDispatcher(override val executor: Executor) : Exe
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
+public abstract class ExecutorCoroutineDispatcherBase : CloseableCoroutineDispatcher(), Delay {
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
@@ -75,6 +89,10 @@ public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), D
             return DisposableFutureHandle(timeout)
         else
             return DefaultExecutor.invokeOnTimeout(time, unit, block)
+    }
+
+    override fun close() {
+        (executor as? ExecutorService)?.shutdown()
     }
 
     override fun toString(): String = executor.toString()
