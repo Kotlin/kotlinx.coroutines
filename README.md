@@ -109,6 +109,17 @@ To avoid field overloading by type during obfuscation, add this to your config:
 }
 ```
 
+## Building 
+
+This library is built with Gradle. To build it, use `./gradlew build`. 
+You can import this project into IDEA, but you have to delegate build actions
+to Gradle (in Preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> Runner)
+
+### Requirements
+
+* JDK >= 1.8 referred to by the `JAVA_HOME` environment variable.
+* JDK 1.6 referred to by the `JDK_16` environment variable.
+
 ## Contributions and releases
 
 All development (both new features and bug fixes) is performed in `develop` branch. 
