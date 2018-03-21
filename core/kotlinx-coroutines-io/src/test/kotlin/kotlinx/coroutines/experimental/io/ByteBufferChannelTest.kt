@@ -1426,6 +1426,21 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
+    fun testJoinToNoFlush() = runTest {
+        val src = ByteChannel(false)
+        launch(coroutineContext) {
+            src.joinTo(ch, closeOnEnd = false, flushOnEnd = false)
+            assertEquals(0, ch.availableForRead)
+            ch.flush()
+            assertEquals(4, ch.availableForRead)
+        }
+        yield()
+
+        src.writeInt(777)
+        src.close()
+    }
+
+    @Test
     fun testReadBlock() = runTest {
         var bytesRead = 0L
 

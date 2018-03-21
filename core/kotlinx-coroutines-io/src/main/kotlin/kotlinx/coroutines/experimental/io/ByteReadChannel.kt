@@ -167,21 +167,21 @@ public interface ByteReadChannel {
 
 typealias ConsumeEachBufferVisitor = (buffer: java.nio.ByteBuffer, last: Boolean) -> Boolean
 
-suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean) {
+suspend fun ByteReadChannel.joinTo(dst: ByteWriteChannel, closeOnEnd: Boolean, flushOnEnd: Boolean = true) {
     require(dst !== this)
 
     if (this is ByteBufferChannel && dst is ByteBufferChannel) {
-        return dst.joinFrom(this, closeOnEnd)
+        return dst.joinFrom(this, closeOnEnd, flushOnEnd)
     }
 
-    return joinToImplSuspend(dst, closeOnEnd)
+    return joinToImplSuspend(dst, closeOnEnd, flushOnEnd)
 }
 
-private suspend fun ByteReadChannel.joinToImplSuspend(dst: ByteWriteChannel, close: Boolean) {
+private suspend fun ByteReadChannel.joinToImplSuspend(dst: ByteWriteChannel, close: Boolean, flush: Boolean) {
     copyToImpl(dst, Long.MAX_VALUE)
     if (close) {
         dst.close()
-    } else {
+    } else if (flush) {
         dst.flush()
     }
 }

@@ -282,10 +282,10 @@ internal class ByteBufferChannel(
         }
     }
 
-    private fun setupDelegateTo(delegate: ByteBufferChannel, delegateClose: Boolean): JoiningState {
+    private fun setupDelegateTo(delegate: ByteBufferChannel, delegateClose: Boolean, delegateFlush: Boolean): JoiningState {
         require(this !== delegate)
 
-        val joined = JoiningState(delegate, delegateClose)
+        val joined = JoiningState(delegate, delegateClose, delegateFlush)
         delegate.writeByteOrder = writeByteOrder
         this.joining = joined
 
@@ -293,7 +293,7 @@ internal class ByteBufferChannel(
         if (alreadyClosed != null) {
             if (alreadyClosed.cause != null) delegate.close(alreadyClosed.cause)
             else if (delegateClose && state === ReadWriteBufferState.Terminated) delegate.close()
-            else delegate.flush()
+            else if (delegateFlush) delegate.flush()
         } else {
             flush()
         }
@@ -1174,7 +1174,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    internal suspend fun joinFrom(src: ByteBufferChannel, delegateClose: Boolean) {
+    internal suspend fun joinFrom(src: ByteBufferChannel, delegateClose: Boolean, delegateFlush: Boolean) {
         if (src.closed != null && src.state === ReadWriteBufferState.Terminated) {
             if (delegateClose) close(src.closed!!.cause)
             return
@@ -1184,7 +1184,7 @@ internal class ByteBufferChannel(
             return
         }
 
-        val joined = src.setupDelegateTo(this, delegateClose)
+        val joined = src.setupDelegateTo(this, delegateClose, delegateFlush)
         if (src.tryCompleteJoining(joined)) {
             return src.awaitClose()
         }
@@ -1198,7 +1198,9 @@ internal class ByteBufferChannel(
         if (delegateClose && src.isClosedForRead) {
             close()
         } else {
-            flush()
+            if (joined.delegateFlush) {
+                flush()
+            }
             src.awaitClose()
         }
     }
@@ -1315,10 +1317,10 @@ internal class ByteBufferChannel(
             val writing = joined.delegatedTo.state.let { it is ReadWriteBufferState.Writing || it is ReadWriteBufferState.ReadingWriting }
             if (closed.cause != null || !writing) {
                 joined.delegatedTo.close(closed.cause)
-            } else {
+            } else if (joined.delegateFlush) {
                 joined.delegatedTo.flush()
             }
-        } else {
+        } else if (joined.delegateFlush) {
             joined.delegatedTo.flush()
         }
 
@@ -2318,7 +2320,7 @@ internal class ByteBufferChannel(
         }
     }
 
-    internal class JoiningState(val delegatedTo: ByteBufferChannel, val delegateClose: Boolean) {
+    internal class JoiningState(val delegatedTo: ByteBufferChannel, val delegateClose: Boolean, val delegateFlush: Boolean) {
         private val _closeWaitJob = atomic<Job?>(null)
         private val closed = atomic(0)
 
