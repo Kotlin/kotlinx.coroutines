@@ -109,6 +109,13 @@ To avoid field overloading by type during obfuscation, add this to your config:
 }
 ```
 
+## Building 
+This library is built with Gradle. To build it, use ./gradlew build. 
+
+### Requirements
+* JDK >=1.6 referred to by the `JAVA_HOME` environment variable.
+* JDK 1.6 referred to by the `JDK_16` environment variable.
+
 ## Contributions and releases
 
 All development (both new features and bug fixes) is performed in `develop` branch. 
