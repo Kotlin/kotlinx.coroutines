@@ -32,7 +32,7 @@ task jdk16Test(type: Test, dependsOn: testClasses) {
 
 task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
 
-build.dependsOn moreTest
+test.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: testClasses) {
     classifier = 'tests'
