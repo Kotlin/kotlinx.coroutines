@@ -30,7 +30,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
     data class Letter(val message: Any?, val sender: SendChannel<Letter>)
 
-    @Param("fjp", "ftp_1", "ftp_2", "ftp_8")
+    @Param("fjp", "ftp_1", "ftp_2", "ftp_8", "experimental")
     override var dispatcher: String = "fjp"
 
     @Benchmark

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
 
-/**
+/*
  * kotlinx-based counterpart of [StatefulActorAkkaBenchmark]
  *
  * Benchmark                                                      (dispatcher)  Mode  Cnt    Score    Error  Units
@@ -41,7 +41,7 @@ open class StatefulActorBenchmark : ParametrizedDispatcherBase() {
 
     data class Letter(val message: Any, val sender: Channel<Letter>)
 
-    @Param("fjp", "ftp_1", "ftp_8")
+    @Param("fjp", "ftp_1", "ftp_8", "experimental")
     override var dispatcher: String = "fjp"
 
     @Benchmark
@@ -95,23 +95,23 @@ open class StatefulActorBenchmark : ParametrizedDispatcherBase() {
             }
         }
     }
+}
 
-    private fun computationActor(context: CoroutineContext) = actor<Letter>(context, 1024) {
-        val coefficients = LongArray(STATE_SIZE) { ThreadLocalRandom.current().nextLong(0, 100) }
+fun computationActor(context: CoroutineContext, stateSize: Int = STATE_SIZE) = actor<StatefulActorBenchmark.Letter>(context, 1024) {
+    val coefficients = LongArray(stateSize) { ThreadLocalRandom.current().nextLong(0, 100) }
 
-        for (letter in channel) with(letter) {
-            when (message) {
-                is Long -> {
-                    var result = 0L
-                    for (coefficient in coefficients) {
-                        result += message * coefficient
-                    }
-
-                    sender.send(Letter(result, channel))
+    for (letter in channel) with(letter) {
+        when (message) {
+            is Long -> {
+                var result = 0L
+                for (coefficient in coefficients) {
+                    result += message * coefficient
                 }
-                is Stop -> return@actor
-                else -> error("Cannot happen: $letter")
+
+                sender.send(StatefulActorBenchmark.Letter(result, channel))
             }
+            is Stop -> return@actor
+            else -> error("Cannot happen: $letter")
         }
     }
 }
