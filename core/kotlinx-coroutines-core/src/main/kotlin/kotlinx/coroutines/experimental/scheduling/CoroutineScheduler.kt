@@ -5,7 +5,6 @@ import java.io.Closeable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.locks.LockSupport
 
 /**
@@ -52,7 +51,6 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         val localQueue: WorkQueue = WorkQueue()
 
         @Volatile
-        @sun.misc.Contended // Temporary hack for spinning, yield/suspend mechanism should be implemented properly
         var yields = 0
 
         override fun run() {
@@ -72,6 +70,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         }
 
         private fun awaitWork() {
+            // Temporary solution
             if (++yields > 100000) {
                 LockSupport.parkNanos(WORK_STEALING_TIME_RESOLUTION / 2)
             }
@@ -94,7 +93,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
             }
 
             while (true) {
-                val worker = workers[ThreadLocalRandom.current().nextInt(workers.size)]
+                val worker = workers[RANDOM_PROVIDER().nextInt(workers.size)]
                 if (worker !== this) {
                     worker.localQueue.offloadWork(true) {
                         localQueue.offer(it, globalWorkQueue)

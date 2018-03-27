@@ -1,6 +1,5 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import sun.misc.Contended
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -27,16 +26,13 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then strategy of selecting most idle worker
  * should be implemented and implementation should be aware multiple producers.
  */
-@Contended // <- temporary hack
 internal class WorkQueue {
 
     internal val bufferSize: Int get() = producerIndex.get() - consumerIndex.get()
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask: AtomicReference<Task?> = AtomicReference(null)
 
-    @Contended
     private val producerIndex: AtomicInteger = AtomicInteger(0)
-    @Contended
     private val consumerIndex: AtomicInteger = AtomicInteger(0)
 
     /**
