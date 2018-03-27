@@ -1,8 +1,10 @@
 package benchmarks
 
+import benchmarks.actors.CORES_COUNT
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.ThreadPoolDispatcher
 import kotlinx.coroutines.experimental.newFixedThreadPoolContext
+import kotlinx.coroutines.experimental.scheduling.ExperimentalCoroutineDispatcher
 import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.TearDown
@@ -23,6 +25,9 @@ abstract class ParametrizedDispatcherBase {
     open fun setup() {
         benchmarkContext = when {
             dispatcher == "fjp" -> CommonPool
+            dispatcher == "experimental" -> {
+                ExperimentalCoroutineDispatcher(CORES_COUNT)
+            }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }
             }
