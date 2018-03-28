@@ -65,21 +65,24 @@ internal class WorkQueue {
      * @param byTimer whether task deadline should be checked before offloading
      */
     inline fun offloadWork(byTimer: Boolean, sink: (Task) -> Unit) {
-        repeat((bufferSize / 2).coerceAtLeast(1)) {
-            if (bufferSize == 0) { // try to steal head if buffer is empty
-                val lastScheduled = lastScheduledTask.get() ?: return
-                if (!byTimer || schedulerTimeSource.nanoTime() - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION) {
-                    return
-                }
+        val time = if (byTimer) schedulerTimeSource.nanoTime() else 0L
 
-                if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                    sink(lastScheduled)
-                    return
-                }
+        if (byTimer && bufferSize == 0) { // try to steal head if buffer is empty
+            val lastScheduled = lastScheduledTask.get() ?: return
+            if (!byTimer || time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
+                return
             }
 
+            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                sink(lastScheduled)
+            }
+
+            return
+        }
+
+        repeat((bufferSize / 2).coerceAtLeast(1)) {
             // TODO use batch drain and (if target queue allows) batch insert
-            val task = pollExternal { !byTimer || schedulerTimeSource.nanoTime() - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION }
+            val task = pollExternal { !byTimer || time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS }
                     ?: return
             sink(task)
         }

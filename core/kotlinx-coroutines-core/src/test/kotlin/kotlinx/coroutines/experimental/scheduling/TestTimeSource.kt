@@ -4,7 +4,7 @@ internal class TestTimeSource(var time: Long) : TimeSource() {
 
     override fun nanoTime() = time
 
-    fun step(delta: Long = WORK_STEALING_TIME_RESOLUTION) {
+    fun step(delta: Long = WORK_STEALING_TIME_RESOLUTION_NS) {
         time += delta
     }
 }

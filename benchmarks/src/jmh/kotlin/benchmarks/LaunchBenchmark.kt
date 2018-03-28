@@ -8,18 +8,18 @@ import java.util.concurrent.TimeUnit
 
 /*
  * Benchmark to measure scheduling overhead in comparison with FJP.
- * LaunchBenchmark.massiveLaunch  experimental  avgt   30  187.342 ± 20.244  us/op
+ * LaunchBenchmark.massiveLaunch  experimental  avgt   30  328.662 ± 52.789  us/op
  * LaunchBenchmark.massiveLaunch           fjp  avgt   30  179.762 ±  3.931  us/op
  */
 @Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 100000, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3, jvmArgsAppend = ["-XX:+PreserveFramePointer"])
+@Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
+@Fork(value = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 open class LaunchBenchmark : ParametrizedDispatcherBase() {
 
-    @Param("experimental")
+    @Param("experimental", "fjp")
     override var dispatcher: String = "fjp"
 
     private val jobsToLaunch = 100

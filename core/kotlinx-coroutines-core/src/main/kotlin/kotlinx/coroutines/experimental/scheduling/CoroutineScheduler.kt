@@ -5,6 +5,7 @@ import java.io.Closeable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 
 /**
@@ -15,7 +16,14 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
     private val workers: Array<PoolWorker>
     private val globalWorkQueue: Queue<Task> = ConcurrentLinkedQueue<Task>()
     @Volatile
-    private var isClosed = false
+    private var isTerminated = false
+
+    companion object {
+        private val maxSpins = 500000L
+        private val maxYields = 100000L
+        private val minParkTimeNs = WORK_STEALING_TIME_RESOLUTION_NS / 2
+        private val maxParkTimeNs = TimeUnit.SECONDS.toNanos(1)
+    }
 
     init {
         require(corePoolSize >= 1, { "Expected positive core pool size, but was $corePoolSize" })
@@ -26,7 +34,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
     override fun execute(command: Runnable) = dispatch(command)
 
     override fun close() {
-        isClosed = true
+        isTerminated = true
     }
 
     fun dispatch(command: Runnable, intensive: Boolean = false) {
@@ -51,16 +59,21 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         val localQueue: WorkQueue = WorkQueue()
 
         @Volatile
-        var yields = 0
+        private var spins = 0L
+        private var yields = 0L
+        private var parks = 0L
+        private var parkTimeNs = minParkTimeNs
 
         override fun run() {
-            while (!isClosed) {
+            while (!isTerminated) {
                 try {
                     val job = findTask()
                     if (job == null) {
                         awaitWork()
                     } else {
+                        spins = 0
                         yields = 0
+                        parkTimeNs = minParkTimeNs
                         job.task.run()
                     }
                 } catch (e: Throwable) {
@@ -71,8 +84,17 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
         private fun awaitWork() {
             // Temporary solution
-            if (++yields > 100000) {
-                LockSupport.parkNanos(WORK_STEALING_TIME_RESOLUTION / 2)
+            if (++spins <= maxSpins) {
+                // Spin
+            } else if (++yields <= maxYields) {
+                Thread.yield()
+            } else {
+                ++parks
+                if (parkTimeNs < maxParkTimeNs) {
+                    parkTimeNs = (parkTimeNs * 1.5).toLong().coerceAtMost(maxParkTimeNs)
+                }
+
+                LockSupport.parkNanos(parkTimeNs)
             }
         }
 
@@ -94,13 +116,15 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
             while (true) {
                 val worker = workers[RANDOM_PROVIDER().nextInt(workers.size)]
-                if (worker !== this) {
-                    worker.localQueue.offloadWork(true) {
-                        localQueue.offer(it, globalWorkQueue)
-                    }
-
-                    return localQueue.poll()
+                if (worker === this) {
+                    continue
                 }
+
+                worker.localQueue.offloadWork(true) {
+                    localQueue.offer(it, globalWorkQueue)
+                }
+
+                return localQueue.poll()
             }
         }
     }
