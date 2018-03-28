@@ -37,7 +37,12 @@ class CoroutineSchedulerStressTest : TestBase() {
 
         for (i in 1..tasksNum) {
             dispatcher.dispatch(ctx, Runnable {
-                val numbers = observedThreads.computeIfAbsent(Thread.currentThread(), { _ -> hashSetOf() })
+                var numbers = observedThreads[Thread.currentThread()]
+                if (numbers == null) {
+                    numbers = hashSetOf()
+                    observedThreads[Thread.currentThread()] = numbers
+                }
+
                 require(numbers.add(i))
                 if (processed.incrementAndGet() == tasksNum) {
                     finishLatch.countDown()
