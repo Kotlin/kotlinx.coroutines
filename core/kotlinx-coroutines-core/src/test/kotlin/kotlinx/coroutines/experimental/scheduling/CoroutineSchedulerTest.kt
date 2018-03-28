@@ -116,4 +116,32 @@ class CoroutineSchedulerTest : TestBase() {
             finish(4)
         }
     }
+
+    @Test
+    fun testRngUniformDistribution() {
+        CoroutineScheduler(1).use { scheduler ->
+            val worker = scheduler.PoolWorker(1)
+            testUniformDistribution(worker, 2)
+            testUniformDistribution(worker, 4)
+            testUniformDistribution(worker, 8)
+            testUniformDistribution(worker, 12)
+            testUniformDistribution(worker, 16)
+        }
+    }
+
+    private fun testUniformDistribution(worker: CoroutineScheduler.PoolWorker, bound: Int) {
+        val result = IntArray(bound)
+        val iterations = 10_000_000
+        repeat(iterations) {
+            ++result[worker.nextInt(bound)]
+        }
+
+        val bucketSize = iterations / bound
+        for (i in result) {
+            val ratio = i.toDouble() / bucketSize
+            // 10% deviation
+            check(ratio <= 1.1)
+            check(ratio >= 0.9)
+        }
+    }
 }

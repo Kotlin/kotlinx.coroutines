@@ -19,9 +19,11 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
     private var isTerminated = false
 
     companion object {
-        private val maxSpins = 500000L
-        private val maxYields = 100000L
+        private const val maxSpins = 500000L
+        private const val maxYields = 100000L
+        @JvmStatic
         private val minParkTimeNs = WORK_STEALING_TIME_RESOLUTION_NS / 2
+        @JvmStatic
         private val maxParkTimeNs = TimeUnit.SECONDS.toNanos(1)
     }
 
@@ -51,7 +53,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         return true
     }
 
-    private inner class PoolWorker(index: Int) : Thread("CoroutinesScheduler-worker-$index") {
+    internal inner class PoolWorker(index: Int) : Thread("CoroutinesScheduler-worker-$index") {
         init {
             isDaemon = true
         }
@@ -63,6 +65,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         private var yields = 0L
         private var parks = 0L
         private var parkTimeNs = minParkTimeNs
+        private var rngState = Random().nextInt()
 
         override fun run() {
             while (!isTerminated) {
@@ -80,6 +83,23 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
                     println(e) // TODO handler
                 }
             }
+        }
+
+        /*
+         * Marsaglia xorshift RNG with period 2^32-1 for work stealing purposes.
+         * ThreadLocalRandom cannot be used to support Android and ThreadLocal<Random> is up to 15% slower on ktor benchmarks
+         */
+        internal fun nextInt(upperBound: Int): Int {
+            rngState = rngState xor (rngState shl 13)
+            rngState = rngState xor (rngState shr 17)
+            rngState = rngState xor (rngState shl 5)
+            val mask = upperBound - 1
+            // Fast path for power of two bound
+            if (mask and upperBound == 0) {
+                return rngState and mask
+            }
+
+            return (rngState and Int.MAX_VALUE) % upperBound
         }
 
         private fun awaitWork() {
@@ -115,7 +135,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
             }
 
             while (true) {
-                val worker = workers[RANDOM_PROVIDER().nextInt(workers.size)]
+                val worker = workers[nextInt(workers.size)]
                 if (worker === this) {
                     continue
                 }
