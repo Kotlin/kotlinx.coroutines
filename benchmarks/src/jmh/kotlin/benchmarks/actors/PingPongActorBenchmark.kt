@@ -11,11 +11,13 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /*
  * Benchmark                                   (dispatcher)  Mode  Cnt    Score    Error  Units
+ * PingPongActorBenchmark.coresCountPingPongs  experimental  avgt   10  185.066 ± 21.692  ms/op
  * PingPongActorBenchmark.coresCountPingPongs           fjp  avgt   10  200.581 ± 22.669  ms/op
  * PingPongActorBenchmark.coresCountPingPongs         ftp_1  avgt   10  494.334 ± 27.450  ms/op
  * PingPongActorBenchmark.coresCountPingPongs         ftp_2  avgt   10  498.754 ± 27.743  ms/op
  * PingPongActorBenchmark.coresCountPingPongs         ftp_8  avgt   10  804.498 ± 69.826  ms/op
  *
+ * PingPongActorBenchmark.singlePingPong       experimental  avgt   10   45.521 ±  3.281  ms/op
  * PingPongActorBenchmark.singlePingPong                fjp  avgt   10  217.005 ± 18.693  ms/op
  * PingPongActorBenchmark.singlePingPong              ftp_1  avgt   10   57.632 ±  1.835  ms/op
  * PingPongActorBenchmark.singlePingPong              ftp_2  avgt   10  112.723 ±  5.280  ms/op
@@ -30,7 +32,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
     data class Letter(val message: Any?, val sender: SendChannel<Letter>)
 
-    @Param("fjp", "ftp_1", "ftp_2", "ftp_8", "experimental")
+    @Param("experimental")
     override var dispatcher: String = "fjp"
 
     @Benchmark

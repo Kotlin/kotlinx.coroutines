@@ -1,7 +1,6 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import kotlinx.atomicfu.atomic
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 internal const val BUFFER_CAPACITY_BASE = 7
@@ -20,68 +19,90 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
  * Work offloading
- * When queue is full, half of existing tasks is offloaded to global queue which is regularly polled by other pool workers.
- * Offloading occurs in LIFO order for the sake of implementation simplicity: offload should be extremely rare and occurs only in specific use-cases
+ * When the queue is full, half of existing tasks are offloaded to global queue which is regularly polled by other pool workers.
+ * Offloading occurs in LIFO order for the sake of implementation simplicity: offloads should be extremely rare and occurs only in specific use-cases
  * (e.g. when coroutine starts heavy fork-join-like computation), so fairness is not important.
- * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then strategy of selecting most idle worker
+ * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then the strategy of selecting any idle worker
  * should be implemented and implementation should be aware multiple producers.
  */
 internal class WorkQueue {
 
-    internal val bufferSize: Int get() = producerIndex.get() - consumerIndex.get()
+    internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
-    private val lastScheduledTask: AtomicReference<Task?> = AtomicReference(null)
+    private val lastScheduledTask = atomic<Task?>(null)
 
-    private val producerIndex: AtomicInteger = AtomicInteger(0)
-    private val consumerIndex: AtomicInteger = AtomicInteger(0)
+    private val producerIndex = atomic(0)
+    private val consumerIndex = atomic(0)
 
     /**
-     * Retrieves and removes task from head of the queue
-     * Invariant: this method is called only by owner of the queue ([pollExternal] is not)
+     * Retrieves and removes task from the head of the queue
+     * Invariant: this method is called only by the owner of the queue ([pollExternal] is not)
      */
     fun poll(): Task? {
         return lastScheduledTask.getAndSet(null) ?: pollExternal()
     }
 
     /**
-     * Invariant: this method is called only by owner of the queue
+     * Invariant: this method is called only by the owner of the queue
+     *
      * @param task task to put into local queue
-     * @param globalQueue fallback queue which is used when local queue is overflown
+     * @param globalQueue fallback queue which is used when the local queue is overflown
+     * @return true if no offloading happened, false otherwise
      */
-    fun offer(task: Task, globalQueue: GlobalQueue) {
+    fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
         while (true) {
-            val previous = lastScheduledTask.get()
+            val previous = lastScheduledTask.value
             if (lastScheduledTask.compareAndSet(previous, task)) {
                 if (previous != null) {
-                    addLast(previous, globalQueue)
+                    return addLast(previous, globalQueue)
                 }
-                return
+                return true
             }
         }
     }
 
     /**
-     * Offloads half of the current buffer to [sink]
-     * @param byTimer whether task deadline should be checked before offloading
+     * @return whether any task was stolen
      */
-    inline fun offloadWork(byTimer: Boolean, sink: (Task) -> Unit) {
-        repeat((bufferSize / 2).coerceAtLeast(1)) {
-            if (bufferSize == 0) { // try to steal head if buffer is empty
-                val lastScheduled = lastScheduledTask.get() ?: return
-                if (!byTimer || schedulerTimeSource.nanoTime() - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION) {
-                    return
-                }
+    fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
+        val time = schedulerTimeSource.nanoTime()
 
-                if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                    sink(lastScheduled)
-                    return
-                }
+        if (victim.bufferSize == 0) {
+            val lastScheduled = victim.lastScheduledTask.value ?: return false
+            if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
+                return false
             }
 
-            // TODO use batch drain and (if target queue allows) batch insert
-            val task = pollExternal { !byTimer || schedulerTimeSource.nanoTime() - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION }
-                    ?: return
-            sink(task)
+            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                offer(lastScheduled, globalQueue)
+                return true
+            }
+
+            return false
+        }
+
+        /*
+         * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find the first task not satisfying a predicate.
+         * If queue size is larger than QUEUE_SIZE_OFFLOAD_THRESHOLD then unconditionally steal tasks over this limit to prevent possible queue overflow
+         */
+        var stolen = false
+        repeat((victim.bufferSize / 2).coerceAtLeast(1)) {
+            val task = victim.pollExternal { time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
+                    ?: return@repeat
+            stolen = true
+            offer(task, globalQueue)
+        }
+
+        return stolen
+    }
+
+    /**
+     * Offloads half of the current buffer to [target]
+     */
+    private fun offloadWork(target: GlobalQueue) {
+        repeat((bufferSize / 2).coerceAtLeast(1)) {
+            val task = pollExternal() ?: return
+            target.add(task)
         }
     }
 
@@ -90,8 +111,8 @@ internal class WorkQueue {
      */
     private inline fun pollExternal(predicate: (Task) -> Boolean = { true }): Task? {
         while (true) {
-            val tailLocal = consumerIndex.get()
-            if (tailLocal - producerIndex.get() == 0) return null
+            val tailLocal = consumerIndex.value
+            if (tailLocal - producerIndex.value == 0) return null
             val index = tailLocal and MASK
             val element = buffer[index] ?: continue
             if (!predicate(element)) {
@@ -105,25 +126,32 @@ internal class WorkQueue {
         }
     }
 
-    // Called only by owner
-    private fun addLast(task: Task, globalQueue: GlobalQueue) {
+    // Called only by the owner
+    private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
+        var addedToGlobalQueue = false
+
+        /*
+         * We need the loop here because race possible not only on full queue,
+         * but also on queue with one element during stealing
+         */
         while (!tryAddLast(task)) {
-            offloadWork(false) {
-                globalQueue.add(it)
-            }
+            offloadWork(globalQueue)
+            addedToGlobalQueue = true
         }
+
+        return !addedToGlobalQueue
     }
 
-    // Called only by owner
+    // Called only by the owner
     private fun tryAddLast(task: Task): Boolean {
         if (bufferSize == BUFFER_CAPACITY - 1) return false
-        val headLocal = producerIndex.get()
+        val headLocal = producerIndex.value
         val nextIndex = headLocal and MASK
 
         /*
-         * If current element is not null then we're racing with consumers for tail. If we skip this check then
-         * consumer can null out current element and it will be lost. If we're racing for tail then
-         * queue is close to overflow => it's fine to offload work to global queue
+         * If current element is not null then we're racing with consumers for the tail. If we skip this check then
+         * the consumer can null out current element and it will be lost. If we're racing for tail then
+         * the queue is close to overflowing => it's fine to offload work to global queue
          */
         if (buffer[nextIndex] != null) {
             return false

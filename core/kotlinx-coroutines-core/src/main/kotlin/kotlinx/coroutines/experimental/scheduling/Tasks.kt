@@ -5,11 +5,12 @@ import java.util.*
 internal typealias Task = TimedTask
 internal typealias GlobalQueue = Queue<Task>
 
-internal val WORK_STEALING_TIME_RESOLUTION = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.resolution.us", 500L, String::toLongOrNull)
+// 100us is default resolution
+internal val WORK_STEALING_TIME_RESOLUTION_NS = readFromSystemProperties(
+        "kotlinx.coroutines.scheduler.resolution.ns", 100000L, String::toLongOrNull)
 
-internal val FORKED_TASK_OFFLOAD_THRESHOLD = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.fork.threshold", 64L, String::toLongOrNull)
+internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = readFromSystemProperties(
+        "kotlinx.coroutines.scheduler.offload.threshold", 96L, String::toLongOrNull)
 
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 

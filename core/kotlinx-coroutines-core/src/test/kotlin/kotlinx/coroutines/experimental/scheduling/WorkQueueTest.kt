@@ -8,7 +8,6 @@ import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
 
-
 class WorkQueueTest : TestBase() {
 
     private val timeSource = TestTimeSource(0)
@@ -16,7 +15,6 @@ class WorkQueueTest : TestBase() {
     @Before
     fun setUp() {
         schedulerTimeSource = timeSource
-
     }
 
     @After
@@ -45,40 +43,76 @@ class WorkQueueTest : TestBase() {
     }
 
     @Test
-    fun testTimelyWorkOffload() {
+    fun testWorkOffloadPrecision() {
         val queue = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
+        repeat(128) { require(queue.offer(task(0), globalQueue)) }
+        require(globalQueue.isEmpty())
+        require(!queue.offer(task(0), globalQueue))
+        require(globalQueue.size == 63)
+    }
 
-        (1L..128L).forEach { queue.offer(task(it), globalQueue) }
+    @Test
+    fun testTimelyStealing() {
+        val victim = WorkQueue()
+        val globalQueue = ArrayDeque<Task>()
+
+        (1L..96L).forEach { victim.offer(task(it), globalQueue) }
 
         timeSource.step()
         timeSource.step(2)
 
         val stealer = WorkQueue()
-        queue.offloadWork(true, { stealer.offer(it, globalQueue) })
+        require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(2L, 1L), stealer.drain())
 
-        queue.offloadWork(true, { stealer.offer(it, globalQueue) })
+        require(!stealer.trySteal(victim, globalQueue))
         assertEquals(emptyList(), stealer.drain())
 
         timeSource.step(3)
-        queue.offloadWork(true, { stealer.offer(it, globalQueue) })
+        require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(5L, 3L, 4L), stealer.drain())
+        require(globalQueue.isEmpty())
+    }
+
+    @Test
+    fun testStealingBySize() {
+        val victim = WorkQueue()
+        val globalQueue = ArrayDeque<Task>()
+
+        (1L..110L).forEach { victim.offer(task(it), globalQueue) }
+        val stealer = WorkQueue()
+        require(stealer.trySteal(victim, globalQueue))
+        assertEquals((1L..13L).toSet(), stealer.drain().toSet())
+
+        require(!stealer.trySteal(victim, globalQueue))
+        require(stealer.drain().isEmpty())
+
+
+        timeSource.step()
+        timeSource.step(13)
+        require(!stealer.trySteal(victim, globalQueue))
+        require(stealer.drain().isEmpty())
+
+        timeSource.step(1)
+        require(stealer.trySteal(victim, globalQueue))
+        assertEquals(arrayListOf(14L), stealer.drain())
+
     }
 
     @Test
     fun testStealingFromHead() {
-        val queue = WorkQueue()
+        val victim = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
-        (1L..2L).forEach { queue.offer(task(it), globalQueue) }
+        (1L..2L).forEach { victim.offer(task(it), globalQueue) }
         timeSource.step()
         timeSource.step(3)
 
         val stealer = WorkQueue()
-        queue.offloadWork(true, { stealer.offer(it, globalQueue) })
+        require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(1L), stealer.drain())
 
-        queue.offloadWork(true, { stealer.offer(it, globalQueue) })
+        require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(2L), stealer.drain())
     }
 }
