@@ -47,15 +47,16 @@ internal class WorkQueue {
      * Invariant: this method is called only by owner of the queue
      * @param task task to put into local queue
      * @param globalQueue fallback queue which is used when local queue is overflown
+     * @return true if no offloading happened, false otherwise
      */
-    fun offer(task: Task, globalQueue: GlobalQueue) {
+    fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
         while (true) {
             val previous = lastScheduledTask.get()
             if (lastScheduledTask.compareAndSet(previous, task)) {
                 if (previous != null) {
-                    addLast(previous, globalQueue)
+                    return addLast(previous, globalQueue)
                 }
-                return
+                return true
             }
         }
     }
@@ -109,12 +110,16 @@ internal class WorkQueue {
     }
 
     // Called only by owner
-    private fun addLast(task: Task, globalQueue: GlobalQueue) {
+    private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
+        var addedToGlobalQueue = false
         while (!tryAddLast(task)) {
             offloadWork(false) {
                 globalQueue.add(it)
+                addedToGlobalQueue = true
             }
         }
+
+        return !addedToGlobalQueue
     }
 
     // Called only by owner

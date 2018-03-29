@@ -6,6 +6,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 
 /**
@@ -14,17 +15,26 @@ import java.util.concurrent.locks.LockSupport
 class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
     private val workers: Array<PoolWorker>
-    private val globalWorkQueue: Queue<Task> = ConcurrentLinkedQueue<Task>()
+    private val globalWorkQueue = ConcurrentLinkedQueue<Task>()
+    private val parkedWorkers = AtomicInteger(0)
+    private val random = Random()
+
     @Volatile
     private var isTerminated = false
 
     companion object {
-        private const val maxSpins = 500000L
-        private const val maxYields = 100000L
+        private const val STEAL_ATTEMPTS = 4
+        private const val MAX_SPINS = 1000L
+        private const val MAX_YIELDS = 500L
         @JvmStatic
-        private val minParkTimeNs = WORK_STEALING_TIME_RESOLUTION_NS / 2
+        private val MAX_PARK_TIME_NS = TimeUnit.SECONDS.toNanos(1)
         @JvmStatic
-        private val maxParkTimeNs = TimeUnit.SECONDS.toNanos(1)
+        private val MIN_PARK_TIME_NS = (WORK_STEALING_TIME_RESOLUTION_NS / 4).coerceAtLeast(10).coerceAtMost(MAX_PARK_TIME_NS)
+
+        // Local queue 'offer' results
+        private const val ADDED = -1
+        private const val ADDED_WITH_OFFLOADING = 0
+        private const val NOT_ADDED = 1
     }
 
     init {
@@ -40,17 +50,50 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
     }
 
     fun dispatch(command: Runnable, intensive: Boolean = false) {
-        val task = TimedTask(System.nanoTime(), command)
-        if (!submitToLocalQueue(task, intensive)) {
+        val task = TimedTask(schedulerTimeSource.nanoTime(), command)
+
+        val offerResult = submitToLocalQueue(task, intensive)
+        if (offerResult == ADDED) {
+            return
+        }
+
+        if (offerResult == NOT_ADDED) {
             globalWorkQueue.add(task)
+        }
+
+        wakeUpIdleWorker()
+    }
+
+    private fun wakeUpIdleWorker() {
+        // If no threads are parked don't try to wake anyone
+        val parked = parkedWorkers.get()
+        if (parked == 0) {
+            return
+        }
+
+        // Try to wake one worker
+        repeat(STEAL_ATTEMPTS) {
+            val victim = workers[random.nextInt(workers.size)]
+            if (victim.isParking) {
+                /*
+                 * Benign data race, victim can wake up after this check, but before 'unpark' call succeeds,
+                 * making first 'park' in next idle period a no-op
+                 */
+                LockSupport.unpark(victim)
+                return
+            }
         }
     }
 
-    private fun submitToLocalQueue(task: Task, intensive: Boolean): Boolean {
-        val worker = Thread.currentThread() as? PoolWorker ?: return false
-        if (intensive && worker.localQueue.bufferSize > FORKED_TASK_OFFLOAD_THRESHOLD) return false
-        worker.localQueue.offer(task, globalWorkQueue)
-        return true
+
+    private fun submitToLocalQueue(task: Task, intensive: Boolean): Int {
+        val worker = Thread.currentThread() as? PoolWorker ?: return NOT_ADDED
+        if (intensive && worker.localQueue.bufferSize > FORKED_TASK_OFFLOAD_THRESHOLD) return NOT_ADDED
+        if (worker.localQueue.offer(task, globalWorkQueue)) {
+            return ADDED
+        }
+
+        return ADDED_WITH_OFFLOADING
     }
 
     internal inner class PoolWorker(index: Int) : Thread("CoroutinesScheduler-worker-$index") {
@@ -59,24 +102,24 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         }
 
         val localQueue: WorkQueue = WorkQueue()
+        var isParking = false
 
         @Volatile
         private var spins = 0L
+
         private var yields = 0L
-        private var parks = 0L
-        private var parkTimeNs = minParkTimeNs
-        private var rngState = Random().nextInt()
+        private var parkTimeNs = MIN_PARK_TIME_NS
+        private var rngState = random.nextInt()
 
         override fun run() {
             while (!isTerminated) {
                 try {
                     val job = findTask()
                     if (job == null) {
-                        awaitWork()
+                        // Wait for a job with potential park
+                        idle()
                     } else {
-                        spins = 0
-                        yields = 0
-                        parkTimeNs = minParkTimeNs
+                        idleReset()
                         job.task.run()
                     }
                 } catch (e: Throwable) {
@@ -102,24 +145,46 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
             return (rngState and Int.MAX_VALUE) % upperBound
         }
 
-        private fun awaitWork() {
-            // Temporary solution
-            if (++spins <= maxSpins) {
-                // Spin
-            } else if (++yields <= maxYields) {
-                Thread.yield()
-            } else {
-                ++parks
-                if (parkTimeNs < maxParkTimeNs) {
-                    parkTimeNs = (parkTimeNs * 1.5).toLong().coerceAtMost(maxParkTimeNs)
-                }
+        private fun idle() {
+            /*
+             * Simple adaptive await of work:
+             * Spin on volatile field with empty loop in hope that new work will arrive,
+             * then start yielding to reduce CPU pressure, and finally start adaptive parking.
+             *
+             * The main idea is not to park while it's possible (otherwise throughput on asymmetric workloads suffers due to too frequent
+             * park/unpark calls and delays between job submission and thread queue checking)
+             */
+            when {
+                spins < MAX_SPINS -> ++spins
+                ++yields <= MAX_YIELDS -> Thread.yield()
+                else -> {
+                    if (!isParking) {
+                        isParking = true
+                        parkedWorkers.incrementAndGet()
+                    }
 
-                LockSupport.parkNanos(parkTimeNs)
+                    if (parkTimeNs < MAX_PARK_TIME_NS) {
+                        parkTimeNs = (parkTimeNs * 1.5).toLong().coerceAtMost(MAX_PARK_TIME_NS)
+                    }
+
+                    LockSupport.parkNanos(parkTimeNs)
+                }
             }
         }
 
+        private fun idleReset() {
+            if (isParking) {
+                isParking = false
+                parkTimeNs = MIN_PARK_TIME_NS
+                parkedWorkers.decrementAndGet()
+            }
+
+            spins = 0
+            yields = 0
+        }
+
         private fun findTask(): Task? {
-            // TODO explain, probabilistic check with park counter?
+            // TODO probabilistic check if thread is not idle?
             var task: Task? = globalWorkQueue.poll()
             if (task != null) return task
 
@@ -134,18 +199,23 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
                 return null
             }
 
-            while (true) {
+            // Probe a couple of workers
+            repeat(STEAL_ATTEMPTS) {
                 val worker = workers[nextInt(workers.size)]
-                if (worker === this) {
-                    continue
-                }
+                if (worker !== this) {
+                    var stolen = false
+                    worker.localQueue.offloadWork(true) {
+                        stolen = true
+                        localQueue.offer(it, globalWorkQueue)
+                    }
 
-                worker.localQueue.offloadWork(true) {
-                    localQueue.offer(it, globalWorkQueue)
+                    if (stolen) {
+                        return@repeat
+                    }
                 }
-
-                return localQueue.poll()
             }
+
+            return localQueue.poll()
         }
     }
 }

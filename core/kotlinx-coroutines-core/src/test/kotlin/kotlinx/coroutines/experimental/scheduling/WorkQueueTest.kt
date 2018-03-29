@@ -16,7 +16,6 @@ class WorkQueueTest : TestBase() {
     @Before
     fun setUp() {
         schedulerTimeSource = timeSource
-
     }
 
     @After
@@ -42,6 +41,16 @@ class WorkQueueTest : TestBase() {
         expectedLocalResults.add(0, 130L)
         assertEquals(expectedLocalResults, queue.drain())
         assertEquals((1L..63L).toList(), globalQueue.map { (it as Task).submissionTime }.toList())
+    }
+
+    @Test
+    fun testWorkOffloadIndication() {
+        val queue = WorkQueue()
+        val globalQueue = ArrayDeque<Task>()
+        repeat(128) { require(queue.offer(task(0), globalQueue)) }
+        require(globalQueue.isEmpty())
+        require(!queue.offer(task(0), globalQueue))
+        require(globalQueue.size == 63)
     }
 
     @Test
