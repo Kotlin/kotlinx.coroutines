@@ -1,7 +1,6 @@
 package benchmarks
 
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.scheduling.ForkedMarker
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.TimeUnit
@@ -31,7 +30,7 @@ open class LaunchBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun massiveLaunch() {
         repeat(submitters) {
-            launch(benchmarkContext + ForkedMarker) {
+            launch(benchmarkContext) {
                 // Wait until all cores are occupied
                 allLaunched.await()
                 allLaunched.reset()
