@@ -18,7 +18,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 abstract class ParametrizedDispatcherBase {
 
     abstract var dispatcher: String
-    lateinit var benchmarkContext: CoroutineContext // coroutinesContext clashes with scope parameter
+    lateinit var benchmarkContext: CoroutineContext // coroutineContext clashes with scope parameter
     var closeable: Closeable? = null
 
     @Setup
@@ -26,7 +26,7 @@ abstract class ParametrizedDispatcherBase {
         benchmarkContext = when {
             dispatcher == "fjp" -> CommonPool
             dispatcher == "experimental" -> {
-                ExperimentalCoroutineDispatcher(CORES_COUNT)
+                ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
             }
             dispatcher.startsWith("ftp") -> {
                 newFixedThreadPoolContext(dispatcher.substring(4).toInt(), dispatcher).also { closeable = it }

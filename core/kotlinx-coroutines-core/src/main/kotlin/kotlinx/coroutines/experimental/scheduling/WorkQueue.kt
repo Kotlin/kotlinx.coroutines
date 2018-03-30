@@ -21,7 +21,7 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  *
  * Work offloading
  * When queue is full, half of existing tasks is offloaded to global queue which is regularly polled by other pool workers.
- * Offloading occurs in LIFO order for the sake of implementation simplicity: offload should be extremely rare and occurs only in specific use-cases
+ * Offloading occurs in LIFO order for the sake of implementation simplicity: offloads should be extremely rare and occurs only in specific use-cases
  * (e.g. when coroutine starts heavy fork-join-like computation), so fairness is not important.
  * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then strategy of selecting most idle worker
  * should be implemented and implementation should be aware multiple producers.
@@ -45,6 +45,7 @@ internal class WorkQueue {
 
     /**
      * Invariant: this method is called only by owner of the queue
+     *
      * @param task task to put into local queue
      * @param globalQueue fallback queue which is used when local queue is overflown
      * @return true if no offloading happened, false otherwise
@@ -62,30 +63,47 @@ internal class WorkQueue {
     }
 
     /**
-     * Offloads half of the current buffer to [sink]
-     * @param byTimer whether task deadline should be checked before offloading
+     * @return whether any task was stolen
      */
-    inline fun offloadWork(byTimer: Boolean, sink: (Task) -> Unit) {
-        val time = if (byTimer) schedulerTimeSource.nanoTime() else 0L
+    fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
+        val time = schedulerTimeSource.nanoTime()
 
-        if (byTimer && bufferSize == 0) { // try to steal head if buffer is empty
-            val lastScheduled = lastScheduledTask.get() ?: return
-            if (!byTimer || time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
-                return
+        if (victim.bufferSize == 0) {
+            val lastScheduled = victim.lastScheduledTask.get() ?: return false
+            if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
+                return false
             }
 
-            if (lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                sink(lastScheduled)
+            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
+                offer(lastScheduled, globalQueue)
+                return true
             }
 
-            return
+            return false
         }
 
+        /*
+         * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find first task not satisfying predicate.
+         * If queue size is larger than QUEUE_SIZE_OFFLOAD_THRESHOLD then unconditionally steal tasks over this limit to prevent possible queue overflow
+         */
+        var stolen = false
+        repeat((victim.bufferSize / 2).coerceAtLeast(1)) {
+            val task = victim.pollExternal { time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
+                    ?: return@repeat
+            stolen = true
+            offer(task, globalQueue)
+        }
+
+        return stolen
+    }
+
+    /**
+     * Offloads half of the current buffer to [target]
+     */
+    private fun offloadWork(target: GlobalQueue) {
         repeat((bufferSize / 2).coerceAtLeast(1)) {
-            // TODO use batch drain and (if target queue allows) batch insert
-            val task = pollExternal { !byTimer || time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS }
-                    ?: return
-            sink(task)
+            val task = pollExternal() ?: return
+            target.add(task)
         }
     }
 
@@ -112,11 +130,14 @@ internal class WorkQueue {
     // Called only by owner
     private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
         var addedToGlobalQueue = false
+
+        /*
+         * We need loop here because race possible not only on full queue,
+         * but also on queue with one element during stealing
+         */
         while (!tryAddLast(task)) {
-            offloadWork(false) {
-                globalQueue.add(it)
-                addedToGlobalQueue = true
-            }
+            offloadWork(globalQueue)
+            addedToGlobalQueue = true
         }
 
         return !addedToGlobalQueue

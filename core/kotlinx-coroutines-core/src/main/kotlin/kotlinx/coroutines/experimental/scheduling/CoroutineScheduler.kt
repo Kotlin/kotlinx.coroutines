@@ -1,12 +1,12 @@
 package kotlinx.coroutines.experimental.scheduling
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.Runnable
 import java.io.Closeable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 
 /**
@@ -16,7 +16,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
     private val workers: Array<PoolWorker>
     private val globalWorkQueue = ConcurrentLinkedQueue<Task>()
-    private val parkedWorkers = AtomicInteger(0)
+    private val parkedWorkers = atomic(0)
     private val random = Random()
 
     @Volatile
@@ -49,10 +49,10 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         isTerminated = true
     }
 
-    fun dispatch(command: Runnable, intensive: Boolean = false) {
+    fun dispatch(command: Runnable) {
         val task = TimedTask(schedulerTimeSource.nanoTime(), command)
 
-        val offerResult = submitToLocalQueue(task, intensive)
+        val offerResult = submitToLocalQueue(task)
         if (offerResult == ADDED) {
             return
         }
@@ -66,7 +66,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
     private fun wakeUpIdleWorker() {
         // If no threads are parked don't try to wake anyone
-        val parked = parkedWorkers.get()
+        val parked = parkedWorkers.value
         if (parked == 0) {
             return
         }
@@ -86,10 +86,14 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
     }
 
 
-    private fun submitToLocalQueue(task: Task, intensive: Boolean): Int {
+    private fun submitToLocalQueue(task: Task): Int {
         val worker = Thread.currentThread() as? PoolWorker ?: return NOT_ADDED
-        if (intensive && worker.localQueue.bufferSize > FORKED_TASK_OFFLOAD_THRESHOLD) return NOT_ADDED
         if (worker.localQueue.offer(task, globalWorkQueue)) {
+            // We're close to queue capacity, wakeup anyone to steal
+            if (worker.localQueue.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD) {
+                wakeUpIdleWorker()
+            }
+
             return ADDED
         }
 
@@ -203,13 +207,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
             repeat(STEAL_ATTEMPTS) {
                 val worker = workers[nextInt(workers.size)]
                 if (worker !== this) {
-                    var stolen = false
-                    worker.localQueue.offloadWork(true) {
-                        stolen = true
-                        localQueue.offer(it, globalWorkQueue)
-                    }
-
-                    if (stolen) {
+                    if (localQueue.trySteal(worker.localQueue, globalWorkQueue)) {
                         return@repeat
                     }
                 }
