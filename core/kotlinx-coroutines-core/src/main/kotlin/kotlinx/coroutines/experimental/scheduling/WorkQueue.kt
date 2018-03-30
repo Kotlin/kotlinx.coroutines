@@ -1,7 +1,6 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import kotlinx.atomicfu.atomic
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 internal const val BUFFER_CAPACITY_BASE = 7
@@ -28,12 +27,12 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  */
 internal class WorkQueue {
 
-    internal val bufferSize: Int get() = producerIndex.get() - consumerIndex.get()
+    internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
-    private val lastScheduledTask: AtomicReference<Task?> = AtomicReference(null)
+    private val lastScheduledTask = atomic<Task?>(null)
 
-    private val producerIndex: AtomicInteger = AtomicInteger(0)
-    private val consumerIndex: AtomicInteger = AtomicInteger(0)
+    private val producerIndex = atomic(0)
+    private val consumerIndex = atomic(0)
 
     /**
      * Retrieves and removes task from head of the queue
@@ -52,7 +51,7 @@ internal class WorkQueue {
      */
     fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
         while (true) {
-            val previous = lastScheduledTask.get()
+            val previous = lastScheduledTask.value
             if (lastScheduledTask.compareAndSet(previous, task)) {
                 if (previous != null) {
                     return addLast(previous, globalQueue)
@@ -69,7 +68,7 @@ internal class WorkQueue {
         val time = schedulerTimeSource.nanoTime()
 
         if (victim.bufferSize == 0) {
-            val lastScheduled = victim.lastScheduledTask.get() ?: return false
+            val lastScheduled = victim.lastScheduledTask.value ?: return false
             if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
                 return false
             }
@@ -112,8 +111,8 @@ internal class WorkQueue {
      */
     private inline fun pollExternal(predicate: (Task) -> Boolean = { true }): Task? {
         while (true) {
-            val tailLocal = consumerIndex.get()
-            if (tailLocal - producerIndex.get() == 0) return null
+            val tailLocal = consumerIndex.value
+            if (tailLocal - producerIndex.value == 0) return null
             val index = tailLocal and MASK
             val element = buffer[index] ?: continue
             if (!predicate(element)) {
@@ -146,7 +145,7 @@ internal class WorkQueue {
     // Called only by owner
     private fun tryAddLast(task: Task): Boolean {
         if (bufferSize == BUFFER_CAPACITY - 1) return false
-        val headLocal = producerIndex.get()
+        val headLocal = producerIndex.value
         val nextIndex = headLocal and MASK
 
         /*
