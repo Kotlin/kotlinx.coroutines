@@ -100,6 +100,27 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         return ADDED_WITH_OFFLOADING
     }
 
+    /**
+     * Returns a string identifying state of this scheduler for nicer debugging
+     */
+    override fun toString(): String {
+        var parkedWorkers = 0
+        val queueSizes = arrayListOf<Int>()
+        for (worker in workers) {
+            if (worker.isParking) {
+                ++parkedWorkers
+            } else {
+                queueSizes += worker.localQueue.bufferSize
+            }
+        }
+
+        return "${super.toString()}[core pool size = ${workers.size}, " +
+                "parked workers = $parkedWorkers, " +
+                "active workers buffer sizes = $queueSizes, " +
+                "global queue size = ${globalWorkQueue.size}]"
+    }
+
+
     internal inner class PoolWorker(index: Int) : Thread("CoroutinesScheduler-worker-$index") {
         init {
             isDaemon = true
