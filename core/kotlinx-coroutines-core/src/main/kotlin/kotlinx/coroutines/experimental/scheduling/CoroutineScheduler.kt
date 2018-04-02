@@ -33,7 +33,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
 
         // Local queue 'offer' results
         private const val ADDED = -1
-        private const val ADDED_WITH_OFFLOADING = 0
+        private const val ADDED_WITH_OFFLOADING = 0 // Added to the local queue, but pool requires additional worker to keep up
         private const val NOT_ADDED = 1
     }
 
@@ -91,7 +91,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         if (worker.localQueue.offer(task, globalWorkQueue)) {
             // We're close to queue capacity, wakeup anyone to steal
             if (worker.localQueue.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD) {
-                unparkIdleWorker()
+                return ADDED_WITH_OFFLOADING
             }
 
             return ADDED
@@ -165,7 +165,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
                 return
             }
 
-            // Check last exhaustion time to avoid race between steal and next task execution
+            // Check last exhaustion time to avoid the race between steal and next task execution
             val now = schedulerTimeSource.nanoTime()
             if (now - job.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS && now - lastExhaustionTime >= WORK_STEALING_TIME_RESOLUTION_NS * 5) {
                 lastExhaustionTime = now
@@ -193,7 +193,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         private fun idle() {
             /*
              * Simple adaptive await of work:
-             * Spin on volatile field with empty loop in hope that new work will arrive,
+             * Spin on the volatile field with an empty loop in hope that new work will arrive,
              * then start yielding to reduce CPU pressure, and finally start adaptive parking.
              *
              * The main idea is not to park while it's possible (otherwise throughput on asymmetric workloads suffers due to too frequent

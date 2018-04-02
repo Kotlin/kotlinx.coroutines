@@ -19,10 +19,10 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
  * Work offloading
- * When queue is full, half of existing tasks is offloaded to global queue which is regularly polled by other pool workers.
+ * When the queue is full, half of existing tasks are offloaded to global queue which is regularly polled by other pool workers.
  * Offloading occurs in LIFO order for the sake of implementation simplicity: offloads should be extremely rare and occurs only in specific use-cases
  * (e.g. when coroutine starts heavy fork-join-like computation), so fairness is not important.
- * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then strategy of selecting most idle worker
+ * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then the strategy of selecting any idle worker
  * should be implemented and implementation should be aware multiple producers.
  */
 internal class WorkQueue {
@@ -35,18 +35,18 @@ internal class WorkQueue {
     private val consumerIndex = atomic(0)
 
     /**
-     * Retrieves and removes task from head of the queue
-     * Invariant: this method is called only by owner of the queue ([pollExternal] is not)
+     * Retrieves and removes task from the head of the queue
+     * Invariant: this method is called only by the owner of the queue ([pollExternal] is not)
      */
     fun poll(): Task? {
         return lastScheduledTask.getAndSet(null) ?: pollExternal()
     }
 
     /**
-     * Invariant: this method is called only by owner of the queue
+     * Invariant: this method is called only by the owner of the queue
      *
      * @param task task to put into local queue
-     * @param globalQueue fallback queue which is used when local queue is overflown
+     * @param globalQueue fallback queue which is used when the local queue is overflown
      * @return true if no offloading happened, false otherwise
      */
     fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
@@ -82,7 +82,7 @@ internal class WorkQueue {
         }
 
         /*
-         * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find first task not satisfying predicate.
+         * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find the first task not satisfying a predicate.
          * If queue size is larger than QUEUE_SIZE_OFFLOAD_THRESHOLD then unconditionally steal tasks over this limit to prevent possible queue overflow
          */
         var stolen = false
@@ -126,12 +126,12 @@ internal class WorkQueue {
         }
     }
 
-    // Called only by owner
+    // Called only by the owner
     private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
         var addedToGlobalQueue = false
 
         /*
-         * We need loop here because race possible not only on full queue,
+         * We need the loop here because race possible not only on full queue,
          * but also on queue with one element during stealing
          */
         while (!tryAddLast(task)) {
@@ -142,16 +142,16 @@ internal class WorkQueue {
         return !addedToGlobalQueue
     }
 
-    // Called only by owner
+    // Called only by the owner
     private fun tryAddLast(task: Task): Boolean {
         if (bufferSize == BUFFER_CAPACITY - 1) return false
         val headLocal = producerIndex.value
         val nextIndex = headLocal and MASK
 
         /*
-         * If current element is not null then we're racing with consumers for tail. If we skip this check then
-         * consumer can null out current element and it will be lost. If we're racing for tail then
-         * queue is close to overflow => it's fine to offload work to global queue
+         * If current element is not null then we're racing with consumers for the tail. If we skip this check then
+         * the consumer can null out current element and it will be lost. If we're racing for tail then
+         * the queue is close to overflowing => it's fine to offload work to global queue
          */
         if (buffer[nextIndex] != null) {
             return false

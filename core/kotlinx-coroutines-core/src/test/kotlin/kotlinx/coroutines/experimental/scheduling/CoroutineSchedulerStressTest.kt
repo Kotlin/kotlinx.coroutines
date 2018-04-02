@@ -18,7 +18,6 @@ class CoroutineSchedulerStressTest : TestBase() {
     private val processed = AtomicInteger(0)
     private val finishLatch = CountDownLatch(1)
 
-
     @After
     fun tearDown() {
         dispatcher.close()
