@@ -61,10 +61,10 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
             globalWorkQueue.add(task)
         }
 
-        wakeUpIdleWorker()
+        unparkIdleWorker()
     }
 
-    private fun wakeUpIdleWorker() {
+    private fun unparkIdleWorker() {
         // If no threads are parked don't try to wake anyone
         val parked = parkedWorkers.value
         if (parked == 0) {
@@ -91,7 +91,7 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         if (worker.localQueue.offer(task, globalWorkQueue)) {
             // We're close to queue capacity, wakeup anyone to steal
             if (worker.localQueue.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD) {
-                wakeUpIdleWorker()
+                unparkIdleWorker()
             }
 
             return ADDED
@@ -127,11 +127,16 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
         }
 
         val localQueue: WorkQueue = WorkQueue()
-        var isParking = false
+        /**
+         * Time of last call to [unparkIdleWorker] due to missing tasks deadlines.
+         * Used as throttling mechanism to avoid unparking multiple threads when it's not really necessary.
+         */
+        private var lastExhaustionTime = 0L
 
         @Volatile
+        var isParking = false
+        @Volatile
         private var spins = 0L
-
         private var yields = 0L
         private var parkTimeNs = MIN_PARK_TIME_NS
         private var rngState = random.nextInt()
@@ -145,11 +150,26 @@ class CoroutineScheduler(private val corePoolSize: Int) : Executor, Closeable {
                         idle()
                     } else {
                         idleReset()
+                        checkExhaustion(job)
                         job.task.run()
                     }
                 } catch (e: Throwable) {
                     println(e) // TODO handler
                 }
+            }
+        }
+
+        private fun checkExhaustion(job: Task) {
+            val parked = parkedWorkers.value
+            if (parked == 0) {
+                return
+            }
+
+            // Check last exhaustion time to avoid race between steal and next task execution
+            val now = schedulerTimeSource.nanoTime()
+            if (now - job.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS && now - lastExhaustionTime >= WORK_STEALING_TIME_RESOLUTION_NS * 5) {
+                lastExhaustionTime = now
+                unparkIdleWorker()
             }
         }
 
