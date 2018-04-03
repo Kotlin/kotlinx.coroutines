@@ -92,6 +92,14 @@ buildscript {
 }
 ```
 
+Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories:
+
+```
+repository {
+    jcenter()
+}
+```
+
 ### Kotlin/JS
 
 Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
