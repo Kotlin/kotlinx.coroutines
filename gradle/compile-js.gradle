@@ -1,0 +1,20 @@
+
+// Platform-specific configuration to compile JS modules
+
+apply plugin: 'kotlin-platform-js'
+
+tasks.withType(compileKotlin2Js.getClass()) {
+    kotlinOptions {
+        moduleKind = "umd"
+        sourceMap = true
+        metaInfo = true
+        // drop -js suffix from outputFile
+        def baseName = project.name - "-js"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+}

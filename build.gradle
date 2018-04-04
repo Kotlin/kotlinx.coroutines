@@ -46,63 +46,8 @@ static def platformLib(base, platform) {
 
 configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
     def platform = platformOf(it)
-    apply plugin: "kotlin-platform-$platform"
-
-    if (platform == "jvm") {
-        sourceCompatibility = 1.6
-        targetCompatibility = 1.6
-    }
-
-    kotlin.experimental.coroutines "enable"
-
-    if (platform == "js") {
-        tasks.withType(compileKotlin2Js.getClass()) {
-            kotlinOptions {
-                moduleKind = "umd"
-                sourceMap = true
-                metaInfo = true
-                // drop -js suffix from outputFile
-                def baseName = project.name - "-js"
-                outputFile = new File(outputFile.parent, baseName + ".js")
-            }
-        }
-    }
-    
-    tasks.withType(Test) {
-        testLogging {
-            showStandardStreams = true
-            events "passed", "failed"
-        }
-        def stressTest = project.properties['stressTest']
-        if (stressTest != null) systemProperties['stressTest'] = stressTest
-    }
-
-    repositories {
-        jcenter()
-        maven { url "http://kotlin.bintray.com/kotlinx" }
-        maven { url "https://dl.bintray.com/devexperts/Maven/" }
-    }
-
-    def kotlin_stdlib = platformLib("kotlin-stdlib", platform)
-    def kotlin_test = platformLib("kotlin-test", platform)
-
-    dependencies {
-        compile "org.jetbrains.kotlin:$kotlin_stdlib:$kotlin_version"
-        testCompile "org.jetbrains.kotlin:$kotlin_test:$kotlin_version"
-    }
-
-    if (platform == "common") {
-        dependencies {
-            testCompile "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
-        }
-    }
-
-    if (platform == "jvm") {
-        dependencies {
-            testCompile "junit:junit:$junit_version"
-            testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-        }
-    }
+    apply from: rootProject.file("gradle/compile-${platform}.gradle")
+    apply from: rootProject.file("gradle/compile-all.gradle")
 }
 
 // --------------- Configure sub-projects that are part of the library ---------------
