@@ -126,7 +126,7 @@ class IntegrationTest(
         checkNumbers(n, observable)
         val channel = observable.openSubscription()
         checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
-        channel.close()
+        channel.cancel()
     }
 
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {

@@ -31,33 +31,33 @@ class ObservableSubscriptionSelectTest() : TestBase() {
         var a = 0
         var b = 0
         // open two subs
-        source.openSubscription().use { channelA ->
-            source.openSubscription().use { channelB ->
-                loop@ while (true) {
-                    val done: Int = select {
-                        channelA.onReceiveOrNull {
-                            if (it != null) assertEquals(a++, it)
-                            if (it == null) 0 else 1
-                        }
-                        channelB.onReceiveOrNull {
-                            if (it != null) assertEquals(b++, it)
-                            if (it == null) 0 else 2
-                        }
-                    }
-                    when (done) {
-                        0 -> break@loop
-                        1 -> {
-                            val r = channelB.receiveOrNull()
-                            if (r != null) assertEquals(b++, r)
-                        }
-                        2 -> {
-                            val r = channelA.receiveOrNull()
-                            if (r != null) assertEquals(a++, r)
-                        }
-                    }
+        val channelA = source.openSubscription()
+        val channelB = source.openSubscription()
+        loop@ while (true) {
+            val done: Int = select {
+                channelA.onReceiveOrNull {
+                    if (it != null) assertEquals(a++, it)
+                    if (it == null) 0 else 1
+                }
+                channelB.onReceiveOrNull {
+                    if (it != null) assertEquals(b++, it)
+                    if (it == null) 0 else 2
+                }
+            }
+            when (done) {
+                0 -> break@loop
+                1 -> {
+                    val r = channelB.receiveOrNull()
+                    if (r != null) assertEquals(b++, r)
+                }
+                2 -> {
+                    val r = channelA.receiveOrNull()
+                    if (r != null) assertEquals(a++, r)
                 }
             }
         }
+        channelA.cancel()
+        channelB.cancel()
         // should receive one of them fully
         assertTrue(a == n || b == n)
     }

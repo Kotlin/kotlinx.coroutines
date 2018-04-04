@@ -34,7 +34,7 @@ import kotlinx.coroutines.experimental.selects.*
  * This channel is also created by `BroadcastChannel(Channel.CONFLATED)` factory function invocation.
  *
  * This implementation is fully lock-free. In this implementation
- * [opening][openSubscription] and [closing][SubscriptionReceiveChannel.close] subscription takes O(N) time, where N is the
+ * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
  */
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
@@ -114,7 +114,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     override val isFull: Boolean get() = false
 
     @Suppress("UNCHECKED_CAST")
-    override fun openSubscription(): SubscriptionReceiveChannel<E> {
+    override fun openSubscription(): ReceiveChannel<E> {
         val subscriber = Subscriber<E>(this)
         _state.loop { state ->
             when (state) {
@@ -247,7 +247,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
-    ) : ConflatedChannel<E>(), SubscriptionReceiveChannel<E> {
+    ) : ConflatedChannel<E>(), ReceiveChannel<E> {
         override fun cancel(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)

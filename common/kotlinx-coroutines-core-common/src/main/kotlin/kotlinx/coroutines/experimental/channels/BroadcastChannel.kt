@@ -23,7 +23,7 @@ import kotlinx.coroutines.experimental.internal.Closeable
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
- * that subscribe for the elements using [openSubscription] function and unsubscribe using [SubscriptionReceiveChannel.close]
+ * that subscribe for the elements using [openSubscription] function and unsubscribe using [ReceiveChannel.cancel]
  * function.
  *
  * See `BroadcastChannel()` factory function for the description of available
@@ -45,17 +45,17 @@ public interface BroadcastChannel<E> : SendChannel<E> {
 
     /**
      * Subscribes to this [BroadcastChannel] and returns a channel to receive elements from it.
-     * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this
+     * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this
      * broadcast channel.
      */
-    public fun openSubscription(): SubscriptionReceiveChannel<E>
+    public fun openSubscription(): ReceiveChannel<E>
 
     /**
      * @suppress **Deprecated**: Renamed to [openSubscription]
      */
     @Deprecated(message = "Renamed to `openSubscription`",
         replaceWith = ReplaceWith("openSubscription()"))
-    public fun open(): SubscriptionReceiveChannel<E> = openSubscription()
+    public fun open(): ReceiveChannel<E> = openSubscription()
 }
 
 /**
@@ -80,6 +80,7 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
  *
  * Note, that invocation of [cancel] also closes subscription.
  */
+@Deprecated("Deprecated in favour of `ReceiveChannel`")
 public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
     /**
      * Closes this subscription. This is a synonym for [cancel].
