@@ -3,7 +3,7 @@
 task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
     args = ['install',
             "mocha@$mocha_version",
-            "source-map-support@$source_map_suport_version",
+            "source-map-support@$source_map_support_version",
             '--no-save']
     if (project.hasProperty("teamcity")) args += [
             "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
