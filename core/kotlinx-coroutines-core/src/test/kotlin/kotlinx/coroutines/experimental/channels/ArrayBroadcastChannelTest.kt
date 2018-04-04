@@ -161,7 +161,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         sub.consumeEach {
             check(it == ++expected)
             if (it == 2) {
-                sub.close()
+                sub.cancel()
             }
         }
         check(expected == 2)
@@ -174,7 +174,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val channel = BroadcastChannel<Int>(1)
         val sub = channel.openSubscription()
         assertFalse(sub.isClosedForReceive)
-        sub.close()
+        sub.cancel()
         assertTrue(sub.isClosedForReceive)
         sub.receive()
     }
