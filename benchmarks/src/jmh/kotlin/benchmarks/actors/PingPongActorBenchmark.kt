@@ -1,13 +1,11 @@
 package benchmarks.actors
 
-import benchmarks.ParametrizedDispatcherBase
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.runBlocking
+import benchmarks.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /*
  * Benchmark                                   (dispatcher)  Mode  Cnt    Score    Error  Units
@@ -32,7 +30,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
     data class Letter(val message: Any?, val sender: SendChannel<Letter>)
 
-    @Param("experimental")
+    @Param("experimental", "fjp", "ftp_1", "ftp_8")
     override var dispatcher: String = "fjp"
 
     @Benchmark

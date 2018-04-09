@@ -26,7 +26,7 @@ class WorkQueueTest : TestBase() {
     fun testLastScheduledComesFirst() {
         val queue = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
-        (1L..4L).forEach { queue.offer(task(it), globalQueue) }
+        (1L..4L).forEach { queue.add(task(it), globalQueue) }
         assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain())
     }
 
@@ -34,7 +34,7 @@ class WorkQueueTest : TestBase() {
     fun testWorkOffload() {
         val queue = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
-        (1L..130L).forEach { queue.offer(task(it), globalQueue) }
+        (1L..130L).forEach { queue.add(task(it), globalQueue) }
 
         val expectedLocalResults = (64L..129L).toMutableList()
         expectedLocalResults.add(0, 130L)
@@ -46,9 +46,9 @@ class WorkQueueTest : TestBase() {
     fun testWorkOffloadPrecision() {
         val queue = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
-        repeat(128) { require(queue.offer(task(0), globalQueue)) }
+        repeat(128) { require(queue.add(task(0), globalQueue)) }
         require(globalQueue.isEmpty())
-        require(!queue.offer(task(0), globalQueue))
+        require(!queue.add(task(0), globalQueue))
         require(globalQueue.size == 63)
     }
 
@@ -57,7 +57,7 @@ class WorkQueueTest : TestBase() {
         val victim = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
 
-        (1L..96L).forEach { victim.offer(task(it), globalQueue) }
+        (1L..96L).forEach { victim.add(task(it), globalQueue) }
 
         timeSource.step()
         timeSource.step(2)
@@ -73,6 +73,7 @@ class WorkQueueTest : TestBase() {
         require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(5L, 3L, 4L), stealer.drain())
         require(globalQueue.isEmpty())
+        assertEquals((6L..96L).toSet(), victim.drain().toSet())
     }
 
     @Test
@@ -80,7 +81,7 @@ class WorkQueueTest : TestBase() {
         val victim = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
 
-        (1L..110L).forEach { victim.offer(task(it), globalQueue) }
+        (1L..110L).forEach { victim.add(task(it), globalQueue) }
         val stealer = WorkQueue()
         require(stealer.trySteal(victim, globalQueue))
         assertEquals((1L..13L).toSet(), stealer.drain().toSet())
@@ -104,7 +105,7 @@ class WorkQueueTest : TestBase() {
     fun testStealingFromHead() {
         val victim = WorkQueue()
         val globalQueue = ArrayDeque<Task>()
-        (1L..2L).forEach { victim.offer(task(it), globalQueue) }
+        (1L..2L).forEach { victim.add(task(it), globalQueue) }
         timeSource.step()
         timeSource.step(3)
 
@@ -117,7 +118,7 @@ class WorkQueueTest : TestBase() {
     }
 }
 
-internal fun task(n: Long) = TimedTask(n, Runnable {})
+internal fun task(n: Long) = TimedTask(Runnable {}, n, TaskMode.NON_BLOCKING)
 
 internal fun WorkQueue.drain(): List<Long> {
     var task: Task? = poll()

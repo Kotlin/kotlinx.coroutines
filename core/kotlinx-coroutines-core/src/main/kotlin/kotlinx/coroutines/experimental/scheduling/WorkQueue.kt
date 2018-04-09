@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.atomicfu.atomic
-import java.util.concurrent.atomic.AtomicReferenceArray
+import kotlinx.atomicfu.*
+import java.util.concurrent.atomic.*
 
 internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
@@ -15,7 +15,7 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  *
  * Fairness
  * [WorkQueue] provides semi-FIFO order, but with priority for most recently submitted task assuming
- * that these two (current and submitted) are communicating and sharing state thus making such communication extremely fast.
+ * that these two (current one and submitted) are communicating and sharing state thus making such communication extremely fast.
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
  * Work offloading
@@ -27,8 +27,16 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  */
 internal class WorkQueue {
 
+    // todo: There is non-atomicity in computing bufferSize (indices update separately).
+    // todo: It can lead to arbitrary values of resulting bufferSize.
+    // todo: Consider merging both indices into a single Long.
+    // todo: Alternatively, prove that sporadic arbitrary result here is Ok (does not seems the case now)
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+
+    // todo: AtomicReferenceArray has an extra memory indirection.
+    // todo: In the future (long-term) atomicfu shall support efficient atomic arrays in a platform-specific way (unsafe or varhandels)
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
+
     private val lastScheduledTask = atomic<Task?>(null)
 
     private val producerIndex = atomic(0)
@@ -49,16 +57,25 @@ internal class WorkQueue {
      * @param globalQueue fallback queue which is used when the local queue is overflown
      * @return true if no offloading happened, false otherwise
      */
-    fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
-        while (true) {
-            val previous = lastScheduledTask.value
-            if (lastScheduledTask.compareAndSet(previous, task)) {
-                if (previous != null) {
-                    return addLast(previous, globalQueue)
-                }
-                return true
-            }
+    fun add(task: Task, globalQueue: GlobalQueue): Boolean {
+        val previous = lastScheduledTask.getAndSet(task) ?: return true
+        return addLast(previous, globalQueue)
+    }
+
+    // Called only by the owner
+    fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
+        var addedToGlobalQueue = false
+
+        /*
+         * We need the loop here because race possible not only on full queue,
+         * but also on queue with one element during stealing
+         */
+        while (!tryAddLast(task)) {
+            offloadWork(globalQueue)
+            addedToGlobalQueue = true
         }
+
+        return !addedToGlobalQueue
     }
 
     /**
@@ -74,7 +91,7 @@ internal class WorkQueue {
             }
 
             if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                offer(lastScheduled, globalQueue)
+                add(lastScheduled, globalQueue)
                 return true
             }
 
@@ -90,10 +107,18 @@ internal class WorkQueue {
             val task = victim.pollExternal { time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
                     ?: return@repeat
             stolen = true
-            offer(task, globalQueue)
+            add(task, globalQueue)
         }
 
         return stolen
+    }
+
+    internal fun size(): Int {
+        if (lastScheduledTask.value != null) {
+            return bufferSize + 1
+        }
+
+        return bufferSize
     }
 
     /**
@@ -124,22 +149,6 @@ internal class WorkQueue {
                 return buffer.getAndSet(index, null)
             }
         }
-    }
-
-    // Called only by the owner
-    private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
-        var addedToGlobalQueue = false
-
-        /*
-         * We need the loop here because race possible not only on full queue,
-         * but also on queue with one element during stealing
-         */
-        while (!tryAddLast(task)) {
-            offloadWork(globalQueue)
-            addedToGlobalQueue = true
-        }
-
-        return !addedToGlobalQueue
     }
 
     // Called only by the owner
