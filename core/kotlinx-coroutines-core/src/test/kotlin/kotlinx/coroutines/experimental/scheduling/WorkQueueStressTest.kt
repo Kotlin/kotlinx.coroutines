@@ -43,7 +43,7 @@ class WorkQueueStressTest : TestBase() {
                     Thread.yield()
                 }
 
-                producerQueue.offer(task(i.toLong()), globalQueue)
+                producerQueue.add(task(i.toLong()), globalQueue)
             }
 
             producerFinished = true
@@ -80,7 +80,7 @@ class WorkQueueStressTest : TestBase() {
                 }
 
                 // No offloading to global queue here
-                producerQueue.offer(task(i.toLong()), fakeQueue)
+                producerQueue.add(task(i.toLong()), fakeQueue)
             }
         }
 

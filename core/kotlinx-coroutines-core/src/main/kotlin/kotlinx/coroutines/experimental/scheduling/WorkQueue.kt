@@ -15,7 +15,7 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  *
  * Fairness
  * [WorkQueue] provides semi-FIFO order, but with priority for most recently submitted task assuming
- * that these two (current and submitted) are communicating and sharing state thus making such communication extremely fast.
+ * that these two (current one and submitted) are communicating and sharing state thus making such communication extremely fast.
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
  * Work offloading
@@ -49,7 +49,7 @@ internal class WorkQueue {
      * @param globalQueue fallback queue which is used when the local queue is overflown
      * @return true if no offloading happened, false otherwise
      */
-    fun offer(task: Task, globalQueue: GlobalQueue): Boolean {
+    fun add(task: Task, globalQueue: GlobalQueue): Boolean {
         while (true) {
             val previous = lastScheduledTask.value
             if (lastScheduledTask.compareAndSet(previous, task)) {
@@ -59,6 +59,22 @@ internal class WorkQueue {
                 return true
             }
         }
+    }
+
+    // Called only by the owner
+    fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
+        var addedToGlobalQueue = false
+
+        /*
+         * We need the loop here because race possible not only on full queue,
+         * but also on queue with one element during stealing
+         */
+        while (!tryAddLast(task)) {
+            offloadWork(globalQueue)
+            addedToGlobalQueue = true
+        }
+
+        return !addedToGlobalQueue
     }
 
     /**
@@ -74,7 +90,7 @@ internal class WorkQueue {
             }
 
             if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                offer(lastScheduled, globalQueue)
+                add(lastScheduled, globalQueue)
                 return true
             }
 
@@ -90,10 +106,18 @@ internal class WorkQueue {
             val task = victim.pollExternal { time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
                     ?: return@repeat
             stolen = true
-            offer(task, globalQueue)
+            add(task, globalQueue)
         }
 
         return stolen
+    }
+
+    internal fun size(): Int {
+        if (lastScheduledTask.value != null) {
+            return bufferSize + 1
+        }
+
+        return bufferSize
     }
 
     /**
@@ -124,22 +148,6 @@ internal class WorkQueue {
                 return buffer.getAndSet(index, null)
             }
         }
-    }
-
-    // Called only by the owner
-    private fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
-        var addedToGlobalQueue = false
-
-        /*
-         * We need the loop here because race possible not only on full queue,
-         * but also on queue with one element during stealing
-         */
-        while (!tryAddLast(task)) {
-            offloadWork(globalQueue)
-            addedToGlobalQueue = true
-        }
-
-        return !addedToGlobalQueue
     }
 
     // Called only by the owner
