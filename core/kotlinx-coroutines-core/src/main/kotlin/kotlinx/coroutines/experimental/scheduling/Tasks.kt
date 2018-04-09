@@ -12,6 +12,9 @@ internal val WORK_STEALING_TIME_RESOLUTION_NS = readFromSystemProperties(
 internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.offload.threshold", 96L)
 
+internal val BLOCKING_DEFAULT_PARALLELISM = readFromSystemProperties(
+        "kotlinx.coroutines.scheduler.blocking.parallelism", 16L).toInt()
+
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
 // Internal API, temporary exposed

@@ -11,10 +11,6 @@ class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().a
 
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 
-    companion object {
-        const val DEFAULT_BLOCKING_PARALLELISM = 16
-    }
-
     /**
      * TODO: yield doesn't work as expected
      */
@@ -36,7 +32,7 @@ class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().a
      *
      * @param parallelism parallelism level, indicating how many threads can execute tasks in given context in parallel.
      */
-    fun blocking(parallelism: Int = DEFAULT_BLOCKING_PARALLELISM): CoroutineDispatcher {
+    fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0, { "Expected positive parallelism level, but have $parallelism" })
         return LimitingBlockingDispatcher(parallelism, TaskMode.PROBABLY_BLOCKING, this)
     }
@@ -57,13 +53,13 @@ private class LimitingBlockingDispatcher(val parallelism: Int, val taskContext: 
             // Commit in-flight tasks slot
             val inFlight = inFlightTasks.incrementAndGet()
 
-            // Fast path #1 if parallelism limit is not reached, dispatch task and return
+            // Fast path, if parallelism limit is not reached, dispatch task and return
             if (inFlight <= parallelism) {
                 dispatcher.dispatchBlocking(taskToSchedule, taskContext, fair)
                 return
             }
 
-            // Parallelism limit is reached, add task to the local queue
+            // Parallelism limit is reached, add task to the queue
             queue.add(taskToSchedule)
 
             /*

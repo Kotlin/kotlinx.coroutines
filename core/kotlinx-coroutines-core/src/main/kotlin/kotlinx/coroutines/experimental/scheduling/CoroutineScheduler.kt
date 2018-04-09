@@ -137,6 +137,10 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
     /**
      * Dispatches execution of a runnable [block] with a hint to a scheduler whether
      * this [block] may execute blocking operations (IO, system calls, locking primitives etc.)
+     *
+     * @param block runnable to be dispatched
+     * @param mode mode of given [block] which is used as a hint to a dynamic resizing mechanism
+     * @param fair whether the task should be dispatched fairly (strict FIFO) or not (semi-FIFO)
      */
     fun dispatch(block: Runnable, mode: TaskMode = TaskMode.NON_BLOCKING, fair: Boolean = false) {
         val task = TimedTask(block, schedulerTimeSource.nanoTime(), mode)

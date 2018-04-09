@@ -1,123 +1,87 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.*
-import org.junit.After
+import kotlinx.coroutines.experimental.TestBase
 import org.junit.Test
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import java.util.concurrent.CountDownLatch
 
-class CoroutineSchedulerTest : SchedulerTestBase() {
-
-    @After
-    fun tearDown() {
-        schedulerTimeSource = NanoTimeSource
-    }
+class CoroutineSchedulerTest : TestBase() {
 
     @Test
-    fun testSingleThread() = runBlocking {
-        expect(1)
-        withContext(dispatcher) {
-            require(Thread.currentThread() is CoroutineScheduler.PoolWorker)
-            expect(2)
-            val job = async(coroutineContext) {
-                expect(3)
-                delay(10)
-                expect(4)
-            }
+    fun testModesExternalSubmission() { // Smoke
+        CoroutineScheduler(1, 1).use {
+            for (value in TaskMode.values()) {
+                val latch = CountDownLatch(1)
+                it.dispatch(Runnable {
+                    latch.countDown()
+                }, mode = value)
 
-            job.await()
-            expect(5)
+                latch.await()
+            }
         }
-
-        finish(6)
-        checkPoolThreads(1)
     }
 
     @Test
-    fun testStealing() = runBlocking {
-        corePoolSize = 2
-        val flag = AtomicBoolean(false)
-        val job = async(context = dispatcher) {
-            expect(1)
-            val innerJob = async {
-                expect(2)
-                flag.set(true)
-            }
-
-            while (!flag.get()) {
-                Thread.yield() // Block current thread, submitted inner job will be stolen
-            }
-
-            innerJob.await()
-            expect(3)
-        }
-
-        job.await()
-        finish(4)
-        checkPoolThreads(2)
-    }
-
-    @Test
-    fun testNoStealing() = runBlocking {
-        corePoolSize = CORES_COUNT
-        schedulerTimeSource = TestTimeSource(0L)
-        withContext(dispatcher) {
-            val thread = Thread.currentThread()
-            val job = async(dispatcher) {
-                assertEquals(thread, Thread.currentThread())
-                val innerJob = async(dispatcher) {
-                    assertEquals(thread, Thread.currentThread())
+    fun testModesInternalSubmission() { // Smoke
+        CoroutineScheduler(2, 2).use {
+            val latch = CountDownLatch(1)
+            it.dispatch(Runnable {
+                for (value in TaskMode.values()) {
+                    it.dispatch(Runnable {
+                        latch.countDown()
+                    }, mode = value)
                 }
-                innerJob.await()
-            }
+            })
 
-            job.await()
-            assertEquals(thread, Thread.currentThread())
+            latch.await()
         }
-
-        checkPoolThreads()
     }
 
     @Test
-    fun testDelay() = runBlocking {
-        corePoolSize = 2
-        withContext(dispatcher) {
-            expect(1)
-            delay(10)
-            expect(2)
-        }
+    fun testNonFairSubmission() {
+        CoroutineScheduler(1, 1).use {
+            val startLatch = CountDownLatch(1)
+            val finishLatch = CountDownLatch(2)
 
-        finish(3)
-        checkPoolThreads(2)
+            it.dispatch(Runnable {
+                it.dispatch(Runnable {
+                    expect(2)
+                    finishLatch.countDown()
+                })
+
+                it.dispatch(Runnable {
+                    expect(1)
+                    finishLatch.countDown()
+                })
+            })
+
+            startLatch.countDown()
+            finishLatch.await()
+            finish(3)
+        }
     }
 
     @Test
-    fun testWithTimeout() = runBlocking {
-        corePoolSize = CORES_COUNT
-        withContext(dispatcher) {
-            expect(1)
-            val result = withTimeoutOrNull(1000) {
-                expect(2)
-                yield() // yield only now
-                "OK"
-            }
-            assertEquals("OK", result)
+    fun testFairSubmission() {
+        CoroutineScheduler(1, 1).use {
+            val startLatch = CountDownLatch(1)
+            val finishLatch = CountDownLatch(2)
 
-            val nullResult = withTimeoutOrNull(1000) {
-                expect(3)
-                while (true) {
-                    yield()
-                }
+            it.dispatch(Runnable {
+                it.dispatch(Runnable {
+                    expect(1)
+                    finishLatch.countDown()
+                })
 
-                "OK"
-            }
+                it.dispatch(Runnable {
+                    expect(2)
+                    finishLatch.countDown()
+                }, fair = true)
+            })
 
-            assertNull(nullResult)
-            finish(4)
+            startLatch.countDown()
+            finishLatch.await()
+            finish(3)
         }
-
-        checkPoolThreads()
     }
 
     @Test
@@ -132,13 +96,19 @@ class CoroutineSchedulerTest : SchedulerTestBase() {
         }
     }
 
-    @Test
-    fun testMaxSize() = runBlocking {
-        ExperimentalCoroutineDispatcher(1, 4).use {
-            val dispatcher = it.blocking()
-            (1..10).map { launch(dispatcher) { Thread.sleep(100)  } }.joinAll()
-            checkPoolThreads(4)
-        }
+    @Test(expected = IllegalArgumentException::class)
+    fun testNegativeCorePoolSize() {
+        ExperimentalCoroutineDispatcher(-1, 4)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testNegativeMaxPoolSize() {
+        ExperimentalCoroutineDispatcher(1, -4)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testCorePoolSizeGreaterThanMaxPoolSize() {
+        ExperimentalCoroutineDispatcher(4, 1)
     }
 
     private fun testUniformDistribution(worker: CoroutineScheduler.PoolWorker, bound: Int) {

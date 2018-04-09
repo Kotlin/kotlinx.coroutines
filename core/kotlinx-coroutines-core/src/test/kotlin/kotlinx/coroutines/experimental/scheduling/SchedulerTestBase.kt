@@ -26,12 +26,14 @@ abstract class SchedulerTestBase : TestBase() {
     private val handler = CoroutineExceptionHandler({ _, e -> exception.value = e })
 
     protected var corePoolSize = 1
+    protected var maxPoolSize = 1024
+
 
     private var _dispatcher: ExperimentalCoroutineDispatcher? = null
     protected val dispatcher: CoroutineContext
         get() {
             if (_dispatcher == null) {
-                _dispatcher = ExperimentalCoroutineDispatcher(corePoolSize)
+                _dispatcher = ExperimentalCoroutineDispatcher(corePoolSize, maxPoolSize)
             }
 
             return _dispatcher!! + handler

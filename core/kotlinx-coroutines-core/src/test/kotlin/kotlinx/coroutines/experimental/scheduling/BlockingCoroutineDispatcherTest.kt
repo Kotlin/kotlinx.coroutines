@@ -1,12 +1,10 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.util.concurrent.CyclicBarrier
 
-class BlockingCoroutineSchedulerTest : SchedulerTestBase() {
+class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
     @Test(timeout = 1_000)
     fun testNonBlockingWithBlockingExternal() = runBlocking {
@@ -138,7 +136,92 @@ class BlockingCoroutineSchedulerTest : SchedulerTestBase() {
 
     @Test
     fun testBlockingFairness() = runBlocking {
+        corePoolSize = 1
+        maxPoolSize = 1
 
+        val blocking = blockingDispatcher(1)
+        val task = async(dispatcher) {
+            expect(1)
+
+            val nonBlocking = async(dispatcher) {
+                expect(3)
+            }
+
+            val firstBlocking = async(blocking) {
+                expect(2)
+            }
+
+            val secondBlocking = async(blocking) {
+                // Already have 1 queued blocking task, so this one wouldn't be scheduled to head
+                expect(4)
+            }
+
+            listOf(firstBlocking, nonBlocking, secondBlocking).joinAll()
+            finish(5)
+        }
+
+        task.await()
+    }
+
+    @Test
+    fun testBoundedBlockingFairness() = runBlocking {
+        corePoolSize = 1
+        maxPoolSize = 1
+
+        val blocking = blockingDispatcher(2)
+        val task = async(dispatcher) {
+            expect(1)
+
+            val nonBlocking = async(dispatcher) {
+                expect(3)
+            }
+
+            val firstBlocking = async(blocking) {
+                expect(4)
+            }
+
+            val secondNonBlocking = async(dispatcher) {
+                expect(5)
+            }
+
+            val secondBlocking = async(blocking) {
+                expect(2) // <- last submitted blocking is executed first
+            }
+
+            val thirdBlocking = async(blocking) {
+                expect(6) // parallelism level is reached before this task
+            }
+
+            listOf(firstBlocking, nonBlocking, secondBlocking, secondNonBlocking, thirdBlocking).joinAll()
+            finish(7)
+        }
+
+        task.await()
+    }
+
+    @Test(timeout = 1_000)
+    fun testYield() = runBlocking {
+        corePoolSize = 1
+        maxPoolSize = 1
+        val ds = blockingDispatcher(1)
+        val outerJob = launch(ds) {
+            expect(1)
+            val innerJob = launch(ds) {
+                // Do nothing
+                expect(3)
+            }
+
+            expect(2)
+            while (innerJob.isActive) {
+                yield()
+            }
+
+            expect(4)
+            innerJob.join()
+        }
+
+        outerJob.join()
+        finish(5)
     }
 
     @Test(expected = IllegalArgumentException::class)
