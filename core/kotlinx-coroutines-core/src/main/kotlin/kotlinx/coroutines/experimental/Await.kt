@@ -9,7 +9,7 @@ import kotlinx.atomicfu.atomic
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-suspend fun awaitAll(vararg jobs: Job): Unit = jobs.asList().awaitAll()
+public suspend fun awaitAll(vararg jobs: Job): Unit = jobs.asList().awaitAll()
 
 /**
  * Awaits for completion of given jobs without blocking a thread and resumes normally when all jobs computations are complete
@@ -18,7 +18,7 @@ suspend fun awaitAll(vararg jobs: Job): Unit = jobs.asList().awaitAll()
  * If the [Job] of the current coroutine is l or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-suspend fun Iterable<Job>.awaitAll(): Unit {
+public suspend fun Iterable<Job>.awaitAll(): Unit {
     val jobs = this as? Collection<Job> ?: this.toList()
     if (jobs.isEmpty()) {
         return
@@ -32,7 +32,7 @@ suspend fun Iterable<Job>.awaitAll(): Unit {
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
+public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
 
 /**
  * Suspends current coroutine until all given jobs are complete. This method is semantically equivalent to
@@ -40,7 +40,7 @@ suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-suspend fun Iterable<Job>.joinAll(): Unit = forEach { it.join() }
+public suspend fun Iterable<Job>.joinAll(): Unit = forEach { it.join() }
 
 private class AwaitAll(private val jobs: Collection<Job>) {
     private val notCompletedCount = atomic(jobs.size)

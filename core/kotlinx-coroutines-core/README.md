@@ -39,13 +39,15 @@ Synchronization primitives for coroutines:
 
 Top-level suspending functions:
 
-| **Name**            | **Description**
-| ------------------- | ---------------
-| [delay]             | Non-blocking sleep
-| [yield]             | Yields thread in single-threaded dispatchers
-| [withContext]       | Switches to a different context
-| [withTimeout]       | Set execution time-limit with exception on timeout 
-| [withTimeoutOrNull] | Set execution time-limit will null result on timeout
+| **Name**                 | **Description**
+| -------------------      | ---------------
+| [delay]                  | Non-blocking sleep
+| [yield]                  | Yields thread in single-threaded dispatchers
+| [withContext]            | Switches to a different context
+| [withTimeout]            | Set execution time-limit with exception on timeout 
+| [withTimeoutOrNull]      | Set execution time-limit will null result on timeout
+| [awaitAll]               | Awaits for successful completion of all given jobs or exceptional completion of any
+| [joinAll]                | Joins on all given jobs
 
 [Select][kotlinx.coroutines.experimental.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
@@ -113,6 +115,8 @@ Optional time unit support for multiplatform projects.
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
 [withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html
+[awaitAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await-all.html
+[joinAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/join-all.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [Job.onJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/on-join.html
 [Job.isCompleted]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/is-completed.html
