@@ -47,7 +47,6 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
         }
     }
 
-
     @Test
     fun testCancellationDispatchCustomNoDelay() {
         // it also checks that there is at most once scheduled request in flight (no spurious concurrency)

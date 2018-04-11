@@ -24,6 +24,12 @@ public actual class CompletionHandlerException public actual constructor(
     public override val cause: Throwable
 ) : RuntimeException(message.withCause(cause))
 
+/**
+ * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
+ * It indicates _normal_ cancellation of a coroutine.
+ * **It is not printed to console/log by default uncaught exception handler**.
+ * (see [handleCoroutineException]).
+ */
 public actual open class CancellationException actual constructor(message: String) : IllegalStateException(message)
 
 /**
@@ -47,26 +53,6 @@ public actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-/**
- * This exception is thrown by [withTimeout] to indicate timeout.
- */
-@Suppress("DEPRECATION")
-public actual class TimeoutCancellationException internal constructor(
-    message: String,
-    internal val coroutine: Job?
-) : CancellationException(message) {
-    /**
-     * Creates timeout exception with a given message.
-     */
-    public actual constructor(message: String) : this(message, null)
-}
-
-@Suppress("FunctionName")
-internal fun TimeoutCancellationException(
-    time: Int,
-    coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time", coroutine)
-
 internal actual class DispatchException actual constructor(message: String, cause: Throwable) : RuntimeException(message.withCause(cause))
 
 @Suppress("FunctionName")
@@ -75,3 +61,6 @@ internal fun IllegalStateException(message: String, cause: Throwable?) =
 
 private fun String.withCause(cause: Throwable?) =
     if (cause == null) this else "$this; caused by $cause"
+
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { /* empty */ }

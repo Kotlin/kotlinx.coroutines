@@ -24,44 +24,6 @@ import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {
     @Test
-    fun testLockAtomicCancel() = runBlocking {
-        expect(1)
-        val mutex = Mutex(true) // locked mutex
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            mutex.lock() // suspends
-            expect(4) // should execute despite cancellation
-        }
-        expect(3)
-        mutex.unlock() // unlock mutex first
-        job.cancel() // cancel the job next
-        yield() // now yield
-        finish(5)
-    }
-
-    @Test
-    fun testSelectLockAtomicCancel() = runBlocking {
-        expect(1)
-        val mutex = Mutex(true) // locked mutex
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            val result = select<String> { // suspends
-                mutex.onLock {
-                    expect(4)
-                    "OK"
-                }
-            }
-            assertEquals("OK", result)
-            expect(5) // should execute despite cancellation
-        }
-        expect(3)
-        mutex.unlock() // unlock mutex first
-        job.cancel() // cancel the job next
-        yield() // now yield
-        finish(6)
-    }
-
-    @Test
     fun testSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()

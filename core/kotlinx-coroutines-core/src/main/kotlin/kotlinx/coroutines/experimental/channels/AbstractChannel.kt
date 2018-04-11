@@ -138,7 +138,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      */
     protected fun describeSendBuffered(element: E): AddLastDesc<*> = SendBufferedDesc(queue, element)
 
-    private open class SendBufferedDesc<out E>(
+    private open class SendBufferedDesc<E>(
         queue: LockFreeLinkedListHead,
         element: E
     ) : AddLastDesc<SendBuffered<E>>(queue, SendBuffered(element)) {
@@ -153,7 +153,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      */
     protected fun describeSendConflated(element: E): AddLastDesc<*> = SendConflatedDesc(queue, element)
 
-    private class SendConflatedDesc<out E>(
+    private class SendConflatedDesc<E>(
         queue: LockFreeLinkedListHead,
         element: E
     ) : SendBufferedDesc<E>(queue, element) {
@@ -647,7 +647,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         }
     }
 
-    private inner class TryEnqueueReceiveDesc<in E, R>(
+    private inner class TryEnqueueReceiveDesc<E, R>(
         select: SelectInstance<R>,
         block: suspend (E?) -> R,
         nullOnClose: Boolean

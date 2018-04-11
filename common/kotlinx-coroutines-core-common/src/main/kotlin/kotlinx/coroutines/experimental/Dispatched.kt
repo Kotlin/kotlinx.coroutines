@@ -17,14 +17,15 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlin.coroutines.experimental.*
 
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")
 
 internal class DispatchedContinuation<in T>(
-    val dispatcher: CoroutineDispatcher,
-    val continuation: Continuation<T>
+    @JvmField val dispatcher: CoroutineDispatcher,
+    @JvmField val continuation: Continuation<T>
 ) : Continuation<T> by continuation, DispatchedTask<T> {
     private var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0

@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internalAnnotations.*
+
 /**
  * Class for an internal state of a job that had completed exceptionally, including cancellation.
  *
@@ -27,7 +29,7 @@ package kotlinx.coroutines.experimental
  * @suppress **This is unstable API and it is subject to change.**
  */
 public open class CompletedExceptionally protected constructor(
-    public val cause: Throwable?,
+    @JvmField public val cause: Throwable?,
     allowNullCause: Boolean
 ) {
     /**

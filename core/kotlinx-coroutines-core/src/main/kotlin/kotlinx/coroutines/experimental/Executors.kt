@@ -16,13 +16,10 @@
 
 package kotlinx.coroutines.experimental
 
-import java.io.Closeable
-import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
+import java.io.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * [CoroutineDispatcher] that implements [Closeable]
@@ -107,4 +104,15 @@ private class ResumeUndispatchedRunnable(
     override fun run() {
         with(continuation) { dispatcher.resumeUndispatched(Unit) }
     }
+}
+
+/**
+ * An implementation of [DisposableHandle] that cancels the specified future on dispose.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
+    override fun dispose() {
+        future.cancel(false)
+    }
+    override fun toString(): String = "DisposableFutureHandle[$future]"
 }

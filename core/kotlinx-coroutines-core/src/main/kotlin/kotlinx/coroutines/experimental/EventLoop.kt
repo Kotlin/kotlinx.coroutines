@@ -18,7 +18,7 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.internal.*
-import java.util.concurrent.*
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
 

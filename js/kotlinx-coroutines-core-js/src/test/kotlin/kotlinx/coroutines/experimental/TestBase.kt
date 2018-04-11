@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// :todo: Remove after transition to Kotlin 1.2.30+
-@file:Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-
 package kotlinx.coroutines.experimental
 
 import kotlin.js.*
@@ -34,6 +31,7 @@ public actual open class TestBase actual constructor() {
      * complete successfully even if this exception is consumed somewhere in the test.
      */
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
+        if (cause != null) console.log(cause)
         val exception = IllegalStateException(
             if (cause == null) message.toString() else "$message; caused by $cause")
         if (error == null) error = exception

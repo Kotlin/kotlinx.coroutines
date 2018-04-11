@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import kotlin.coroutines.experimental.*
 import org.w3c.dom.*
 
@@ -24,12 +25,12 @@ internal class NodeDispatcher : CoroutineDispatcher(), Delay {
         setTimeout({ block.run() }, 0)
     }
 
-    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
     }
 
-    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = setTimeout({ block.run() }, time.coerceAtLeast(0))
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val handle = setTimeout({ block.run() }, time.toIntMillis(unit))
         return object : DisposableHandle {
             override fun dispose() {
                 clearTimeout(handle)
@@ -60,12 +61,12 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
         queue.enqueue(block)
     }
 
-    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
     }
 
-    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, time.coerceAtLeast(0))
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val handle = window.setTimeout({ block.run() }, time.toIntMillis(unit))
         return object : DisposableHandle {
             override fun dispose() {
                 window.clearTimeout(handle)
@@ -105,6 +106,9 @@ internal abstract class MessageQueue : Queue<Runnable>() {
         }
     }
 }
+
+private fun Long.toIntMillis(unit: TimeUnit): Int =
+    unit.toMillis(this).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
 
 internal open class Queue<T : Any> {
     private var queue = arrayOfNulls<Any?>(8)

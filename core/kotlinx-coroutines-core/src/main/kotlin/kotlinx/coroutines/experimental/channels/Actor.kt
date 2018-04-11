@@ -172,7 +172,8 @@ private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     private val block: suspend ActorScope<E>.() -> Unit
-) : ActorCoroutine<E>(parentContext, channel, active = false), SelectClause2<E, SendChannel<E>> {
+) : ActorCoroutine<E>(parentContext, channel, active = false),
+    SelectClause2<E, SendChannel<E>> {
     override fun onStart() {
         block.startCoroutineCancellable(this, this)
     }

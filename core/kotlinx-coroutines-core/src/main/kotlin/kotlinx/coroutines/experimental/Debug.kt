@@ -20,7 +20,7 @@ import kotlin.coroutines.experimental.Continuation
 
 // internal debugging tools
 
-internal val Any.hexAddress: String
+internal actual val Any.hexAddress: String
     get() = Integer.toHexString(System.identityHashCode(this))
 
 internal fun Any?.toSafeString(): String =

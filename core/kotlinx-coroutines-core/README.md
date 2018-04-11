@@ -87,6 +87,10 @@ Select expression to perform multiple suspending operations simultaneously until
 
 Low-level primitives for finer-grained control of coroutines.
 
+# Package kotlinx.coroutines.experimental.timeunit
+
+Optional time unit support for multiplatform projects.
+
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
