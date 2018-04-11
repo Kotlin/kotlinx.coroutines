@@ -8,7 +8,6 @@ Coroutine builder functions:
 | ------------- | ------------- | ---------------- | ---------------
 | [launch]      | [Job]         | [CoroutineScope] | Launches coroutine that does not have any result 
 | [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
-| [runBlocking] | `T`           | [CoroutineScope] | Blocks the event loop while the coroutine runs
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
@@ -49,7 +48,6 @@ General-purpose coroutine builders, contexts, and helper functions.
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
 [DefaultDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html
 [Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
