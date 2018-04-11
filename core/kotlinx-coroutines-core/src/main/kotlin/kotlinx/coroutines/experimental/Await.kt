@@ -59,6 +59,7 @@ private class AwaitAll(private val jobs: Collection<Job>) {
             }
 
             jobs.forEach {
+                it.start() // To properly await lazily started jobs
                 cont.disposeOnCompletion(it.invokeOnCompletion(handler))
             }
         }

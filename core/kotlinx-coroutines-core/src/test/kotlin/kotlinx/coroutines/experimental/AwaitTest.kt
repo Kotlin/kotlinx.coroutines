@@ -31,6 +31,15 @@ class AwaitTest : TestBase() {
     }
 
     @Test
+    fun testAwaitAllLazy() = runTest {
+        expect(1)
+        val d = async(coroutineContext, start = CoroutineStart.LAZY) { expect(2) }
+        val d2 = launch(coroutineContext, start = CoroutineStart.LAZY) { expect(3) }
+        awaitAll(d, d2)
+        finish(4)
+    }
+
+    @Test
     fun testAwaitAllTyped() = runTest {
         val d1 = async(coroutineContext) { 1L }
         val d2 = async(coroutineContext) { "" }
@@ -242,6 +251,15 @@ class AwaitTest : TestBase() {
         expect(1)
         joinAll(d1, d2, d3)
         finish(5)
+    }
+
+    @Test
+    fun testJoinAllLazy() = runTest {
+        expect(1)
+        val d = async(coroutineContext, start = CoroutineStart.LAZY) { expect(2) }
+        val d2 = launch(coroutineContext, start = CoroutineStart.LAZY) { expect(3) }
+        joinAll(d, d2)
+        finish(4)
     }
 
     @Test
