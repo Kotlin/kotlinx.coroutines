@@ -1,5 +1,4 @@
 allprojects {
-    group = 'org.jetbrains.kotlinx'
     def deployVersion = properties['DeployVersion']
     if (deployVersion != null) version = deployVersion
 }
@@ -13,12 +12,14 @@ buildscript {
     }
     repositories {
         jcenter()
-        maven { url "http://kotlin.bintray.com/kotlinx" }
-        maven { url "http://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
@@ -36,6 +37,7 @@ def sourceless = ['site']
 static def platformOf(project) {
     if (project.name.endsWith("-common")) return "common"
     if (project.name.endsWith("-js")) return "js"
+    if (project.name.endsWith("-native")) return "native"
     return "jvm"
 }
 
@@ -47,37 +49,16 @@ static def platformLib(base, platform) {
 configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
     def platform = platformOf(it)
     apply from: rootProject.file("gradle/compile-${platform}.gradle")
-    apply from: rootProject.file("gradle/compile-all.gradle")
 }
 
 // --------------- Configure sub-projects that are part of the library ---------------
 
 def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
 
-// configure atomicfu for JVM modules
-configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {
-    apply plugin: 'kotlinx-atomicfu'
-
-    dependencies {
-        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
-        testCompile "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
-    }
-
-    atomicFU {
-        inputFiles = sourceSets.main.output.classesDirs
-        outputDir = file("$buildDir/classes-atomicfu/main")
-        classPath = sourceSets.main.runtimeClasspath
-    }
-
-    jar {
-        mainSpec.sourcePaths.clear() // hack to clear existing paths
-        from files(atomicFU.outputs, sourceSets.main.output.resourcesDir)
-    }
-
-    test {
-        classpath = files(configurations.testRuntime, atomicFU.outputs, sourceSets.test.output.classesDirs,
-                sourceSets.main.output.resourcesDir)
-    }
+// configure atomicfu
+configure(subprojects.findAll { !internal.contains(it.name) }) {
+    def platform = platformOf(it)
+    apply from: rootProject.file("gradle/atomicfu-${platform}.gradle")
 }
 
 // configure dependencies on core
@@ -100,7 +81,8 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 
 // --------------- Configure sub-projects that are published ---------------
 
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
+// todo: native is not published yet
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'kotlinx-coroutines-core-native']
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"

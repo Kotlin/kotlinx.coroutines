@@ -3,18 +3,31 @@
 
 apply plugin: 'kotlin-platform-js'
 
+kotlin.experimental.coroutines "enable"
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+}
+
+repositories {
+    jcenter()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+}
+
 tasks.withType(compileKotlin2Js.getClass()) {
     kotlinOptions {
         moduleKind = "umd"
         sourceMap = true
         metaInfo = true
+    }
+}
+
+compileKotlin2Js {
+    kotlinOptions {
         // drop -js suffix from outputFile
         def baseName = project.name - "-js"
         outputFile = new File(outputFile.parent, baseName + ".js")
     }
 }
 
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
-}

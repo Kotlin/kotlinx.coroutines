@@ -6,9 +6,26 @@ apply plugin: 'kotlin-platform-jvm'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+kotlin.experimental.coroutines "enable"
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
     testCompile "junit:junit:$junit_version"
+}
+
+repositories {
+    jcenter()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url "https://dl.bintray.com/devexperts/Maven/" }
+}
+
+tasks.withType(Test) {
+    testLogging {
+        showStandardStreams = true
+        events "passed", "failed"
+    }
+    def stressTest = project.properties['stressTest']
+    if (stressTest != null) systemProperties['stressTest'] = stressTest
 }
