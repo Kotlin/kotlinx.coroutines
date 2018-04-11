@@ -18,8 +18,9 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.test.*
 import java.io.IOException
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class WithTimeoutTest : TestBase() {
     @Test
@@ -72,5 +73,19 @@ class WithTimeoutTest : TestBase() {
             "OK"
         }
         expectUnreached()
+    }
+
+    @Test
+    fun testNegativeTimeout() = runTest {
+        expect(1)
+        try {
+            withTimeout(-1) {
+                expectUnreached()
+                "OK"
+            }
+        } catch (e: CancellationException) {
+            assertEquals("Timed out immediately", e.message)
+            finish(2)
+        }
     }
 }

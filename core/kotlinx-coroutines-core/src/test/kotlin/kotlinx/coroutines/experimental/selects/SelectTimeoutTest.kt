@@ -21,8 +21,11 @@ import kotlinx.coroutines.experimental.runBlocking
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SelectTimeoutTest : TestBase() {
+
     @Test
     fun testBasic() = runBlocking {
         expect(1)
@@ -42,5 +45,72 @@ class SelectTimeoutTest : TestBase() {
         }
         assertThat(result, IsEqual("OK"))
         finish(3)
+    }
+
+    @Test
+    fun testZeroTimeout() = runBlocking {
+        expect(1)
+        val result = select<String> {
+            onTimeout(1000) {
+                expectUnreached()
+                "FAIL"
+            }
+
+            onTimeout(0) {
+                expect(2)
+                "OK"
+            }
+        }
+
+        assertThat(result, IsEqual("OK"))
+        finish(3)
+    }
+
+    @Test
+    fun testNegativeTimeout() = runBlocking {
+        expect(1)
+        val result = select<String> {
+            onTimeout(1000) {
+                expectUnreached()
+                "FAIL"
+            }
+
+            onTimeout(-10) {
+                expect(2)
+                "OK"
+            }
+
+        }
+
+        assertThat(result, IsEqual("OK"))
+        finish(3)
+    }
+
+    @Test
+    fun testUnbiasedNegativeTimeout() = runBlocking {
+        val counters = intArrayOf(0, 0, 0)
+        val iterations =10_000
+        for (i in 0..iterations) {
+            val result = selectUnbiased<Int> {
+                onTimeout(-10) {
+                    0
+                }
+
+                onTimeout(0) {
+                    1
+                }
+
+                onTimeout(10) {
+                    expectUnreached()
+                    2
+                }
+            }
+
+            ++counters[result]
+        }
+
+        assertEquals(0, counters[2])
+        assertTrue { counters[0] >  iterations / 4 }
+        assertTrue { counters[1] >  iterations / 4 }
     }
 }
