@@ -21,10 +21,25 @@ import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
-const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
-const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
-const val DEBUG_PROPERTY_VALUE_ON = "on"
-const val DEBUG_PROPERTY_VALUE_OFF = "off"
+/**
+ * Name of the property that control coroutine debugging. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+
+/**
+ * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
+
+/**
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_ON = "on"
+
+/**
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
 private val DEBUG = run {
     val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
@@ -64,10 +79,11 @@ public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
  * then the thread name displays
  * the whole stack of coroutine descriptions that are being executed on this thread.
  *
- * Enable debugging facilities with "`kotlinx.coroutines.debug`" system property, use the following values:
- * * "`auto`" (default mode) -- enabled when assertions are enabled with "`-ea`" JVM option.
- * * "`on`" or empty string -- enabled.
- * * "`off`" -- disabled.
+ * Enable debugging facilities with "`kotlinx.coroutines.debug`" ([DEBUG_PROPERTY_NAME]) system property
+ * , use the following values:
+ * * "`auto`" (default mode, [DEBUG_PROPERTY_VALUE_AUTO]) -- enabled when assertions are enabled with "`-ea`" JVM option.
+ * * "`on`" ([DEBUG_PROPERTY_VALUE_ON]) or empty string -- enabled.
+ * * "`off`" ([DEBUG_PROPERTY_VALUE_OFF]) -- disabled.
  *
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
