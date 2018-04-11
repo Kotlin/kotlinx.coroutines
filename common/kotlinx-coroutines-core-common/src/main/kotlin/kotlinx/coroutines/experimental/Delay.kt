@@ -35,7 +35,6 @@ public interface Delay {
      * immediately resumes with [CancellationException].
      */
     suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
-        require(time >= 0) { "Delay time $time cannot be negative" }
         if (time <= 0) return // don't delay
         return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, unit, it) }
     }
@@ -99,7 +98,6 @@ public suspend fun delay(time: Int) =
  * @param unit time unit.
  */
 public suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
-    require(time >= 0) { "Delay time $time cannot be negative" }
     if (time <= 0) return // don't delay
     return suspendCancellableCoroutine sc@ { cont: CancellableContinuation<Unit> ->
         cont.context.delay.scheduleResumeAfterDelay(time, unit, cont)

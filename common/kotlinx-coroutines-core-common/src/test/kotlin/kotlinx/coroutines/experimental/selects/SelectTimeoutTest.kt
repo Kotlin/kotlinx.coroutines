@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectTimeoutTest : TestBase() {
+
     @Test
     fun testBasic() = runTest {
         expect(1)
@@ -39,5 +40,63 @@ class SelectTimeoutTest : TestBase() {
         }
         assertEquals("OK", result)
         finish(3)
+    }
+
+    @Test
+    fun testZeroTimeout() = runTest {
+        expect(1)
+        val result = select<String> {
+            onTimeout(1000) {
+                expectUnreached()
+                "FAIL"
+            }
+            onTimeout(0) {
+                expect(2)
+                "OK"
+            }
+        }
+        assertEquals("OK", result)
+        finish(3)
+    }
+
+    @Test
+    fun testNegativeTimeout() = runTest {
+        expect(1)
+        val result = select<String> {
+            onTimeout(1000) {
+                expectUnreached()
+                "FAIL"
+            }
+            onTimeout(-10) {
+                expect(2)
+                "OK"
+            }
+        }
+        assertEquals("OK", result)
+        finish(3)
+    }
+
+    @Test
+    fun testUnbiasedNegativeTimeout() = runTest {
+        val counters = intArrayOf(0, 0, 0)
+        val iterations =10_000
+        for (i in 0..iterations) {
+            val result = selectUnbiased<Int> {
+                onTimeout(-10) {
+                    0
+                }
+                onTimeout(0) {
+                    1
+                }
+                onTimeout(10) {
+                    expectUnreached()
+                    2
+                }
+            }
+            ++counters[result]
+        }
+        assertEquals(0, counters[2])
+        assertTrue { counters[0] >  iterations / 4 }
+        assertTrue { counters[1] >  iterations / 4 }
     }
 }

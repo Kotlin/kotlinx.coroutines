@@ -179,5 +179,19 @@ class WithTimeoutTest : TestBase() {
     }
 
     private class TestException : Exception()
+
+    @Test
+    fun testNegativeTimeout() = runTest {
+        expect(1)
+        try {
+            withTimeout(-1) {
+                expectUnreached()
+                "OK"
+            }
+        } catch (e: CancellationException) {
+            assertEquals("Timed out immediately", e.message)
+            finish(2)
+        }
+    }
 }
 

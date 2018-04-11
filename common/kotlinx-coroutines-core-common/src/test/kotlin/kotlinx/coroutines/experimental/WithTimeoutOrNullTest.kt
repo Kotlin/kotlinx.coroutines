@@ -192,4 +192,18 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     private class TestException : Exception()
+
+    @Test
+    fun testNegativeTimeout() = runTest {
+        expect(1)
+        var result = withTimeoutOrNull(-1) {
+            expectUnreached()
+        }
+        assertNull(result)
+        result = withTimeoutOrNull(0) {
+            expectUnreached()
+        }
+        assertNull(result)
+        finish(2)
+    }
 }

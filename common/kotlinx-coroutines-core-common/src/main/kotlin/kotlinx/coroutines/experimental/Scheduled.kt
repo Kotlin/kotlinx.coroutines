@@ -61,7 +61,6 @@ public suspend fun <T> withTimeout(time: Int, block: suspend CoroutineScope.() -
  * @param unit timeout unit (milliseconds by default)
  */
 public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T {
-    require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) throw CancellationException("Timed out immediately")
     return suspendCoroutineOrReturn { cont: Continuation<T> ->
         setupTimeout(TimeoutCoroutine(time, unit, cont), block)
@@ -151,7 +150,6 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
  * @param unit timeout unit (milliseconds by default)
  */
 public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T? {
-    require(time >= 0) { "Timeout time $time cannot be negative" }
     if (time <= 0L) return null
     return suspendCoroutineOrReturn { cont: Continuation<T?> ->
         setupTimeout(TimeoutOrNullCoroutine(time, unit, cont), block)

@@ -52,6 +52,7 @@ public interface SelectBuilder<in R> {
 
     /**
      * Clause that selects the given [block] after a specified timeout passes.
+     * If timeout is negative or zero, [block] is selected immediately.
      *
      * @param time timeout time
      * @param unit timeout unit (milliseconds by default)
@@ -416,8 +417,7 @@ internal class SelectBuilderImpl<in R>(
     }
 
     override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {
-        require(time >= 0) { "Timeout time $time cannot be negative" }
-        if (time == 0L) {
+        if (time <= 0L) {
             if (trySelect(null))
                 block.startCoroutineUndispatched(completion)
             return

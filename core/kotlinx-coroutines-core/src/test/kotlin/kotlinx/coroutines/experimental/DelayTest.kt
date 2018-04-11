@@ -21,10 +21,7 @@ import org.hamcrest.core.IsEqual
 import org.junit.Test
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 class DelayTest : TestBase() {
     /**
@@ -47,7 +44,6 @@ class DelayTest : TestBase() {
         pool.shutdown()
     }
 
-
     @Test
     fun testDelayWithoutDispatcher() = runBlocking(CoroutineName("testNoDispatcher.main")) {
         // launch w/o a specified dispatcher
@@ -56,6 +52,21 @@ class DelayTest : TestBase() {
             42
         }
         assertThat(c.await(), IsEqual(42))
+    }
+
+    @Test
+    fun testNegativeDelay() = runBlocking {
+        expect(1)
+        val job = async(coroutineContext) {
+            expect(3)
+            delay(0)
+            expect(4)
+        }
+
+        delay(-1)
+        expect(2)
+        job.await()
+        finish(5)
     }
 
     class CustomInterceptor(val pool: Executor) : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
