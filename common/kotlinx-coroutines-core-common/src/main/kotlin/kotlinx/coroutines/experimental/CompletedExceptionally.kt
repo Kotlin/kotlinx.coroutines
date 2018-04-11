@@ -23,36 +23,21 @@ import kotlinx.coroutines.experimental.internalAnnotations.*
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
  *
- * @param cause the exceptional completion cause. If `cause` is null, then an exception is
- *        if created via [createException] on first get from [exception] property.
- * @param allowNullCause if `null` cause is allowed.
+ * @param cause the exceptional completion cause. It's either original exceptional cause
+ *        or artificial JobCancellationException if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
-public open class CompletedExceptionally protected constructor(
-    @JvmField public val cause: Throwable?,
-    allowNullCause: Boolean
-) {
-    /**
-     * Creates exceptionally completed state.
-     * @param cause the exceptional completion cause.
-     */
-    public constructor(cause: Throwable) : this(cause, false)
-
-    @Volatile
-    private var _exception: Throwable? = cause // will materialize JobCancellationException on first need
-
-    init {
-        require(allowNullCause || cause != null) { "Null cause is not allowed" }
-    }
+public open class CompletedExceptionally(public val cause: Throwable) {
 
     /**
      * Returns completion exception.
      */
-    public val exception: Throwable get() =
-        _exception ?: // atomic read volatile var or else create new
-            createException().also { _exception = it }
+    public val exception: Throwable get() = cause // alias for backward compatibility
 
-    protected open fun createException(): Throwable = error("Completion exception was not specified")
+    /**
+     * Returns true if the current exceptional reason is cancellation without cause
+     */
+    open fun isCancelledWithoutCause() = false
 
     override fun toString(): String = "$classSimpleName[$exception]"
 }
@@ -61,16 +46,15 @@ public open class CompletedExceptionally protected constructor(
  * A specific subclass of [CompletedExceptionally] for cancelled jobs.
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
- * 
+ *
  * @param job the job that was cancelled.
- * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
- *        if created on first get from [exception] property.
+ * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException] is created.
  * @suppress **This is unstable API and it is subject to change.**
  */
 public class Cancelled(
-    private val job: Job,
-    cause: Throwable?
-) : CompletedExceptionally(cause, true) {
-    override fun createException(): Throwable = JobCancellationException("Job was cancelled normally", null, job)
+        private val job: Job,
+        cause: Throwable?) : CompletedExceptionally(cause ?: JobCancellationException("Job was cancelled normally", null, job)) {
+
+    override fun isCancelledWithoutCause(): Boolean = cause is JobCancellationException && cause.job == job
 }
 

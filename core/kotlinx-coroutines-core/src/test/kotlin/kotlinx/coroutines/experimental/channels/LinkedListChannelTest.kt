@@ -22,6 +22,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNull
 import org.junit.Test
+import java.io.IOException
 
 class LinkedListChannelTest : TestBase() {
     @Test
@@ -48,5 +49,12 @@ class LinkedListChannelTest : TestBase() {
         check(q.isClosedForSend)
         check(q.isClosedForReceive)
         check(q.receiveOrNull() == null)
+    }
+
+    @Test(expected = IOException::class)
+    fun testCancelWithCause() = runBlocking<Unit> {
+        val channel = LinkedListChannel<Int>()
+        channel.cancel(IOException())
+        channel.receiveOrNull()
     }
 }

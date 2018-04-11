@@ -19,6 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Assert.*
+import java.io.IOException
 import kotlin.coroutines.experimental.*
 
 class ArrayChannelTest : TestBase() {
@@ -167,5 +168,12 @@ class ArrayChannelTest : TestBase() {
         check(q.isClosedForReceive)
         check(q.receiveOrNull() == null)
         finish(12)
+    }
+
+    @Test(expected = IOException::class)
+    fun testCancelWithCause() = runBlocking<Unit> {
+        val channel = ArrayChannel<Int>(5)
+        channel.cancel(IOException())
+        channel.receiveOrNull()
     }
 }

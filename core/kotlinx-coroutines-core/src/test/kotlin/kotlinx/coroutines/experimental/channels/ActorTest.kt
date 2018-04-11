@@ -20,13 +20,24 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.IOException
 import kotlin.coroutines.experimental.*
 
-class ActorTest : TestBase() {
+@RunWith(Parameterized::class)
+class ActorTest(private val capacity: Int) : TestBase() {
+
+    companion object {
+        @Parameterized.Parameters(name = "Capacity: {0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> = listOf(0, 1, Channel.UNLIMITED, Channel.CONFLATED).map { arrayOf<Any>(it) }
+    }
+
     @Test
-    fun testEmpty() = runBlocking<Unit> {
+    fun testEmpty() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext) {
+        val actor = actor<String>(coroutineContext, capacity) {
             expect(3)
         }
         actor as Job // type assertion
@@ -42,9 +53,9 @@ class ActorTest : TestBase() {
     }
 
     @Test
-    fun testOne() = runBlocking<Unit> {
+    fun testOne() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext) {
+        val actor = actor<String>(coroutineContext, capacity) {
             expect(3)
             assertThat(receive(), IsEqual("OK"))
             expect(6)
@@ -67,5 +78,46 @@ class ActorTest : TestBase() {
         assertThat(actor.isCompleted, IsEqual(true))
         assertThat(actor.isClosedForSend, IsEqual(true))
         finish(7)
+    }
+
+
+    @Test
+    fun testCancelWithoutCause() = runTest {
+        val actor = actor<Int>(coroutineContext, capacity) {
+            val element = channel.receiveOrNull()
+            expect(2)
+            assertEquals(42, element)
+            val next = channel.receiveOrNull()
+            assertNull(next)
+            expect(3)
+        }
+
+        expect(1)
+        actor.send(42)
+        yield()
+        actor.close()
+        yield()
+        finish(4)
+    }
+
+    @Test
+    fun testCancelWithCause() = runTest {
+        val actor = actor<Int>(coroutineContext, capacity) {
+            val element = channel.receiveOrNull()
+            expect(2)
+            require(element!! == 42)
+            try {
+                val next = channel.receiveOrNull()
+            } catch (e: IOException) {
+                expect(3)
+            }
+        }
+
+        expect(1)
+        actor.send(42)
+        yield()
+        actor.close(IOException())
+        yield()
+        finish(4)
     }
 }

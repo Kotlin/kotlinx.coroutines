@@ -18,9 +18,12 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
+import java.io.IOException
 import kotlin.coroutines.experimental.*
+import kotlin.test.assertNull
 
 class ProduceTest : TestBase() {
+
     @Test
     fun testBasic() = runTest {
         val c = produce(coroutineContext) {
@@ -40,7 +43,7 @@ class ProduceTest : TestBase() {
     }
 
     @Test
-    fun testCancel() = runTest {
+    fun testCancelWithoutCause() = runTest {
         val c = produce(coroutineContext) {
             expect(2)
             send(1)
@@ -59,7 +62,37 @@ class ProduceTest : TestBase() {
         expect(4)
         c.cancel()
         expect(5)
-        check(c.receiveOrNull() == null)
+        assertNull(c.receiveOrNull())
         expect(6)
+    }
+
+    @Test
+    fun testCancelWithCause() = runTest {
+        val c = produce(coroutineContext) {
+            expect(2)
+            send(1)
+            expect(3)
+            try {
+                send(2) // will get cancelled
+            } catch (e: Exception) {
+                finish(6)
+                check(e is JobCancellationException && e.job == coroutineContext[Job])
+                check(e.cause is IOException)
+                throw e
+            }
+            expectUnreached()
+        }
+
+        expect(1)
+        check(c.receive() == 1)
+        expect(4)
+        c.cancel(IOException())
+
+        try {
+            assertNull(c.receiveOrNull())
+            expectUnreached()
+        } catch (e: IOException) {
+            expect(5)
+        }
     }
 }

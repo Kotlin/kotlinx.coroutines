@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import java.io.IOException
 import kotlin.coroutines.experimental.*
 
 class RendezvousChannelTest : TestBase() {
@@ -307,5 +308,12 @@ class RendezvousChannelTest : TestBase() {
         check(q.isClosedForReceive)
         check(q.receiveOrNull() == null)
         finish(12)
+    }
+
+    @Test(expected = IOException::class)
+    fun testCancelWithCause() = runBlocking<Unit> {
+        val channel = RendezvousChannel<Int>()
+        channel.cancel(IOException())
+        channel.receiveOrNull()
     }
 }

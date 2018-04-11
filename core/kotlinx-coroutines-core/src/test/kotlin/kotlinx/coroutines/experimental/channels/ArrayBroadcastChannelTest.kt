@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import java.io.IOException
 import kotlin.coroutines.experimental.*
 
 class ArrayBroadcastChannelTest : TestBase() {
@@ -177,5 +178,13 @@ class ArrayBroadcastChannelTest : TestBase() {
         sub.close()
         assertTrue(sub.isClosedForReceive)
         sub.receive()
+    }
+
+    @Test(expected = IOException::class)
+    fun testCancelWithCause() = runBlocking<Unit> {
+        val channel = BroadcastChannel<Int>(1)
+        val subscription = channel.openSubscription()
+        subscription.cancel(IOException())
+        subscription.receiveOrNull()
     }
 }

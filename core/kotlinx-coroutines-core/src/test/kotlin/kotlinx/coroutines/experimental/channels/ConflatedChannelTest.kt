@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import java.io.IOException
 import kotlin.coroutines.experimental.*
 
 class ConflatedChannelTest : TestBase() {
@@ -90,5 +91,12 @@ class ConflatedChannelTest : TestBase() {
         check(q.isClosedForReceive)
         check(q.receiveOrNull() == null)
         finish(2)
+    }
+
+    @Test(expected = IOException::class)
+    fun testCancelWithCause() = runBlocking<Unit> {
+        val channel = ConflatedChannel<Int>()
+        channel.cancel(IOException())
+        channel.receiveOrNull()
     }
 }
