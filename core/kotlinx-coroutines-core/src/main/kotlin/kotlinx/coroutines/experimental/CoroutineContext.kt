@@ -21,15 +21,18 @@ import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
-private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
+const val DEBUG_PROPERTY_VALUE_ON = "on"
+const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
 private val DEBUG = run {
     val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
         catch (e: SecurityException) { null }
     when (value) {
-        "auto", null -> CoroutineId::class.java.desiredAssertionStatus()
-        "on", "" -> true
-        "off" -> false
+        DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
+        DEBUG_PROPERTY_VALUE_ON, "" -> true
+        DEBUG_PROPERTY_VALUE_OFF -> false
         else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
     }
 }
