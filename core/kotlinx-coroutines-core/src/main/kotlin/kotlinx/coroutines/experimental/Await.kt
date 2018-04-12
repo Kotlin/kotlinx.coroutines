@@ -15,16 +15,12 @@ public suspend fun awaitAll(vararg jobs: Job): Unit = jobs.asList().awaitAll()
  * Awaits for completion of given jobs without blocking a thread and resumes normally when all jobs computations are complete
  * or resumes with the first thrown exception if any of computations completes exceptionally including cancellation.
  * This suspending function is cancellable.
- * If the [Job] of the current coroutine is l or completed while this suspending function is waiting,
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-public suspend fun Iterable<Job>.awaitAll(): Unit {
-    val jobs = this as? Collection<Job> ?: this.toList()
-    if (jobs.isEmpty()) {
-        return
-    }
-
-    AwaitAll(jobs).await()
+public suspend fun Collection<Job>.awaitAll() {
+    if (isEmpty()) return
+    AwaitAll(this).await()
 }
 
 /**
@@ -40,13 +36,14 @@ public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting,
  * this function immediately resumes with [CancellationException].
  */
-public suspend fun Iterable<Job>.joinAll(): Unit = forEach { it.join() }
+public suspend fun Collection<Job>.joinAll(): Unit = forEach { it.join() }
 
 private class AwaitAll(private val jobs: Collection<Job>) {
     private val notCompletedCount = atomic(jobs.size)
 
     suspend fun await() {
         suspendCancellableCoroutine<Unit> { cont ->
+            // todo: create a separate named class instance of JobNode to avoid extra object
             val handler: (Throwable?) -> Unit = {
                 if (it != null) {
                     val token = cont.tryResumeWithException(it)
