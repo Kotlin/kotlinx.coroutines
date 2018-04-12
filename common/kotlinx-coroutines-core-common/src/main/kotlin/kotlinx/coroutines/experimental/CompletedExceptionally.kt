@@ -26,16 +26,7 @@ package kotlinx.coroutines.experimental
  *        or artificial JobCancellationException if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
-open class CompletedExceptionally(
-    public val cause: Throwable
-) {
-    /**
-     * Returns completion exception.
-     */
-    @Deprecated("Use `cause`", replaceWith = ReplaceWith("cause"))
-    // todo: Remove exception usages
-    public val exception: Throwable get() = cause // alias for backward compatibility
-
+open class CompletedExceptionally(public val cause: Throwable) {
     override fun toString(): String = "$classSimpleName[$cause]"
 }
 
