@@ -20,7 +20,8 @@ public suspend fun awaitAll(vararg jobs: Job): Unit = jobs.asList().awaitAll()
  */
 public suspend fun Collection<Job>.awaitAll() {
     if (isEmpty()) return
-    AwaitAll(this).await()
+    val snapshot = ArrayList(this)
+    AwaitAll(snapshot).await()
 }
 
 /**
@@ -43,21 +44,23 @@ private class AwaitAll(private val jobs: Collection<Job>) {
 
     suspend fun await() {
         suspendCancellableCoroutine<Unit> { cont ->
-            // todo: create a separate named class instance of JobNode to avoid extra object
-            val handler: (Throwable?) -> Unit = {
-                if (it != null) {
-                    val token = cont.tryResumeWithException(it)
-                    if (token != null) {
-                        cont.completeResume(token)
-                    }
-                } else if (notCompletedCount.decrementAndGet() == 0) {
-                    cont.resume(Unit)
-                }
-            }
-
             jobs.forEach {
                 it.start() // To properly await lazily started jobs
-                cont.disposeOnCompletion(it.invokeOnCompletion(handler))
+                cont.disposeOnCompletion(it.invokeOnCompletion(AwaitAllNode(cont, it)))
+            }
+        }
+    }
+
+    inner class AwaitAllNode(private val continuation: CancellableContinuation<Unit>, job: Job) : JobNode<Job>(job), CompletionHandler {
+
+        override fun invoke(cause: Throwable?) {
+            if (cause != null) {
+                val token = continuation.tryResumeWithException(cause)
+                if (token != null) {
+                    continuation.completeResume(token)
+                }
+            } else if (notCompletedCount.decrementAndGet() == 0) {
+                continuation.resume(Unit)
             }
         }
     }

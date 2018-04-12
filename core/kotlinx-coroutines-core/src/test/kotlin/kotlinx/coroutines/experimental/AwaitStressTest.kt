@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental
 
-import org.junit.After
-import java.util.concurrent.CyclicBarrier
-import kotlin.test.Test
+import org.junit.*
+import org.junit.Test
+import java.util.concurrent.*
 
 class AwaitStressTest : TestBase() {
 
@@ -99,5 +99,35 @@ class AwaitStressTest : TestBase() {
         }
 
         require(cancelledOnce) { "Cancellation exception wasn't properly caught" }
+    }
+
+    @Test
+    fun testMutatingCollection() = runTest {
+        val barrier = CyclicBarrier(4)
+
+        repeat(iterations) {
+            val jobs = mutableListOf<Job>()
+
+            jobs += async(pool) {
+                barrier.await()
+                1L
+            }
+
+            jobs += async(pool) {
+                barrier.await()
+                2L
+            }
+
+            jobs += async(pool) {
+                barrier.await()
+                jobs.removeAt(2)
+            }
+
+            val allJobs = ArrayList(jobs)
+            barrier.await()
+            jobs.awaitAll() // shouldn't hang
+            allJobs.awaitAll()
+            barrier.reset()
+        }
     }
 }
