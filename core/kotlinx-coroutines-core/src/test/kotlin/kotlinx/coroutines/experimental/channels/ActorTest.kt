@@ -20,9 +20,9 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.io.IOException
+import org.junit.runner.*
+import org.junit.runners.*
+import java.io.*
 import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
@@ -80,9 +80,8 @@ class ActorTest(private val capacity: Int) : TestBase() {
         finish(7)
     }
 
-
     @Test
-    fun testCancelWithoutCause() = runTest {
+    fun testCloseWithoutCause() = runTest {
         val actor = actor<Int>(coroutineContext, capacity) {
             val element = channel.receiveOrNull()
             expect(2)
@@ -101,7 +100,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest {
+    fun testCloseWithCause() = runTest {
         val actor = actor<Int>(coroutineContext, capacity) {
             val element = channel.receiveOrNull()
             expect(2)
@@ -119,5 +118,32 @@ class ActorTest(private val capacity: Int) : TestBase() {
         actor.close(IOException())
         yield()
         finish(4)
+    }
+
+    @Test
+    fun testCancelEnclosingJob() = runTest {
+        val job = async(coroutineContext) {
+            actor<Int>(coroutineContext, capacity) {
+                expect(1)
+                channel.receiveOrNull()
+                expectUnreached()
+            }
+        }
+
+        yield()
+        yield()
+
+        expect(2)
+        yield()
+        job.cancel()
+
+        try {
+            job.await()
+            expectUnreached()
+        } catch (e: JobCancellationException) {
+            assertTrue(e.message?.contains("Job was cancelled normally") ?: false)
+        }
+
+        finish(3)
     }
 }

@@ -76,8 +76,8 @@ public abstract class AbstractCoroutine<in T>(
      * This function is invoked once when this coroutine is cancelled or is completed,
      * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
      *
-     * @param cause the cause that was passed to [Job.cancel] function or `null` if coroutine was cancelled
-     *              without cause or is completing normally.
+     * @param cause the cause that was passed to [Job.cancel] function, [JobCancellationException] if it was completed without cause
+     *        or `null` if coroutine is completing normally.
      */
     protected open fun onCancellation(cause: Throwable?) {}
 
@@ -98,7 +98,7 @@ public abstract class AbstractCoroutine<in T>(
     @Suppress("UNCHECKED_CAST")
     internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
-            onCompletedExceptionally(state.exception)
+            onCompletedExceptionally(state.cause)
         else
             onCompleted(state as T)
     }

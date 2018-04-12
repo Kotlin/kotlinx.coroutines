@@ -158,7 +158,7 @@ private class RxObservableCoroutine<T>(
                 _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
                 try {
-                    if (cause != null)
+                    if (cause != null && cause !is JobCancellationException)
                         subscriber.onError(cause)
                     else
                         subscriber.onComplete()

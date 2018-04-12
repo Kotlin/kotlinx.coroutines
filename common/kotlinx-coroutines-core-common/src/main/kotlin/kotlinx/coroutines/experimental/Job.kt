@@ -641,15 +641,16 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun isCorrespondinglyCancelled(cancelled: Cancelled, proposedUpdate: Any?): Boolean {
         if (proposedUpdate !is Cancelled) return false
         // NOTE: equality comparison of causes is performed here by design, see equals of JobCancellationException
-        return proposedUpdate.cause == cancelled.cause ||
-            proposedUpdate.cause is JobCancellationException && cancelled.isCancelledWithoutCause()
+        return proposedUpdate.cause == cancelled.cause || proposedUpdate.cause is JobCancellationException
     }
 
     private fun createCancelled(cancelled: Cancelled, proposedUpdate: Any?): Cancelled {
         if (proposedUpdate !is CompletedExceptionally) return cancelled // not exception -- just use original cancelled
-        val exception = proposedUpdate.exception
-        if (cancelled.exception == exception) return cancelled // that is the cancelled we need already!
-        if (!cancelled.isCancelledWithoutCause()) {
+        val exception = proposedUpdate.cause
+        if (cancelled.cause == exception) return cancelled // that is the cancelled we need already!
+
+        // Do not spam with JCE in suppressed exceptions
+        if (cancelled.cause !is JobCancellationException) {
             exception.addSuppressedThrowable(cancelled.cause)
         }
         return Cancelled(this, exception)
@@ -752,11 +753,11 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         val state = this.state
         return when {
             state is Finishing && state.cancelled != null ->
-                state.cancelled.exception.toCancellationException("Job is being cancelled")
+                state.cancelled.cause.toCancellationException("Job is being cancelled")
             state is Incomplete ->
                 error("Job was not completed or cancelled yet: $this")
             state is CompletedExceptionally ->
-                state.exception.toCancellationException("Job has failed")
+                state.cause.toCancellationException("Job has failed")
             else -> JobCancellationException("Job has completed normally", null, this)
         }
     }
@@ -766,21 +767,14 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
-     * [cancel] cause or **`null` if this job had completed
-     * normally or was cancelled without a cause**. This function throws
-     * [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
+     * [cancel] cause, [JobCancellationException] or **`null` if this job had completed normally**.
+     * This function throws [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
      * [isCancelled] yet.
      */
     protected fun getCompletionCause(): Throwable? {
         val state = this.state
         return when {
-            state is Finishing && state.cancelled != null -> {
-                if (state.cancelled.isCancelledWithoutCause()) {
-                    null
-                } else {
-                    state.cancelled.cause
-                }
-            }
+            state is Finishing && state.cancelled != null -> state.cancelled.cause
             state is Incomplete -> error("Job was not completed or cancelled yet")
             state is CompletedExceptionally -> state.cause
             else -> null
@@ -1060,7 +1054,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             }
             // cancel all children in list on exceptional completion
             if (proposedUpdate is CompletedExceptionally)
-                child?.cancelChildrenInternal(proposedUpdate.exception)
+                child?.cancelChildrenInternal(proposedUpdate.cause)
             // switch to completing state
             val cancelled = (state as? Finishing)?.cancelled ?: (proposedUpdate as? Cancelled)
             val completing = Finishing(list, cancelled, true)
@@ -1080,7 +1074,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private val Any?.exceptionOrNull: Throwable?
-        get() = (this as? CompletedExceptionally)?.exception
+        get() = (this as? CompletedExceptionally)?.cause
 
     private fun firstChild(state: Incomplete) =
         state as? Child ?: state.list?.nextChild()
@@ -1232,7 +1226,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     internal fun getCompletedInternal(): Any? {
         val state = this.state
         check(state !is Incomplete) { "This job has not completed yet" }
-        if (state is CompletedExceptionally) throw state.exception
+        if (state is CompletedExceptionally) throw state.cause
         return state
     }
 
@@ -1245,7 +1239,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result
-                if (state is CompletedExceptionally) throw state.exception
+                if (state is CompletedExceptionally) throw state.cause
                 return state
 
             }
@@ -1259,7 +1253,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val state = this.state
             check(state !is Incomplete)
             if (state is CompletedExceptionally)
-                cont.resumeWithException(state.exception)
+                cont.resumeWithException(state.cause)
             else
                 cont.resume(state)
         })
@@ -1278,7 +1272,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 // already complete -- select result
                 if (select.trySelect(null)) {
                     if (state is CompletedExceptionally)
-                        select.resumeSelectCancellableWithException(state.exception)
+                        select.resumeSelectCancellableWithException(state.cause)
                     else
                         block.startCoroutineUndispatched(state as T, select.completion)
                 }
@@ -1300,7 +1294,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
         if (state is CompletedExceptionally)
-            select.resumeSelectCancellableWithException(state.exception)
+            select.resumeSelectCancellableWithException(state.cause)
         else
             block.startCoroutineCancellable(state as T, select.completion)
     }

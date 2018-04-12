@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.*
-
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
  */
@@ -47,7 +45,24 @@ public actual class JobCancellationException public actual constructor(
      */
     public actual val job: Job
 ) : CancellationException(message) {
-    init { if (cause != null) initCause(cause) }
+
+    init {
+        if (cause != null) initCause(cause)
+    }
+
+    override fun fillInStackTrace(): Throwable {
+        if (DEBUG) {
+            return super.fillInStackTrace()
+        }
+
+        /*
+         * In non-debug mode we don't want to have a stacktrace on every cancellation/close,
+         * parent job reference is enough. Stacktrace of JCE is not needed most of the time (e.g., it is not logged)
+         * and hurts performance.
+         */
+        return this
+    }
+
     override fun toString(): String = "${super.toString()}; job=$job"
     override fun equals(other: Any?): Boolean =
         other === this ||

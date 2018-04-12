@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Assert.*
-import java.io.IOException
+import java.io.*
 import kotlin.coroutines.experimental.*
 
 class ArrayChannelTest : TestBase() {
