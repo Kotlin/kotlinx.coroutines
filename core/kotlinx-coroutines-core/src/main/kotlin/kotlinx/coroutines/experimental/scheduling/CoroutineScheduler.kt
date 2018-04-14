@@ -49,6 +49,9 @@ import java.util.concurrent.locks.LockSupport
  *
  * Note: will be internal after integration with Ktor
  */
+// todo: Take maxPoolSize from system property.
+// todo: Base default maxPoolSize on a `noOfCPUs * someFactor` so that it scales.
+// todo: On "larger" workstations maxPoolSize should be correspondingly larger ("small machine" will run out of memory)
 class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize: Int = 16384) : Closeable {
 
     private val globalWorkQueue: GlobalQueue = ConcurrentLinkedQueue<Task>()
@@ -57,9 +60,15 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
      * Permits to execute non-blocking (~CPU-intensive) tasks.
      * If worker owns a permit, it can schedule non-blocking tasks to its queue and steal work from other workers.
      * If worker doesn't, it can execute only blocking tasks (and non-blocking leftovers from its local queue)
-     * and will try to park as soon as his queue will be empty.
+     * and will try to park as soon as its queue is empty.
      */
     private val cpuPermits = Semaphore(corePoolSize, false)
+
+    // todo: Consider putting retired workers into stack as opposed to queue.
+    // todo: Next time we need a worker we'll get the "warmest" one
+    // todo: Take a look at ObjectPool implementation from kotlinx.io module (it is lock-free & zero-garbage stack)
+    // todo: However, since all workers are already numbered (indexed) and have PoolWorker objects, you can have a very simply impl
+    // todo: Just implement Treiber stack using `val nextRetiredIndexVersion = atomic(0)` in each PoolWorker and keep top here
     private val retiredWorkers = ConcurrentLinkedQueue<PoolWorker>()
 
     /**
@@ -70,9 +79,11 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
      */
     private val workers: Array<PoolWorker?>
     private val createdWorkers = atomic(0)
+    // todo: We should keep track of cpuWorkers. See comment in `requestCpuWorker`
     private val blockingWorkers = atomic(0)
     private val random = Random()
 
+    // todo: It should be atomic. See comment in `close`
     @Volatile
     private var isTerminated = false
 
@@ -95,6 +106,9 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         require(corePoolSize >= 1, { "Expected positive core pool size, but was $corePoolSize" })
         require(maxPoolSize >= corePoolSize, { "Expected max pool size ($maxPoolSize) greater than or equals to core pool size ($corePoolSize)" })
         workers = arrayOfNulls(maxPoolSize)
+        // todo: can we lazily create corePool, too?
+        // todo: The goal: when running "small" workload on "large" machine we should not consume extra resource in advance
+        // todo: Can't we just invoke createNewWorker here to get the first one up and running?
         for (i in 0 until corePoolSize) {
             workers[i] = PoolWorker(i).apply { start() }
         }
@@ -108,6 +122,7 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
      * and intended to be used only for testing. Invocation has no additional effect if already closed.
      */
     override fun close() {
+        // todo: isTerminated should be atomic with `if (!isTerminated.compareAndSet(0, 1)) return` here
         if (isTerminated) {
             return
         }
@@ -143,8 +158,13 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
      * @param fair whether the task should be dispatched fairly (strict FIFO) or not (semi-FIFO)
      */
     fun dispatch(block: Runnable, mode: TaskMode = TaskMode.NON_BLOCKING, fair: Boolean = false) {
+        // todo: This is an extra allocation of TimedTask on dispatch that we can avoid.
+        // todo: Turn TimedTask into an interface with settable time and mode, make DispatchedTask extend TimedTask,
+        // todo: Implement it in all concrete classes implementing DispatchedTask.
+        // todo: Note, that an instance of DispatchedTask is cached (reused) per state machine.
         val task = TimedTask(block, schedulerTimeSource.nanoTime(), mode)
 
+        // todo: Idiomatic Kotlin: use `when (submitToLocalQueue(task, fair))` here
         val offerResult = submitToLocalQueue(task, fair)
         if (offerResult == ADDED) {
             return
@@ -168,7 +188,7 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         }
 
         /*
-         * Fast path -- we have retired worker, unpark him, and we're done.
+         * Fast path -- we have retired worker, unpark it, and we're done.
          * The benign data race here: when only one permit is available, multiple retired workers
          * can be unparked, but only one will continue execution
          */
@@ -178,6 +198,11 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
             return
         }
 
+        // todo: Here we are reading two atomic counters separately and computing difference
+        // todo: Observe, that we never use the value of blockingWorkers itself.
+        // todo: Only cpuWorkers = created - blocking is important and used
+        // todo: We should maintain cpuWorkersCounter instead of blockingWorkers
+        // todo: Don't forget to increment cpuWorkersCounter in createNewWorker
         val created = createdWorkers.value
         val blocking = blockingWorkers.value
         val cpuWorkers = created - blocking
@@ -191,6 +216,8 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
     }
 
     private fun createNewWorker() {
+        // todo: Use createdWorkers.loop { nextWorker -> ... } idiom here.
+        // todo: It makes it explicit that we doing lock-free loop on createdWorkers atomic.
         while (true) {
             val nextWorker = createdWorkers.value
             // Limit is reached, bail out
@@ -210,6 +237,12 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
     private fun unparkAny() {
         // Probabilistically try to unpark someone
         repeat(STEAL_ATTEMPTS) {
+            // todo: Here we have a similar problem to trySteal, with different types of threads
+            // todo: When we have a large number of active (non-parked) worker threads, then it is hard to find one
+            // todo: If we have lots of blocking threads busy doing some IO (they are not parking and not retired),
+            // todo: then it is even harder to find a parked one among them.
+            // todo: Since we care to unpark _any_ parked one, do we really need random here?
+            // todo: We can just maintain a stack of all parked workers.
             val victim = workers[random.nextInt(createdWorkers.value)]
             if (victim != null && victim.isParking) {
                 /*
@@ -226,6 +259,7 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         val worker = Thread.currentThread() as? PoolWorker ?: return NOT_ADDED
         var result = ADDED
 
+        // todo: Micro-optimization: pass task.mode as parameter to this fun, avoid reading it from property
         if (task.mode == TaskMode.NON_BLOCKING) {
             /*
              * If the worker is currently executing blocking task and tries to dispatch non-blocking task, it's one the following reasons:
@@ -250,16 +284,19 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
             }
         }
 
-        val addResult = if (fair) worker.localQueue.addLast(task, globalWorkQueue) else worker.localQueue.add(task, globalWorkQueue)
+        val addResult = if (fair) {
+            worker.localQueue.addLast(task, globalWorkQueue)
+        } else {
+            worker.localQueue.add(task, globalWorkQueue)
+        }
         if (addResult) {
             // We're close to queue capacity, wake up anyone to steal work
+            // Note: non-atomic bufferSize here is Ok (it is just a performance optimization)
             if (worker.localQueue.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD) {
                 return ADDED_REQUIRES_HELP
             }
-
             return result
         }
-
         return ADDED_REQUIRES_HELP
     }
 
@@ -311,12 +348,17 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                 "global queue size = ${globalWorkQueue.size}]"
     }
 
+    // todo: make name of the pool configurable (optional parameter to CoroutineScheduler) and base thread names on it
     internal inner class PoolWorker(val index: Int) : Thread("CoroutineScheduler-worker-$index") {
         init {
             isDaemon = true
         }
 
         val localQueue: WorkQueue = WorkQueue()
+
+        // todo: hasCpuPermit + isBlocking is actaully a single state variable with 3 possible states (not four!)
+        // todo: Notice: cannot hasCpuPermit && isBlocking at the same time.
+        // todo: Merging them would simplify code and make worker state changes atomic to the external observers.
         @Volatile
         var hasCpuPermit = false
         var isBlocking = false
@@ -327,11 +369,19 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
          */
         private var lastExhaustionTime = 0L
 
+        // todo: Same story here. Merge hasCpuPermit + isBlocking + isParking it a single state work.
+        // todo: Notice: Cannot hasCpuPermit && isParking
         @Volatile
         var isParking = false
+
+        // todo: It does not seem that @Volatile is of any value here.
+        // todo: It is incremented between calls to findTask which _already_ has globalWorkQueue.poll()
         @Volatile
         private var spins = 0L
+        // todo: Given the above consideration with can combine spins & yields into a single var
+        // todo: Micro-optimization: A single combined spins+yields counter will make `idleReset` slightly faster
         private var yields = 0L
+
         private var parkTimeNs = MIN_PARK_TIME_NS
         private var rngState = random.nextInt()
 
@@ -416,7 +466,9 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
             if (mask and upperBound == 0) {
                 return rngState and mask
             }
-
+            // todo: consider dropping output of bound value & generating another one (until in bounds)
+            // todo: reminder operation is very, very slow (can be slower than generating another random with xor/shift)
+            // todo: needs benchmark
             return (rngState and Int.MAX_VALUE) % upperBound
         }
 
@@ -442,11 +494,14 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                 spins < MAX_SPINS -> ++spins
                 ++yields <= MAX_YIELDS -> yield()
                 else -> {
+                    // todo: just isParking = true is all we need here (no need for `if`)
+                    // todo: it _is_ a volatile write, but it should be still cheaper that using `if`
                     if (!isParking) {
                         isParking = true
                     }
 
                     if (parkTimeNs < MAX_PARK_TIME_NS) {
+                        // todo: `x * 3 shr 1` is better than `x * 1.5` for performance-optimized code
                         parkTimeNs = (parkTimeNs * 1.5).toLong().coerceAtMost(MAX_PARK_TIME_NS)
                     }
 
@@ -475,18 +530,27 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
             yields = 0
         }
 
+        // todo: The current logic here is to always take globalWorkQueue if there is some work
+        // todo: If incoming rate is too fast, this can lead to starvation of non-empty localQueues in threads with CPU permits
+        // todo: Moreover, on overflow of local queues they post to globalQueue, thus aggravating starvation
+        // todo: It looks like the simplest strategy is to alternate between global-first / local-first to load-balance
         private fun findTask(): Task? {
+            // todo: we we are reading volatile hasCpuPermit too often here.
+            // todo: for performance, it should be load once into local val hasCpuPermit, then used
             hasCpuPermit = hasCpuPermit || cpuPermits.tryAcquire()
 
             var task: Task?
             if (hasCpuPermit) {
+                // :todo: Idiomatic Kotlin does not need var: globalWorkQueue.poll()?.let { return it }
                 task = globalWorkQueue.poll()
                 if (task != null) return task
             }
 
+            // :todo: Idiomatic Kotlin does not need var: localQueue.poll()?.let { return it }
             task = localQueue.poll()
             if (task != null) return task
 
+            // todo: Idiomatic Kotlin: return if (hasCpuPermit) trySteal() else null
             if (hasCpuPermit) {
                 return trySteal()
             }
@@ -496,13 +560,20 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
 
         private fun trySteal(): Task? {
             // 0 to await an initialization and 1 to avoid excess stealing on single-core machines
+            // todo: should not read createdWorkers.value twice.
+            // todo: Read it once when trying to find a worker to steal from.
             if (createdWorkers.value < 2) {
                 return null
             }
 
             // Probe a couple of workers
             // TODO coarse grained mechanism when used with blocking dispatcher
+            // todo: Do we really need STEAL_ATTEMPTS > 1 ???
+            // todo: If steal fails and returns null we quickly spin again into trySteal.
             repeat(STEAL_ATTEMPTS) {
+                // todo: We are wasting time here tyring to steal from all workers ever created.
+                // todo: It is inefficient when there are many retired workers.
+                // todo: We need to find a solution that does not degrade over time.
                 val worker = workers[nextInt(createdWorkers.value)]
                 if (worker !== null && worker !== this) {
                     if (localQueue.trySteal(worker.localQueue, globalWorkQueue)) {
@@ -510,7 +581,7 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                     }
                 }
             }
-
+            // todo: why not just return null here and let it retry in top-level loop?
             return localQueue.poll()
         }
     }

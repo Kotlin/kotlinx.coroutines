@@ -27,8 +27,16 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  */
 internal class WorkQueue {
 
+    // todo: There is non-atomicity in computing bufferSize (indices update separately).
+    // todo: It can lead to arbitrary values of resulting bufferSize.
+    // todo: Consider merging both indices into a single Long.
+    // todo: Alternatively, prove that sporadic arbitrary result here is Ok (does not seems the case now)
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
+
+    // todo: AtomicReferenceArray has an extra memory indirection.
+    // todo: In the future (long-term) atomicfu shall support efficient atomic arrays in a platform-specific way (unsafe or varhandels)
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
+
     private val lastScheduledTask = atomic<Task?>(null)
 
     private val producerIndex = atomic(0)
@@ -50,6 +58,8 @@ internal class WorkQueue {
      * @return true if no offloading happened, false otherwise
      */
     fun add(task: Task, globalQueue: GlobalQueue): Boolean {
+        // todo: can optimize to `val previous = lastScheduledTask.getAndSet(task)`
+        // todo: no CAS loop will be needed
         while (true) {
             val previous = lastScheduledTask.value
             if (lastScheduledTask.compareAndSet(previous, task)) {
