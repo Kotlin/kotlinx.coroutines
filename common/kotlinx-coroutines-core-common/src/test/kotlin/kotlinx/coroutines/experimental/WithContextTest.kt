@@ -23,6 +23,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class WithContextTest : TestBase() {
+
     @Test
     fun testSameContextNoSuspend() = runTest {
         expect(1)
@@ -145,7 +146,7 @@ class WithContextTest : TestBase() {
     }
 
     @Test
-    fun testRunWithException() = runTest {
+    fun testRunSelfCancellationWithException() = runTest {
         expect(1)
         var job: Job? = null
         job = launch(coroutineContext) {
@@ -162,6 +163,33 @@ class WithContextTest : TestBase() {
                 assertTrue(e is TestException, "Caught $e")
             }
         }
+        expect(2)
+        yield() // to the launched job
+        expect(4)
+        yield() // again to the job
+        expect(6)
+        yield() // again to exception handler
+        finish(8)
+    }
+
+    @Test
+    fun testRunSelfCancellation() = runTest {
+        expect(1)
+        var job: Job? = null
+        job = launch(coroutineContext) {
+            try {
+                expect(3)
+                withContext(wrapperDispatcher(coroutineContext)) {
+                    expect(5)
+                    job!!.cancel() // cancel itself
+                }
+            } catch (e: Throwable) {
+                expect(6)
+                // make sure TestException, not CancellationException is thrown!
+                assertTrue(e is JobCancellationException, "Caught $e")
+            }
+        }
+
         expect(2)
         yield() // to the launched job
         expect(4)
