@@ -311,7 +311,7 @@ public actual open class LockFreeLinkedListNode {
 
     // ------ multi-word atomic operations helpers ------
 
-    public open class AddLastDesc<T : Node> actual constructor(
+    public open class AddLastDesc<T : Node>(
         @JvmField val queue: Node,
         @JvmField val node: T
     ) : AbstractAtomicDesc() {

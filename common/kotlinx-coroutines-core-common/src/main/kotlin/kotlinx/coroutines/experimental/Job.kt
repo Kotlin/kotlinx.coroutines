@@ -1332,7 +1332,7 @@ internal interface Incomplete {
     val list: NodeList? // is null only for Empty and JobNode incomplete state objects
 }
 
-internal abstract class JobNode<out J : Job> actual constructor(
+internal abstract class JobNode<out J : Job>(
     @JvmField val job: J
 ) : CompletionHandlerNode(), DisposableHandle, Incomplete {
     override val isActive: Boolean get() = true
