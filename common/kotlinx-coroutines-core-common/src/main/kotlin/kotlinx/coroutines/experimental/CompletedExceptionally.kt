@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internalAnnotations.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Class for an internal state of a job that had completed exceptionally, including cancellation.
@@ -61,7 +62,8 @@ public open class CompletedExceptionally protected constructor(
  * A specific subclass of [CompletedExceptionally] for cancelled jobs.
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
- * 
+ * TODO rename to CancelledJob?
+ *
  * @param job the job that was cancelled.
  * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
  *        if created on first get from [exception] property.
@@ -74,3 +76,19 @@ public class Cancelled(
     override fun createException(): Throwable = JobCancellationException("Job was cancelled normally", null, job)
 }
 
+/**
+ * A specific subclass of [CompletedExceptionally] for cancelled [AbstractContinuation].
+ *
+ * **Note: This class cannot be used outside of internal coroutines framework**.
+ *
+ * @param continuation the continuation that was cancelled.
+ * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
+ *        if created on first get from [exception] property.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public class CancelledContinuation(
+    private val continuation: Continuation<*>,
+    cause: Throwable?
+) : CompletedExceptionally(cause, true) {
+    override fun createException(): Throwable = CancellationException("Coroutine $continuation was cancelled normally")
+}

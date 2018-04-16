@@ -24,6 +24,12 @@ internal actual abstract class CompletionHandlerNode : LinkedListNode() {
     actual abstract fun invoke(cause: Throwable?)
 }
 
+internal actual abstract class CancellationHandler {
+    @Suppress("UnsafeCastFromDynamic")
+    actual inline val asHandler: CompletionHandler get() = asDynamic()
+    actual abstract fun invoke(cause: Throwable?)
+}
+
 internal actual fun CompletionHandler.invokeIt(cause: Throwable?) {
     when(jsTypeOf(this)) {
         "function" -> invoke(cause)

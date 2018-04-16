@@ -23,5 +23,10 @@ internal actual abstract class CompletionHandlerNode actual constructor() : Lock
     actual abstract override fun invoke(cause: Throwable?)
 }
 
+internal actual abstract class CancellationHandler actual constructor() : CompletionHandler {
+    actual inline val asHandler: CompletionHandler get() = this
+    actual abstract override fun invoke(cause: Throwable?)
+}
+
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun CompletionHandler.invokeIt(cause: Throwable?) = invoke(cause)

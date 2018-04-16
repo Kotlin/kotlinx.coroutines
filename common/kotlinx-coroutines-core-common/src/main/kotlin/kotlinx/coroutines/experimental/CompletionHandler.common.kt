@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.internal.*
 
 /**
- * Handler for [Job.invokeOnCompletion].
+ * Handler for [Job.invokeOnCompletion] and [CancellableContinuation.invokeOnCancellation].
  *
  * Installed handler should not throw any exceptions. If it does, they will get caught,
  * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
@@ -34,6 +34,12 @@ public typealias CompletionHandler = (cause: Throwable?) -> Unit
 // We want class that extends LockFreeLinkedListNode & CompletionHandler but we cannot do it on Kotlin/JS,
 // so this expect class provides us with the corresponding abstraction in a platform-agnostic way.
 internal expect abstract class CompletionHandlerNode() : LockFreeLinkedListNode {
+    val asHandler: CompletionHandler
+    abstract fun invoke(cause: Throwable?)
+}
+
+// More compact version of CompletionHandlerNode for CancellableContinuation with same workaround for JS
+internal expect abstract class CancellationHandler() {
     val asHandler: CompletionHandler
     abstract fun invoke(cause: Throwable?)
 }

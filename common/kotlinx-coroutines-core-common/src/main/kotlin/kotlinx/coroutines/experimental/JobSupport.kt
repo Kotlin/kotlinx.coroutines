@@ -402,7 +402,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private suspend fun joinSuspend() = suspendCancellableCoroutine<Unit> { cont ->
-        cont.disposeOnCompletion(invokeOnCompletion(handler = ResumeOnCompletion(this, cont).asHandler))
+        // We have to invoke join() handler only on cancellation, on completion we will be resumed regularly without handlers
+        cont.disposeOnCancellation(invokeOnCompletion(handler = ResumeOnCompletion(this, cont).asHandler))
     }
 
     public final override val onJoin: SelectClause0
@@ -556,7 +557,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 return COMPLETING_ALREADY_COMPLETING
             if (state is Finishing && state.completing)
                 return COMPLETING_ALREADY_COMPLETING
-            val child: Child? = firstChild(state) ?: // or else complete immediately w/o children
+            val child: ChildJob? = firstChild(state) ?: // or else complete immediately w/o children
             when {
                 state !is Finishing && hasOnFinishingHandler(proposedUpdate) -> null // unless it has onFinishing handler
                 updateState(state, proposedUpdate, mode) -> return COMPLETING_COMPLETED
@@ -590,7 +591,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    private tailrec fun Child.cancelChildrenInternal(cause: Throwable) {
+    private tailrec fun ChildJob.cancelChildrenInternal(cause: Throwable) {
         childJob.cancel(JobCancellationException("Child job was cancelled because of parent failure", cause, childJob))
         nextChild()?.cancelChildrenInternal(cause)
     }
@@ -599,10 +600,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         get() = (this as? CompletedExceptionally)?.exception
 
     private fun firstChild(state: Incomplete) =
-        state as? Child ?: state.list?.nextChild()
+        state as? ChildJob ?: state.list?.nextChild()
 
     // return false when there is no more incomplete children to wait
-    private tailrec fun tryWaitForChild(child: Child, proposedUpdate: Any?): Boolean {
+    private tailrec fun tryWaitForChild(child: ChildJob, proposedUpdate: Any?): Boolean {
         val handle = child.childJob.invokeOnCompletion(invokeImmediately = false,
             handler = ChildCompletion(this, child, proposedUpdate).asHandler)
         if (handle !== NonDisposableHandle) return true // child is not complete and we've started waiting for it
@@ -613,7 +614,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun continueCompleting(lastChild: Child, proposedUpdate: Any?) {
+    internal fun continueCompleting(lastChild: ChildJob, proposedUpdate: Any?) {
         loopOnState { state ->
             if (state !is Finishing)
                 throw IllegalStateException("Job $this is found in expected state while completing with $proposedUpdate", proposedUpdate.exceptionOrNull)
@@ -626,13 +627,13 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    private fun LockFreeLinkedListNode.nextChild(): Child? {
+    private fun LockFreeLinkedListNode.nextChild(): ChildJob? {
         var cur = this
         while (cur.isRemoved) cur = cur.prevNode // rollback to prev non-removed (or list head)
         while (true) {
             cur = cur.nextNode
             if (cur.isRemoved) continue
-            if (cur is Child) return cur
+            if (cur is ChildJob) return cur
             if (cur is NodeList) return null // checked all -- no more children
         }
     }
@@ -640,16 +641,16 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     public final override val children: Sequence<Job> get() = buildSequence {
         val state = this@JobSupport.state
         when (state) {
-            is Child -> yield(state.childJob)
+            is ChildJob -> yield(state.childJob)
             is Incomplete -> state.list?.let { list ->
-                list.forEach<Child> { yield(it.childJob) }
+                list.forEach<ChildJob> { yield(it.childJob) }
             }
         }
     }
 
     @Suppress("OverridingDeprecatedMember")
     public final override fun attachChild(child: Job): DisposableHandle =
-        invokeOnCompletion(onCancelling = true, handler = Child(this, child).asHandler)
+        invokeOnCompletion(onCancelling = true, handler = ChildJob(this, child).asHandler)
 
     @Suppress("OverridingDeprecatedMember")
     public final override fun cancelChildren(cause: Throwable?) {
@@ -771,7 +772,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private suspend fun awaitSuspend(): Any? = suspendCancellableCoroutine { cont ->
-        cont.disposeOnCompletion(invokeOnCompletion {
+        // We have to invoke await() ha ndler only on cancellation, on completion we will be resumed regularly without handlers
+        cont.disposeOnCancellation(invokeOnCompletion {
             val state = this.state
             check(state !is Incomplete)
             if (state is CompletedExceptionally)
@@ -962,7 +964,7 @@ private class InvokeOnCancellation(
     override fun toString() = "InvokeOnCancellation[$classSimpleName@$hexAddress]"
 }
 
-internal class Child(
+internal class ChildJob(
     parent: JobSupport,
     @JvmField val childJob: Job
 ) : JobCancellationNode<JobSupport>(parent) {
@@ -970,12 +972,23 @@ internal class Child(
         // Always materialize the actual instance of parent's completion exception and cancel child with it
         childJob.cancel(job.getCancellationException())
     }
-    override fun toString(): String = "Child[$childJob]"
+    override fun toString(): String = "ChildJob[$childJob]"
+}
+
+// Same as ChildJob, but for cancellable continuation
+internal class ChildContinuation(
+    parent: Job,
+    @JvmField val child: AbstractContinuation<*>
+) : JobCancellationNode<Job>(parent) {
+    override fun invoke(cause: Throwable?) {
+        child.cancel(job.getCancellationException())
+    }
+    override fun toString(): String = "ChildContinuation[$child]"
 }
 
 private class ChildCompletion(
     private val parent: JobSupport,
-    private val child: Child,
+    private val child: ChildJob,
     private val proposedUpdate: Any?
 ) : JobNode<Job>(child.childJob) {
     override fun invoke(cause: Throwable?) {

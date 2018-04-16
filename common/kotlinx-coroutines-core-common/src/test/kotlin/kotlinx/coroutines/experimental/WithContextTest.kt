@@ -125,6 +125,8 @@ class WithContextTest : TestBase() {
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
         withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) { // but start atomically
+            // TODO here behaviour changed
+            require(!isActive)
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -139,6 +141,7 @@ class WithContextTest : TestBase() {
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
         withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
+            require(isActive)
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -153,6 +156,7 @@ class WithContextTest : TestBase() {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
+                    require(isActive)
                     expect(5)
                     job!!.cancel() // cancel itself
                     throw TestException() // but throw a different exception
@@ -184,7 +188,7 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel itself
                 }
             } catch (e: Throwable) {
-                expect(6)
+                expect(7)
                 // make sure TestException, not CancellationException is thrown!
                 assertTrue(e is JobCancellationException, "Caught $e")
             }

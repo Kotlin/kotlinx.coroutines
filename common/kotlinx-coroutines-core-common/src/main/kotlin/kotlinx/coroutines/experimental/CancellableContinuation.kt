@@ -57,24 +57,24 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * ```
  */
-public interface CancellableContinuation<in T> : Continuation<T>, Job {
+public interface CancellableContinuation<in T> : Continuation<T> {
     /**
      * Returns `true` when this continuation is active -- it has not completed or cancelled yet.
      */
-    public override val isActive: Boolean
+    public val isActive: Boolean
 
     /**
      * Returns `true` when this continuation has completed for any reason. A continuation
      * that was cancelled is also considered complete.
      */
-    public override val isCompleted: Boolean
+    public val isCompleted: Boolean
 
     /**
      * Returns `true` if this continuation was [cancelled][cancel].
      *
      * It implies that [isActive] is `false` and [isCompleted] is `true`.
      */
-    public override val isCancelled: Boolean
+    public val isCancelled: Boolean
 
     /**
      * Tries to resume this continuation with a given value and returns non-null object token if it was successful,
@@ -114,24 +114,37 @@ public interface CancellableContinuation<in T> : Continuation<T>, Job {
      * Cancels this continuation with an optional cancellation [cause]. The result is `true` if this continuation was
      * cancelled as a result of this invocation and `false` otherwise.
      */
-    @Suppress("DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE")
-    public override fun cancel(cause: Throwable? = null): Boolean
+    public fun cancel(cause: Throwable? = null): Boolean
 
     /**
-     * Registers handler that is **synchronously** invoked once on completion of this continuation.
-     * When continuation is already complete, then the handler is immediately invoked
-     * with continuation's exception or `null`. Otherwise, handler will be invoked once when this
-     * continuation is complete.
-     *
-     * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
-     * registration of this handler and release its memory if its invocation is no longer needed.
-     * There is no need to dispose the handler after completion of this continuation. The references to
-     * all the handlers are released when this continuation completes.
+     * Registers handler that is **synchronously** invoked once on cancellation (both regular and exceptional) of this continuation.
+     * When the continuation is already cancelled, then the handler is immediately invoked
+     * with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
+     * continuation is cancelled.
      *
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
-     * wrapped into [CompletionHandlerException], and rethrown, potentially causing crash of unrelated code.
+     * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
+     *
+     * At most one [handler] can be installed on one continuation
      */
-    public override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+    @Deprecated(
+        message = "Disposable handlers on regular completion are no longer supported",
+        replaceWith = ReplaceWith("invokeOnCancellation(handler)"),
+        level = DeprecationLevel.WARNING)
+    public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+
+    /**
+     * Registers handler that is **synchronously** invoked once on cancellation (both regular and exceptional) of this continuation.
+     * When the continuation is already cancelled, then the handler is immediately invoked
+     * with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
+     * continuation is cancelled.
+     *
+     * Installed [handler] should not throw any exceptions. If it does, they will get caught,
+     * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
+     *
+     * At most one [handler] can be installed on one continuation
+     */
+    public fun invokeOnCancellation(handler: CompletionHandler)
 
     /**
      * Resumes this continuation with a given [value] in the invoker thread without going though
@@ -193,20 +206,58 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
  * Removes a given node on cancellation.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle =
-    invokeOnCompletion(handler = RemoveOnCancel(this, node).asHandler)
+@Deprecated(
+    message = "Disposable handlers on cancellation are no longer supported",
+    replaceWith = ReplaceWith("removeOnCancellation(handler)"),
+    level = DeprecationLevel.WARNING)
+public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
+    invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
+    return NonDisposableHandle
+}
+
+/**
+ * Removes a given node on cancellation.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode): Unit =
+    invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
+
+@Deprecated(
+    message = "Disposable handlers on regular completion are no longer supported",
+    replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
+    level = DeprecationLevel.WARNING)
+public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
+    invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
+    return NonDisposableHandle
+}
+
+public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
+    invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
 
 // --------------- implementation details ---------------
 
+// TODO: With separate class IDEA fails
 private class RemoveOnCancel(
-    cont: CancellableContinuation<*>,
+    cont: CancellableContinuationImpl<*>,
     @JvmField val node: LockFreeLinkedListNode
-) : JobNode<CancellableContinuation<*>>(cont)  {
+) : CancellationHandlerImpl<CancellableContinuationImpl<*>>(cont) {
+
     override fun invoke(cause: Throwable?) {
-        if (job.isCancelled)
+        if (continuation.isCancelled)
             node.remove()
     }
+
     override fun toString() = "RemoveOnCancel[$node]"
+}
+
+private class DisposeOnCancellation(
+    continuation: CancellableContinuationImpl<*>,
+    private val handle: DisposableHandle
+) : CancellationHandlerImpl<CancellableContinuationImpl<*>>(continuation) {
+
+    override fun invoke(cause: Throwable?) = handle.dispose()
+
+    override fun toString(): String = "DisposeOnCancellation[$handle]"
 }
 
 @PublishedApi
@@ -214,23 +265,22 @@ internal class CancellableContinuationImpl<in T>(
     delegate: Continuation<T>,
     resumeMode: Int
 ) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable {
-    @Volatile // just in case -- we don't want an extra data race, even benign one
-    private var _context: CoroutineContext? = null // created on first need
 
-    public override val context: CoroutineContext
-        get() = _context ?: (delegate.context + this).also { _context = it }
+    public override val context: CoroutineContext = delegate.context
 
     override fun initCancellability() {
         initParentJobInternal(delegate.context[Job])
     }
 
-    override val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLED
+    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle {
+        invokeOnCancellation(handler)
+        return NonDisposableHandle
+    }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
+        loopOnState { state ->
             when (state) {
-                is Incomplete -> {
+                is NotCompleted -> {
                     val update: Any? = if (idempotent == null) value else
                         CompletedIdempotentResult(idempotent, value, state)
                     if (tryUpdateState(state, update)) return state
@@ -248,10 +298,9 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResumeWithException(exception: Throwable): Any? {
-        while (true) { // lock-free loop on state
-            val state = this.state // atomic read
-            when (state) {
-                is Incomplete -> {
+        loopOnState { state ->
+        when (state) {
+                is NotCompleted -> {
                     if (tryUpdateState(state, CompletedExceptionally(exception))) return state
                 }
                 else -> return null // cannot resume -- not active anymore
@@ -260,7 +309,7 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun completeResume(token: Any) {
-        completeUpdateState(token as Incomplete, state, resumeMode)
+        completeUpdateState(token as NotCompleted, state, resumeMode)
     }
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
@@ -277,19 +326,14 @@ internal class CancellableContinuationImpl<in T>(
     override fun <T> getSuccessfulResult(state: Any?): T =
         if (state is CompletedIdempotentResult) state.result as T else state as T
 
-    override fun nameString(): String =
+    protected override fun nameString(): String =
         "CancellableContinuation(${delegate.toDebugString()})"
-
-    // todo: This workaround for KT-21968, should be removed in the future
-    public override fun cancel(cause: Throwable?): Boolean =
-        super.cancel(cause)
 }
 
 private class CompletedIdempotentResult(
     @JvmField val idempotentResume: Any?,
     @JvmField val result: Any?,
-    @JvmField val token: Incomplete
+    @JvmField val token: NotCompleted
 ) {
     override fun toString(): String = "CompletedIdempotentResult[$result]"
 }
-
