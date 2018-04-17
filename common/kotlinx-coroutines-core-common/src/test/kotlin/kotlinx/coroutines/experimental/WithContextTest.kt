@@ -118,18 +118,22 @@ class WithContextTest : TestBase() {
     }
 
     @Test
-    fun testRunAtomicTryCancel() = runTest(
-        expected = { it is JobCancellationException }
-    ) {
+    fun testRunAtomicTryCancel() = runTest {
         expect(1)
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
-        withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) { // but start atomically
-            // TODO here behaviour changed
-            require(!isActive)
-            finish(2)
-            yield() // but will cancel here
-            expectUnreached()
+
+        try {
+            withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) {
+                require(isActive)
+                // but start atomically
+                expect(2)
+                yield() // but will cancel here
+                expectUnreached()
+            }
+        } catch (e: JobCancellationException) {
+            // This block should be invoked *after* context body
+            finish(3)
         }
     }
 
@@ -158,12 +162,14 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    job!!.cancel() // cancel itself
+                    require(job!!.cancel()) // cancel itself
+                    require(!job!!.cancel(AssertionError())) // cancel again, no success here
+                    require(!isActive)
                     throw TestException() // but throw a different exception
                 }
             } catch (e: Throwable) {
                 expect(7)
-                // make sure TestException, not CancellationException is thrown!
+                // make sure TestException, not CancellationException or AssertionError is thrown
                 assertTrue(e is TestException, "Caught $e")
             }
         }
@@ -184,12 +190,15 @@ class WithContextTest : TestBase() {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
+                    require(isActive)
                     expect(5)
-                    job!!.cancel() // cancel itself
+                    require(job!!.cancel()) // cancel itself
+                    require(!job!!.cancel(AssertionError())) // cancel again, no success here
+                    require(!isActive)
                 }
             } catch (e: Throwable) {
                 expect(7)
-                // make sure TestException, not CancellationException is thrown!
+                // make sure TestException, not CancellationException or AssertionError is thrown!
                 assertTrue(e is JobCancellationException, "Caught $e")
             }
         }

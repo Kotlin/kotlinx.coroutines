@@ -34,15 +34,23 @@ internal abstract class AbstractContinuation<in T>(
 ) : Continuation<T>, DispatchedTask<T> {
 
     /*
+     * Implementation notes
+     *
      * AbstractContinuation is a subset of Job with following limitations:
      * 1) It can have only cancellation listeners
      * 2) It always invokes cancellation listener if it's cancelled (no 'invokeImmediately')
      * 3) It can have at most one cancellation listener
-     * 4) It cannot be in cancelling state, only active/finished/cancelled
-     * 5) Its cancellation listeners cannot be deregistered
-     *
+     * 4) Its cancellation listeners cannot be deregistered
      * As a consequence it has much simpler state machine, more lightweight machinery and
      * less dependencies.
+     *
+     * Cancelling state
+     * If useCancellingState is true, then this continuation can have additional cancelling state,
+     * which is transition from Active to Cancelled. This is specific state to support withContext(ctx)
+     * construction: block in withContext can be cancelled from withing or even before stepping into withContext,
+     * but we still want to properly run it (e.g. when it has atomic cancellation mode) and run its completion listener
+     * after.
+     * During cancellation all pending exceptions are aggregated and thrown during transition to final state
      */
 
     /* decision state machine
@@ -67,6 +75,7 @@ internal abstract class AbstractContinuation<in T>(
        ------      ------------         ------------    -----------
        ACTIVE      Active               : Active        active, no listeners
        SINGLE_A    CancellationHandler  : Active        active, one cancellation listener
+       CANCELLING  Cancelling           : Active        in the process of cancellation due to cancellation of parent job
        CANCELLED   Cancelled            : Cancelled     cancelled (final state)
        COMPLETED   any                  : Completed     produced some result or threw an exception (final state)
      */
@@ -82,6 +91,8 @@ internal abstract class AbstractContinuation<in T>(
     public val isCompleted: Boolean get() = state !is NotCompleted
 
     public val isCancelled: Boolean get() = state is CancelledContinuation
+
+    protected open val useCancellingState: Boolean get() = false
 
     internal fun initParentJobInternal(parent: Job?) {
         check(parentHandle == null)
@@ -105,6 +116,7 @@ internal abstract class AbstractContinuation<in T>(
     public fun cancel(cause: Throwable?): Boolean {
         loopOnState { state ->
             if (state !is NotCompleted) return false // quit if already complete
+            if (state is Cancelling) return false // someone else succeeded
             if (updateStateCancelled(state, cause)) return true
         }
     }
@@ -174,8 +186,15 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    private fun updateStateCancelled(state: NotCompleted, cause: Throwable?): Boolean =
-        updateState(state, CancelledContinuation(this, cause), mode = MODE_ATOMIC_DEFAULT)
+    private fun updateStateCancelled(state: NotCompleted, cause: Throwable?): Boolean {
+        val update: Any = if (useCancellingState) {
+            Cancelling(CancelledContinuation(this, cause))
+        } else {
+            CancelledContinuation(this, cause)
+        }
+
+        return updateState(state, update, mode = MODE_ATOMIC_DEFAULT)
+    }
 
     private fun onCompletionInternal(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
@@ -192,47 +211,99 @@ internal abstract class AbstractContinuation<in T>(
     protected fun resumeImpl(proposedUpdate: Any?, resumeMode: Int) {
         loopOnState { state ->
             when (state) {
+                is Cancelling -> { // withContext() support
+                    /*
+                     * If already cancelled block is resumed with non-exception,
+                     * resume it with cancellation exception.
+                     * E.g.
+                     * ```
+                     * val value = withContext(ctx) {
+                     *   outerJob.cancel() // -> cancelling
+                     *   42 // -> cancelled
+                     * }
+                     * ```
+                     * should throw cancellation exception instead of returning 42
+                     */
+                    if (proposedUpdate !is CompletedExceptionally) {
+                        val update = state.cancel
+                        if (updateState(state, update, resumeMode)) return
+                    } else {
+                        /*
+                         * If already cancelled block is resumed with an exception,
+                         * then we should properly merge them to avoid information loss
+                         */
+                        val update: CompletedExceptionally
+
+                        /*
+                         * Proposed update is another CancellationException.
+                         * e.g.
+                         * ```
+                         * T1: ctxJob.cancel(e1) // -> cancelling
+                         * T2:
+                         * withContext(ctx) {
+                         *   // -> resumed with cancellation exception
+                         * }
+                         * ```
+                         */
+                        if (proposedUpdate.exception is CancellationException) {
+                            // Keep original cancellation cause and try add to suppressed exception from proposed cancel
+                            update = state.cancel
+                            coerceWithCancellation(state, proposedUpdate, update)
+                        } else {
+                            /*
+                             * Proposed update is exception => transition to terminal state
+                             * E.g.
+                             * ```
+                             * withContext(ctx) {
+                             *   outerJob.cancel() // -> cancelling
+                             *   throw Exception() // -> completed exceptionally
+                             * }
+                             * ```
+                             */
+                            val exception = proposedUpdate.exception
+                            // TODO clashes with await all
+                            val currentException = state.cancel.cause
+                            // Add to suppressed if original cancellation differs from proposed exception
+                            if (currentException != null && (currentException !is CancellationException || currentException.cause !== exception)) {
+                                exception.addSuppressedThrowable(currentException)
+                            }
+
+                            update = CompletedExceptionally(exception)
+                        }
+
+                        if (updateState(state, update, resumeMode)) {
+                            return
+                        }
+                    }
+                }
+
                 is NotCompleted -> {
                     if (updateState(state, proposedUpdate, resumeMode)) return
                 }
-
                 is CancelledContinuation -> {
-                    if (proposedUpdate !is CompletedExceptionally) {
-                        return // Cancelled continuation completed, do nothing
+                    if (proposedUpdate is NotCompleted || proposedUpdate is CompletedExceptionally) {
+                        error("Unexpected update, state: $state, update: $proposedUpdate")
                     }
-
-                    /*
-                     * Coerce concurrent cancellation and pending thrown exception.
-                     * E.g. for linear history `T1: cancel() T2 (job): throw e T3: job.await()`
-                     * we'd like to see actual exception in T3, not JobCancellationException.
-                     * So thrown exception overwrites cancellation exception, but
-                     * suppresses its non-null cause.
-                     */
-                    if (state.exception is CancellationException && state.exception.cause == null) {
-                        return // Do not add to suppressed regular cancellation
-                    }
-
-                    if (state.exception is CancellationException && state.exception.cause === proposedUpdate.exception) {
-                        return // Do not add to suppressed cancellation with the same cause
-                    }
-
-                    if (state.exception === proposedUpdate.exception) {
-                        return // Do no add to suppressed the same exception
-                    }
-
-                    val exception = proposedUpdate.exception
-                    val update = CompletedExceptionally(exception)
-                    if (state.cause != null) {
-                        exception.addSuppressedThrowable(state.cause)
-                    }
-
-                    if (_state.compareAndSet(state, update)) {
-                        return
-                    }
+                    // Coroutine is dispatched normally (e.g.via `delay()`) after cancellation
+                    return
                 }
-
                 else -> error("Already resumed, but proposed with update $proposedUpdate")
             }
+        }
+    }
+
+    // Coerce current cancelling state with proposed cancellation
+    private fun coerceWithCancellation(state: Cancelling, proposedUpdate: CompletedExceptionally, update: CompletedExceptionally) {
+        val originalCancellation = state.cancel
+        val originalException = originalCancellation.exception
+        val updateCause = proposedUpdate.cause
+
+        // Cause of proposed update is present and differs from one in current state TODO clashes with await all
+        val isSameCancellation = originalCancellation.exception is CancellationException
+                && originalException.cause === updateCause?.cause
+
+        if (!isSameCancellation && updateCause !== null && originalException.cause !== updateCause) {
+            update.exception.addSuppressedThrowable(updateCause)
         }
     }
 
@@ -250,18 +321,17 @@ internal abstract class AbstractContinuation<in T>(
     }
 
     private fun updateState(expect: NotCompleted, proposedUpdate: Any?, mode: Int): Boolean {
+        // TODO slow path for cancelling?
         if (!tryUpdateState(expect, proposedUpdate)) {
             return false
         }
 
-        completeUpdateState(expect, proposedUpdate, mode)
+        if (proposedUpdate !is Cancelling) {
+            completeUpdateState(expect, proposedUpdate, mode)
+        }
         return true
     }
 
-    /**
-     * Completes update of the current [state] of this job.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
     protected fun completeUpdateState(expect: NotCompleted, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
         onCompletionInternal(mode)
@@ -276,17 +346,16 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    /**
-     * Tries to initiate update of the current [state] of this job.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
     protected fun tryUpdateState(expect: NotCompleted, update: Any?): Boolean {
-        require(update !is NotCompleted) // only NotCompleted -> completed transition is allowed
         if (!_state.compareAndSet(expect, update)) return false
-        // Unregister from parent job
-        parentHandle?.let {
-            it.dispose() // volatile read parentHandle _after_ state was updated
-            parentHandle = NonDisposableHandle // release it just in case, to aid GC
+
+        // TODO separate code path?
+        if (update !is Cancelling) {
+            // Unregister from parent job
+            parentHandle?.let {
+                it.dispose() // volatile read parentHandle _after_ state was updated
+                parentHandle = NonDisposableHandle // release it just in case, to aid GC
+            }
         }
         return true // continues in completeUpdateState
     }
@@ -313,8 +382,10 @@ internal abstract class AbstractContinuation<in T>(
 internal interface NotCompleted
 
 private class Active : NotCompleted
-
 private val ACTIVE: Active = Active()
+
+// In progress of cancellation
+internal class Cancelling(@JvmField val cancel: CancelledContinuation) : NotCompleted
 
 internal abstract class CancellationHandlerImpl<out C : AbstractContinuation<*>>(@JvmField val continuation: C) :
     CancellationHandler(), NotCompleted

@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
+import java.io.*
 import kotlin.coroutines.experimental.*
 
 class ProduceTest : TestBase() {
