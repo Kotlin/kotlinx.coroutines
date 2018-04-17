@@ -124,7 +124,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal inline fun loopOnState(block: (Any?) -> Unit): Nothing {
+    private inline fun loopOnState(block: (Any?) -> Unit): Nothing {
         while (true) {
             block(state)
         }
@@ -148,7 +148,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * Updates current [state] of this job. Returns `false` if current state is not equal to expected.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun updateState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
+    private fun updateState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
         val update = coerceProposedUpdate(expect, proposedUpdate)
         if (!tryUpdateState(expect, update)) return false
         completeUpdateState(expect, update, mode)
@@ -181,7 +181,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * Tries to initiate update of the current [state] of this job.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun tryUpdateState(expect: Incomplete, update: Any?): Boolean  {
+    private fun tryUpdateState(expect: Incomplete, update: Any?): Boolean  {
         require(update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!_state.compareAndSet(expect, update)) return false
         // Unregister from parent job
@@ -196,7 +196,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * Completes update of the current [state] of this job.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun completeUpdateState(expect: Incomplete, update: Any?, mode: Int) {
+    private fun completeUpdateState(expect: Incomplete, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
         // Do overridable processing before completion handlers
         if (!expect.isCancelling) onCancellationInternal(exceptionally) // only notify when was not cancelling before
@@ -338,7 +338,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                         promoteSingleToNodeList(state as JobNode<*>)
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
-                            check(onCancelMode != ON_CANCEL_MAKE_CANCELLED) // cannot be in this state unless were support cancelling state
                             // installing cancellation handler on job that is being cancelled
                             if (invokeImmediately) handler(state.cancelled.cause)
                             return NonDisposableHandle
@@ -358,12 +357,11 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
-        val hasCancellingState = onCancelMode != ON_CANCEL_MAKE_CANCELLED
-        return if (onCancelling && hasCancellingState)
+        return if (onCancelling)
             (handler as? JobCancellationNode<*>)?.also { require(it.job === this) }
                     ?: InvokeOnCancellation(this, handler)
         else
-            (handler as? JobNode<*>)?.also { require(it.job === this && (!hasCancellingState || it !is JobCancellationNode)) }
+            (handler as? JobNode<*>)?.also { require(it.job === this && it !is JobCancellationNode) }
                     ?: InvokeOnCompletion(this, handler)
     }
 
@@ -458,7 +456,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     internal open val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLING
 
     public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
-        ON_CANCEL_MAKE_CANCELLED -> makeCancelled(cause)
         ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
         ON_CANCEL_MAKE_COMPLETING -> makeCompletingOnCancel(cause)
         else -> error("Invalid onCancelMode $onCancelMode")
@@ -468,14 +465,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     // an extra check for Job status in MODE_CANCELLABLE
     private fun updateStateCancelled(state: Incomplete, cause: Throwable?) =
         updateState(state, Cancelled(this, cause), mode = MODE_ATOMIC_DEFAULT)
-
-    // transitions to Cancelled state
-    private fun makeCancelled(cause: Throwable?): Boolean {
-        loopOnState { state ->
-            if (state !is Incomplete) return false // quit if already complete
-            if (updateStateCancelled(state, cause)) return true
-        }
-    }
 
     // transitions to Cancelling state
     private fun makeCancelling(cause: Throwable?): Boolean {
@@ -772,7 +761,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private suspend fun awaitSuspend(): Any? = suspendCancellableCoroutine { cont ->
-        // We have to invoke await() ha ndler only on cancellation, on completion we will be resumed regularly without handlers
+        // We have to invoke await() handler only on cancellation, on completion we will be resumed regularly without handlers
         cont.disposeOnCancellation(invokeOnCompletion {
             val state = this.state
             check(state !is Incomplete)
@@ -827,7 +816,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 // --------------- helper classes to simplify job implementation
 
 
-internal const val ON_CANCEL_MAKE_CANCELLED = 0
 internal const val ON_CANCEL_MAKE_CANCELLING = 1
 internal const val ON_CANCEL_MAKE_COMPLETING = 2
 

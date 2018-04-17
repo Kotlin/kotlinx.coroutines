@@ -19,7 +19,7 @@ class WithContextCancellationStressTest : TestBase() {
     fun testConcurrentCancellation() = runBlocking {
         var ioException = 0
         var arithmeticException = 0
-        var aiobException = 0
+        var aioobException = 0
 
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
@@ -54,11 +54,11 @@ class WithContextCancellationStressTest : TestBase() {
                         val cause = e.cause
                         when (cause) {
                             is ArithmeticException -> ++arithmeticException
-                            is ArrayIndexOutOfBoundsException -> ++aiobException
+                            is ArrayIndexOutOfBoundsException -> ++aioobException
                             else -> error("Unexpected exception")
                         }
                     }
-                    else -> error("Unexpected exception")
+                    else -> error("Unexpected exception $e")
                 }
             }
         }
@@ -66,7 +66,7 @@ class WithContextCancellationStressTest : TestBase() {
         // Backward compatibility, no exceptional code paths were lost
         require(ioException > 0) { "At least one IOException expected" }
         require(arithmeticException > 0) { "At least one ArithmeticException expected" }
-        require(aiobException > 0) { "At least one ArrayIndexOutOfBoundsException expected" }
+        require(aioobException > 0) { "At least one ArrayIndexOutOfBoundsException expected" }
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {

@@ -76,9 +76,9 @@ private class CancelFutureOnCompletion(
 }
 
 private class CancelFutureOnCancellation(
-    continuation: CancellableContinuation<*>,
+    continuation: AbstractContinuation<*>,
     private val future: Future<*>
-) : CancellationHandlerImpl<AbstractContinuation<*>>(continuation as AbstractContinuation<*>)  {
+) : CancellationHandlerImpl<AbstractContinuation<*>>(continuation)  {
 
     override fun invoke(reason: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this

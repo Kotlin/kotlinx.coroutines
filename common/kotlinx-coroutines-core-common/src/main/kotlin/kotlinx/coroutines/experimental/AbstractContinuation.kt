@@ -104,7 +104,7 @@ internal abstract class AbstractContinuation<in T>(
         val handle = parent.invokeOnCompletion(onCancelling = true, handler = ChildContinuation(parent, this).asHandler)
 
         parentHandle = handle
-        // now check our state _after_ registering (see updateState order of actions)
+        // now check our state _after_ registering (see updateStateToFinal order of actions)
         if (isCompleted) {
             handle.dispose()
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
@@ -117,7 +117,7 @@ internal abstract class AbstractContinuation<in T>(
         loopOnState { state ->
             if (state !is NotCompleted) return false // quit if already complete
             if (state is Cancelling) return false // someone else succeeded
-            if (updateStateCancelled(state, cause)) return true
+            if (tryCancel(state, cause)) return true
         }
     }
 
@@ -170,8 +170,8 @@ internal abstract class AbstractContinuation<in T>(
                 is CancelledContinuation -> {
                     /*
                      * Continuation is complete, invoke directly.
-                     * NOTE: multiple invokeOnCancellation calls with different handlers are allowed on completed coroutine.
-                     * It's slightly inconsistent with running coroutine, but currently, we have no mechanism to check
+                     * NOTE: multiple invokeOnCancellation calls with different handlers are allowed on cancelled continuation.
+                     * It's inconsistent with running continuation, but currently, we have no mechanism to check
                      * whether any handler was registered during continuation lifecycle without additional overhead.
                      * This may be changed in the future.
                      *
@@ -181,19 +181,28 @@ internal abstract class AbstractContinuation<in T>(
                     handler.invokeIt((state as? CompletedExceptionally)?.cause)
                     return
                 }
+                is Cancelling -> error("Cancellation handlers for continuations with 'Cancelling' state are not supported")
                 else -> return
             }
         }
     }
 
-    private fun updateStateCancelled(state: NotCompleted, cause: Throwable?): Boolean {
-        val update: Any = if (useCancellingState) {
-            Cancelling(CancelledContinuation(this, cause))
-        } else {
-            CancelledContinuation(this, cause)
+    private fun makeHandler(handler: CompletionHandler): CancellationHandlerImpl<*> {
+        if (handler is CancellationHandlerImpl<*>) {
+            require(handler.continuation === this) { "Handler has non-matching continuation ${handler.continuation}, current: $this" }
+            return handler
         }
 
-        return updateState(state, update, mode = MODE_ATOMIC_DEFAULT)
+        return InvokeOnCancel(this, handler)
+    }
+
+    private fun tryCancel(state: NotCompleted, cause: Throwable?): Boolean {
+        if (useCancellingState) {
+            require(state !is CancellationHandler) { "Invariant: 'Cancelling' state and cancellation handlers cannot be used together" }
+            return _state.compareAndSet(state, Cancelling(CancelledContinuation(this, cause)))
+        }
+
+        return updateStateToFinal(state, CancelledContinuation(this, cause), mode = MODE_ATOMIC_DEFAULT)
     }
 
     private fun onCompletionInternal(mode: Int) {
@@ -226,7 +235,7 @@ internal abstract class AbstractContinuation<in T>(
                      */
                     if (proposedUpdate !is CompletedExceptionally) {
                         val update = state.cancel
-                        if (updateState(state, update, resumeMode)) return
+                        if (updateStateToFinal(state, update, resumeMode)) return
                     } else {
                         /*
                          * If already cancelled block is resumed with an exception,
@@ -271,14 +280,14 @@ internal abstract class AbstractContinuation<in T>(
                             update = CompletedExceptionally(exception)
                         }
 
-                        if (updateState(state, update, resumeMode)) {
+                        if (updateStateToFinal(state, update, resumeMode)) {
                             return
                         }
                     }
                 }
 
                 is NotCompleted -> {
-                    if (updateState(state, proposedUpdate, resumeMode)) return
+                    if (updateStateToFinal(state, proposedUpdate, resumeMode)) return
                 }
                 is CancelledContinuation -> {
                     if (proposedUpdate is NotCompleted || proposedUpdate is CompletedExceptionally) {
@@ -307,32 +316,30 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    private fun makeHandler(handler: CompletionHandler): CancellationHandlerImpl<*> {
-        if (handler is CancellationHandlerImpl<*>) {
-            require(handler.continuation === this) { "Handler has non-matching continuation ${handler.continuation}, current: $this" }
-            return handler
-        }
-
-        return InvokeOnCancel(this, handler)
-    }
-
-    private fun handleException(exception: Throwable) {
-        handleCoroutineException(context, exception)
-    }
-
-    private fun updateState(expect: NotCompleted, proposedUpdate: Any?, mode: Int): Boolean {
-        // TODO slow path for cancelling?
-        if (!tryUpdateState(expect, proposedUpdate)) {
+    /**
+     * Tries to make transition from active to cancelled or completed state and invokes cancellation handler if necessary
+     */
+    private fun updateStateToFinal(expect: NotCompleted, proposedUpdate: Any?, mode: Int): Boolean {
+        if (!tryUpdateStateToFinal(expect, proposedUpdate)) {
             return false
         }
 
-        if (proposedUpdate !is Cancelling) {
-            completeUpdateState(expect, proposedUpdate, mode)
-        }
+        completeStateUpdate(expect, proposedUpdate, mode)
         return true
     }
 
-    protected fun completeUpdateState(expect: NotCompleted, update: Any?, mode: Int) {
+    protected fun tryUpdateStateToFinal(expect: NotCompleted, update: Any?): Boolean {
+        require(update !is NotCompleted) // only NotCompleted -> completed transition is allowed
+        if (!_state.compareAndSet(expect, update)) return false
+        // Unregister from parent job
+        parentHandle?.let {
+            it.dispose() // volatile read parentHandle _after_ state was updated
+            parentHandle = NonDisposableHandle // release it just in case, to aid GC
+        }
+        return true // continues in completeStateUpdate
+    }
+
+    protected fun completeStateUpdate(expect: NotCompleted, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
         onCompletionInternal(mode)
 
@@ -346,18 +353,8 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    protected fun tryUpdateState(expect: NotCompleted, update: Any?): Boolean {
-        if (!_state.compareAndSet(expect, update)) return false
-
-        // TODO separate code path?
-        if (update !is Cancelling) {
-            // Unregister from parent job
-            parentHandle?.let {
-                it.dispose() // volatile read parentHandle _after_ state was updated
-                parentHandle = NonDisposableHandle // release it just in case, to aid GC
-            }
-        }
-        return true // continues in completeUpdateState
+    private fun handleException(exception: Throwable) {
+        handleCoroutineException(context, exception)
     }
 
     // For nicer debugging

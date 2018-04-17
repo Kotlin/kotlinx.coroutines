@@ -24,7 +24,7 @@ import kotlin.coroutines.experimental.intrinsics.*
 // --------------- cancellable continuations ---------------
 
 /**
- * Cancellable continuation. Its job is _completed_ when it is resumed or cancelled.
+ * Cancellable continuation. It is _completed_ when it is resumed or cancelled.
  * When [cancel] function is explicitly invoked, this continuation immediately resumes with [CancellationException] or
  * with the specified cancel cause.
  *
@@ -211,7 +211,7 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
     replaceWith = ReplaceWith("removeOnCancellation(handler)"),
     level = DeprecationLevel.HIDDEN)
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
-    invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
+    removeOnCancellation(node)
     return NonDisposableHandle
 }
 
@@ -219,8 +219,16 @@ public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNod
  * Removes a given node on cancellation.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode): Unit =
-    invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
+public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode): Unit {
+    val handler: CompletionHandler
+    if (this is CancellableContinuationImpl<*>) {
+        handler = RemoveOnCancel(this, node).asHandler
+    } else {
+        handler = { node.remove() }
+    }
+
+    invokeOnCancellation(handler)
+}
 
 /**
  * Disposes a specified [handle] when this continuation is cancelled.
@@ -235,7 +243,7 @@ public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedL
     replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
     level = DeprecationLevel.HIDDEN)
 public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
-    invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
+    disposeOnCancellation(handle)
     return NonDisposableHandle
 }
 
@@ -247,8 +255,17 @@ public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHand
  * invokeOnCancellation { handle.dispose() }
  * ```
  */
-public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
-    invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
+public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) {
+    val handler: CompletionHandler
+    if (this is CancellableContinuationImpl<*>) {
+        handler = DisposeOnCancellation(this, handle).asHandler
+    } else {
+        handler = { handle.dispose() }
+    }
+
+
+    invokeOnCancellation(handler)
+}
 
 // --------------- implementation details ---------------
 
@@ -259,8 +276,7 @@ private class RemoveOnCancel(
 ) : CancellationHandlerImpl<CancellableContinuationImpl<*>>(cont) {
 
     override fun invoke(cause: Throwable?) {
-        if (continuation.isCancelled)
-            node.remove()
+        node.remove()
     }
 
     override fun toString() = "RemoveOnCancel[$node]"
@@ -299,7 +315,7 @@ internal class CancellableContinuationImpl<in T>(
                 is NotCompleted -> {
                     val update: Any? = if (idempotent == null) value else
                         CompletedIdempotentResult(idempotent, value, state)
-                    if (tryUpdateState(state, update)) return state
+                    if (tryUpdateStateToFinal(state, update)) return state
                 }
                 is CompletedIdempotentResult -> {
                     if (state.idempotentResume === idempotent) {
@@ -317,16 +333,14 @@ internal class CancellableContinuationImpl<in T>(
         loopOnState { state ->
         when (state) {
                 is NotCompleted -> {
-                    if (tryUpdateState(state, CompletedExceptionally(exception))) return state
+                    if (tryUpdateStateToFinal(state, CompletedExceptionally(exception))) return state
                 }
                 else -> return null // cannot resume -- not active anymore
             }
         }
     }
 
-    override fun completeResume(token: Any) {
-        completeUpdateState(token as NotCompleted, state, resumeMode)
-    }
+    override fun completeResume(token: Any) = completeStateUpdate(token as NotCompleted, state, resumeMode)
 
     override fun CoroutineDispatcher.resumeUndispatched(value: T) {
         val dc = delegate as? DispatchedContinuation
