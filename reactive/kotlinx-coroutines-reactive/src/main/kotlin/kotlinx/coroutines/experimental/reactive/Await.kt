@@ -111,7 +111,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         override fun onSubscribe(sub: Subscription) {
             subscription = sub
-            cont.invokeOnCompletion { sub.cancel() }
+            cont.invokeOnCancellation { sub.cancel() }
             sub.request(if (mode == Mode.FIRST) 1 else Long.MAX_VALUE)
         }
 

@@ -230,7 +230,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                     if (state.addLastIf(waiter, { _state.value === state })) {
                         // added to waiter list!
                         cont.initCancellability() // make it properly cancellable
-                        cont.removeOnCancel(waiter)
+                        cont.removeOnCancellation(waiter)
                         return@sc
                     }
                 }

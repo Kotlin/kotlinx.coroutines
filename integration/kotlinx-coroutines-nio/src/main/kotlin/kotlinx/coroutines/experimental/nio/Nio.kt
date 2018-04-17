@@ -136,8 +136,7 @@ suspend fun AsynchronousSocketChannel.aWrite(
 // ---------------- private details ----------------
 
 private fun Channel.closeOnCancel(cont: CancellableContinuation<*>) {
-    cont.invokeOnCompletion {
-        if (cont.isCancelled)
+    cont.invokeOnCancellation {
             try {
                 close()
             } catch (ex: Throwable) {

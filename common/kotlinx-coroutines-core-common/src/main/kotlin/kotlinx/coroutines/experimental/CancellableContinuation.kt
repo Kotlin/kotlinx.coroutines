@@ -130,7 +130,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     @Deprecated(
         message = "Disposable handlers on regular completion are no longer supported",
         replaceWith = ReplaceWith("invokeOnCancellation(handler)"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.HIDDEN)
     public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
 
     /**
@@ -209,7 +209,7 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
 @Deprecated(
     message = "Disposable handlers on cancellation are no longer supported",
     replaceWith = ReplaceWith("removeOnCancellation(handler)"),
-    level = DeprecationLevel.WARNING)
+    level = DeprecationLevel.HIDDEN)
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
     invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
     return NonDisposableHandle
@@ -222,15 +222,31 @@ public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNod
 public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode): Unit =
     invokeOnCancellation(handler = RemoveOnCancel(this as CancellableContinuationImpl<*>, node).asHandler)
 
+/**
+ * Disposes a specified [handle] when this continuation is cancelled.
+ *
+ * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
+ * ```
+ * invokeOnCancellation { handle.dispose() }
+ * ```
+ */
 @Deprecated(
     message = "Disposable handlers on regular completion are no longer supported",
     replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
-    level = DeprecationLevel.WARNING)
+    level = DeprecationLevel.HIDDEN)
 public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
     invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
     return NonDisposableHandle
 }
 
+/**
+ * Disposes a specified [handle] when this continuation is cancelled.
+ *
+ * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
+ * ```
+ * invokeOnCancellation { handle.dispose() }
+ * ```
+ */
 public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
     invokeOnCancellation(handler = DisposeOnCancellation(this as CancellableContinuationImpl<*>, handle).asHandler)
 

@@ -72,7 +72,7 @@ public abstract class ExecutorCoroutineDispatcherBase : CloseableCoroutineDispat
                 ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) }
             catch (e: RejectedExecutionException) { null }
         if (timeout != null)
-            continuation.cancelFutureOnCompletion(timeout)
+            continuation.cancelFutureOnCancellation(timeout)
         else
             DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
     }

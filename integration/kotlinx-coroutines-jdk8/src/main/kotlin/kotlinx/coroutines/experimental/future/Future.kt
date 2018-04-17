@@ -176,7 +176,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
-        cont.invokeOnCompletion {
+        cont.invokeOnCancellation {
             consumer.cont = null // shall clear reference to continuation
         }
     }

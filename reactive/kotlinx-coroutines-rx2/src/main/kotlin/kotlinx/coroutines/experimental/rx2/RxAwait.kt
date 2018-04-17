@@ -162,7 +162,7 @@ public suspend fun <T> ObservableSource<T>.awaitSingle(): T = awaitOne(Mode.SING
 // ------------------------ private ------------------------
 
 internal fun CancellableContinuation<*>.disposeOnCompletion(d: Disposable) =
-    invokeOnCompletion { d.dispose() }
+    invokeOnCancellation { d.dispose() }
 
 private enum class Mode(val s: String) {
     FIRST("awaitFirst"),
@@ -183,7 +183,7 @@ private suspend fun <T> ObservableSource<T>.awaitOne(
 
         override fun onSubscribe(sub: Disposable) {
             subscription = sub
-            cont.invokeOnCompletion { sub.dispose() }
+            cont.invokeOnCancellation { sub.dispose() }
         }
 
         override fun onNext(t: T) {

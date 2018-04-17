@@ -58,7 +58,7 @@ object JavaFx : CoroutineDispatcher(), Delay {
         val timeline = schedule(time, unit, EventHandler<ActionEvent> {
             with(continuation) { resumeUndispatched(Unit) }
         })
-        continuation.invokeOnCompletion { timeline.stop() }
+        continuation.invokeOnCancellation { timeline.stop() }
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {

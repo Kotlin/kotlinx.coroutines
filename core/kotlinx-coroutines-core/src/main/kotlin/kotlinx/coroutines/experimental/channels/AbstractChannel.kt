@@ -193,7 +193,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             when (enqueueResult) {
                 null -> { // enqueued successfully
                     cont.initCancellability() // make it properly cancellable
-                    cont.removeOnCancel(send)
+                    cont.removeOnCancellation(send)
                     return@sc
                 }
                 is Closed<*> -> {
@@ -769,8 +769,8 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
     // ------ private ------
 
     private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
-        cont.invokeOnCompletion {
-            if (cont.isCancelled && receive.remove())
+        cont.invokeOnCancellation {
+            if (receive.remove())
                 onReceiveDequeued()
         }
     }

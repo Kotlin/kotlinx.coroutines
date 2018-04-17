@@ -129,7 +129,7 @@ private class DeferredListenableFuture<T>(
 public suspend fun <T> ListenableFuture<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
     val callback = ContinuationCallback(cont)
     Futures.addCallback(this, callback)
-    cont.invokeOnCompletion {
+    cont.invokeOnCancellation {
         callback.cont = null // clear the reference to continuation from the future's callback
     }
 }

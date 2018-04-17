@@ -41,7 +41,7 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
 @Deprecated(
     message = "Disposable handlers on regular completion are no longer supported",
     replaceWith = ReplaceWith("cancelFutureOnCancellation(future)"),
-    level = DeprecationLevel.WARNING)
+    level = DeprecationLevel.HIDDEN)
 public fun CancellableContinuation<*>.cancelFutureOnCompletion(future: Future<*>): DisposableHandle {
     cancelFutureOnCancellation(future)
     return NonDisposableHandle

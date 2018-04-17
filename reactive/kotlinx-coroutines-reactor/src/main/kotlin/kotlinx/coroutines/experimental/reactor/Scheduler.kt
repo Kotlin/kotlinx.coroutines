@@ -24,7 +24,7 @@ open class SchedulerCoroutineDispatcher(private val scheduler: Scheduler) : Coro
         val disposable = scheduler.schedule({
             with(continuation) { resumeUndispatched(Unit) }
         }, time, unit)
-        continuation.disposeOnCompletion(disposable.asDisposableHandle())
+        continuation.disposeOnCancellation(disposable.asDisposableHandle())
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
