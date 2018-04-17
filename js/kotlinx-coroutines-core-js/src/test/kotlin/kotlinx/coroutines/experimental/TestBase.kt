@@ -30,6 +30,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
+    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         if (cause != null) console.log(cause)
         val exception = IllegalStateException(
@@ -63,6 +64,7 @@ public actual open class TestBase actual constructor() {
     }
 
     // todo: The dynamic (promise) result is a work-around for missing suspend tests, see KT-22228
+    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
