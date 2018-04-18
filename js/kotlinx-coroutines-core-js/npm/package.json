@@ -21,6 +21,6 @@
     "JetBrains"
   ],
   "dependencies": {
-    "kotlin": "$kotlin_version"
+    $kotlinDependency
   }
 }
