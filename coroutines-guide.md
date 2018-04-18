@@ -88,6 +88,7 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Fan-out](#fan-out)
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
+  * [Delay channels](#delay-channels)
   * [Channels are fair](#channels-are-fair)
 * [Shared mutable state and concurrency](#shared-mutable-state-and-concurrency)
   * [The problem](#the-problem)
@@ -1666,6 +1667,63 @@ Sending 4
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
 
+### Delay channels
+
+Delay channel is a special rendezvous channel, which emits `Unit` every time given delay passes since last consumption from this channel.
+Though it may seem to be useless standalone, it is a useful building block to create complex time-based [produce] operators, using this channel as one of [select] clauses and performing "timeout" action in its [onReceive][ReceiveChannel.onReceive].
+
+To create such channel, use factory methods [DelayChannel()] and [FixedDelayChannel()] and to indicate that no further elements are needed use [ReceiveChannel.cancel] method on it.
+
+Now let's see how it works in practice:
+<!--- INCLUDE  
+import kotlin.coroutines.experimental.*
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+ val delayChannel = DelayChannel(delay = 100, initialDelay = 0) // create delay channel
+    var nextElement = withTimeoutOrNull(1) { delayChannel.receive() }
+    println("Initial element is available immediately: $nextElement") // Initial delay haven't passed yet
+
+    nextElement = withTimeoutOrNull(50) { delayChannel.receive() } // All subsequent elements has 100ms delay
+    println("Next element is not ready in 50 ms: $nextElement")
+
+    nextElement = withTimeoutOrNull(51) { delayChannel.receive() }
+    println("Next element is ready in 100 ms: $nextElement")
+
+    // Emulate large consumption delays
+    println("Consumer pause in 150ms")
+    delay(150)
+    // Next element is available immediately
+    nextElement = withTimeoutOrNull(1) { delayChannel.receive() }
+    println("Next element is available immediately after large consumer delay: $nextElement")
+    // Note that the pause between `receive` calls is taken into account and next element arrives faster
+    nextElement = withTimeoutOrNull(60) { delayChannel.receive() } // 60 instead of 50 to mitigate scheduler delays
+    println("Next element is ready in 50ms after consumer pause in 150ms: $nextElement")
+
+    delayChannel.cancel() // indicate that no more elements are needed
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-10.kt)
+
+It prints following lines:
+
+```text
+Initial element is available immediately: kotlin.Unit
+Next element is not ready in 50 ms: null
+Next element is ready in 100 ms: kotlin.Unit
+Consumer pause in 150ms
+Next element is available immediately after large consumer delay: kotlin.Unit
+Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit
+```
+
+<!--- TEST -->
+
+Note that [DelayChannel()] is aware of possible consumer pauses and adapts next element emission if a pause occurs. 
+[FixedDelayChannel()] doesn't do so and simply emits elements with fixed delay after consumption, but both have built-in backpressure 
+via [RendezvousChannel]
+
 ### Channels are fair
 
 Send and receive operations to channels are _fair_ with respect to the order of their invocation from 
@@ -2444,8 +2502,12 @@ Channel was closed
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
-[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
+[DelayChannel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-delay-channel.html
+[FixedDelayChannel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-fixed-delay-channel.html
+[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
+[RendezvousChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/index.html
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/on-send.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
