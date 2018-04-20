@@ -24,7 +24,7 @@ import org.junit.runners.*
 import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
-class ProduceConsumeTest(
+class ProduceConsumeJvmTest(
     private val capacity: Int,
     private val number: Int
 ) : TestBase() {
@@ -43,7 +43,7 @@ class ProduceConsumeTest(
     fun testProducer() = runTest {
         var sentAll = false
         val producer = produce(coroutineContext, capacity = capacity) {
-            for(i in 1..number) {
+            for (i in 1..number) {
                 send(i)
             }
             sentAll = true

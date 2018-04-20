@@ -80,4 +80,3 @@ public open class ConflatedChannel<E> : AbstractChannel<E>() {
         }
     }
 }
-

@@ -27,5 +27,12 @@ internal open class ChannelCoroutine<E>(
     val channel: Channel<E>
         get() = this
 
+    // Workaround for KT-23094
+    override suspend fun receive(): E = _channel.receive()
+
+    override suspend fun send(element: E) = _channel.send(element)
+
+    override suspend fun receiveOrNull(): E? = _channel.receiveOrNull()
+
     override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
 }

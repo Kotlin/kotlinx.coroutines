@@ -16,12 +16,11 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.internal.Symbol
-import kotlinx.coroutines.experimental.intrinsics.startCoroutineUndispatched
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.internalAnnotations.*
+import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -162,8 +161,8 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         check(i >= 0)
         if (n == 1) return null
         val update = arrayOfNulls<Subscriber<E>>(n - 1)
-        System.arraycopy(list, 0, update, 0, i)
-        System.arraycopy(list, i + 1, update, i, n - i - 1)
+        arraycopy(list, 0, update, 0, i)
+        arraycopy(list, i + 1, update, i, n - i - 1)
         return update as Array<Subscriber<E>>
     }
 

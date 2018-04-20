@@ -17,50 +17,49 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ConflatedChannelTest : TestBase() {
+
     @Test
     fun testBasicConflationOfferPoll() {
         val q = ConflatedChannel<Int>()
-        assertThat(q.poll(), IsNull())
-        assertThat(q.offer(1), IsEqual(true))
-        assertThat(q.offer(2), IsEqual(true))
-        assertThat(q.offer(3), IsEqual(true))
-        assertThat(q.poll(), IsEqual(3))
-        assertThat(q.poll(), IsNull())
+        assertNull(q.poll())
+        assertTrue(q.offer(1))
+        assertTrue(q.offer(2))
+        assertTrue(q.offer(3))
+        assertEquals(3, q.poll())
+        assertNull(q.poll())
     }
 
     @Test
-    fun testConflatedSend() = runBlocking<Unit> {
+    fun testConflatedSend() = runTest {
         val q = ConflatedChannel<Int>()
         q.send(1)
         q.send(2) // shall conflated previously sent
-        assertThat(q.receiveOrNull(), IsEqual(2))
+        assertEquals(2, q.receiveOrNull())
     }
 
     @Test
-    fun testConflatedClose() = runBlocking<Unit> {
+    fun testConflatedClose() = runTest {
         val q = ConflatedChannel<Int>()
         q.send(1)
         q.close() // shall conflate sent item and become closed
-        assertThat(q.receiveOrNull(), IsNull())
+        assertNull(q.receiveOrNull())
     }
 
     @Test
-    fun testConflationSendReceive() = runBlocking<Unit> {
+    fun testConflationSendReceive() = runTest {
         val q = ConflatedChannel<Int>()
         expect(1)
         launch(coroutineContext) { // receiver coroutine
             expect(4)
-            assertThat(q.receive(), IsEqual(2))
+            assertEquals(2, q.receive())
             expect(5)
-            assertThat(q.receive(), IsEqual(3)) // this receive suspends
+            assertEquals(3, q.receive()) // this receive suspends
             expect(8)
-            assertThat(q.receive(), IsEqual(6)) // last conflated value
+            assertEquals(6, q.receive()) // last conflated value
             expect(9)
         }
         expect(2)
@@ -79,7 +78,7 @@ class ConflatedChannelTest : TestBase() {
     }
 
     @Test
-    fun testConsumeAll() = runBlocking {
+    fun testConsumeAll() = runTest {
         val q = ConflatedChannel<Int>()
         expect(1)
         for (i in 1..10) {

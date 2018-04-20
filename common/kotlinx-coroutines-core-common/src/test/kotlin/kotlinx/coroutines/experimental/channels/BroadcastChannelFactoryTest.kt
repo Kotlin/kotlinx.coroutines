@@ -16,34 +16,34 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Test
+import kotlin.test.*
+
 
 class BroadcastChannelFactoryTest {
-    @Test(expected = IllegalArgumentException::class)
+
+    @Test
     fun testRendezvousChannelNotSupported() {
-        BroadcastChannel<Int>(0)
+        assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(0) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testLinkedListChannelNotSupported() {
-        BroadcastChannel<Int>(Channel.UNLIMITED)
+        assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(Channel.UNLIMITED) }
     }
 
     @Test
     fun testConflatedBroadcastChannel() {
-        assertThat(BroadcastChannel<Int>(Channel.CONFLATED), IsInstanceOf(ConflatedBroadcastChannel::class.java))
+        assertTrue { BroadcastChannel<Int>(Channel.CONFLATED) is ConflatedBroadcastChannel }
     }
 
     @Test
     fun testArrayBroadcastChannel() {
-        assertThat(BroadcastChannel<Int>(1), IsInstanceOf(ArrayBroadcastChannel::class.java))
-        assertThat(BroadcastChannel<Int>(10), IsInstanceOf(ArrayBroadcastChannel::class.java))
+        assertTrue { BroadcastChannel<Int>(1) is ArrayBroadcastChannel }
+        assertTrue { BroadcastChannel<Int>(10) is ArrayBroadcastChannel }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testInvalidCapacityNotSupported() {
-        BroadcastChannel<Int>(-2)
+        assertFailsWith<IllegalArgumentException> { BroadcastChannel<Int>(-2) }
     }
 }

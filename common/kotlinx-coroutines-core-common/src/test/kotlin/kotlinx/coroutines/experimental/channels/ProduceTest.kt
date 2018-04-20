@@ -17,10 +17,11 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ProduceTest : TestBase() {
+
     @Test
     fun testBasic() = runTest {
         val c = produce(coroutineContext) {

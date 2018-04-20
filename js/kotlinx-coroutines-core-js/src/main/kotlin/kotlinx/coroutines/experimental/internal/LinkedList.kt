@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.channels.*
+
 private typealias Node = LinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -30,6 +32,9 @@ public open class LinkedListNode {
     @PublishedApi internal var _next = this
     @PublishedApi internal var _prev = this
     @PublishedApi internal var _removed: Boolean = false
+
+    public val prev: Any get() = _prev
+    public val next: Any get() = _next
 
     public inline val nextNode get() = _next
     public inline val prevNode get() = _prev
@@ -107,6 +112,21 @@ public actual open class AddLastDesc<T : Node> actual constructor(
     protected override val affectedNode: Node get() = queue._prev
     protected actual override fun onPrepare(affected: Node, next: Node): Any? = null
     protected override fun onComplete() = queue.addLast(node)
+    protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
+}
+
+public actual open class RemoveFirstDesc<T> actual constructor(
+    actual val queue: LockFreeLinkedListNode
+) : AbstractAtomicDesc() {
+
+    @Suppress("UNCHECKED_CAST")
+    public actual val result: T get() = affectedNode as T
+    protected override val affectedNode: Node get() = queue._prev
+
+    protected actual open fun validatePrepared(node: T): Boolean = true
+    protected actual final override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? = null
+    protected override fun onComplete(): Unit { queue.removeFirstOrNull() }
+    protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -116,6 +136,10 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     protected abstract fun onComplete()
     actual final override fun prepare(op: AtomicOp<*>): Any? = onPrepare(affectedNode, affectedNode._next)
     actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
+
+    protected actual open fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = null // Never fails
+    protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
+    protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
