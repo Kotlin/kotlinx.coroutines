@@ -16,35 +16,36 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import kotlin.test.*
 
-class ChannelFactoryTest {
+
+class ChannelFactoryTest : TestBase() {
+
     @Test
     fun testRendezvousChannel() {
-        assertThat(Channel<Int>(), IsInstanceOf(RendezvousChannel::class.java))
-        assertThat(Channel<Int>(0), IsInstanceOf(RendezvousChannel::class.java))
+        assertTrue(Channel<Int>() is RendezvousChannel)
+        assertTrue(Channel<Int>(0) is RendezvousChannel)
     }
 
     @Test
     fun testLinkedListChannel() {
-        assertThat(Channel<Int>(Channel.UNLIMITED), IsInstanceOf(LinkedListChannel::class.java))
+        assertTrue(Channel<Int>(Channel.UNLIMITED) is LinkedListChannel)
     }
 
     @Test
     fun testConflatedChannel() {
-        assertThat(Channel<Int>(Channel.CONFLATED), IsInstanceOf(ConflatedChannel::class.java))
+        assertTrue(Channel<Int>(Channel.CONFLATED) is ConflatedChannel)
     }
 
     @Test
     fun testArrayChannel() {
-        assertThat(Channel<Int>(1), IsInstanceOf(ArrayChannel::class.java))
-        assertThat(Channel<Int>(10), IsInstanceOf(ArrayChannel::class.java))
+        assertTrue(Channel<Int>(1) is ArrayChannel)
+        assertTrue(Channel<Int>(10) is ArrayChannel)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun testInvalidCapacityNotSupported() {
+    @Test
+    fun testInvalidCapacityNotSupported() = runTest({ it is IllegalArgumentException }) {
         Channel<Int>(-2)
     }
 }

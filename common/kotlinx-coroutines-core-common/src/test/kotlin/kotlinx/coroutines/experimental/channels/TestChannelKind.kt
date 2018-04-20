@@ -20,23 +20,23 @@ import kotlinx.coroutines.experimental.selects.SelectClause1
 
 enum class TestChannelKind {
     RENDEZVOUS {
-        override fun create(): Channel<Int> = RendezvousChannel<Int>()
+        override fun create(): Channel<Int> = RendezvousChannel()
         override fun toString(): String = "RendezvousChannel"
     },
     ARRAY_1 {
-        override fun create(): Channel<Int> = ArrayChannel<Int>(1)
+        override fun create(): Channel<Int> = ArrayChannel(1)
         override fun toString(): String = "ArrayChannel(1)"
     },
     ARRAY_10 {
-        override fun create(): Channel<Int> = ArrayChannel<Int>(8)
+        override fun create(): Channel<Int> = ArrayChannel(8)
         override fun toString(): String = "ArrayChannel(8)"
     },
     LINKED_LIST {
-        override fun create(): Channel<Int> = LinkedListChannel<Int>()
+        override fun create(): Channel<Int> = LinkedListChannel()
         override fun toString(): String = "LinkedListChannel"
     },
     CONFLATED {
-        override fun create(): Channel<Int> = ConflatedChannel<Int>()
+        override fun create(): Channel<Int> = ConflatedChannel()
         override fun toString(): String = "ConflatedChannel"
         override val isConflated: Boolean get() = true
     },
@@ -66,8 +66,12 @@ private class ChannelViaBroadcast<E>(
 
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
     override val isEmpty: Boolean get() = sub.isEmpty
-    suspend override fun receive(): E = sub.receive()
-    suspend override fun receiveOrNull(): E? = sub.receiveOrNull()
+
+    // Workaround for KT-23094
+    override suspend fun send(element: E) = broadcast.send(element)
+
+    override suspend fun receive(): E = sub.receive()
+    override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
     override fun cancel(cause: Throwable?): Boolean = sub.cancel(cause)

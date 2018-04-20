@@ -16,9 +16,9 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.internalAnnotations.Volatile
 import kotlinx.coroutines.experimental.selects.*
-import java.util.concurrent.locks.*
-import kotlin.concurrent.*
 
 /**
  * Channel with array buffer of a fixed [capacity].

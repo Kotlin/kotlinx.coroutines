@@ -25,7 +25,7 @@ import org.junit.runners.*
 import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
-class SimpleSendReceiveTest(
+class SimpleSendReceiveJvmTest(
     val kind: TestChannelKind,
     val n: Int,
     val concurrent: Boolean

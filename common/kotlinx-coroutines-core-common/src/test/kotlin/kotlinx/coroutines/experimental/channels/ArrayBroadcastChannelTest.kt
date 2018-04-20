@@ -17,28 +17,27 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.*
-import org.junit.*
-import org.junit.Assert.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ArrayBroadcastChannelTest : TestBase() {
+
     @Test
-    fun testBasic() = runBlocking<Unit> {
+    fun testBasic() = runTest {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
-        assertThat(broadcast.isClosedForSend, IsEqual(false))
+        assertFalse(broadcast.isClosedForSend)
         val first = broadcast.openSubscription()
         launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2)
-            assertThat(first.receive(), IsEqual(1)) // suspends
-            assertThat(first.isClosedForReceive, IsEqual(false))
+            assertEquals(1, first.receive()) // suspends
+            assertFalse(first.isClosedForReceive)
             expect(5)
-            assertThat(first.receive(), IsEqual(2)) // suspends
-            assertThat(first.isClosedForReceive, IsEqual(false))
+            assertEquals(2, first.receive()) // suspends
+            assertFalse(first.isClosedForReceive)
             expect(10)
-            assertThat(first.receiveOrNull(), IsNull()) // suspends
-            assertThat(first.isClosedForReceive, IsEqual(true))
+            assertNull(first.receiveOrNull()) // suspends
+            assertTrue(first.isClosedForReceive)
             expect(14)
         }
         expect(3)
@@ -46,14 +45,15 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(4)
         yield() // to the first receiver
         expect(6)
+
         val second = broadcast.openSubscription()
         launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(7)
-            assertThat(second.receive(), IsEqual(2)) // suspends
-            assertThat(second.isClosedForReceive, IsEqual(false))
+            assertEquals(2, second.receive()) // suspends
+            assertFalse(second.isClosedForReceive)
             expect(11)
-            assertThat(second.receiveOrNull(), IsNull()) // suspends
-            assertThat(second.isClosedForReceive, IsEqual(true))
+            assertNull(second.receiveOrNull()) // suspends
+            assertTrue(second.isClosedForReceive)
             expect(15)
         }
         expect(8)
@@ -63,21 +63,21 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(12)
         broadcast.close()
         expect(13)
-        assertThat(broadcast.isClosedForSend, IsEqual(true))
+        assertTrue(broadcast.isClosedForSend)
         yield() // to first & second receivers
         finish(16)
     }
 
     @Test
-    fun testSendSuspend() = runBlocking {
+    fun testSendSuspend() = runTest {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
         val first = broadcast.openSubscription()
         launch(coroutineContext) {
             expect(4)
-            assertThat(first.receive(), IsEqual(1))
+            assertEquals(1, first.receive())
             expect(5)
-            assertThat(first.receive(), IsEqual(2))
+            assertEquals(2, first.receive())
             expect(6)
         }
         expect(2)
@@ -88,7 +88,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     }
 
     @Test
-    fun testConcurrentSendCompletion() = runBlocking {
+    fun testConcurrentSendCompletion() = runTest {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
         val sub = broadcast.openSubscription()
@@ -104,17 +104,17 @@ class ArrayBroadcastChannelTest : TestBase() {
         broadcast.close()
         // now must receive all 3 items
         expect(6)
-        assertThat(sub.isClosedForReceive, IsEqual(false))
+        assertFalse(sub.isClosedForReceive)
         for (x in 1..3)
-            assertThat(sub.receiveOrNull(), IsEqual(x))
+            assertEquals(x, sub.receiveOrNull())
         // and receive close signal
-        assertThat(sub.receiveOrNull(), IsNull())
-        assertThat(sub.isClosedForReceive, IsEqual(true))
+        assertNull(sub.receiveOrNull())
+        assertTrue(sub.isClosedForReceive)
         finish(7)
     }
 
     @Test
-    fun testForgetUnsubscribed() = runBlocking {
+    fun testForgetUnsubscribed() = runTest {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
         broadcast.send(1)
@@ -124,7 +124,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val sub = broadcast.openSubscription()
         launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(3)
-            assertThat(sub.receive(), IsEqual(4)) // suspends
+            assertEquals(4, sub.receive()) // suspends
             expect(5)
         }
         expect(4)
@@ -134,7 +134,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     }
 
     @Test
-    fun testReceiveFullAfterClose() = runBlocking<Unit> {
+    fun testReceiveFullAfterClose() = runTest {
         val channel = BroadcastChannel<Int>(10)
         val sub = channel.openSubscription()
         // generate into buffer & close
@@ -148,7 +148,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     }
 
     @Test
-    fun testCloseSubDuringIteration() = runBlocking<Unit> {
+    fun testCloseSubDuringIteration() = runTest {
         val channel = BroadcastChannel<Int>(1)
         // launch generator (for later) in this context
         launch(coroutineContext) {
@@ -168,9 +168,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     }
 
     @Test
-    fun testReceiveFromClosedSub() = runTest(
-        expected = { it is ClosedReceiveChannelException }
-    ) {
+    fun testReceiveFromClosedSub() = runTest({ it is ClosedReceiveChannelException }) {
         val channel = BroadcastChannel<Int>(1)
         val sub = channel.openSubscription()
         assertFalse(sub.isClosedForReceive)

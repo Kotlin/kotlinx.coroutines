@@ -16,87 +16,72 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Assert.*
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import kotlin.math.*
+import kotlin.test.*
 
-class ChannelsTest {
+class ChannelsTest: TestBase() {
     private val testList = listOf(1, 2, 3)
 
     @Test
-    fun testBlocking() {
-        val ch = Channel<Int>()
-        val sum = async {
-            ch.sumBy { it }
-        }
-        repeat(10) {
-            ch.sendBlocking(it)
-        }
-        ch.close()
-        assertEquals(45, runBlocking { sum.await() })
-
-    }
-
-    @Test
-    fun testIterableAsReceiveChannel() = runBlocking {
+    fun testIterableAsReceiveChannel() = runTest {
         assertEquals(testList, testList.asReceiveChannel().toList())
     }
 
     @Test
-    fun testSequenceAsReceiveChannel() = runBlocking {
+    fun testSequenceAsReceiveChannel() = runTest {
         assertEquals(testList, testList.asSequence().asReceiveChannel().toList())
     }
 
     @Test
-    fun testAssociate() = runBlocking {
+    fun testAssociate() = runTest {
         assertEquals(testList.associate { it * 2 to it * 3 },
             testList.asReceiveChannel().associate { it * 2 to it * 3 }.toMap())
     }
 
     @Test
-    fun testAssociateBy() = runBlocking {
+    fun testAssociateBy() = runTest {
         assertEquals(testList.associateBy { it % 2 }, testList.asReceiveChannel().associateBy { it % 2 })
     }
 
     @Test
-    fun testAssociateBy2() = runBlocking {
+    fun testAssociateBy2() = runTest {
         assertEquals(testList.associateBy({ it * 2}, { it * 3 }),
             testList.asReceiveChannel().associateBy({ it * 2}, { it * 3 }).toMap())
     }
 
     @Test
-    fun testDistinct() = runBlocking {
+    fun testDistinct() = runTest {
         assertEquals(testList.map { it % 2 }.distinct(), testList.asReceiveChannel().map { it % 2 }.distinct().toList())
     }
 
     @Test
-    fun testDistinctBy() = runBlocking {
+    fun testDistinctBy() = runTest {
         assertEquals(testList.distinctBy { it % 2 }.toList(), testList.asReceiveChannel().distinctBy { it % 2 }.toList())
     }
 
     @Test
-    fun testToCollection() = runBlocking {
+    fun testToCollection() = runTest {
         val target = mutableListOf<Int>()
         testList.asReceiveChannel().toCollection(target)
         assertEquals(testList, target)
     }
 
     @Test
-    fun testDrop() = runBlocking {
+    fun testDrop() = runTest {
         for (i in 0..testList.size) {
-            assertEquals("Drop $i", testList.drop(i), testList.asReceiveChannel().drop(i).toList())
+            assertEquals(testList.drop(i), testList.asReceiveChannel().drop(i).toList(), "Drop $i")
         }
     }
 
     @Test
-    fun testElementAtOrElse() = runBlocking {
+    fun testElementAtOrElse() = runTest {
         assertEquals(testList.elementAtOrElse(2) { 42 }, testList.asReceiveChannel().elementAtOrElse(2) { 42 })
         assertEquals(testList.elementAtOrElse(9) { 42 }, testList.asReceiveChannel().elementAtOrElse(9) { 42 })
     }
 
     @Test
-    fun testFirst() = runBlocking {
+    fun testFirst() = runTest {
         assertEquals(testList.first(), testList.asReceiveChannel().first())
         for (i in testList) {
             assertEquals(testList.first { it == i }, testList.asReceiveChannel().first { it == i })
@@ -109,56 +94,56 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFirstOrNull() = runBlocking {
+    fun testFirstOrNull() = runTest {
         assertEquals(testList.firstOrNull(), testList.asReceiveChannel().firstOrNull())
         assertEquals(testList.firstOrNull { it == 2 }, testList.asReceiveChannel().firstOrNull { it == 2 })
         assertEquals(testList.firstOrNull { it == 9 }, testList.asReceiveChannel().firstOrNull { it == 9 })
     }
 
     @Test
-    fun testFlatMap() = runBlocking {
+    fun testFlatMap() = runTest {
         assertEquals(testList.flatMap { (0..it).toList() }, testList.asReceiveChannel().flatMap { (0..it).asReceiveChannel() }.toList())
 
     }
 
     @Test
-    fun testFold() = runBlocking {
+    fun testFold() = runTest {
         assertEquals(testList.fold(mutableListOf(42)) { acc, e -> acc.apply { add(e) } },
             testList.asReceiveChannel().fold(mutableListOf(42)) { acc, e -> acc.apply { add(e) } }.toList())
     }
 
     @Test
-    fun testFoldIndexed() = runBlocking {
+    fun testFoldIndexed() = runTest {
         assertEquals(testList.foldIndexed(mutableListOf(42)) { index, acc, e -> acc.apply { add(index + e) } },
             testList.asReceiveChannel().foldIndexed(mutableListOf(42)) { index, acc, e -> acc.apply { add(index + e) } }.toList())
     }
 
     @Test
-    fun testGroupBy() = runBlocking {
+    fun testGroupBy() = runTest {
         assertEquals(testList.groupBy { it % 2 }, testList.asReceiveChannel().groupBy { it % 2 })
     }
 
     @Test
-    fun testGroupBy2() = runBlocking {
+    fun testGroupBy2() = runTest {
         assertEquals(testList.groupBy({ -it }, { it + 100 }), testList.asReceiveChannel().groupBy({ -it }, { it + 100 }).toMap())
 
     }
 
     @Test
-    fun testMap() = runBlocking {
+    fun testMap() = runTest {
         assertEquals(testList.map { it + 10 }, testList.asReceiveChannel().map { it + 10 }.toList())
 
     }
 
     @Test
-    fun testMapToCollection() = runBlocking {
+    fun testMapToCollection() = runTest {
         val c = mutableListOf<Int>()
         testList.asReceiveChannel().mapTo(c) { it + 10 }
         assertEquals(testList.map { it + 10 }, c)
     }
 
     @Test
-    fun testMapToSendChannel() = runBlocking {
+    fun testMapToSendChannel() = runTest {
         val c = produce<Int> {
             testList.asReceiveChannel().mapTo(channel) { it + 10 }
         }
@@ -166,34 +151,34 @@ class ChannelsTest {
     }
 
     @Test
-    fun testEmptyList() = runBlocking {
+    fun testEmptyList() = runTest {
         assertTrue(emptyList<Nothing>().asReceiveChannel().toList().isEmpty())
     }
 
     @Test
-    fun testToList() = runBlocking {
+    fun testToList() = runTest {
         assertEquals(testList, testList.asReceiveChannel().toList())
 
     }
 
     @Test
-    fun testEmptySet() = runBlocking {
+    fun testEmptySet() = runTest {
         assertTrue(emptyList<Nothing>().asReceiveChannel().toSet().isEmpty())
 
     }
 
     @Test
-    fun testToSet() = runBlocking {
+    fun testToSet() = runTest {
         assertEquals(testList.toSet(), testList.asReceiveChannel().toSet())
     }
 
     @Test
-    fun testToMutableSet() = runBlocking {
+    fun testToMutableSet() = runTest {
         assertEquals(testList.toMutableSet(), testList.asReceiveChannel().toMutableSet())
     }
 
     @Test
-    fun testEmptySequence() = runBlocking {
+    fun testEmptySequence() = runTest {
         val channel = Channel<Nothing>()
         channel.close()
 
@@ -201,7 +186,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testEmptyMap() = runBlocking {
+    fun testEmptyMap() = runTest {
         val channel = Channel<Pair<Nothing, Nothing>>()
         channel.close()
 
@@ -209,50 +194,50 @@ class ChannelsTest {
     }
 
     @Test
-    fun testToMap() = runBlocking {
+    fun testToMap() = runTest {
         val values = testList.map { it to it.toString() }
         assertEquals(values.toMap(), values.asReceiveChannel().toMap())
     }
 
     @Test
-    fun testReduce() = runBlocking {
+    fun testReduce() = runTest {
         assertEquals(testList.reduce { acc, e -> acc * e },
             testList.asReceiveChannel().reduce { acc, e -> acc * e })
     }
 
     @Test
-    fun testReduceIndexed() = runBlocking {
+    fun testReduceIndexed() = runTest {
         assertEquals(testList.reduceIndexed { index, acc, e -> index + acc * e },
             testList.asReceiveChannel().reduceIndexed { index, acc, e -> index + acc * e })
     }
 
     @Test
-    fun testTake() = runBlocking {
+    fun testTake() = runTest {
         for (i in 0..testList.size) {
             assertEquals(testList.take(i), testList.asReceiveChannel().take(i).toList())
         }
     }
 
     @Test
-    fun testPartition() = runBlocking {
+    fun testPartition() = runTest {
         assertEquals(testList.partition { it % 2 == 0 }, testList.asReceiveChannel().partition { it % 2 == 0 })
     }
 
     @Test
-    fun testZip() = runBlocking {
+    fun testZip() = runTest {
         val other = listOf("a", "b")
         assertEquals(testList.zip(other), testList.asReceiveChannel().zip(other.asReceiveChannel()).toList())
     }
 
     @Test
-    fun testElementAt() = runBlocking {
+    fun testElementAt() = runTest {
         testList.indices.forEach { i ->
             assertEquals(testList[i], testList.asReceiveChannel().elementAt(i))
         }
     }
 
     @Test
-    fun testElementAtOrNull() = runBlocking {
+    fun testElementAtOrNull() = runTest {
         testList.indices.forEach { i ->
             assertEquals(testList[i], testList.asReceiveChannel().elementAtOrNull(i))
         }
@@ -261,7 +246,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFind() = runBlocking {
+    fun testFind() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.find { it % 2 == mod },
                 testList.asReceiveChannel().find { it % 2 == mod })
@@ -269,28 +254,28 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFindLast() = runBlocking {
+    fun testFindLast() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.findLast { it % 2 == mod }, testList.asReceiveChannel().findLast { it % 2 == mod })
         }
     }
 
     @Test
-    fun testIndexOf() = runBlocking {
+    fun testIndexOf() = runTest {
         repeat(testList.size + 1) { i ->
             assertEquals(testList.indexOf(i), testList.asReceiveChannel().indexOf(i))
         }
     }
 
     @Test
-    fun testLastIndexOf() = runBlocking {
+    fun testLastIndexOf() = runTest {
         repeat(testList.size + 1) { i ->
             assertEquals(testList.lastIndexOf(i), testList.asReceiveChannel().lastIndexOf(i))
         }
     }
 
     @Test
-    fun testIndexOfFirst() = runBlocking {
+    fun testIndexOfFirst() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.indexOfFirst { it % 2 == mod },
                 testList.asReceiveChannel().indexOfFirst { it % 2 == mod })
@@ -298,7 +283,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testIndexOfLast() = runBlocking {
+    fun testIndexOfLast() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.indexOfLast { it % 2 != mod },
                 testList.asReceiveChannel().indexOfLast { it % 2 != mod })
@@ -306,13 +291,13 @@ class ChannelsTest {
     }
 
     @Test
-    fun testLastOrNull() = runBlocking {
+    fun testLastOrNull() = runTest {
         assertEquals(testList.lastOrNull(), testList.asReceiveChannel().lastOrNull())
         assertEquals(null, emptyList<Int>().asReceiveChannel().lastOrNull())
     }
 
     @Test
-    fun testSingleOrNull() = runBlocking {
+    fun testSingleOrNull() = runTest {
         assertEquals(1, listOf(1).asReceiveChannel().singleOrNull())
         assertEquals(null, listOf(1, 2).asReceiveChannel().singleOrNull())
         assertEquals(null, emptyList<Int>().asReceiveChannel().singleOrNull())
@@ -327,7 +312,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testDropWhile() = runBlocking {
+    fun testDropWhile() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.dropWhile { it % 2 == mod },
                 testList.asReceiveChannel().dropWhile { it % 2 == mod }.toList())
@@ -335,7 +320,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilter() = runBlocking {
+    fun testFilter() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.filter { it % 2 == mod },
                 testList.asReceiveChannel().filter { it % 2 == mod }.toList())
@@ -343,7 +328,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterToCollection() = runBlocking {
+    fun testFilterToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().filterTo(c) { it % 2 == mod }
@@ -352,7 +337,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterToSendChannel() = runBlocking {
+    fun testFilterToSendChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
                 testList.asReceiveChannel().filterTo(channel) { it % 2 == mod }
@@ -362,7 +347,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNot() = runBlocking {
+    fun testFilterNot() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.filterNot { it % 2 == mod },
                 testList.asReceiveChannel().filterNot { it % 2 == mod }.toList())
@@ -370,7 +355,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNotToCollection() = runBlocking {
+    fun testFilterNotToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().filterNotTo(c) { it % 2 == mod }
@@ -379,7 +364,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNotToSendChannel() = runBlocking {
+    fun testFilterNotToSendChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
                 testList.asReceiveChannel().filterNotTo(channel) { it % 2 == mod }
@@ -389,7 +374,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNotNull() = runBlocking {
+    fun testFilterNotNull() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.map { it.takeIf { it % 2 == mod } }.filterNotNull(),
                 testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNull().toList())
@@ -397,7 +382,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNotNullToCollection() = runBlocking {
+    fun testFilterNotNullToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNullTo(c)
@@ -406,7 +391,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterNotNullToSendChannel() = runBlocking {
+    fun testFilterNotNullToSendChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
                 testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNullTo(channel)
@@ -416,7 +401,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterIndexed() = runBlocking {
+    fun testFilterIndexed() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.filterIndexed { index, _ ->  index % 2 == mod },
                 testList.asReceiveChannel().filterIndexed { index, _ ->  index % 2 == mod }.toList())
@@ -424,7 +409,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterIndexedToCollection() = runBlocking {
+    fun testFilterIndexedToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().filterIndexedTo(c) { index, _ ->  index % 2 == mod }
@@ -433,17 +418,17 @@ class ChannelsTest {
     }
 
     @Test
-    fun testFilterIndexedToChannel() = runBlocking {
+    fun testFilterIndexedToChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
-                testList.asReceiveChannel().filterIndexedTo(channel) { index, _ ->  index % 2 == mod }
+                testList.asReceiveChannel().filterIndexedTo(channel) { index, _ -> index % 2 == mod }
             }
             assertEquals(testList.filterIndexed { index, _ ->  index % 2 == mod }, c.toList())
         }
     }
 
     @Test
-    fun testTakeWhile() = runBlocking {
+    fun testTakeWhile() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.takeWhile { it % 2 != mod },
                 testList.asReceiveChannel().takeWhile { it % 2 != mod }.toList())
@@ -451,7 +436,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testToChannel() = runBlocking {
+    fun testToChannel() = runTest {
         val c = produce<Int> {
             testList.asReceiveChannel().toChannel(channel)
         }
@@ -459,20 +444,20 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapIndexed() = runBlocking {
+    fun testMapIndexed() = runTest {
         assertEquals(testList.mapIndexed { index, i -> index + i },
             testList.asReceiveChannel().mapIndexed { index, i -> index + i }.toList())
     }
 
     @Test
-    fun testMapIndexedToCollection() = runBlocking {
+    fun testMapIndexedToCollection() = runTest {
         val c = mutableListOf<Int>()
         testList.asReceiveChannel().mapIndexedTo(c) { index, i -> index + i }
         assertEquals(testList.mapIndexed { index, i -> index + i }, c)
     }
 
     @Test
-    fun testMapIndexedToSendChannel() = runBlocking {
+    fun testMapIndexedToSendChannel() = runTest {
         val c = produce<Int> {
             testList.asReceiveChannel().mapIndexedTo(channel) { index, i -> index + i }
         }
@@ -480,7 +465,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapNotNull() = runBlocking {
+    fun testMapNotNull() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.mapNotNull { i -> i.takeIf { i % 2 == mod } },
                 testList.asReceiveChannel().mapNotNull { i -> i.takeIf { i % 2 == mod } }.toList())
@@ -488,7 +473,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapNotNullToCollection() = runBlocking {
+    fun testMapNotNullToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().mapNotNullTo(c) { i -> i.takeIf { i % 2 == mod } }
@@ -497,7 +482,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapNotNullToSendChannel() = runBlocking {
+    fun testMapNotNullToSendChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
                 testList.asReceiveChannel().mapNotNullTo(channel) { i -> i.takeIf { i % 2 == mod } }
@@ -507,7 +492,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapIndexedNotNull() = runBlocking {
+    fun testMapIndexedNotNull() = runTest {
         repeat(3) { mod ->
             assertEquals(testList.mapIndexedNotNull { index, i -> index.takeIf { i % 2 == mod } },
                 testList.asReceiveChannel().mapIndexedNotNull { index, i -> index.takeIf { i % 2 == mod } }.toList())
@@ -515,7 +500,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapIndexedNotNullToCollection() = runBlocking {
+    fun testMapIndexedNotNullToCollection() = runTest {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().mapIndexedNotNullTo(c) { index, i -> index.takeIf { i % 2 == mod } }
@@ -524,7 +509,7 @@ class ChannelsTest {
     }
 
     @Test
-    fun testMapIndexedNotNullToSendChannel() = runBlocking {
+    fun testMapIndexedNotNullToSendChannel() = runTest {
         repeat(3) { mod ->
             val c = produce<Int> {
                 testList.asReceiveChannel().mapIndexedNotNullTo(channel) { index, i -> index.takeIf { i % 2 == mod } }
@@ -534,50 +519,51 @@ class ChannelsTest {
     }
 
     @Test
-    fun testWithIndex() = runBlocking {
+    fun testWithIndex() = runTest {
         assertEquals(testList.withIndex().toList(), testList.asReceiveChannel().withIndex().toList())
     }
 
     @Test
-    fun testMaxBy() = runBlocking {
-        assertEquals(testList.maxBy { 10 - Math.abs(it - 2) },
-            testList.asReceiveChannel().maxBy { 10 - Math.abs(it - 2) })
+    fun testMaxBy() = runTest {
+        assertEquals(testList.maxBy { 10 - abs(it - 2) },
+            testList.asReceiveChannel().maxBy { 10 - abs(it - 2) })
     }
 
     @Test
-    fun testMaxWith() = runBlocking {
-        val cmp = compareBy<Int> { 10 - Math.abs(it - 2) }
+    fun testMaxWith() = runTest {
+        val cmp = compareBy<Int> { 10 - abs(it - 2) }
         assertEquals(testList.maxWith(cmp),
             testList.asReceiveChannel().maxWith(cmp))
     }
 
     @Test
-    fun testMinBy() = runBlocking {
-        assertEquals(testList.minBy { Math.abs(it - 2) },
-            testList.asReceiveChannel().minBy { Math.abs(it - 2) })
+    fun testMinBy() = runTest {
+        assertEquals(testList.minBy { abs(it - 2) },
+            testList.asReceiveChannel().minBy { abs(it - 2) })
     }
 
     @Test
-    fun testMinWith() = runBlocking {
-        val cmp = compareBy<Int> { Math.abs(it - 2) }
+    fun testMinWith() = runTest {
+        val cmp = compareBy<Int> { abs(it - 2) }
         assertEquals(testList.minWith(cmp),
             testList.asReceiveChannel().minWith(cmp))
     }
 
     @Test
-    fun testSumBy() = runBlocking {
+    fun testSumBy() = runTest {
         assertEquals(testList.sumBy { it * 3 },
             testList.asReceiveChannel().sumBy { it * 3 })
     }
 
     @Test
-    fun testSumByDouble() = runBlocking {
-        assertEquals(testList.sumByDouble { it * 3.0 },
-            testList.asReceiveChannel().sumByDouble { it * 3.0 }, 1e-10)
+    fun testSumByDouble() = runTest {
+        val expected = testList.sumByDouble { it * 3.0 }
+        val actual = testList.asReceiveChannel().sumByDouble { it * 3.0 }
+        assertEquals(expected, actual)
     }
 
     @Test
-    fun testRequireNoNulls() = runBlocking {
+    fun testRequireNoNulls() = runTest {
         assertEquals(testList.requireNoNulls(), testList.asReceiveChannel().requireNoNulls().toList())
     }
 }

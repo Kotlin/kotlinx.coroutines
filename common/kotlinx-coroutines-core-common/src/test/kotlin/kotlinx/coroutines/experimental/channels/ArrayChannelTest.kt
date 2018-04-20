@@ -17,13 +17,13 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.*
-import org.junit.Assert.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ArrayChannelTest : TestBase() {
+
     @Test
-    fun testSimple() = runBlocking {
+    fun testSimple() = runTest {
         val q = ArrayChannel<Int>(1)
         check(q.isEmpty && !q.isFull)
         expect(1)
@@ -52,25 +52,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testStress() = runBlocking {
-        val n = 100_000
-        val q = ArrayChannel<Int>(1)
-        val sender = launch(coroutineContext) {
-            for (i in 1..n) q.send(i)
-            expect(2)
-        }
-        val receiver = launch(coroutineContext) {
-            for (i in 1..n) check(q.receive() == i)
-            expect(3)
-        }
-        expect(1)
-        sender.join()
-        receiver.join()
-        finish(4)
-    }
-
-    @Test
-    fun testClosedBufferedReceiveOrNull() = runBlocking {
+    fun testClosedBufferedReceiveOrNull() = runTest {
         val q = ArrayChannel<Int>(1)
         check(q.isEmpty && !q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
@@ -95,7 +77,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testClosedExceptions() = runBlocking {
+    fun testClosedExceptions() = runTest {
         val q = ArrayChannel<Int>(1)
         expect(1)
         launch(coroutineContext) {
@@ -106,7 +88,8 @@ class ArrayChannelTest : TestBase() {
             }
         }
         expect(2)
-        q.close()
+
+        require(q.close())
         expect(3)
         yield()
         expect(6)
@@ -117,7 +100,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testOfferAndPool() = runBlocking {
+    fun testOfferAndPool() = runTest {
         val q = ArrayChannel<Int>(1)
         assertTrue(q.offer(1))
         expect(1)
@@ -147,7 +130,7 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testConsumeAll() = runBlocking {
+    fun testConsumeAll() = runTest {
         val q = ArrayChannel<Int>(5)
         for (i in 1..10) {
             if (i <= 5) {
