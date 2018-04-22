@@ -17,15 +17,14 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import org.junit.*
-import org.junit.Assert.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
-class SelectBiasTest {
+class SelectBiasTest : TestBase() {
     val n = 10_000
 
     @Test
-    fun testBiased() = runBlocking<Unit> {
+    fun testBiased() = runTest {
         val d0 = async(coroutineContext) { 0 }
         val d1 = async(coroutineContext) { 1 }
         val counter = IntArray(2)
@@ -41,7 +40,7 @@ class SelectBiasTest {
     }
 
     @Test
-    fun testUnbiased() = runBlocking<Unit> {
+    fun testUnbiased() = runTest {
         val d0 = async(coroutineContext) { 0 }
         val d1 = async(coroutineContext) { 1 }
         val counter = IntArray(2)

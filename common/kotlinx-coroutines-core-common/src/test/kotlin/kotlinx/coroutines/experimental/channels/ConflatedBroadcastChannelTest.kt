@@ -116,7 +116,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         }
     }
 
-    // Ugly workaround for bug in JS compiler
+    // Workaround for KT-23921
     fun exceptionFromNotInline(block: () -> Unit): Throwable? {
         try {
             block()

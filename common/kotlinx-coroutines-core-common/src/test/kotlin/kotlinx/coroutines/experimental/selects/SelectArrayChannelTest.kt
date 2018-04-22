@@ -19,15 +19,15 @@ package kotlinx.coroutines.experimental.selects
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.intrinsics.*
-import org.junit.*
-import org.junit.Assert.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
-class SelectRendezvousChannelTest : TestBase() {
+class SelectArrayChannelTest : TestBase() {
+
     @Test
-    fun testSelectSendSuccess() = runBlocking<Unit> {
+    fun testSelectSendSuccess() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -44,9 +44,9 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectSendSuccessWithDefault() = runBlocking<Unit> {
+    fun testSelectSendSuccessWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         launch(coroutineContext) {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -66,96 +66,83 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectSendWaitWithDefault() = runBlocking<Unit> {
+    fun testSelectSendReceiveBuf() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         select<Unit> {
             channel.onSend("OK") {
-                expectUnreached()
-            }
-            default {
                 expect(2)
             }
         }
         expect(3)
-        // make sure receive blocks (select above is over)
-        launch(coroutineContext) {
-            expect(5)
-            assertEquals("CHK", channel.receive())
-            finish(8)
-        }
-        expect(4)
-        yield()
-        expect(6)
-        channel.send("CHK")
-        expect(7)
-    }
-
-    @Test
-    fun testSelectSendWait() = runBlocking<Unit> {
-        expect(1)
-        val channel = RendezvousChannel<String>()
-        launch(coroutineContext) {
-            expect(3)
-            assertEquals("OK", channel.receive())
-            expect(4)
-        }
-        expect(2)
-        select<Unit> {
-            channel.onSend("OK") {
-                expect(5)
-            }
-        }
-        finish(6)
-    }
-
-    @Test
-    fun testSelectReceiveSuccess() = runBlocking<Unit> {
-        expect(1)
-        val channel = RendezvousChannel<String>()
-        launch(coroutineContext) {
-            expect(2)
-            channel.send("OK")
-            finish(6)
-        }
-        yield() // to launched coroutine
-        expect(3)
         select<Unit> {
             channel.onReceive { v ->
                 expect(4)
                 assertEquals("OK", v)
             }
         }
-        expect(5)
+        finish(5)
     }
 
     @Test
-    fun testSelectReceiveSuccessWithDefault() = runBlocking<Unit> {
+    fun testSelectSendWait() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         launch(coroutineContext) {
-            expect(2)
-            channel.send("OK")
-            finish(6)
+            expect(4)
+            assertEquals("BUF", channel.receive())
+            expect(5)
+            assertEquals("OK", channel.receive())
+            expect(6)
         }
-        yield() // to launched coroutine
+        expect(2)
+        channel.send("BUF")
         expect(3)
         select<Unit> {
+            channel.onSend("OK") {
+                expect(7)
+            }
+        }
+        finish(8)
+    }
+
+    @Test
+    fun testSelectReceiveSuccess() = runTest {
+        expect(1)
+        val channel = ArrayChannel<String>(1)
+        channel.send("OK")
+        expect(2)
+        select<Unit> {
             channel.onReceive { v ->
-                expect(4)
+                expect(3)
+                assertEquals("OK", v)
+            }
+        }
+        finish(4)
+    }
+
+    @Test
+    fun testSelectReceiveSuccessWithDefault() = runTest {
+        expect(1)
+        val channel = ArrayChannel<String>(1)
+        channel.send("OK")
+        expect(2)
+        select<Unit> {
+            channel.onReceive { v ->
+                expect(3)
                 assertEquals("OK", v)
             }
             default {
                 expectUnreached()
             }
         }
-        expect(5)
+        finish(4)
     }
 
     @Test
-    fun testSelectReceiveWaitWithDefault() = runBlocking<Unit> {
+    fun testSelectReceiveWaitWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         select<Unit> {
             channel.onReceive {
                 expectUnreached()
@@ -165,23 +152,27 @@ class SelectRendezvousChannelTest : TestBase() {
             }
         }
         expect(3)
-        // make sure send blocks (select above is over)
-        launch(coroutineContext) {
-            expect(5)
-            channel.send("CHK")
-            finish(8)
-        }
+        channel.send("BUF")
         expect(4)
+        // make sure second send blocks (select above is over)
+        launch(coroutineContext) {
+            expect(6)
+            channel.send("CHK")
+            finish(10)
+        }
+        expect(5)
         yield()
-        expect(6)
-        assertEquals("CHK", channel.receive())
         expect(7)
+        assertEquals("BUF", channel.receive())
+        expect(8)
+        assertEquals("CHK", channel.receive())
+        expect(9)
     }
 
     @Test
-    fun testSelectReceiveWait() = runBlocking<Unit> {
+    fun testSelectReceiveWait() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         launch(coroutineContext) {
             expect(3)
             channel.send("OK")
@@ -197,10 +188,10 @@ class SelectRendezvousChannelTest : TestBase() {
         finish(6)
     }
 
-    @Test(expected = ClosedReceiveChannelException::class)
-    fun testSelectReceiveClosed() = runBlocking<Unit> {
+    @Test
+    fun testSelectReceiveClosed() = runTest({it is ClosedReceiveChannelException}) {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         channel.close()
         finish(2)
         select<Unit> {
@@ -211,10 +202,10 @@ class SelectRendezvousChannelTest : TestBase() {
         expectUnreached()
     }
 
-    @Test(expected = ClosedReceiveChannelException::class)
-    fun testSelectReceiveWaitClosed() = runBlocking<Unit> {
+    @Test
+    fun testSelectReceiveWaitClosed() = runTest({it is ClosedReceiveChannelException}) {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = ArrayChannel<String>(1)
         launch(coroutineContext) {
             expect(3)
             channel.close()
@@ -230,10 +221,11 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectSendResourceCleanup() = runBlocking<Unit> {
-        val channel = RendezvousChannel<Int>()
-        val n = 10_000_000 * stressTestMultiplier
+    fun testSelectSendResourceCleanup() = runTest {
+        val channel = ArrayChannel<Int>(1)
+        val n = 1000
         expect(1)
+        channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
         repeat(n) { i ->
             select {
                 channel.onSend(i) { expectUnreached() }
@@ -244,9 +236,9 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveResourceCleanup() = runBlocking<Unit> {
-        val channel = RendezvousChannel<Int>()
-        val n = 10_000_000 * stressTestMultiplier
+    fun testSelectReceiveResourceCleanup() = runTest {
+        val channel = ArrayChannel<Int>(1)
+        val n = 1000
         expect(1)
         repeat(n) { i ->
             select {
@@ -258,60 +250,48 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectAtomicFailure() = runBlocking<Unit> {
-        val c1 = RendezvousChannel<Int>()
-        val c2 = RendezvousChannel<Int>()
+    fun testSelectReceiveDispatchNonSuspending() = runTest {
+        val channel = ArrayChannel<Int>(1)
         expect(1)
+        channel.send(42)
+        expect(2)
         launch(coroutineContext) {
-            expect(3)
-            val res = select<String> {
-                c1.onReceive { v1 ->
-                    expect(4)
-                    assertEquals(42, v1)
-                    yield() // back to main
-                    expect(7)
-                    "OK"
-                }
-                c2.onReceive {
-                    "FAIL"
+            expect(4)
+            select<Unit> {
+                channel.onReceive { v ->
+                    expect(5)
+                    assertEquals(42, v)
+                    expect(6)
                 }
             }
-            expect(8)
-            assertEquals("OK", res)
+            expect(7) // returns from select without further dispatch
         }
-        expect(2)
-        c1.send(42) // send to coroutine, suspends
-        expect(5)
-        c2.close() // makes sure that selected expression does not fail!
-        expect(6)
-        yield() // back
-        finish(9)
+        expect(3)
+        yield() // to launched
+        finish(8)
     }
 
     @Test
-    fun testSelectWaitDispatch() = runBlocking<Unit> {
-        val c = RendezvousChannel<Int>()
+    fun testSelectReceiveDispatchNonSuspending2() = runTest {
+        val channel = ArrayChannel<Int>(1)
         expect(1)
+        channel.send(42)
+        expect(2)
         launch(coroutineContext) {
-            expect(3)
-            val res = select<String> {
-                c.onReceive { v ->
-                    expect(6)
+            expect(4)
+            select<Unit> {
+                channel.onReceive { v ->
+                    expect(5)
                     assertEquals(42, v)
+                    expect(6)
                     yield() // back to main
                     expect(8)
-                    "OK"
                 }
             }
-            expect(9)
-            assertEquals("OK", res)
+            expect(9) // returns from select without further dispatch
         }
-        expect(2)
-        yield() // to launch
-        expect(4)
-        c.send(42) // do not suspend
-        expect(5)
-        yield() // to receive
+        expect(3)
+        yield() // to launched
         expect(7)
         yield() // again
         finish(10)
