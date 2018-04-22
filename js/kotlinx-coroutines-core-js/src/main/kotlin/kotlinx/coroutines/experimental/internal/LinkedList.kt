@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import kotlinx.coroutines.experimental.channels.*
-
 private typealias Node = LinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
@@ -121,11 +119,14 @@ public actual open class RemoveFirstDesc<T> actual constructor(
 
     @Suppress("UNCHECKED_CAST")
     public actual val result: T get() = affectedNode as T
-    protected override val affectedNode: Node get() = queue._prev
-
+    protected override val affectedNode: Node = queue.next as Node
     protected actual open fun validatePrepared(node: T): Boolean = true
-    protected actual final override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? = null
-    protected override fun onComplete(): Unit { queue.removeFirstOrNull() }
+    protected actual final override fun onPrepare(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode): Any? {
+        @Suppress("UNCHECKED_CAST")
+        validatePrepared(affectedNode as T)
+        return null
+    }
+    protected override fun onComplete() { queue.removeFirstOrNull() }
     protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
 
@@ -134,10 +135,17 @@ public actual abstract class AbstractAtomicDesc : AtomicDesc() {
     protected abstract val affectedNode: Node
     protected actual abstract fun onPrepare(affected: Node, next: Node): Any?
     protected abstract fun onComplete()
-    actual final override fun prepare(op: AtomicOp<*>): Any? = onPrepare(affectedNode, affectedNode._next)
-    actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
 
-    protected actual open fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = null // Never fails
+    actual final override fun prepare(op: AtomicOp<*>): Any? {
+        val affected = affectedNode
+        val next = affected._next
+        val failure = failure(affected, next)
+        if (failure != null) return failure
+        return onPrepare(affected, next)
+    }
+
+    actual final override fun complete(op: AtomicOp<*>, failure: Any?) = onComplete()
+    protected actual open fun failure(affected: LockFreeLinkedListNode, next: Any): Any? = null // Never fails by default
     protected actual open fun retry(affected: LockFreeLinkedListNode, next: Any): Boolean = false // Always succeeds
     protected actual abstract fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
