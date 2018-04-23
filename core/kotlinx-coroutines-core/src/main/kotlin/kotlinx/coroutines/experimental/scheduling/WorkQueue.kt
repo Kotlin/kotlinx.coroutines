@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.atomicfu.atomic
-import java.util.concurrent.atomic.AtomicReferenceArray
+import kotlinx.atomicfu.*
+import java.util.concurrent.atomic.*
 
 internal const val BUFFER_CAPACITY_BASE = 7
 internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
@@ -58,17 +58,8 @@ internal class WorkQueue {
      * @return true if no offloading happened, false otherwise
      */
     fun add(task: Task, globalQueue: GlobalQueue): Boolean {
-        // todo: can optimize to `val previous = lastScheduledTask.getAndSet(task)`
-        // todo: no CAS loop will be needed
-        while (true) {
-            val previous = lastScheduledTask.value
-            if (lastScheduledTask.compareAndSet(previous, task)) {
-                if (previous != null) {
-                    return addLast(previous, globalQueue)
-                }
-                return true
-            }
-        }
+        val previous = lastScheduledTask.getAndSet(task) ?: return true
+        return addLast(previous, globalQueue)
     }
 
     // Called only by the owner

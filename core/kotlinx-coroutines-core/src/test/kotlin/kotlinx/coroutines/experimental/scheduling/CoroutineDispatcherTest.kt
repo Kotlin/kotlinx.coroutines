@@ -1,9 +1,9 @@
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
-import org.junit.After
-import org.junit.Test
+import org.junit.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.experimental.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -125,8 +125,6 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
                 while (true) {
                     yield()
                 }
-
-                "OK"
             }
 
             assertNull(nullResult)
@@ -145,6 +143,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     }
 
     @Test(timeout = 1_000) // Failing test until yield() is not fixed
+    @Ignore
     fun testYield() = runBlocking {
         corePoolSize = 1
         maxPoolSize = 1

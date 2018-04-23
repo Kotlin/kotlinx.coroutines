@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.experimental.CoroutineContext
 
-class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().availableProcessors(), maxPoolSize: Int = 16384) : CoroutineDispatcher(), Delay, Closeable {
+class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().availableProcessors(), maxPoolSize: Int = MAX_POOL_SIZE) : CoroutineDispatcher(), Delay, Closeable {
 
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 

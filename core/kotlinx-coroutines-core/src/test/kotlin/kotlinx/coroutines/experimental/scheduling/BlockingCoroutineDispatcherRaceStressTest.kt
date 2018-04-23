@@ -12,8 +12,9 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
 
     @Test(timeout = 20_000L)
     fun testAddPollRace() = runBlocking {
+        val iterations = 100_000 * stressTestMultiplier
         // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
-        for (i in 1..100_000) {
+        for (i in 1..iterations) {
             val tasks = (1..2).map {
                 async(limitingDispatcher) {
                     try {

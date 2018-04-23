@@ -28,7 +28,8 @@ class BlockingCoroutineDispatcherStressTest(private val limit: Int) : SchedulerT
 
     @Test(timeout = 20_000L)
     fun testLimitParallelism() = runBlocking {
-        val tasks = (1..250_000).map {
+        val iterations = 250_000* stressTestMultiplier
+        val tasks = (1..iterations).map {
             async(limitingDispatcher) {
                 try {
                     val currentlyExecuting = concurrentWorkers.incrementAndGet()

@@ -15,7 +15,7 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     private var dispatcher: ExperimentalCoroutineDispatcher = ExperimentalCoroutineDispatcher()
     private val observedThreads = ConcurrentHashMap<Thread, MutableSet<Int>>()
-    private val tasksNum = 4_000_000
+    private val tasksNum = 4_000_000 * stressTestMultiplier
     private val processed = AtomicInteger(0)
     private val finishLatch = CountDownLatch(1)
 
