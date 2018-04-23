@@ -1,12 +1,11 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.junit.runner.*
+import org.junit.runners.*
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
 
 @RunWith(Parameterized::class)
 class BlockingCoroutineDispatcherStressTest(private val limit: Int) : SchedulerTestBase() {
@@ -26,9 +25,9 @@ class BlockingCoroutineDispatcherStressTest(private val limit: Int) : SchedulerT
     private val concurrentWorkers = AtomicInteger(0)
 
 
-    @Test(timeout = 20_000L)
+    @Test
     fun testLimitParallelism() = runBlocking {
-        val iterations = 250_000* stressTestMultiplier
+        val iterations = 250_000 * stressTestMultiplier
         val tasks = (1..iterations).map {
             async(limitingDispatcher) {
                 try {

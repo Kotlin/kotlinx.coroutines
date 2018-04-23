@@ -47,7 +47,10 @@ import java.util.concurrent.locks.*
  *
  * Note: will be internal after integration with Ktor
  */
-class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize: Int = corePoolSize * 1024) : Closeable {
+class CoroutineScheduler(
+    private val corePoolSize: Int,
+    private val maxPoolSize: Int = corePoolSize * 1024
+) : Closeable {
 
     private val globalWorkQueue: GlobalQueue = ConcurrentLinkedQueue<Task>()
 
@@ -86,17 +89,23 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         @JvmStatic
         private val MAX_PARK_TIME_NS = TimeUnit.SECONDS.toNanos(1)
         @JvmStatic
-        private val MIN_PARK_TIME_NS = (WORK_STEALING_TIME_RESOLUTION_NS / 4).coerceAtLeast(10).coerceAtMost(MAX_PARK_TIME_NS)
+        private val MIN_PARK_TIME_NS = (WORK_STEALING_TIME_RESOLUTION_NS / 4)
+            .coerceAtLeast(10)
+            .coerceAtMost(MAX_PARK_TIME_NS)
 
         // Local queue 'add' results
         private const val ADDED = -1
-        private const val ADDED_REQUIRES_HELP = 0 // Added to the local queue, but pool requires additional worker to keep up
+        // Added to the local queue, but pool requires additional worker to keep up
+        private const val ADDED_REQUIRES_HELP = 0
         private const val NOT_ADDED = 1
     }
 
     init {
         require(corePoolSize >= 1, { "Expected positive core pool size, but was $corePoolSize" })
-        require(maxPoolSize >= corePoolSize, { "Expected max pool size ($maxPoolSize) greater than or equals to core pool size ($corePoolSize)" })
+        require(
+            maxPoolSize >= corePoolSize,
+            { "Expected max pool size ($maxPoolSize) greater than or equals to core pool size ($corePoolSize)" })
+
         workers = arrayOfNulls(maxPoolSize)
         // todo: can we lazily create corePool, too?
         // todo: The goal: when running "small" workload on "large" machine we should not consume extra resource in advance
@@ -256,10 +265,10 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                 /*
                  * If thread is not blocking, then it's just tries to finish its
                  * local work in order to park (or grab another blocking task), do not add non-blocking tasks
-                 * to its local queue
+                 * to its local queue if it can't acquire CPU
                  */
-                worker.hasCpuPermit = worker.hasCpuPermit || cpuPermits.tryAcquire()
-                if (!worker.hasCpuPermit) {
+                val hasPermit = worker.tryAcquireCpu()
+                if (!hasPermit) {
                     return NOT_ADDED
                 }
             }
@@ -296,6 +305,8 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         var parkedWorkers = 0
         var blockingWorkers = 0
         var cpuWorkers = 0
+        var retired = 0
+        var finished = 0
 
         val queueSizes = arrayListOf<String>()
         for (worker in workers) {
@@ -304,28 +315,30 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
             }
 
             val queueSize = worker.localQueue.size()
-            when {
-                worker.isParking -> ++parkedWorkers
-                worker.isBlocking -> {
+            when(worker.state) {
+                WorkerState.PARKING -> ++parkedWorkers
+                WorkerState.BLOCKING -> {
                     ++blockingWorkers
                     queueSizes += queueSize.toString() + "b" // Blocking
                 }
-                worker.hasCpuPermit -> {
+                WorkerState.CPU_ACQUIRED -> {
                     ++cpuWorkers
                     queueSizes += queueSize.toString() + "c" // CPU
                 }
-                queueSize > 0 -> {
-                    queueSizes += queueSize.toString() + "r" // Retiring
+                WorkerState.RETIRING -> {
+                    ++retired
+                    if (queueSize > 0) queueSizes += queueSize.toString() + "r" // Retiring
                 }
+                WorkerState.FINISHED -> ++finished
             }
-
         }
 
         return "${super.toString()}[core pool size = ${workers.size}, " +
                 "CPU workers = $cpuWorkers, " +
                 "blocking workers = $blockingWorkers, " +
                 "parked workers = $parkedWorkers, " +
-                "retired workers = ${retiredWorkers.size}, " +
+                "retired workers = $retired, " +
+                "finished workers = $finished, " +
                 "running workers queues = $queueSizes, " +
                 "global queue size = ${globalWorkQueue.size}]"
     }
@@ -338,12 +351,43 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
 
         val localQueue: WorkQueue = WorkQueue()
 
-        // todo: hasCpuPermit + isBlocking is actaully a single state variable with 3 possible states (not four!)
-        // todo: Notice: cannot hasCpuPermit && isBlocking at the same time.
-        // todo: Merging them would simplify code and make worker state changes atomic to the external observers.
+        /*
+         * By default, worker is in RETIRING state in the case when it was created,
+         * but all CPU tokens or tasks were taken
+         */
         @Volatile
-        var hasCpuPermit = false
-        var isBlocking = false
+        var state = WorkerState.RETIRING
+        val isParking: Boolean get() = state == WorkerState.PARKING
+        val isBlocking: Boolean get() = state == WorkerState.BLOCKING
+        private val hasCpuPermit: Boolean get() = state == WorkerState.CPU_ACQUIRED
+
+        /**
+         * Tries to acquire CPU token if worker doesn't have one
+         * @return whether worker has CPU token
+         */
+        fun tryAcquireCpu(): Boolean {
+            return when {
+                state == WorkerState.CPU_ACQUIRED -> true
+                cpuPermits.tryAcquire() -> {
+                    state = WorkerState.CPU_ACQUIRED
+                    true
+                }
+                else -> false
+            }
+        }
+
+        /**
+         * Releases CPU token if worker has any and changes state to [newState]
+         * @return whether worker had CPU token
+         */
+        private fun tryReleaseCpu(newState: WorkerState): Boolean {
+            val hadCpu = state == WorkerState.CPU_ACQUIRED
+            if (hadCpu) {
+                cpuPermits.release()
+            }
+            state = newState
+            return hadCpu
+        }
 
         /**
          * Time of the last call to [requestCpuWorker] due to missing tasks deadlines.
@@ -351,14 +395,8 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
          */
         private var lastExhaustionTime = 0L
 
-        // todo: Same story here. Merge hasCpuPermit + isBlocking + isParking it a single state work.
-        // todo: Notice: Cannot hasCpuPermit && isParking
-        @Volatile
-        var isParking = false
-
         // todo: It does not seem that @Volatile is of any value here.
         // todo: It is incremented between calls to findTask which _already_ has globalWorkQueue.poll()
-        @Volatile
         private var spins = 0L
         // todo: Given the above consideration with can combine spins & yields into a single var
         // todo: Micro-optimization: A single combined spins+yields counter will make `idleReset` slightly faster
@@ -374,17 +412,14 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                     // Wait for a job with potential park
                     idle()
                 } else {
-                    idleReset()
+                    idleReset(job.mode)
                     beforeTask(job)
                     runSafely(job.task)
                     afterTask(job)
                 }
             }
 
-            if (hasCpuPermit) {
-                hasCpuPermit = false
-                cpuPermits.release()
-            }
+            tryReleaseCpu(WorkerState.FINISHED)
         }
 
         private fun runSafely(block: Runnable) {
@@ -397,15 +432,12 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
 
         private fun beforeTask(job: Task) {
             if (job.mode != TaskMode.NON_BLOCKING) {
-                isBlocking = true
                 /*
                  * We should increment blocking workers *before* checking CPU starvation,
                  * otherwise requestCpuWorker() will not count current thread as starving
                  */
                 blockingWorkers.incrementAndGet()
-                if (hasCpuPermit) {
-                    hasCpuPermit = false
-                    cpuPermits.release()
+                if (tryReleaseCpu(WorkerState.BLOCKING)) {
                     requestCpuWorker()
                 }
 
@@ -431,7 +463,8 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         private fun afterTask(job: Task) {
             if (job.mode != TaskMode.NON_BLOCKING) {
                 blockingWorkers.decrementAndGet()
-                isBlocking = false
+                assert(state == WorkerState.BLOCKING)
+                state = WorkerState.RETIRING
             }
         }
 
@@ -474,34 +507,26 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
                 spins < MAX_SPINS -> ++spins
                 ++yields <= MAX_YIELDS -> yield()
                 else -> {
-                    // todo: just isParking = true is all we need here (no need for `if`)
-                    // todo: it _is_ a volatile write, but it should be still cheaper that using `if`
-                    if (!isParking) {
-                        isParking = true
-                    }
-
                     if (parkTimeNs < MAX_PARK_TIME_NS) {
                         parkTimeNs = (parkTimeNs * 3 shr 1).coerceAtMost(MAX_PARK_TIME_NS)
                     }
 
-                    if (hasCpuPermit) {
-                        hasCpuPermit = false
-                        cpuPermits.release()
-                    }
+                    tryReleaseCpu(WorkerState.PARKING)
                     LockSupport.parkNanos(parkTimeNs)
                 }
             }
         }
 
         private fun blockingWorkerIdle() {
-            isParking = true
+            state = WorkerState.PARKING
             retiredWorkers.add(this)
             LockSupport.parkNanos(Long.MAX_VALUE)
         }
 
-        private fun idleReset() {
-            if (isParking) {
-                isParking = false
+        private fun idleReset(mode: TaskMode) {
+            if (state == WorkerState.PARKING) {
+                assert(mode == TaskMode.PROBABLY_BLOCKING)
+                state = WorkerState.BLOCKING
                 parkTimeNs = MIN_PARK_TIME_NS
             }
 
@@ -514,12 +539,7 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
         // todo: Moreover, on overflow of local queues they post to globalQueue, thus aggravating starvation
         // todo: It looks like the simplest strategy is to alternate between global-first / local-first to load-balance
         private fun findTask(): Task? {
-            var hasPermit = hasCpuPermit
-            if (!hasPermit && cpuPermits.tryAcquire()) {
-                hasCpuPermit = true
-                hasPermit = true
-            }
-
+            val hasPermit = tryAcquireCpu()
             if (hasPermit) {
                 globalWorkQueue.poll()?.let { return it }
             }
@@ -554,5 +574,24 @@ class CoroutineScheduler(private val corePoolSize: Int, private val maxPoolSize:
 
             return null
         }
+    }
+
+    enum class WorkerState {
+        /*
+         * Has CPU token and either executes NON_BLOCKING task or
+         * tries to steal one (~in busy wait)
+         */
+        CPU_ACQUIRED,
+        // Executing task with Mode.PROBABLY_BLOCKING
+        BLOCKING,
+        // Currently parked
+        PARKING,
+        /*
+         * Tries to execute its local work
+         * and then goes to infinite sleep as no longer needed worker
+         */
+        RETIRING,
+        // Terminal state, will no longer be used
+        FINISHED
     }
 }
