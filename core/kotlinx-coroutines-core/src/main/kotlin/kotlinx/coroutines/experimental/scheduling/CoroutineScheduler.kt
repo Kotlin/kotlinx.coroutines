@@ -67,7 +67,7 @@ class CoroutineScheduler(
     // todo: Take a look at ObjectPool implementation from kotlinx.io module (it is lock-free & zero-garbage stack)
     // todo: However, since all workers are already numbered (indexed) and have PoolWorker objects, you can have a very simply impl
     // todo: Just implement Treiber stack using `val nextRetiredIndexVersion = atomic(0)` in each PoolWorker and keep top here
-    private val retiredWorkers = ConcurrentLinkedQueue<PoolWorker>()
+    private val parkedWorkers = ConcurrentLinkedQueue<PoolWorker>()
 
     /**
      * State of worker threads
@@ -176,27 +176,29 @@ class CoroutineScheduler(
      * Unparks or creates a new [PoolWorker] for executing non-blocking tasks if there are idle cores
      */
     private fun requestCpuWorker() {
-        // All cores are already busy with CPU work
+        // Try acquire token for requested CPU
         if (cpuPermits.availablePermits() == 0) {
             return
         }
 
         /*
-         * Fast path -- we have retired worker, unpark it, and we're done.
+         * Fast path -- we have retired or parked worker, unpark it, and we're done.
          * The benign data race here: when only one permit is available, multiple retired workers
          * can be unparked, but only one will continue execution
          */
-        val retired = retiredWorkers.poll()
-        if (retired != null) {
-            LockSupport.unpark(retired)
-            return
-        }
+        if (tryUnpark()) return
 
         // todo: Here we are reading two atomic counters separately and computing difference
         // todo: Observe, that we never use the value of blockingWorkers itself.
         // todo: Only cpuWorkers = created - blocking is important and used
         // todo: We should maintain cpuWorkersCounter instead of blockingWorkers
         // todo: Don't forget to increment cpuWorkersCounter in createNewWorker
+        /*
+         * It's not preferable to use 'cpuWorkersCounter' here (moreover, it's implicitly here as corePoolSize - cpuPermits.availableTokens),
+         * cpuWorkersCounter doesn't take into account threads which are created (and either running or parked), but have not
+         * cpuToken: retiring workers, recently unparked workers before `findTask` call, etc.
+         * So if we will use cpuWorkersCounter, we start to overprovision too much
+         */
         val created = createdWorkers.value
         val blocking = blockingWorkers.value
         val cpuWorkers = created - blocking
@@ -206,7 +208,38 @@ class CoroutineScheduler(
             return
         }
 
-        unparkAny()
+        // Try unpark again in case there was race between permit release and parking
+        tryUnpark()
+    }
+
+    private fun tryUnpark(): Boolean {
+        while (true) {
+            val worker = parkedWorkers.poll() ?: return false
+            if (!worker.registeredInParkedQueue.value) {
+                continue // Someone else succeeded
+            } else if (!worker.registeredInParkedQueue.compareAndSet(true, false)) {
+                continue // Someone else succeeded
+            }
+
+            /*
+             * If we successfully took the worker out of the queue, it could be in the following states:
+             * 1) Worker is parked, then we'd like to reset its spin and park counters, so after
+             *    unpark it will try to steal from every worker at least once
+             * 2) Worker is not parked, but it actually idle and
+             *    tries to find work. Then idle reset is required as well.
+             *    Worker state may be either PARKING or CPU_ACQUIRED (from `findTask`)
+             * 3) Worker is active (unparked itself from `idleCpuWorker`), found tasks to do and is currently busy.
+             *    Then `idleReset` will do nothing, but we can't distinguish this state from previous
+             *    one, so just retry
+             */
+            worker.idleReset()
+            LockSupport.unpark(worker)
+            if (!worker.isParking) { // Case 2 or 3, just retry
+                continue
+            }
+
+            return true
+        }
     }
 
     private fun createNewWorker() {
@@ -220,27 +253,6 @@ class CoroutineScheduler(
                 require(workers[nextWorker] == null)
                 val worker = PoolWorker(nextWorker).apply { start() }
                 workers[nextWorker] = worker
-                return
-            }
-        }
-    }
-
-    private fun unparkAny() {
-        // Probabilistically try to unpark someone
-        repeat(STEAL_ATTEMPTS) {
-            // todo: Here we have a similar problem to trySteal, with different types of threads
-            // todo: When we have a large number of active (non-parked) worker threads, then it is hard to find one
-            // todo: If we have lots of blocking threads busy doing some IO (they are not parking and not retired),
-            // todo: then it is even harder to find a parked one among them.
-            // todo: Since we care to unpark _any_ parked one, do we really need random here?
-            // todo: We can just maintain a stack of all parked workers.
-            val victim = workers[random.nextInt(createdWorkers.value)]
-            if (victim != null && victim.isParking) {
-                /*
-                 * The benign data race, the victim can wake up after this check, but before 'unpark' call succeeds,
-                 * making first 'park' in next idle period a no-op
-                 */
-                LockSupport.unpark(victim)
                 return
             }
         }
@@ -362,6 +374,13 @@ class CoroutineScheduler(
         private val hasCpuPermit: Boolean get() = state == WorkerState.CPU_ACQUIRED
 
         /**
+         * Whether worker was added to [parkedWorkers].
+         * Worker registers itself in this queue once and will stay there until
+         * someone will call [Queue.poll] which return it, then this flag is reset.
+         */
+        val registeredInParkedQueue = atomic(false)
+
+        /**
          * Tries to acquire CPU token if worker doesn't have one
          * @return whether worker has CPU token
          */
@@ -382,10 +401,8 @@ class CoroutineScheduler(
          */
         private fun tryReleaseCpu(newState: WorkerState): Boolean {
             val hadCpu = state == WorkerState.CPU_ACQUIRED
-            if (hadCpu) {
-                cpuPermits.release()
-            }
-            state = newState
+            if (hadCpu) cpuPermits.release()
+            if (state != newState) state = newState
             return hadCpu
         }
 
@@ -397,6 +414,7 @@ class CoroutineScheduler(
 
         // todo: It does not seem that @Volatile is of any value here.
         // todo: It is incremented between calls to findTask which _already_ has globalWorkQueue.poll()
+        @Volatile
         private var spins = 0L
         // todo: Given the above consideration with can combine spins & yields into a single var
         // todo: Micro-optimization: A single combined spins+yields counter will make `idleReset` slightly faster
@@ -433,8 +451,8 @@ class CoroutineScheduler(
         private fun beforeTask(job: Task) {
             if (job.mode != TaskMode.NON_BLOCKING) {
                 /*
-                 * We should increment blocking workers *before* checking CPU starvation,
-                 * otherwise requestCpuWorker() will not count current thread as starving
+                 * We should release CPU *before* checking for CPU starvation,
+                 * otherwise requestCpuWorker() will not count current thread as blocking
                  */
                 blockingWorkers.incrementAndGet()
                 if (tryReleaseCpu(WorkerState.BLOCKING)) {
@@ -463,7 +481,7 @@ class CoroutineScheduler(
         private fun afterTask(job: Task) {
             if (job.mode != TaskMode.NON_BLOCKING) {
                 blockingWorkers.decrementAndGet()
-                assert(state == WorkerState.BLOCKING)
+                assert(state == WorkerState.BLOCKING, {"Expected BLOCKING state, but has $state"})
                 state = WorkerState.RETIRING
             }
         }
@@ -505,10 +523,17 @@ class CoroutineScheduler(
              */
             when {
                 spins < MAX_SPINS -> ++spins
-                ++yields <= MAX_YIELDS -> yield()
+                yields <= MAX_YIELDS -> {
+                    ++yields
+                    yield()
+                }
                 else -> {
                     if (parkTimeNs < MAX_PARK_TIME_NS) {
                         parkTimeNs = (parkTimeNs * 3 shr 1).coerceAtMost(MAX_PARK_TIME_NS)
+                    }
+
+                    if (registeredInParkedQueue.compareAndSet(false, true)) {
+                        parkedWorkers.add(this)
                     }
 
                     tryReleaseCpu(WorkerState.PARKING)
@@ -519,7 +544,9 @@ class CoroutineScheduler(
 
         private fun blockingWorkerIdle() {
             state = WorkerState.PARKING
-            retiredWorkers.add(this)
+            if (registeredInParkedQueue.compareAndSet(false, true)) {
+                parkedWorkers.add(this)
+            }
             LockSupport.parkNanos(Long.MAX_VALUE)
         }
 
@@ -530,8 +557,14 @@ class CoroutineScheduler(
                 parkTimeNs = MIN_PARK_TIME_NS
             }
 
-            spins = 0
             yields = 0
+            spins = 0
+        }
+
+        fun idleReset() {
+            parkTimeNs = MIN_PARK_TIME_NS
+            yields = 0
+            spins = 0 // Should be written last
         }
 
         // todo: The current logic here is to always take globalWorkQueue if there is some work

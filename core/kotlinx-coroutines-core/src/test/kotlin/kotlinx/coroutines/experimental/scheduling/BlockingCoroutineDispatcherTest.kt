@@ -110,7 +110,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         firstBarrier.await()
         secondBarrier.await()
         blockingTasks.joinAll()
-        checkPoolThreads(21..21 + CORES_COUNT)
+        checkPoolThreads(21..22)
     }
 
     @Test(timeout = 1_000)

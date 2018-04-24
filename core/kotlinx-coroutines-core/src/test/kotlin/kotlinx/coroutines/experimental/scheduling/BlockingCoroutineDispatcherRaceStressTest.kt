@@ -9,7 +9,6 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
     private var limitingDispatcher = blockingDispatcher(1)
     private val concurrentWorkers = AtomicInteger(0)
 
-
     @Test
     fun testAddPollRace() = runBlocking {
         val iterations = 100_000 * stressTestMultiplier
@@ -29,6 +28,6 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
             tasks.forEach { it.await() }
         }
 
-        checkPoolThreads(2..4)
+        checkPoolThreads(2..3)
     }
 }

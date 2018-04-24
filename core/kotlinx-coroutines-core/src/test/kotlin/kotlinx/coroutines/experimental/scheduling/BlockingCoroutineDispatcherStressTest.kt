@@ -24,7 +24,6 @@ class BlockingCoroutineDispatcherStressTest(private val limit: Int) : SchedulerT
     private val observedConcurrency = ConcurrentHashMap<Int, Boolean>()
     private val concurrentWorkers = AtomicInteger(0)
 
-
     @Test
     fun testLimitParallelism() = runBlocking {
         val iterations = 250_000 * stressTestMultiplier
@@ -48,7 +47,6 @@ class BlockingCoroutineDispatcherStressTest(private val limit: Int) : SchedulerT
             require(i !in observedConcurrency.keys, { "Unexpected state: $observedConcurrency" })
         }
 
-        val lowerBound = Runtime.getRuntime().availableProcessors() + limit
-        checkPoolThreads(lowerBound..lowerBound + Runtime.getRuntime().availableProcessors())
+        checkPoolThreads(limit..limit + CORES_COUNT * 2)
     }
 }
