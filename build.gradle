@@ -17,6 +17,9 @@ buildscript {
         resolutionStrategy {
             eachDependency { DependencyResolveDetails details ->
                 if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name != 'kotlin-native-gradle-plugin') {
+                    // fix version of all dependencies from org.jetbrains.kotlin group
+                    // even when other dependencies require other versions indirectly,
+                    // except kotlin-native, which has its own pre-release versioning
                     details.useVersion kotlin_version
                 }
             }
