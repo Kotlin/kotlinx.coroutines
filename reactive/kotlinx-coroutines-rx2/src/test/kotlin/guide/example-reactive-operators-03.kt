@@ -24,14 +24,14 @@ import org.reactivestreams.*
 import kotlin.coroutines.experimental.*
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    this@takeUntil.openSubscription().use { thisChannel -> // explicitly open channel to Publisher<T>
-        other.openSubscription().use { otherChannel ->     // explicitly open channel to Publisher<U>
-            whileSelect {
-                otherChannel.onReceive { false }          // bail out on any received element from `other`
-                thisChannel.onReceive { send(it); true }  // resend element from this channel and continue
-            }
-        }
+    val thisChannel = this@takeUntil.openSubscription() // explicitly open channel to Publisher<T>
+    val otherChannel = other.openSubscription() // explicitly open channel to Publisher<U>
+    whileSelect {
+        otherChannel.onReceive { false }          // bail out on any received element from `other`
+        thisChannel.onReceive { send(it); true }  // resend element from this channel and continue
     }
+    thisChannel.cancel()
+    otherChannel.cancel()
 }
 
 fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {

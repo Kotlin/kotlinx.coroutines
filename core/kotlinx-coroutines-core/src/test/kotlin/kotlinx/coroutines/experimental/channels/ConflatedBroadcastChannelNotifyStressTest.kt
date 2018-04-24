@@ -95,7 +95,9 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     }
 
     suspend fun waitForEvent(): Int =
-        broadcast.openSubscription().use {
-            it.receive()
+        with(broadcast.openSubscription()) {
+            val value = receive()
+            cancel()
+            value
         }
 }

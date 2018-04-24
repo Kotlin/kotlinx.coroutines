@@ -69,7 +69,7 @@ class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    override fun openSubscription(): SubscriptionReceiveChannel<E> =
+    override fun openSubscription(): ReceiveChannel<E> =
         Subscriber(this).also {
             updateHead(addSub = it)
         }
@@ -197,7 +197,7 @@ class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), SubscriptionReceiveChannel<E> {
+    ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         @Volatile @JvmField

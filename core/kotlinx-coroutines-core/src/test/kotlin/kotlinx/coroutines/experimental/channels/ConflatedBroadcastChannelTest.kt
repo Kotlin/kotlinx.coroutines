@@ -38,7 +38,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
             expect(6)
             assertThat(sub.receive(), IsEqual("two")) // suspends
             expect(12)
-            sub.close()
+            sub.cancel()
             expect(13)
         }
         expect(4)
@@ -59,7 +59,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
             expect(17)
             assertThat(sub.receiveOrNull(), IsNull()) // suspends until closed
             expect(20)
-            sub.close()
+            sub.cancel()
             expect(21)
         }
         expect(10)
