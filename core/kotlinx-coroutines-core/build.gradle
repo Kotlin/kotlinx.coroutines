@@ -1,4 +1,6 @@
 dependencies {
+    testCompile group: 'io.ktor', name: 'ktor-client-apache', version: '0.9.1'
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
     testCompile "com.devexperts.lincheck:core:$lincheck_version"
 }
 
