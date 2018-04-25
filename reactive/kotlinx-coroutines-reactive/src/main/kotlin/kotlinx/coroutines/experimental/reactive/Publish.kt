@@ -167,7 +167,7 @@ private class PublisherCoroutine<in T>(
                 _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
                 try {
-                    if (cause != null && cause !is JobCancellationException)
+                    if (cause != null && cause !is CancellationException)
                         subscriber.onError(cause)
                     else
                         subscriber.onComplete()

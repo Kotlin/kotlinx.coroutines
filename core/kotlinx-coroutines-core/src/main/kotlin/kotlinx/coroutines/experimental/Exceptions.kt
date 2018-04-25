@@ -40,10 +40,7 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
 public actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    /**
-     * The job that was cancelled.
-     */
-    public actual val job: Job
+    @JvmField internal actual val job: Job
 ) : CancellationException(message) {
 
     init {

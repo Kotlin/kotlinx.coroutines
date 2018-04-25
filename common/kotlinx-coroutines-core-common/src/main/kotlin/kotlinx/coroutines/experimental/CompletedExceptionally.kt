@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internalAnnotations.*
+
 /**
  * Class for an internal state of a job that had completed exceptionally, including cancellation.
  *
@@ -26,7 +28,9 @@ package kotlinx.coroutines.experimental
  *        or artificial JobCancellationException if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
-open class CompletedExceptionally(public val cause: Throwable) {
+open class CompletedExceptionally(
+    @JvmField public val cause: Throwable
+) {
     override fun toString(): String = "$classSimpleName[$cause]"
 }
 
