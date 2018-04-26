@@ -30,7 +30,7 @@ public actual class CompletionHandlerException public actual constructor(
  * **It is not printed to console/log by default uncaught exception handler**.
  * (see [handleCoroutineException]).
  */
-public actual open class CancellationException actual constructor(message: String) : IllegalStateException(message)
+public actual open class CancellationException actual constructor(message: String?) : IllegalStateException(message)
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed

@@ -18,7 +18,7 @@ package kotlinx.coroutines.experimental
 
 public expect class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException
 
-public expect open class CancellationException(message: String) : IllegalStateException
+public expect open class CancellationException(message: String?) : IllegalStateException
 
 public expect class JobCancellationException(
     message: String,

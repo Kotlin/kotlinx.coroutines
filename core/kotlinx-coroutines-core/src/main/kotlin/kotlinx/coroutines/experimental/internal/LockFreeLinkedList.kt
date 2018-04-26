@@ -42,7 +42,7 @@ internal val LIST_EMPTY: Any = Symbol("LIST_EMPTY")
 private val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
+public actual typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
@@ -101,7 +101,7 @@ public actual open class LockFreeLinkedListNode {
     public actual val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
-    public val next: Any get() {
+    public actual val next: Any get() {
         _next.loop { next ->
             if (next !is OpDescriptor) return next
             next.perform(this)
@@ -111,7 +111,7 @@ public actual open class LockFreeLinkedListNode {
     public actual val nextNode: Node get() = next.unwrap()
 
     // LINEARIZABLE. Returns Node | Removed
-    public val prev: Any get() {
+    public actual val prev: Any get() {
         _prev.loop { prev ->
             if (prev is Removed) return prev
             prev as Node // otherwise, it can be only node
@@ -311,7 +311,7 @@ public actual open class LockFreeLinkedListNode {
 
     // ------ multi-word atomic operations helpers ------
 
-    public open class AddLastDesc<T : Node>(
+    public open class AddLastDesc<T : Node> constructor(
         @JvmField val queue: Node,
         @JvmField val node: T
     ) : AbstractAtomicDesc() {

@@ -66,8 +66,10 @@ public abstract class AtomicOp<in T> : OpDescriptor() {
     final override fun perform(affected: Any?): Any? {
         // make decision on status
         var decision = this._consensus.value
-        if (decision === NO_DECISION)
+        if (decision === NO_DECISION) {
             decision = decide(prepare(affected as T))
+        }
+
         complete(affected as T, decision)
         return decision
     }
