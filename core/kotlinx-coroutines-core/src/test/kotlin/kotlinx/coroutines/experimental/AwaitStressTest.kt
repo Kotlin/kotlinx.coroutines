@@ -3,6 +3,7 @@ package kotlinx.coroutines.experimental
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
+import kotlin.test.*
 
 class AwaitStressTest : TestBase() {
 
@@ -106,26 +107,29 @@ class AwaitStressTest : TestBase() {
         val barrier = CyclicBarrier(4)
 
         repeat(iterations) {
-            val jobs = mutableListOf<Job>()
+            // thread-safe collection that we are going to modify
+            val deferreds = CopyOnWriteArrayList<Deferred<Long>>()
 
-            jobs += async(pool) {
+            deferreds += async(pool) {
                 barrier.await()
                 1L
             }
 
-            jobs += async(pool) {
+            deferreds += async(pool) {
                 barrier.await()
                 2L
             }
 
-            jobs += async(pool) {
+            deferreds += async(pool) {
                 barrier.await()
-                jobs.removeAt(2)
+                deferreds.removeAt(2)
+                3L
             }
 
-            val allJobs = ArrayList(jobs)
+            val allJobs = ArrayList(deferreds)
             barrier.await()
-            jobs.awaitAll() // shouldn't hang
+            val results = deferreds.awaitAll() // shouldn't hang
+            check(results == listOf(1L, 2L, 3L) || results == listOf(1L, 2L))
             allJobs.awaitAll()
             barrier.reset()
         }

@@ -1,7 +1,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.coroutineContext
-import kotlin.test.Test
+import kotlin.test.*
 
 class AwaitTest : TestBase() {
 
@@ -22,7 +22,7 @@ class AwaitTest : TestBase() {
         expect(2)
         require(d2.isActive && !d2.isCompleted)
 
-        awaitAll(d, d2)
+        assertEquals(listOf("OK", 1L), awaitAll(d, d2))
         expect(5)
 
         require(d.isCompleted && d2.isCompleted)
@@ -33,9 +33,9 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllLazy() = runTest {
         expect(1)
-        val d = async(coroutineContext, start = CoroutineStart.LAZY) { expect(2) }
-        val d2 = launch(coroutineContext, start = CoroutineStart.LAZY) { expect(3) }
-        awaitAll(d, d2)
+        val d = async(coroutineContext, start = CoroutineStart.LAZY) { expect(2); 1 }
+        val d2 = async(coroutineContext, start = CoroutineStart.LAZY) { expect(3); 2 }
+        assertEquals(listOf(1, 2), awaitAll(d, d2))
         finish(4)
     }
 
@@ -43,11 +43,11 @@ class AwaitTest : TestBase() {
     fun testAwaitAllTyped() = runTest {
         val d1 = async(coroutineContext) { 1L }
         val d2 = async(coroutineContext) { "" }
-        val d3 = launch(coroutineContext) {  }
+        val d3 = async(coroutineContext) {  }
 
-        setOf(d1, d2).awaitAll()
-        setOf(d1, d3).awaitAll()
-        listOf(d2, d3).awaitAll()
+        assertEquals(listOf(1L, ""), listOf(d1, d2).awaitAll())
+        assertEquals(listOf(1L, Unit), listOf(d1, d3).awaitAll())
+        assertEquals(listOf("", Unit), listOf(d2, d3).awaitAll())
     }
 
     @Test
@@ -134,11 +134,11 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompleted() = runTest {
-        val d1 = async(coroutineContext) { expect(1) }
+        val d1 = async(coroutineContext) { expect(1); 1 }
         d1.await()
-        val d2 = launch(coroutineContext) { expect(3) }
+        val d2 = async(coroutineContext) { expect(3); 2 }
         expect(2)
-        awaitAll(d1, d2)
+        assertEquals(listOf(1, 2), awaitAll(d1, d2))
         require(d1.isCompleted && d2.isCompleted)
         finish(4)
     }
@@ -209,9 +209,9 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllSameJobMultipleTimes() = runTest {
-        val job = launch(coroutineContext) { }
+        val d = async(coroutineContext) { "OK" }
         // Duplicates are allowed though kdoc doesn't guarantee that
-        awaitAll(job, job, job)
+        assertEquals(listOf("OK", "OK", "OK"), awaitAll(d, d, d))
     }
 
     @Test
@@ -232,8 +232,8 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllEmpty() = runTest {
         expect(1)
-        awaitAll()
-        emptyList<Job>().awaitAll()
+        assertEquals(emptyList(), awaitAll<Unit>())
+        assertEquals(emptyList(), emptyList<Deferred<Unit>>().awaitAll())
         finish(2)
     }
 
