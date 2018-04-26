@@ -935,28 +935,28 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 }
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
+@JvmField internal val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
+@JvmField internal val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val POLL_FAILED: Any = Symbol("POLL_FAILED")
+@JvmField internal val POLL_FAILED: Any = Symbol("POLL_FAILED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
+@JvmField internal val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
+@JvmField internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val NULL_VALUE: Any = Symbol("NULL_VALUE")
+@JvmField internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
+@JvmField internal val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-@JvmField val SEND_RESUMED = Symbol("SEND_RESUMED")
+@JvmField internal val SEND_RESUMED = Symbol("SEND_RESUMED")
 
 /**
  * Represents sending waiter in the queue.

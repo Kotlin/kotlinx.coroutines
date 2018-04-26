@@ -21,6 +21,6 @@ package kotlinx.coroutines.experimental.internal
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-public class Symbol(val symbol: String) {
+internal class Symbol(val symbol: String) {
     override fun toString(): String = symbol
 }

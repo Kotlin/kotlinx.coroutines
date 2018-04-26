@@ -60,6 +60,7 @@ public expect open class AddLastDesc<T : LockFreeLinkedListNode>(
     override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode)
 }
 
+/** @suppress **This is unstable API and it is subject to change.** */
 public expect open class RemoveFirstDesc<T>(queue: LockFreeLinkedListNode): AbstractAtomicDesc {
     val queue: LockFreeLinkedListNode
     public val result: T
