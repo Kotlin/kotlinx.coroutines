@@ -113,6 +113,7 @@ public actual open class AddLastDesc<T : Node> actual constructor(
     protected actual override fun finishOnSuccess(affected: LockFreeLinkedListNode, next: LockFreeLinkedListNode) = Unit
 }
 
+/** @suppress **This is unstable API and it is subject to change.** */
 public actual open class RemoveFirstDesc<T> actual constructor(
     actual val queue: LockFreeLinkedListNode
 ) : AbstractAtomicDesc() {

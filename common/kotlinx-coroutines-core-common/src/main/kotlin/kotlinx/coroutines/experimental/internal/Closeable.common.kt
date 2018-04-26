@@ -1,5 +1,11 @@
 package kotlinx.coroutines.experimental.internal
 
-expect interface Closeable {
+/**
+ * Closeable entity.
+ * @suppress **Deprecated**
+ */
+@Deprecated("No replacement, see specific use")
+public expect interface Closeable {
+    @Deprecated("No replacement, see specific code")
     fun close()
 }

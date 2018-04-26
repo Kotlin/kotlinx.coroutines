@@ -6,13 +6,13 @@ package kotlinx.coroutines.experimental.internal
  *
  * Note that this alias is intentionally not named as CopyOnWriteList to avoid accidental misusage outside of ArrayBroadcastChannel
  */
-typealias SubscribersList<E> = MutableList<E>
+internal typealias SubscribersList<E> = MutableList<E>
 
-expect fun <E> subscriberList(): SubscribersList<E>
+internal expect fun <E> subscriberList(): SubscribersList<E>
 
-expect class ReentrantLock() {
+internal expect class ReentrantLock() {
     fun tryLock(): Boolean
     fun unlock(): Unit
 }
 
-expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
+internal expect inline fun <T> ReentrantLock.withLock(action: () -> T): T
