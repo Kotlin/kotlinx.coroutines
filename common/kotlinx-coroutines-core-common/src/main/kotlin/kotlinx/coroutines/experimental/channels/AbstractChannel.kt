@@ -83,13 +83,13 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Returns non-null closed token if it is last in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForSend: Closed<*>? get() = queue.prev as? Closed<*>
+    protected val closedForSend: Closed<*>? get() = queue.prevNode as? Closed<*>
 
     /**
      * Returns non-null closed token if it is first in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForReceive: Closed<*>? get() = queue.next as? Closed<*>
+    protected val closedForReceive: Closed<*>? get() = queue.nextNode as? Closed<*>
 
     /**
      * Retrieves first sending waiter from the queue or returns closed token.
@@ -130,7 +130,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
-        val prev = node.prev
+        val prev = node.prevNode
         (prev as? SendBuffered<*>)?.remove()
     }
 
@@ -168,7 +168,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
     // ------ SendChannel ------
 
     public final override val isClosedForSend: Boolean get() = closedForSend != null
-    public final override val isFull: Boolean get() = queue.next !is ReceiveOrClosed<*> && isBufferFull
+    public final override val isFull: Boolean get() = queue.nextNode !is ReceiveOrClosed<*> && isBufferFull
 
     public final override suspend fun send(element: E) {
         // fast path -- try offer non-blocking
@@ -376,7 +376,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     private val queueDebugStateString: String
         get() {
-            val head = queue.next
+            val head = queue.nextNode
             if (head === queue) return "EmptyQueue"
             var result = when (head) {
                 is Closed<*> -> head.toString()
@@ -384,7 +384,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                 is Send -> "SendQueued"
                 else -> "UNEXPECTED:$head" // should not happen
             }
-            val tail = queue.prev
+            val tail = queue.prevNode
             if (tail !== head) {
                 result += ",queueSize=${countQueueSize()}"
                 if (tail is Closed<*>) result += ",closedForSend=$tail"
@@ -498,12 +498,12 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val hasReceiveOrClosed: Boolean get() = queue.next is ReceiveOrClosed<*>
+    protected val hasReceiveOrClosed: Boolean get() = queue.nextNode is ReceiveOrClosed<*>
 
     // ------ ReceiveChannel ------
 
     public final override val isClosedForReceive: Boolean get() = closedForReceive != null && isBufferEmpty
-    public final override val isEmpty: Boolean get() = queue.next !is Send && isBufferEmpty
+    public final override val isEmpty: Boolean get() = queue.nextNode !is Send && isBufferEmpty
 
     @Suppress("UNCHECKED_CAST")
     public final override suspend fun receive(): E {

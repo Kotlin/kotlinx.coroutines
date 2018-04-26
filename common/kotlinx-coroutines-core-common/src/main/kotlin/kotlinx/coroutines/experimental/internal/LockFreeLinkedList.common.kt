@@ -19,9 +19,7 @@ package kotlinx.coroutines.experimental.internal
 /** @suppress **This is unstable API and it is subject to change.** */
 public expect open class LockFreeLinkedListNode() {
     public val isRemoved: Boolean
-    public val next: Any
     public val nextNode: LockFreeLinkedListNode
-    public val prev: Any
     public val prevNode: LockFreeLinkedListNode
     public fun addLast(node: LockFreeLinkedListNode)
     public fun addOneIfEmpty(node: LockFreeLinkedListNode): Boolean

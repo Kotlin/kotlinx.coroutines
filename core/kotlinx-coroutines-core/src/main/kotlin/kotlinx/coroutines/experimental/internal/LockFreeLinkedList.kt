@@ -101,17 +101,18 @@ public actual open class LockFreeLinkedListNode {
     public actual val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
-    public actual val next: Any get() {
+    public val next: Any get() {
         _next.loop { next ->
             if (next !is OpDescriptor) return next
             next.perform(this)
         }
     }
 
+    // LINEARIZABLE. Returns next non-removed Node
     public actual val nextNode: Node get() = next.unwrap()
 
     // LINEARIZABLE. Returns Node | Removed
-    public actual val prev: Any get() {
+    public val prev: Any get() {
         _prev.loop { prev ->
             if (prev is Removed) return prev
             prev as Node // otherwise, it can be only node
@@ -120,6 +121,7 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
+    // LINEARIZABLE. Returns prev non-removed Node
     public actual val prevNode: Node get() = prev.unwrap()
 
     // ------ addOneIfEmpty ------
@@ -565,7 +567,7 @@ public actual open class LockFreeLinkedListNode {
         var cur = this
         while (true) {
             if (cur is LockFreeLinkedListHead) return cur
-            cur = cur.next.unwrap()
+            cur = cur.nextNode
             check(cur !== this) { "Cannot loop to this while looking for list head" }
         }
     }
@@ -679,7 +681,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         var cur: Node = next as Node
         while (cur != this) {
             if (cur is T) block(cur)
-            cur = cur.next.unwrap()
+            cur = cur.nextNode
         }
     }
 
@@ -692,7 +694,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         var prev: Node = this
         var cur: Node = next as Node
         while (cur != this) {
-            val next = cur.next.unwrap()
+            val next = cur.nextNode
             cur.validateNode(prev, next)
             prev = cur
             cur = next
