@@ -18,9 +18,10 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.timeunit.TimeUnit
+import kotlinx.coroutines.experimental.timeunit.*
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
+import kotlin.jvm.*
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -303,6 +304,12 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         time: Long, timeUnit: TimeUnit,
         private val cont: CancellableContinuation<Unit>
     ) : DelayedTask(time, timeUnit) {
+
+        init {
+            // Note that this operation isn't lock-free, but very short
+            cont.invokeOnCompletion(DelayedCancellationHandler(cont, this))
+        }
+
         override fun run() {
             with(cont) { resumeUndispatched(Unit) }
         }
@@ -314,6 +321,15 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     ) : DelayedTask(time, timeUnit) {
         override fun run() { block.run() }
         override fun toString(): String = super.toString() + block.toString()
+    }
+
+    private class DelayedCancellationHandler(
+        cont: CancellableContinuation<Unit>,
+        private val task: DelayedResumeTask
+    ) : JobNode<CancellableContinuation<Unit>>(cont) {
+        override fun invoke(cause: Throwable?) {
+            task.dispose()
+        }
     }
 }
 

@@ -23,7 +23,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import kotlin.coroutines.experimental.*
 
-class DelayTest : TestBase() {
+class DelayJvmTest : TestBase() {
     /**
      * Test that delay works properly in contexts with custom [ContinuationInterceptor]
      */

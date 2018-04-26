@@ -72,38 +72,37 @@ class AwaitTest : TestBase() {
         assertEquals(listOf("", Unit), listOf(d2, d3).awaitAll())
     }
 
-// todo: HANGS ON JS
-//    @Test
-//    fun testAwaitAllExceptionally() = runTest {
-//        expect(1)
-//        val d = async(coroutineContext) {
-//            expect(3)
-//            "OK"
-//        }
-//
-//        val d2 = async(coroutineContext) {
-//            yield()
-//            throw TestException()
-//        }
-//
-//        val d3 = async(coroutineContext) {
-//            expect(4)
-//            delay(Long.MAX_VALUE)
-//            1
-//        }
-//
-//        expect(2)
-//        try {
-//            awaitAll(d, d2, d3)
-//        } catch (e: TestException) {
-//            expect(5)
-//        }
-//
-//        yield()
-//        require(d.isCompleted && d2.isCompletedExceptionally && d3.isActive)
-//        d3.cancel()
-//        finish(6)
-//    }
+    @Test
+    fun testAwaitAllExceptionally() = runTest {
+        expect(1)
+        val d = async(coroutineContext) {
+            expect(3)
+            "OK"
+        }
+
+        val d2 = async(coroutineContext) {
+            yield()
+            throw TestException()
+        }
+
+        val d3 = async(coroutineContext) {
+            expect(4)
+            delay(Long.MAX_VALUE)
+            1
+        }
+
+        expect(2)
+        try {
+            awaitAll(d, d2, d3)
+        } catch (e: TestException) {
+            expect(5)
+        }
+
+        yield()
+        require(d.isCompleted && d2.isCompletedExceptionally && d3.isActive)
+        d3.cancel()
+        finish(6)
+    }
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
@@ -131,30 +130,29 @@ class AwaitTest : TestBase() {
         finish(4)
     }
 
-// todo: HANGS ON JS
-//    @Test
-//    fun testAwaitAllCancellation() = runTest {
-//        val outer = async(coroutineContext) {
-//
-//            expect(1)
-//            val inner = async(coroutineContext) {
-//                expect(4)
-//                delay(Long.MAX_VALUE)
-//            }
-//
-//            expect(2)
-//            awaitAll(inner)
-//            expectUnreached()
-//        }
-//
-//        yield()
-//        expect(3)
-//        yield()
-//        require(outer.isActive)
-//        outer.cancel()
-//        require(outer.isCancelled)
-//        finish(5)
-//    }
+    @Test
+    fun testAwaitAllCancellation() = runTest {
+        val outer = async(coroutineContext) {
+
+            expect(1)
+            val inner = async(coroutineContext) {
+                expect(4)
+                delay(Long.MAX_VALUE)
+            }
+
+            expect(2)
+            awaitAll(inner)
+            expectUnreached()
+        }
+
+        yield()
+        expect(3)
+        yield()
+        require(outer.isActive)
+        outer.cancel()
+        require(outer.isCancelled)
+        finish(5)
+    }
 
     @Test
     fun testAwaitAllPartiallyCompleted() = runTest {
@@ -313,28 +311,27 @@ class AwaitTest : TestBase() {
         finish(5)
     }
 
-// todo: HANGS ON JS
-//    @Test
-//    fun testJoinAllCancellation() = runTest {
-//        val outer = launch(coroutineContext) {
-//            expect(2)
-//            val inner = launch(coroutineContext) {
-//                expect(3)
-//                delay(Long.MAX_VALUE)
-//            }
-//
-//            joinAll(inner)
-//            expectUnreached()
-//        }
-//
-//        expect(1)
-//        yield()
-//        require(outer.isActive)
-//        yield()
-//        outer.cancel()
-//        outer.join()
-//        finish(4)
-//    }
+    @Test
+    fun testJoinAllCancellation() = runTest {
+        val outer = launch(coroutineContext) {
+            expect(2)
+            val inner = launch(coroutineContext) {
+                expect(3)
+                delay(Long.MAX_VALUE)
+            }
+
+            joinAll(inner)
+            expectUnreached()
+        }
+
+        expect(1)
+        yield()
+        require(outer.isActive)
+        yield()
+        outer.cancel()
+        outer.join()
+        finish(4)
+    }
 
     @Test
     fun testJoinAllAlreadyCompleted() = runTest {
