@@ -49,6 +49,10 @@ Top-level suspending functions:
 | [awaitAll]               | Awaits for successful completion of all given jobs or exceptional completion of any
 | [joinAll]                | Joins on all given jobs
 
+Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
+helper function. [NonCancellable] job object is provided to suppress cancellation with 
+`run(NonCancellable) {...}` block of code.
+
 [Select][kotlinx.coroutines.experimental.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
 | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
@@ -60,10 +64,6 @@ Top-level suspending functions:
 | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.experimental.channels.ReceiveChannel.receiveOrNull] | [onReceiveOrNull][kotlinx.coroutines.experimental.channels.ReceiveChannel.onReceiveOrNull] | [poll][kotlinx.coroutines.experimental.channels.ReceiveChannel.poll]
 | [Mutex][kotlinx.coroutines.experimental.sync.Mutex]          | [lock][kotlinx.coroutines.experimental.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.experimental.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.experimental.sync.Mutex.tryLock]
 | none            | [delay]                                        | [onTimeout][kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]                   | none
-
-Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
-helper function. [NonCancellable] job object is provided to suppress cancellation with 
-`run(NonCancellable) {...}` block of code.
 
 This module provides debugging facilities for coroutines (run JVM with `-ea` or `-Dkotlinx.coroutines.debug` options) 
 and [newCoroutineContext] function to write user-defined coroutine builders that work with these
@@ -117,12 +117,12 @@ Optional time unit support for multiplatform projects.
 [withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html
 [awaitAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await-all.html
 [joinAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/join-all.html
+[suspendCancellableCoroutine]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [Job.onJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/on-join.html
 [Job.isCompleted]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/is-completed.html
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
-[suspendCancellableCoroutine]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->
 [kotlinx.coroutines.experimental.sync.Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/index.html

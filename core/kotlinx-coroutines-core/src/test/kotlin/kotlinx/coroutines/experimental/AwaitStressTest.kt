@@ -3,7 +3,6 @@ package kotlinx.coroutines.experimental
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
-import kotlin.test.*
 
 class AwaitStressTest : TestBase() {
 

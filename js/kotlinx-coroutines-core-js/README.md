@@ -10,7 +10,6 @@ Coroutine builder functions:
 | [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
 | [produce][kotlinx.coroutines.experimental.channels.produce]     | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.experimental.channels.ProducerScope]  | Produces a stream of elements
 
-
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
 | **Name**                    | **Description**
@@ -32,16 +31,17 @@ Synchronization primitives for coroutines:
 | [Mutex][kotlinx.coroutines.experimental.sync.Mutex]          | [lock][kotlinx.coroutines.experimental.sync.Mutex.lock]                                          | Mutual exclusion 
 | [Channel][kotlinx.coroutines.experimental.channels.Channel]  | [send][kotlinx.coroutines.experimental.channels.SendChannel.send], [receive][kotlinx.coroutines.experimental.channels.ReceiveChannel.receive] | Communication channel (aka queue or exchanger)
 
-
 Top-level suspending functions:
 
-| **Name**            | **Description**
-| ------------------- | ---------------
-| [delay]             | Non-blocking sleep
-| [yield]             | Yields thread in single-threaded dispatchers
-| [withContext]       | Switches to a different context
-| [withTimeout]       | Set execution time-limit with exception on timeout 
-| [withTimeoutOrNull] | Set execution time-limit will null result on timeout
+| **Name**                 | **Description**
+| -------------------      | ---------------
+| [delay]                  | Non-blocking sleep
+| [yield]                  | Yields thread in single-threaded dispatchers
+| [withContext]            | Switches to a different context
+| [withTimeout]            | Set execution time-limit with exception on timeout 
+| [withTimeoutOrNull]      | Set execution time-limit will null result on timeout
+| [awaitAll]               | Awaits for successful completion of all given jobs or exceptional completion of any
+| [joinAll]                | Joins on all given jobs
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
 helper function. [NonCancellable] job object is provided to suppress cancellation with 
@@ -58,7 +58,6 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 | [ReceiveChannel][kotlinx.coroutines.experimental.channels.ReceiveChannel] | [receiveOrNull][kotlinx.coroutines.experimental.channels.ReceiveChannel.receiveOrNull] | [onReceiveOrNull][kotlinx.coroutines.experimental.channels.ReceiveChannel.onReceiveOrNull] | [poll][kotlinx.coroutines.experimental.channels.ReceiveChannel.poll]
 | [Mutex][kotlinx.coroutines.experimental.sync.Mutex]          | [lock][kotlinx.coroutines.experimental.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.experimental.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.experimental.sync.Mutex.tryLock]
 | none            | [delay]                                        | [onTimeout][kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]                   | none
-
 
 # Package kotlinx.coroutines.experimental
 
@@ -81,6 +80,8 @@ General-purpose coroutine builders, contexts, and helper functions.
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
 [withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html
+[awaitAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await-all.html
+[joinAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/join-all.html
 [suspendCancellableCoroutine]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [Job.onJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/on-join.html
