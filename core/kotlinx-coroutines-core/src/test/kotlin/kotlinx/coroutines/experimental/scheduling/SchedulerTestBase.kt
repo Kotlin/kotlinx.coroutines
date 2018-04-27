@@ -1,22 +1,60 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import org.junit.After
-import kotlin.coroutines.experimental.CoroutineContext
+import org.junit.*
+import kotlin.coroutines.experimental.*
 
 abstract class SchedulerTestBase : TestBase() {
     companion object {
         val CORES_COUNT = Runtime.getRuntime().availableProcessors()
 
-        fun checkPoolThreads(expectedThreadsCount: Int = Runtime.getRuntime().availableProcessors()) {
-            val actual = Thread.getAllStackTraces().keys.count { it is CoroutineScheduler.PoolWorker }
-            require(actual == expectedThreadsCount, { "Expected $expectedThreadsCount pool threads, but have $actual" })
+        /**
+         * TODO
+         */
+        fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
+            val threadsCount = maxSequenceNumber()!! + 1
+            require(threadsCount == expectedThreadsCount)
+                { "Expected $expectedThreadsCount pool threads, but has $threadsCount" }
         }
 
-        fun checkPoolThreads(range: IntRange) {
-            val actual = Thread.getAllStackTraces().keys.count { it is CoroutineScheduler.PoolWorker }
-            require(actual in range, { "Expected pool threads to be in interval $range, but have $actual" })
+        /**
+         * TODO
+         */
+        fun checkPoolThreadsCreated(range: IntRange) {
+            val maxSequenceNumber = maxSequenceNumber()!! + 1
+            require(maxSequenceNumber in range) { "Expected pool threads to be in interval $range, but has $maxSequenceNumber" }
+        }
+
+        /**
+         * TODO
+         */
+        fun checkPoolThreadsExist(range: IntRange) {
+            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()
+            require(threads in range) { "Expected threads in $range interval, but has $threads" }
+        }
+
+        /**
+         * TODO
+         */
+        fun checkPoolThreadsExist(expectedThreadsCount: Int = CORES_COUNT) {
+            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()
+            require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
+        }
+
+        private fun maxSequenceNumber(): Int? {
+            return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }
+                .map { sequenceNumber(it.name) }.max()
+        }
+
+        private fun sequenceNumber(threadName: String): Int {
+            val suffix = threadName.substring(threadName.lastIndexOf("-") + 1)
+            val separatorIndex = suffix.indexOf(' ')
+            if (separatorIndex == -1) {
+                return suffix.toInt()
+            }
+
+            return suffix.substring(0, separatorIndex).toInt()
         }
 
         suspend fun Iterable<Job>.joinAll() = forEach { it.join() }

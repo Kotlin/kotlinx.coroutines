@@ -2,10 +2,11 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
-import java.util.concurrent.atomic.AtomicBoolean
+import org.junit.Ignore
+import org.junit.Test
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class CoroutineDispatcherTest : SchedulerTestBase() {
 
@@ -31,7 +32,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         }
 
         finish(6)
-        checkPoolThreads(1)
+        checkPoolThreadsCreated(1)
     }
 
     @Test
@@ -71,7 +72,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
 
         job.await()
         finish(4)
-        checkPoolThreads(2)
+        checkPoolThreadsCreated(2)
     }
 
     @Test
@@ -92,7 +93,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
             assertEquals(thread, Thread.currentThread())
         }
 
-        checkPoolThreads()
+        checkPoolThreadsCreated()
     }
 
     @Test
@@ -105,7 +106,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         }
 
         finish(3)
-        checkPoolThreads(2)
+        checkPoolThreadsCreated(2)
     }
 
     @Test
@@ -131,7 +132,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
             finish(4)
         }
 
-        checkPoolThreads()
+        checkPoolThreadsCreated()
     }
 
     @Test
@@ -139,7 +140,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         corePoolSize = 1
         maxPoolSize = 4
         (1..10).map { launch(blockingDispatcher.value) { Thread.sleep(100) } }.joinAll()
-        checkPoolThreads(4)
+        checkPoolThreadsCreated(4)
     }
 
     @Test(timeout = 1_000) // Failing test until yield() is not fixed

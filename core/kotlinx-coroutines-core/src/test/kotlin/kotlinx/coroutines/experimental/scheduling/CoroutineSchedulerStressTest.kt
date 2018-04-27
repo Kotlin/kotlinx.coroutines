@@ -1,15 +1,13 @@
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.scheduling.SchedulerTestBase.Companion.checkPoolThreads
-import org.junit.After
+import kotlinx.coroutines.experimental.scheduling.SchedulerTestBase.Companion.checkPoolThreadsCreated
+import org.junit.*
 import org.junit.Test
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.experimental.EmptyCoroutineContext
-import kotlin.test.assertEquals
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class CoroutineSchedulerStressTest : TestBase() {
 
@@ -111,7 +109,7 @@ class CoroutineSchedulerStressTest : TestBase() {
     private fun validateResults() {
         val result = observedThreads.values.flatMap { it }.toSet()
         assertEquals((1..tasksNum).toSet(), result)
-        checkPoolThreads(Runtime.getRuntime().availableProcessors())
+        checkPoolThreadsCreated(Runtime.getRuntime().availableProcessors())
     }
 
 }

@@ -1,8 +1,8 @@
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Test
-import java.util.concurrent.CyclicBarrier
+import org.junit.*
+import java.util.concurrent.*
 
 class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
@@ -20,7 +20,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
         nonBlockingJob.join()
         blockingJob.join()
-        checkPoolThreads(2)
+        checkPoolThreadsCreated(2)
     }
 
     @Test(timeout = 10_000)
@@ -37,7 +37,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         }
 
         blocking.join()
-        checkPoolThreads(2)
+        checkPoolThreadsCreated(2)
     }
 
     @Test(timeout = 1_000)
@@ -51,7 +51,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
             blocking.join()
             // Depends on how fast thread will be created
-            checkPoolThreads(2..3)
+            checkPoolThreadsCreated(2..3)
         }
     }
 
@@ -85,7 +85,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         tasks.forEach { require(it.isActive) }
         barrier.await()
         tasks.joinAll()
-        checkPoolThreads(101)
+        checkPoolThreadsCreated(101)
     }
 
     @Test(timeout = 1_000)
@@ -110,7 +110,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         firstBarrier.await()
         secondBarrier.await()
         blockingTasks.joinAll()
-        checkPoolThreads(21..22)
+        checkPoolThreadsCreated(21..22)
     }
 
     @Test(timeout = 1_000)
@@ -131,7 +131,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         barrier.await()
         blockingTasks.joinAll()
         // There may be race when multiple CPU threads are trying to lazily created one more
-        checkPoolThreads(104..110)
+        checkPoolThreadsCreated(104..110)
     }
 
     @Test

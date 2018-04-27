@@ -16,12 +16,11 @@ internal val BLOCKING_DEFAULT_PARALLELISM = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.blocking.parallelism", 16L).toInt()
 
 internal val MAX_POOL_SIZE = readFromSystemProperties(
-    "kotlinx.coroutines.scheduler.max.pool.size", Runtime.getRuntime().availableProcessors() * 1024L).toInt()
+    "kotlinx.coroutines.scheduler.max.pool.size", Runtime.getRuntime().availableProcessors() * 128L).toInt()
 
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
-// Internal API, temporary exposed
-enum class TaskMode {
+internal enum class TaskMode {
     // Marker indicating that task is CPU-bound and will not block
     NON_BLOCKING,
     // Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required

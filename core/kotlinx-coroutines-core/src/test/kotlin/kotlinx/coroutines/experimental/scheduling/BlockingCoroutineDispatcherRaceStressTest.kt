@@ -1,16 +1,15 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
-import org.junit.Test
-import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import java.util.concurrent.atomic.*
 
 class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
-    private var limitingDispatcher = blockingDispatcher(1)
     private val concurrentWorkers = AtomicInteger(0)
 
     @Test
     fun testAddPollRace() = runBlocking {
+        val limitingDispatcher = blockingDispatcher(1)
         val iterations = 100_000 * stressTestMultiplier
         // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
         for (i in 1..iterations) {
@@ -28,6 +27,26 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
             tasks.forEach { it.await() }
         }
 
-        checkPoolThreads(2..3)
+        checkPoolThreadsCreated(2..3)
+    }
+
+    @Test
+    fun testPingPongThreadsCount() = runBlocking {
+        corePoolSize = CORES_COUNT
+        val iterations = 100_000 * stressTestMultiplier
+        // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
+        for (i in 1..iterations) {
+            val tasks = (1..2).map {
+                async(dispatcher) {
+                    // Useless work
+                    concurrentWorkers.incrementAndGet()
+                    concurrentWorkers.decrementAndGet()
+                }
+            }
+
+            tasks.forEach { it.await() }
+        }
+
+        checkPoolThreadsCreated(CORES_COUNT)
     }
 }
