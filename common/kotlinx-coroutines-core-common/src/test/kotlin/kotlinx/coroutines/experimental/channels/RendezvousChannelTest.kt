@@ -21,7 +21,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class RendezvousChannelTest : TestBase() {
-
     @Test
     fun testSimple() = runTest {
         val q = RendezvousChannel<Int>()
@@ -289,4 +288,13 @@ class RendezvousChannelTest : TestBase() {
         check(q.receiveOrNull() == null)
         finish(12)
     }
+
+    @Test
+    fun testCancelWithCause() = runTest({ it is TestException }) {
+        val channel = RendezvousChannel<Int>()
+        channel.cancel(TestException())
+        channel.receiveOrNull()
+    }
+
+    private class TestException : Exception()
 }

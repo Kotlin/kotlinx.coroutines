@@ -75,7 +75,7 @@ internal abstract class AbstractContinuation<in T>(
         if (trySuspend()) return COROUTINE_SUSPENDED
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
-        if (state is CompletedExceptionally) throw state.exception
+        if (state is CompletedExceptionally) throw state.cause
         return getSuccessfulResult(state)
     }
 
@@ -99,8 +99,8 @@ internal abstract class AbstractContinuation<in T>(
                 }
                 is Cancelled -> {
                     // Ignore resumes in cancelled coroutines, but handle exception if a different one here
-                    if (proposedUpdate is CompletedExceptionally && proposedUpdate.exception != state.exception)
-                        handleException(proposedUpdate.exception)
+                    if (proposedUpdate is CompletedExceptionally && proposedUpdate.cause != state.cause)
+                        handleException(proposedUpdate.cause)
                     return
                 }
                 else -> error("Already resumed, but got $proposedUpdate")

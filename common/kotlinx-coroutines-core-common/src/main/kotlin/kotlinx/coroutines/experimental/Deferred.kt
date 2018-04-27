@@ -152,7 +152,7 @@ public interface Deferred<out T> : Job {
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,,
  * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
- * function and will be started implicitly on the first invocation of [join][Job.join] or [await][Deferred.await].
+ * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].

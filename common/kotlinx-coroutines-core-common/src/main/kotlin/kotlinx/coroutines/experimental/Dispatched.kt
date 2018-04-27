@@ -142,7 +142,7 @@ public interface DispatchedTask<in T> : Runnable {
         state as T
 
     public fun getExceptionalResult(state: Any?): Throwable? =
-        (state as? CompletedExceptionally)?.exception
+        (state as? CompletedExceptionally)?.cause
 
     public override fun run() {
         try {

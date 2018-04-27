@@ -21,7 +21,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ArrayBroadcastChannelTest : TestBase() {
-
     @Test
     fun testBasic() = runTest {
         expect(1)
@@ -161,7 +160,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         sub.consumeEach {
             check(it == ++expected)
             if (it == 2) {
-                sub.close()
+                sub.cancel()
             }
         }
         check(expected == 2)
@@ -172,8 +171,18 @@ class ArrayBroadcastChannelTest : TestBase() {
         val channel = BroadcastChannel<Int>(1)
         val sub = channel.openSubscription()
         assertFalse(sub.isClosedForReceive)
-        sub.close()
+        sub.cancel()
         assertTrue(sub.isClosedForReceive)
         sub.receive()
     }
+
+    @Test
+    fun testCancelWithCause() = runTest({ it is TestException }) {
+        val channel = BroadcastChannel<Int>(1)
+        val subscription = channel.openSubscription()
+        subscription.cancel(TestException())
+        subscription.receiveOrNull()
+    }
+
+    private class TestException : Exception()
 }

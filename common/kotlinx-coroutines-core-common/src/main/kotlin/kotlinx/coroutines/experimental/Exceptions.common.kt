@@ -25,7 +25,7 @@ public expect class JobCancellationException(
     cause: Throwable?,
     job: Job
 ) : CancellationException {
-    val job: Job
+    internal val job: Job
 }
 
 internal expect class DispatchException(message: String, cause: Throwable) : RuntimeException

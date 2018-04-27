@@ -21,7 +21,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ConflatedChannelTest : TestBase() {
-
     @Test
     fun testBasicConflationOfferPoll() {
         val q = ConflatedChannel<Int>()
@@ -90,4 +89,13 @@ class ConflatedChannelTest : TestBase() {
         check(q.receiveOrNull() == null)
         finish(2)
     }
+
+    @Test
+    fun testCancelWithCause() = runTest({ it is TestException }) {
+        val channel = ConflatedChannel<Int>()
+        channel.cancel(TestException())
+        channel.receiveOrNull()
+    }
+
+    private class TestException : Exception()
 }

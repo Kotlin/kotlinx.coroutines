@@ -21,7 +21,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ArrayChannelTest : TestBase() {
-
     @Test
     fun testSimple() = runTest {
         val q = ArrayChannel<Int>(1)
@@ -151,4 +150,13 @@ class ArrayChannelTest : TestBase() {
         check(q.receiveOrNull() == null)
         finish(12)
     }
+
+    @Test
+    fun testCancelWithCause() = runTest({ it is TestException }) {
+        val channel = ArrayChannel<Int>(5)
+        channel.cancel(TestException())
+        channel.receiveOrNull()
+    }
+
+    private class TestException : Exception()
 }

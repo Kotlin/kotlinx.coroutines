@@ -41,7 +41,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
-private val DEBUG = run {
+internal val DEBUG = run {
     val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
         catch (e: SecurityException) { null }
     when (value) {

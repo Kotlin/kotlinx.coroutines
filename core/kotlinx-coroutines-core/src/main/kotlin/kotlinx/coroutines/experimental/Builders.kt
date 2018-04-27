@@ -94,7 +94,7 @@ private class BlockingCoroutine<T>(
         timeSource.unregisterTimeLoopThread()
         // now return result
         val state = this.state
-        (state as? CompletedExceptionally)?.let { throw it.exception }
+        (state as? CompletedExceptionally)?.let { throw it.cause }
         return state as T
     }
 }

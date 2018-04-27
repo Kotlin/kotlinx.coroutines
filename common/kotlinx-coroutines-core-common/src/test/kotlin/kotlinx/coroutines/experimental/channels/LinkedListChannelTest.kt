@@ -16,11 +16,10 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
 class LinkedListChannelTest : TestBase() {
-
     @Test
     fun testBasic() = runTest {
         val c = LinkedListChannel<Int>()
@@ -46,4 +45,13 @@ class LinkedListChannelTest : TestBase() {
         check(q.isClosedForReceive)
         check(q.receiveOrNull() == null)
     }
+
+    @Test
+    fun testCancelWithCause() = runTest({ it is TestException }) {
+        val channel = LinkedListChannel<Int>()
+        channel.cancel(TestException())
+        channel.receiveOrNull()
+    }
+
+    private class TestException : Exception()
 }
