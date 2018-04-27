@@ -307,7 +307,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
         init {
             // Note that this operation isn't lock-free, but very short
-            cont.invokeOnCompletion(DelayedCancellationHandler(cont, this))
+            cont.disposeOnCompletion(this)
         }
 
         override fun run() {
@@ -321,15 +321,6 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     ) : DelayedTask(time, timeUnit) {
         override fun run() { block.run() }
         override fun toString(): String = super.toString() + block.toString()
-    }
-
-    private class DelayedCancellationHandler(
-        cont: CancellableContinuation<Unit>,
-        private val task: DelayedResumeTask
-    ) : JobNode<CancellableContinuation<Unit>>(cont) {
-        override fun invoke(cause: Throwable?) {
-            task.dispose()
-        }
     }
 }
 
