@@ -171,7 +171,7 @@ private open class StandaloneCoroutine(
     override fun hasOnFinishingHandler(update: Any?) = update is CompletedExceptionally
     override fun onFinishingInternal(update: Any?) {
         // note the use of the parent's job context below!
-        if (update is CompletedExceptionally) handleCoroutineException(parentContext, update.exception)
+        if (update is CompletedExceptionally) handleCoroutineException(parentContext, update.cause)
     }
 }
 

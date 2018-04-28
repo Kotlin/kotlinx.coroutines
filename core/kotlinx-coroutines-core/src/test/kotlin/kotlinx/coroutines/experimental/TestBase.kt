@@ -62,6 +62,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
      * complete successfully even if this exception is consumed somewhere in the test.
      */
+    @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun error(message: Any, cause: Throwable? = null): Nothing {
         val exception = IllegalStateException(message.toString(), cause)
         error.compareAndSet(null, exception)
@@ -117,7 +118,7 @@ public actual open class TestBase actual constructor() {
         checkTestThreads(threadsBefore)
     }
 
-    @Suppress("ACTUAL_WITHOUT_EXPECT")
+    @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun runTest(
         expected: ((Throwable) -> Boolean)? = null,
         unhandled: List<(Throwable) -> Boolean> = emptyList(),

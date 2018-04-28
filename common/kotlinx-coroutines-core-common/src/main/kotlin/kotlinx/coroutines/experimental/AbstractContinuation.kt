@@ -101,7 +101,8 @@ internal abstract class AbstractContinuation<in T>(
             return
         }
         parent.start() // make sure the parent is started
-        val handle = parent.invokeOnCompletion(onCancelling = true, handler = ChildContinuation(parent, this).asHandler)
+        val handle = parent.invokeOnCompletion(onCancelling = true,
+            handler = ChildContinuation(parent, this).asHandler)
 
         parentHandle = handle
         // now check our state _after_ registering (see updateStateToFinal order of actions)
@@ -146,7 +147,7 @@ internal abstract class AbstractContinuation<in T>(
         if (trySuspend()) return COROUTINE_SUSPENDED
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
-        if (state is CompletedExceptionally) throw state.exception
+        if (state is CompletedExceptionally) throw state.cause
         return getSuccessfulResult(state)
     }
 
@@ -254,7 +255,7 @@ internal abstract class AbstractContinuation<in T>(
                          * }
                          * ```
                          */
-                        if (proposedUpdate.exception is CancellationException) {
+                        if (proposedUpdate.cause is CancellationException) {
                             // Keep original cancellation cause and try add to suppressed exception from proposed cancel
                             update = state.cancel
                             coerceWithCancellation(state, proposedUpdate, update)
@@ -269,11 +270,10 @@ internal abstract class AbstractContinuation<in T>(
                              * }
                              * ```
                              */
-                            val exception = proposedUpdate.exception
-                            // TODO clashes with await all
+                            val exception = proposedUpdate.cause
                             val currentException = state.cancel.cause
                             // Add to suppressed if original cancellation differs from proposed exception
-                            if (currentException != null && (currentException !is CancellationException || currentException.cause !== exception)) {
+                            if (currentException !is CancellationException || currentException.cause !== exception) {
                                 exception.addSuppressedThrowable(currentException)
                             }
 
@@ -304,15 +304,13 @@ internal abstract class AbstractContinuation<in T>(
     // Coerce current cancelling state with proposed cancellation
     private fun coerceWithCancellation(state: Cancelling, proposedUpdate: CompletedExceptionally, update: CompletedExceptionally) {
         val originalCancellation = state.cancel
-        val originalException = originalCancellation.exception
+        val originalException = originalCancellation.cause
         val updateCause = proposedUpdate.cause
-
         // Cause of proposed update is present and differs from one in current state TODO clashes with await all
-        val isSameCancellation = originalCancellation.exception is CancellationException
-                && originalException.cause === updateCause?.cause
-
-        if (!isSameCancellation && updateCause !== null && originalException.cause !== updateCause) {
-            update.exception.addSuppressedThrowable(updateCause)
+        val isSameCancellation = originalCancellation.cause is CancellationException
+                && originalException.cause === updateCause.cause
+        if (!isSameCancellation && originalException.cause !== updateCause) {
+            update.cause.addSuppressedThrowable(updateCause)
         }
     }
 

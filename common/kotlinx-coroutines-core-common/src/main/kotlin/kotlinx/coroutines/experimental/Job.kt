@@ -275,6 +275,12 @@ public interface Job : CoroutineContext.Element {
      * with a job's exception or cancellation cause or `null`. Otherwise, handler will be invoked once when this
      * job is complete.
      *
+     * The meaning of `cause` that is passed to the handler:
+     * * Cause is `null` when job has completed normally.
+     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * * Otherwise, the job had _failed_.
+     *
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
      * registration of this handler and release its memory if its invocation is no longer needed.
      * There is no need to dispose the handler after completion of this job. The references to
@@ -292,6 +298,12 @@ public interface Job : CoroutineContext.Element {
      * When job is already cancelling or complete, then the handler is immediately invoked
      * with a job's cancellation cause or `null` unless [invokeImmediately] is set to false.
      * Otherwise, handler will be invoked once when this job is cancelled or complete.
+     *
+     * The meaning of `cause` that is passed to the handler:
+     * * Cause is `null` when job has completed normally.
+     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
+     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * * Otherwise, the job had _failed_.
      *
      * Invocation of this handler on a transition to a transient _cancelling_ state
      * is controlled by [onCancelling] boolean parameter.

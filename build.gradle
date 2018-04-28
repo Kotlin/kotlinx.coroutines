@@ -1,10 +1,6 @@
-allprojects {
-    def deployVersion = properties['DeployVersion']
-    if (deployVersion != null) version = deployVersion
-}
-
 buildscript {
-    if (rootProject.properties['kotlinSnapshot'] != null) {
+    ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
+    if (useKotlinSnapshot) {
         ext.kotlin_version = '1.2-SNAPSHOT'
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -17,6 +13,18 @@ buildscript {
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
+    configurations.classpath {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name != 'kotlin-native-gradle-plugin') {
+                    // fix version of all dependencies from org.jetbrains.kotlin group
+                    // even when other dependencies require other versions indirectly,
+                    // except kotlin-native, which has its own pre-release versioning
+                    details.useVersion kotlin_version
+                }
+            }
+        }
+    }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
@@ -26,6 +34,15 @@ buildscript {
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
     }
 }
+
+allprojects {
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
+    if (useKotlinSnapshot) {
+        kotlin_version = '1.2-SNAPSHOT'
+    }
+}
+
 
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
@@ -44,6 +61,23 @@ static def platformOf(project) {
 static def platformLib(base, platform) {
     if (platform == "jvm") return base
     return "$base-$platform"
+}
+
+subprojects {
+    if (useKotlinSnapshot) {
+        repositories {
+            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        }
+    }
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.jetbrains.kotlin') {
+                    details.useVersion kotlin_version
+                }
+            }
+        }
+    }
 }
 
 configure(subprojects.findAll { !sourceless.contains(it.name)  }) {

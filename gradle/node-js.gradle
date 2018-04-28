@@ -13,7 +13,7 @@ node {
 task prepareNodePackage(type: Copy) {
    from("npm") {
        include 'package.json'
-       expand project.properties
+       expand (project.properties + [kotlinDependency: ""])
    }
    from("npm") {
        exclude 'package.json'

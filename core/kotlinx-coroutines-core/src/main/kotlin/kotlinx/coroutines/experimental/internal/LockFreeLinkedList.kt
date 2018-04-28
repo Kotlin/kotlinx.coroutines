@@ -42,7 +42,7 @@ internal val LIST_EMPTY: Any = Symbol("LIST_EMPTY")
 private val REMOVE_PREPARED: Any = Symbol("REMOVE_PREPARED")
 
 /** @suppress **This is unstable API and it is subject to change.** */
-public typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
+public actual typealias RemoveFirstDesc<T> = LockFreeLinkedListNode.RemoveFirstDesc<T>
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual typealias AddLastDesc<T> = LockFreeLinkedListNode.AddLastDesc<T>
@@ -108,6 +108,7 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
+    // LINEARIZABLE. Returns next non-removed Node
     public actual val nextNode: Node get() = next.unwrap()
 
     // LINEARIZABLE. Returns Node | Removed
@@ -120,6 +121,7 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
+    // LINEARIZABLE. Returns prev non-removed Node
     public actual val prevNode: Node get() = prev.unwrap()
 
     // ------ addOneIfEmpty ------
@@ -311,7 +313,7 @@ public actual open class LockFreeLinkedListNode {
 
     // ------ multi-word atomic operations helpers ------
 
-    public open class AddLastDesc<T : Node> actual constructor(
+    public open class AddLastDesc<T : Node> constructor(
         @JvmField val queue: Node,
         @JvmField val node: T
     ) : AbstractAtomicDesc() {
@@ -565,7 +567,7 @@ public actual open class LockFreeLinkedListNode {
         var cur = this
         while (true) {
             if (cur is LockFreeLinkedListHead) return cur
-            cur = cur.next.unwrap()
+            cur = cur.nextNode
             check(cur !== this) { "Cannot loop to this while looking for list head" }
         }
     }
@@ -679,7 +681,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         var cur: Node = next as Node
         while (cur != this) {
             if (cur is T) block(cur)
-            cur = cur.next.unwrap()
+            cur = cur.nextNode
         }
     }
 
@@ -692,7 +694,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
         var prev: Node = this
         var cur: Node = next as Node
         while (cur != this) {
-            val next = cur.next.unwrap()
+            val next = cur.nextNode
             cur.validateNode(prev, next)
             prev = cur
             cur = next

@@ -26,7 +26,9 @@ internal class NodeDispatcher : CoroutineDispatcher(), Delay {
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
+        val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
+        // Actually on cancellation, but clearTimeout is idempotent
+        continuation.invokeOnCancellation { clearTimeout(handle) }
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {

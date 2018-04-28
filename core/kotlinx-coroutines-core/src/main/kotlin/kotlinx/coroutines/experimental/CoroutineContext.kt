@@ -41,7 +41,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
-private val DEBUG = run {
+internal val DEBUG = run {
     val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
         catch (e: SecurityException) { null }
     when (value) {
@@ -89,6 +89,7 @@ public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
  * The string "coroutine" is used as a default name.
  */
 @JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
     val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
     val wp = if (parent == null) debug else debug + parent

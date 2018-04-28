@@ -28,11 +28,11 @@ class CancellableContinuationHandlersTest : TestBase() {
             suspendCancellableCoroutine<Unit> { c ->
                 c.cancel()
                 c.invokeOnCancellation {
-                    assertNull(it)
+                    assertTrue(it is CancellationException)
                     expect(1)
                 }
                 c.invokeOnCancellation {
-                    assertNull(it)
+                    assertTrue(it is CancellationException)
                     expect(2)
                 }
             }

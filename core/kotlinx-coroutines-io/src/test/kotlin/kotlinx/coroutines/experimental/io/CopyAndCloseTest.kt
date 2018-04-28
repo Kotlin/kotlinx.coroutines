@@ -49,39 +49,6 @@ class CopyAndCloseTest : TestBase() {
     }
 
     @Test
-    fun failurePropagation() = runBlocking {
-        expect(1)
-
-        launch(coroutineContext) {
-            expect(2)
-
-            try {
-                from.copyAndClose(to) // should suspend and then throw IOException
-                fail("Should rethrow exception")
-            } catch (expected: IOException) {
-            }
-
-            expect(4)
-        }
-
-        yield()
-        expect(3)
-
-        from.close(IOException())
-        yield()
-
-        expect(5)
-
-        try {
-            to.readInt()
-            fail("Should throw exception")
-        } catch (expected: IOException) {
-        }
-
-        finish(6)
-    }
-
-    @Test
     fun copyLimitedTest() = runBlocking {
         expect(1)
 
