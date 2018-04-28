@@ -120,15 +120,15 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     if (!seenValue) {
                         seenValue = true
-                        cont.resume(t)
                         subscription.cancel()
+                        cont.resume(t)
                     }
                 }
                 Mode.LAST, Mode.SINGLE -> {
                     if (mode == Mode.SINGLE && seenValue) {
+                        subscription.cancel()
                         if (cont.isActive)
                             cont.resumeWithException(IllegalArgumentException("More that one onNext value for $mode"))
-                        subscription.cancel()
                     } else {
                         value = t
                         seenValue = true

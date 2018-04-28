@@ -74,12 +74,17 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             it.start() // To properly await lazily started deferreds
             it.invokeOnCompletion(AwaitAllNode(cont, it).asHandler)
         }
-        cont.invokeOnCancellation {
-            handlers.forEach { it.dispose() }
-        }
+        cont.invokeOnCancellation(handler = DisposeHandlersOnCancel(handlers).asHandler)
     }
 
-    inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
+    private class DisposeHandlersOnCancel(private val handlers: List<DisposableHandle>) : CancelHandler() {
+        override fun invoke(cause: Throwable?) {
+            handlers.forEach { it.dispose() }
+        }
+        override fun toString(): String = "DisposeHandlersOnCancel[$handlers]"
+    }
+
+    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
                 val token = continuation.tryResumeWithException(cause)

@@ -43,7 +43,7 @@ public class SchedulerCoroutineDispatcher(private val scheduler: Scheduler) : Co
         val disposable = scheduler.scheduleDirect({
             with(continuation) { resumeUndispatched(Unit) }
         }, time, unit)
-        continuation.disposeOnCompletion(disposable)
+        continuation.disposeOnCancellation(disposable)
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {

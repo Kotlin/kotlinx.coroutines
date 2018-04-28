@@ -137,12 +137,12 @@ suspend fun AsynchronousSocketChannel.aWrite(
 
 private fun Channel.closeOnCancel(cont: CancellableContinuation<*>) {
     cont.invokeOnCancellation {
-            try {
-                close()
-            } catch (ex: Throwable) {
-                // Specification says that it is Ok to call it any time, but reality is different,
-                // so we have just to ignore exception
-            }
+        try {
+            close()
+        } catch (ex: Throwable) {
+            // Specification says that it is Ok to call it any time, but reality is different,
+            // so we have just to ignore exception
+        }
     }
 }
 

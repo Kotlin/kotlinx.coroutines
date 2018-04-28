@@ -33,7 +33,7 @@ import rx.*
  */
 public suspend fun Completable.awaitCompleted(): Unit = suspendCancellableCoroutine { cont ->
     subscribe(object : CompletableSubscriber {
-        override fun onSubscribe(s: Subscription) { cont.unsubscribeOnCompletion(s) }
+        override fun onSubscribe(s: Subscription) { cont.unsubscribeOnCancellation(s) }
         override fun onCompleted() { cont.resume(Unit) }
         override fun onError(e: Throwable) { cont.resumeWithException(e) }
     })
@@ -50,7 +50,7 @@ public suspend fun Completable.awaitCompleted(): Unit = suspendCancellableCorout
  * immediately resumes with [CancellationException].
  */
 public suspend fun <T> Single<T>.await(): T = suspendCancellableCoroutine { cont ->
-    cont.unsubscribeOnCompletion(subscribe(object : SingleSubscriber<T>() {
+    cont.unsubscribeOnCancellation(subscribe(object : SingleSubscriber<T>() {
         override fun onSuccess(t: T) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
     }))
@@ -128,7 +128,7 @@ public suspend fun <T> Observable<T>.awaitSingle(): T = single().awaitOne()
 // ------------------------ private ------------------------
 
 private suspend fun <T> Observable<T>.awaitOne(): T = suspendCancellableCoroutine { cont ->
-    cont.unsubscribeOnCompletion(subscribe(object : Subscriber<T>() {
+    cont.unsubscribeOnCancellation(subscribe(object : Subscriber<T>() {
         override fun onStart() { request(1) }
         override fun onNext(t: T) { cont.resume(t) }
         override fun onCompleted() { if (cont.isActive) cont.resumeWithException(IllegalStateException("Should have invoked onNext")) }
@@ -136,6 +136,5 @@ private suspend fun <T> Observable<T>.awaitOne(): T = suspendCancellableCoroutin
     }))
 }
 
-internal fun <T> CancellableContinuation<T>.unsubscribeOnCompletion(sub: Subscription) {
+internal fun <T> CancellableContinuation<T>.unsubscribeOnCancellation(sub: Subscription) =
     invokeOnCancellation { sub.unsubscribe() }
-}

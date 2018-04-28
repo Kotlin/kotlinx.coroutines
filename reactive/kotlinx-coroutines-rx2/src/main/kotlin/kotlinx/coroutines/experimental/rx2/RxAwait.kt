@@ -34,7 +34,7 @@ import kotlinx.coroutines.experimental.suspendCancellableCoroutine
  */
 public suspend fun CompletableSource.await(): Unit = suspendCancellableCoroutine { cont ->
     subscribe(object : CompletableObserver {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCompletion(d) }
+        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onComplete() { cont.resume(Unit) }
         override fun onError(e: Throwable) { cont.resumeWithException(e) }
     })
@@ -65,7 +65,7 @@ public suspend fun <T> MaybeSource<T>.await(): T? = (this as MaybeSource<T?>).aw
  */
 public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCancellableCoroutine { cont ->
     subscribe(object : MaybeObserver<T> {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCompletion(d) }
+        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onComplete() { cont.resume(default) }
         override fun onSuccess(t: T) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
@@ -84,7 +84,7 @@ public suspend fun <T> MaybeSource<T>.awaitOrDefault(default: T): T = suspendCan
  */
 public suspend fun <T> SingleSource<T>.await(): T = suspendCancellableCoroutine { cont ->
     subscribe(object : SingleObserver<T> {
-        override fun onSubscribe(d: Disposable) { cont.disposeOnCompletion(d) }
+        override fun onSubscribe(d: Disposable) { cont.disposeOnCancellation(d) }
         override fun onSuccess(t: T) { cont.resume(t) }
         override fun onError(error: Throwable) { cont.resumeWithException(error) }
     })
@@ -161,7 +161,7 @@ public suspend fun <T> ObservableSource<T>.awaitSingle(): T = awaitOne(Mode.SING
 
 // ------------------------ private ------------------------
 
-internal fun CancellableContinuation<*>.disposeOnCompletion(d: Disposable) =
+internal fun CancellableContinuation<*>.disposeOnCancellation(d: Disposable) =
     invokeOnCancellation { d.dispose() }
 
 private enum class Mode(val s: String) {

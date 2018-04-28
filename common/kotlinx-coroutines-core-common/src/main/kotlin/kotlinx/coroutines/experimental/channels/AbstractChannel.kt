@@ -769,11 +769,15 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
     // ------ private ------
 
-    private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) {
-        cont.invokeOnCancellation {
+    private fun removeReceiveOnCancel(cont: CancellableContinuation<*>, receive: Receive<*>) =
+        cont.invokeOnCancellation(handler = RemoveReceiveOnCancel(receive).asHandler)
+
+    private inner class RemoveReceiveOnCancel(private val receive: Receive<*>) : CancelHandler() {
+        override fun invoke(cause: Throwable?) {
             if (receive.remove())
                 onReceiveDequeued()
         }
+        override fun toString(): String = "RemoveReceiveOnCancel[$receive]"
     }
 
     private class Itr<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {

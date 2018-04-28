@@ -28,16 +28,18 @@ internal class NodeDispatcher : CoroutineDispatcher(), Delay {
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
         // Actually on cancellation, but clearTimeout is idempotent
-        continuation.invokeOnCancellation { clearTimeout(handle) }
+        continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
+    }
+
+    private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
+        override fun dispose() { clearTimeout(handle) }
+        override fun invoke(cause: Throwable?) { dispose() }
+        override fun toString(): String = "ClearTimeout[$handle]"
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
         val handle = setTimeout({ block.run() }, time.toIntMillis(unit))
-        return object : DisposableHandle {
-            override fun dispose() {
-                clearTimeout(handle)
-            }
-        }
+        return ClearTimeout(handle)
     }
 }
 
