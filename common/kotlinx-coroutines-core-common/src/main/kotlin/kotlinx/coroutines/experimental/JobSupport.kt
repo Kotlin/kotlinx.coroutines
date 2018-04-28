@@ -853,7 +853,7 @@ internal interface Incomplete {
 
 internal abstract class JobNode<out J : Job>(
     @JvmField val job: J
-) : CompletionHandlerNode(), DisposableHandle, Incomplete {
+) : CompletionHandlerBase(), DisposableHandle, Incomplete {
     override val isActive: Boolean get() = true
     override val list: NodeList? get() = null
     override fun dispose() = (job as JobSupport).removeNode(this)

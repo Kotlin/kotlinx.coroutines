@@ -39,16 +39,18 @@ public typealias CompletionHandler = (cause: Throwable?) -> Unit
 
 // We want class that extends LockFreeLinkedListNode & CompletionHandler but we cannot do it on Kotlin/JS,
 // so this expect class provides us with the corresponding abstraction in a platform-agnostic way.
-internal expect abstract class CompletionHandlerNode() : LockFreeLinkedListNode {
-    val asHandler: CompletionHandler
+internal expect abstract class CompletionHandlerBase() : LockFreeLinkedListNode {
     abstract fun invoke(cause: Throwable?)
 }
 
-// More compact version of CompletionHandlerNode for CancellableContinuation with same workaround for JS
-internal expect abstract class CancellationHandler() {
-    val asHandler: CompletionHandler
+internal expect val CompletionHandlerBase.asHandler: CompletionHandler
+
+// More compact version of CompletionHandlerBase for CancellableContinuation with same workaround for JS
+internal expect abstract class CancelHandlerBase() {
     abstract fun invoke(cause: Throwable?)
 }
+
+internal expect val CancelHandlerBase.asHandler: CompletionHandler
 
 // :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
 // because we play type tricks on Kotlin/JS and handler is not necessarily a function there

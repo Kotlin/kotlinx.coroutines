@@ -74,7 +74,7 @@ internal abstract class AbstractContinuation<in T>(
        name        state class          public state    description
        ------      ------------         ------------    -----------
        ACTIVE      Active               : Active        active, no listeners
-       SINGLE_A    CancellationHandler  : Active        active, one cancellation listener
+       SINGLE_A    CancelHandler        : Active        active, one cancellation listener
        CANCELLING  Cancelling           : Active        in the process of cancellation due to cancellation of parent job
        CANCELLED   Cancelled            : Cancelled     cancelled (final state)
        COMPLETED   any                  : Completed     produced some result or threw an exception (final state)
@@ -158,7 +158,7 @@ internal abstract class AbstractContinuation<in T>(
         resumeImpl(CompletedExceptionally(exception), resumeMode)
 
     public fun invokeOnCancellation(handler: CompletionHandler) {
-        var handleCache: CancellationHandler? = null
+        var handleCache: CancelHandler? = null
         loopOnState { state ->
             when (state) {
                 is Active -> {
@@ -167,7 +167,7 @@ internal abstract class AbstractContinuation<in T>(
                         return
                     }
                 }
-                is CancellationHandler -> error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
+                is CancelHandler -> error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
                 is CancelledContinuation -> {
                     /*
                      * Continuation is complete, invoke directly.
@@ -188,18 +188,12 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    private fun makeHandler(handler: CompletionHandler): CancellationHandlerImpl<*> {
-        if (handler is CancellationHandlerImpl<*>) {
-            require(handler.continuation === this) { "Handler has non-matching continuation ${handler.continuation}, current: $this" }
-            return handler
-        }
-
-        return InvokeOnCancel(this, handler)
-    }
+    private fun makeHandler(handler: CompletionHandler): CancelHandler =
+        if (handler is CancelHandler) handler else InvokeOnCancel(handler)
 
     private fun tryCancel(state: NotCompleted, cause: Throwable?): Boolean {
         if (useCancellingState) {
-            require(state !is CancellationHandler) { "Invariant: 'Cancelling' state and cancellation handlers cannot be used together" }
+            require(state !is CancelHandler) { "Invariant: 'Cancelling' state and cancellation handlers cannot be used together" }
             return _state.compareAndSet(state, Cancelling(CancelledContinuation(this, cause)))
         }
 
@@ -342,7 +336,7 @@ internal abstract class AbstractContinuation<in T>(
         onCompletionInternal(mode)
 
         // Invoke cancellation handlers only if necessary
-        if (update is CancelledContinuation && expect is CancellationHandler) {
+        if (update is CancelledContinuation && expect is CancelHandler) {
             try {
                 expect.invoke(exceptionally?.cause)
             } catch (ex: Throwable) {
@@ -382,18 +376,14 @@ private val ACTIVE: Active = Active()
 // In progress of cancellation
 internal class Cancelling(@JvmField val cancel: CancelledContinuation) : NotCompleted
 
-internal abstract class CancellationHandlerImpl<out C : AbstractContinuation<*>>(@JvmField val continuation: C) :
-    CancellationHandler(), NotCompleted
+internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted
 
-// Wrapper for lambdas, for the performance sake CancellationHandler can be subclassed directly
+// Wrapper for lambdas, for the performance sake CancelHandler can be subclassed directly
 private class InvokeOnCancel( // Clashes with InvokeOnCancellation
-    continuation: AbstractContinuation<*>,
     private val handler: CompletionHandler
-) : CancellationHandlerImpl<AbstractContinuation<*>>(continuation) {
-
+) : CancelHandler() {
     override fun invoke(cause: Throwable?) {
         handler.invoke(cause)
     }
-
     override fun toString() = "InvokeOnCancel[${handler.classSimpleName}@$hexAddress]"
 }

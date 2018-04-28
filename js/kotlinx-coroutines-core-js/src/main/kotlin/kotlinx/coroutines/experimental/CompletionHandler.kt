@@ -18,21 +18,25 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
 
-internal actual abstract class CompletionHandlerNode : LinkedListNode() {
-    @Suppress("UnsafeCastFromDynamic")
-    actual inline val asHandler: CompletionHandler get() = asDynamic()
+internal actual abstract class CompletionHandlerBase : LinkedListNode() {
+    @JsName("invoke")
     actual abstract fun invoke(cause: Throwable?)
 }
 
-internal actual abstract class CancellationHandler {
-    @Suppress("UnsafeCastFromDynamic")
-    actual inline val asHandler: CompletionHandler get() = asDynamic()
+@Suppress("UnsafeCastFromDynamic")
+internal actual inline val CompletionHandlerBase.asHandler: CompletionHandler get() = asDynamic()
+
+internal actual abstract class CancelHandlerBase {
+    @JsName("invoke")
     actual abstract fun invoke(cause: Throwable?)
 }
+
+@Suppress("UnsafeCastFromDynamic")
+internal actual inline val CancelHandlerBase.asHandler: CompletionHandler get() = asDynamic()
 
 internal actual fun CompletionHandler.invokeIt(cause: Throwable?) {
     when(jsTypeOf(this)) {
         "function" -> invoke(cause)
-        else -> (this as CompletionHandlerNode).invoke(cause)
+        else -> asDynamic().invoke(cause)
     }
 }

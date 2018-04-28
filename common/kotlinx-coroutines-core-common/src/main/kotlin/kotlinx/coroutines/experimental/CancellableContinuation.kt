@@ -219,16 +219,8 @@ public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNod
  * Removes a given node on cancellation.
  * @suppress **This is unstable API and it is subject to change.**
  */
-public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode): Unit {
-    val handler: CompletionHandler
-    if (this is CancellableContinuationImpl<*>) {
-        handler = RemoveOnCancel(this, node).asHandler
-    } else {
-        handler = { node.remove() }
-    }
-
-    invokeOnCancellation(handler)
-}
+public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
+    invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
 
 /**
  * Disposes a specified [handle] when this continuation is cancelled.
@@ -255,41 +247,19 @@ public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHand
  * invokeOnCancellation { handle.dispose() }
  * ```
  */
-public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) {
-    val handler: CompletionHandler
-    if (this is CancellableContinuationImpl<*>) {
-        handler = DisposeOnCancellation(this, handle).asHandler
-    } else {
-        handler = { handle.dispose() }
-    }
-
-
-    invokeOnCancellation(handler)
-}
+public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
+    invokeOnCancellation(handler = DisposeOnCancel(handle).asHandler)
 
 // --------------- implementation details ---------------
 
-// TODO: With separate class IDEA fails
-private class RemoveOnCancel(
-    cont: CancellableContinuationImpl<*>,
-    @JvmField val node: LockFreeLinkedListNode
-) : CancellationHandlerImpl<CancellableContinuationImpl<*>>(cont) {
-
-    override fun invoke(cause: Throwable?) {
-        node.remove()
-    }
-
+private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : CancelHandler() {
+    override fun invoke(cause: Throwable?) { node.remove() }
     override fun toString() = "RemoveOnCancel[$node]"
 }
 
-private class DisposeOnCancellation(
-    continuation: CancellableContinuationImpl<*>,
-    private val handle: DisposableHandle
-) : CancellationHandlerImpl<CancellableContinuationImpl<*>>(continuation) {
-
+private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler() {
     override fun invoke(cause: Throwable?) = handle.dispose()
-
-    override fun toString(): String = "DisposeOnCancellation[$handle]"
+    override fun toString(): String = "DisposeOnCancel[$handle]"
 }
 
 @PublishedApi

@@ -54,20 +54,14 @@ public fun CancellableContinuation<*>.cancelFutureOnCompletion(future: Future<*>
  * invokeOnCancellation { future.cancel(false) }
  * ```
  */
-public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>) {
-    if (this is AbstractContinuation<*>) {
-        invokeOnCancellation(handler = CancelFutureOnCancellation(this, future))
-    } else {
-        // Fallback if someone else implement CancellableContinuation
-        invokeOnCancellation { future.cancel(false)  }
-    }
-}
+public fun CancellableContinuation<*>.cancelFutureOnCancellation(future: Future<*>) =
+    invokeOnCancellation(handler = CancelFutureOnCancel(future))
 
 private class CancelFutureOnCompletion(
     job: Job,
     private val future: Future<*>
 ) : JobNode<Job>(job)  {
-    override fun invoke(reason: Throwable?) {
+    override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
@@ -75,15 +69,11 @@ private class CancelFutureOnCompletion(
     override fun toString() = "CancelFutureOnCompletion[$future]"
 }
 
-private class CancelFutureOnCancellation(
-    continuation: AbstractContinuation<*>,
-    private val future: Future<*>
-) : CancellationHandlerImpl<AbstractContinuation<*>>(continuation)  {
-
-    override fun invoke(reason: Throwable?) {
+private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandler()  {
+    override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
     }
-    override fun toString() = "CancelFutureOnCancellation[$future]"
+    override fun toString() = "CancelFutureOnCancel[$future]"
 }
