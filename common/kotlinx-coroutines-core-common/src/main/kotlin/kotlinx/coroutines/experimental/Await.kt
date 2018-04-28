@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.experimental.internalAnnotations.Volatile
 
 /**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
@@ -70,29 +71,56 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     private val notCompletedCount = atomic(deferreds.size)
 
     suspend fun await(): List<T> = suspendCancellableCoroutine { cont ->
-        val handlers = deferreds.map {
-            it.start() // To properly await lazily started deferreds
-            it.invokeOnCompletion(AwaitAllNode(cont, it).asHandler)
+        // Intricate dance here
+        // Step 1: Create nodes and install them as completion handlers, they may fire!
+        val nodes = Array<AwaitAllNode>(deferreds.size) { i ->
+            val deferred = deferreds[i]
+            deferred.start() // To properly await lazily started deferreds
+            AwaitAllNode(cont, deferred).apply {
+                handle = deferred.invokeOnCompletion(asHandler)
+            }
         }
-        cont.invokeOnCancellation(handler = DisposeHandlersOnCancel(handlers).asHandler)
+        val disposer = DisposeHandlersOnCancel(nodes)
+        // Step 2: Set disposer to each node
+        nodes.forEach { it.disposer = disposer }
+        // Here we know that if any code the nodes complete, it will dipsose the rest
+        // Step 3: Now we can check if continuation is complete
+        if (cont.isCompleted) {
+            // it is already complete while handlers were being installed -- dispose them all
+            disposer.disposeAll()
+        } else {
+            cont.invokeOnCancellation(handler = disposer.asHandler)
+        }
     }
 
-    private class DisposeHandlersOnCancel(private val handlers: List<DisposableHandle>) : CancelHandler() {
-        override fun invoke(cause: Throwable?) {
-            handlers.forEach { it.dispose() }
+    private inner class DisposeHandlersOnCancel(private val nodes: Array<AwaitAllNode>) : CancelHandler() {
+        fun disposeAll() {
+            nodes.forEach { it.handle.dispose() }
         }
-        override fun toString(): String = "DisposeHandlersOnCancel[$handlers]"
+
+        override fun invoke(cause: Throwable?) { disposeAll() }
+        override fun toString(): String = "DisposeHandlersOnCancel[$nodes]"
     }
 
     private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
+        lateinit var handle: DisposableHandle
+
+        @Volatile
+        var disposer: DisposeHandlersOnCancel? = null
+        
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
                 val token = continuation.tryResumeWithException(cause)
                 if (token != null) {
                     continuation.completeResume(token)
+                    // volatile read of disposer AFTER continuation is complete
+                    val disposer = this.disposer
+                    // and if disposer was already set (all handlers where already installed, then dispose them all)
+                    if (disposer != null) disposer.disposeAll()
                 }
             } else if (notCompletedCount.decrementAndGet() == 0) {
                 continuation.resume(deferreds.map { it.getCompleted() })
+                // Note, that all deferreds are complete here, so we don't need to dispose their nodes
             }
         }
     }
