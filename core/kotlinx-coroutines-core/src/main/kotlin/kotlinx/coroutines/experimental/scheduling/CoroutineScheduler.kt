@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
+import netscape.security.Privilege.*
 import java.io.*
 import java.util.*
 import java.util.concurrent.*
@@ -45,6 +46,7 @@ import java.util.concurrent.locks.*
  * global queue or trying to steal new tasks. Such approach may slightly limit scalability (allowing more than [corePoolSize] threads
  * to execute CPU-bound tasks at once), but in practice, it is not, significantly reducing context switches and tasks re-dispatching.
  */
+@Suppress("NOTHING_TO_INLINE")
 internal class CoroutineScheduler(
     private val corePoolSize: Int,
     private val maxPoolSize: Int = corePoolSize * 128
@@ -70,9 +72,24 @@ internal class CoroutineScheduler(
      * [blockingWorkers] is count of running workers which are executing [TaskMode.PROBABLY_BLOCKING] task
      */
     private val workers: Array<PoolWorker?>
-    private val createdWorkers = atomic(0) // Mutations are guarded by scheduler lock
-    private val blockingWorkers = atomic(0)
-    private val idleWorkers = atomic(0)
+
+    // TODO describe, asserts?
+    private val controlState = atomic(0L)
+    private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
+    private val blockingWorkers: Int inline get() = (controlState.value and BLOCKING_MASK shr 21).toInt()
+    private val idleWorkers: Int inline get() = (controlState.value and IDLE_MASK shr 42).toInt()
+
+    private inline fun createdWorkers(state: Long): Int = (state and CREATED_MASK).toInt()
+    private inline fun blockingWorkers(state: Long): Int = (state and BLOCKING_MASK shr 21).toInt()
+    private inline fun idleWorkers(state: Long): Int = (state and IDLE_MASK shr 42).toInt()
+
+    private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.addAndGet(1L))
+    private inline fun decrementCreatedWorkers(): Int = createdWorkers(controlState.addAndGet(-1L))
+    private inline fun incrementBlockingWorkers(): Int = blockingWorkers(controlState.addAndGet(1L shl 21))
+    private inline fun decrementBlockingWorkers(): Int = blockingWorkers(controlState.addAndGet(-(1L shl 21)))
+    private inline fun incrementIdleWorkers(): Int = idleWorkers(controlState.addAndGet(1L shl 42))
+    private inline fun decrementIdleWorkers(): Int = idleWorkers(controlState.addAndGet(-(1L shl 42)))
+
     private val random = Random()
     private val isTerminated = atomic(false)
 
@@ -101,6 +118,10 @@ internal class CoroutineScheduler(
         private const val FORBIDDEN = -1
         private const val ALLOWED = 0
         private const val TERMINATED = 1
+
+        private const val CREATED_MASK: Long = (1L shl 21) - 1
+        private const val BLOCKING_MASK: Long = CREATED_MASK shl 21
+        private const val IDLE_MASK: Long = BLOCKING_MASK shl 21
     }
 
     init {
@@ -119,7 +140,7 @@ internal class CoroutineScheduler(
             workers[i] = PoolWorker(i).apply { start() }
         }
 
-        createdWorkers.value = corePoolSize
+        controlState.value = corePoolSize.toLong()
     }
 
     /*
@@ -134,9 +155,9 @@ internal class CoroutineScheduler(
 
         // Race with recently created threads which may park indefinitely
         var finishedThreads = 0
-        while (finishedThreads != createdWorkers.value) {
+        while (finishedThreads < createdWorkers) {
             var finished = 0
-            for (i in 0 until createdWorkers.value) {
+            for (i in 0 until createdWorkers) {
                 workers[i]?.also {
                     if (it.isAlive) {
                         // Unparking alive thread is unsafe in general, but acceptable for testing purposes
@@ -196,10 +217,10 @@ internal class CoroutineScheduler(
          * cpuWorkersCounter doesn't take into account threads which are created (and either running or parked), but haven't
          * CPU token: retiring workers, recently unparked workers before `findTask` call, etc.
          * So if we will use cpuWorkersCounter, we start to overprovision too much.
-         * Small race is here, because we're reading two counter not atomically
          */
-        val created = createdWorkers.value
-        val blocking = blockingWorkers.value
+        val state = controlState.value
+        val created = createdWorkers(state)
+        val blocking = blockingWorkers(state)
         val cpuWorkers = created - blocking
         // If most of created workers are blocking, we should create one more thread to handle non-blocking work
         if (cpuWorkers < corePoolSize && createNewWorker()) {
@@ -265,23 +286,23 @@ internal class CoroutineScheduler(
 
     private fun createNewWorker(): Boolean {
         synchronized(workers) {
-            val created = createdWorkers.value
-            val blocking = blockingWorkers.value
+            val state = controlState.value
+            val created = createdWorkers(state)
+            val blocking = blockingWorkers(state)
             val cpuWorkers = created - blocking
             // Double check for overprovision
             if (cpuWorkers >= corePoolSize) {
                 return false
             }
 
-            val nextWorker = created
-            if (nextWorker >= maxPoolSize || cpuPermits.availablePermits() == 0) {
+            if (created >= maxPoolSize || cpuPermits.availablePermits() == 0) {
                 return false
             }
 
-            createdWorkers.incrementAndGet()
-            require(workers[nextWorker] == null)
-            val worker = PoolWorker(nextWorker).apply { start() }
-            workers[nextWorker] = worker
+            incrementCreatedWorkers()
+            require(workers[created] == null)
+            val worker = PoolWorker(created).apply { start() }
+            workers[created] = worker
             return true
         }
     }
@@ -492,7 +513,7 @@ internal class CoroutineScheduler(
                  * We should release CPU *before* checking for CPU starvation,
                  * otherwise requestCpuWorker() will not count current thread as blocking
                  */
-                blockingWorkers.incrementAndGet()
+                incrementBlockingWorkers()
                 if (tryReleaseCpu(WorkerState.BLOCKING)) {
                     requestCpuWorker()
                 }
@@ -518,7 +539,7 @@ internal class CoroutineScheduler(
 
         private fun afterTask(job: Task) {
             if (job.mode != TaskMode.NON_BLOCKING) {
-                blockingWorkers.decrementAndGet()
+                decrementBlockingWorkers()
                 assert(state == WorkerState.BLOCKING) {"Expected BLOCKING state, but has $state"}
                 state = WorkerState.RETIRING
             }
@@ -590,7 +611,7 @@ internal class CoroutineScheduler(
             LockSupport.parkNanos(BLOCKING_WORKER_KEEP_ALIVE_NS)
             // Protection against spurious wakeups of parkNanos
             if (System.nanoTime() - time > BLOCKING_WORKER_KEEP_ALIVE_NS) {
-                // terminateWorker() temporary disabled
+                terminateWorker()
             }
         }
 
@@ -600,7 +621,7 @@ internal class CoroutineScheduler(
         private fun terminateWorker() {
             synchronized(workers) {
                 // Someone else terminated, bail out
-                if (createdWorkers.value <= corePoolSize) {
+                if (createdWorkers <= corePoolSize) {
                     return
                 }
 
@@ -621,7 +642,7 @@ internal class CoroutineScheduler(
                 }
 
                 // At this point this thread is no longer considered as usable for scheduling
-                val lastWorkerIndex = createdWorkers.decrementAndGet()
+                val lastWorkerIndex = decrementCreatedWorkers()
                 val worker = workers[lastWorkerIndex]!!
                 workers[indexInArray] = worker
                 worker.indexInArray = indexInArray
@@ -676,7 +697,7 @@ internal class CoroutineScheduler(
         }
 
         private fun trySteal(): Task? {
-            val created = createdWorkers.value
+            val created = createdWorkers
 
             // 0 to await an initialization and 1 to avoid excess stealing on single-core machines
             if (created < 2) {

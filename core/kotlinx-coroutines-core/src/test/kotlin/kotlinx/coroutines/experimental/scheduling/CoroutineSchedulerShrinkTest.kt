@@ -4,7 +4,6 @@ import kotlinx.coroutines.experimental.*
 import org.junit.*
 import java.util.concurrent.*
 
-@Ignore
 class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
 
