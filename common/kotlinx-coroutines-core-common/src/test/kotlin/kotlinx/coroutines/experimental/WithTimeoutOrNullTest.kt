@@ -177,7 +177,7 @@ class WithTimeoutOrNullTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val result = withTimeoutOrNull(100) {
+        withTimeoutOrNull(100) {
             expect(2)
             try {
                 delay(1000)

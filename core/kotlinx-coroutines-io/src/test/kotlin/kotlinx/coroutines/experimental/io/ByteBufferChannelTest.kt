@@ -819,7 +819,7 @@ class ByteBufferChannelTest : TestBase() {
         return launch(context = DefaultDispatcher + CoroutineName(name), parent = coroutineContext[Job]) {
             block()
         }.apply {
-            invokeOnCompletion(true) { t ->
+            invokeOnCompletion( onCancelling = true) { t ->
                 if (t != null) ch.cancel(t)
             }
         }

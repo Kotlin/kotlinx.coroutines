@@ -91,7 +91,7 @@ class BroadcastChannelMultiReceiveStressTest(
             printProgress()
         }
         // wait
-        repeat(nSeconds) { sec ->
+        repeat(nSeconds) { _ ->
             delay(1000)
             printProgress()
         }

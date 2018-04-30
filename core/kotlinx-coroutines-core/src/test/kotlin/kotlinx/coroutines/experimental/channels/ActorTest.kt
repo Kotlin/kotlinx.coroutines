@@ -106,7 +106,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
             expect(2)
             require(element!! == 42)
             try {
-                val next = channel.receiveOrNull()
+                channel.receiveOrNull()
             } catch (e: IOException) {
                 expect(3)
             }

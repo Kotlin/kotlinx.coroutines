@@ -147,7 +147,7 @@ class WithTimeoutTest : TestBase() {
         expected = { it is CancellationException }
     ) {
         expect(1)
-        val result = withTimeout(100) {
+        withTimeout(100) {
             expect(2)
             try {
                 delay(1000)

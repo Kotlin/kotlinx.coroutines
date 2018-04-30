@@ -22,7 +22,7 @@ class TestBaseTest : TestBase() {
     @Test
     fun testThreadsShutdown() {
         val SHUTDOWN_TIMEOUT = 1_000L
-        repeat(1000 * stressTestMultiplier) { i ->
+        repeat(1000 * stressTestMultiplier) { _ ->
             CommonPool.usePrivatePool()
             val threadsBefore = currentThreads()
             runBlocking {

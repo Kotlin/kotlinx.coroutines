@@ -166,7 +166,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
     if (this is Future<*> && isDone()) {
         try {
-            @Suppress("UNCHECKED")
+            @Suppress("UNCHECKED_CAST")
             return get() as T
         } catch (e: ExecutionException) {
             throw e.cause ?: e // unwrap original cause from ExecutionException

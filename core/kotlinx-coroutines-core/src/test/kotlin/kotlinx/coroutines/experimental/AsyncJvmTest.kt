@@ -24,7 +24,9 @@ class AsyncJvmTest : TestBase() {
     @Test
     fun testAsyncWithFinally() = runTest {
         expect(1)
-        val d = async<String>(coroutineContext) {
+
+        @Suppress("UNREACHABLE_CODE")
+        val d = async(coroutineContext) {
             expect(3)
             try {
                 yield() // to main, will cancel
