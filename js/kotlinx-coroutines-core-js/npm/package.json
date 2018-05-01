@@ -20,7 +20,7 @@
     "JavaScript",
     "JetBrains"
   ],
-  "dependencies": {
+  "peerDependencies": {
     $kotlinDependency
   }
 }
