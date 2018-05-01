@@ -21,14 +21,14 @@ allprojects {
     apply plugin: 'kotlin'
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     }
 }
 
 dependencies {
     //compileOnly project(':kotlinx-coroutines-debug-agent')
     compile project(':kotlinx-coroutines-debug-agent') //explained below
-    shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version" //will be add to pom.xml when publish
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version" //will be add to pom.xml when publish
 }
 
 jar {

@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     compile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-debug"
 }
 

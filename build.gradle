@@ -44,7 +44,7 @@ static def platformLib(base, platform) {
     return "$base-$platform"
 }
 
-configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
+configure(subprojects.findAll { !sourceless.contains(it.name) }) {
     def platform = platformOf(it)
     apply plugin: "kotlin-platform-$platform"
 
@@ -112,12 +112,11 @@ def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
 // configure atomicfu for JVM modules
 configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {
     apply plugin: 'kotlinx-atomicfu'
-    apply plugin: 'kotlinx-coroutines-debug'
 
     dependencies {
         compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
         testCompile "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
-        testCompile "org.jetbrains.kotlinx:kotlinx-coroutines-debug-test"
+        testCompile "org.jetbrains.kotlinx:kotlinx-coroutines-debug-test-assertions"
     }
 
     atomicFU {
@@ -135,20 +134,32 @@ configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) ==
         classpath = files(configurations.testRuntime, atomicFU.outputs, sourceSets.test.output.classesDirs,
                 sourceSets.main.output.resourcesDir)
     }
+}
 
+// will be configured in self build script
+def debugger_misc_tests = 'kotlinx-coroutines-debug-tests'
+
+def without_debug_tests_tasks = internal + [debugger_misc_tests]
+
+// configure tasks for JVM modules to run some tests with debugger assertions
+// see documentation of kotlinx-coroutines-debug plugin for details
+configure(subprojects.findAll { !without_debug_tests_tasks.contains(it.name) && platformOf(it) == "jvm" }) {
+    apply plugin: 'kotlinx-coroutines-debug'
+
+    //TODO: remove when kotlinx-coroutines-debug plugin will start to add instrumentation agent for each test run
     debuggerTransformMain {
         inputFiles = atomicFU.outputs.files
     }
 
     testWithDebugger {
         useJUnit {
-            includeCategories 'kotlinx.coroutines.debug.test.DebuggableTest'
+            includeCategories 'kotlinx.coroutines.debug.assertions.DebuggableTest'
         }
     }
 }
 
 // configure dependencies on core
-configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-core-common'}) {
+configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-core-common' }) {
     def platform = platformOf(it)
     def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 
@@ -167,7 +178,7 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 
 // --------------- Configure sub-projects that are published ---------------
 
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', debugger_misc_tests]
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
@@ -200,6 +211,23 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 // main deployment task
 task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
 
+// --------------- Add task adapters for included builds ---------------
+
+// IMPORTANT!
+// the only way to execute included build tasks from command line
+// https://docs.gradle.org/4.2/userguide/composite_builds.html#composite_build_executing_tasks
 apply plugin: 'base'
 
 clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
+
+task buildDebugAgent(dependsOn: gradle.includedBuild('kotlinx-coroutines-debug').task(':build'))
+task buildDebugGradlePlugin(dependsOn: gradle.includedBuild('kotlinx-coroutines-debug-gradle-plugin').task(':build'))
+task buildDebugTestAssertions(dependsOn: gradle.includedBuild('kotlinx-coroutines-debug-test-assertions').task(':build'))
+
+task buildDebugAll {
+    dependsOn buildDebugAgent
+    dependsOn buildDebugGradlePlugin
+    dependsOn buildDebugTestAssertions
+}
+
+build.dependsOn buildDebugAll

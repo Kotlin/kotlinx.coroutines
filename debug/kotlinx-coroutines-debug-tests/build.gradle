@@ -1,0 +1,34 @@
+buildscript {
+    apply from: file('../gradle/load-props.gradle')
+
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'kotlinx-coroutines-debug'
+
+repositories {
+    jcenter()
+}
+
+configurations {
+    debuggerAgent {
+        transitive = false
+    }
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile project(':kotlinx-coroutines-core')
+    testCompile 'junit:junit:4.12'
+    debuggerAgent 'org.jetbrains.kotlinx:kotlinx-coroutines-debug'
+}
+
+test {
+    jvmArgs "-javaagent:${configurations.debuggerAgent.singleFile}"
+}
