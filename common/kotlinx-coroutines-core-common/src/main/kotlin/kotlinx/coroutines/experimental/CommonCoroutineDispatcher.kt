@@ -28,5 +28,11 @@ public expect interface Runnable {
     public fun run()
 }
 
+public expect val DefaultDefaultDispatcher: CoroutineDispatcher
+
+private fun getDefaultDefaultDispatcherHelper() = DefaultDefaultDispatcher
+
+var DefaultDispatcherProvider: () -> CoroutineDispatcher = { getDefaultDefaultDispatcherHelper() }
+
 @Suppress("PropertyName")
-public expect val DefaultDispatcher: CoroutineDispatcher
+public val DefaultDispatcher: CoroutineDispatcher get() = DefaultDispatcherProvider()
