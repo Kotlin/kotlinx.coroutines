@@ -72,7 +72,7 @@ public typealias Here = Unconfined
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
+public actual val DefaultDefaultDispatcher: CoroutineDispatcher = CommonPool
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor

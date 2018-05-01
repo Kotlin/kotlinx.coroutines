@@ -44,7 +44,7 @@ private const val UNDEFINED = "undefined"
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  */
 @Suppress("PropertyName", "UnsafeCastFromDynamic")
-public actual val DefaultDispatcher: CoroutineDispatcher = when {
+public actual val DefaultDefaultDispatcher: CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
     // The problem is that ReactNative has a `window` object with `addEventListener`, but it does not  really work.
     // For details see https://github.com/Kotlin/kotlinx.coroutines/issues/236

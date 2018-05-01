@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.*
+import kotlin.jvm.Volatile
 
 public expect abstract class CoroutineDispatcher constructor() : AbstractCoroutineContextElement, ContinuationInterceptor {
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean
@@ -28,5 +29,12 @@ public expect interface Runnable {
     public fun run()
 }
 
+public expect val DefaultDefaultDispatcher: CoroutineDispatcher
+
+private fun getDefaultDefaultDispatcherHelper() = DefaultDefaultDispatcher
+
+@Volatile
+var DefaultDispatcherProvider: () -> CoroutineDispatcher = { getDefaultDefaultDispatcherHelper() }
+
 @Suppress("PropertyName")
-public expect val DefaultDispatcher: CoroutineDispatcher
+public val DefaultDispatcher: CoroutineDispatcher get() = DefaultDispatcherProvider()
