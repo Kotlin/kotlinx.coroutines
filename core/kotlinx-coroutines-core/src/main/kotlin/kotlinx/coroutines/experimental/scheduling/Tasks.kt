@@ -1,9 +1,8 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import java.util.*
 
 internal typealias Task = TimedTask
-internal typealias GlobalQueue = Queue<Task>
+internal typealias GlobalQueue = TaskQueue
 
 // 100us as default
 internal val WORK_STEALING_TIME_RESOLUTION_NS = readFromSystemProperties(

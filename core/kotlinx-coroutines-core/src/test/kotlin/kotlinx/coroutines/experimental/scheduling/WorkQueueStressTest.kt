@@ -1,22 +1,20 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.TestBase
-import org.junit.After
-import org.junit.Before
+import kotlinx.coroutines.experimental.*
+import org.junit.*
 import org.junit.Test
 import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.SynchronousQueue
-import kotlin.concurrent.thread
-import kotlin.test.assertEquals
+import java.util.concurrent.*
+import kotlin.concurrent.*
+import kotlin.test.*
 
 class WorkQueueStressTest : TestBase() {
 
     private val threads = mutableListOf<Thread>()
     private val offerIterations = 2_000_000 * stressTestMultiplier
     private val stealersCount = 6
-    private val stolenTasks = Array(stealersCount) { ArrayDeque<TimedTask>() }
-    private val globalQueue = ArrayDeque<Task>() // only producer will use it
+    private val stolenTasks = Array(stealersCount) { Queue() }
+    private val globalQueue = Queue() // only producer will use it
     private val producerQueue = WorkQueue()
 
     @Volatile
@@ -71,7 +69,7 @@ class WorkQueueStressTest : TestBase() {
     @Test
     fun testSingleProducerSingleStealer() {
         val startLatch = CountDownLatch(1)
-        val fakeQueue = SynchronousQueue<Task>()
+        val fakeQueue = Queue()
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
@@ -84,7 +82,7 @@ class WorkQueueStressTest : TestBase() {
             }
         }
 
-        val stolen = ArrayDeque<Task>()
+        val stolen = Queue()
         threads += thread(name = "stealer") {
             val myQueue = WorkQueue()
             startLatch.await()
@@ -112,5 +110,13 @@ class WorkQueueStressTest : TestBase() {
         result += globalQueue.map { it.submissionTime }
         val expected = (1L..offerIterations).toSet()
         assertEquals(expected, result, "Following elements are missing: ${(expected - result)}")
+    }
+}
+
+internal class Queue : ArrayDeque<TimedTask>(), TaskQueue {
+    override fun pollBlockingMode(): TimedTask? = error("Should not be called")
+
+    override fun add(element: TimedTask): Boolean {
+        return super.add(element)
     }
 }

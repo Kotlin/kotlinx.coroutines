@@ -55,41 +55,41 @@ open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
             me.receive()
         }
     }
+}
 
-    private fun pingActorCoroutine(context: CoroutineContext, pingChannel: SendChannel<Letter>,
-                                   capacity: Int = 1) = actor<Letter>(context, capacity = capacity) {
-        var initiator: SendChannel<Letter>? = null
-        for (letter in channel) with(letter) {
-            when (message) {
-                is Start -> {
-                    initiator = sender
-                    pingChannel.send(Letter(Ball(0), channel))
-                }
-                is Ball -> {
-                    pingChannel.send(Letter(Ball(message.count + 1), channel))
-                }
-                is Stop -> {
-                    initiator!!.send(Letter(Stop(), channel))
-                    return@actor
-                }
-                else -> error("Cannot happen $message")
+fun pingActorCoroutine(context: CoroutineContext, pingChannel: SendChannel<PingPongActorBenchmark.Letter>,
+                       capacity: Int = 1) = actor<PingPongActorBenchmark.Letter>(context, capacity = capacity) {
+    var initiator: SendChannel<PingPongActorBenchmark.Letter>? = null
+    for (letter in channel) with(letter) {
+        when (message) {
+            is Start -> {
+                initiator = sender
+                pingChannel.send(PingPongActorBenchmark.Letter(Ball(0), channel))
             }
+            is Ball -> {
+                pingChannel.send(PingPongActorBenchmark.Letter(Ball(message.count + 1), channel))
+            }
+            is Stop -> {
+                initiator!!.send(PingPongActorBenchmark.Letter(Stop(), channel))
+                return@actor
+            }
+            else -> error("Cannot happen $message")
         }
     }
+}
 
-    private fun pongActorCoroutine(context: CoroutineContext, capacity: Int = 1) = actor<Letter>(context, capacity = capacity) {
-        for (letter in channel) with(letter) {
-            when (message) {
-                is Ball -> {
-                    if (message.count >= N_MESSAGES) {
-                        sender.send(Letter(Stop(), channel))
-                        return@actor
-                    } else {
-                        sender.send(Letter(Ball(message.count + 1), channel))
-                    }
+fun pongActorCoroutine(context: CoroutineContext, capacity: Int = 1) = actor<PingPongActorBenchmark.Letter>(context, capacity = capacity) {
+    for (letter in channel) with(letter) {
+        when (message) {
+            is Ball -> {
+                if (message.count >= N_MESSAGES) {
+                    sender.send(PingPongActorBenchmark.Letter(Stop(), channel))
+                    return@actor
+                } else {
+                    sender.send(PingPongActorBenchmark.Letter(Ball(message.count + 1), channel))
                 }
-                else -> error("Cannot happen $message")
             }
+            else -> error("Cannot happen $message")
         }
     }
 }
