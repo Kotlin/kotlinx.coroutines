@@ -1,0 +1,23 @@
+public final class kotlinx/coroutines/experimental/android/AndroidExceptionPreHandler : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlinx/coroutines/experimental/CoroutineExceptionHandler {
+	public fun <init> ()V
+	public fun handleException (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;)V
+}
+
+public final class kotlinx/coroutines/experimental/android/HandlerContext : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
+	public fun <init> (Landroid/os/Handler;Ljava/lang/String;)V
+	public synthetic fun <init> (Landroid/os/Handler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun awaitFrame (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/experimental/android/HandlerContextKt {
+	public static final fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerContext;
+	public static final fun getUI ()Lkotlinx/coroutines/experimental/android/HandlerContext;
+}
+

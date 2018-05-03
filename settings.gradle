@@ -13,6 +13,8 @@ include('benchmarks')
 include('knit')
 include('site')
 
+module('binary-compatibility-validator')
+
 module('common/kotlinx-coroutines-core-common')
 
 module('core/kotlinx-coroutines-core')

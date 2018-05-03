@@ -87,7 +87,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 // --------------- Configure sub-projects that are part of the library ---------------
 
-def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
 
 // configure atomicfu
 configure(subprojects.findAll { !internal.contains(it.name) }) {
@@ -143,6 +143,11 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
+
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+            kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        }
+
     }
 }
 

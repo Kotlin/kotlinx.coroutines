@@ -1,0 +1,259 @@
+public abstract interface class kotlinx/coroutines/experimental/io/ByteChannel : kotlinx/coroutines/experimental/io/ByteReadChannel, kotlinx/coroutines/experimental/io/ByteWriteChannel {
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteChannel$DefaultImpls {
+	public static fun readAvailable (Lkotlinx/coroutines/experimental/io/ByteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun readFully (Lkotlinx/coroutines/experimental/io/ByteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun writeAvailable (Lkotlinx/coroutines/experimental/io/ByteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun writeFully (Lkotlinx/coroutines/experimental/io/ByteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteChannelKt {
+	public static final fun ByteChannel (Z)Lkotlinx/coroutines/experimental/io/ByteChannel;
+	public static synthetic fun ByteChannel$default (ZILjava/lang/Object;)Lkotlinx/coroutines/experimental/io/ByteChannel;
+	public static final fun ByteReadChannel (Ljava/nio/ByteBuffer;)Lkotlinx/coroutines/experimental/io/ByteReadChannel;
+	public static final fun ByteReadChannel ([B)Lkotlinx/coroutines/experimental/io/ByteReadChannel;
+	public static final fun getEmptyByteReadChannel ()Lkotlinx/coroutines/experimental/io/ByteReadChannel;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/ByteReadChannel {
+	public abstract fun cancel (Ljava/lang/Throwable;)Z
+	public abstract fun consumeEachBufferRange (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun discard (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun getAvailableForRead ()I
+	public abstract fun getReadByteOrder ()Lkotlinx/io/core/ByteOrder;
+	public abstract fun getTotalBytesRead ()J
+	public abstract fun isClosedForRead ()Z
+	public abstract fun isClosedForWrite ()Z
+	public abstract fun lookAhead (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public abstract fun lookAheadSuspend (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun read (ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readAvailable (Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readAvailable (Lkotlinx/io/core/BufferView;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readAvailable ([BIILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readAvailable ([BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readBoolean (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readByte (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readDouble (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readFloat (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readFully (Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readFully ([BIILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readFully ([BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readInt (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readLong (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readPacket (IILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readShort (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun readUTF8LineTo (Ljava/lang/Appendable;ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun setReadByteOrder (Lkotlinx/io/core/ByteOrder;)V
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteReadChannel$DefaultImpls {
+	public static synthetic fun cancel$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
+	public static synthetic fun discard$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun read$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun readAvailable (Lkotlinx/coroutines/experimental/io/ByteReadChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun readFully (Lkotlinx/coroutines/experimental/io/ByteReadChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readPacket$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun readUTF8LineTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/lang/Appendable;ILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteReadChannelKt {
+	public static final fun copyAndClose (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyAndClose$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun copyTo (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun joinTo (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ZZLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun joinTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ZZLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun readRemaining (Lkotlinx/coroutines/experimental/io/ByteReadChannel;ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readRemaining$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;ILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/ByteWriteChannel {
+	public abstract fun close (Ljava/lang/Throwable;)Z
+	public abstract fun flush ()V
+	public abstract fun getAutoFlush ()Z
+	public abstract fun getAvailableForWrite ()I
+	public abstract fun getClosedCause ()Ljava/lang/Throwable;
+	public abstract fun getTotalBytesWritten ()J
+	public abstract fun getWriteByteOrder ()Lkotlinx/io/core/ByteOrder;
+	public abstract fun isClosedForWrite ()Z
+	public abstract fun setWriteByteOrder (Lkotlinx/io/core/ByteOrder;)V
+	public abstract fun write (ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeAvailable (Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeAvailable (Lkotlinx/io/core/BufferView;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeAvailable ([BIILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeAvailable ([BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeByte (BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeDouble (DLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeFloat (FLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeFully (Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeFully (Lkotlinx/io/core/BufferView;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeFully ([BIILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeFully ([BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeInt (ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeLong (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writePacket (Lkotlinx/io/core/ByteReadPacket;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeShort (SLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeSuspendSession (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun writeWhile (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteWriteChannel$DefaultImpls {
+	public static synthetic fun close$default (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
+	public static synthetic fun write$default (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun writeAvailable (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun writeFully (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/ByteWriteChannelKt {
+	public static final fun writeBoolean (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ZLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeByte (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeChar (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;CLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeInt (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writePacketSuspend (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeShort (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeStringUtf8 (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/CharSequence;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeStringUtf8 (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/String;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeStringUtf8 (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/nio/CharBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/ClosedWriteChannelException : java/util/concurrent/CancellationException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class kotlinx/coroutines/experimental/io/DelimitedKt {
+	public static final fun readUntilDelimiter (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun skipDelimiter (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/ByteBuffer;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/LookAheadSession {
+	public abstract fun consumed (I)V
+	public abstract fun request (II)Ljava/nio/ByteBuffer;
+}
+
+public final class kotlinx/coroutines/experimental/io/LookAheadSessionKt {
+	public static final fun consumeEachRemaining (Lkotlinx/coroutines/experimental/io/LookAheadSession;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/LookAheadSuspendSession : kotlinx/coroutines/experimental/io/LookAheadSession {
+	public abstract fun awaitAtLeast (ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/MigrationUtilsKt {
+	public static final fun write (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;[BIILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun write (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;[BLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeBytes (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/String;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeChars (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/String;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun writeUTF (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Ljava/lang/String;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/ReaderJob : kotlinx/coroutines/experimental/Job {
+	public abstract fun getChannel ()Lkotlinx/coroutines/experimental/io/ByteWriteChannel;
+}
+
+public final class kotlinx/coroutines/experimental/io/ReaderJob$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/experimental/io/ReaderJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/experimental/io/ReaderJob;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext$Element;
+	public static fun getCompletionException (Lkotlinx/coroutines/experimental/io/ReaderJob;)Ljava/lang/Throwable;
+	public static fun minusKey (Lkotlinx/coroutines/experimental/io/ReaderJob;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/experimental/io/ReaderJob;Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/experimental/io/ReaderJob;Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
+}
+
+public final class kotlinx/coroutines/experimental/io/ReaderJobKt {
+	public static final fun reader (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/io/ByteChannel;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/io/ReaderJob;
+	public static final fun reader (Lkotlin/coroutines/experimental/CoroutineContext;ZLkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/io/ReaderJob;
+	public static synthetic fun reader$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/io/ByteChannel;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/io/ReaderJob;
+	public static synthetic fun reader$default (Lkotlin/coroutines/experimental/CoroutineContext;ZLkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/io/ReaderJob;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/ReaderScope : kotlinx/coroutines/experimental/CoroutineScope {
+	public abstract fun getChannel ()Lkotlinx/coroutines/experimental/io/ByteReadChannel;
+}
+
+public final class kotlinx/coroutines/experimental/io/StringsKt {
+	public static final fun readASCIILine (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readASCIILine$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun readLine (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readLine$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun readUTF8Line (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readUTF8Line$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;IILkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/WriterJob : kotlinx/coroutines/experimental/Job {
+	public abstract fun getChannel ()Lkotlinx/coroutines/experimental/io/ByteReadChannel;
+}
+
+public final class kotlinx/coroutines/experimental/io/WriterJob$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/experimental/io/WriterJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/experimental/io/WriterJob;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext$Element;
+	public static fun getCompletionException (Lkotlinx/coroutines/experimental/io/WriterJob;)Ljava/lang/Throwable;
+	public static fun minusKey (Lkotlinx/coroutines/experimental/io/WriterJob;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/experimental/io/WriterJob;Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/experimental/io/WriterJob;Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
+}
+
+public final class kotlinx/coroutines/experimental/io/WriterJobKt {
+	public static final fun writer (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/io/ByteChannel;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/io/WriterJob;
+	public static final fun writer (Lkotlin/coroutines/experimental/CoroutineContext;ZLkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/io/WriterJob;
+	public static synthetic fun writer$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/io/ByteChannel;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/io/WriterJob;
+	public static synthetic fun writer$default (Lkotlin/coroutines/experimental/CoroutineContext;ZLkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/io/WriterJob;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/WriterScope : kotlinx/coroutines/experimental/CoroutineScope {
+	public abstract fun getChannel ()Lkotlinx/coroutines/experimental/io/ByteWriteChannel;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/WriterSession {
+	public abstract fun request (I)Ljava/nio/ByteBuffer;
+	public abstract fun written (I)V
+}
+
+public abstract interface class kotlinx/coroutines/experimental/io/WriterSuspendSession : kotlinx/coroutines/experimental/io/WriterSession {
+	public abstract fun tryAwait (ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/internal/InlineRendezvousSwapKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+
+public final class kotlinx/coroutines/experimental/io/jvm/javaio/BlockingKt {
+	public static final fun toInputStream (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/Job;)Ljava/io/InputStream;
+	public static synthetic fun toInputStream$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Ljava/io/InputStream;
+	public static final fun toOutputStream (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Lkotlinx/coroutines/experimental/Job;)Ljava/io/OutputStream;
+	public static synthetic fun toOutputStream$default (Lkotlinx/coroutines/experimental/io/ByteWriteChannel;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Ljava/io/OutputStream;
+}
+
+public final class kotlinx/coroutines/experimental/io/jvm/javaio/ReadingKt {
+	public static final fun copyTo (Ljava/io/InputStream;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Ljava/io/InputStream;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/jvm/javaio/WritingKt {
+	public static final fun copyTo (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/io/OutputStream;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/io/OutputStream;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/jvm/nio/ReadingKt {
+	public static final fun copyTo (Ljava/nio/channels/Pipe;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun copyTo (Ljava/nio/channels/ReadableByteChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Ljava/nio/channels/Pipe;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Ljava/nio/channels/ReadableByteChannel;Lkotlinx/coroutines/experimental/io/ByteWriteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/jvm/nio/WritingKt {
+	public static final fun copyTo (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/channels/Pipe;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun copyTo (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/channels/WritableByteChannel;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/channels/Pipe;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun copyTo$default (Lkotlinx/coroutines/experimental/io/ByteReadChannel;Ljava/nio/channels/WritableByteChannel;JLkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class kotlinx/coroutines/experimental/io/packet/ByteReadPacketEmptyKt {
+	public static final fun getByteReadPacketEmpty ()Lkotlinx/io/core/ByteReadPacket;
+}
+
+public final class kotlinx/coroutines/experimental/io/packet/PacketsKt {
+	public static final fun WritePacket (I)Lkotlinx/io/core/BytePacketBuilder;
+	public static synthetic fun WritePacket$default (IILjava/lang/Object;)Lkotlinx/io/core/BytePacketBuilder;
+}
+
