@@ -2,7 +2,6 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
-import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
@@ -143,8 +142,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         checkPoolThreadsCreated(4)
     }
 
-    @Test(timeout = 1_000) // Failing test until yield() is not fixed
-    @Ignore
+    @Test(timeout = 1_000)
     fun testYield() = runBlocking {
         corePoolSize = 1
         maxPoolSize = 1

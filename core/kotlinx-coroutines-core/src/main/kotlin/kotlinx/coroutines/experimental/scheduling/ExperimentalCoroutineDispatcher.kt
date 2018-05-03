@@ -6,14 +6,14 @@ import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
+// TODO make internal after integration wih Ktor
 class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().availableProcessors(), maxPoolSize: Int = MAX_POOL_SIZE) : CoroutineDispatcher(), Delay, Closeable {
 
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 
-    /**
-     * TODO: yield doesn't work as expected
-     */
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
+
+    override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block, fair = true)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>): Unit =
             DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)

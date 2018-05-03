@@ -267,9 +267,9 @@ internal class CoroutineScheduler(
     private fun tryUnpark(): Boolean {
         while (true) {
             val worker = parkedWorkersStack.pop() ?: return false
-            if (!worker.registeredInParkedQueue.value) {
+            if (!worker.registeredInStack.value) {
                 continue // Someone else succeeded
-            } else if (!worker.registeredInParkedQueue.compareAndSet(true, false)) {
+            } else if (!worker.registeredInStack.compareAndSet(true, false)) {
                 continue // Someone else succeeded
             }
 
@@ -434,7 +434,8 @@ internal class CoroutineScheduler(
                 "retired workers = $retired, " +
                 "finished workers = $finished, " +
                 "running workers queues = $queueSizes, "+
-                "global queue size = ${globalWorkQueue.size()}]"
+                "global queue size = ${globalWorkQueue.size()}], " +
+                "control state: ${controlState.value}"
     }
 
     // todo: make name of the pool configurable (optional parameter to CoroutineScheduler) and base thread names on it
@@ -473,7 +474,7 @@ internal class CoroutineScheduler(
          * Worker registers itself in this queue once and will stay there until
          * someone will call [Queue.poll] which return it, then this flag is reset.
          */
-        val registeredInParkedQueue = atomic(false)
+        val registeredInStack = atomic(false)
         var nextParkedWorker: PoolWorker? = null
 
         /**
@@ -624,7 +625,7 @@ internal class CoroutineScheduler(
                         parkTimeNs = (parkTimeNs * 3 shr 1).coerceAtMost(MAX_PARK_TIME_NS)
                     }
 
-                    if (registeredInParkedQueue.compareAndSet(false, true)) {
+                    if (registeredInStack.compareAndSet(false, true)) {
                         parkedWorkersStack.push(this)
                     }
 
@@ -636,7 +637,7 @@ internal class CoroutineScheduler(
 
         private fun blockingWorkerIdle() {
             tryReleaseCpu(WorkerState.PARKING)
-            if (registeredInParkedQueue.compareAndSet(false, true)) {
+            if (registeredInStack.compareAndSet(false, true)) {
                 parkedWorkersStack.push(this)
             }
 
@@ -671,7 +672,7 @@ internal class CoroutineScheduler(
                  * Either thread successfully deregisters itself from queue (and then terminate) or someone else
                  * tried to unpark it. In the latter case we should proceed as unparked worker
                  */
-                if (registeredInParkedQueue.value && !registeredInParkedQueue.compareAndSet(true, false)) {
+                if (registeredInStack.value && !registeredInStack.compareAndSet(true, false)) {
                     return
                 }
 

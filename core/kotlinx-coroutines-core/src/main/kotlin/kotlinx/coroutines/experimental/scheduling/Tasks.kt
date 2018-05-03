@@ -12,10 +12,10 @@ internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.offload.threshold", 96L)
 
 internal val BLOCKING_DEFAULT_PARALLELISM = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.blocking.parallelism", 16L).toInt()
+        "kotlinx.coroutines.scheduler.blocking.parallelism", 16)
 
 internal val MAX_POOL_SIZE = readFromSystemProperties(
-    "kotlinx.coroutines.scheduler.max.pool.size", Runtime.getRuntime().availableProcessors() * 128L).toInt()
+    "kotlinx.coroutines.scheduler.max.pool.size", Runtime.getRuntime().availableProcessors() * 128)
 
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
@@ -36,7 +36,9 @@ internal object NanoTimeSource : TimeSource() {
     override fun nanoTime() = System.nanoTime()
 }
 
-private fun readFromSystemProperties(propertyName: String, defaultValue: Long): Long {
+internal fun readFromSystemProperties(propertyName: String, defaultValue: Int): Int = readFromSystemProperties(propertyName, defaultValue.toLong()).toInt()
+
+internal fun readFromSystemProperties(propertyName: String, defaultValue: Long): Long {
     val value = try {
         System.getProperty(propertyName)
     } catch (e: SecurityException) {

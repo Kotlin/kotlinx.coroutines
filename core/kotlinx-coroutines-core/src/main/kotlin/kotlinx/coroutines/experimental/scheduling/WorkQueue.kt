@@ -27,10 +27,19 @@ internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
  */
 internal class WorkQueue {
 
-    // todo: There is non-atomicity in computing bufferSize (indices update separately).
-    // todo: It can lead to arbitrary values of resulting bufferSize.
-    // todo: Consider merging both indices into a single Long.
-    // todo: Alternatively, prove that sporadic arbitrary result here is Ok (does not seems the case now)
+    /*
+     * We read two independent counter here.
+     * Producer index is incremented only by owner
+     * Consumer index is incremented both by owner and external threads
+     *
+     * The only harmful race is:
+     * [T1] readProducerIndex (1) preemption(2) readConsumerIndex(5)
+     * [T2] changeProducerIndex (3)
+     * [T3] changeConsumerIndex (4)
+     *
+     * Which can lead to resulting size bigger than actual size at any moment of time.
+     * This is in general harmless because steal will be blocked by timer
+     */
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
 
     // TODO replace with inlined array when atomicfu will support it

@@ -101,7 +101,7 @@ internal class DispatchedContinuation<in T>(
         val context = continuation.context
         _state = value
         resumeMode = MODE_CANCELLABLE
-        dispatcher.dispatch(context, this)
+        dispatcher.dispatchYield(context, this)
     }
 
     override fun toString(): String =
