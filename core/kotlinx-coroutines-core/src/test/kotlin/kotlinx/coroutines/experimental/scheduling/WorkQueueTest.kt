@@ -1,12 +1,9 @@
 package kotlinx.coroutines.experimental.scheduling
 
-import kotlinx.coroutines.experimental.Runnable
-import kotlinx.coroutines.experimental.TestBase
-import org.junit.After
-import org.junit.Before
+import kotlinx.coroutines.experimental.*
+import org.junit.*
 import org.junit.Test
-import java.util.*
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class WorkQueueTest : TestBase() {
 
@@ -25,7 +22,7 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testLastScheduledComesFirst() {
         val queue = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
         (1L..4L).forEach { queue.add(task(it), globalQueue) }
         assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain())
     }
@@ -33,29 +30,29 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testWorkOffload() {
         val queue = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
         (1L..130L).forEach { queue.add(task(it), globalQueue) }
 
         val expectedLocalResults = (64L..129L).toMutableList()
         expectedLocalResults.add(0, 130L)
         assertEquals(expectedLocalResults, queue.drain())
-        assertEquals((1L..63L).toList(), globalQueue.map { (it as Task).submissionTime }.toList())
+        assertEquals((1L..63L).toList(), globalQueue.asTimeList())
     }
 
     @Test
     fun testWorkOffloadPrecision() {
         val queue = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
         repeat(128) { require(queue.add(task(0), globalQueue)) }
         require(globalQueue.isEmpty())
         require(!queue.add(task(0), globalQueue))
-        require(globalQueue.size == 63)
+        require(globalQueue.size() == 63)
     }
 
     @Test
     fun testTimelyStealing() {
         val victim = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
 
         (1L..96L).forEach { victim.add(task(it), globalQueue) }
 
@@ -79,7 +76,7 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testStealingBySize() {
         val victim = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
 
         (1L..110L).forEach { victim.add(task(it), globalQueue) }
         val stealer = WorkQueue()
@@ -104,7 +101,7 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testStealingFromHead() {
         val victim = WorkQueue()
-        val globalQueue = ArrayDeque<Task>()
+        val globalQueue = LockFreeQueue()
         (1L..2L).forEach { victim.add(task(it), globalQueue) }
         timeSource.step()
         timeSource.step(3)
@@ -116,6 +113,17 @@ class WorkQueueTest : TestBase() {
         require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(2L), stealer.drain())
     }
+}
+
+internal fun LockFreeQueue.asTimeList(): List<Long> {
+    val result = mutableListOf<Long>()
+    var next = poll()
+    while (next != null) {
+        result += next.submissionTime
+        next = poll()
+    }
+
+    return result
 }
 
 internal fun task(n: Long) = TimedTask(Runnable {}, n, TaskMode.NON_BLOCKING)

@@ -3,119 +3,117 @@ package kotlinx.coroutines.experimental.scheduling
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
+    private val blockingTasksCount = CORES_COUNT * 3
+    private val blockingTasksBarrier = CyclicBarrier(blockingTasksCount + 1)
+    lateinit var blocking: CoroutineContext
 
-    @Test(timeout = 10_000)
-    fun testShrinkOnlyBlockingTasks() = runBlocking {
+    @Before
+    fun setUp() {
         corePoolSize = CORES_COUNT
-        val tasksCount = 24
+        blocking = blockingDispatcher(100)
 
+    }
+
+    @Test(timeout = 15_000)
+    fun testShrinkOnlyBlockingTasks() = runBlocking {
         // Init dispatcher
         async(dispatcher) { }.await()
-
         // Pool is initialized with core size in the beginning
-        checkPoolThreadsExist(CORES_COUNT)
+        checkPoolThreadsExist(corePoolSize)
 
-        // Launch only blocking tasks
-        val latch = CountDownLatch(1)
-        val blocking = blockingDispatcher(100)
-        val blockingTasks = (1..tasksCount).map {
-            async(blocking) {
-                latch.await()
-            }
-        }
+        // Run blocking tasks and check increased threads count
+        val blockingTasks = launchBlocking()
+        checkBlockingTasks(blockingTasks)
 
-        //At least #tasksCount threads should be created
-        checkPoolThreadsExist(tasksCount..CORES_COUNT + tasksCount)
-        latch.countDown()
-        blockingTasks.joinAll()
-
-        delay(5, TimeUnit.SECONDS)
-        // Pool should shrink to core size
-        checkPoolThreadsExist(CORES_COUNT)
+        delay(10, TimeUnit.SECONDS)
+        // Pool should shrink to core size +- eps
+        checkPoolThreadsExist(corePoolSize..corePoolSize + 3)
     }
 
-    @Test(timeout = 10_000)
-    fun testShrinkMixedWithWorkload() = runBlocking {
-        corePoolSize = CORES_COUNT
-        val tasksCount = 24
-
-        // Launch only blocking tasks
-        val latch = CountDownLatch(1)
-        val blocking = blockingDispatcher(100)
-        val blockingTasks = (1..tasksCount).map {
-            async(blocking) {
-                latch.await()
-            }
-        }
-
-        val nonBlockingBarrier = CyclicBarrier(CORES_COUNT + 1)
-        val nonBlockingTasks = (1..CORES_COUNT).map {
-            async(dispatcher) {
-                nonBlockingBarrier.await()
-            }
-        }
-
-        nonBlockingTasks.forEach { require(it.isActive) }
-        nonBlockingBarrier.await()
-        nonBlockingTasks.joinAll()
-
-        //At least #tasksCount threads should be created
-        checkPoolThreadsExist(tasksCount..CORES_COUNT + tasksCount)
-        latch.countDown()
-        blockingTasks.joinAll()
-
-        delay(5, TimeUnit.SECONDS)
-        // Pool should shrink to core size
-        checkPoolThreadsExist(CORES_COUNT)
-    }
-
-    @Ignore
     @Test(timeout = 15_000)
-    fun testShrinkWithActiveWork() = runBlocking {
-        corePoolSize = CORES_COUNT
-        val tasksCount = 24
+    fun testShrinkMixedWithWorkload() = runBlocking {
+        // Block blockingTasksCount cores in blocking dispatcher
+        val blockingTasks = launchBlocking()
 
-        val latch = CountDownLatch(1)
+        // Block cores count CPU threads
         val nonBlockingBarrier = CyclicBarrier(CORES_COUNT + 1)
-        val blocking = blockingDispatcher(100)
-
-        val blockingTasks = (1..tasksCount).map {
-            async(blocking) {
-                latch.await()
-            }
-        }
-
         val nonBlockingTasks = (1..CORES_COUNT).map {
             async(dispatcher) {
                 nonBlockingBarrier.await()
             }
         }
 
-        val busySpinTasks = (1..2).map {
-            // TODO for lower resolution pool shrinks much slower
-            async(dispatcher) { while (true) delay(1) }
-        }
-
+        // Check CPU tasks succeeded properly even though blocking tasks acquired everything
         nonBlockingTasks.forEach { require(it.isActive) }
         nonBlockingBarrier.await()
-
-        // At least #tasksCount threads should be created
-        checkPoolThreadsExist(CORES_COUNT + tasksCount)
-
-        latch.countDown()
-        blockingTasks.joinAll()
         nonBlockingTasks.joinAll()
+
+        // Check blocking tasks succeeded properly
+        checkBlockingTasks(blockingTasks)
 
         delay(10, TimeUnit.SECONDS)
         // Pool should shrink to core size
         checkPoolThreadsExist(CORES_COUNT)
+    }
+
+    private suspend fun checkBlockingTasks(blockingTasks: List<Deferred<*>>) {
+        checkPoolThreadsExist(blockingTasksCount..corePoolSize + blockingTasksCount)
+        blockingTasksBarrier.await()
+        blockingTasks.joinAll()
+    }
+
+    @Test(timeout = 15_000)
+    fun testShrinkWithExternalTasks() = runBlocking {
+        val nonBlockingBarrier = CyclicBarrier(CORES_COUNT + 1)
+        val blockingTasks = launchBlocking()
+
+        val nonBlockingTasks = (1..CORES_COUNT).map {
+            async(dispatcher) {
+                nonBlockingBarrier.await()
+            }
+        }
+
+        // Tasks that burn CPU. Delay is important so tasks will be scheduled from external thread
+        val busySpinTasks = (1..2).map {
+            async(dispatcher) {
+                while (true) {
+                    delay(100, TimeUnit.MICROSECONDS)
+                    yield()
+                }
+            }
+        }
+
+        nonBlockingTasks.forEach { require(it.isActive) }
+        nonBlockingBarrier.await()
+        nonBlockingTasks.joinAll()
+
+        checkBlockingTasks(blockingTasks)
+
+        delay(10, TimeUnit.SECONDS)
+        // Pool should shrink almost to core size (+/- eps)
+        checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 4)
 
         busySpinTasks.forEach {
             require(it.isActive)
             it.cancelAndJoin()
         }
+    }
+
+    private suspend fun launchBlocking(): List<Deferred<*>> {
+        val result = (1..blockingTasksCount).map {
+            async(blocking) {
+                blockingTasksBarrier.await()
+            }
+        }
+
+        while (blockingTasksBarrier.numberWaiting != blockingTasksCount) {
+            delay(1)
+        }
+
+        return result
     }
 }

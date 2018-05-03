@@ -33,8 +33,7 @@ internal class WorkQueue {
     // todo: Alternatively, prove that sporadic arbitrary result here is Ok (does not seems the case now)
     internal val bufferSize: Int get() = producerIndex.value - consumerIndex.value
 
-    // todo: AtomicReferenceArray has an extra memory indirection.
-    // todo: In the future (long-term) atomicfu shall support efficient atomic arrays in a platform-specific way (unsafe or varhandels)
+    // TODO replace with inlined array when atomicfu will support it
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
 
     private val lastScheduledTask = atomic<Task?>(null)

@@ -10,7 +10,8 @@ abstract class SchedulerTestBase : TestBase() {
         val CORES_COUNT = Runtime.getRuntime().availableProcessors()
 
         /**
-         * TODO
+         * Asserts that [expectedThreadsCount] pool worker threads were created.
+         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
             val threadsCount = maxSequenceNumber()!! + 1
@@ -19,7 +20,8 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         /**
-         * TODO
+         * Asserts that any number of pool worker threads in [range] were created.
+         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(range: IntRange) {
             val maxSequenceNumber = maxSequenceNumber()!! + 1
@@ -27,7 +29,7 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         /**
-         * TODO
+         * Asserts that any number of pool worker threads in [range] exists at the time of method invocation
          */
         fun checkPoolThreadsExist(range: IntRange) {
             val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()
@@ -35,7 +37,7 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         /**
-         * TODO
+         * Asserts that [expectedThreadsCount] of pool worker threads exists at the time of method invocation
          */
         fun checkPoolThreadsExist(expectedThreadsCount: Int = CORES_COUNT) {
             val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()

@@ -63,6 +63,7 @@ class CoroutineSchedulerStressTest : TestBase() {
                 while (processedCounter.get() < 100) {
                     Thread.yield()
                 }
+
                 processedCounter.set(0L)
             }
         })
