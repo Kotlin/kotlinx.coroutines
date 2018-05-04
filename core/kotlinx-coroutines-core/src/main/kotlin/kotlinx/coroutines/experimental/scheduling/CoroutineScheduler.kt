@@ -636,6 +636,8 @@ internal class CoroutineScheduler(
                 parkedWorkersStack.push(this)
             }
 
+            if (!blockingQuiescence()) return
+
             terminationState.value = ALLOWED
             val time = System.nanoTime()
             LockSupport.parkNanos(IDLE_WORKER_KEEP_ALIVE_NS)
@@ -649,14 +651,6 @@ internal class CoroutineScheduler(
          * Stops execution of current thread and removes it from [createdWorkers]
          */
         private fun terminateWorker() {
-            // Last ditch polling: try to find blocking task before termination
-            val task = globalWorkQueue.pollBlockingMode()
-            if (task != null) {
-                localQueue.add(task, globalWorkQueue)
-                return
-            }
-
-
             synchronized(workers) {
                 // Someone else terminated, bail out
                 if (createdWorkers <= corePoolSize) {
@@ -670,6 +664,9 @@ internal class CoroutineScheduler(
                 if (registeredInStack.value && !registeredInStack.compareAndSet(true, false)) {
                     return
                 }
+
+                // Last ditch polling: try to find blocking task before termination
+                if (!blockingQuiescence()) return
 
                 /*
                  * See tryUnpark for state reasoning.
@@ -688,6 +685,18 @@ internal class CoroutineScheduler(
             }
 
             state = WorkerState.FINISHED
+        }
+
+        /**
+         * Method checks whether new blocking tasks arrived to pool when worker decided
+         * it can go to deep park/termination and puts recently arrived task to its local queue
+         */
+        private fun blockingQuiescence(): Boolean {
+            globalWorkQueue.pollBlockingMode()?.let {
+                localQueue.add(it, globalWorkQueue)
+                return false
+            }
+            return true
         }
 
         private fun idleReset(mode: TaskMode) {
