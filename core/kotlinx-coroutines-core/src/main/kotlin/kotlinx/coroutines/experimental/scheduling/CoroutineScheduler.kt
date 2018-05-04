@@ -70,7 +70,7 @@ internal class CoroutineScheduler(
      * The stack is better than a queue (even with contention on top) because it unparks threads
      * in most-recently used order, improving both performance and locality.
      * Moreover, it decreases threads thrashing, if the pool has n threads when only n / 2 is required,
-     * the latter half will never be unparked and will terminate itself after [BLOCKING_WORKER_KEEP_ALIVE_NS].
+     * the latter half will never be unparked and will terminate itself after [IDLE_WORKER_KEEP_ALIVE_NS].
      */
     @Suppress("ClassName")
     private object parkedWorkersStack
@@ -135,9 +135,6 @@ internal class CoroutineScheduler(
         private val MIN_PARK_TIME_NS = (WORK_STEALING_TIME_RESOLUTION_NS / 4)
             .coerceAtLeast(10)
             .coerceAtMost(MAX_PARK_TIME_NS)
-
-        @JvmStatic
-        private val BLOCKING_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(5)
 
         // Local queue 'add' results
         private const val ADDED = -1
@@ -304,8 +301,7 @@ internal class CoroutineScheduler(
              *    'ALLOWED', then proceed, because park will have no effect
              */
             if (!worker.terminationState.compareAndSet(terminationState, FORBIDDEN)
-                && worker.terminationState.value == TERMINATED
-            ) {
+                && worker.terminationState.value == TERMINATED) {
                 continue
             }
 
@@ -643,9 +639,9 @@ internal class CoroutineScheduler(
 
             terminationState.value = ALLOWED
             val time = System.nanoTime()
-            LockSupport.parkNanos(BLOCKING_WORKER_KEEP_ALIVE_NS)
+            LockSupport.parkNanos(IDLE_WORKER_KEEP_ALIVE_NS)
             // Protection against spurious wakeups of parkNanos
-            if (System.nanoTime() - time >= BLOCKING_WORKER_KEEP_ALIVE_NS) {
+            if (System.nanoTime() - time >= IDLE_WORKER_KEEP_ALIVE_NS) {
                 terminateWorker()
             }
         }
