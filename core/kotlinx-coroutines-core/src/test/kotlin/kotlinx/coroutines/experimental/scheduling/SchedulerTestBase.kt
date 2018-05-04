@@ -44,6 +44,8 @@ abstract class SchedulerTestBase : TestBase() {
             require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
         }
 
+        fun initialPoolSize() = Runtime.getRuntime().availableProcessors().coerceAtMost(2)
+
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }
                 .map { sequenceNumber(it.name) }.max()

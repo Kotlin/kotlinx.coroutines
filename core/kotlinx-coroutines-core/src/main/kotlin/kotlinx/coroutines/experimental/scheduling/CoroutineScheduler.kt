@@ -161,14 +161,13 @@ internal class CoroutineScheduler(
         }
 
         workers = arrayOfNulls(maxPoolSize)
-        // todo: can we lazily create corePool, too?
-        // todo: The goal: when running "small" workload on "large" machine we should not consume extra resource in advance
-        // todo: Can't we just invoke createNewWorker here to get the first one up and running?
-        for (i in 0 until corePoolSize) {
+        // By default create at most 2 workers and allocate next ones lazily
+        val initialSize = corePoolSize.coerceAtMost(2)
+        for (i in 0 until initialSize) {
             workers[i] = PoolWorker(i).apply { start() }
         }
 
-        controlState.value = corePoolSize.toLong()
+        controlState.value = initialSize.toLong()
     }
 
     /*
