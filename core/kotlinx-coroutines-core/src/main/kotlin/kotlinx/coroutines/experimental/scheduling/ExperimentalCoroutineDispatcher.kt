@@ -7,7 +7,7 @@ import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 // TODO make internal after integration wih Ktor
-class ExperimentalCoroutineDispatcher(corePoolSize: Int = Runtime.getRuntime().availableProcessors(), maxPoolSize: Int = MAX_POOL_SIZE) : CoroutineDispatcher(), Delay, Closeable {
+class ExperimentalCoroutineDispatcher(corePoolSize: Int = CORE_POOL_SIZE, maxPoolSize: Int = MAX_POOL_SIZE) : CoroutineDispatcher(), Delay, Closeable {
 
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 

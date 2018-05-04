@@ -1,22 +1,38 @@
 package kotlinx.coroutines.experimental.scheduling
 
+import java.util.concurrent.*
+
 
 internal typealias Task = TimedTask
 internal typealias GlobalQueue = TaskQueue
+// TODO most of these fields will be moved to 'object ExperimentalDispatcher'
 
 // 100us as default
+@JvmField
 internal val WORK_STEALING_TIME_RESOLUTION_NS = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.resolution.ns", 100000L)
 
+@JvmField
 internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.offload.threshold", 96L)
 
+@JvmField
 internal val BLOCKING_DEFAULT_PARALLELISM = readFromSystemProperties(
         "kotlinx.coroutines.scheduler.blocking.parallelism", 16)
 
+@JvmField
+internal val CORE_POOL_SIZE = readFromSystemProperties(
+    "kotlinx.coroutines.scheduler.core.pool.size", Runtime.getRuntime().availableProcessors().coerceAtLeast(2))
+
+@JvmField
 internal val MAX_POOL_SIZE = readFromSystemProperties(
     "kotlinx.coroutines.scheduler.max.pool.size", Runtime.getRuntime().availableProcessors() * 128)
 
+@JvmField
+internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(readFromSystemProperties(
+    "kotlinx.coroutines.scheduler.keep.alive.sec", 5L))
+
+@JvmField
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
 internal enum class TaskMode {
