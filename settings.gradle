@@ -14,8 +14,10 @@ include('knit')
 include('site')
 
 module('common/kotlinx-coroutines-core-common')
+module('common/kotlinx-coroutines-test-common')
 
 module('core/kotlinx-coroutines-core')
+module('core/kotlinx-coroutines-core-test')
 module('core/kotlinx-coroutines-io')
 
 module('integration/kotlinx-coroutines-guava')
@@ -34,6 +36,7 @@ module('ui/kotlinx-coroutines-javafx')
 module('ui/kotlinx-coroutines-swing')
 
 module('js/kotlinx-coroutines-core-js')
+module('js/kotlinx-coroutines-test-js')
 module('js/js-stub')
 module('js/example-frontend-js')
 

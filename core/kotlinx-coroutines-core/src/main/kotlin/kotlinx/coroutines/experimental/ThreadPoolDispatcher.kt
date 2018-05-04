@@ -61,7 +61,7 @@ fun newFixedThreadPoolContext(nThreads: Int, name: String): ThreadPoolDispatcher
 fun newFixedThreadPoolContext(nThreads: Int, name: String, parent: Job? = null): CoroutineContext =
     newFixedThreadPoolContext(nThreads, name)
 
-internal class PoolThread(
+public class PoolThread(
     @JvmField val dispatcher: ThreadPoolDispatcher, // for debugging & tests
     target: Runnable, name: String
 ) : Thread(target, name) {

@@ -108,7 +108,23 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
         dependencies {
             compile project(":$coroutines_core")
             //the only way IDEA can resolve test classes
-            testCompile project(":$coroutines_core").sourceSets.test.output
+//            testCompile project(":$coroutines_core").sourceSets.test.output
+        }
+    }
+}
+
+// configure dependencies on test
+configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-test-common'}) {
+    def platform = platformOf(it)
+    def coroutines_test = platformLib("kotlinx-coroutines-test", platform)
+
+    if (it.name == coroutines_test) {
+        dependencies {
+            expectedBy project(':kotlinx-coroutines-test-common')
+        }
+    } else {
+        dependencies {
+            testCompile project(":$coroutines_test")
         }
     }
 }
@@ -126,7 +142,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     apply from: rootProject.file('gradle/publish-bintray.gradle')
 }
 
-configure(subprojects.findAll { !unpublished.contains(it.name) }) {
+configure(subprojects.findAll { !unpublished.contains(it.name) && it.name != 'kotlinx-coroutines-test-common' && it.name != 'kotlinx-coroutines-test-js' }) {
     def platform = platformOf(it)
     def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 

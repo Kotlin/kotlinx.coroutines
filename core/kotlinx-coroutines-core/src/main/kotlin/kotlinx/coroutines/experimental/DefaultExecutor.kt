@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.timeunit.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal object DefaultExecutor : EventLoopBase(), Runnable {
+public object DefaultExecutor : EventLoopBase(), Runnable {
 
     override val isCompleted: Boolean get() = false
 

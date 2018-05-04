@@ -81,7 +81,7 @@ private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeMPSCQueueCore<T>
 
-internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
+public abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
