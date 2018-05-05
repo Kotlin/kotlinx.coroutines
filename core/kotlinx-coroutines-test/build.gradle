@@ -1,8 +1,4 @@
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    kotlinOptions.jdkHome = System.env.JDK_16
-}
-
 dependencies {
     compile "junit:junit:$junit_version"
-    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    compile "com.devexperts.lincheck:core:$lincheck_version"
 }

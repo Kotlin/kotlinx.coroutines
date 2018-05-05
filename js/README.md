@@ -6,6 +6,7 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 ## Modules
 
 * [kotlinx-coroutines-core-js](kotlinx-coroutines-core-js/README.md) -- core coroutine builders and primitives.
+* [kotlinx-coroutines-test-js](kotlinx-coroutines-test-js/README.md) -- coroutine testing tools
 
 ## Examples
 

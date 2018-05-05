@@ -17,7 +17,7 @@ module('common/kotlinx-coroutines-core-common')
 module('common/kotlinx-coroutines-test-common')
 
 module('core/kotlinx-coroutines-core')
-module('core/kotlinx-coroutines-core-test')
+module('core/kotlinx-coroutines-test')
 module('core/kotlinx-coroutines-io')
 
 module('integration/kotlinx-coroutines-guava')

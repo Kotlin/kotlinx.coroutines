@@ -103,7 +103,7 @@ public object DefaultExecutor : EventLoopBase(), Runnable {
 
     // used for tests
     @Synchronized
-    internal fun ensureStarted() {
+    public fun ensureStarted() {
         assert(_thread == null) // ensure we are at a clean state
         assert(debugStatus == FRESH || debugStatus == SHUTDOWN_ACK)
         debugStatus = FRESH

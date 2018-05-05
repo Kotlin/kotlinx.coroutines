@@ -107,8 +107,6 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
     } else {
         dependencies {
             compile project(":$coroutines_core")
-            //the only way IDEA can resolve test classes
-//            testCompile project(":$coroutines_core").sourceSets.test.output
         }
     }
 }

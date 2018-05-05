@@ -1,4 +1,4 @@
-# Module kotlinx-coroutines-core-js
+# Module kotlinx-coroutines-core-common
 
 Common primitives to work with coroutines in
 [multiplatform Kotlin projects](https://kotlinlang.org/docs/reference/multiplatform.html).

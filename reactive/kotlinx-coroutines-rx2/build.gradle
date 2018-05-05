@@ -1,6 +1,9 @@
 dependencies {
     compile project(':kotlinx-coroutines-reactive')
     compile 'io.reactivex.rxjava2:rxjava:2.1.9'
+
+    //the only way IDEA can resolve test classes, used for access to guide TestUtil
+    testCompile project(":kotlinx-coroutines-core").sourceSets.test.output
 }
 
 tasks.withType(dokka.getClass()) {

@@ -1,7 +1,3 @@
-dependencies {
-    testCompile "com.devexperts.lincheck:core:$lincheck_version"
-}
-
 task checkJdk16() {
     // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
     doLast {
