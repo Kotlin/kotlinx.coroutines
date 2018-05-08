@@ -16,14 +16,14 @@ fun <T> String.readKV(reader: StupidSerializer<T>): Pair<String, T> {
 
 fun <T> File.readAll(reader: StupidSerializer<T>) = readLines().map { it.readKV(reader) }
 
-fun <T> File.appendAll(writer: StupidSerializer<T>, keyValues: List<Pair<String, T>>)
-        = appendText(keyValues.joinAndWrite(writer))
+fun <T> File.appendAll(writer: StupidSerializer<T>, keyValues: List<Pair<String, T>>) =
+    appendText(keyValues.joinAndWrite(writer))
 
-fun <T> File.writeAll(writer: StupidSerializer<T>, keyValues: List<Pair<String, T>>)
-        = writeText(keyValues.joinAndWrite(writer))
+fun <T> File.writeAll(writer: StupidSerializer<T>, keyValues: List<Pair<String, T>>) =
+    writeText(keyValues.joinAndWrite(writer))
 
-private fun <T> List<Pair<String, T>>.joinAndWrite(writer: StupidSerializer<T>)
-        = joinToString("\n") { (k, v) -> "$k$KV_SEPARATOR${writer.write(v)}" }
+private fun <T> List<Pair<String, T>>.joinAndWrite(writer: StupidSerializer<T>) =
+    joinToString("\n") { (k, v) -> "$k$KV_SEPARATOR${writer.write(v)}" }
 
 data class MethodId(val name: String, val className: String, val desc: String) {
     init {
@@ -62,26 +62,28 @@ sealed class MethodCall {
 }
 
 data class DoResumeCall(
-        override val method: MethodId,
-        override val fromMethod: MethodId,
-        override val position: CallPosition
+    override val method: MethodId,
+    override val fromMethod: MethodId,
+    override val position: CallPosition
 ) : MethodCall() {
     override fun toString() = super.toString()
 
     companion object : StupidSerializer<DoResumeCall> {
+        fun withUnknownPosition(method: MethodId) = DoResumeCall(method, MethodId.UNKNOWN, CallPosition.UNKNOWN)
+
         override fun read(string: String) = string.split('\t').let {
             DoResumeCall(MethodId.read(it[0]), MethodId.read(it[1]), CallPosition.read(it[2]))
         }
 
-        override fun write(obj: DoResumeCall)
-                = "${MethodId.write(obj.method)}\t${MethodId.write(obj.fromMethod)}\t${CallPosition.write(obj.position)}"
+        override fun write(obj: DoResumeCall) =
+            "${MethodId.write(obj.method)}\t${MethodId.write(obj.fromMethod)}\t${CallPosition.write(obj.position)}"
     }
 }
 
 data class SuspendCall(
-        override val method: MethodId,
-        override val fromMethod: MethodId,
-        override val position: CallPosition
+    override val method: MethodId,
+    override val fromMethod: MethodId,
+    override val position: CallPosition
 ) : MethodCall() {
     override fun toString() = super.toString()
 
@@ -90,7 +92,7 @@ data class SuspendCall(
             SuspendCall(MethodId.read(it[0]), MethodId.read(it[1]), CallPosition.read(it[2]))
         }
 
-        override fun write(obj: SuspendCall)
-                = "${MethodId.write(obj.method)}\t${MethodId.write(obj.fromMethod)}\t${CallPosition.write(obj.position)}"
+        override fun write(obj: SuspendCall) =
+            "${MethodId.write(obj.method)}\t${MethodId.write(obj.fromMethod)}\t${CallPosition.write(obj.position)}"
     }
 }

@@ -24,8 +24,8 @@ inline fun handle(message: () -> String, body: () -> Unit) {
 }
 
 private fun handleSuspendedCall(continuation: Continuation<Any?>, functionCallKey: String) {
-    require(allSuspendCallsMap.isNotEmpty(),
-            { "allSuspendCallsMap is empty. Did you forget to build or read debugger indexes?" })
+    check(allSuspendCallsMap.isNotEmpty(),
+        { "allSuspendCallsMap is empty. Did you forget to build or read debugger indexes?" })
     val call = allSuspendCallsMap[functionCallKey]!!
     handle({ "handleAfterSuspendCall(${continuation.toStringSafe()}, $call)" }) {
         StacksManager.handleAfterSuspendFunctionReturn(continuation, call)
@@ -34,8 +34,8 @@ private fun handleSuspendedCall(continuation: Continuation<Any?>, functionCallKe
 
 // used from instrumented code
 fun handleDoResumeEnter(completion: Continuation<Any?>, continuation: Continuation<Any?>, doResumeKey: String) {
-    require(knownDoResumeFunctionsMap.isNotEmpty(),
-            { "knownDoResumeFunctionsMap is empty. Did you forget to build or read debugger indexes?" })
+    check(knownDoResumeFunctionsMap.isNotEmpty(),
+        { "knownDoResumeFunctionsMap is empty. Did you forget to build or read debugger indexes?" })
     val func = knownDoResumeFunctionsMap[doResumeKey]!!
     handle({ "handleDoResumeEnter(${completion.toStringSafe()}, ${continuation.toStringSafe()}, $func)" }) {
         StacksManager.handleDoResumeEnter(completion, continuation, func)

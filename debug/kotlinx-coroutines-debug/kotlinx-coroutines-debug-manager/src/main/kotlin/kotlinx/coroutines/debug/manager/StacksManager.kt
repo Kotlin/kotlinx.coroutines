@@ -5,25 +5,26 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.coroutines.experimental.Continuation
-
-val DEBUG_AGENT_PACKAGE_PREFIX = "kotlinx.coroutines.debug"
 
 private fun classNameBasedKey(currentClassName: String, index: Int) = "${currentClassName}___$index"
 
 private fun Collection<String>.lastIndexForClassName(name: String) =
-        filter { it.startsWith("${name}___") }.map { it.split("___").last().toInt() }.max()
+    filter { it.startsWith("${name}___") }.map { it.split("___").last().toInt() }.max()
 
 val allSuspendCallsMap = ConcurrentHashMap<String, SuspendCall>()
 
 val knownDoResumeFunctionsMap = ConcurrentHashMap<String, MethodId>()
 
 fun <T> MutableMap<String, T>.classNameIndexedPut(className: String, data: T) =
-        classNameBasedKey(className, (keys.lastIndexForClassName(className) ?: -1) + 1).also {
-            put(it, data)
-        }
+    classNameBasedKey(className, (keys.lastIndexForClassName(className) ?: -1) + 1).also {
+        put(it, data)
+    }
 
-enum class StackChangedEvent { Created, Suspended, Removed, WakedUp }
+enum class StackChangedEvent { Created, Suspended, WakedUp, Removed }
 
 typealias OnStackChangedCallback = StacksManager.(StackChangedEvent, WrappedContext) -> Unit
 
@@ -34,29 +35,29 @@ open class WeakId<T : Any>(value: T) : WeakReference<T>(value, referenceQueue) {
     val value: T? get() = get()
     override fun equals(other: Any?): Boolean = this === other || other is WeakId<*> && get() === other.get()
     override fun hashCode() = hash
-    override fun toString() = value
-            ?.let { "${this::class.java.simpleName}(${it::class.java.name}@${it.prettyHash})" }
-            ?: "${this::class.java.simpleName}(collected)"
+    override fun toString() =
+        value?.let { "${this::class.java.simpleName}(${it::class.java.name}@${it.prettyHash})" }
+                ?: "${this::class.java.simpleName}(collected)"
 }
 
 typealias WeakContinuation = WeakId<out Continuation<Any?>>
 typealias WeakWrappedCompletion = WeakId<WrappedCompletion>
 
 object StacksManager {
-    private val stackByContext = ConcurrentHashMap<WrappedContext, CoroutineStack>()
     private val stackByTopDoResumeContinuation = ConcurrentHashMap<WeakContinuation, CoroutineStack>()
     private val stacksByRunningThread = ConcurrentHashMap<Thread, MutableList<CoroutineStack>>()
     private val stackByInitialCompletion = ConcurrentHashMap<WeakWrappedCompletion, CoroutineStack>()
     private val ignoreDoResumeWithCompletion: MutableSet<WeakContinuation> =
-            Collections.newSetFromMap(ConcurrentHashMap<WeakContinuation, Boolean>())
+        Collections.newSetFromMap(ConcurrentHashMap<WeakContinuation, Boolean>())
+
+    //TODO: write kdoc to explain
+    private val anyCoroutineStateChangedReadWriteLock = ReentrantReadWriteLock(true)
 
     private val onChangeCallbacks = CopyOnWriteArrayList<OnStackChangedCallback>()
 
     fun addOnStackChangedCallback(callback: OnStackChangedCallback) = onChangeCallbacks.add(callback)
 
     fun removeOnStackChangedCallback(callback: OnStackChangedCallback) = onChangeCallbacks.remove(callback)
-
-    fun coroutinesOnThread(thread: Thread) = stacksByRunningThread[thread]?.toList().orEmpty()
 
     private fun cleanupOutdatedStacks() {
         while (true) {
@@ -65,19 +66,28 @@ object StacksManager {
     }
 
     private fun cleanup(weakContinuation: WeakId<*>) {
-        val stack = stackByInitialCompletion[weakContinuation] ?:
-                stackByTopDoResumeContinuation[weakContinuation] ?: return
+        val stack =
+            stackByInitialCompletion[weakContinuation] ?: stackByTopDoResumeContinuation[weakContinuation] ?: return
         debug { "cleanup(${weakContinuation.prettyHash})" }
-        stackByContext.remove(stack.context)
         stackByTopDoResumeContinuation.remove(stack.topFrameCompletion)
         stackByInitialCompletion.remove(stack.initialCompletion)
         ignoreDoResumeWithCompletion.remove(weakContinuation) //should already be removed anyway
     }
 
     @JvmStatic
-    fun getSnapshot(): FullCoroutineSnapshot {
+    fun getSnapshot(): AllCoroutinesSnapshot {
         cleanupOutdatedStacks()
-        return FullCoroutineSnapshot(stackByContext.values.map { it.getSnapshot() }.toList())
+        return anyCoroutineStateChangedReadWriteLock.write {
+            val alreadyCreatedSnapshots = mutableMapOf<CoroutineStack, CoroutineSnapshot>()
+            val snapshotsByRunningThread = stacksByRunningThread.mapValues { (_, stacks) ->
+                stacks.map { stack ->
+                    stack.getSnapshot().also { snapshot -> alreadyCreatedSnapshots[stack] = snapshot }
+                }
+            }
+            AllCoroutinesSnapshot(stackByInitialCompletion.values.map {
+                alreadyCreatedSnapshots[it] ?: it.getSnapshot()
+            }, snapshotsByRunningThread)
+        }
     }
 
     /**
@@ -87,76 +97,84 @@ object StacksManager {
     @Suppress("unused")
     fun getFullDumpString() = getSnapshot().fullCoroutineDump(Configuration.Debug).toString()
 
-    fun ignoreNextDoResume(completion: Continuation<Any?>) =
-            ignoreDoResumeWithCompletion.add(WeakId(completion))
+    fun ignoreNextDoResume(completion: Continuation<Any?>) = ignoreDoResumeWithCompletion.add(WeakId(completion))
 
     fun handleNewCoroutineCreated(initialCompletion: WrappedCompletion) {
         cleanupOutdatedStacks()
-        debug { "handleNewCoroutineCreated(${initialCompletion.prettyHash})" }
-        val stack = CoroutineStack(WeakWrappedCompletion(initialCompletion))
-        stackByContext[stack.context] = stack
-        stackByInitialCompletion[stack.initialCompletion] = stack
-        fireCallbacks(StackChangedEvent.Created, stack.context)
+        anyCoroutineStateChangedReadWriteLock.read {
+            debug { "handleNewCoroutineCreated(${initialCompletion.prettyHash})" }
+            val stack = CoroutineStack(WeakWrappedCompletion(initialCompletion))
+            stackByInitialCompletion[stack.initialCompletion] = stack
+            fireCallbacks(StackChangedEvent.Created, stack.context)
+        }
     }
 
     fun handleCoroutineExit(initialCompletion: WrappedCompletion) {
-        debug { "handleCoroutineExit(${initialCompletion.prettyHash})" }
-        val stack = stackByInitialCompletion.remove(WeakWrappedCompletion(initialCompletion)) ?: run {
-            error { "Exiting missing coroutine $initialCompletion @${initialCompletion.prettyHash}) (completed twice?)" }
-            return
+        anyCoroutineStateChangedReadWriteLock.read {
+            debug { "handleCoroutineExit(${initialCompletion.prettyHash})" }
+            val stack = stackByInitialCompletion.remove(WeakWrappedCompletion(initialCompletion)) ?: run {
+                error { "Exiting missing coroutine $initialCompletion @${initialCompletion.prettyHash}) (completed twice?)" }
+                return
+            }
+            stacksByRunningThread[stack.thread]?.let {
+                it.remove(stack)
+                if (it.isEmpty()) stacksByRunningThread.remove(stack.thread)
+            }
+            fireCallbacks(StackChangedEvent.Removed, stack.context)
         }
-        stackByContext.remove(stack.context)
-        stacksByRunningThread[stack.thread]?.let {
-            it.remove(stack)
-            if (it.isEmpty()) stacksByRunningThread.remove(stack.thread)
-        }
-        fireCallbacks(StackChangedEvent.Removed, stack.context)
     }
 
+    //TODO: suspend atomicity? how should we report coroutine while it is in the process of `returning`?
     fun handleAfterSuspendFunctionReturn(continuation: Continuation<Any?>, call: SuspendCall) {
         debug { "handleAfterSuspendFunctionReturn(${continuation.prettyHash}, $call)" }
         val runningOnCurrentThread = stacksByRunningThread[Thread.currentThread()]!!
         val stack = runningOnCurrentThread.last()
-        stackByTopDoResumeContinuation.remove(stack.topFrameCompletion)
-        if (stack.handleSuspendFunctionReturn(continuation, call)) {
-            runningOnCurrentThread.dropLastInplace()
-            stackByTopDoResumeContinuation[stack.topFrameCompletion] = stack
-            fireCallbacks(StackChangedEvent.Suspended, stack.context)
-            // todo: wakeup waiting handleDoResumeEnter
+        val runningStateTopFrameCompletion = stack.topFrameCompletion
+        anyCoroutineStateChangedReadWriteLock.read {
+            if (stack.handleSuspendFunctionReturn(continuation, call)) { //state had changed
+                runningOnCurrentThread.dropLastInplace()
+                stackByTopDoResumeContinuation.remove(runningStateTopFrameCompletion)
+                stackByTopDoResumeContinuation[stack.topFrameCompletion] = stack
+                fireCallbacks(StackChangedEvent.Suspended, stack.context)
+                // todo: wakeup waiting handleDoResumeEnter
+            }
         }
     }
 
     fun handleDoResumeEnter(completion: Continuation<Any?>, continuation: Continuation<Any?>, function: MethodId) {
-        fun message() = "handleDoResumeEnter(compl: ${completion.prettyHash}, cont: ${continuation.prettyHash}, $function)"
+        fun message() =
+            "handleDoResumeEnter(compl: ${completion.prettyHash}, cont: ${continuation.prettyHash}, $function)"
         if (ignoreDoResumeWithCompletion.remove(WeakId(completion))) {
             debug { message() + " - ignored" }
             return
         }
-        // todo: how can we make it last check?
-        stackByTopDoResumeContinuation.remove(WeakId(continuation))?.let {
-            //first case: coroutine wake up
-            debug { message() + " - coroutine waking up" }
-            val previousStatus = it.status
-            stackByTopDoResumeContinuation[it.handleDoResume(completion, continuation, function)] = it
-            with(stacksByRunningThread.getOrPut(it.thread, { mutableListOf() })) { if (lastOrNull() != it) add(it) }
-            if (previousStatus != CoroutineStatus.Running)
-                fireCallbacks(StackChangedEvent.WakedUp, it.context)
-            return
-        }
-        if (completion is WrappedCompletion) {
-            //second case: first lambda for coroutine
-            debug { message() + " - first lambda for coroutine" }
-            val stack = stackByInitialCompletion[WeakId(completion)]!!
-            stackByTopDoResumeContinuation[stack.handleDoResume(completion, continuation, function)] = stack
-            stacksByRunningThread.getOrPut(stack.thread, { mutableListOf() }).add(stack)
-            return
+        anyCoroutineStateChangedReadWriteLock.read {
+            // todo: how can we make it last check?
+            stackByTopDoResumeContinuation.remove(WeakId(continuation))?.let { stack ->
+                //first case: coroutine wake up
+                debug { message() + " - coroutine waking up" }
+                val previousStatus = stack.status
+                stackByTopDoResumeContinuation[stack.handleDoResume(completion, continuation, function)] = stack
+                with(stacksByRunningThread.getOrPut(stack.thread, { mutableListOf() })) {
+                    if (lastOrNull() != stack) add(stack)
+                }
+                if (previousStatus != CoroutineStatus.Running) fireCallbacks(StackChangedEvent.WakedUp, stack.context)
+                return
+            }
+            if (completion is WrappedCompletion) {
+                //second case: first lambda for coroutine
+                debug { message() + " - first lambda for coroutine" }
+                val stack = stackByInitialCompletion[WeakId(completion)]!!
+                stackByTopDoResumeContinuation[stack.handleDoResume(completion, continuation, function)] = stack
+                stacksByRunningThread.getOrPut(stack.thread, { mutableListOf() }).add(stack)
+                return
+            }
         }
         //final case: any lambda body call -> do nothing
         debug { message() + " - lambda body call" }
     }
 
     fun reset() {
-        stackByContext.clear()
         stackByInitialCompletion.clear()
         stackByTopDoResumeContinuation.clear()
         stacksByRunningThread.clear()
@@ -165,7 +183,7 @@ object StacksManager {
     }
 
     private fun fireCallbacks(event: StackChangedEvent, context: WrappedContext) =
-            onChangeCallbacks.forEach { it.invoke(this, event, context) }
+        onChangeCallbacks.forEach { it.invoke(this, event, context) }
 }
 
 private fun MutableList<*>.dropLastInplace() {

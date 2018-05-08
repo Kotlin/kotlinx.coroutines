@@ -3,7 +3,7 @@ package kotlinx.coroutines.debug.manager
 import java.io.PrintWriter
 import java.io.StringWriter
 
-fun Any?.toStringSafe() = try {
+fun Any?.toStringSafe(): String = try {
     toString()
 } catch (e: Throwable) {
     "<can't be printed ($e)>"
