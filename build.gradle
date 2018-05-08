@@ -231,3 +231,37 @@ task buildDebugAll {
 }
 
 build.dependsOn buildDebugAll
+
+// Such a hack, very flexible build system, WOW!
+//
+// E.g: you can run task 'kotlinx-coroutines-debug-test-assertions-test' (without any ':'!)
+// to run task(':test') in build 'kotlinx-coroutines-debug-test-assertions'
+/**
+ * Proxy task name generated as "${included-build-name}-${task-in-build}"
+ * @return map from proxy task name to original task
+ */
+static Map<String, TaskReference> createTasksProxyForIncludedBuild(IncludedBuild targetBuild) {
+    def projectInternal = targetBuild.getConfiguredBuild().getDefaultProject()
+    def tasksInternalNames = projectInternal.getTasks().getNames()
+    return tasksInternalNames.collectEntries { [("${targetBuild.name}-$it".toString()): targetBuild.task(":$it")] }
+}
+
+// This code generate in root project one task for each task in all included builds,
+// that depends on corresponding task from included build
+afterEvaluate {
+    gradle.getIncludedBuilds().forEach {
+        Map<String, TaskReference> proxy = [:]
+        try {
+            proxy = createTasksProxyForIncludedBuild(it)
+        } catch (Exception ex) {
+            println("Can't get tasks from build '$it':\n${ex.message}")
+        }
+        proxy.forEach { name, task ->
+            try {
+                tasks.create(name).dependsOn(task).setGroup('Included build proxy')
+            } catch (Exception ex) {
+                println("Can't create proxy task '$name' for build '$it':\n${ex.message}")
+            }
+        }
+    }
+}
