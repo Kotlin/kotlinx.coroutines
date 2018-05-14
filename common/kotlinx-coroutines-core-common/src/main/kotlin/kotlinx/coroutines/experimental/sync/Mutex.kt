@@ -30,6 +30,11 @@ import kotlinx.coroutines.experimental.internalAnnotations.*
  * Mutex has two states: _locked_ and _unlocked_.
  * It is **non-reentrant**, that is invoking [lock] even from the same thread/coroutine that currently holds
  * the lock still suspends the invoker.
+ *
+ * JVM API note:
+ * Memory semantic of the [Mutex] is similar to `synchronized` block on JVM:
+ * An unlock on a [Mutex] happens-before every subsequent successful lock on that [Mutex].
+ * Unsuccessful call to [tryLock] do not have any memory effects.
  */
 public interface Mutex {
     /**

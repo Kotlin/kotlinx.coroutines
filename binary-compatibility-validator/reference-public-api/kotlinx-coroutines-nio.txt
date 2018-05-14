@@ -1,0 +1,13 @@
+public final class kotlinx/coroutines/experimental/nio/NioKt {
+	public static final fun aAccept (Ljava/nio/channels/AsynchronousServerSocketChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aConnect (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/net/SocketAddress;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aLock (Ljava/nio/channels/AsynchronousFileChannel;JJZLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aLock (Ljava/nio/channels/AsynchronousFileChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aRead (Ljava/nio/channels/AsynchronousFileChannel;Ljava/nio/ByteBuffer;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aRead (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun aRead$default (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun aWrite (Ljava/nio/channels/AsynchronousFileChannel;Ljava/nio/ByteBuffer;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun aWrite (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun aWrite$default (Ljava/nio/channels/AsynchronousSocketChannel;Ljava/nio/ByteBuffer;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+

@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental.guava
 
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.experimental.*
+import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
@@ -126,11 +127,19 @@ private class DeferredListenableFuture<T>(
  * care is taken to clear the reference to the waiting coroutine itself, so that its memory can be released even if
  * the future never completes.
  */
-public suspend fun <T> ListenableFuture<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-    val callback = ContinuationCallback(cont)
-    Futures.addCallback(this, callback)
-    cont.invokeOnCancellation {
-        callback.cont = null // clear the reference to continuation from the future's callback
+public suspend fun <T> ListenableFuture<T>.await(): T {
+    try {
+        if (isDone) return get() as T
+    } catch (e: ExecutionException) {
+        throw e.cause ?: e // unwrap original cause from ExecutionException
+    }
+
+    return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+        val callback = ContinuationCallback(cont)
+        Futures.addCallback(this, callback, MoreExecutors.directExecutor())
+        cont.invokeOnCancellation {
+            callback.cont = null // clear the reference to continuation from the future's callback
+        }
     }
 }
 
