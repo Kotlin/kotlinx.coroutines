@@ -214,7 +214,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
         }
     }
 
-    public override fun toString(): String = name ?: "TestCoroutineContext@$hexAddress"
+    public override fun toString(): String = name ?: defaultToStringTest()
 
     private inner class Dispatcher : CoroutineDispatcher(), Delay, EventLoop {
         override fun dispatch(context: CoroutineContext, block: Runnable) = post(block)
