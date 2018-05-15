@@ -78,7 +78,7 @@ public class ThreadPoolDispatcher internal constructor(
 ) : ExecutorCoroutineDispatcherBase(), Closeable {
     private val threadNo = AtomicInteger()
 
-    public override val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
+    internal override val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(nThreads) { target ->
         PoolThread(this, target, if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet())
     }
 

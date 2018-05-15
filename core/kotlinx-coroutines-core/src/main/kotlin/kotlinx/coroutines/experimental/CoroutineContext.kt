@@ -55,7 +55,7 @@ internal val DEBUG = run {
 private val COROUTINE_ID = AtomicLong()
 
 // for tests only
-public fun resetCoroutineId() {
+internal fun resetCoroutineId() {
     COROUTINE_ID.set(0)
 }
 

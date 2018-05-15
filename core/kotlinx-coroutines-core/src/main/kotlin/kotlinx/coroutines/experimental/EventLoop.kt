@@ -81,7 +81,7 @@ private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeMPSCQueueCore<T>
 
-public abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
+internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
@@ -150,7 +150,7 @@ public abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     @Suppress("MemberVisibilityCanBePrivate") // todo: remove suppress when KT-22030 is fixed
-    public fun execute(task: Runnable) {
+    internal fun execute(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()

@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.timeunit.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-public object DefaultExecutor : EventLoopBase(), Runnable {
+internal object DefaultExecutor : EventLoopBase(), Runnable {
 
     override val isCompleted: Boolean get() = false
 
@@ -103,7 +103,7 @@ public object DefaultExecutor : EventLoopBase(), Runnable {
 
     // used for tests
     @Synchronized
-    public fun ensureStarted() {
+    internal fun ensureStarted() {
         assert(_thread == null) // ensure we are at a clean state
         assert(debugStatus == FRESH || debugStatus == SHUTDOWN_ACK)
         debugStatus = FRESH

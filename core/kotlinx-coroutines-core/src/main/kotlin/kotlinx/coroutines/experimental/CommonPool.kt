@@ -76,7 +76,7 @@ object CommonPool : CoroutineDispatcher() {
 
     // used for tests
     @Synchronized
-    public fun usePrivatePool() {
+    internal fun usePrivatePool() {
         shutdown(0)
         usePrivatePool = true
         _pool = null
@@ -84,7 +84,7 @@ object CommonPool : CoroutineDispatcher() {
 
     // used for tests
     @Synchronized
-    public fun shutdown(timeout: Long) {
+    internal fun shutdown(timeout: Long) {
         (_pool as? ExecutorService)?.apply {
             shutdown()
             if (timeout > 0)
