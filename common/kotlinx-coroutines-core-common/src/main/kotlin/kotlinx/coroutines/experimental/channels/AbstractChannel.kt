@@ -181,7 +181,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
-            result === OFFER_FAILED -> false
+            result === OFFER_FAILED ->  throw closedForSend?.sendException ?: return false
             result is Closed<*> -> throw result.sendException
             else -> error("offerInternal returned $result")
         }
