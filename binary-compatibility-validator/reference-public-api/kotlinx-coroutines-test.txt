@@ -1,0 +1,81 @@
+public final class kotlinx/coroutines/experimental/LinTesting {
+	public fun <init> ()V
+	public final fun run (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
+}
+
+public final class kotlinx/coroutines/experimental/LinVerifier : com/devexperts/dxlab/lincheck/verifier/Verifier {
+	public fun <init> (Ljava/util/List;Ljava/lang/Object;Ljava/lang/reflect/Method;)V
+	public fun verifyResults (Ljava/util/List;)V
+}
+
+public final class kotlinx/coroutines/experimental/OpResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Object;)Lkotlinx/coroutines/experimental/OpResult;
+	public static synthetic fun copy$default (Lkotlinx/coroutines/experimental/OpResult;Ljava/lang/String;Ljava/lang/Object;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/OpResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public class kotlinx/coroutines/experimental/TestBase {
+	public fun <init> ()V
+	public final fun before ()V
+	public final fun check (ZLkotlin/jvm/functions/Function0;)V
+	public final fun error (Ljava/lang/Object;Ljava/lang/Throwable;)Ljava/lang/Void;
+	public static synthetic fun error$default (Lkotlinx/coroutines/experimental/TestBase;Ljava/lang/Object;Ljava/lang/Throwable;ILjava/lang/Object;)Ljava/lang/Void;
+	public final fun expect (I)V
+	public final fun expectUnreached ()V
+	public final fun finish (I)V
+	public final fun getStressTestMultiplier ()I
+	public final fun getStressTestMultiplierSqrt ()I
+	public final fun isStressTest ()Z
+	public final fun onCompletion ()V
+	public final fun runTest (Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun runTest$default (Lkotlinx/coroutines/experimental/TestBase;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class kotlinx/coroutines/experimental/ThreadsKt {
+	public static final fun checkTestThreads (Ljava/util/Set;)V
+	public static final fun currentThreads ()Ljava/util/Set;
+	public static final fun dumpThreads (Ljava/util/List;Ljava/lang/String;)V
+	public static final fun dumpThreads (Lkotlinx/coroutines/experimental/ThreadPoolDispatcher;Ljava/lang/String;)V
+	public static final fun ignoreLostThreads ([Ljava/lang/String;)V
+}
+
+public final class kotlinx/coroutines/experimental/test/TestCoroutineContext : kotlin/coroutines/experimental/CoroutineContext {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advanceTimeBy (JLjava/util/concurrent/TimeUnit;)J
+	public static synthetic fun advanceTimeBy$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;JLjava/util/concurrent/TimeUnit;ILjava/lang/Object;)J
+	public final fun advanceTimeTo (JLjava/util/concurrent/TimeUnit;)V
+	public static synthetic fun advanceTimeTo$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;JLjava/util/concurrent/TimeUnit;ILjava/lang/Object;)V
+	public final fun assertAllUnhandledExceptions (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun assertAllUnhandledExceptions$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun assertAnyUnhandledException (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun assertAnyUnhandledException$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun assertExceptions (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun assertExceptions$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun assertUnhandledException (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun assertUnhandledException$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun cancelAllActions ()V
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext$Element;
+	public final fun getExceptions ()Ljava/util/List;
+	public fun minusKey (Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public final fun now (Ljava/util/concurrent/TimeUnit;)J
+	public static synthetic fun now$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Ljava/util/concurrent/TimeUnit;ILjava/lang/Object;)J
+	public fun plus (Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public fun toString ()Ljava/lang/String;
+	public final fun triggerActions ()V
+}
+
+public final class kotlinx/coroutines/experimental/test/TestCoroutineContextKt {
+	public static final fun withTestContext (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun withTestContext$default (Lkotlinx/coroutines/experimental/test/TestCoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
