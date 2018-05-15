@@ -47,5 +47,6 @@ test {
 
     systemProperty 'testCasesClassesDirs', sourceSets.test.output.classesDirs.asPath
     systemProperty 'testCasesDeclarations', testCasesDeclarationsDump
+    systemProperty 'overwrite.output', project.properties['overwrite.output']
     jvmArgs '-ea'
 }
