@@ -16,8 +16,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.*
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -95,8 +94,6 @@ public actual open class LockFreeLinkedListNode {
         object : CondAddOp(node) {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
-
-    public val isFresh: Boolean get() = _next.value === this
 
     public actual val isRemoved: Boolean get() = next is Removed
 

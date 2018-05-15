@@ -243,23 +243,51 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     public override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
+
+        /*
+         * Try to commit close by adding a close token to the end of the queue.
+         * Successful -> we're now responsible for closing receivers
+         * Not successful -> help closing pending receivers to maintain invariant
+         * "if (!close()) next send will throw"
+         */
+        val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
+        if (!closeAdded) {
+            helpClose(queue.prevNode as Closed<*>)
+            return false
+        }
+
+        helpClose(closed)
+        onClosed(closed)
+        afterClose(cause)
+        return true
+    }
+
+    private fun helpClose(closed: Closed<*>) {
+        /*
+         * It's important to traverse list from right to left to avoid races with sender.
+         * Consider channel state
+         * head sentinel -> [receiver 1] -> [receiver 2] -> head sentinel
+         * T1 invokes receive()
+         * T2 invokes close()
+         * T3 invokes close() + send(value)
+         *
+         * If both will traverse list from left to right, following non-linearizable history is possible:
+         * [close -> false], [send -> transferred 'value' to receiver]
+         */
         while (true) {
-            val receive = takeFirstReceiveOrPeekClosed()
-            if (receive == null) {
-                // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(closed, { prev ->
-                    if (prev is Closed<*>) return false // already closed
-                    prev !is ReceiveOrClosed<*> // only add close if no waiting receive
-                })) {
-                    onClosed(closed)
-                    afterClose(cause)
-                    return true
-                }
-                continue // retry on failure
+            val previous = closed.prevNode
+            // Channel is empty or has no receivers
+            if (previous is LockFreeLinkedListHead || previous !is Receive<*>) {
+                break
             }
-            if (receive is Closed<*>) return false // already marked as closed -- nothing to do
-            receive as Receive<E> // type assertion
-            receive.resumeReceiveClosed(closed)
+
+            if (!previous.remove()) {
+                continue
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            previous as Receive<E> // type assertion
+            previous.resumeReceiveClosed(closed)
         }
     }
 

@@ -16,23 +16,24 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import com.devexperts.dxlab.lincheck.LinChecker
-import com.devexperts.dxlab.lincheck.annotations.Operation
-import com.devexperts.dxlab.lincheck.annotations.Param
-import com.devexperts.dxlab.lincheck.annotations.Reset
-import com.devexperts.dxlab.lincheck.paramgen.IntGen
+import com.devexperts.dxlab.lincheck.*
+import com.devexperts.dxlab.lincheck.annotations.*
+import com.devexperts.dxlab.lincheck.paramgen.*
 import com.devexperts.dxlab.lincheck.stress.*
 import kotlinx.coroutines.experimental.*
-import org.junit.Test
+import org.junit.*
+import java.io.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
 class ChannelLinearizabilityTest : TestBase() {
+
     private val lt = LinTesting()
+    private var capacity = 0
     private lateinit var channel: Channel<Int>
 
     @Reset
     fun reset() {
-        channel = Channel<Int>()
+        channel = Channel(capacity)
     }
 
     @Operation(runOnce = true)
@@ -53,14 +54,32 @@ class ChannelLinearizabilityTest : TestBase() {
     @Operation(runOnce = true)
     fun receive3() = lt.run("receive3") { channel.receive() }
 
-//    @Operation(runOnce = true)
-//    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
-//
-//    @Operation(runOnce = true)
-//    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
+    @Operation(runOnce = true)
+    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
+
+    @Operation(runOnce = true)
+    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
 
     @Test
-    fun testLinearizability() {
+    fun testRendezvousChannelLinearizability() {
+        runTest(0)
+    }
+
+    @Test
+    fun testArrayChannelLinearizability() {
+        for (i in listOf(1, 2, 16)) {
+            runTest(i)
+        }
+    }
+
+    @Test
+    fun testConflatedChannelLinearizability() = runTest(Channel.CONFLATED)
+
+    @Test
+    fun testUnlimitedChannelLinearizability() = runTest(Channel.UNLIMITED)
+
+    private fun runTest(capacity: Int) {
+        this.capacity = capacity
         val options = StressOptions()
             .iterations(100)
             .invocationsPerIteration(1000 * stressTestMultiplier)
