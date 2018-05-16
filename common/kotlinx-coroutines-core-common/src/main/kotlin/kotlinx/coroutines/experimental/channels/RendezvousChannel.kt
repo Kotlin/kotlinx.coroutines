@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
+
 /**
  * Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
  * to receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
@@ -25,7 +27,7 @@ package kotlinx.coroutines.experimental.channels
  *
  * This implementation is fully lock-free.
  */
-public open class RendezvousChannel<E> : AbstractChannel<E>() {
+public open class RendezvousChannel<E>(job: Job = Job()) : AbstractChannel<E>(job) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = true

@@ -456,11 +456,12 @@ public final class kotlinx/coroutines/experimental/YieldKt {
 }
 
 public abstract class kotlinx/coroutines/experimental/channels/AbstractChannel : kotlinx/coroutines/experimental/channels/AbstractSendChannel, kotlinx/coroutines/experimental/channels/Channel {
-	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/experimental/Job;)V
 	public fun cancel (Ljava/lang/Throwable;)Z
 	protected fun cleanupSendQueueOnCancel ()V
 	protected final fun describeTryPoll ()Lkotlinx/coroutines/experimental/channels/AbstractChannel$TryPollDesc;
 	protected final fun getHasReceiveOrClosed ()Z
+	public final fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public final fun getOnReceive ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
 	public final fun getOnReceiveOrNull ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
 	protected abstract fun isBufferAlwaysEmpty ()Z
@@ -539,15 +540,18 @@ public abstract interface class kotlinx/coroutines/experimental/channels/ActorSc
 }
 
 public final class kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel : kotlinx/coroutines/experimental/channels/AbstractSendChannel, kotlinx/coroutines/experimental/channels/BroadcastChannel {
-	public fun <init> (I)V
+	public fun <init> (ILkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (ILkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close (Ljava/lang/Throwable;)Z
 	public final fun getCapacity ()I
+	public fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public fun open ()Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public fun openSubscription ()Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
 
 public class kotlinx/coroutines/experimental/channels/ArrayChannel : kotlinx/coroutines/experimental/channels/AbstractChannel {
-	public fun <init> (I)V
+	public fun <init> (ILkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (ILkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected fun cleanupSendQueueOnCancel ()V
 	protected fun getBufferDebugString ()Ljava/lang/String;
 	public final fun getCapacity ()I
@@ -712,7 +716,10 @@ public final class kotlinx/coroutines/experimental/channels/ConflatedBroadcastCh
 	public static final field UNDEFINED Lkotlinx/coroutines/experimental/internal/Symbol;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Object;)V
+	public fun <init> (Lkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close (Ljava/lang/Throwable;)Z
+	public fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun getValueOrNull ()Ljava/lang/Object;
@@ -726,6 +733,8 @@ public final class kotlinx/coroutines/experimental/channels/ConflatedBroadcastCh
 
 public class kotlinx/coroutines/experimental/channels/ConflatedChannel : kotlinx/coroutines/experimental/channels/AbstractChannel {
 	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected final fun isBufferAlwaysEmpty ()Z
 	protected final fun isBufferAlwaysFull ()Z
 	protected final fun isBufferEmpty ()Z
@@ -737,6 +746,8 @@ public class kotlinx/coroutines/experimental/channels/ConflatedChannel : kotlinx
 
 public class kotlinx/coroutines/experimental/channels/LinkedListChannel : kotlinx/coroutines/experimental/channels/AbstractChannel {
 	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected final fun isBufferAlwaysEmpty ()Z
 	protected final fun isBufferAlwaysFull ()Z
 	protected final fun isBufferEmpty ()Z
@@ -775,6 +786,7 @@ public abstract interface class kotlinx/coroutines/experimental/channels/Produce
 
 public abstract interface class kotlinx/coroutines/experimental/channels/ReceiveChannel {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
+	public abstract fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public abstract fun getOnReceive ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
 	public abstract fun getOnReceiveOrNull ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
 	public abstract fun isClosedForReceive ()Z
@@ -797,6 +809,8 @@ public abstract interface class kotlinx/coroutines/experimental/channels/Receive
 
 public class kotlinx/coroutines/experimental/channels/RendezvousChannel : kotlinx/coroutines/experimental/channels/AbstractChannel {
 	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/experimental/Job;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected final fun isBufferAlwaysEmpty ()Z
 	protected final fun isBufferAlwaysFull ()Z
 	protected final fun isBufferEmpty ()Z
@@ -812,6 +826,7 @@ public abstract interface class kotlinx/coroutines/experimental/channels/Send {
 
 public abstract interface class kotlinx/coroutines/experimental/channels/SendChannel {
 	public abstract fun close (Ljava/lang/Throwable;)Z
+	public abstract fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public abstract fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
 	public abstract fun isClosedForSend ()Z
 	public abstract fun isFull ()Z

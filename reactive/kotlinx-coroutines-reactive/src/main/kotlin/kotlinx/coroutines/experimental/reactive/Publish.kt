@@ -81,7 +81,7 @@ private class PublisherCoroutine<in T>(
 
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex = Mutex(locked = true)
-
+    override val job: Job = channel.job
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
     override val isClosedForSend: Boolean get() = isCompleted

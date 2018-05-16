@@ -259,6 +259,8 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         helpClose(closed)
         onClosed(closed)
         afterClose(cause)
+        // Cancel it as the last action so if the channel is closed, then the job is cancelled as well
+        job.cancel(cause)
         return true
     }
 
@@ -473,8 +475,12 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 /**
  * Abstract send/receive channel. It is a base class for all channel implementations.
  */
-public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> {
+public abstract class AbstractChannel<E>(final override val job: Job) : AbstractSendChannel<E>(), Channel<E> {
     // ------ extension points for buffered channels ------
+
+    init {
+        registerCancellation(job)
+    }
 
     /**
      * Returns `true` if [isBufferEmpty] is always `true`.
@@ -1049,5 +1055,22 @@ public class Closed<in E>(
 private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed<E> {
     override val offerResult get() = OFFER_SUCCESS
     abstract fun resumeReceiveClosed(closed: Closed<*>)
+}
+
+internal fun SendChannel<*>.registerCancellation(job: Job) {
+    val cancellation = ChannelCancellation(this, job)
+    job.invokeOnCompletion(cancellation.asHandler)
+}
+
+private class ChannelCancellation(
+    private val channel: SendChannel<*>, job: Job) : JobNode<Job>(job) {
+
+    override fun invoke(cause: Throwable?) {
+        if (job.isCancelled) {
+            channel.close(cause)
+        } else {
+            channel.close()
+        }
+    }
 }
 

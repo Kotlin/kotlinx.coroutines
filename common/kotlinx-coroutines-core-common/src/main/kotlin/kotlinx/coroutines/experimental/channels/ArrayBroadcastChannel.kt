@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.selects.*
@@ -38,10 +39,16 @@ class ArrayBroadcastChannel<E>(
     /**
      * Buffer capacity.
      */
-    val capacity: Int
+    val capacity: Int,
+
+    /**
+     * Job owning this channel.
+     */
+    override val job: Job = Job()
 ) : AbstractSendChannel<E>(), BroadcastChannel<E> {
     init {
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
+        registerCancellation(job)
     }
 
     private val bufferLock = ReentrantLock()
@@ -195,7 +202,7 @@ class ArrayBroadcastChannel<E>(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), SubscriptionReceiveChannel<E> {
+    ) : AbstractChannel<E>(Job()), SubscriptionReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         @Volatile

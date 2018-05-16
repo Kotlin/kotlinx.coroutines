@@ -16,8 +16,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
@@ -27,7 +27,7 @@ import kotlinx.coroutines.experimental.selects.SelectInstance
  *
  * This implementation is fully lock-free.
  */
-public open class LinkedListChannel<E> : AbstractChannel<E>() {
+public open class LinkedListChannel<E>(job: Job = Job()) : AbstractChannel<E>(job) {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false

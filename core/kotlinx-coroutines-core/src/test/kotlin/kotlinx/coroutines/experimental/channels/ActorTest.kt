@@ -146,4 +146,32 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
         finish(3)
     }
+
+    @Test
+    fun testJoinActor() = runTest {
+        val actor = actor<Int>(coroutineContext, capacity = capacity) {
+            expect(2)
+            for (i in channel) {
+                if (i == 42) {
+                    expect(5)
+                    break
+                }
+
+                expect(4)
+                assertEquals(1, i)
+            }
+        }
+
+
+        val sender = async(coroutineContext) {
+            expect(3)
+            actor.send(1)
+            actor.send(42)
+        }
+
+        expect(1)
+        actor.job.join()
+        sender.await()
+        finish(6)
+    }
 }

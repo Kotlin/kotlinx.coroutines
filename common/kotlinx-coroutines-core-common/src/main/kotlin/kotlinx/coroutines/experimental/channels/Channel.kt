@@ -16,20 +16,24 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.selects.SelectClause1
-import kotlinx.coroutines.experimental.selects.SelectClause2
-import kotlinx.coroutines.experimental.selects.select
-import kotlinx.coroutines.experimental.yield
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * Sender's interface to [Channel].
  */
 public interface SendChannel<in E> {
+
+    /**
+     * The job of this channel bounded with channel lifecycle.
+     * If job is completed with any reason (either normally or exceptionally), channel is [closed][SendChannel.close]
+     * with a completion [cause][Job.getCancellationException] of the job.
+     * If the channel is [closed][isClosedForSend], job is cancelled with the same reason as [SendChannel.close] call
+     */
+    public val job: Job
+
     /**
      * Returns `true` if this channel was closed by invocation of [close] and thus
      * the [send] and [offer] attempts throws exception.
@@ -105,6 +109,15 @@ public interface SendChannel<in E> {
  * Receiver's interface to [Channel].
  */
 public interface ReceiveChannel<out E> {
+
+    /**
+     * The job of this channel bounded with channel lifecycle.
+     * If job is completed with any reason (either normally or exceptionally), channel is [cancelled][ReceiveChannel.cancel]
+     * with a completion [cause][Job.getCancellationException] of the job.
+     * If the channel is cancelled or [closed][isClosedForReceive], job is cancelled with the same reason as [ReceiveChannel.cancel] call
+     */
+    public val job: Job
+
     /**
      * Returns `true` if this channel was closed by invocation of [close][SendChannel.close] on the [SendChannel]
      * side and all previously sent items were already received, so that the [receive] attempt

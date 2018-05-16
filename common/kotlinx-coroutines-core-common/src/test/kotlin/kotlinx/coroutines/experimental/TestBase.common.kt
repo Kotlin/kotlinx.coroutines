@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.test.*
+
 public expect open class TestBase constructor() {
     public val isStressTest: Boolean
     public val stressTestMultiplier: Int
@@ -30,4 +32,24 @@ public expect open class TestBase constructor() {
         unhandled: List<(Throwable) -> Boolean> = emptyList(),
         block: suspend CoroutineScope.() -> Unit
     )
+}
+
+suspend inline fun <reified T : Exception> assertFailsWith(deferred: Deferred<*>) {
+    try {
+        deferred.await()
+        fail("Expected ${T::class} to be thrown, but was completed successfully")
+    } catch (e: Exception) {
+        assertTrue(e is T, "Expected exception of type ${T::class}, but has $e}")
+    }
+}
+
+// Clashes with assertFailsWith
+suspend inline fun <reified T : Throwable> assertFails(noinline block: suspend () -> Unit): T {
+    try {
+        block()
+        fail("Expected ${T::class} to be thrown, but was completed successfully")
+    } catch (e: Throwable) {
+        assertTrue(e is T, "Expected exception of type ${T::class}, but has $e}")
+        return e as T
+    }
 }

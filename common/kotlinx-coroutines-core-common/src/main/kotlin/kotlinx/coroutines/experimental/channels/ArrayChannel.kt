@@ -16,8 +16,9 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.internalAnnotations.Volatile
+import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.selects.*
 
 /**
@@ -33,8 +34,13 @@ public open class ArrayChannel<E>(
     /**
      * Buffer capacity.
      */
-    val capacity: Int
-) : AbstractChannel<E>() {
+    val capacity: Int,
+
+    /**
+     * Job owning this channel.
+     */
+    job: Job = Job()
+) : AbstractChannel<E>(job) {
     init {
         require(capacity >= 1) { "ArrayChannel capacity must be at least 1, but $capacity was specified" }
     }

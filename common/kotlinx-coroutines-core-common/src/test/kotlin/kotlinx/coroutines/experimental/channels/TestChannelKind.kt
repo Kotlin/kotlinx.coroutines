@@ -16,46 +16,47 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.selects.*
 
 enum class TestChannelKind {
     RENDEZVOUS {
-        override fun create(): Channel<Int> = RendezvousChannel()
+        override fun create(job: Job): Channel<Int> = RendezvousChannel(job)
         override fun toString(): String = "RendezvousChannel"
     },
     ARRAY_1 {
-        override fun create(): Channel<Int> = ArrayChannel(1)
+        override fun create(job: Job): Channel<Int> = ArrayChannel(1, job)
         override fun toString(): String = "ArrayChannel(1)"
     },
     ARRAY_10 {
-        override fun create(): Channel<Int> = ArrayChannel(8)
+        override fun create(job: Job): Channel<Int> = ArrayChannel(8, job)
         override fun toString(): String = "ArrayChannel(8)"
     },
     LINKED_LIST {
-        override fun create(): Channel<Int> = LinkedListChannel()
+        override fun create(job: Job): Channel<Int> = LinkedListChannel(job)
         override fun toString(): String = "LinkedListChannel"
     },
     CONFLATED {
-        override fun create(): Channel<Int> = ConflatedChannel()
+        override fun create(job: Job): Channel<Int> = ConflatedChannel(job)
         override fun toString(): String = "ConflatedChannel"
         override val isConflated: Boolean get() = true
     },
     ARRAY_BROADCAST_1 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(1))
+        override fun create(job: Job): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(1, job))
         override fun toString(): String = "ArrayBroadcastChannel(1)"
     },
     ARRAY_BROADCAST_10 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(10))
+        override fun create(job: Job): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(10, job))
         override fun toString(): String = "ArrayBroadcastChannel(10)"
     },
     CONFLATED_BROADCAST {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ConflatedBroadcastChannel<Int>())
+        override fun create(job: Job): Channel<Int> = ChannelViaBroadcast(ConflatedBroadcastChannel<Int>(job))
         override fun toString(): String = "ConflatedBroadcastChannel"
         override val isConflated: Boolean get() = true
     }
     ;
 
-    abstract fun create(): Channel<Int>
+    abstract fun create(job: Job = Job()): Channel<Int>
     open val isConflated: Boolean get() = false
 }
 

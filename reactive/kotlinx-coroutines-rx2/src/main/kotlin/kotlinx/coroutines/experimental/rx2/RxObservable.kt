@@ -81,6 +81,8 @@ private class RxObservableCoroutine<T>(
 ) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Cancellable, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
+    override val job: Job = channel.job
+
     // Mutex is locked when while subscriber.onXXX is being invoked
     private val mutex = Mutex()
 

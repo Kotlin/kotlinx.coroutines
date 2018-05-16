@@ -21,6 +21,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ProduceTest : TestBase() {
+
     @Test
     fun testBasic() = runTest {
         val c = produce(coroutineContext) {
@@ -91,6 +92,22 @@ class ProduceTest : TestBase() {
         } catch (e: TestException) {
             expect(5)
         }
+    }
+
+    @Test
+    fun testAwaitProducerJob() = runTest {
+        val source = produce(coroutineContext) {
+            for (i in 1..100) {
+                send(i)
+            }
+        }
+
+        val transformer = source.map { it * it }
+        val consumer = async(coroutineContext) { transformer.consumeEach {  } }
+
+        source.job.join()
+        assertTrue(transformer.job.isCompleted)
+        assertTrue(consumer.isCompleted)
     }
 
     private class TestException : Exception()

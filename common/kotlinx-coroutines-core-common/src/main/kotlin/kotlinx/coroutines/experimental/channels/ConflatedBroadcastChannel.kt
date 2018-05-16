@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
@@ -37,7 +38,12 @@ import kotlinx.coroutines.experimental.selects.*
  * [opening][openSubscription] and [closing][SubscriptionReceiveChannel.close] subscription takes O(N) time, where N is the
  * number of subscribers.
  */
-public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
+public class ConflatedBroadcastChannel<E>(override val job: Job = Job()) : BroadcastChannel<E> {
+
+    init {
+        registerCancellation(job)
+    }
+
     /**
      * Creates an instance of this class that already holds a value.
      *
