@@ -1,7 +1,7 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package guide.test
 
-import org.junit.Test
+import org.junit.*
 
 class GuideTest {
 
@@ -288,6 +288,14 @@ class GuideTest {
             "16",
             "25",
             "Done!"
+        )
+    }
+
+    @Test
+    fun testGuideChannelExample11() {
+        test("GuideChannelExample11") { guide.channel.example11.main(emptyArray()) }.verifyLinesStart(
+            "Registering onClose in thread main @coroutine#1",
+            "Invoking onClose in thread ClosingThread @coroutine#2"
         )
     }
 

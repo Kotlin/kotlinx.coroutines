@@ -91,6 +91,59 @@ class BasicOperationsTest : TestBase() {
         testJobCancellation(it, IllegalStateException())
     }
 
+    @Test
+    fun testOnClose() = testChannel {
+        val channel = it.create()
+        var invoked = false
+        channel.onClose {
+            assertNull(it)
+            invoked = true
+        }
+
+        channel.close()
+        assertTrue(invoked, "Kind $it")
+    }
+
+    @Test
+    fun testOnCloseWithException() = testChannel {
+        val channel = it.create()
+        var invoked = false
+        channel.onClose {
+            assertTrue(it is IllegalStateException)
+            invoked = true
+        }
+
+        channel.close(IllegalStateException())
+        assertTrue(invoked, "Kind $it")
+    }
+
+    @Test
+    fun testOnCloseWithJob() = testChannel {
+        val channel = it.create()
+        var invoked = false
+        channel.onClose {
+            assertTrue(it is IllegalArgumentException)
+            invoked = true
+        }
+
+        channel.job.cancel(IllegalArgumentException())
+        assertTrue(invoked, "Kind $it")
+    }
+
+    @Test
+    fun testOnCloseMultipleTimes() = testChannel {
+        val channel = it.create()
+        var invoked = false
+        channel.onClose {
+            assertFalse(invoked)
+            invoked = true
+        }
+
+        assertTrue(channel.job.cancel())
+        assertFalse(channel.job.cancel())
+        assertTrue(invoked, "Kind $it")
+    }
+
     private suspend inline fun <reified T : Exception> testJobCancellation(kind: TestChannelKind, exception: T? = null) {
         var channel: Channel<Int>? = null
         val producer = async(coroutineContext) {

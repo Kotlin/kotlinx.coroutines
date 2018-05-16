@@ -661,6 +661,7 @@ public final class kotlinx/coroutines/experimental/channels/ChannelsKt {
 	public static final fun maxWith (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Ljava/util/Comparator;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun minWith (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Ljava/util/Comparator;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun none (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun onClose (Lkotlinx/coroutines/experimental/channels/Channel;Lkotlin/jvm/functions/Function1;)V
 	public static final fun requireNoNulls (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static final fun single (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun singleOrNull (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;

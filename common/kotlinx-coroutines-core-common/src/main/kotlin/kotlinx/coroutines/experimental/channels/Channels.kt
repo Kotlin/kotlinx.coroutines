@@ -150,6 +150,20 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     }
 
 /**
+ * Invokes the given block **synchronously** in the context of cancellation when channel or its job is cancelled.
+ * If channel is already closed, block is invoked immediately.
+ * [block] is invoked only once even if channel is cancelled or closed more than once
+ *
+ * @param block non-blocking callback which should be invoked on cancellation
+ */
+public inline fun Channel<*>.onClose(crossinline block: (Throwable?) -> Unit) {
+    job.invokeOnCompletion { cause ->
+        if (cause !is JobCancellationException || cause.cause != null) block(cause)
+        else block(null)
+    }
+}
+
+/**
  * @suppress: **Deprecated**: binary compatibility with old code
  */
 @Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)

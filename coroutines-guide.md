@@ -1340,6 +1340,32 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 Done!
 -->
 
+Additionally, it's possible to invoke a specific listener which is fired when the channel is closed using [onClose].
+Note that listener is invoked synchronously in the context of close:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val channel = Channel<Int>()
+    println("Registering onClose in thread ${Thread.currentThread().name}")
+    channel.onClose {
+        println("Invoking onClose in thread ${Thread.currentThread().name}")
+    }
+    
+    val job = launch(newSingleThreadContext("ClosingThread")) {
+        channel.close()  
+    }
+  
+    job.join()
+}
+```
+
+You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-11.kt)
+
+<!--- TEST LINES_START 
+Registering onClose in thread main @coroutine#1
+Invoking onClose in thread ClosingThread @coroutine#2
+-->
+
 ### Building channel producers
 
 The pattern where a coroutine is producing a sequence of elements is quite common. 
@@ -2441,6 +2467,7 @@ Channel was closed
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
+[onClose]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/on-close.html
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html

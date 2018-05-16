@@ -64,7 +64,7 @@ private class ChannelViaBroadcast<E>(
     private val broadcast: BroadcastChannel<E>
 ): Channel<E>, SendChannel<E> by broadcast {
     val sub = broadcast.openSubscription()
-
+    override val job: Job = sub.job
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
     override val isEmpty: Boolean get() = sub.isEmpty
 
