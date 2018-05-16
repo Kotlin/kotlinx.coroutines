@@ -27,3 +27,5 @@ internal expect annotation class JvmMultifileClass()
 internal expect annotation class JvmField()
 
 internal expect annotation class Volatile()
+
+internal expect annotation class JsName(val name: String)

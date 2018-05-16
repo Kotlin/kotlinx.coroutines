@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.experimental.internal.Closeable
+import kotlinx.coroutines.experimental.internalAnnotations.*
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
@@ -48,14 +49,23 @@ public interface BroadcastChannel<E> : SendChannel<E> {
      * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this
      * broadcast channel.
      */
+    @Suppress("CONFLICTING_OVERLOADS")
     public fun openSubscription(): ReceiveChannel<E>
+
+    /**
+     * @suppress **Deprecated**: Return type changed to `ReceiveChannel`, this one left here for binary compatibility.
+     */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Return type changed to `ReceiveChannel`, this one left here for binary compatibility")
+    @Suppress("CONFLICTING_OVERLOADS")
+    @JsName("openSubscriptionDeprecated")
+    public fun openSubscription(): SubscriptionReceiveChannel<E> = openSubscription() as SubscriptionReceiveChannel<E>
 
     /**
      * @suppress **Deprecated**: Renamed to [openSubscription]
      */
     @Deprecated(message = "Renamed to `openSubscription`",
         replaceWith = ReplaceWith("openSubscription()"))
-    public fun open(): ReceiveChannel<E> = openSubscription()
+    public fun open(): SubscriptionReceiveChannel<E> = openSubscription() as SubscriptionReceiveChannel<E>
 }
 
 /**
@@ -80,10 +90,11 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
  *
  * Note, that invocation of [cancel] also closes subscription.
  */
-@Deprecated("Deprecated in favour of `ReceiveChannel`")
+@Deprecated("Deprecated in favour of `ReceiveChannel`", replaceWith = ReplaceWith("ReceiveChannel"))
 public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeable {
     /**
      * Closes this subscription. This is a synonym for [cancel].
      */
+    @Deprecated("Use `cancel`", replaceWith = ReplaceWith("cancel()"))
     public override fun close() { cancel() }
 }

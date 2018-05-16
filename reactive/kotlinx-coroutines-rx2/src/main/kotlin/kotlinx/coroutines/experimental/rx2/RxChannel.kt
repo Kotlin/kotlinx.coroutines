@@ -18,42 +18,57 @@ package kotlinx.coroutines.experimental.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.*
 
 /**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
  */
+@Suppress("CONFLICTING_OVERLOADS")
 public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
 
+/** @suppress **Deprecated**: Left here for binary compatibility */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+@Suppress("CONFLICTING_OVERLOADS")
+public fun <T> MaybeSource<T>.openSubscription(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
+
 /**
  * @suppress **Deprecated**: Renamed to [openSubscription]
  */
 @Deprecated(message = "Renamed to `openSubscription`",
     replaceWith = ReplaceWith("openSubscription()"))
-public fun <T> MaybeSource<T>.open(): ReceiveChannel<T> = openSubscription()
+public fun <T> MaybeSource<T>.open(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
 
 /**
  * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
  */
+@Suppress("CONFLICTING_OVERLOADS")
 public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>()
     subscribe(channel)
     return channel
 }
 
+/** @suppress **Deprecated**: Left here for binary compatibility */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+@Suppress("CONFLICTING_OVERLOADS")
+public fun <T> ObservableSource<T>.openSubscription(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
+
 /**
  * @suppress **Deprecated**: Renamed to [openSubscription]
  */
 @Deprecated(message = "Renamed to `openSubscription`",
     replaceWith = ReplaceWith("openSubscription()"))
-public fun <T> ObservableSource<T>.open(): ReceiveChannel<T> = openSubscription()
+public fun <T> ObservableSource<T>.open(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
 
 /**
  * Subscribes to this [Observable] and returns an iterator to receive elements emitted by it.
@@ -93,7 +108,9 @@ public inline suspend fun <T> ObservableSource<T>.consumeEach(action: (T) -> Uni
 public suspend fun <T> ObservableSource<T>.consumeEach(action: suspend (T) -> Unit) =
     consumeEach { action(it) }
 
-private class SubscriptionChannel<T> : LinkedListChannel<T>(), ReceiveChannel<T>, Observer<T>, MaybeObserver<T> {
+private class SubscriptionChannel<T> :
+    LinkedListChannel<T>(), ReceiveChannel<T>, Observer<T>, MaybeObserver<T>, SubscriptionReceiveChannel<T>
+{
     @Volatile
     var subscription: Disposable? = null
 

@@ -16,8 +16,10 @@ public final class kotlinx/coroutines/experimental/rx2/RxChannelKt {
 	public static final fun iterator (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/ChannelIterator;
 	public static final fun open (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public static final fun open (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
 
 public final class kotlinx/coroutines/experimental/rx2/RxCompletableKt {

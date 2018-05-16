@@ -25,3 +25,7 @@ internal actual annotation class JvmMultifileClass
 internal actual annotation class JvmField
 
 internal actual annotation class Volatile
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias JsName = kotlin.js.JsName
+

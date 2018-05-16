@@ -11,8 +11,10 @@ public final class kotlinx/coroutines/experimental/reactive/ChannelKt {
 	public static final synthetic fun consumeEach (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun iterator (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/ChannelIterator;
 	public static final fun open (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
 

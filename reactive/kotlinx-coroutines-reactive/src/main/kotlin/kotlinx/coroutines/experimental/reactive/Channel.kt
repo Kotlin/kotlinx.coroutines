@@ -16,32 +16,36 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import org.reactivestreams.Publisher
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.channels.*
+import org.reactivestreams.*
 
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this publisher.
  * @param request how many items to request from publisher in advance (optional, on-demand request by default).
  */
-@JvmOverloads // for binary compatibility
+@Suppress("CONFLICTING_OVERLOADS")
 public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)
     return channel
 }
 
+/** @suppress **Deprecated**: Left here for binary compatibility */
+@JvmOverloads // for binary compatibility
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+@Suppress("CONFLICTING_OVERLOADS")
+public fun <T> Publisher<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> =
+    openSubscription(request) as SubscriptionReceiveChannel<T>
+
 /**
  * @suppress **Deprecated**: Renamed to [openSubscription]
  */
 @Deprecated(message = "Renamed to `openSubscription`",
     replaceWith = ReplaceWith("openSubscription()"))
-public fun <T> Publisher<T>.open(): ReceiveChannel<T> = openSubscription()
+public fun <T> Publisher<T>.open(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
 
 /**
  * Subscribes to this [Publisher] and returns an iterator to receive elements emitted by it.
@@ -74,7 +78,7 @@ public suspend fun <T> Publisher<T>.consumeEach(action: suspend (T) -> Unit) =
 
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T> {
+) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T>, SubscriptionReceiveChannel<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
