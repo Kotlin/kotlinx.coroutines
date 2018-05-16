@@ -83,13 +83,13 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Returns non-null closed token if it is last in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForSend: Closed<*>? get() = queue.prevNode as? Closed<*>
+    protected val closedForSend: Closed<*>? get() = (queue.prevNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Returns non-null closed token if it is first in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForReceive: Closed<*>? get() = queue.nextNode as? Closed<*>
+    protected val closedForReceive: Closed<*>? get() = (queue.nextNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Retrieves first sending waiter from the queue or returns closed token.
