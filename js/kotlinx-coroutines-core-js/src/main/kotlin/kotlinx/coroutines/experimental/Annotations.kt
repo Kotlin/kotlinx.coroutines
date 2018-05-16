@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.internalAnnotations
 
-@Target(AnnotationTarget.FILE)
+@Target(AnnotationTarget.FILE, AnnotationTarget.FUNCTION)
 internal actual annotation class JvmName(actual val name: String)
 
 @Target(AnnotationTarget.FILE)

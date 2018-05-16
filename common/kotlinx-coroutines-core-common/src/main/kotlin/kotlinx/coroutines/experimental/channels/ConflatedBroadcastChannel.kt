@@ -113,7 +113,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     override val isClosedForSend: Boolean get() = _state.value is Closed
     override val isFull: Boolean get() = false
 
-    @Suppress("UNCHECKED_CAST", "RETURN_TYPE_MISMATCH_ON_OVERRIDE")
+    @Suppress("UNCHECKED_CAST")
     override fun openSubscription(): ReceiveChannel<E> {
         val subscriber = Subscriber<E>(this)
         _state.loop { state ->

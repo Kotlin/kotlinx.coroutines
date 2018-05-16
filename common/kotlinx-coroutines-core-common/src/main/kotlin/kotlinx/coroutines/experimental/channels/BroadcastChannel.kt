@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.internal.Closeable
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
 
 /**
@@ -49,16 +49,15 @@ public interface BroadcastChannel<E> : SendChannel<E> {
      * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this
      * broadcast channel.
      */
-    @Suppress("CONFLICTING_OVERLOADS")
     public fun openSubscription(): ReceiveChannel<E>
 
     /**
      * @suppress **Deprecated**: Return type changed to `ReceiveChannel`, this one left here for binary compatibility.
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Return type changed to `ReceiveChannel`, this one left here for binary compatibility")
-    @Suppress("CONFLICTING_OVERLOADS")
-    @JsName("openSubscriptionDeprecated")
-    public fun openSubscription(): SubscriptionReceiveChannel<E> = openSubscription() as SubscriptionReceiveChannel<E>
+    @JvmName("openSubscription")
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    public fun openSubscription1(): SubscriptionReceiveChannel<E> = openSubscription() as SubscriptionReceiveChannel<E>
 
     /**
      * @suppress **Deprecated**: Renamed to [openSubscription]

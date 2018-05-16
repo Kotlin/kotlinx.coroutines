@@ -68,7 +68,6 @@ class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    @Suppress("RETURN_TYPE_MISMATCH_ON_OVERRIDE")
     override fun openSubscription(): ReceiveChannel<E> =
         Subscriber(this).also {
             updateHead(addSub = it)
