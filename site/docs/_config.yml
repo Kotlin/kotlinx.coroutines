@@ -13,3 +13,5 @@ markdown: kramdown
 exclude:
   - Gemfile
   - Gemfile.lock
+include:
+  - package-list
