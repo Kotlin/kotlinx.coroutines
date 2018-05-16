@@ -540,6 +540,7 @@ public abstract interface class kotlinx/coroutines/experimental/channels/ActorSc
 }
 
 public final class kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel : kotlinx/coroutines/experimental/channels/AbstractSendChannel, kotlinx/coroutines/experimental/channels/BroadcastChannel {
+	public fun <init> (I)V
 	public fun <init> (ILkotlinx/coroutines/experimental/Job;)V
 	public synthetic fun <init> (ILkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close (Ljava/lang/Throwable;)Z
@@ -550,6 +551,7 @@ public final class kotlinx/coroutines/experimental/channels/ArrayBroadcastChanne
 }
 
 public class kotlinx/coroutines/experimental/channels/ArrayChannel : kotlinx/coroutines/experimental/channels/AbstractChannel {
+	public fun <init> (I)V
 	public fun <init> (ILkotlinx/coroutines/experimental/Job;)V
 	public synthetic fun <init> (ILkotlinx/coroutines/experimental/Job;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	protected fun cleanupSendQueueOnCancel ()V

@@ -35,7 +35,7 @@ import kotlinx.coroutines.experimental.selects.*
  * The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
  * The lists of suspended senders or receivers are lock-free.
  */
-class ArrayBroadcastChannel<E>(
+class ArrayBroadcastChannel<E> @JvmOverloads constructor(
     /**
      * Buffer capacity.
      */

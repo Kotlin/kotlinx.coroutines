@@ -23,6 +23,9 @@ internal actual typealias JvmName = kotlin.jvm.JvmName
 internal actual typealias JvmMultifileClass = kotlin.jvm.JvmMultifileClass
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias JvmOverloads = kotlin.jvm.JvmOverloads
+
+@Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias JvmField = kotlin.jvm.JvmField
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")

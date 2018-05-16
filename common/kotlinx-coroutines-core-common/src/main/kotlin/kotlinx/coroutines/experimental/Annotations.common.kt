@@ -24,6 +24,8 @@ internal expect annotation class JvmName(val name: String)
 @Target(AnnotationTarget.FILE)
 internal expect annotation class JvmMultifileClass()
 
+internal expect annotation class JvmOverloads()
+
 internal expect annotation class JvmField()
 
 internal expect annotation class Volatile()

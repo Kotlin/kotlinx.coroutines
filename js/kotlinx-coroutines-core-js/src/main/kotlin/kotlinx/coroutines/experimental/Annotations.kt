@@ -22,6 +22,8 @@ internal actual annotation class JvmName(actual val name: String)
 @Target(AnnotationTarget.FILE)
 internal actual annotation class JvmMultifileClass
 
+internal actual annotation class JvmOverloads
+
 internal actual annotation class JvmField
 
 internal actual annotation class Volatile
