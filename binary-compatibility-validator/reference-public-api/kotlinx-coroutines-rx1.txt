@@ -13,8 +13,10 @@ public final class kotlinx/coroutines/experimental/rx1/RxChannelKt {
 	public static final synthetic fun consumeEach (Lrx/Observable;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun iterator (Lrx/Observable;)Lkotlinx/coroutines/experimental/channels/ChannelIterator;
 	public static final fun open (Lrx/Observable;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lrx/Observable;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lrx/Observable;I)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final synthetic fun openSubscription (Lrx/Observable;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static final fun openSubscription (Lrx/Observable;I)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lrx/Observable;I)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+	public static synthetic fun openSubscription$default (Lrx/Observable;IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun openSubscription$default (Lrx/Observable;IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
 

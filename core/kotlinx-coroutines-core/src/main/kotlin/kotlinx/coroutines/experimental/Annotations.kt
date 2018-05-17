@@ -27,3 +27,5 @@ internal actual typealias JvmField = kotlin.jvm.JvmField
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias Volatile = kotlin.jvm.Volatile
+
+internal actual annotation class JsName(actual val name: String)

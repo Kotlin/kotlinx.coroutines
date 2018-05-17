@@ -60,13 +60,13 @@ class BroadcastChannelSubStressTest(
             launch(context = ctx + CoroutineName("Receiver")) {
                 var last = -1L
                 while (isActive) {
-                    broadcast.openSubscription().use { sub ->
-                        val i = sub.receive()
-                        check(i >= last) { "Last was $last, got $i" }
-                        if (!kind.isConflated) check(i != last) { "Last was $last, got it again" }
-                        receivedTotal.incrementAndGet()
-                        last = i
-                    }
+                    val channel = broadcast.openSubscription()
+                    val i = channel.receive()
+                    check(i >= last) { "Last was $last, got $i" }
+                    if (!kind.isConflated) check(i != last) { "Last was $last, got it again" }
+                    receivedTotal.incrementAndGet()
+                    last = i
+                    channel.cancel()
                 }
             }
         var prevSent = -1L

@@ -18,7 +18,7 @@
 // user code that uses kotlinx.coroutines library otherwise, see https://youtrack.jetbrains.com/issue/KT-23727
 package kotlinx.coroutines.experimental.internalAnnotations
 
-@Target(AnnotationTarget.FILE)
+@Target(AnnotationTarget.FILE, AnnotationTarget.FUNCTION)
 internal expect annotation class JvmName(val name: String)
 
 @Target(AnnotationTarget.FILE)
@@ -27,3 +27,5 @@ internal expect annotation class JvmMultifileClass()
 internal expect annotation class JvmField()
 
 internal expect annotation class Volatile()
+
+internal expect annotation class JsName(val name: String)

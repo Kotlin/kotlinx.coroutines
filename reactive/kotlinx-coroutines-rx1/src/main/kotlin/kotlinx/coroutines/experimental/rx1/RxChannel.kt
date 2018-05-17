@@ -16,21 +16,17 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import rx.Observable
-import rx.Subscriber
-import rx.Subscription
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.channels.*
+import rx.*
 
 /**
  * Subscribes to this [Observable] and returns a channel to receive elements emitted by it.
- * The resulting channel shall be [closed][SubscriptionReceiveChannel.close] to unsubscribe from this observable.
+ * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this observable.
  * @param request how many items to request from publisher in advance (optional, on-demand request by default).
  */
-@JvmOverloads // for binary compatibility
-public fun <T> Observable<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> {
+@Suppress("CONFLICTING_OVERLOADS")
+public fun <T> Observable<T>.openSubscription(request: Int = 0): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     val subscription = subscribe(channel.subscriber)
     channel.subscription = subscription
@@ -38,12 +34,20 @@ public fun <T> Observable<T>.openSubscription(request: Int = 0): SubscriptionRec
     return channel
 }
 
+/** @suppress **Deprecated**: Left here for binary compatibility */
+@JvmOverloads // for binary compatibility
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+@Suppress("CONFLICTING_OVERLOADS")
+public fun <T> Observable<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> =
+    openSubscription(request) as SubscriptionReceiveChannel<T>
+
 /**
  * @suppress **Deprecated**: Renamed to [openSubscription]
  */
 @Deprecated(message = "Renamed to `openSubscription`",
     replaceWith = ReplaceWith("openSubscription()"))
-public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> = openSubscription()
+public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> =
+    openSubscription() as SubscriptionReceiveChannel<T>
 
 /**
  * Subscribes to this [Observable] and returns an iterator to receive elements emitted by it.
@@ -62,9 +66,9 @@ public operator fun <T> Observable<T>.iterator() = openSubscription().iterator()
  * Subscribes to this [Observable] and performs the specified action for each received element.
  */
 public suspend inline fun <T> Observable<T>.consumeEach(action: (T) -> Unit) {
-    openSubscription().use { channel ->
-        for (x in channel) action(x)
-    }
+    val channel = openSubscription()
+    for (x in channel) action(x)
+    channel.cancel()
 }
 
 /**
@@ -76,7 +80,7 @@ public suspend fun <T> Observable<T>.consumeEach(action: suspend (T) -> Unit) =
 
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), SubscriptionReceiveChannel<T> {
+) : LinkedListChannel<T>(), ReceiveChannel<T>, SubscriptionReceiveChannel<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }

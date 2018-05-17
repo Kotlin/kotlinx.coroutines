@@ -104,7 +104,7 @@ class IntegrationTest(
         checkNumbers(n, pub)
         val channel = pub.openSubscription()
         checkNumbers(n, channel.asPublisher(ctx(coroutineContext)))
-        channel.close()
+        channel.cancel()
     }
 
     private suspend fun checkNumbers(n: Int, pub: Publisher<Int>) {

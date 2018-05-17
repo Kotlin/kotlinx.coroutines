@@ -78,15 +78,15 @@ class BroadcastChannelMultiReceiveStressTest(
             val name = "Receiver$receiverIndex"
             println("Launching $name")
             receivers += launch(ctx + CoroutineName(name)) {
-                broadcast.openSubscription().use { sub ->
+                val channel = broadcast.openSubscription()
                     when (receiverIndex % 5) {
-                        0 -> doReceive(sub, receiverIndex)
-                        1 -> doReceiveOrNull(sub, receiverIndex)
-                        2 -> doIterator(sub, receiverIndex)
-                        3 -> doReceiveSelect(sub, receiverIndex)
-                        4 -> doReceiveSelectOrNull(sub, receiverIndex)
+                        0 -> doReceive(channel, receiverIndex)
+                        1 -> doReceiveOrNull(channel, receiverIndex)
+                        2 -> doIterator(channel, receiverIndex)
+                        3 -> doReceiveSelect(channel, receiverIndex)
+                        4 -> doReceiveSelectOrNull(channel, receiverIndex)
                     }
-                }
+                channel.cancel()
             }
             printProgress()
         }

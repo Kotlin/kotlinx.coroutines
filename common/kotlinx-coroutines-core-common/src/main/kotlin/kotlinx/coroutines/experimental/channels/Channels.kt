@@ -46,9 +46,9 @@ public fun <E> Sequence<E>.asReceiveChannel(context: CoroutineContext = Unconfin
 
 /**
  * Opens subscription to this [BroadcastChannel] and makes sure that the given [block] consumes all elements
- * from it by always invoking [cancel][SubscriptionReceiveChannel.cancel] after the execution of the block.
+ * from it by always invoking [cancel][ReceiveChannel.cancel] after the execution of the block.
  */
-public inline fun <E, R> BroadcastChannel<E>.consume(block: SubscriptionReceiveChannel<E>.() -> R): R {
+public inline fun <E, R> BroadcastChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     val channel = openSubscription()
     try {
         return channel.block()
