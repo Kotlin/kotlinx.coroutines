@@ -91,6 +91,7 @@ public actual open class TestBase actual constructor() {
     }
 
     private lateinit var threadsBefore: Set<Thread>
+    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
 
     @Before
     fun before() {
@@ -102,7 +103,7 @@ public actual open class TestBase actual constructor() {
     fun onCompletion() {
         error.get()?.let { throw it }
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
-        Tests.shutdown()
+        Tests.shutdown(SHUTDOWN_TIMEOUT)
         checkTestThreads(threadsBefore)
     }
 

@@ -22,7 +22,6 @@ import kotlinx.coroutines.experimental.hexAddress
 import kotlin.coroutines.experimental.CoroutineContext
 
 public object Tests {
-    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
 
     // used for tests
     public fun usePrivatePool() {
@@ -30,9 +29,9 @@ public object Tests {
     }
 
     // used for tests
-    public fun shutdown() {
-        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+    public fun shutdown(shutdownTimeout: Long) {
+        CommonPool.shutdown(shutdownTimeout)
+        DefaultExecutor.shutdown(shutdownTimeout)
     }
 }
 

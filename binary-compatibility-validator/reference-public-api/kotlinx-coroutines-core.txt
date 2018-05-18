@@ -961,7 +961,7 @@ public final class kotlinx/coroutines/experimental/sync/MutexKt {
 
 public final class kotlinx/coroutines/experimental/test/Tests {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/test/Tests;
-	public final fun shutdown ()V
+	public final fun shutdown (J)V
 	public final fun usePrivatePool ()V
 }
 
