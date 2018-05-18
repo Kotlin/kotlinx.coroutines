@@ -90,11 +90,11 @@ class FutureTest : TestBase() {
     @Test
     fun testCompletedFutureExceptionally() {
         val toAwait = CompletableFuture<String>()
-        toAwait.completeExceptionally(RuntimeException("O"))
-        val future = future<String> {
+        toAwait.completeExceptionally(TestException("O"))
+        val future = future {
             try {
                 toAwait.await()
-            } catch (e: RuntimeException) {
+            } catch (e: TestException) {
                 e.message!!
             } + "K"
         }
@@ -102,14 +102,15 @@ class FutureTest : TestBase() {
     }
 
     @Test
+    // Test fast-path of CompletionStage.await() extension
     fun testCompletedCompletionStageExceptionally() {
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
-        completable.completeExceptionally(RuntimeException("O"))
-        val future = future<String> {
+        completable.completeExceptionally(TestException("O"))
+        val future = future {
             try {
                 toAwait.await()
-            } catch (e: RuntimeException) {
+            } catch (e: TestException) {
                 e.message!!
             } + "K"
         }
@@ -117,33 +118,40 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testWaitForFutureWithException() {
+    // Test slow-path of CompletionStage.await() extension
+    fun testWaitForFutureWithException() = runTest {
+        expect(1)
         val toAwait = CompletableFuture<String>()
-        val future = future<String> {
+        val future = future(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
             try {
-                toAwait.await()
-            } catch (e: RuntimeException) {
+                expect(2)
+                toAwait.await() // will suspend (slow path)
+            } catch (e: TestException) {
+                expect(4)
                 e.message!!
             } + "K"
         }
+        expect(3)
         assertFalse(future.isDone)
-        toAwait.completeExceptionally(RuntimeException("O"))
+        toAwait.completeExceptionally(TestException("O"))
+        yield() // to future coroutine
         assertThat(future.get(), IsEqual("OK"))
+        finish(5)
     }
 
     @Test
     fun testWaitForCompletionStageWithException() {
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
-        val future = future<String> {
+        val future = future {
             try {
                 toAwait.await()
-            } catch (e: RuntimeException) {
+            } catch (e: TestException) {
                 e.message!!
             } + "K"
         }
         assertFalse(future.isDone)
-        completable.completeExceptionally(RuntimeException("O"))
+        completable.completeExceptionally(TestException("O"))
         assertThat(future.get(), IsEqual("OK"))
     }
 
