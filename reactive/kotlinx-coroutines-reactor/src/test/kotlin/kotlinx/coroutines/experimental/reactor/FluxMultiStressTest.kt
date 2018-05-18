@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package kotlinx.coroutines.experimental.rx1
+package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import rx.Observable
-import java.io.IOException
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
+import org.junit.Assert.*
+import org.junit.*
+import reactor.core.publisher.*
+import java.io.*
 
 /**
- * Test emitting multiple values with [rxObservable].
+ * Test emitting multiple values with [flux].
  */
-class ObservableMultiTest : TestBase() {
+class FluxMultiStressTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable(CommonPool) {
+        val flux = flux(CommonPool) {
             repeat(n) { send(it) }
         }
-        checkSingleValue(observable.toList()) { list ->
+        checkMonoValue(flux.collectList()) { list ->
             assertEquals((0..n - 1).toList(), list)
         }
     }
@@ -43,7 +41,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable<Int>(CommonPool) {
+        val flux = flux<Int>(CommonPool) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -53,7 +51,7 @@ class ObservableMultiTest : TestBase() {
             }
             jobs.forEach { it.join() }
         }
-        checkSingleValue(observable.toList()) { list ->
+        checkMonoValue(flux.collectList()) { list ->
             assertEquals(n, list.size)
             assertEquals((0..n - 1).toList(), list.sorted())
         }
@@ -62,10 +60,10 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(Unconfined) {
-            Observable.range(0, n).consumeEach { send(it) }
+        val flux = flux(Unconfined) {
+            Flux.range(0, n).consumeEach { send(it) }
         }
-        checkSingleValue(observable.toList()) { list ->
+        checkMonoValue(flux.collectList()) { list ->
             assertEquals((0..n - 1).toList(), list)
         }
     }
@@ -73,30 +71,30 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(CommonPool) {
-            Observable.range(0, n).consumeEach { send(it) }
+        val flux = flux(CommonPool) {
+            Flux.range(0, n).consumeEach { send(it) }
         }
-        checkSingleValue(observable.toList()) { list ->
+        checkMonoValue(flux.collectList()) { list ->
             assertEquals((0..n - 1).toList(), list)
         }
     }
 
     @Test
     fun testSendAndCrash() {
-        val observable = rxObservable(CommonPool) {
+        val flux = flux(CommonPool) {
             send("O")
             throw IOException("K")
         }
-        val single = rxSingle(CommonPool) {
+        val mono = mono(CommonPool) {
             var result = ""
             try {
-                observable.consumeEach { result += it }
+                flux.consumeEach { result += it }
             } catch(e: IOException) {
                 result += e.message
             }
             result
         }
-        checkSingleValue(single) {
+        checkMonoValue(mono) {
             assertEquals("OK", it)
         }
     }

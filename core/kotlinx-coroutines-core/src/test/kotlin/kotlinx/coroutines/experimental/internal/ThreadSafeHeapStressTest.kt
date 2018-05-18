@@ -20,7 +20,7 @@ import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 import java.util.*
 
-class ThreadSafeHeapTest : TestBase() {
+class ThreadSafeHeapStressTest : TestBase() {
     class Node(val value: Int) : ThreadSafeHeapNode, Comparable<Node> {
         override var index = -1
         override fun compareTo(other: Node): Int = value.compareTo(other.value)

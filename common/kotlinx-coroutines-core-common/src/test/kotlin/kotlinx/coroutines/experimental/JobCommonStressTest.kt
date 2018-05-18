@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class JobTest : TestBase() {
+class JobCommonStressTest : TestBase() {
     @Test
     fun testState() {
         val job = Job()

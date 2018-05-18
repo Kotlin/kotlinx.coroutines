@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class ByteBufferChannelTest : TestBase() {
+class ByteBufferChannelStressTest : TestBase() {
     @get:Rule
     val timeout = Timeout(100L * stressTestMultiplier, TimeUnit.SECONDS)
 

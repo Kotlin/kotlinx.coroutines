@@ -7,9 +7,6 @@ public class kotlinx/coroutines/experimental/TestBase {
 	public final fun expect (I)V
 	public final fun expectUnreached ()V
 	public final fun finish (I)V
-	public final fun getStressTestMultiplier ()I
-	public final fun getStressTestMultiplierSqrt ()I
-	public final fun isStressTest ()Z
 	public final fun onCompletion ()V
 	public final fun runTest (Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function2;)V
 	public static synthetic fun runTest$default (Lkotlinx/coroutines/experimental/TestBase;Lkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V

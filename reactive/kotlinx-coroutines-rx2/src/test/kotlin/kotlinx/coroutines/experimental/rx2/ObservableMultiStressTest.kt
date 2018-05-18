@@ -16,19 +16,16 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import java.io.IOException
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import org.junit.Assert.*
+import org.junit.*
+import java.io.*
 
 /**
  * Test emitting multiple values with [rxObservable].
  */
-class ObservableMultiTest : TestBase() {
+class ObservableMultiStressTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier

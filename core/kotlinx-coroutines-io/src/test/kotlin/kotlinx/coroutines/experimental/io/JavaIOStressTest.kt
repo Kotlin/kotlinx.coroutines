@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class JavaIOTest : TestBase() {
+class JavaIOStressTest : TestBase() {
     private val channel = ByteChannel()
 
     @Test
