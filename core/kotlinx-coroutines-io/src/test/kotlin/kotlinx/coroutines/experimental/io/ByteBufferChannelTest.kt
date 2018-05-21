@@ -186,6 +186,41 @@ class ByteBufferChannelTest : TestBase() {
     }
 
     @Test
+    fun testIntEdge2() {
+        runTest {
+            for (shift in 1..3) {
+                for (i in 1..shift) {
+                    ch.writeByte(1)
+                }
+
+                repeat(Size / 4 - 1) {
+                    ch.writeInt(0xeeeeeeeeL)
+                }
+
+                ch.flush()
+
+                for (i in 1..shift) {
+                    ch.readByte()
+                }
+
+                ch.writeByte(0x12)
+                ch.writeByte(0x34)
+                ch.writeByte(0x56)
+                ch.writeByte(0x78)
+
+                ch.flush()
+
+                while (ch.availableForRead > 4) {
+                    ch.readInt()
+                }
+
+                assertEquals(0x12345678, ch.readInt())
+            }
+        }
+    }
+
+
+    @Test
     fun testLongB() {
         runTest {
             ch.readByteOrder = ByteOrder.BIG_ENDIAN
