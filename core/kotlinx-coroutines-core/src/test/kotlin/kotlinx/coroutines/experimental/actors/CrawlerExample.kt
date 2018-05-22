@@ -9,15 +9,15 @@ import java.net.*
 import kotlin.system.*
 
 
-class Crawler(private val initialUrl: String, private val maxDepth: Int) : TypedActor<Crawler>() {
+class Crawler(private val initialUrl: String, private val maxDepth: Int) : Actor() {
 
     private val extractor: UrlExtractor
     private val downloader: Downloader
 
     init {
         val httpClient = HttpClient(Apache)
-        extractor = concurrent(parallelism = 8, parent = this) { UrlExtractor(this) }
-        downloader = concurrent(parallelism = 512, parent = this) { Downloader(this, httpClient, extractor) }
+        extractor =  workerPool(parallelism = 8, parent = this) { UrlExtractor(this) }
+        downloader = workerPool(parallelism = 512, parent = this) { Downloader(this, httpClient, extractor) }
     }
 
     private val index: MutableMap<String, Int> = mutableMapOf()
@@ -72,10 +72,11 @@ class Downloader(
     private val crawler: Crawler,
     private val client: HttpClient,
     private val extractor: UrlExtractor
-) : TypedActor<Downloader>() {
+) : WorkerPoolActor<Downloader>() {
 
     suspend fun download(url: String, depth: Int) = act {
         try {
+            println("Downloading $url")
             val htmlContent = client.get<String>(url)
             extractor.extractUrls(url, htmlContent, depth)
         } catch (e: Exception) {
@@ -86,14 +87,19 @@ class Downloader(
     override fun onClose() = client.close() // close is idempotent
 }
 
-class UrlExtractor(private val crawler: Crawler) : TypedActor<UrlExtractor>() {
+class UrlExtractor(private val crawler: Crawler) : WorkerPoolActor<UrlExtractor>() {
 
     suspend fun extractUrls(baseUrl: String, htmlContent: String, depth: Int): Unit = act {
         Jsoup.parse(htmlContent, baseUrl).select("a[href]")
             .asSequence()
             .map { it.absUrl("href") }
-            .filter { !it.contains("mailto:") && it.isNotEmpty() }
-            .forEach { crawler.urlExtracted(baseUrl, it, depth) }
+            .filter { !it.contains("mailto:") && it.isNotEmpty() && !it.contains("nginx.org/r/error_log") }
+            .forEach {
+                if (baseUrl.contains(" ") || baseUrl.contains("GUARDIAN WEB")) {
+                    println("Hm: $it")
+                }
+                crawler.urlExtracted(baseUrl, it, depth)
+            }
         // TODO: finally ?
         crawler.urlProcessed()
     }
