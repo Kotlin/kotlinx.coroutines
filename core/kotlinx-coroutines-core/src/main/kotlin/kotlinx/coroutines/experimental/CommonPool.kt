@@ -34,10 +34,33 @@ import kotlin.coroutines.experimental.*
  * privileged actions.
  */
 object CommonPool : CoroutineDispatcher() {
+
+    /**
+     * Name of the property that controls default parallelism level of [CommonPool].
+     * If the property is not specified, `Runtime.getRuntime().availableProcessors() - 1` will be used instead (or `1` for single-core JVM).
+     * Note that until Java 10, if an application is run within a container,
+     * `Runtime.getRuntime().availableProcessors()` is not aware of container constraints and will return real number of cores.
+     */
+    public const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
+
+    private val parallelism = run<Int> {
+        val property = Try { System.getProperty(DEFAULT_PARALLELISM_PROPERTY_NAME) }
+        if (property == null) {
+            (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
+        } else {
+            val parallelism = property.toIntOrNull()
+            if (parallelism == null || parallelism < 1) {
+                error("Expected positive number in $DEFAULT_PARALLELISM_PROPERTY_NAME, but has $property")
+            }
+            parallelism
+        }
+    }
+
+    // For debug and tests
     private var usePrivatePool = false
 
     @Volatile
-    private var _pool: Executor? = null
+    private var pool: Executor? = null
 
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
 
@@ -49,26 +72,24 @@ object CommonPool : CoroutineDispatcher() {
             Try { fjpClass.getMethod("commonPool")?.invoke(null) as? ExecutorService }
                 ?.let { return it }
         }
-        Try { fjpClass.getConstructor(Int::class.java).newInstance(defaultParallelism()) as? ExecutorService }
+        Try { fjpClass.getConstructor(Int::class.java).newInstance(parallelism) as? ExecutorService }
             ?. let { return it }
         return createPlainPool()
     }
 
     private fun createPlainPool(): ExecutorService {
         val threadId = AtomicInteger()
-        return Executors.newFixedThreadPool(defaultParallelism()) {
+        return Executors.newFixedThreadPool(parallelism) {
             Thread(it, "CommonPool-worker-${threadId.incrementAndGet()}").apply { isDaemon = true }
         }
     }
 
-    private fun defaultParallelism() = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
-
     @Synchronized
     private fun getOrCreatePoolSync(): Executor =
-        _pool ?: createPool().also { _pool = it }
+        pool ?: createPool().also { pool = it }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        try { (_pool ?: getOrCreatePoolSync()).execute(timeSource.trackTask(block)) }
+        try { (pool ?: getOrCreatePoolSync()).execute(timeSource.trackTask(block)) }
         catch (e: RejectedExecutionException) {
             timeSource.unTrackTask()
             DefaultExecutor.execute(block)
@@ -79,19 +100,19 @@ object CommonPool : CoroutineDispatcher() {
     internal fun usePrivatePool() {
         shutdown(0)
         usePrivatePool = true
-        _pool = null
+        pool = null
     }
 
     // used for tests
     @Synchronized
     internal fun shutdown(timeout: Long) {
-        (_pool as? ExecutorService)?.apply {
+        (pool as? ExecutorService)?.apply {
             shutdown()
             if (timeout > 0)
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
             shutdownNow().forEach { DefaultExecutor.execute(it) }
         }
-        _pool = Executor { throw RejectedExecutionException("CommonPool was shutdown") }
+        pool = Executor { throw RejectedExecutionException("CommonPool was shutdown") }
     }
 
     // used for tests
@@ -99,7 +120,7 @@ object CommonPool : CoroutineDispatcher() {
     internal fun restore() {
         shutdown(0)
         usePrivatePool = false
-        _pool = null
+        pool = null
     }
 
     override fun toString(): String = "CommonPool"

@@ -88,6 +88,7 @@ public abstract class kotlinx/coroutines/experimental/CloseableCoroutineDispatch
 }
 
 public final class kotlinx/coroutines/experimental/CommonPool : kotlinx/coroutines/experimental/CoroutineDispatcher {
+	public static final field DEFAULT_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/CommonPool;
 	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun toString ()Ljava/lang/String;
