@@ -11,7 +11,7 @@ import kotlin.test.*
 class WorkQueueStressTest : TestBase() {
 
     private val threads = mutableListOf<Thread>()
-    private val offerIterations = 2_000_000 * stressTestMultiplier
+    private val offerIterations = 100_000 * stressTestMultiplier
     private val stealersCount = 6
     private val stolenTasks = Array(stealersCount) { Queue() }
     private val globalQueue = Queue() // only producer will use it

@@ -143,6 +143,7 @@ public final class kotlinx/coroutines/experimental/CoroutineContextKt {
 public abstract class kotlinx/coroutines/experimental/CoroutineDispatcher : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlin/coroutines/experimental/ContinuationInterceptor {
 	public fun <init> ()V
 	public abstract fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun dispatchYield (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun interceptContinuation (Lkotlin/coroutines/experimental/Continuation;)Lkotlin/coroutines/experimental/Continuation;
 	public fun isDispatchNeeded (Lkotlin/coroutines/experimental/CoroutineContext;)Z
 	public final fun plus (Lkotlinx/coroutines/experimental/CoroutineDispatcher;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;

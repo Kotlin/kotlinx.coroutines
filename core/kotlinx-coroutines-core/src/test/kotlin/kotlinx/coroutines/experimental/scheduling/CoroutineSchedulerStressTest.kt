@@ -12,7 +12,7 @@ import kotlin.test.*
 class CoroutineSchedulerStressTest : TestBase() {
 
     private var dispatcher: ExperimentalCoroutineDispatcher = ExperimentalCoroutineDispatcher()
-    private val observedThreads = ConcurrentHashMap<Thread, MutableSet<Int>>()
+    private val observedThreads = ConcurrentHashMap<Thread, Long>()
     private val tasksNum = 4_000_000 * stressTestMultiplier
     private val processed = AtomicInteger(0)
     private val finishLatch = CountDownLatch(1)
@@ -53,9 +53,8 @@ class CoroutineSchedulerStressTest : TestBase() {
                         return@Runnable
                     }
 
-                    val defensiveCopy = submittedTasks
                     dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-                        processTask(defensiveCopy)
+                        processTask()
                         processedCounter.incrementAndGet()
                     })
                 }
@@ -83,7 +82,7 @@ class CoroutineSchedulerStressTest : TestBase() {
         submissionInitiator.dispatch(EmptyCoroutineContext, Runnable {
             for (i in 1..tasksNum) {
                 dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-                    processTask(i)
+                    processTask()
                 })
             }
         })
@@ -93,14 +92,9 @@ class CoroutineSchedulerStressTest : TestBase() {
         validateResults()
     }
 
-    private fun processTask(i: Int) {
-        var numbers = observedThreads[Thread.currentThread()]
-        if (numbers == null) {
-            numbers = hashSetOf()
-            observedThreads[Thread.currentThread()] = numbers
-        }
-
-        require(numbers.add(i))
+    private fun processTask() {
+        val counter = observedThreads[Thread.currentThread()] ?: 0L
+        observedThreads[Thread.currentThread()] = counter + 1
 
         if (processed.incrementAndGet() == tasksNum) {
             finishLatch.countDown()
@@ -108,8 +102,8 @@ class CoroutineSchedulerStressTest : TestBase() {
     }
 
     private fun validateResults() {
-        val result = observedThreads.values.flatMap { it }.toSet()
-        assertEquals((1..tasksNum).toSet(), result)
+        val result = observedThreads.values.sum()
+        assertEquals(tasksNum.toLong(), result)
         checkPoolThreadsCreated(Runtime.getRuntime().availableProcessors())
     }
 
