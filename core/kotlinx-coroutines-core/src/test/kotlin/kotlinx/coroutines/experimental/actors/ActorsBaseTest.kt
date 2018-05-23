@@ -1,6 +1,7 @@
 package kotlinx.coroutines.experimental.actors
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
@@ -237,5 +238,12 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
         actor.close()
         actor.join()
         assertTrue(actor.getChild().isCancelled)
+    }
+
+    @Test
+    fun testClosedActorThrows() = runTest(expected = { it is ClosedSendChannelException }) {
+        val actor = TestActor(coroutineContext)
+        actor.close()
+        actor.expectedSequence(1)
     }
 }

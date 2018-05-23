@@ -1,9 +1,27 @@
 package kotlinx.coroutines.experimental.actors
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 
 /**
- * Actor traits, common for [Actor], [MonoActor] and [WorkerPoolActor]
+ * Actor traits, common for [Actor], [MonoActor] and [WorkerPoolActor].
+ * Actor is a high-level abstraction for [channel][ReceiveChannel] and coroutine, which
+ * sequentially processes messages from this channel, having the semantics of
+ * the Actor Model: <a href="http://en.wikipedia.org/wiki/Actor_model">http://en.wikipedia.org/wiki/Actor_model</a>
+ *
+ * Every actor has a [Job] associated with it, so when actor finishes its execution, all started children and launched tasks are cancelled.
+ *
+ * Any actor has well-defined lifecycle:
+ * -- Not started. Note that by default actors are started [lazily][CoroutineStart.LAZY]
+ * -- Active. Actor is running and processes incoming messages
+ * -- Closing. Actor's channel is closed for new messages, but actor still processes all pending messages,
+ *    then cancels its [Job] and invokes [onClose]. Can be triggered by [close] call
+ * -- Killed. Actor's channel is closed for new messages, pending messages are not processed and
+ *            hang in the channel, [onClose] is invoked. Can be triggered by [kill] call
+ *
+ * Note:
+ * [ActorTraits] doesn't have any variations of `send` method, because different implementations
+ * have different ways to expose message handler to provide static typing.
  */
 abstract class ActorTraits {
 
