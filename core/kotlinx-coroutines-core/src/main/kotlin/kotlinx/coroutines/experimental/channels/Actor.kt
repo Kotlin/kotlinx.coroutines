@@ -163,8 +163,9 @@ private open class ActorCoroutine<E>(
     active: Boolean
 ) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E> {
     override fun onCancellation(cause: Throwable?) {
-        if (!_channel.cancel(cause) && cause != null)
-            handleCoroutineException(context, cause)
+        _channel.cancel(cause)
+        // Always propagate the exception, don't wait for actor senders
+        if (cause != null) handleCoroutineException(context, cause)
     }
 }
 
@@ -178,7 +179,7 @@ private class LazyActorCoroutine<E>(
         block.startCoroutineCancellable(this, this)
     }
 
-    suspend override fun send(element: E) {
+    override suspend fun send(element: E) {
         start()
         return super.send(element)
     }
@@ -197,4 +198,3 @@ private class LazyActorCoroutine<E>(
         super.onSend.registerSelectClause2(select, param, block)
     }
 }
-
