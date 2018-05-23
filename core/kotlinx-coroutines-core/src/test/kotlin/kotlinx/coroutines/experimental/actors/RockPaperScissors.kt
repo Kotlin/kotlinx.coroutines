@@ -59,8 +59,8 @@ class GameCoordinator(private val rounds: Int, private val playerOne: Player, pr
             println("""
 
                 Game over:
-                ${playerOne.name} score: ${results[playerOne]!!}
-                ${playerTwo.name} score: ${results[playerTwo]!!}
+                ${playerOne.name} score: ${results[playerOne] ?: 0}
+                ${playerTwo.name} score: ${results[playerTwo] ?: 0}
             """.trimIndent())
             close()
         } else {
