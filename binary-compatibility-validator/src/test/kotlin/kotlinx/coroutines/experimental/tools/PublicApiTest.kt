@@ -27,7 +27,9 @@ class PublicApiTest {
 
     @Test
     fun kotlinxCoroutinesCore() {
-        snapshotAPIAndCompare("core/kotlinx-coroutines-core", nonPublicPackages = listOf("kotlinx.coroutines.experimental.internal"))
+        snapshotAPIAndCompare("core/kotlinx-coroutines-core", nonPublicPackages = listOf(
+            "kotlinx.coroutines.experimental.internal",
+            "kotlinx.coroutines.experimental.scheduling"))
     }
 
     @Test
