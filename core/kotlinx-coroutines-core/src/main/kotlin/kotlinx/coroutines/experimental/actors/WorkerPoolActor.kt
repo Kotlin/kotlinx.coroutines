@@ -122,15 +122,13 @@ private val DISPATCHER_ACTOR = ThreadLocal<WorkerPoolActor<*>?>()
  * Resulting hierarchy of actors will have the following form:
  * `parent (TypedActor<*>) <- router actor (T) <- parallelism * [worker actor (T)]`
  *
- * Close will be called on all created actors (TODO is this really that useful?).
  * It's guaranteed that [actorFactory] will be called exactly [parallelism] + 1 times.
  *
- * TODO provide example of usage
  * @param parallelism how many workers should be created for pool
- * @param parent owner of given worker (TODO allow orphan parallel workers?)
+ * @param parent owner of given worker
  * @param actorFactory factory to create actors for pool. Should be idempotent and all created actors should be indistinguishable
  */
-fun <T : WorkerPoolActor<T>> workerPool(
+public fun <T : WorkerPoolActor<T>> workerPool(
     parallelism: Int,
     parent: ActorTraits? = null,
     actorFactory: () -> T
@@ -142,12 +140,44 @@ fun <T : WorkerPoolActor<T>> workerPool(
     return dispatcher
 }
 
-fun <T : WorkerPoolActor<T>> workerPool(parallelism: Int, parent: Job, actorFactory: () -> T): T {
+public fun <T : WorkerPoolActor<T>> workerPool(parallelism: Int, parent: Job?, actorFactory: () -> T): T {
     require(parallelism > 0) { "Expected positive parallelism, but has $parallelism" }
-    DISPATCHER_PARENT.set(parent)
+    DISPATCHER_PARENT.set(parent ?: NO_PARENT_MARKER)
     val dispatcher = createDispatcherActor(actorFactory)
     createWorkers(dispatcher, parallelism, actorFactory)
     return dispatcher
+}
+
+/**
+ * TODO
+ */
+public fun <T> workerPoolActor(
+    parallelism: Int,
+    context: CoroutineContext = DefaultDispatcher,
+    parent: Job? = null,
+    start: CoroutineStart = CoroutineStart.LAZY,
+    workerChannelCapacity: Int = 16,
+    onMessage: suspend ActorTraits.(T) -> Unit
+): Worker<T> {
+    return workerPool(parallelism, parent) {
+        Worker(
+            onMessage,
+            context,
+            start,
+            workerChannelCapacity = workerChannelCapacity)
+    }
+}
+
+public class Worker<T>(
+    private val onMessage: suspend ActorTraits.(T) -> Unit,
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.LAZY,
+    workerChannelCapacity: Int = 16
+) : WorkerPoolActor<Worker<T>>(context, start, workerChannelCapacity) {
+
+    suspend fun send(message: T) = act {
+        onMessage(message)
+    }
 }
 
 private fun <T : WorkerPoolActor<T>> createDispatcherActor(actorFactory: () -> T): T {

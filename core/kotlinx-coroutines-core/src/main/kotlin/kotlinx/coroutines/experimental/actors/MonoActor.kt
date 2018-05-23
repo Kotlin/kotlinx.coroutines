@@ -36,14 +36,3 @@ abstract class MonoActor<T>(
         }
     }
 }
-
-/**
- * TODO
- */
-fun <T> actor(onMessage: suspend MonoActor<T>.(T) -> Unit): MonoActor<T> {
-    return object : MonoActor<T>() {
-        override suspend fun receive(message: T) {
-            onMessage(message)
-        }
-    }
-}
