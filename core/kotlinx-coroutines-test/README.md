@@ -10,7 +10,7 @@ class MyTest : TestBase() {
     @Test
     fun testSomething() = runTest { // run in the context of the main thread, with Exception handling
         expect(1) // first step : initiate action counter
-        val job = launch(context) { // use the context of the main thread
+        val job = launch(coroutineContext) { // use the context of the main thread
             expect(3) // the body of this coroutine in going to be executed in the 3rd step
         }
         expect(2) // launch just scheduled coroutine for exectuion later, so this line is executed second
