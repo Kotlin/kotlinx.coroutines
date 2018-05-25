@@ -234,7 +234,12 @@ internal abstract class AbstractContinuation<in T>(
                     } else {
                         /*
                          * If already cancelled block is resumed with an exception,
-                         * then we should properly merge them to avoid information loss
+                         * then we should properly merge them to avoid information loss.
+                         *
+                         * General rule:
+                         * Thrown exception always becomes a result and cancellation reason
+                         * is added to suppressed exceptions if necessary.
+                         * Basic duplicate/cycles check is performed
                          */
                         val update: CompletedExceptionally
 
@@ -244,15 +249,15 @@ internal abstract class AbstractContinuation<in T>(
                          * ```
                          * T1: ctxJob.cancel(e1) // -> cancelling
                          * T2:
-                         * withContext(ctx) {
+                         * withContext(ctx, Mode.ATOMIC) {
                          *   // -> resumed with cancellation exception
                          * }
                          * ```
                          */
                         if (proposedUpdate.cause is CancellationException) {
                             // Keep original cancellation cause and try add to suppressed exception from proposed cancel
-                            update = state.cancel
-                            coerceWithCancellation(state, proposedUpdate, update)
+                            update = proposedUpdate
+                            coerceWithException(state, update)
                         } else {
                             /*
                              * Proposed update is exception => transition to terminal state
@@ -295,16 +300,16 @@ internal abstract class AbstractContinuation<in T>(
         }
     }
 
-    // Coerce current cancelling state with proposed cancellation
-    private fun coerceWithCancellation(state: Cancelling, proposedUpdate: CompletedExceptionally, update: CompletedExceptionally) {
+    // Coerce current cancelling state with proposed exception
+    private fun coerceWithException(state: Cancelling, proposedUpdate: CompletedExceptionally) {
         val originalCancellation = state.cancel
         val originalException = originalCancellation.cause
         val updateCause = proposedUpdate.cause
-        // Cause of proposed update is present and differs from one in current state TODO clashes with await all
+        // Cause of proposed update is present and differs from one in current state
         val isSameCancellation = originalCancellation.cause is CancellationException
                 && originalException.cause === updateCause.cause
-        if (!isSameCancellation && originalException.cause !== updateCause) {
-            update.cause.addSuppressedThrowable(updateCause)
+        if (!isSameCancellation && (originalException.cause !== updateCause)) {
+            proposedUpdate.cause.addSuppressedThrowable(originalException)
         }
     }
 
