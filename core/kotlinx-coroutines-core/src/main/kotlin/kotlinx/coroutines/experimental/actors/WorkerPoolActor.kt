@@ -33,6 +33,13 @@ abstract class WorkerPoolActor<T : WorkerPoolActor<T>>(
     private val activeWorkers = atomic(0)
 
     init {
+        /*
+         * Thread-locals for control flow.
+         * If DISPATCHER_PARENT is set, then current worker is going to be
+         * dispatcher actor (one user sees and uses).
+         * Otherwise, it's worker pool actor, then DISPATCHER_ACTOR should
+         * be present to register created worker
+         */
         val parent = DISPATCHER_PARENT.get()
         if (parent != null) {
             // Init as dispatcher
@@ -110,6 +117,9 @@ abstract class WorkerPoolActor<T : WorkerPoolActor<T>>(
     }
 }
 
+// Thread locals to properly initialize worker pool actors.
+// We can't use constructor arguments for that to provide
+// flexible easy to use worker pool builders
 private val DISPATCHER_PARENT = ThreadLocal<Any>()
 private val NO_PARENT_MARKER = Any()
 private val DISPATCHER_ACTOR = ThreadLocal<WorkerPoolActor<*>?>()
@@ -133,19 +143,36 @@ public fun <T : WorkerPoolActor<T>> workerPool(
     parent: ActorTraits? = null,
     actorFactory: () -> T
 ): T {
-    require(parallelism > 0) { "Expected positive parallelism, but has $parallelism" }
-    DISPATCHER_PARENT.set(parent ?: NO_PARENT_MARKER)
-    val dispatcher = createDispatcherActor(actorFactory)
-    createWorkers(dispatcher, parallelism, actorFactory)
-    return dispatcher
+    return createWorkerPool(parallelism, parent, actorFactory)
 }
 
 public fun <T : WorkerPoolActor<T>> workerPool(parallelism: Int, parent: Job?, actorFactory: () -> T): T {
+    return createWorkerPool(parallelism, parent, actorFactory)
+}
+
+private fun <T : WorkerPoolActor<T>> createWorkerPool(
+    parallelism: Int,
+    parent: Any?,
+    actorFactory: () -> T
+): T {
     require(parallelism > 0) { "Expected positive parallelism, but has $parallelism" }
     DISPATCHER_PARENT.set(parent ?: NO_PARENT_MARKER)
     val dispatcher = createDispatcherActor(actorFactory)
     createWorkers(dispatcher, parallelism, actorFactory)
+    checkInvariant(dispatcher)
     return dispatcher
+}
+
+private fun checkInvariant(dispatcher: WorkerPoolActor<*>) {
+    @Suppress("SENSELESS_COMPARISON")
+    if (dispatcher.job == null) {
+        throw IllegalStateException("""
+            Dispatcher job isn't properly initialized,
+            it usually indicates that actor constructor wasn't invoked.
+            If you are using Mockito, use spy() instead of mock() to guarantee constructor
+            invocation during worker pool construction.
+        """.trimIndent())
+    }
 }
 
 /**

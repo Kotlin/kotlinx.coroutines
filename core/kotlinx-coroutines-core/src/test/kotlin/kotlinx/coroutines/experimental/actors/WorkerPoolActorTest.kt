@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.actors
 
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
+import org.mockito.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
@@ -41,6 +42,13 @@ class WorkerPoolActorTest : TestBase() {
         finish(2)
     }
 
+    @Test
+    fun testInvalidMock() = runTest(expected = { it is IllegalStateException }) {
+        workerPool(parallelism) {
+            Mockito.mock(TestActor::class.java)
+        }
+    }
+
     private fun worker(
         accumulator: MutableMap<Int, Int>,
         context: CoroutineContext
@@ -51,7 +59,7 @@ class WorkerPoolActorTest : TestBase() {
         }
     }
 
-    private class TestActor(val id: Int, val map: MutableMap<Int, Int>, context: CoroutineContext) :
+    private open class TestActor(val id: Int, val map: MutableMap<Int, Int>, context: CoroutineContext) :
         WorkerPoolActor<TestActor>(context) {
 
         suspend fun send() = act {
