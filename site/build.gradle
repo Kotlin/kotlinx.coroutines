@@ -4,6 +4,7 @@ def buildDocsDir = "$buildDir/docs"
 task copyDocs(type: Copy, dependsOn: rootProject.getTasksByName("dokka", true)) {
     from (rootProject.getTasksByName("dokka", true).collect { "$it.project.buildDir/dokka" }) {
         include "**/*.md"
+        include "**/package-list"
     }
     from "docs"
     into buildDocsDir
