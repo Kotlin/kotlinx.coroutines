@@ -362,16 +362,6 @@ class GuideTest {
     }
 
     @Test
-    fun testGuideChannelExample09() {
-        test("GuideChannelExample09") { guide.channel.example09.main(emptyArray()) }.verifyLines(
-            "ping Ball(hits=1)",
-            "pong Ball(hits=2)",
-            "ping Ball(hits=3)",
-            "pong Ball(hits=4)"
-        )
-    }
-
-    @Test
     fun testGuideChannelExample10() {
         test("GuideChannelExample10") { guide.channel.example10.main(emptyArray()) }.verifyLines(
             "Initial element is available immediately: kotlin.Unit",
@@ -380,6 +370,16 @@ class GuideTest {
             "Consumer pause in 150ms",
             "Next element is available immediately after large consumer delay: kotlin.Unit",
             "Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit"
+        )
+    }
+
+    @Test
+    fun testGuideChannelExample09() {
+        test("GuideChannelExample09") { guide.channel.example09.main(emptyArray()) }.verifyLines(
+            "ping Ball(hits=1)",
+            "pong Ball(hits=2)",
+            "ping Ball(hits=3)",
+            "pong Ball(hits=4)"
         )
     }
 

@@ -848,6 +848,15 @@ public final class kotlinx/coroutines/experimental/channels/SubscriptionReceiveC
 	public static fun close (Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;)V
 }
 
+public final class kotlinx/coroutines/experimental/channels/TickerChannelsKt {
+	public static final fun adjustingTicker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun adjustingTicker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final fun fixedTicker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun fixedTicker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final fun ticker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Z)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun ticker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ZILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+}
+
 public final class kotlinx/coroutines/experimental/intrinsics/CancellableKt {
 	public static final fun startCoroutineCancellable (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)V
 	public static final fun startCoroutineCancellable (Lkotlin/jvm/functions/Function2;Ljava/lang/Object;Lkotlin/coroutines/experimental/Continuation;)V

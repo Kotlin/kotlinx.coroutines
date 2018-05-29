@@ -5,9 +5,7 @@ import kotlinx.coroutines.experimental.selects.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
-import java.io.*
 import kotlin.test.*
-
 
 @RunWith(Parameterized::class)
 class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
@@ -21,17 +19,15 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
 
     enum class Channel {
         DELAY {
-            override fun invoke(delay: Long, initialDelay: Long) = DelayChannel(delay, initialDelay = initialDelay)
+            override fun invoke(delay: Long, initialDelay: Long) = adjustingTicker(delay, initialDelay = initialDelay)
         },
 
         FIXED_DELAY {
-            override fun invoke(delay: Long, initialDelay: Long) = FixedDelayChannel(delay, initialDelay = initialDelay)
+            override fun invoke(delay: Long, initialDelay: Long) = fixedTicker(delay, initialDelay = initialDelay)
         };
-
 
         abstract operator fun invoke(delay: Long, initialDelay: Long = 0): ReceiveChannel<Unit>
     }
-
 
     @Test
     fun testDelay() = runTest {
@@ -41,17 +37,17 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
 
         delay(50)
         delayChannel.checkEmpty()
-        delay(52)
+        delay(51)
         delayChannel.checkNotEmpty()
 
         delayChannel.cancel()
-        delay(52)
+        delay(51)
         delayChannel.checkEmpty()
         delayChannel.cancel()
     }
 
     @Test
-    fun testInitialDelay() = runBlocking<Unit> {
+    fun testInitialDelay() = runTest {
         val delayChannel = channelFactory(initialDelay = 75, delay = 100)
         delayChannel.checkEmpty()
         delay(50)
@@ -69,7 +65,7 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
 
 
     @Test
-    fun testReceive() = runBlocking<Unit> {
+    fun testReceive() = runTest {
         val delayChannel = channelFactory(delay = 100)
         delayChannel.checkNotEmpty()
         var value = withTimeoutOrNull(75) {
@@ -88,7 +84,7 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     }
 
     @Test
-    fun testComplexOperator() = runBlocking {
+    fun testComplexOperator() = runTest {
         val producer = produce {
             for (i in 1..7) {
                 send(i)
@@ -133,9 +129,9 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     }
 
     @Test
-    fun testStress() = runBlocking<Unit> {
+    fun testStress() = runTest {
         // No OOM/SOE
-        val iterations = 500_000 * stressTestMultiplier
+        val iterations = 100_000 * stressTestMultiplier
         val delayChannel = channelFactory(0)
         repeat(iterations) {
             delayChannel.receive()
@@ -157,4 +153,7 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
 
 fun ReceiveChannel<Unit>.checkEmpty() = assertNull(poll())
 
-fun ReceiveChannel<Unit>.checkNotEmpty() = assertNotNull(poll())
+fun ReceiveChannel<Unit>.checkNotEmpty() {
+    assertNotNull(poll())
+    assertNull(poll())
+}
