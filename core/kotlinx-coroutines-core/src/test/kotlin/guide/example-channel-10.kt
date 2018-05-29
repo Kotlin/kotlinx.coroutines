@@ -19,28 +19,27 @@ package guide.channel.example10
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
- val delayChannel = DelayChannel(delay = 100, initialDelay = 0) // create delay channel
-    var nextElement = withTimeoutOrNull(1) { delayChannel.receive() }
-    println("Initial element is available immediately: $nextElement") // Initial delay haven't passed yet
+ val tickerChannel = ticker(delay = 100, initialDelay = 0) // create ticker channel
+    var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
+    println("Initial element is available immediately: $nextElement") // Initial delay hasn't passed yet
 
-    nextElement = withTimeoutOrNull(50) { delayChannel.receive() } // All subsequent elements has 100ms delay
+    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // All subsequent elements has 100ms delay
     println("Next element is not ready in 50 ms: $nextElement")
 
-    nextElement = withTimeoutOrNull(51) { delayChannel.receive() }
+    nextElement = withTimeoutOrNull(51) { tickerChannel.receive() }
     println("Next element is ready in 100 ms: $nextElement")
 
     // Emulate large consumption delays
     println("Consumer pause in 150ms")
     delay(150)
     // Next element is available immediately
-    nextElement = withTimeoutOrNull(1) { delayChannel.receive() }
+    nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
     println("Next element is available immediately after large consumer delay: $nextElement")
     // Note that the pause between `receive` calls is taken into account and next element arrives faster
-    nextElement = withTimeoutOrNull(60) { delayChannel.receive() } // 60 instead of 50 to mitigate scheduler delays
+    nextElement = withTimeoutOrNull(60) { tickerChannel.receive() } // 60 instead of 50 to mitigate scheduler delays
     println("Next element is ready in 50ms after consumer pause in 150ms: $nextElement")
 
-    delayChannel.cancel() // indicate that no more elements are needed
+    tickerChannel.cancel() // indicate that no more elements are needed
 }
