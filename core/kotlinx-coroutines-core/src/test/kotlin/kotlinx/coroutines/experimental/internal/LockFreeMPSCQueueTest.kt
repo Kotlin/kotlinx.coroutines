@@ -19,7 +19,7 @@ package kotlinx.coroutines.experimental.internal
 import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
-class LockFreeMPSCQueueStressTest : TestBase() {
+class LockFreeMPSCQueueTest : TestBase() {
     @Test
     fun testBasic() {
         val q = LockFreeMPSCQueue<Int>()
