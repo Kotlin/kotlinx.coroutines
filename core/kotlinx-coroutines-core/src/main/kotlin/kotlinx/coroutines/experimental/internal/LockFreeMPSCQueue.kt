@@ -122,7 +122,10 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
     }
 
     private fun fillPlaceholder(index: Int, element: E): Core<E>? {
-        if (array.compareAndSet(index and mask, PLACEHOLDER, element)) {
+        val old = array.get(index and mask)
+        if (old is Placeholder && old.index == index) {
+            // that is OUR placeholder and only we can fill it in
+            array.set(index and mask, element)
             // we've corrected missing element, should check if that propagated to further copies, just in case
             return this
         }
@@ -137,15 +140,10 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
             if (state and FROZEN_MASK != 0L) return REMOVE_FROZEN // frozen -- cannot modify
             state.withState { head, tail ->
                 if ((tail and mask) == (head and mask)) return null // empty
-                // because queue is Single Consumer, then element == null|PLACEHOLDER can only be when add has not finished yet
+                // because queue is Single Consumer, then element == null|Placeholder can only be when add has not finished yet
                 val element = array[head and mask] ?: return null
-                if (element === PLACEHOLDER) return null // same story -- consider it not added yet
-                check(element !== REMOVED) { "This queue can have only one consumer" }
-                // tentatively remove element to let GC work
-                // we cannot put null into array, because copying thread could replace it with PLACEHOLDER
-                // and that is a disaster, so a separate REMOVED token is used here.
-                // Note: at most one REMOVED in the array, because single consumer.
-                array[head and mask] = REMOVED
+                if (element is Placeholder) return null // same story -- consider it not added yet
+                // we cannot put null into array here, because copying thread could replace it with Placeholder and that is a disaster
                 val newHead = (head + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {
                     array[head and mask] = null // now can safely put null (state was updated)
@@ -165,10 +163,8 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
             state.withState { head, _ ->
                 check(head == oldHead) { "This queue can have only one consumer" }
                 if (state and FROZEN_MASK != 0L) {
-                    // state was already frozen, so either old or REMOVED item could have been copied to next
-                    val next = next()
-                    next.array[head and next.mask] = REMOVED // make sure it is removed in new array regardless
-                    return next // continue to correct head in next
+                    // state was already frozen, so removed element was copied to next
+                    return next() // continue to correct head in next
                 }
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {
                     array[head and mask] = null // now can safely put null (state was updated)
@@ -199,13 +195,18 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
             var index = head
             while (index and mask != tail and mask) {
                 // replace nulls with placeholders on copy
-                next.array[index and next.mask] = array[index and mask] ?: PLACEHOLDER
+                next.array[index and next.mask] = array[index and mask] ?: Placeholder(index)
                 index++
             }
             next._state.value = state wo FROZEN_MASK
         }
         return next
     }
+
+    // Instance of this class is placed into array when we have to copy array, but addLast is in progress --
+    // it had already reserved a slot in the array (with null) and have not yet put its value there.
+    // Placeholder keeps the actual index (not masked) to distinguish placeholders on different wraparounds of array
+    private class Placeholder(@JvmField val index: Int)
 
     @Suppress("PrivatePropertyName")
     internal companion object {
@@ -228,9 +229,6 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         internal const val ADD_SUCCESS = 0
         internal const val ADD_FROZEN = 1
         internal const val ADD_CLOSED = 2
-
-        private val PLACEHOLDER = Symbol("PLACEHOLDER")
-        private val REMOVED = Symbol("PLACEHOLDER")
 
         private infix fun Long.wo(other: Long) = this and other.inv()
         private fun Long.updateHead(newHead: Int) = (this wo HEAD_MASK) or (newHead.toLong() shl HEAD_SHIFT)
