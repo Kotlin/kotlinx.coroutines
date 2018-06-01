@@ -97,3 +97,18 @@ public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeabl
     @Deprecated("Use `cancel`", replaceWith = ReplaceWith("cancel()"))
     public override fun close() { cancel() }
 }
+
+/** @suppress **Deprecated**: Left here for migration from SubscriptionReceiveChannel */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Use `ReceiveChannel<*>.consume` instead")
+public inline fun <E, R> ReceiveChannel<E>.use(block: (ReceiveChannel<E>) -> R) {
+    var exception: Throwable? = null
+    try {
+        block(this)
+    } catch (t: Throwable) {
+        exception = t
+        throw t
+    }
+    finally {
+        this.cancel(exception)
+    }
+}

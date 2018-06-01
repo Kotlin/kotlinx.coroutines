@@ -237,8 +237,8 @@ as shown in the following example:
 <!--- INCLUDE
 import io.reactivex.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
@@ -247,8 +247,8 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
-    source.openSubscription().use { channel -> // open channel to the source
-        for (x in channel) { // iterate over the channel to receive elements from it
+    source.openSubscription().consume { // open channel to the source
+        for (x in this) { // iterate over the channel to receive elements from it
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
         }
@@ -677,6 +677,7 @@ We need to relay all the elements from the source stream until the other stream 
 emits anything. However, we have [select] expression to rescue us in coroutines implementation:
 
 <!--- INCLUDE
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.selects.*
@@ -686,11 +687,13 @@ import kotlin.coroutines.experimental.*
 
 ```kotlin
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    this@takeUntil.openSubscription().use { thisChannel -> // explicitly open channel to Publisher<T>
-        other.openSubscription().use { otherChannel ->     // explicitly open channel to Publisher<U>
+    this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
+        val current = this
+        other.openSubscription().consume { // explicitly open channel to Publisher<U>
+            val other = this
             whileSelect {
-                otherChannel.onReceive { false }          // bail out on any received element from `other`
-                thisChannel.onReceive { send(it); true }  // resend element from this channel and continue
+                other.onReceive { false }          // bail out on any received element from `other`
+                current.onReceive { send(it); true }  // resend element from this channel and continue
             }
         }
     }
