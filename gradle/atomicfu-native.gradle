@@ -1,0 +1,6 @@
+
+// todo: this does not work in Kotlin/Native
+
+//dependencies {
+//    compile "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
+//}

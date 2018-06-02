@@ -19,6 +19,7 @@ package guide.channel.example09
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlin.coroutines.experimental.*
 
 data class Ball(var hits: Int)
 

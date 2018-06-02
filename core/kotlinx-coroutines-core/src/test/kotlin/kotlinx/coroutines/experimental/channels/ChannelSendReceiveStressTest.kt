@@ -17,14 +17,13 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.select
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicIntegerArray
+import kotlinx.coroutines.experimental.selects.*
+import org.junit.*
+import org.junit.Assert.*
+import org.junit.runner.*
+import org.junit.runners.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(

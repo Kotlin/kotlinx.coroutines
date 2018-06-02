@@ -17,13 +17,13 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.select
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.experimental.timeunit.*
+import org.junit.*
+import org.junit.runner.*
+import org.junit.runners.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Tests delivery of events to multiple broadcast channel subscribers.
@@ -78,20 +78,20 @@ class BroadcastChannelMultiReceiveStressTest(
             val name = "Receiver$receiverIndex"
             println("Launching $name")
             receivers += launch(ctx + CoroutineName(name)) {
-                broadcast.openSubscription().use { sub ->
+                val channel = broadcast.openSubscription()
                     when (receiverIndex % 5) {
-                        0 -> doReceive(sub, receiverIndex)
-                        1 -> doReceiveOrNull(sub, receiverIndex)
-                        2 -> doIterator(sub, receiverIndex)
-                        3 -> doReceiveSelect(sub, receiverIndex)
-                        4 -> doReceiveSelectOrNull(sub, receiverIndex)
+                        0 -> doReceive(channel, receiverIndex)
+                        1 -> doReceiveOrNull(channel, receiverIndex)
+                        2 -> doIterator(channel, receiverIndex)
+                        3 -> doReceiveSelect(channel, receiverIndex)
+                        4 -> doReceiveSelectOrNull(channel, receiverIndex)
                     }
-                }
+                channel.cancel()
             }
             printProgress()
         }
         // wait
-        repeat(nSeconds) { sec ->
+        repeat(nSeconds) { _ ->
             delay(1000)
             printProgress()
         }

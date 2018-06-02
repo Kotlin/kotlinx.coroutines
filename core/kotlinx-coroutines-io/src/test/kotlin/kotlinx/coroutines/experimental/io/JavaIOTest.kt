@@ -7,6 +7,7 @@ import org.junit.Test
 import java.io.*
 import java.nio.channels.*
 import java.util.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class JavaIOTest : TestBase() {

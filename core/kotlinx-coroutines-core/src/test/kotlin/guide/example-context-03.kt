@@ -18,6 +18,7 @@
 package guide.context.example03
 
 import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 

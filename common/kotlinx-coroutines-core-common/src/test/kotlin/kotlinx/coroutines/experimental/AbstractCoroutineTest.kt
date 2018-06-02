@@ -16,12 +16,14 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AbstractCoroutineTest : TestBase() {
     @Test
     fun testNotifications() = runTest {
         expect(1)
+        val coroutineContext = coroutineContext // workaround for KT-22984
         val coroutine = object : AbstractCoroutine<String>(coroutineContext, false) {
             override fun onStart() {
                 expect(3)
@@ -59,6 +61,7 @@ class AbstractCoroutineTest : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
+        val coroutineContext = coroutineContext // workaround for KT-22984
         val coroutine = object : AbstractCoroutine<String>(coroutineContext, false) {
             override fun onStart() {
                 expect(3)

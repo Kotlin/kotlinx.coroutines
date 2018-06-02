@@ -17,9 +17,10 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
-import org.junit.Assert.assertThat
-import org.junit.Test
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class ActorLazyTest : TestBase() {
     @Test

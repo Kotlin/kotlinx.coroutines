@@ -17,18 +17,13 @@
 package kotlinx.coroutines.experimental.reactor
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.awaitFirst
-import kotlinx.coroutines.experimental.reactive.awaitLast
-import kotlinx.coroutines.experimental.reactive.awaitSingle
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import java.time.Duration.ofMillis
+import kotlinx.coroutines.experimental.reactive.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import reactor.core.publisher.*
+import java.time.Duration.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Tests emitting single item with [mono].

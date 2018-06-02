@@ -46,7 +46,7 @@ public class SchedulerCoroutineDispatcher(private val scheduler: Scheduler) : Co
                     with(continuation) { resumeUndispatched(Unit) }
                  }, time, unit)
                 .let { subscription ->
-                    continuation.unsubscribeOnCompletion(subscription)
+                    continuation.unsubscribeOnCancellation(subscription)
                 }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =

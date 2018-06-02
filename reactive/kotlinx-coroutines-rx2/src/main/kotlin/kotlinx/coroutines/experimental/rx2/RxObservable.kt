@@ -41,7 +41,7 @@ import kotlin.coroutines.experimental.*
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [coroutineContext] of the parent coroutine may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -133,7 +133,7 @@ private class RxObservableCoroutine<T>(
         } catch (e: Throwable) {
             try {
                 if (!cancel(e))
-                    handleCoroutineException(coroutineContext, e)
+                    handleCoroutineException(context, e)
             } finally {
                 doLockedSignalCompleted()
             }
@@ -158,12 +158,12 @@ private class RxObservableCoroutine<T>(
                 _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
                 try {
-                    if (cause != null)
+                    if (cause != null && cause !is CancellationException)
                         subscriber.onError(cause)
                     else
                         subscriber.onComplete()
                 } catch (e: Throwable) {
-                    handleCoroutineException(coroutineContext, e)
+                    handleCoroutineException(context, e)
                 }
             }
         } finally {

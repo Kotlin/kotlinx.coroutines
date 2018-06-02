@@ -17,10 +17,10 @@
 package kotlinx.coroutines.experimental.rx2
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.produce
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import kotlinx.coroutines.experimental.channels.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)

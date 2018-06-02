@@ -169,7 +169,7 @@ open class ChannelCopyBenchmark {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
 
-        launch(coroutineContext) {
+        launch(this.coroutineContext) {
             pOut.joinTo(pIn, true)
         }
 
@@ -193,7 +193,7 @@ open class ChannelCopyBenchmark {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
 
-        launch(coroutineContext) {
+        launch(this.coroutineContext) {
             pOut.joinTo(pIn, true)
         }
 
@@ -217,7 +217,7 @@ open class ChannelCopyBenchmark {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
 
-        launch(coroutineContext) {
+        launch(this.coroutineContext) {
             pOut.copyTo(pIn)
             pIn.close()
         }
@@ -242,7 +242,7 @@ open class ChannelCopyBenchmark {
         val pIn = ByteChannel(true)
         val pOut = ByteChannel(true)
 
-        launch(coroutineContext) {
+        launch(this.coroutineContext) {
             pOut.copyTo(pIn)
             pIn.close()
         }
@@ -298,7 +298,7 @@ open class ChannelCopyBenchmark {
 
     @Benchmark
     fun runBlockingAndLaunch() = runBlocking {
-        launch(coroutineContext) {
+        launch(this.coroutineContext) {
             yield()
         }
 

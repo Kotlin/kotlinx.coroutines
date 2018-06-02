@@ -16,17 +16,14 @@
 
 package kotlinx.coroutines.experimental.guava
 
-import com.google.common.util.concurrent.MoreExecutors
-import com.google.common.util.concurrent.SettableFuture
+import com.google.common.util.concurrent.*
 import kotlinx.coroutines.experimental.*
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
+import kotlinx.coroutines.experimental.CancellationException
+import org.hamcrest.core.*
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 class ListenableFutureTest : TestBase() {
     @Before

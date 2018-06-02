@@ -16,8 +16,6 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.*
-
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
  */
@@ -26,9 +24,12 @@ public actual class CompletionHandlerException actual constructor(
     cause: Throwable
 ) : RuntimeException(message, cause)
 
-    /**
-     * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
-     */
+/**
+ * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
+ * It indicates _normal_ cancellation of a coroutine.
+ * **It is not printed to console/log by default uncaught exception handler**.
+ * (see [handleCoroutineException]).
+*/
 public actual typealias CancellationException = java.util.concurrent.CancellationException
 
 /**
@@ -39,12 +40,26 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
 public actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
-    /**
-     * The job that was cancelled.
-     */
-    public actual val job: Job
+    @JvmField internal actual val job: Job
 ) : CancellationException(message) {
-    init { if (cause != null) initCause(cause) }
+
+    init {
+        if (cause != null) initCause(cause)
+    }
+
+    override fun fillInStackTrace(): Throwable {
+        if (DEBUG) {
+            return super.fillInStackTrace()
+        }
+
+        /*
+         * In non-debug mode we don't want to have a stacktrace on every cancellation/close,
+         * parent job reference is enough. Stacktrace of JCE is not needed most of the time (e.g., it is not logged)
+         * and hurts performance.
+         */
+        return this
+    }
+
     override fun toString(): String = "${super.toString()}; job=$job"
     override fun equals(other: Any?): Boolean =
         other === this ||
@@ -53,31 +68,8 @@ public actual class JobCancellationException public actual constructor(
         (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
 }
 
-/**
- * This exception is thrown by [withTimeout] to indicate timeout.
- */
-@Suppress("DEPRECATION")
-public actual class TimeoutCancellationException internal constructor(
-    message: String,
-    @JvmField internal val coroutine: Job?
-) : TimeoutException(message) {
-    /**
-     * Creates timeout exception with a given message.
-     */
-    public actual constructor(message: String) : this(message, null)
-}
-
-@Suppress("FunctionName")
-internal fun TimeoutCancellationException(
-    time: Long,
-    unit: TimeUnit,
-    coroutine: Job
-) : TimeoutCancellationException = TimeoutCancellationException("Timed out waiting for $time $unit", coroutine)
-
-/**
- * @suppress **Deprecated**: Renamed to TimeoutCancellationException
- */
-@Deprecated("Renamed to TimeoutCancellationException", replaceWith = ReplaceWith("TimeoutCancellationException"))
-public open class TimeoutException(message: String) : CancellationException(message)
-
 internal actual class DispatchException actual constructor(message: String, cause: Throwable) : RuntimeException(message, cause)
+
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) =
+    addSuppressed(other)

@@ -18,6 +18,7 @@
 package guide.context.example08
 
 import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // launch a coroutine to process some kind of incoming request

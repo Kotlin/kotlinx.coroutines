@@ -20,7 +20,7 @@ def dryRun = prop("dryRun", "false")
 
 task preparePublishNpm(type: Copy, dependsOn: [compileKotlin2Js]) {
     from(npmTemplateDir) {
-        expand project.properties
+        expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
     }
     from("$buildDir/classes/kotlin/main")
     into npmDeployDir
@@ -29,12 +29,14 @@ task preparePublishNpm(type: Copy, dependsOn: [compileKotlin2Js]) {
 task publishNpm(type: NpmTask, dependsOn: [preparePublishNpm]) {
     workingDir = npmDeployDir
     def deployArgs = ['publish',
-        "--//registry.npmjs.org/:_authToken=$authToken",
-        "--tag=$npmDeployTag"]
-    if (dryRun == "true") {
-        println("$npmDeployDir \$ npm arguments: $deployArgs")
-        args = ['pack']
-    } else {
-        args = deployArgs
+                      "--//registry.npmjs.org/:_authToken=$authToken",
+                      "--tag=$npmDeployTag"]
+    doFirst {
+        if (dryRun == "true") {
+            println("$npmDeployDir \$ npm arguments: $deployArgs")
+            args = ['pack']
+        } else {
+            args = deployArgs
+        }
     }
 }

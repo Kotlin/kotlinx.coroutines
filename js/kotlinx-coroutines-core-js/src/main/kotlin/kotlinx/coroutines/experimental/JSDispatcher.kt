@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import kotlin.coroutines.experimental.*
 import org.w3c.dom.*
 
@@ -24,17 +25,21 @@ internal class NodeDispatcher : CoroutineDispatcher(), Delay {
         setTimeout({ block.run() }, 0)
     }
 
-    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        val handle = setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
+        // Actually on cancellation, but clearTimeout is idempotent
+        continuation.invokeOnCancellation(handler = ClearTimeout(handle).asHandler)
     }
 
-    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = setTimeout({ block.run() }, time.coerceAtLeast(0))
-        return object : DisposableHandle {
-            override fun dispose() {
-                clearTimeout(handle)
-            }
-        }
+    private class ClearTimeout(private val handle: Int) : CancelHandler(), DisposableHandle {
+        override fun dispose() { clearTimeout(handle) }
+        override fun invoke(cause: Throwable?) { dispose() }
+        override fun toString(): String = "ClearTimeout[$handle]"
+    }
+
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val handle = setTimeout({ block.run() }, time.toIntMillis(unit))
+        return ClearTimeout(handle)
     }
 }
 
@@ -60,12 +65,12 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
         queue.enqueue(block)
     }
 
-    override fun scheduleResumeAfterDelay(time: Int, continuation: CancellableContinuation<Unit>) {
-        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.coerceAtLeast(0))
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        window.setTimeout({ with(continuation) { resumeUndispatched(Unit) } }, time.toIntMillis(unit))
     }
 
-    override fun invokeOnTimeout(time: Int, block: Runnable): DisposableHandle {
-        val handle = window.setTimeout({ block.run() }, time.coerceAtLeast(0))
+    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+        val handle = window.setTimeout({ block.run() }, time.toIntMillis(unit))
         return object : DisposableHandle {
             override fun dispose() {
                 window.clearTimeout(handle)
@@ -105,6 +110,9 @@ internal abstract class MessageQueue : Queue<Runnable>() {
         }
     }
 }
+
+private fun Long.toIntMillis(unit: TimeUnit): Int =
+    unit.toMillis(this).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
 
 internal open class Queue<T : Any> {
     private var queue = arrayOfNulls<Any?>(8)

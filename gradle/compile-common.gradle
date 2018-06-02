@@ -1,0 +1,17 @@
+
+// Platform-specific configuration to compile common modules
+
+apply plugin: 'kotlin-platform-common'
+
+kotlin.experimental.coroutines "enable"
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-common:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
+}
+
+repositories {
+    jcenter()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+}

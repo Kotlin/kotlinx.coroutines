@@ -16,15 +16,12 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.hamcrest.core.IsEqual
-import org.hamcrest.core.IsInstanceOf
-import org.junit.Assert.assertThat
-import org.junit.Test
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
+import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 
 class PublishTest : TestBase() {
     @Test

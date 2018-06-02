@@ -16,6 +16,8 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import java.util.*
+
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
@@ -35,6 +37,11 @@ public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
     internal var size = 0
 
     public val isEmpty: Boolean get() = size == 0
+
+    public fun clear() = synchronized(this) {
+        Arrays.fill(a, 0, size, null)
+        size = 0
+    }
 
     public fun peek(): T? = synchronized(this) { firstImpl() }
 

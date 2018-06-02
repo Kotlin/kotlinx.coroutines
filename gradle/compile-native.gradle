@@ -1,0 +1,37 @@
+apply plugin: 'konan'
+
+repositories {
+    jcenter()
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+}
+
+def libraryName = project.name
+def testProgramName = libraryName + "-test"
+
+konanArtifacts {
+    library(libraryName, targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
+        artifactName libraryName.replace('-', '_')
+        enableMultiplatform true
+        dependencies {
+            "artifact$libraryName" "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
+        }
+    }
+    // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
+    if (!rootProject.properties["publish"]) {
+        program(testProgramName, targets: ["macos_x64"]) {
+            srcDir 'src/test/kotlin'
+            commonSourceSet 'test'
+            libraries {
+                artifact libraryName
+            }
+            extraOpts '-tr'
+        }
+    }
+}
+
+task test(dependsOn: run)
+
+// TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
+if (rootProject.properties["publish"]) {
+    publishToMavenLocal.dependsOn(build)
+}

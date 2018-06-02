@@ -16,7 +16,9 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.*
+import kotlinx.coroutines.experimental.timeunit.*
+
+internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal object DefaultExecutor : EventLoopBase(), Runnable {

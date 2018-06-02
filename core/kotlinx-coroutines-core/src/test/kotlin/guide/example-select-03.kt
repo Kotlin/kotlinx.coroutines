@@ -20,7 +20,7 @@ package guide.select.example03
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 fun produceNumbers(context: CoroutineContext, side: SendChannel<Int>) = produce<Int>(context) {
     for (num in 1..10) { // produce 10 numbers from 1 to 10

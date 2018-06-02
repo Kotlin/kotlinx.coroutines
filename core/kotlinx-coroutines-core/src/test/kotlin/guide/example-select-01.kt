@@ -20,7 +20,8 @@ package guide.select.example01
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 
 fun fizz(context: CoroutineContext) = produce<String>(context) {
     while (true) { // sends "Fizz" every 300 ms

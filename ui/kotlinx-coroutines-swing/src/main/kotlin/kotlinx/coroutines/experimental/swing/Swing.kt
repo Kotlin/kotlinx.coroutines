@@ -37,7 +37,7 @@ object Swing : CoroutineDispatcher(), Delay {
         val timer = schedule(time, unit, ActionListener {
             with(continuation) { resumeUndispatched(Unit) }
         })
-        continuation.invokeOnCompletion { timer.stop() }
+        continuation.invokeOnCancellation { timer.stop() }
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {

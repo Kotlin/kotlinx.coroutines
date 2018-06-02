@@ -410,8 +410,8 @@ fun writeLines(file: File, lines: List<String>) {
 
 fun findModuleRootDir(name: String): String =
     moduleRoots
-        .map { it + "/" + name }
-        .firstOrNull { File(it + "/" + moduleMarker).exists() }
+        .map { "$it/$name" }
+        .firstOrNull { File("$it/$moduleMarker").exists() }
         ?: throw IllegalArgumentException("Module $name is not found in any of the module root dirs")
 
 data class ApiIndexKey(
@@ -419,26 +419,21 @@ data class ApiIndexKey(
     val pkg: String
 )
 
-val apiIndexCache: MutableMap<ApiIndexKey, Map<String, String>> = HashMap()
+val apiIndexCache: MutableMap<ApiIndexKey, Map<String, List<String>>> = HashMap()
 
 val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
 val FUNCTIONS_SECTION_HEADER = "### Functions"
 
-val AMBIGUOUS = "#AMBIGUOUS: "
-
-fun HashMap<String,String>.putUnambiguous(key: String, value: String) {
+fun HashMap<String, MutableList<String>>.putUnambiguous(key: String, value: String) {
     val oldValue = this[key]
-    val putVal =
-        if (oldValue != null && oldValue != value) {
-            when {
-                oldValue.contains("[$value]") -> oldValue
-                oldValue.startsWith(AMBIGUOUS) -> "$oldValue; [$value]"
-                else -> "$AMBIGUOUS[$oldValue]; [$value]"
-            }
-        } else value
-    put(key, putVal)
+    if (oldValue != null) {
+        oldValue.add(value)
+        put(key, oldValue)
+    } else {
+        put(key, mutableListOf(value))
+    }
 }
 
 fun loadApiIndex(
@@ -446,10 +441,10 @@ fun loadApiIndex(
     path: String,
     pkg: String,
     namePrefix: String = ""
-): Map<String, String>? {
+): Map<String, MutableList<String>>? {
     val fileName = docsRoot + "/" + path + INDEX_MD
     val visited = mutableSetOf<String>()
-    val map = HashMap<String,String>()
+    val map = HashMap<String, MutableList<String>>()
     var inFunctionsSection = false
     File(fileName).withLineNumberReader<LineNumberReader>(::LineNumberReader) {
         while (true) {
@@ -499,11 +494,12 @@ fun processApiIndex(
     while (it.hasNext()) {
         val refName = it.next()
         val refLink = map[refName] ?: continue
-        if (refLink.startsWith(AMBIGUOUS)) {
-            println("WARNING: Ambiguous reference to [$refName]: ${refLink.substring(AMBIGUOUS.length)}")
-            continue
+        if (refLink.size > 1) {
+            println("INFO: Ambiguous reference to [$refName]: $refLink, taking the shortest one")
         }
-        indexList += "[$refName]: $siteRoot/$refLink"
+
+        val link = refLink.minBy { it.length }
+        indexList += "[$refName]: $siteRoot/$link"
         it.remove()
     }
     return indexList

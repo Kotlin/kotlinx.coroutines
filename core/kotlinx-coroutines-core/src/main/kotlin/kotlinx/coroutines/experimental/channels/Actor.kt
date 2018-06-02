@@ -56,7 +56,7 @@ interface ActorJob<in E> : SendChannel<E> {
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [coroutineContext] of the parent coroutine may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -116,6 +116,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
+ * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
 public fun <E> actor(
@@ -123,6 +124,7 @@ public fun <E> actor(
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
     block: suspend ActorScope<E>.() -> Unit
 ): SendChannel<E> {
     val newContext = newCoroutineContext(context, parent)
@@ -130,9 +132,20 @@ public fun <E> actor(
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
         ActorCoroutine(newContext, channel, active = true)
+    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
     coroutine.start(start, coroutine, block)
     return coroutine
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <E> actor(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    block: suspend ActorScope<E>.() -> Unit
+): SendChannel<E> = actor(context, capacity, start, parent, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -159,7 +172,8 @@ private class LazyActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     private val block: suspend ActorScope<E>.() -> Unit
-) : ActorCoroutine<E>(parentContext, channel, active = false), SelectClause2<E, SendChannel<E>> {
+) : ActorCoroutine<E>(parentContext, channel, active = false),
+    SelectClause2<E, SendChannel<E>> {
     override fun onStart() {
         block.startCoroutineCancellable(this, this)
     }

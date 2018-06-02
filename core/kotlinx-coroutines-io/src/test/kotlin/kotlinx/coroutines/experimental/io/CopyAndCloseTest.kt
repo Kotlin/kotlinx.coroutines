@@ -1,12 +1,12 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.io.internal.asByteBuffer
-import org.junit.After
+import kotlinx.coroutines.experimental.io.internal.*
+import org.junit.*
 import org.junit.Test
-import java.io.IOException
-import kotlin.test.assertEquals
-import kotlin.test.fail
+import java.io.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class CopyAndCloseTest : TestBase() {
     private val from = ByteChannel(true)
@@ -46,39 +46,6 @@ class CopyAndCloseTest : TestBase() {
         yield()
 
         finish(8)
-    }
-
-    @Test
-    fun failurePropagation() = runBlocking {
-        expect(1)
-
-        launch(coroutineContext) {
-            expect(2)
-
-            try {
-                from.copyAndClose(to) // should suspend and then throw IOException
-                fail("Should rethrow exception")
-            } catch (expected: IOException) {
-            }
-
-            expect(4)
-        }
-
-        yield()
-        expect(3)
-
-        from.close(IOException())
-        yield()
-
-        expect(5)
-
-        try {
-            to.readInt()
-            fail("Should throw exception")
-        } catch (expected: IOException) {
-        }
-
-        finish(6)
     }
 
     @Test

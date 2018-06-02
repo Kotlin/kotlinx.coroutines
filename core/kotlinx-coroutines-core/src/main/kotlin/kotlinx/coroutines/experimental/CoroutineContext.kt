@@ -21,15 +21,33 @@ import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.ContinuationInterceptor
 import kotlin.coroutines.experimental.CoroutineContext
 
-private const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
+/**
+ * Name of the property that control coroutine debugging. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
-private val DEBUG = run {
+/**
+ * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
+
+/**
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_ON = "on"
+
+/**
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ */
+public const val DEBUG_PROPERTY_VALUE_OFF = "off"
+
+internal val DEBUG = run {
     val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
         catch (e: SecurityException) { null }
     when (value) {
-        "auto", null -> CoroutineId::class.java.desiredAssertionStatus()
-        "on", "" -> true
-        "off" -> false
+        DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
+        DEBUG_PROPERTY_VALUE_ON, "" -> true
+        DEBUG_PROPERTY_VALUE_OFF -> false
         else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
     }
 }
@@ -40,30 +58,6 @@ private val COROUTINE_ID = AtomicLong()
 internal fun resetCoroutineId() {
     COROUTINE_ID.set(0)
 }
-
-/**
- * A coroutine dispatcher that is not confined to any specific thread.
- * It executes initial continuation of the coroutine _right here_ in the current call-frame
- * and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
- * mandating any specific threading policy.
- *
- * Note, that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
- * but still want to execute it in the current call-frame until its first suspension, then you can use
- * an optional [CoroutineStart] parameter in coroutine builders like [launch] and [async] setting it to the
- * the value of [CoroutineStart.UNDISPATCHED].
- */
-public actual object Unconfined : CoroutineDispatcher() {
-    actual override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
-    actual override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
-    override fun toString(): String = "Unconfined"
-}
-
-/**
- * @suppress **Deprecated**: `Here` was renamed to `Unconfined`.
- */
-@Deprecated(message = "`Here` was renamed to `Unconfined`",
-        replaceWith = ReplaceWith(expression = "Unconfined"))
-public typealias Here = Unconfined
 
 /**
  * This is the default [CoroutineDispatcher] that is used by all standard builders like
@@ -85,16 +79,18 @@ public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
  * then the thread name displays
  * the whole stack of coroutine descriptions that are being executed on this thread.
  *
- * Enable debugging facilities with "`kotlinx.coroutines.debug`" system property, use the following values:
- * * "`auto`" (default mode) -- enabled when assertions are enabled with "`-ea`" JVM option.
- * * "`on`" or empty string -- enabled.
- * * "`off`" -- disabled.
+ * Enable debugging facilities with "`kotlinx.coroutines.debug`" ([DEBUG_PROPERTY_NAME]) system property
+ * , use the following values:
+ * * "`auto`" (default mode, [DEBUG_PROPERTY_VALUE_AUTO]) -- enabled when assertions are enabled with "`-ea`" JVM option.
+ * * "`on`" ([DEBUG_PROPERTY_VALUE_ON]) or empty string -- enabled.
+ * * "`off`" ([DEBUG_PROPERTY_VALUE_OFF]) -- disabled.
  *
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
  */
 @JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
-public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
     val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
     val wp = if (parent == null) debug else debug + parent
     return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)

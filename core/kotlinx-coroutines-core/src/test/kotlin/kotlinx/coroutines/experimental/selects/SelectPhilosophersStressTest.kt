@@ -17,9 +17,10 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.sync.Mutex
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.experimental.sync.*
+import org.junit.*
+import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class SelectPhilosophersStressTest : TestBase() {
     val TEST_DURATION = 3000L * stressTestMultiplier

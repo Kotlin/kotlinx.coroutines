@@ -111,7 +111,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
 
         override fun onSubscribe(sub: Subscription) {
             subscription = sub
-            cont.invokeOnCompletion { sub.cancel() }
+            cont.invokeOnCancellation { sub.cancel() }
             sub.request(if (mode == Mode.FIRST) 1 else Long.MAX_VALUE)
         }
 
@@ -120,15 +120,15 @@ private suspend fun <T> Publisher<T>.awaitOne(
                 Mode.FIRST, Mode.FIRST_OR_DEFAULT -> {
                     if (!seenValue) {
                         seenValue = true
-                        cont.resume(t)
                         subscription.cancel()
+                        cont.resume(t)
                     }
                 }
                 Mode.LAST, Mode.SINGLE -> {
                     if (mode == Mode.SINGLE && seenValue) {
+                        subscription.cancel()
                         if (cont.isActive)
                             cont.resumeWithException(IllegalArgumentException("More that one onNext value for $mode"))
-                        subscription.cancel()
                     } else {
                         value = t
                         seenValue = true

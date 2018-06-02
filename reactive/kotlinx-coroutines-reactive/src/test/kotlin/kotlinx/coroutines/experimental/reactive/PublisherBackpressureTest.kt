@@ -16,12 +16,10 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
-import org.junit.Test
-import org.reactivestreams.Subscriber
-import org.reactivestreams.Subscription
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.reactivestreams.*
+import kotlin.coroutines.experimental.*
 
 class PublisherBackpressureTest : TestBase() {
     @Test

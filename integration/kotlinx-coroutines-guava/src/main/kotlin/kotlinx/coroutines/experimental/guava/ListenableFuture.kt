@@ -16,14 +16,10 @@
 
 package kotlinx.coroutines.experimental.guava
 
-import com.google.common.util.concurrent.AbstractFuture
-import com.google.common.util.concurrent.FutureCallback
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.*
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
@@ -33,7 +29,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.context] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [coroutineContext] of the parent coroutine may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -50,12 +46,14 @@ import kotlin.coroutines.experimental.CoroutineContext
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
+ * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
 public fun <T> future(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): ListenableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
@@ -63,9 +61,19 @@ public fun <T> future(
     val job = Job(newContext[Job])
     val future = ListenableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
+    if (onCompletion != null) job.invokeOnCompletion(handler = onCompletion)
     start(block, receiver=future, completion=future) // use the specified start strategy
     return future
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    block: suspend CoroutineScope.() -> T
+): ListenableFuture<T> = future(context, start, parent, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -119,11 +127,19 @@ private class DeferredListenableFuture<T>(
  * care is taken to clear the reference to the waiting coroutine itself, so that its memory can be released even if
  * the future never completes.
  */
-public suspend fun <T> ListenableFuture<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-    val callback = ContinuationCallback(cont)
-    Futures.addCallback(this, callback)
-    cont.invokeOnCompletion {
-        callback.cont = null // clear the reference to continuation from the future's callback
+public suspend fun <T> ListenableFuture<T>.await(): T {
+    try {
+        if (isDone) return get() as T
+    } catch (e: ExecutionException) {
+        throw e.cause ?: e // unwrap original cause from ExecutionException
+    }
+
+    return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
+        val callback = ContinuationCallback(cont)
+        Futures.addCallback(this, callback, MoreExecutors.directExecutor())
+        cont.invokeOnCancellation {
+            callback.cont = null // clear the reference to continuation from the future's callback
+        }
     }
 }
 

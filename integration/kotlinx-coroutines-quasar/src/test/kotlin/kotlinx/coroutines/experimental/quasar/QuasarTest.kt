@@ -16,14 +16,13 @@
 
 package kotlinx.coroutines.experimental.quasar
 
-import co.paralleluniverse.fibers.Fiber
-import co.paralleluniverse.fibers.SuspendExecution
-import co.paralleluniverse.strands.SuspendableCallable
-import co.paralleluniverse.strands.dataflow.Val
+import co.paralleluniverse.fibers.*
+import co.paralleluniverse.strands.*
+import co.paralleluniverse.strands.dataflow.*
 import kotlinx.coroutines.experimental.*
-import org.junit.Before
-import org.junit.Test
-import java.util.concurrent.TimeUnit
+import org.junit.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 class QuasarTest : TestBase() {
     @Before

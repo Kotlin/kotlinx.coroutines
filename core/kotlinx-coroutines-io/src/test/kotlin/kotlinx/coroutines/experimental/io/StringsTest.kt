@@ -1,15 +1,13 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Rule
+import org.junit.*
 import org.junit.Test
-import org.junit.rules.Timeout
+import org.junit.rules.*
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNull
-import kotlin.test.fail
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class StringsTest : TestBase() {
     @get:Rule

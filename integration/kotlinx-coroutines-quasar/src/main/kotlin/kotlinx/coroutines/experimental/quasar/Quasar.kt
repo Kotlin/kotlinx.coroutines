@@ -37,9 +37,7 @@ import co.paralleluniverse.fibers.FiberAsync
 import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.fibers.Suspendable
 import co.paralleluniverse.strands.SuspendableCallable
-import kotlinx.coroutines.experimental.asCoroutineDispatcher
-import kotlinx.coroutines.experimental.cancelFutureOnCompletion
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.startCoroutine
@@ -59,7 +57,7 @@ suspend fun <T> runSuspendable(callable: SuspendableCallable<T>): T = suspendCan
             cont.resume(result)
         }
     }
-    cont.cancelFutureOnCompletion(fiber)
+    cont.cancelFutureOnCancellation(fiber)
     fiber.start()
 }
 

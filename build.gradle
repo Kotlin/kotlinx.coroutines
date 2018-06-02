@@ -1,11 +1,6 @@
-allprojects {
-    group = 'org.jetbrains.kotlinx'
-    def deployVersion = properties['DeployVersion']
-    if (deployVersion != null) version = deployVersion
-}
-
 buildscript {
-    if (rootProject.properties['kotlinSnapshot'] != null) {
+    ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
+    if (useKotlinSnapshot) {
         ext.kotlin_version = '1.2-SNAPSHOT'
         repositories {
             maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -13,18 +8,41 @@ buildscript {
     }
     repositories {
         jcenter()
-        maven { url "http://kotlin.bintray.com/kotlinx" }
-        maven { url "http://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
+    }
+    configurations.classpath {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name != 'kotlin-native-gradle-plugin') {
+                    // fix version of all dependencies from org.jetbrains.kotlin group
+                    // even when other dependencies require other versions indirectly,
+                    // except kotlin-native, which has its own pre-release versioning
+                    details.useVersion kotlin_version
+                }
+            }
+        }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
     }
 }
+
+allprojects {
+    def deployVersion = properties['DeployVersion']
+    if (deployVersion != null) version = deployVersion
+    if (useKotlinSnapshot) {
+        kotlin_version = '1.2-SNAPSHOT'
+    }
+}
+
 
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
@@ -36,6 +54,7 @@ def sourceless = ['site']
 static def platformOf(project) {
     if (project.name.endsWith("-common")) return "common"
     if (project.name.endsWith("-js")) return "js"
+    if (project.name.endsWith("-native")) return "native"
     return "jvm"
 }
 
@@ -44,95 +63,36 @@ static def platformLib(base, platform) {
     return "$base-$platform"
 }
 
-configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
-    def platform = platformOf(it)
-    apply plugin: "kotlin-platform-$platform"
-
-    if (platform == "jvm") {
-        sourceCompatibility = 1.6
-        targetCompatibility = 1.6
+subprojects {
+    if (useKotlinSnapshot) {
+        repositories {
+            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        }
     }
-
-    kotlin.experimental.coroutines "enable"
-
-    if (platform == "js") {
-        tasks.withType(compileKotlin2Js.getClass()) {
-            kotlinOptions {
-                moduleKind = "umd"
-                sourceMap = true
-                metaInfo = true
-                // drop -js suffix from outputFile
-                def baseName = project.name - "-js"
-                outputFile = new File(outputFile.parent, baseName + ".js")
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'org.jetbrains.kotlin') {
+                    details.useVersion kotlin_version
+                }
             }
-        }
-    }
-    
-    tasks.withType(Test) {
-        testLogging {
-            showStandardStreams = true
-            events "passed", "failed"
-        }
-        def stressTest = project.properties['stressTest']
-        if (stressTest != null) systemProperties['stressTest'] = stressTest
-    }
-
-    repositories {
-        jcenter()
-        maven { url "http://kotlin.bintray.com/kotlinx" }
-        maven { url "https://dl.bintray.com/devexperts/Maven/" }
-    }
-
-    def kotlin_stdlib = platformLib("kotlin-stdlib", platform)
-    def kotlin_test = platformLib("kotlin-test", platform)
-
-    dependencies {
-        compile "org.jetbrains.kotlin:$kotlin_stdlib:$kotlin_version"
-        testCompile "org.jetbrains.kotlin:$kotlin_test:$kotlin_version"
-    }
-
-    if (platform == "common") {
-        dependencies {
-            testCompile "org.jetbrains.kotlin:kotlin-test-annotations-common:$kotlin_version"
-        }
-    }
-
-    if (platform == "jvm") {
-        dependencies {
-            testCompile "junit:junit:$junit_version"
-            testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
         }
     }
 }
 
+configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
+    def platform = platformOf(it)
+    apply from: rootProject.file("gradle/compile-${platform}.gradle")
+}
+
 // --------------- Configure sub-projects that are part of the library ---------------
 
-def internal = sourceless + ['benchmarks', 'knit', 'js-stub']
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
 
-// configure atomicfu for JVM modules
-configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == "jvm" }) {
-    apply plugin: 'kotlinx-atomicfu'
-
-    dependencies {
-        compileOnly "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
-        testCompile "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
-    }
-
-    atomicFU {
-        inputFiles = sourceSets.main.output.classesDirs
-        outputDir = file("$buildDir/classes-atomicfu/main")
-        classPath = sourceSets.main.runtimeClasspath
-    }
-
-    jar {
-        mainSpec.sourcePaths.clear() // hack to clear existing paths
-        from files(atomicFU.outputs, sourceSets.main.output.resourcesDir)
-    }
-
-    test {
-        classpath = files(configurations.testRuntime, atomicFU.outputs, sourceSets.test.output.classesDirs,
-                sourceSets.main.output.resourcesDir)
-    }
+// configure atomicfu
+configure(subprojects.findAll { !internal.contains(it.name) }) {
+    def platform = platformOf(it)
+    apply from: rootProject.file("gradle/atomicfu-${platform}.gradle")
 }
 
 // configure dependencies on core
@@ -155,7 +115,8 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 
 // --------------- Configure sub-projects that are published ---------------
 
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
+// todo: native is not published yet
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'kotlinx-coroutines-core-native']
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
@@ -182,6 +143,11 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
+
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+            kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+        }
+
     }
 }
 

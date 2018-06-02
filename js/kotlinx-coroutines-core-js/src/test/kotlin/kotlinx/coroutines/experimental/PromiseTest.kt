@@ -16,7 +16,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.js.Promise
+import kotlin.coroutines.experimental.*
+import kotlin.js.*
 import kotlin.test.*
 
 class PromiseTest : TestBase() {

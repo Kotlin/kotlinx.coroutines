@@ -53,7 +53,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
     @Operation
     fun removeFirstOrPeekIfNotSame(@Param(name = "value") value: Int): Int? {
         val node = q.removeFirstIfIsInstanceOfOrPeekIf<Node> { !it.isSame(value) } ?: return null
-        return (node as Node).value
+        return node.value
     }
 
     fun Any.isSame(value: Int) = this is Node && this.value == value

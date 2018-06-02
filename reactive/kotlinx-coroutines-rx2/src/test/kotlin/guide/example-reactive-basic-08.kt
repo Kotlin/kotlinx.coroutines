@@ -17,11 +17,10 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.basic.example08
 
-import io.reactivex.subjects.BehaviorSubject
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.rx2.consumeEach
-import kotlinx.coroutines.experimental.yield
+import io.reactivex.subjects.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.rx2.*
+import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()

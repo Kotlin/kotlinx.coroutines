@@ -1,29 +1,22 @@
 package kotlinx.coroutines.experimental.io
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.internal.BUFFER_SIZE
-import kotlinx.coroutines.experimental.io.internal.RESERVED_SIZE
-import kotlinx.coroutines.experimental.io.internal.ReadWriteBufferState
+import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.io.internal.*
+import kotlinx.coroutines.experimental.io.packet.*
 import kotlinx.coroutines.experimental.io.packet.ByteReadPacket
-import kotlinx.coroutines.experimental.io.packet.ByteWritePacket
-import kotlinx.io.core.BufferView
-import kotlinx.io.core.BytePacketBuilder
-import kotlinx.io.core.readUTF8Line
-import kotlinx.io.pool.DefaultPool
-import kotlinx.io.pool.NoPoolImpl
+import kotlinx.io.core.*
+import kotlinx.io.pool.*
 import org.junit.*
-import org.junit.rules.ErrorCollector
-import org.junit.rules.Timeout
+import org.junit.Test
+import org.junit.rules.*
 import java.nio.CharBuffer
 import java.util.*
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class ByteBufferChannelTest : TestBase() {
     @get:Rule
@@ -191,6 +184,41 @@ class ByteBufferChannelTest : TestBase() {
             }
         }
     }
+
+    @Test
+    fun testIntEdge2() {
+        runTest {
+            for (shift in 1..3) {
+                for (i in 1..shift) {
+                    ch.writeByte(1)
+                }
+
+                repeat(Size / 4 - 1) {
+                    ch.writeInt(0xeeeeeeeeL)
+                }
+
+                ch.flush()
+
+                for (i in 1..shift) {
+                    ch.readByte()
+                }
+
+                ch.writeByte(0x12)
+                ch.writeByte(0x34)
+                ch.writeByte(0x56)
+                ch.writeByte(0x78)
+
+                ch.flush()
+
+                while (ch.availableForRead > 4) {
+                    ch.readInt()
+                }
+
+                assertEquals(0x12345678, ch.readInt())
+            }
+        }
+    }
+
 
     @Test
     fun testLongB() {
@@ -822,11 +850,11 @@ class ByteBufferChannelTest : TestBase() {
         latch.await()
     }
 
-    private fun CoroutineScope.launch(name: String = "child", block: suspend () -> Unit): Job {
+    private suspend fun launch(name: String = "child", block: suspend () -> Unit): Job {
         return launch(context = DefaultDispatcher + CoroutineName(name), parent = coroutineContext[Job]) {
             block()
         }.apply {
-            invokeOnCompletion(true) { t ->
+            invokeOnCompletion( onCancelling = true) { t ->
                 if (t != null) ch.cancel(t)
             }
         }
@@ -1430,6 +1458,21 @@ class ByteBufferChannelTest : TestBase() {
         pipeline.invokeOnCompletion { cause ->
             cause?.let { throw it }
         }
+    }
+
+    @Test
+    fun testJoinToNoFlush() = runTest {
+        val src = ByteChannel(false)
+        launch(coroutineContext) {
+            src.joinTo(ch, closeOnEnd = false, flushOnEnd = false)
+            assertEquals(0, ch.availableForRead)
+            ch.flush()
+            assertEquals(4, ch.availableForRead)
+        }
+        yield()
+
+        src.writeInt(777)
+        src.close()
     }
 
     @Test

@@ -17,15 +17,9 @@
 package kotlinx.coroutines.experimental.future
 
 import kotlinx.coroutines.experimental.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionStage
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
-import java.util.function.BiConsumer
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.suspendCoroutine
+import java.util.concurrent.*
+import java.util.function.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
@@ -35,7 +29,8 @@ import kotlin.coroutines.experimental.suspendCoroutine
  *
  * The [context] for the new coroutine can be explicitly specified.
  * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [context][CoroutineScope.coroutineContext] of the parent coroutine from its [scope][CoroutineScope] may be used,
+ * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * of the parent coroutine may be used,
  * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
  * The parent job may be also explicitly specified using [parent] parameter.
  *
@@ -52,12 +47,14 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
+ * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
 public fun <T> future(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): CompletableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
@@ -66,9 +63,19 @@ public fun <T> future(
     val future = CompletableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
     future.whenComplete { _, exception -> job.cancel(exception) }
+    if (onCompletion != null) job.invokeOnCompletion(handler = onCompletion)
     start(block, receiver=future, completion=future) // use the specified start strategy
     return future
 }
+
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    block: suspend CoroutineScope.() -> T
+): CompletableFuture<T> = future(context, start, parent, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -159,7 +166,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
     if (this is Future<*> && isDone()) {
         try {
-            @Suppress("UNCHECKED")
+            @Suppress("UNCHECKED_CAST")
             return get() as T
         } catch (e: ExecutionException) {
             throw e.cause ?: e // unwrap original cause from ExecutionException
@@ -169,7 +176,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
-        cont.invokeOnCompletion {
+        cont.invokeOnCancellation {
             consumer.cont = null // shall clear reference to continuation
         }
     }

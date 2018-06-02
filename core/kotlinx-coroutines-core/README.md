@@ -39,13 +39,19 @@ Synchronization primitives for coroutines:
 
 Top-level suspending functions:
 
-| **Name**            | **Description**
-| ------------------- | ---------------
-| [delay]             | Non-blocking sleep
-| [yield]             | Yields thread in single-threaded dispatchers
-| [withContext]       | Switches to a different context
-| [withTimeout]       | Set execution time-limit with exception on timeout 
-| [withTimeoutOrNull] | Set execution time-limit will null result on timeout
+| **Name**                 | **Description**
+| -------------------      | ---------------
+| [delay]                  | Non-blocking sleep
+| [yield]                  | Yields thread in single-threaded dispatchers
+| [withContext]            | Switches to a different context
+| [withTimeout]            | Set execution time-limit with exception on timeout 
+| [withTimeoutOrNull]      | Set execution time-limit will null result on timeout
+| [awaitAll]               | Awaits for successful completion of all given jobs or exceptional completion of any
+| [joinAll]                | Joins on all given jobs
+
+Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
+helper function. [NonCancellable] job object is provided to suppress cancellation with 
+`run(NonCancellable) {...}` block of code.
 
 [Select][kotlinx.coroutines.experimental.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
@@ -59,13 +65,13 @@ Top-level suspending functions:
 | [Mutex][kotlinx.coroutines.experimental.sync.Mutex]          | [lock][kotlinx.coroutines.experimental.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.experimental.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.experimental.sync.Mutex.tryLock]
 | none            | [delay]                                        | [onTimeout][kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]                   | none
 
-Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
-helper function. [NonCancellable] job object is provided to suppress cancellation with 
-`run(NonCancellable) {...}` block of code.
-
 This module provides debugging facilities for coroutines (run JVM with `-ea` or `-Dkotlinx.coroutines.debug` options) 
 and [newCoroutineContext] function to write user-defined coroutine builders that work with these
 debugging facilities.
+
+This module provides a special CoroutineContext type [TestCoroutineCoroutineContext][kotlinx.coroutines.experimental.test.TestCoroutineContext] that
+allows the writer of code that contains Coroutines with delays and timeouts to write non-flaky unit-tests for that code allowing these tests to
+terminate in near zero time. See the documentation for this class for more information.
 
 # Package kotlinx.coroutines.experimental
 
@@ -86,6 +92,14 @@ Select expression to perform multiple suspending operations simultaneously until
 # Package kotlinx.coroutines.experimental.intrinsics
 
 Low-level primitives for finer-grained control of coroutines.
+
+# Package kotlinx.coroutines.experimental.timeunit
+
+Optional time unit support for multiplatform projects.
+
+# Package kotlinx.coroutines.experimental.test
+
+Components to ease writing unit-tests for code that contains coroutines with delays and timeouts.
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
@@ -109,12 +123,14 @@ Low-level primitives for finer-grained control of coroutines.
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [withTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout.html
 [withTimeoutOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html
+[awaitAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await-all.html
+[joinAll]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/join-all.html
+[suspendCancellableCoroutine]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [Job.onJoin]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/on-join.html
 [Job.isCompleted]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/is-completed.html
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
-[suspendCancellableCoroutine]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 <!--- INDEX kotlinx.coroutines.experimental.sync -->
 [kotlinx.coroutines.experimental.sync.Mutex]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/index.html
@@ -140,4 +156,6 @@ Low-level primitives for finer-grained control of coroutines.
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [kotlinx.coroutines.experimental.selects.select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [kotlinx.coroutines.experimental.selects.SelectBuilder.onTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/-select-builder/on-timeout.html
+<!--- INDEX kotlinx.coroutines.experimental.test -->
+[kotlinx.coroutines.experimental.test.TestCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.test/-test-coroutine-context/index.html
 <!--- END -->

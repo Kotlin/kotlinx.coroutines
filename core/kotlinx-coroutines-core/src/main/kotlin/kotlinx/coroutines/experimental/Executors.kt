@@ -16,11 +16,22 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.Executor
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.timeunit.TimeUnit
+import java.io.*
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
+
+/**
+ * [CoroutineDispatcher] that implements [Closeable]
+ */
+abstract class CloseableCoroutineDispatcher: CoroutineDispatcher(), Closeable
+
+/**
+ * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
+ */
+public fun ExecutorService.asCoroutineDispatcher(): CloseableCoroutineDispatcher =
+    // we know that an implementation of Executor.asCoroutineDispatcher actually returns a closeable one
+    (this as Executor).asCoroutineDispatcher() as CloseableCoroutineDispatcher
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
@@ -42,7 +53,7 @@ private class ExecutorCoroutineDispatcher(override val executor: Executor) : Exe
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), Delay {
+public abstract class ExecutorCoroutineDispatcherBase : CloseableCoroutineDispatcher(), Delay {
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
@@ -61,7 +72,7 @@ public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), D
                 ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) }
             catch (e: RejectedExecutionException) { null }
         if (timeout != null)
-            continuation.cancelFutureOnCompletion(timeout)
+            continuation.cancelFutureOnCancellation(timeout)
         else
             DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
     }
@@ -77,6 +88,10 @@ public abstract class ExecutorCoroutineDispatcherBase : CoroutineDispatcher(), D
             return DefaultExecutor.invokeOnTimeout(time, unit, block)
     }
 
+    override fun close() {
+        (executor as? ExecutorService)?.shutdown()
+    }
+
     override fun toString(): String = executor.toString()
     override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcherBase && other.executor === executor
     override fun hashCode(): Int = System.identityHashCode(executor)
@@ -89,4 +104,15 @@ private class ResumeUndispatchedRunnable(
     override fun run() {
         with(continuation) { dispatcher.resumeUndispatched(Unit) }
     }
+}
+
+/**
+ * An implementation of [DisposableHandle] that cancels the specified future on dispose.
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
+    override fun dispose() {
+        future.cancel(false)
+    }
+    override fun toString(): String = "DisposableFutureHandle[$future]"
 }
