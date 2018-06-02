@@ -407,7 +407,7 @@ public fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
  *
  * In particular, it means that a parent coroutine invoking `cancelAndJoin` on a child coroutine that was started using
  * `launch(coroutineContext) { ... }` builder throws [CancellationException] if the child
- * had crashed, unless a non-standard [CoroutineExceptionHandler] if installed in the context.
+ * had crashed, unless a non-standard [CoroutineExceptionHandler] is installed in the context.
  *
  * This is a shortcut for the invocation of [cancel][Job.cancel] followed by [join][Job.join].
  */
