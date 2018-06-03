@@ -996,7 +996,7 @@ same coroutine as you can see in the output below:
 <!--- TEST -->
 
 
-Note, that is example also uses `use` function from the Kotlin standard library to release threads that
+Note, that this example also uses `use` function from the Kotlin standard library to release threads that
 are created with [newSingleThreadContext] when they are no longer needed. 
 
 ### Job in the context
