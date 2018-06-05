@@ -123,8 +123,17 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
 
     private fun fillPlaceholder(index: Int, element: E): Core<E>? {
         val old = array.get(index and mask)
+        /*
+         * addLast actions:
+         * 1) Commit tail slot
+         * 2) Write element to array slot
+         * 3) Check for array copy
+         *
+         * If copy happened between 2 and 3 then the consumer might have consumed our element,
+         * then another producer might have written its placeholder in our slot, so we should
+         * perform *unique* check that current placeholder is our to avoid overwriting another producer placeholder
+         */
         if (old is Placeholder && old.index == index) {
-            // that is OUR placeholder and only we can fill it in
             array.set(index and mask, element)
             // we've corrected missing element, should check if that propagated to further copies, just in case
             return this
