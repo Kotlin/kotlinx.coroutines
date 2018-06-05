@@ -188,10 +188,13 @@ private class ContinuationConsumer<T>(
     @Suppress("UNCHECKED_CAST")
     override fun accept(result: T?, exception: Throwable?) {
         val cont = this.cont ?: return // atomically read current value unless null
-        if (exception == null) // the future has been completed normally
+        if (exception == null) {
+            // the future has been completed normally
             cont.resume(result as T)
-        else // the future has completed with an exception
-            cont.resumeWithException(exception)
+        } else {
+            // the future has completed with an exception, unwrap it to provide consistent view of .await() result and to propagate only original exception
+            cont.resumeWithException((exception as? CompletionException)?.cause ?: exception)
+        }
     }
 }
 
@@ -214,4 +217,4 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompl
 public fun <T> future(
     context: CoroutineContext = CommonPool,
     block: suspend () -> T
-): CompletableFuture<T> = future(context=context) { block() }
+): CompletableFuture<T> = future(context = context) { block() }
