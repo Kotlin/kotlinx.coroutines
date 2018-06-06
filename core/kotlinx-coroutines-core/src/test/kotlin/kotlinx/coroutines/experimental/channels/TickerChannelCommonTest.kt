@@ -9,7 +9,6 @@ import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
-
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
@@ -18,12 +17,14 @@ class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     }
 
     enum class Channel {
-        DELAY {
-            override fun invoke(delay: Long, initialDelay: Long) = adjustingTicker(delay, initialDelay = initialDelay)
+        FIXED_PERIOD {
+            override fun invoke(delay: Long, initialDelay: Long) =
+                ticker(delay, initialDelay = initialDelay, mode = TickerMode.FIXED_PERIOD)
         },
 
         FIXED_DELAY {
-            override fun invoke(delay: Long, initialDelay: Long) = fixedTicker(delay, initialDelay = initialDelay)
+            override fun invoke(delay: Long, initialDelay: Long) =
+                ticker(delay, initialDelay = initialDelay, mode = TickerMode.FIXED_DELAY)
         };
 
         abstract operator fun invoke(delay: Long, initialDelay: Long = 0): ReceiveChannel<Unit>

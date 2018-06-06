@@ -849,12 +849,15 @@ public final class kotlinx/coroutines/experimental/channels/SubscriptionReceiveC
 }
 
 public final class kotlinx/coroutines/experimental/channels/TickerChannelsKt {
-	public static final fun adjustingTicker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static synthetic fun adjustingTicker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static final fun fixedTicker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static synthetic fun fixedTicker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static final fun ticker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Z)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static synthetic fun ticker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;ZILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final fun ticker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun ticker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+}
+
+public final class kotlinx/coroutines/experimental/channels/TickerMode : java/lang/Enum {
+	public static final field FIXED_DELAY Lkotlinx/coroutines/experimental/channels/TickerMode;
+	public static final field FIXED_PERIOD Lkotlinx/coroutines/experimental/channels/TickerMode;
+	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/experimental/channels/TickerMode;
+	public static fun values ()[Lkotlinx/coroutines/experimental/channels/TickerMode;
 }
 
 public final class kotlinx/coroutines/experimental/intrinsics/CancellableKt {
