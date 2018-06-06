@@ -4,10 +4,9 @@ import kotlinx.coroutines.experimental.*
 import org.junit.*
 
 class TickerChannelTest : TestBase() {
-
     @Test
     fun testFixedDelayChannelBackpressure() = runTest {
-        val delayChannel = fixedTicker(delay = 100, initialDelay = 0)
+        val delayChannel = ticker(delay = 100, initialDelay = 0, mode = TickerMode.FIXED_DELAY)
         delayChannel.checkNotEmpty()
         delayChannel.checkEmpty()
 
