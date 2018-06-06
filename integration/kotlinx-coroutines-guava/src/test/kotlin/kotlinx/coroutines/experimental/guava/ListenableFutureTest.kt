@@ -22,6 +22,7 @@ import kotlinx.coroutines.experimental.CancellationException
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
@@ -40,6 +41,32 @@ class ListenableFutureTest : TestBase() {
             }).await() + "K"
         }
         assertThat(future.get(), IsEqual("OK"))
+    }
+
+    @Test
+    fun testAwaitWithContext() = runTest {
+        val future = SettableFuture.create<Int>()
+        val deferred = async(coroutineContext) {
+            withContext(CommonPool) {
+                future.await()
+            }
+        }
+
+        future.set(1)
+        assertEquals(1, deferred.await())
+    }
+
+    @Test
+    fun testAwaitWithContextCancellation() = runTest(expected = {it is JobCancellationException}) {
+        val future = SettableFuture.create<Int>()
+        val deferred = async(coroutineContext) {
+            withContext(CommonPool) {
+                future.await()
+            }
+        }
+
+        deferred.cancel(IOException())
+        deferred.await()
     }
 
     @Test

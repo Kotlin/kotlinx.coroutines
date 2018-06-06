@@ -43,6 +43,7 @@ sourceSets {
 }
 
 test {
+    dependsOn cleanCompileTestKotlin
     dependsOn configurations.testArtifacts
 
     systemProperty 'testCasesClassesDirs', sourceSets.test.output.classesDirs.asPath
