@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmMultifileClass
+@file:JvmName("ChannelsKt")
 
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
+import kotlin.jvm.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 

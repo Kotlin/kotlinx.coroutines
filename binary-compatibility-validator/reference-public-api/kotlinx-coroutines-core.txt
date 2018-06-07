@@ -608,10 +608,6 @@ public final class kotlinx/coroutines/experimental/channels/ChannelKt {
 	public static final fun Channel (I)Lkotlinx/coroutines/experimental/channels/Channel;
 }
 
-public final class kotlinx/coroutines/experimental/channels/ChannelsJvmKt {
-	public static final fun sendBlocking (Lkotlinx/coroutines/experimental/channels/SendChannel;Ljava/lang/Object;)V
-}
-
 public final class kotlinx/coroutines/experimental/channels/ChannelsKt {
 	public static final fun any (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun asReceiveChannel (Ljava/lang/Iterable;Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
@@ -664,6 +660,7 @@ public final class kotlinx/coroutines/experimental/channels/ChannelsKt {
 	public static final fun minWith (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Ljava/util/Comparator;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun none (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun requireNoNulls (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final fun sendBlocking (Lkotlinx/coroutines/experimental/channels/SendChannel;Ljava/lang/Object;)V
 	public static final fun single (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun singleOrNull (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun take (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;ILkotlin/coroutines/experimental/CoroutineContext;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
