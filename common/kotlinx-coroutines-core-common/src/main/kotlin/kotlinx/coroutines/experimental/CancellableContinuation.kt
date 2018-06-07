@@ -134,7 +134,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     @Deprecated(
         message = "Disposable handlers on regular completion are no longer supported",
         replaceWith = ReplaceWith("invokeOnCancellation(handler)"),
-        level = DeprecationLevel.HIDDEN
+        level = DeprecationLevel.WARNING
     )
     public fun invokeOnCompletion(
         onCancelling: Boolean = false,
@@ -217,7 +217,7 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
 @Deprecated(
     message = "Disposable handlers on cancellation are no longer supported",
     replaceWith = ReplaceWith("removeOnCancellation(handler)"),
-    level = DeprecationLevel.HIDDEN)
+    level = DeprecationLevel.WARNING)
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
     removeOnCancellation(node)
     return NonDisposableHandle
@@ -241,7 +241,7 @@ public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedL
 @Deprecated(
     message = "Disposable handlers on regular completion are no longer supported",
     replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
-    level = DeprecationLevel.HIDDEN)
+    level = DeprecationLevel.WARNING)
 public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
     disposeOnCancellation(handle)
     return NonDisposableHandle

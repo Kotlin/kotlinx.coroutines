@@ -44,7 +44,7 @@ public abstract interface class kotlinx/coroutines/experimental/CancellableConti
 	public abstract fun completeResume (Ljava/lang/Object;)V
 	public abstract fun initCancellability ()V
 	public abstract fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
-	public abstract synthetic fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public abstract fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
@@ -66,7 +66,7 @@ public final class kotlinx/coroutines/experimental/CancellableContinuationImpl :
 	public fun getContext ()Lkotlin/coroutines/experimental/CoroutineContext;
 	public fun getSuccessfulResult (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun initCancellability ()V
-	public synthetic fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public fun resumeUndispatched (Lkotlinx/coroutines/experimental/CoroutineDispatcher;Ljava/lang/Object;)V
 	public fun resumeUndispatchedWithException (Lkotlinx/coroutines/experimental/CoroutineDispatcher;Ljava/lang/Throwable;)V
 	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
@@ -75,8 +75,8 @@ public final class kotlinx/coroutines/experimental/CancellableContinuationImpl :
 
 public final class kotlinx/coroutines/experimental/CancellableContinuationKt {
 	public static final fun disposeOnCancellation (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/DisposableHandle;)V
-	public static final synthetic fun disposeOnCompletion (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/DisposableHandle;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public static final synthetic fun removeOnCancel (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/internal/LockFreeLinkedListNode;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static final fun disposeOnCompletion (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/DisposableHandle;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static final fun removeOnCancel (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/internal/LockFreeLinkedListNode;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public static final fun removeOnCancellation (Lkotlinx/coroutines/experimental/CancellableContinuation;Lkotlinx/coroutines/experimental/internal/LockFreeLinkedListNode;)V
 }
 
@@ -371,7 +371,7 @@ public final class kotlinx/coroutines/experimental/JobKt {
 	public static synthetic fun cancelChildren$default (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static synthetic fun cancelChildren$default (Lkotlinx/coroutines/experimental/Job;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static final fun cancelFutureOnCancellation (Lkotlinx/coroutines/experimental/CancellableContinuation;Ljava/util/concurrent/Future;)V
-	public static final synthetic fun cancelFutureOnCompletion (Lkotlinx/coroutines/experimental/CancellableContinuation;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static final fun cancelFutureOnCompletion (Lkotlinx/coroutines/experimental/CancellableContinuation;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public static final fun cancelFutureOnCompletion (Lkotlinx/coroutines/experimental/Job;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public static final fun disposeOnCompletion (Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/DisposableHandle;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public static final fun isActive (Lkotlin/coroutines/experimental/CoroutineContext;)Z
