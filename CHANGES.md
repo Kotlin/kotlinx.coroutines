@@ -1,5 +1,58 @@
 # Change log for kotlinx.coroutines 
 
+## Version 0.23.0
+
+* Kotlin 1.2.41
+* **Coroutines core module is made mostly cross-platform for JVM and JS**:
+  * Migrate channels and related operators to common, so channels can be used from JS (see #201).
+  * Most of the code is shared between JVM and JS versions using cross-platform versino of [AtomicFU](https://github.com/Kotlin/kotlinx.atomicfu) library.
+  * The recent version of Kotlin allows default parameters in common code (see #348).
+  * The project is built using Gradle 4.6. 
+* **Breaking change**: `CancellableContinuation` is not a `Job` anymore (see #219):
+  * It does not affect casual users of `suspendCancellableCoroutine`, since all the typically used functions are still there.
+  * `CancellableContinuation.invokeOnCompletion` is deprecated now and its semantics had subtly changed:
+     * `invokeOnCancellation` is a replacement for `invokeOnCompletion` to install a handler.
+     * The handler is **not** invoked on `resume` which corresponds to the typical usage pattern.
+     * There is no need to check for `cont.isCancelled` in a typical handler code anymore (since handler is invoked only when continuation is cancelled). 
+     * Multiple cancellation handlers cannot be installed.
+     * Cancellation handlers cannot be removed (disposed of) anymore.  
+  * This change is designed to allow better performance of suspending cancellable functions: 
+     * Now `CancellableContinuation` implementation has simpler state machine and is implemented more efficiently. 
+  * Exception handling in `AbstractContinuation` (that implements `CancellableContinuation`) is now consistent: 
+     * Always prefer exception thrown from coroutine as exceptional reason, add cancellation cause as suppressed exception.      
+* **Big change**: Deprecate `CoroutineScope.coroutineContext`:
+  * It is replaced with top-level `coroutineContext` function from Kotlin standard library.
+* Improve `ReceiveChannel` operators implementations to guarantee closing of the source channels under all circumstances (see #279):
+  * `onCompletion` parameter added to `produce` and all other coroutine builders.
+  * Introduce `ReceiveChannel.consumes(): CompletionHandler` extension function.
+* Replace `SubscriptionReceiveChannel` with `ReceiveChannel` (see #283, PR by @deva666).
+  * `ReceiveChannel.use` extension is introduced to preserve source compatibility, but is deprecated.
+    * `consume` or `consumeEach` extensions should be used for channels.
+    * When writing operators, `produce(onCompletion=consumes())  { ... }` pattern shall be used (see #279 above). 
+* JS: Kotlin is declared as peer dependency in JVM (see #339, #340, PR by @ansman).  
+* Invoke exception handler for actor on cancellation even when channel was successfully closed, so exceptions thrown by actor are always reported (see #368).
+* Introduce `awaitAll` and `joinAll` for `Deferred` and `Job` lists correspondingly (see #171).  
+* Unwrap `CompletionException` exception in `CompletionStage.await` slow-path to provide consistent results (see #375).
+* Add extension to `ExecutorService` to return `CloseableCoroutineDispatcher` (see #278, PR by @deva666).
+* Fail with proper message during build if JDK_16 is not set (see #291, PR by @venkatperi).
+* Allow negative timeouts in `delay`, `withTimeout` and `onTimeout` (see #310).
+* Fix a few bugs (leaks on cancellation) in `delay`:
+  * Invoke `clearTimeout` on cancellation in JSDispatcher.
+  * Remove delayed task on cancellation from internal data structure on JVM.
+* Introduce `ticker` function to create "ticker channels" (see #327):
+  * It provides analogue of RX `Observable.timer` for coroutine channels.
+  * It is currently supported on JVM only.
+* Add a test-helper class `TestCoroutineContext` (see #297, PR by @streetsofboston).  
+  * It is currently supported on JVM only.
+  * Ticker channels (#327) are not yet compatible with it. 
+* Implement a better way to set `CoroutineContext.DEBUG` value (see #316, PR by @dmytrodanylyk):
+  * Made `CoroutineContext.DEBUG_PROPERTY_NAME` constant public.
+  * Introduce public constants with `"on"`, `"off"`, `"auto"` values.
+* Introduce system property to control `CommonPool` parallelism (see #343):
+  * `CommonPool.DEFAULT_PARALLELISM_PROPERTY_NAME` constant is introduced with a value of "kotlinx.coroutines.default.parallelism".
+* Include package-list files into documentation site (see #290).
+* Fix various typos in docs (PRs by @paolop and @ArtsiomCh).  
+
 ## Version 0.22.5
 
 * JS: Fixed main file reference in [NPM package](https://www.npmjs.com/package/kotlinx-coroutines-core)
