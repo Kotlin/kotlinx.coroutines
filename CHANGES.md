@@ -29,7 +29,7 @@
   * `ReceiveChannel.use` extension is introduced to preserve source compatibility, but is deprecated.
     * `consume` or `consumeEach` extensions should be used for channels.
     * When writing operators, `produce(onCompletion=consumes())  { ... }` pattern shall be used (see #279 above). 
-* JS: Kotlin is declared as peer dependency in JVM (see #339, #340, PR by @ansman).  
+* JS: Kotlin is declared as peer dependency (see #339, #340, PR by @ansman).  
 * Invoke exception handler for actor on cancellation even when channel was successfully closed, so exceptions thrown by actor are always reported (see #368).
 * Introduce `awaitAll` and `joinAll` for `Deferred` and `Job` lists correspondingly (see #171).  
 * Unwrap `CompletionException` exception in `CompletionStage.await` slow-path to provide consistent results (see #375).
