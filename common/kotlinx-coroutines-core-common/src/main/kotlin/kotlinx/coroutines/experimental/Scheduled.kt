@@ -18,6 +18,7 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
 import kotlinx.coroutines.experimental.timeunit.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
