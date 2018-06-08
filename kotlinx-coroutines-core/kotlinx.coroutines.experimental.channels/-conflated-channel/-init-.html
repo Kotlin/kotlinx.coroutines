@@ -35,8 +35,6 @@
 
 <div class="signature"><code><span class="identifier">ConflatedChannel</span><span class="symbol">(</span><span class="symbol">)</span></code></div>
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
 <p>Channel that buffers at most one element and conflates all subsequent <code>send</code> and <code>offer</code> invocations,
 so that the receiver always gets the most recently sent element.
 Back-to-send sent elements are <em>conflated</em> – only the the most recently sent element is received,

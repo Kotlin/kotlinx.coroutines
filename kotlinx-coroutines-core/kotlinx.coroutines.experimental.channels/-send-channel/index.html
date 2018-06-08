@@ -33,9 +33,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L32">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L32">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -163,7 +161,8 @@ or throws exception if the channel <a href="is-closed-for-send.html">Channel.isC
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/index.html">AbstractSendChannel</a></p>
 
@@ -174,7 +173,9 @@ or throws exception if the channel <a href="is-closed-for-send.html">Channel.isC
         <p>Abstract send channel. It is a base class for all send channel implementations.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-broadcast-channel/index.html">BroadcastChannel</a></p>
 
@@ -183,11 +184,13 @@ or throws exception if the channel <a href="is-closed-for-send.html">Channel.isC
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../-broadcast-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
-that subscribe for the elements using <a href="../-broadcast-channel/open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
+that subscribe for the elements using <a href="../-broadcast-channel/open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../-receive-channel/cancel.html">ReceiveChannel.cancel</a>
 function.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-channel/index.html">Channel</a></p>
 
@@ -200,7 +203,9 @@ Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/d
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-producer-scope/index.html">ProducerScope</a></p>
 
@@ -211,7 +216,8 @@ but it has suspending operations instead of blocking ones and it can be closed.<
         <p>Scope for <a href="../produce.html">produce</a> coroutine builder.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
       </div>

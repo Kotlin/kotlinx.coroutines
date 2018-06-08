@@ -105,7 +105,7 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
 <td>
 
         <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
-that subscribe for the elements using <a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html">SubscriptionReceiveChannel.close</a>
+that subscribe for the elements using <a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html">ReceiveChannel.cancel</a>
 function.</p>
 
       </td>
@@ -116,7 +116,7 @@ function.</p>
       </td>
 <td>
 
-        <p>Cancellable continuation. Its job is <em>completed</em> when it is resumed or cancelled.
+        <p>Cancellable continuation. It is <em>completed</em> when it is resumed or cancelled.
 When <a href="../kotlinx.coroutines.experimental/-cancellable-continuation/cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a> or
 with the specified cancel cause.</p>
 
@@ -147,6 +147,16 @@ from concurrent coroutines.</p>
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/-closeable-coroutine-dispatcher/index.html">kotlinx.coroutines.experimental.CloseableCoroutineDispatcher</a></p>
+      </td>
+<td>
+
+        <p><a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that implements <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-closed-receive-channel-exception/index.html">kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException</a></p>
       </td>
 <td>
@@ -166,6 +176,14 @@ exception on receive attempts.</p>
         <p>Indicates attempt to <a href="../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a> on <a href="../kotlinx.coroutines.experimental.channels/-send-channel/is-closed-for-send.html">isClosedForSend</a> channel
 that was closed without a cause. A <em>failed</em> channel rethrows the original <a href="../kotlinx.coroutines.experimental.channels/-send-channel/close.html">close</a> cause
 exception on send attempts.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/kotlin.collections.-collection/index.html">kotlin.collections.Collection</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
 
       </td>
 </tr>
@@ -196,7 +214,7 @@ exception on send attempts.</p>
       </td>
 <td>
 
-        <p>Handler for <a href="#">Job.invokeOnCompletion</a>.</p>
+        <p>Handler for <a href="#">Job.invokeOnCompletion</a> and <a href="../kotlinx.coroutines.experimental/-cancellable-continuation/invoke-on-cancellation.html">CancellableContinuation.invokeOnCancellation</a>.</p>
 
       </td>
 </tr>
@@ -279,8 +297,8 @@ See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newC
       </td>
 <td>
 
-        <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient access
-to its <a href="../kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html">coroutineContext</a> and its cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
+        <p>Receiver interface for generic coroutine builders, so that the code inside coroutine has a convenient
+and fast access to its own cancellation status via <a href="../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a>.</p>
 
       </td>
 </tr>
@@ -340,6 +358,14 @@ be asked to process next event from their event queue.</p>
 <tr>
 <td>
         <p><a href="../kotlinx.coroutines.experimental/java.util.concurrent.-executor/index.html">java.util.concurrent.Executor</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/java.util.concurrent.-executor-service/index.html">java.util.concurrent.ExecutorService</a> (extensions in package kotlinx.coroutines.experimental)</p>
       </td>
 <td>
 
@@ -546,12 +572,33 @@ open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-s
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental.test/-test-coroutine-context/index.html">kotlinx.coroutines.experimental.test.TestCoroutineContext</a></p>
+      </td>
+<td>
+
+        <p>This <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html">CoroutineContext</a> dispatcher can be used to simulate virtual time to speed up
+code, especially tests, that deal with delays and timeouts in Coroutines.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental/-thread-pool-dispatcher/index.html">kotlinx.coroutines.experimental.ThreadPoolDispatcher</a></p>
       </td>
 <td>
 
         <p>Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
 created with <a href="../kotlinx.coroutines.experimental/new-single-thread-context.html">newSingleThreadContext</a> and <a href="../kotlinx.coroutines.experimental/new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental.channels/-ticker-mode/index.html">kotlinx.coroutines.experimental.channels.TickerMode</a></p>
+      </td>
+<td>
+
+        <p>Mode for <a href="../kotlinx.coroutines.experimental.channels/ticker.html">ticker</a> function.</p>
 
       </td>
 </tr>

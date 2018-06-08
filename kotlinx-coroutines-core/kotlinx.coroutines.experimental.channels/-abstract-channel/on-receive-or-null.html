@@ -33,18 +33,9 @@
 
 <h1 id="onreceiveornull">onReceiveOrNull</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L708">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">onReceiveOrNull</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause1.html"><span class="identifier">SelectClause1</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/AbstractChannel.kt#L709">(source)</a></div>
 
 <p>Overrides <a href="../-receive-channel/on-receive-or-null.html">ReceiveChannel.onReceiveOrNull</a></p>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
-<p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
-is received from the channel or selects with <code>null</code> if if the channel
-<a href="is-closed-for-receive.html">isClosedForReceive</a> without cause. The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with
-the original <a href="../-send-channel/close.html">close</a> cause exception if the channel has <em>failed</em>.</p>
-
-<p><strong>Getter</strong></p>
 
 <p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="receive-or-null.html">receiveOrNull</a> suspending function that selects with the element that
 is received from the channel or selects with <code>null</code> if if the channel

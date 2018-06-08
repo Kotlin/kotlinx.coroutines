@@ -33,15 +33,19 @@
 
 <h1 id="oncancellation">onCancellation</h1>
 
-<div class="signature"><code><span class="keyword">protected</span> <span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancellation</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$onCancellation(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/AbstractCoroutine.kt#L81">(source)</a></div>
+<div class="signature"><code><span class="keyword">protected</span> <span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancellation</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$onCancellation(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/AbstractCoroutine.kt#L85">(source)</a></div>
 
 <p>This function is invoked once when this coroutine is cancelled or is completed,
 similarly to <a href="invoke-on-completion.html">invokeOnCompletion</a> with <code>onCancelling</code> set to <code>true</code>.</p>
 
-<h3 id="parameters">Parameters</h3>
+<p>The meaning of <a href="on-cancellation.html#kotlinx.coroutines.experimental.AbstractCoroutine$onCancellation(kotlin.Throwable)/cause">cause</a> parameter:</p>
 
-<p><code>cause</code> - the cause that was passed to <a href="../-job/cancel.html">Job.cancel</a> function or <code>null</code> if coroutine was cancelled
-    without cause or is completing normally.</p>
+<ul>
+  <li>Cause is <code>null</code> when job has completed normally.</li>
+  <li>Cause is an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+<strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
+  <li>Otherwise, the job had <em>failed</em>.</li>
+</ul>
 
       </div>
     </main>

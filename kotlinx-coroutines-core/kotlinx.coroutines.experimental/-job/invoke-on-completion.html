@@ -33,16 +33,23 @@
 
 <h1 id="invokeoncompletion">invokeOnCompletion</h1>
 
-<div class="overload-group" data-platform="JVM">
+<div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L290">(source)</a></div>
-
-  <p><strong>Platform and version requirements:</strong> JVM</p>
+  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L294">(source)</a></div>
 
   <p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this job.
 When job is already complete, then the handler is immediately invoked
 with a job’s exception or cancellation cause or <code>null</code>. Otherwise, handler will be invoked once when this
 job is complete.</p>
+
+  <p>The meaning of <code>cause</code> that is passed to the handler:</p>
+
+  <ul>
+    <li>Cause is <code>null</code> when job has completed normally.</li>
+    <li>Cause is an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+<strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
+    <li>Otherwise, the job had <em>failed</em>.</li>
+  </ul>
 
   <p>The resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> can be used to <a href="../-disposable-handle/dispose.html">dispose</a> the
 registration of this handler and release its memory if its invocation is no longer needed.
@@ -57,12 +64,21 @@ wrapped into <a href="../-completion-handler-exception/index.html">CompletionHan
 </div>
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L325">(source)</a></div>
+  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L335">(source)</a></div>
 
   <p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation or completion of this job.
 When job is already cancelling or complete, then the handler is immediately invoked
 with a job’s cancellation cause or <code>null</code> unless <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</a> is set to false.
 Otherwise, handler will be invoked once when this job is cancelled or complete.</p>
+
+  <p>The meaning of <code>cause</code> that is passed to the handler:</p>
+
+  <ul>
+    <li>Cause is <code>null</code> when job has completed normally.</li>
+    <li>Cause is an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+<strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
+    <li>Otherwise, the job had <em>failed</em>.</li>
+  </ul>
 
   <p>Invocation of this handler on a transition to a transient <em>cancelling</em> state
 is controlled by <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.Job$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancelling">onCancelling</a> boolean parameter.

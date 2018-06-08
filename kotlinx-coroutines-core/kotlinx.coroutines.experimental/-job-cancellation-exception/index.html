@@ -33,7 +33,7 @@
 
 <h1 id="jobcancellationexception">JobCancellationException</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Exceptions.kt#L39">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Exceptions.kt#L40">(source)</a></div>
 
 <p>Thrown by cancellable suspending functions if the <a href="../-job/index.html">Job</a> of the coroutine is cancelled or completed
 without cause, or with a cause or exception that is not <a href="../-cancellation-exception/index.html">CancellationException</a>
@@ -74,20 +74,7 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">cause</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
 
       </td>
-</tr><tr>
-<td>
-
-        <p><a href="job.html">job</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">job</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
-
-        <p>The job that was cancelled.</p>
-
-      </td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
@@ -102,6 +89,17 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="fill-in-stack-trace.html">fillInStackTrace</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">fillInStackTrace</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a></code></div>
 
       </td>
 </tr>

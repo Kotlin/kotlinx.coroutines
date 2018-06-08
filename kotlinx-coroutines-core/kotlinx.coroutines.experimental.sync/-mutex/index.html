@@ -33,15 +33,18 @@
 
 <h1 id="mutex">Mutex</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L37">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Mutex</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L39">(source)</a></div>
 
 <p>Mutual exclusion for coroutines.</p>
 
 <p>Mutex has two states: <em>locked</em> and <em>unlocked</em>.
 It is <strong>non-reentrant</strong>, that is invoking <a href="lock.html">lock</a> even from the same thread/coroutine that currently holds
 the lock still suspends the invoker.</p>
+
+<p>JVM API note:
+Memory semantic of the <a href="./index.md">Mutex</a> is similar to <code>synchronized</code> block on JVM:
+An unlock on a <a href="./index.md">Mutex</a> happens-before every subsequent successful lock on that <a href="./index.md">Mutex</a>.
+Unsuccessful call to <a href="try-lock.html">tryLock</a> do not have any memory effects.</p>
 
 <h3 id="properties">Properties</h3>
 
@@ -141,7 +144,8 @@ the reference to this mutex is passed into the corresponding block.</p>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../with-lock.html">withLock</a></p>
 
@@ -152,7 +156,8 @@ the reference to this mutex is passed into the corresponding block.</p>
         <p>Executes the given <a href="../with-lock.html#kotlinx.coroutines.experimental.sync$withLock(kotlinx.coroutines.experimental.sync.Mutex, kotlin.Any, kotlin.Function0((kotlinx.coroutines.experimental.sync.withLock.T)))/action">action</a> under this mutex’s lock.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
       </div>

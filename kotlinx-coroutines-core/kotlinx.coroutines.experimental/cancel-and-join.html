@@ -33,7 +33,7 @@
 
 <h1 id="cancelandjoin">cancelAndJoin</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L441">(source)</a></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelAndJoin</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/Job.kt#L414">(source)</a></div>
 
 <p>Cancels the job and suspends invoking coroutine until the cancelled job is complete.</p>
 
@@ -44,7 +44,7 @@ throws <a href="-cancellation-exception/index.html">CancellationException</a>.</
 
 <p>In particular, it means that a parent coroutine invoking <code>cancelAndJoin</code> on a child coroutine that was started using
 <code>launch(coroutineContext) { ... }</code> builder throws <a href="-cancellation-exception/index.html">CancellationException</a> if the child
-had crashed, unless a non-standard <a href="-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> if installed in the context.</p>
+had crashed, unless a non-standard <a href="-coroutine-exception-handler/index.html">CoroutineExceptionHandler</a> is installed in the context.</p>
 
 <p>This is a shortcut for the invocation of <a href="-job/cancel.html">cancel</a> followed by <a href="-job/join.html">join</a>.</p>
 

@@ -1,0 +1,12 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.channels8$asReceiveChannel(java.util.stream.Stream((kotlinx.coroutines.experimental.channels8.asReceiveChannel.E)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.channels8/java.util.stream.-stream/as-receive-channel.html
+$dokka.location:kotlinx.coroutines.experimental.channels8$asStream(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels8.asStream.E)))kotlinx.coroutines.experimental.channels8/kotlinx.coroutines.experimental.channels.-receive-channel/as-stream.html
+$dokka.location:kotlinx.coroutines.experimental.channels8$collect(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels8.collect.T)), java.util.stream.Collector((kotlinx.coroutines.experimental.channels8.collect.T, kotlinx.coroutines.experimental.channels8.collect.A, kotlinx.coroutines.experimental.channels8.collect.R)))kotlinx.coroutines.experimental.channels8/kotlinx.coroutines.experimental.channels.-receive-channel/collect.html
+$dokka.location:kotlinx.coroutines.experimental.future$asCompletableFuture(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.future.asCompletableFuture.T)))kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/as-completable-future.html
+$dokka.location:kotlinx.coroutines.experimental.future$asDeferred(java.util.concurrent.CompletionStage((kotlinx.coroutines.experimental.future.asDeferred.T)))kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/as-deferred.html
+$dokka.location:kotlinx.coroutines.experimental.future$await(java.util.concurrent.CompletionStage((kotlinx.coroutines.experimental.future.await.T)))kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/await.html
+$dokka.location:kotlinx.coroutines.experimental.time$onTimeout(kotlinx.coroutines.experimental.selects.SelectBuilder((kotlinx.coroutines.experimental.time.onTimeout.R)), java.time.Duration, kotlin.SuspendFunction0((kotlinx.coroutines.experimental.time.onTimeout.R)))kotlinx.coroutines.experimental.time/kotlinx.coroutines.experimental.selects.-select-builder/on-timeout.html
+kotlinx.coroutines.experimental.channels8
+kotlinx.coroutines.experimental.future
+kotlinx.coroutines.experimental.time

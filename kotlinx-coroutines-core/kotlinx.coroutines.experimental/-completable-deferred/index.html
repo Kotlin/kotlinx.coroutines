@@ -33,7 +33,7 @@
 
 <h1 id="completabledeferred">CompletableDeferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableDeferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CompletableDeferred.kt#L35">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CompletableDeferred</span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CompletableDeferred.kt#L32">(source)</a></div>
 
 <p>A <a href="../-deferred/index.html">Deferred</a> that can be completed via public functions
 <a href="complete.html">complete</a>, <a href="complete-exceptionally.html">completeExceptionally</a>, and <a href="#">cancel</a>.</p>
@@ -63,7 +63,8 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-deferred/on-await.html">onAwait</a></p>
 
@@ -76,7 +77,8 @@ resolved. The <a href="../../kotlinx.coroutines.experimental.selects/select.html
 it cancelled).</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
@@ -165,22 +167,32 @@ returning the resulting value or throwing the corresponding exception if the def
 </tbody>
 </table>
 
+<h3 id="extension-properties">Extension Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> when the <a href="../-job/index.html">Job</a> of the coroutine in this context is still active
+(has not completed and was not cancelled yet).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extension-functions">Extension Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JS"><td>
-
-        <p><a href="../as-promise.html">asPromise</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../as-promise.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asPromise</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html"><span class="identifier">Promise</span></a><span class="symbol">&lt;</span><a href="../as-promise.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Converts this deferred value to the instance of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>.</p>
-
-      </td>
-</tr><tr>
+<tr>
 <td>
 
         <p><a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html">cancel</a></p>
@@ -216,7 +228,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is cancelled.
+This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
 </tr><tr>

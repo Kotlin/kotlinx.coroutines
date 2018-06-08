@@ -1,0 +1,5 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.guava$asListenableFuture(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.guava.asListenableFuture.T)))kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-deferred/as-listenable-future.html
+$dokka.location:kotlinx.coroutines.experimental.guava$await(com.google.common.util.concurrent.ListenableFuture((kotlinx.coroutines.experimental.guava.await.T)))kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/await.html
+kotlinx.coroutines.experimental.guava

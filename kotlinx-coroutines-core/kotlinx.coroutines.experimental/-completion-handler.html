@@ -33,12 +33,21 @@
 
 <h1 id="completionhandler">CompletionHandler</h1>
 
-<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CommonCompletionHandler.kt#L30">(source)</a></div>
+<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CompletionHandler.common.kt#L38">(source)</a></div>
 
-<p>Handler for <a href="#">Job.invokeOnCompletion</a>.</p>
+<p>Handler for <a href="#">Job.invokeOnCompletion</a> and <a href="-cancellable-continuation/invoke-on-cancellation.html">CancellableContinuation.invokeOnCancellation</a>.</p>
 
 <p>Installed handler should not throw any exceptions. If it does, they will get caught,
 wrapped into <a href="-completion-handler-exception/index.html">CompletionHandlerException</a>, and rethrown, potentially causing crash of unrelated code.</p>
+
+<p>The meaning of <code>cause</code> that is passed to the handler:</p>
+
+<ul>
+  <li>Cause is <code>null</code> when job has completed normally.</li>
+  <li>Cause is an instance of <a href="-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+<strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
+  <li>Otherwise, the job had <em>failed</em>.</li>
+</ul>
 
 <p><strong>Note</strong>: This type is a part of internal machinery that supports parent-child hierarchies
 and allows for implementation of suspending functions that wait on the Job’s state.

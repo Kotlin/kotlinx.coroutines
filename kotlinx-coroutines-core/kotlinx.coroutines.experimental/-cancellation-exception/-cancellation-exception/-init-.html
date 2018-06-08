@@ -33,9 +33,14 @@
 
 <h1 id="init">&lt;init&gt;</h1>
 
-<div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CancellationException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span></code></div>
+<div class="signature"><code><span class="identifier">CancellationException</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.CancellationException$&lt;init&gt;(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span></code></div>
 
 <p><strong>Platform and version requirements:</strong> JS</p>
+
+<p>Thrown by cancellable suspending functions if the <a href="../../-job/index.html">Job</a> of the coroutine is cancelled while it is suspending.
+It indicates <em>normal</em> cancellation of a coroutine.
+<strong>It is not printed to console/log by default uncaught exception handler</strong>.
+(see <a href="../../handle-coroutine-exception.html">handleCoroutineException</a>).</p>
 
 
       </div>

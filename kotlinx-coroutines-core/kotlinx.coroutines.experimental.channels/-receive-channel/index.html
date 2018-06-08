@@ -33,9 +33,7 @@
 
 <h1 id="receivechannel">ReceiveChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L107">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/Channel.kt#L107">(source)</a></div>
 
 <p>Receiver’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -196,7 +194,8 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../all.html">all</a></p>
 
@@ -207,7 +206,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
         <p>Returns <code>true</code> if all elements match the given <a href="../all.html#kotlinx.coroutines.experimental.channels$all(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.all.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.all.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../any.html">any</a></p>
 
@@ -222,7 +223,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
         <p>Returns <code>true</code> if at least one element matches the given <a href="../any.html#kotlinx.coroutines.experimental.channels$any(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.any.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.any.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../associate.html">associate</a></p>
 
@@ -234,7 +237,9 @@ or throws the original <a href="../-send-channel/close.html">close</a> cause exc
 applied to elements of the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../associate-by.html">associateBy</a></p>
 
@@ -250,7 +255,9 @@ returned from <a href="../associate-by.html#kotlinx.coroutines.experimental.chan
         <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html">Map</a> containing the values provided by <a href="../associate-by.html#kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/valueTransform">valueTransform</a> and indexed by <a href="../associate-by.html#kotlinx.coroutines.experimental.channels$associateBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateBy.E, kotlinx.coroutines.experimental.channels.associateBy.V)))/keySelector">keySelector</a> functions applied to elements of the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../associate-by-to.html">associateByTo</a></p>
 
@@ -269,7 +276,9 @@ where key is provided by the <a href="../associate-by-to.html#kotlinx.coroutines
 and value is provided by the <a href="../associate-by-to.html#kotlinx.coroutines.experimental.channels$associateByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateByTo.E)), kotlinx.coroutines.experimental.channels.associateByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.associateByTo.E, kotlinx.coroutines.experimental.channels.associateByTo.V)))/valueTransform">valueTransform</a> function applied to elements of the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../associate-to.html">associateTo</a></p>
 
@@ -281,7 +290,9 @@ and value is provided by the <a href="../associate-by-to.html#kotlinx.coroutines
 provided by <a href="../associate-to.html#kotlinx.coroutines.experimental.channels$associateTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.associateTo.E)), kotlinx.coroutines.experimental.channels.associateTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.associateTo.E, kotlin.Pair((kotlinx.coroutines.experimental.channels.associateTo.K, kotlinx.coroutines.experimental.channels.associateTo.V)))))/transform">transform</a> function applied to each element of the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../consume.html">consume</a></p>
 
@@ -293,7 +304,9 @@ provided by <a href="../associate-to.html#kotlinx.coroutines.experimental.channe
 by always invoking <a href="cancel.html">cancel</a> after the execution of the block.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../consume-each.html">consumeEach</a></p>
 
@@ -304,7 +317,9 @@ by always invoking <a href="cancel.html">cancel</a> after the execution of the b
         <p>Performs the given <a href="../consume-each.html#kotlinx.coroutines.experimental.channels$consumeEach(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEach.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.consumeEach.E, kotlin.Unit)))/action">action</a> for each received element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../consume-each-indexed.html">consumeEachIndexed</a></p>
 
@@ -315,7 +330,23 @@ by always invoking <a href="cancel.html">cancel</a> after the execution of the b
         <p>Performs the given <a href="../consume-each-indexed.html#kotlinx.coroutines.experimental.channels$consumeEachIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Function1((kotlin.collections.IndexedValue((kotlinx.coroutines.experimental.channels.consumeEachIndexed.E)), kotlin.Unit)))/action">action</a> for each received element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../consumes.html">consumes</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="./index.md"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consumes</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a></code></div>
+
+        <p>Returns a <a href="../../kotlinx.coroutines.experimental/-completion-handler.html">CompletionHandler</a> that invokes <a href="cancel.html">cancel</a> on the <a href="./index.md">ReceiveChannel</a>
+with the corresponding cause. See also <a href="../consume.html">ReceiveChannel.consume</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../count.html">count</a></p>
 
@@ -330,7 +361,9 @@ by always invoking <a href="cancel.html">cancel</a> after the execution of the b
         <p>Returns the number of elements matching the given <a href="../count.html#kotlinx.coroutines.experimental.channels$count(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.count.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.count.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../distinct.html">distinct</a></p>
 
@@ -341,7 +374,9 @@ by always invoking <a href="cancel.html">cancel</a> after the execution of the b
         <p>Returns a channel containing only distinct elements from the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../distinct-by.html">distinctBy</a></p>
 
@@ -353,7 +388,9 @@ by always invoking <a href="cancel.html">cancel</a> after the execution of the b
 having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.coroutines.experimental.channels$distinctBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.distinctBy.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.distinctBy.E, kotlinx.coroutines.experimental.channels.distinctBy.K)))/selector">selector</a> function.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../drop.html">drop</a></p>
 
@@ -364,7 +401,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing all elements except first <a href="../drop.html#kotlinx.coroutines.experimental.channels$drop(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.drop.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</a> elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../drop-while.html">dropWhile</a></p>
 
@@ -375,7 +414,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing all elements except first elements that satisfy the given <a href="../drop-while.html#kotlinx.coroutines.experimental.channels$dropWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.dropWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.dropWhile.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../element-at.html">elementAt</a></p>
 
@@ -386,7 +427,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns an element at the given <a href="../element-at.html#kotlinx.coroutines.experimental.channels$elementAt(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAt.E)), kotlin.Int)/index">index</a> or throws an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-index-out-of-bounds-exception/index.html">IndexOutOfBoundsException</a> if the <a href="../element-at.html#kotlinx.coroutines.experimental.channels$elementAt(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAt.E)), kotlin.Int)/index">index</a> is out of bounds of this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../element-at-or-else.html">elementAtOrElse</a></p>
 
@@ -397,7 +440,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns an element at the given <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/index">index</a> or the result of calling the <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/defaultValue">defaultValue</a> function if the <a href="../element-at-or-else.html#kotlinx.coroutines.experimental.channels$elementAtOrElse(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrElse.E)), kotlin.Int, kotlin.Function1((kotlin.Int, kotlinx.coroutines.experimental.channels.elementAtOrElse.E)))/index">index</a> is out of bounds of this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../element-at-or-null.html">elementAtOrNull</a></p>
 
@@ -408,7 +453,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns an element at the given <a href="../element-at-or-null.html#kotlinx.coroutines.experimental.channels$elementAtOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrNull.E)), kotlin.Int)/index">index</a> or <code>null</code> if the <a href="../element-at-or-null.html#kotlinx.coroutines.experimental.channels$elementAtOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.elementAtOrNull.E)), kotlin.Int)/index">index</a> is out of bounds of this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter.html">filter</a></p>
 
@@ -419,7 +466,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing only elements matching the given <a href="../filter.html#kotlinx.coroutines.experimental.channels$filter(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filter.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filter.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-indexed.html">filterIndexed</a></p>
 
@@ -430,7 +479,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing only elements matching the given <a href="../filter-indexed.html#kotlinx.coroutines.experimental.channels$filterIndexed(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexed.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexed.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-indexed-to.html">filterIndexedTo</a></p>
 
@@ -441,7 +492,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Appends all elements matching the given <a href="../filter-indexed-to.html#kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-indexed-to.html#kotlinx.coroutines.experimental.channels$filterIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterIndexedTo.E)), kotlinx.coroutines.experimental.channels.filterIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.filterIndexedTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-not.html">filterNot</a></p>
 
@@ -452,7 +505,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing all elements not matching the given <a href="../filter-not.html#kotlinx.coroutines.experimental.channels$filterNot(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNot.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.filterNot.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-not-null.html">filterNotNull</a></p>
 
@@ -463,7 +518,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a channel containing all elements that are not <code>null</code>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-not-null-to.html">filterNotNullTo</a></p>
 
@@ -474,7 +531,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Appends all elements that are not <code>null</code> to the given <a href="../filter-not-null-to.html#kotlinx.coroutines.experimental.channels$filterNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotNullTo.E)), kotlinx.coroutines.experimental.channels.filterNotNullTo.C)/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-not-to.html">filterNotTo</a></p>
 
@@ -485,7 +544,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Appends all elements not matching the given <a href="../filter-not-to.html#kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-not-to.html#kotlinx.coroutines.experimental.channels$filterNotTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterNotTo.E)), kotlinx.coroutines.experimental.channels.filterNotTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterNotTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../filter-to.html">filterTo</a></p>
 
@@ -496,7 +557,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Appends all elements matching the given <a href="../filter-to.html#kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/predicate">predicate</a> to the given <a href="../filter-to.html#kotlinx.coroutines.experimental.channels$filterTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.filterTo.E)), kotlinx.coroutines.experimental.channels.filterTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.filterTo.E, kotlin.Boolean)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../find.html">find</a></p>
 
@@ -507,7 +570,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns the first element matching the given <a href="../find.html#kotlinx.coroutines.experimental.channels$find(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.find.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.find.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../find-last.html">findLast</a></p>
 
@@ -518,7 +583,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns the last element matching the given <a href="../find-last.html#kotlinx.coroutines.experimental.channels$findLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.findLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.findLast.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../first.html">first</a></p>
 
@@ -533,7 +600,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns the first element matching the given <a href="../first.html#kotlinx.coroutines.experimental.channels$first(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.first.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.first.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../first-or-null.html">firstOrNull</a></p>
 
@@ -548,7 +617,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns the first element matching the given <a href="../first-or-null.html#kotlinx.coroutines.experimental.channels$firstOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.firstOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.firstOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if element was not found.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../flat-map.html">flatMap</a></p>
 
@@ -559,7 +630,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Returns a single channel of all elements from results of <a href="../flat-map.html#kotlinx.coroutines.experimental.channels$flatMap(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.flatMap.E, kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.flatMap.R)))))/transform">transform</a> function being invoked on each element of original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../fold.html">fold</a></p>
 
@@ -570,7 +643,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
         <p>Accumulates value starting with <a href="../fold.html#kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/initial">initial</a> value and applying <a href="../fold.html#kotlinx.coroutines.experimental.channels$fold(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.fold.E)), kotlinx.coroutines.experimental.channels.fold.R, kotlin.Function2((kotlinx.coroutines.experimental.channels.fold.R, kotlinx.coroutines.experimental.channels.fold.E, )))/operation">operation</a> from left to right to current accumulator value and each element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../fold-indexed.html">foldIndexed</a></p>
 
@@ -582,7 +657,9 @@ having distinct keys returned by the given <a href="../distinct-by.html#kotlinx.
 to current accumulator value and each element with its index in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../group-by.html">groupBy</a></p>
 
@@ -600,7 +677,9 @@ by the key returned by the given <a href="../group-by.html#kotlinx.coroutines.ex
 and returns a map where each group key is associated with a list of corresponding values.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../group-by-to.html">groupByTo</a></p>
 
@@ -618,7 +697,9 @@ by the key returned by the given <a href="../group-by-to.html#kotlinx.coroutines
 and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.channels$groupByTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.groupByTo.E)), kotlinx.coroutines.experimental.channels.groupByTo.M, kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.K)), kotlin.Function1((kotlinx.coroutines.experimental.channels.groupByTo.E, kotlinx.coroutines.experimental.channels.groupByTo.V)))/destination">destination</a> map each group key associated with a list of corresponding values.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../index-of.html">indexOf</a></p>
 
@@ -629,7 +710,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns first index of <a href="../index-of.html#kotlinx.coroutines.experimental.channels$indexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOf.E)), kotlinx.coroutines.experimental.channels.indexOf.E)/element">element</a>, or -1 if the channel does not contain element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../index-of-first.html">indexOfFirst</a></p>
 
@@ -640,7 +723,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns index of the first element matching the given <a href="../index-of-first.html#kotlinx.coroutines.experimental.channels$indexOfFirst(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfFirst.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfFirst.E, kotlin.Boolean)))/predicate">predicate</a>, or -1 if the channel does not contain such element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../index-of-last.html">indexOfLast</a></p>
 
@@ -651,7 +736,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns index of the last element matching the given <a href="../index-of-last.html#kotlinx.coroutines.experimental.channels$indexOfLast(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.indexOfLast.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.indexOfLast.E, kotlin.Boolean)))/predicate">predicate</a>, or -1 if the channel does not contain such element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../last.html">last</a></p>
 
@@ -666,7 +753,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns the last element matching the given <a href="../last.html#kotlinx.coroutines.experimental.channels$last(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.last.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.last.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../last-index-of.html">lastIndexOf</a></p>
 
@@ -677,7 +766,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns last index of <a href="../last-index-of.html#kotlinx.coroutines.experimental.channels$lastIndexOf(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastIndexOf.E)), kotlinx.coroutines.experimental.channels.lastIndexOf.E)/element">element</a>, or -1 if the channel does not contain element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../last-or-null.html">lastOrNull</a></p>
 
@@ -692,7 +783,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
         <p>Returns the last element matching the given <a href="../last-or-null.html#kotlinx.coroutines.experimental.channels$lastOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.lastOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.lastOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if no such element was found.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map.html">map</a></p>
 
@@ -704,7 +797,9 @@ and puts to the <a href="../group-by-to.html#kotlinx.coroutines.experimental.cha
 to each element in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-indexed.html">mapIndexed</a></p>
 
@@ -716,7 +811,9 @@ to each element in the original channel.</p>
 to each element and its index in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-indexed-not-null.html">mapIndexedNotNull</a></p>
 
@@ -728,7 +825,9 @@ to each element and its index in the original channel.</p>
 to each element and its index in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-indexed-not-null-to.html">mapIndexedNotNullTo</a></p>
 
@@ -740,7 +839,9 @@ to each element and its index in the original channel.</p>
 and appends only the non-null results to the given <a href="../map-indexed-not-null-to.html#kotlinx.coroutines.experimental.channels$mapIndexedNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.E, kotlinx.coroutines.experimental.channels.mapIndexedNotNullTo.R)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-indexed-to.html">mapIndexedTo</a></p>
 
@@ -752,7 +853,9 @@ and appends only the non-null results to the given <a href="../map-indexed-not-n
 and appends the results to the given <a href="../map-indexed-to.html#kotlinx.coroutines.experimental.channels$mapIndexedTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapIndexedTo.E)), kotlinx.coroutines.experimental.channels.mapIndexedTo.C, kotlin.Function2((kotlin.Int, kotlinx.coroutines.experimental.channels.mapIndexedTo.E, kotlinx.coroutines.experimental.channels.mapIndexedTo.R)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-not-null.html">mapNotNull</a></p>
 
@@ -764,7 +867,9 @@ and appends the results to the given <a href="../map-indexed-to.html#kotlinx.cor
 to each element in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-not-null-to.html">mapNotNullTo</a></p>
 
@@ -776,7 +881,9 @@ to each element in the original channel.</p>
 and appends only the non-null results to the given <a href="../map-not-null-to.html#kotlinx.coroutines.experimental.channels$mapNotNullTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapNotNullTo.E)), kotlinx.coroutines.experimental.channels.mapNotNullTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapNotNullTo.E, kotlinx.coroutines.experimental.channels.mapNotNullTo.R)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../map-to.html">mapTo</a></p>
 
@@ -788,7 +895,9 @@ and appends only the non-null results to the given <a href="../map-not-null-to.h
 and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.experimental.channels$mapTo(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.mapTo.E)), kotlinx.coroutines.experimental.channels.mapTo.C, kotlin.Function1((kotlinx.coroutines.experimental.channels.mapTo.E, kotlinx.coroutines.experimental.channels.mapTo.R)))/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../max-by.html">maxBy</a></p>
 
@@ -799,7 +908,9 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Returns the first element yielding the largest value of the given function or <code>null</code> if there are no elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../max-with.html">maxWith</a></p>
 
@@ -810,7 +921,9 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Returns the first element having the largest value according to the provided <a href="../max-with.html#kotlinx.coroutines.experimental.channels$maxWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.maxWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.maxWith.E)))/comparator">comparator</a> or <code>null</code> if there are no elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../min-by.html">minBy</a></p>
 
@@ -821,7 +934,9 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Returns the first element yielding the smallest value of the given function or <code>null</code> if there are no elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../min-with.html">minWith</a></p>
 
@@ -832,7 +947,9 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Returns the first element having the smallest value according to the provided <a href="../min-with.html#kotlinx.coroutines.experimental.channels$minWith(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.minWith.E)), java.util.Comparator((kotlinx.coroutines.experimental.channels.minWith.E)))/comparator">comparator</a> or <code>null</code> if there are no elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../none.html">none</a></p>
 
@@ -847,7 +964,9 @@ and appends the results to the given <a href="../map-to.html#kotlinx.coroutines.
         <p>Returns <code>true</code> if no elements match the given <a href="../none.html#kotlinx.coroutines.experimental.channels$none(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.none.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.none.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../partition.html">partition</a></p>
 
@@ -860,7 +979,9 @@ where <em>first</em> list contains elements for which <a href="../partition.html
 while <em>second</em> list contains elements for which <a href="../partition.html#kotlinx.coroutines.experimental.channels$partition(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.partition.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.partition.E, kotlin.Boolean)))/predicate">predicate</a> yielded <code>false</code>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../reduce.html">reduce</a></p>
 
@@ -871,7 +992,9 @@ while <em>second</em> list contains elements for which <a href="../partition.htm
         <p>Accumulates value starting with the first element and applying <a href="../reduce.html#kotlinx.coroutines.experimental.channels$reduce(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.reduce.E)), kotlin.Function2((kotlinx.coroutines.experimental.channels.reduce.S, kotlinx.coroutines.experimental.channels.reduce.E, )))/operation">operation</a> from left to right to current accumulator value and each element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../reduce-indexed.html">reduceIndexed</a></p>
 
@@ -883,7 +1006,9 @@ while <em>second</em> list contains elements for which <a href="../partition.htm
 to current accumulator value and each element with its index in the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../require-no-nulls.html">requireNoNulls</a></p>
 
@@ -894,7 +1019,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns an original collection containing all the non-<code>null</code> elements, throwing an <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a> if there are any <code>null</code> elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../single.html">single</a></p>
 
@@ -909,7 +1036,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns the single element matching the given <a href="../single.html#kotlinx.coroutines.experimental.channels$single(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.single.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.single.E, kotlin.Boolean)))/predicate">predicate</a>, or throws exception if there is no or more than one matching element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../single-or-null.html">singleOrNull</a></p>
 
@@ -924,7 +1053,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns the single element matching the given <a href="../single-or-null.html#kotlinx.coroutines.experimental.channels$singleOrNull(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.singleOrNull.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.singleOrNull.E, kotlin.Boolean)))/predicate">predicate</a>, or <code>null</code> if element was not found or more than one element was found.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../sum-by.html">sumBy</a></p>
 
@@ -935,7 +1066,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns the sum of all values produced by <a href="../sum-by.html#kotlinx.coroutines.experimental.channels$sumBy(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumBy.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumBy.E, kotlin.Int)))/selector">selector</a> function applied to each element in the channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../sum-by-double.html">sumByDouble</a></p>
 
@@ -946,7 +1079,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns the sum of all values produced by <a href="../sum-by-double.html#kotlinx.coroutines.experimental.channels$sumByDouble(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.sumByDouble.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.sumByDouble.E, kotlin.Double)))/selector">selector</a> function applied to each element in the channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../take.html">take</a></p>
 
@@ -957,7 +1092,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns a channel containing first <a href="../take.html#kotlinx.coroutines.experimental.channels$take(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.take.E)), kotlin.Int, kotlin.coroutines.experimental.CoroutineContext)/n">n</a> elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../take-while.html">takeWhile</a></p>
 
@@ -968,7 +1105,9 @@ to current accumulator value and each element with its index in the original cha
         <p>Returns a channel containing first elements satisfying the given <a href="../take-while.html#kotlinx.coroutines.experimental.channels$takeWhile(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.takeWhile.E)), kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.takeWhile.E, kotlin.Boolean)))/predicate">predicate</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-channel.html">toChannel</a></p>
 
@@ -980,7 +1119,9 @@ to current accumulator value and each element with its index in the original cha
 and appends the results to the given <a href="../to-channel.html#kotlinx.coroutines.experimental.channels$toChannel(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toChannel.E)), kotlinx.coroutines.experimental.channels.toChannel.C)/destination">destination</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-collection.html">toCollection</a></p>
 
@@ -991,7 +1132,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Appends all elements to the given <a href="../to-collection.html#kotlinx.coroutines.experimental.channels$toCollection(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.toCollection.E)), kotlinx.coroutines.experimental.channels.toCollection.C)/destination">destination</a> collection.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-list.html">toList</a></p>
 
@@ -1002,7 +1145,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a> containing all elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-map.html">toMap</a></p>
 
@@ -1017,7 +1162,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-map/index.html">MutableMap</a> filled with all elements of this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-mutable-list.html">toMutableList</a></p>
 
@@ -1028,7 +1175,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html">MutableList</a> filled with all elements of this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-mutable-set.html">toMutableSet</a></p>
 
@@ -1039,7 +1188,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a mutable set containing all distinct elements from the given channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../to-set.html">toSet</a></p>
 
@@ -1050,7 +1201,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a> of all elements.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../with-index.html">withIndex</a></p>
 
@@ -1061,7 +1214,9 @@ and appends the results to the given <a href="../to-channel.html#kotlinx.corouti
         <p>Returns a channel of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-indexed-value/index.html">IndexedValue</a> for each element of the original channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../zip.html">zip</a></p>
 
@@ -1077,7 +1232,8 @@ Resulting channel has length of shortest input channel.</p>
         <p>Returns a channel of values built from elements of both collections with same indexes using provided <a href="../zip.html#kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/transform">transform</a>. Resulting channel has length of shortest input channels.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="inheritors">Inheritors</h3>
@@ -1095,7 +1251,8 @@ Resulting channel has length of shortest input channel.</p>
         <p>Scope for <a href="../actor.html">actor</a> coroutine builder.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr><tr>
+<td>
 
         <p><a href="../-channel/index.html">Channel</a></p>
 
@@ -1108,19 +1265,22 @@ Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/d
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-subscription-receive-channel/index.html">SubscriptionReceiveChannel</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">SubscriptionReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../-subscription-receive-channel/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
+        <div class="signature"><code><span class="keyword">interface </span><s><span class="identifier">SubscriptionReceiveChannel</span></s><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../-subscription-receive-channel/index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">Closeable</span></code></div>
 
         <p>Return type for <a href="../-broadcast-channel/open-subscription.html">BroadcastChannel.openSubscription</a> that can be used to <a href="receive.html">receive</a> elements from the
 open subscription and to <a href="../-subscription-receive-channel/close.html">close</a> it to unsubscribe.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
       </div>

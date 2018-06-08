@@ -33,48 +33,22 @@
 
 <h1 id="scheduleresumeafterdelay">scheduleResumeAfterDelay</h1>
 
-<div class="overload-group" data-platform="JVM">
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">scheduleResumeAfterDelay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental.timeunit/-time-unit/index.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="../-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/Delay.kt#L57">(source)</a></div>
 
-  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">scheduleResumeAfterDelay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="../-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Delay.kt#L61">(source)</a></div>
+<p>Schedules resume of a specified <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</a> after a specified delay <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</a>.</p>
 
-  <p><strong>Platform and version requirements:</strong> JVM</p>
-
-  <p>Schedules resume of a specified <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</a> after a specified delay <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</a>.</p>
-
-  <p>Continuation <strong>must be scheduled</strong> to resume even if it is already cancelled, because a cancellation is just
+<p>Continuation <strong>must be scheduled</strong> to resume even if it is already cancelled, because a cancellation is just
 an exception that the coroutine that used <code>delay</code> might wanted to catch and process. It might
 need to close some resources in its <code>finally</code> blocks, for example.</p>
 
-  <p>This implementation is supposed to use dispatcher’s native ability for scheduled execution in its thread(s).
+<p>This implementation is supposed to use dispatcher’s native ability for scheduled execution in its thread(s).
 In order to avoid an extra delay of execution, the following code shall be used to resume this
 <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</a> when the code is already executing in the appropriate thread:</p>
 
-  <div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">with</span><span class="p">(</span><span class="n">continuation</span><span class="p">)</span> <span class="p">{</span> <span class="n">resumeUndispatched</span><span class="p">(</span><span class="n">Unit</span><span class="p">)</span> <span class="p">}</span>
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">with</span><span class="p">(</span><span class="n">continuation</span><span class="p">)</span> <span class="p">{</span> <span class="n">resumeUndispatched</span><span class="p">(</span><span class="n">Unit</span><span class="p">)</span> <span class="p">}</span>
 </code></pre>
-  </div>
-
 </div>
-<div class="overload-group" data-platform="JS">
 
-  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">scheduleResumeAfterDelay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Int, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Int, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="../-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/main/kotlin/kotlinx/coroutines/experimental/Delay.kt#L45">(source)</a></div>
-
-  <p><strong>Platform and version requirements:</strong> JS</p>
-
-  <p>Schedules resume of a specified <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Int, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</a> after a specified delay <a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Int, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</a>.</p>
-
-  <p>Continuation <strong>must be scheduled</strong> to resume even if it is already cancelled, because a cancellation is just
-an exception that the coroutine that used <code>delay</code> might wanted to catch and process. It might
-need to close some resources in its <code>finally</code> blocks, for example.</p>
-
-  <p>This implementation is supposed to use dispatcher’s native ability for scheduled execution in its thread(s).
-In order to avoid an extra delay of execution, the following code shall be used to resume this
-<a href="schedule-resume-after-delay.html#kotlinx.coroutines.experimental.Delay$scheduleResumeAfterDelay(kotlin.Int, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</a> when the code is already executing in the appropriate dispatcher:</p>
-
-  <div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">with</span><span class="p">(</span><span class="n">continuation</span><span class="p">)</span> <span class="p">{</span> <span class="n">resumeUndispatched</span><span class="p">(</span><span class="n">Unit</span><span class="p">)</span> <span class="p">}</span>
-</code></pre>
-  </div>
-
-</div>
 
       </div>
     </main>

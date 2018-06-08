@@ -33,25 +33,15 @@
 
 <h1 id="onsend">onSend</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L233">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">onSend</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.selects/-select-clause2.html"><span class="identifier">SelectClause2</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/ConflatedBroadcastChannel.kt#L232">(source)</a></div>
 
 <p>Overrides <a href="../-send-channel/on-send.html">SendChannel.onSend</a></p>
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
-
-<p>Clause for <a href="#">select</a> expression of <a href="send.html">send</a> suspending function that selects when the element that is specified
+<p>Clause for <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> expression of <a href="send.html">send</a> suspending function that selects when the element that is specified
 as parameter is sent to the channel. When the clause is selected the reference to this channel
 is passed into the corresponding block.</p>
 
-<p>The <a href="#">select</a> invocation fails with exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
-
-<p><strong>Getter</strong></p>
-
-<p>Clause for <a href="#">select</a> expression of <a href="send.html">send</a> suspending function that selects when the element that is specified
-as parameter is sent to the channel. When the clause is selected the reference to this channel
-is passed into the corresponding block.</p>
-
-<p>The <a href="#">select</a> invocation fails with exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
+<p>The <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation fails with exception if the channel <a href="is-closed-for-send.html">isClosedForSend</a> (see <a href="close.html">close</a> for details).</p>
 
 
       </div>

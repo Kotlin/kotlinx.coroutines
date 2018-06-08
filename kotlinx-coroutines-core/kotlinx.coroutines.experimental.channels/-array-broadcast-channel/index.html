@@ -33,9 +33,7 @@
 
 <h1 id="arraybroadcastchannel">ArrayBroadcastChannel</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L38">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L37">(source)</a></div>
 
 <p>Broadcast channel with array buffer of a fixed <a href="capacity.html">capacity</a>.
 Sender suspends only when buffer is full due to one of the receives being slow to consume and
@@ -107,7 +105,8 @@ receiver suspends only when buffer is empty.</p>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a></p>
 
@@ -119,7 +118,9 @@ receiver suspends only when buffer is empty.</p>
 the <a href="../-abstract-send-channel/send.html">send</a> and <a href="../-abstract-send-channel/offer.html">offer</a> attempts throws exception.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/is-full.html">isFull</a></p>
 
@@ -131,7 +132,9 @@ the <a href="../-abstract-send-channel/send.html">send</a> and <a href="../-abst
 This function returns <code>false</code> for <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/on-send.html">onSend</a></p>
 
@@ -144,7 +147,8 @@ as parameter is sent to the channel. When the clause is selected the reference t
 is passed into the corresponding block.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
@@ -173,10 +177,10 @@ Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">openSubscription</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">openSubscription</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Subscribes to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and returns a channel to receive elements from it.
-The resulting channel shall be <a href="../-subscription-receive-channel/close.html">closed</a> to unsubscribe from this
+The resulting channel shall be <a href="../-receive-channel/cancel.html">cancelled</a> to unsubscribe from this
 broadcast channel.</p>
 
       </td>
@@ -188,7 +192,8 @@ broadcast channel.</p>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/after-close.html">afterClose</a></p>
 
@@ -199,7 +204,9 @@ broadcast channel.</p>
         <p>Invoked after successful <a href="../-abstract-send-channel/close.html">close</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/offer.html">offer</a></p>
 
@@ -212,7 +219,9 @@ and returns <code>true</code>. Otherwise, it returns <code>false</code> immediat
 or throws exception if the channel <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-abstract-send-channel/close.html">close</a> for details).</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/send.html">send</a></p>
 
@@ -224,7 +233,9 @@ or throws exception if the channel <a href="../-abstract-send-channel/is-closed-
 or throws exception if the channel <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-abstract-send-channel/close.html">close</a> for details).</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-abstract-send-channel/to-string.html">toString</a></p>
 
@@ -233,26 +244,30 @@ or throws exception if the channel <a href="../-abstract-send-channel/is-closed-
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="extension-functions">Extension Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../consume.html">consume</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../consume.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.BroadcastChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</span><span class="symbol">:</span>&nbsp;<a href="../-subscription-receive-channel/index.html"><span class="identifier">SubscriptionReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../consume.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../consume.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../consume.html#R"><span class="identifier">R</span></a></code></div>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../consume.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">consume</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.BroadcastChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</span><span class="symbol">:</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../consume.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../consume.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../consume.html#R"><span class="identifier">R</span></a></code></div>
 
-        <p>Opens subscription to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and makes sure that the given <a href="../consume.html#kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.BroadcastChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</a> consumes all elements
+        <p>Opens subscription to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and makes sure that the given <a href="../consume.html#kotlinx.coroutines.experimental.channels$consume(kotlinx.coroutines.experimental.channels.BroadcastChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlin.Function1((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.consume.E)), kotlinx.coroutines.experimental.channels.consume.R)))/block">block</a> consumes all elements
 from it by always invoking <a href="../-receive-channel/cancel.html">cancel</a> after the execution of the block.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../consume-each.html">consumeEach</a></p>
 
@@ -263,7 +278,8 @@ from it by always invoking <a href="../-receive-channel/cancel.html">cancel</a> 
         <p>Subscribes to this <a href="../-broadcast-channel/index.html">BroadcastChannel</a> and performs the specified action for each received element.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr data-platform="JVM"><td>
 
         <p><a href="../send-blocking.html">sendBlocking</a></p>
 

@@ -33,7 +33,7 @@
 
 <h1 id="coroutineexceptionhandler">CoroutineExceptionHandler</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineExceptionHandler.kt#L76">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineExceptionHandler.kt#L82">(source)</a></div>
 
 <p>An optional element on the coroutine context to handle uncaught exceptions.</p>
 
@@ -45,7 +45,7 @@
   <li>Otherwise:
     <ul>
       <li>if there is a <a href="../-job/index.html">Job</a> in the context, then <a href="../-job/cancel.html">Job.cancel</a> is invoked;</li>
-      <li>all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> are invoked;</li>
+      <li>all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="#">ServiceLoader</a> are invoked;</li>
       <li>and current thread’s <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#uncaughtExceptionHandler">Thread.uncaughtExceptionHandler</a> is invoked.</li>
     </ul>
   </li>
@@ -88,6 +88,27 @@
 
         <p>Handles uncaught <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</a> in the given <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</a>. It is invoked
 if coroutine has an uncaught exception. See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-properties">Extension Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> when the <a href="../-job/index.html">Job</a> of the coroutine in this context is still active
+(has not completed and was not cancelled yet).</p>
 
       </td>
 </tr>

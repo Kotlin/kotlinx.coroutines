@@ -33,31 +33,11 @@
 
 <h1 id="children">children</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">children</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html"><span class="identifier">Sequence</span></a><span class="symbol">&lt;</span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/NonCancellable.kt#L81">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">children</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html"><span class="identifier">Sequence</span></a><span class="symbol">&lt;</span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/NonCancellable.kt#L81">(source)</a></div>
 
 <p>Overrides <a href="../-job/children.html">Job.children</a></p>
 
 <p>Always returns <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/empty-sequence.html">emptySequence</a>.</p>
-
-<p><strong>Getter</strong></p>
-
-<p>Returns a sequence of this job’s children.</p>
-
-<p>A job becomes a child of this job when it is constructed with this job in its
-<a href="#">CoroutineContext</a> or using an explicit <code>parent</code> parameter.</p>
-
-<p>A parent-child relation has the following effect:</p>
-
-<ul>
-  <li>Cancellation of parent with <a href="cancel.html">cancel</a> or its exceptional completion (failure)
-immediately cancels all its children.</li>
-  <li>Parent cannot complete until all its children are complete. Parent waits for all its children to
-complete in <em>completing</em> or <em>cancelling</em> state.</li>
-  <li>Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-children created with <a href="../launch.html">launch</a> coroutine builder. Note, that <a href="../async.html">async</a> and other future-like
-coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
-caught and are encapsulated in their result.</li>
-</ul>
 
 
       </div>

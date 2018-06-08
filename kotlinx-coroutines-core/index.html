@@ -188,8 +188,20 @@
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-timeout-or-null.html">withTimeoutOrNull</a></td>
       <td>Set execution time-limit will null result on timeout</td>
     </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/await-all.html">awaitAll</a></td>
+      <td>Awaits for successful completion of all given jobs or exceptional completion of any</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/join-all.html">joinAll</a></td>
+      <td>Joins on all given jobs</td>
+    </tr>
   </tbody>
 </table>
+
+<p>Cancellation support for user-defined suspending functions is available with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>
+helper function. <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html">NonCancellable</a> job object is provided to suppress cancellation with 
+<code>run(NonCancellable) {...}</code> block of code.</p>
 
 <p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html">Select</a> expression waits for the result of multiple suspending functions simultaneously:</p>
 
@@ -248,13 +260,13 @@
   </tbody>
 </table>
 
-<p>Cancellation support for user-defined suspending functions is available with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>
-helper function. <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html">NonCancellable</a> job object is provided to suppress cancellation with 
-<code>run(NonCancellable) {...}</code> block of code.</p>
-
 <p>This module provides debugging facilities for coroutines (run JVM with <code>-ea</code> or <code>-Dkotlinx.coroutines.debug</code> options) 
 and <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html">newCoroutineContext</a> function to write user-defined coroutine builders that work with these
 debugging facilities.</p>
+
+<p>This module provides a special CoroutineContext type <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.test/-test-coroutine-context/index.html">TestCoroutineCoroutineContext</a> that
+allows the writer of code that contains Coroutines with delays and timeouts to write non-flaky unit-tests for that code allowing these tests to
+terminate in near zero time. See the documentation for this class for more information.</p>
 
 <h3 id="packages">Packages</h3>
 
@@ -272,7 +284,8 @@ debugging facilities.</p>
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="kotlinx.coroutines.experimental.channels/index.html">kotlinx.coroutines.experimental.channels</a></p>
 
@@ -282,7 +295,8 @@ debugging facilities.</p>
         <p>Channels – non-blocking primitives for communicating a stream of elements between coroutines.</p>
 
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="kotlinx.coroutines.experimental.intrinsics/index.html">kotlinx.coroutines.experimental.intrinsics</a></p>
@@ -294,7 +308,8 @@ debugging facilities.</p>
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="kotlinx.coroutines.experimental.selects/index.html">kotlinx.coroutines.experimental.selects</a></p>
 
@@ -304,7 +319,9 @@ debugging facilities.</p>
         <p>Select expression to perform multiple suspending operations simultaneously until one of them succeeds.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="kotlinx.coroutines.experimental.sync/index.html">kotlinx.coroutines.experimental.sync</a></p>
 
@@ -314,7 +331,30 @@ debugging facilities.</p>
         <p>Synchronization primitives (mutex).</p>
 
       </td>
-</tr></tbody>
+</tr>
+<tr data-platform="JVM"><td>
+
+        <p><a href="kotlinx.coroutines.experimental.test/index.html">kotlinx.coroutines.experimental.test</a></p>
+
+      </td>
+<td>
+
+        <p>Components to ease writing unit-tests for code that contains coroutines with delays and timeouts.</p>
+
+      </td>
+</tr><tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.experimental.timeunit/index.html">kotlinx.coroutines.experimental.timeunit</a></p>
+
+      </td>
+<td>
+
+        <p>Optional time unit support for multiplatform projects.</p>
+
+      </td>
+</tr>
+</tbody>
 </table>
 
 <h3 id="index">Index</h3>

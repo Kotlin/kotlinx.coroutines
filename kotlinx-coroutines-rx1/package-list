@@ -1,0 +1,18 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.rx1$asCompletable(kotlinx.coroutines.experimental.Job, kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.-job/as-completable.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$asCoroutineDispatcher(rx.Scheduler)kotlinx.coroutines.experimental.rx1/rx.-scheduler/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$asObservable(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.rx1.asObservable.T)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.channels.-receive-channel/as-observable.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$asSingle(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.rx1.asSingle.T)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.-deferred/as-single.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$await(rx.Single((kotlinx.coroutines.experimental.rx1.await.T)))kotlinx.coroutines.experimental.rx1/rx.-single/await.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitCompleted(rx.Completable)kotlinx.coroutines.experimental.rx1/rx.-completable/await-completed.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitFirst(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirst.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitFirstOrDefault(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirstOrDefault.T)), kotlinx.coroutines.experimental.rx1.awaitFirstOrDefault.T)kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-default.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitFirstOrElse(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)), kotlin.Function0((kotlinx.coroutines.experimental.rx1.awaitFirstOrElse.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-else.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitFirstOrNull(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitFirstOrNull.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-null.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitLast(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitLast.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/await-last.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$awaitSingle(rx.Observable((kotlinx.coroutines.experimental.rx1.awaitSingle.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/await-single.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$consumeEach(rx.Observable((kotlinx.coroutines.experimental.rx1.consumeEach.T)), kotlin.Function1((kotlinx.coroutines.experimental.rx1.consumeEach.T, kotlin.Unit)))kotlinx.coroutines.experimental.rx1/rx.-observable/consume-each.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$iterator(rx.Observable((kotlinx.coroutines.experimental.rx1.iterator.T)))kotlinx.coroutines.experimental.rx1/rx.-observable/iterator.html
+$dokka.location:kotlinx.coroutines.experimental.rx1$openSubscription(rx.Observable((kotlinx.coroutines.experimental.rx1.openSubscription.T)), kotlin.Int)kotlinx.coroutines.experimental.rx1/rx.-observable/open-subscription.html
+kotlinx.coroutines.experimental.rx1

@@ -33,9 +33,7 @@
 
 <h1 id="producerscope">ProducerScope</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/channels/Produce.kt#L25">(source)</a></div>
-
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ProducerScope</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../../kotlinx.coroutines.experimental/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/Produce.kt#L25">(source)</a></div>
 
 <p>Scope for <a href="../produce.html">produce</a> coroutine builder.</p>
 
@@ -70,19 +68,6 @@ the channel instance returned by this function.</p>
 <tr>
 <td>
 
-        <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/coroutine-context.html">coroutineContext</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
-
-        <p>Returns the context of this coroutine.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="../../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">isActive</a></p>
 
       </td>
@@ -93,7 +78,8 @@ the channel instance returned by this function.</p>
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a></p>
 
@@ -105,7 +91,9 @@ the channel instance returned by this function.</p>
 the <a href="../-send-channel/send.html">send</a> and <a href="../-send-channel/offer.html">offer</a> attempts throws exception.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-send-channel/is-full.html">isFull</a></p>
 
@@ -117,7 +105,9 @@ the <a href="../-send-channel/send.html">send</a> and <a href="../-send-channel/
 This function returns <code>false</code> for <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-send-channel/on-send.html">onSend</a></p>
 
@@ -130,14 +120,16 @@ as parameter is sent to the channel. When the clause is selected the reference t
 is passed into the corresponding block.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="inherited-functions">Inherited Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-send-channel/close.html">close</a></p>
 
@@ -150,7 +142,9 @@ This is an idempotent operation – repeated invocations of this function have n
 Conceptually, its sends a special “close token” over this channel.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-send-channel/offer.html">offer</a></p>
 
@@ -163,7 +157,9 @@ and returns <code>true</code>. Otherwise, it returns <code>false</code> immediat
 or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr>
+<tr>
+<td>
 
         <p><a href="../-send-channel/send.html">send</a></p>
 
@@ -175,7 +171,8 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 or throws exception if the channel <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a> (see <a href="../-send-channel/close.html">close</a> for details).</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="extension-functions">Extension Functions</h3>

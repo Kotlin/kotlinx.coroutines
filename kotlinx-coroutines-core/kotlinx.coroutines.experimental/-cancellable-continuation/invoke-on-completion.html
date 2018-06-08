@@ -33,22 +33,28 @@
 
 <h1 id="invokeoncompletion">invokeOnCompletion</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L138">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><s><span class="identifier">invokeOnCompletion</span></s><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;false<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a>&nbsp;<span class="symbol">=</span>&nbsp;true<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CancellableContinuation.kt#L139">(source)</a></div>
 
-<p>Overrides <a href="../-job/invoke-on-completion.html">Job.invokeOnCompletion</a></p>
+<p><strong>Deprecated:</strong> Disposable handlers on regular completion are no longer supported</p>
 
-<p>Registers handler that is <strong>synchronously</strong> invoked once on completion of this continuation.
-When continuation is already complete, then the handler is immediately invoked
-with continuation’s exception or <code>null</code>. Otherwise, handler will be invoked once when this
-continuation is complete.</p>
+<p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation (both regular and exceptional) of this continuation.
+When the continuation is already cancelled, then the handler is immediately invoked
+with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
+continuation is cancelled.</p>
 
-<p>The resulting <a href="../-disposable-handle/index.html">DisposableHandle</a> can be used to <a href="../-disposable-handle/dispose.html">dispose</a> the
-registration of this handler and release its memory if its invocation is no longer needed.
-There is no need to dispose the handler after completion of this continuation. The references to
-all the handlers are released when this continuation completes.</p>
+<p>Installed <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> should not throw any exceptions. If it does, they will get caught,
+wrapped into <a href="../-completion-handler-exception/index.html">CompletionHandlerException</a>, and rethrown, potentially causing the crash of unrelated code.</p>
 
-<p>Installed <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> should not throw any exceptions. If it does, they will get caught,
-wrapped into <a href="../-completion-handler-exception/index.html">CompletionHandlerException</a>, and rethrown, potentially causing crash of unrelated code.</p>
+<p>At most one <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.CancellableContinuation$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</a> can be installed on one continuation</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>invokeImmediately</code> - not used</p>
+
+<p><code>onCancelling</code> - not used</p>
+
+<p><strong>Return</strong>
+not used</p>
 
 
       </div>

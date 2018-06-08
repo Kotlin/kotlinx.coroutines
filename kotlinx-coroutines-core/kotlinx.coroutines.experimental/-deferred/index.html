@@ -33,7 +33,7 @@
 
 <h1 id="deferred">Deferred</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L83">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Deferred</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/Deferred.kt#L81">(source)</a></div>
 
 <p>Deferred value is a non-blocking cancellable future.</p>
 
@@ -129,8 +129,9 @@ when all its children <a href="../-job/is-completed.html">complete</a>.</p>
     +-----------+
 </pre>
 
-<p>A deferred value is a <a href="../-job/index.html">Job</a>. A job in the coroutine <a href="../-coroutine-scope/coroutine-context.html">context</a> of <a href="../async.html">async</a> builder
-represents the coroutine itself.
+<p>A deferred value is a <a href="../-job/index.html">Job</a>. A job in the
+<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html">coroutineContext</a>
+of <a href="../async.html">async</a> builder represents the coroutine itself.
 A deferred value is active while the coroutine is working and cancellation aborts the coroutine when
 the coroutine is suspended on a <em>cancellable</em> suspension point by throwing <a href="../-cancellation-exception/index.html">CancellationException</a>
 or the cancellation cause inside the coroutine.</p>
@@ -161,7 +162,8 @@ either <em>failed</em> with exception during computation or was <a href="../-job
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="on-await.html">onAwait</a></p>
 
@@ -174,7 +176,8 @@ resolved. The <a href="../../kotlinx.coroutines.experimental.selects/select.html
 it cancelled).</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
@@ -238,7 +241,8 @@ all its <a href="../-job/children.html">children</a> complete.</p>
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../-job/on-join.html">onJoin</a></p>
 
@@ -250,7 +254,8 @@ all its <a href="../-job/children.html">children</a> complete.</p>
 This clause never fails, even if the job completes exceptionally.</p>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
@@ -308,17 +313,6 @@ returning the resulting value or throwing the corresponding exception if the def
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-
-        <p><a href="../-job/attach-child.html">attachChild</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><s><span class="identifier">attachChild</span></s><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$attachChild(kotlinx.coroutines.experimental.Job)/child">child</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
-
-      </td>
-</tr>
 <tr>
 <td>
 
@@ -406,6 +400,27 @@ if it was already started or completed.</p>
 </tbody>
 </table>
 
+<h3 id="extension-properties">Extension Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../kotlin.coroutines.experimental.-coroutine-context/is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> when the <a href="../-job/index.html">Job</a> of the coroutine in this context is still active
+(has not completed and was not cancelled yet).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extension-functions">Extension Functions</h3>
 
 <table class="api-docs-table">
@@ -457,7 +472,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 <td>
         <div class="signature"><code><span class="keyword">fun </span><a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">.</span><span class="identifier">cancelFutureOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"><span class="identifier">Future</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
 
-        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is complete.</p>
+        <p>Cancels a specified <a href="../cancel-future-on-completion.html#kotlinx.coroutines.experimental$cancelFutureOnCompletion(kotlinx.coroutines.experimental.Job, java.util.concurrent.Future((kotlin.Any)))/future">future</a> when this job is cancelled.
+This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
 </tr><tr>

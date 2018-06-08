@@ -1,0 +1,11 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.nio$aAccept(java.nio.channels.AsynchronousServerSocketChannel)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-server-socket-channel/a-accept.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aConnect(java.nio.channels.AsynchronousSocketChannel, java.net.SocketAddress)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-socket-channel/a-connect.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aLock(java.nio.channels.AsynchronousFileChannel)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-lock.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aLock(java.nio.channels.AsynchronousFileChannel, kotlin.Long, kotlin.Long, kotlin.Boolean)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-lock.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-read.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aRead(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-socket-channel/a-read.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aWrite(java.nio.channels.AsynchronousFileChannel, java.nio.ByteBuffer, kotlin.Long)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-file-channel/a-write.html
+$dokka.location:kotlinx.coroutines.experimental.nio$aWrite(java.nio.channels.AsynchronousSocketChannel, java.nio.ByteBuffer, kotlin.Long, java.util.concurrent.TimeUnit)kotlinx.coroutines.experimental.nio/java.nio.channels.-asynchronous-socket-channel/a-write.html
+kotlinx.coroutines.experimental.nio

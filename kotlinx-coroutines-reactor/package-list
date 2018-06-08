@@ -1,0 +1,7 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.reactor$asCoroutineDispatcher(reactor.core.scheduler.Scheduler)kotlinx.coroutines.experimental.reactor/reactor.core.scheduler.-scheduler/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines.experimental.reactor$asFlux(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.reactor.asFlux.T)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.channels.-receive-channel/as-flux.html
+$dokka.location:kotlinx.coroutines.experimental.reactor$asMono(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.reactor.asMono.T)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-deferred/as-mono.html
+$dokka.location:kotlinx.coroutines.experimental.reactor$asMono(kotlinx.coroutines.experimental.Job, kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-job/as-mono.html
+kotlinx.coroutines.experimental.reactor

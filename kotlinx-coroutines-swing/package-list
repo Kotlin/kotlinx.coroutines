@@ -1,0 +1,4 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+
+kotlinx.coroutines.experimental.swing

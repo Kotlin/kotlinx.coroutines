@@ -1,0 +1,10 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.io.jvm.javaio$copyTo(java.io.InputStream, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)kotlinx.coroutines.experimental.io.jvm.javaio/java.io.-input-stream/copy-to.html
+$dokka.location:kotlinx.coroutines.experimental.io.jvm.nio$copyTo(java.nio.channels.Pipe, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)kotlinx.coroutines.experimental.io.jvm.nio/java.nio.channels.-pipe/copy-to.html
+$dokka.location:kotlinx.coroutines.experimental.io.jvm.nio$copyTo(java.nio.channels.ReadableByteChannel, kotlinx.coroutines.experimental.io.ByteWriteChannel, kotlin.Long)kotlinx.coroutines.experimental.io.jvm.nio/java.nio.channels.-readable-byte-channel/copy-to.html
+kotlinx.coroutines.experimental.io
+kotlinx.coroutines.experimental.io.internal
+kotlinx.coroutines.experimental.io.jvm.javaio
+kotlinx.coroutines.experimental.io.jvm.nio
+kotlinx.coroutines.experimental.io.packet
