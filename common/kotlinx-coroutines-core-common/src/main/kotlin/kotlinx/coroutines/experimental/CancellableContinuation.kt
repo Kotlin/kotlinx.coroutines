@@ -150,7 +150,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
      *
-     * At most one [handler] can be installed on one continuation
+     * At most one [handler] can be installed on one continuation.
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
 
