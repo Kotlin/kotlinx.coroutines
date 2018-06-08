@@ -44,7 +44,7 @@ public actual open class TestBase actual constructor() {
 
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
-    private var error = AtomicReference<Throwable>()
+    private var error = AtomicReference<IllegalStateException>()
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -99,7 +99,9 @@ public actual open class TestBase actual constructor() {
 
     @After
     fun onCompletion() {
-        error.get()?.let { throw it }
+        error.get()?.let {
+            throw IllegalStateException("Throwing error from onCompletion because error() was called)", it)
+        }
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
         CommonPool.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
