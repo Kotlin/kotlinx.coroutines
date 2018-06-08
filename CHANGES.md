@@ -5,7 +5,7 @@
 * Kotlin 1.2.41
 * **Coroutines core module is made mostly cross-platform for JVM and JS**:
   * Migrate channels and related operators to common, so channels can be used from JS (see #201).
-  * Most of the code is shared between JVM and JS versions using cross-platform versino of [AtomicFU](https://github.com/Kotlin/kotlinx.atomicfu) library.
+  * Most of the code is shared between JVM and JS versions using cross-platform version of [AtomicFU](https://github.com/Kotlin/kotlinx.atomicfu) library.
   * The recent version of Kotlin allows default parameters in common code (see #348).
   * The project is built using Gradle 4.6. 
 * **Breaking change**: `CancellableContinuation` is not a `Job` anymore (see #219):
