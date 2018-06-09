@@ -912,7 +912,7 @@ function is using.
 
 Coroutines can suspend on one thread and resume on another thread with [Unconfined] dispatcher or 
 with a default multi-threaded dispatcher. Even with a single-threaded dispatcher it might be hard to
-figure out what coroutine was doing what, where, and when. The common approach to debugging applications with 
+figure out what coroutine was doing, where, and when. The common approach to debugging applications with 
 threads is to print the thread name in the log file on each log statement. This feature is universally supported
 by logging frameworks. When using coroutines, the thread name alone does not give much of a context, so 
 `kotlinx.coroutines` includes debugging facilities to make it easier. 
