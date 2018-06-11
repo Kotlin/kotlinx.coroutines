@@ -1,4 +1,13 @@
-# Change log for kotlinx.coroutines 
+# Change log for kotlinx.coroutines
+
+## Version 0.23.1
+
+* JS: Fix dependencies in NPM: add "kotlinx-atomicfu" dependency (see #370).
+* Introduce `broadcast` coroutine builder (see #280):
+  * Support `BroadcastChannel.cancel` method to drop the buffer.
+  * Introduce `ReceiveChannel.broadcast()` extension. 
+* Fixed a bunch of doc typos (PRs by @paolop).
+* Corrected previous version's release notes (PR by @ansman).  
 
 ## Version 0.23.0
 
