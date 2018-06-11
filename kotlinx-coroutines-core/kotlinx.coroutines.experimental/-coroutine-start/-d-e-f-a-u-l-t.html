@@ -45,7 +45,7 @@ invoked the coroutine builder continues execution.</p>
 function, so starting coroutine with <a href="../-unconfined/index.html">Unconfined</a> dispatcher by <a href="./-d-e-f-a-u-l-t.md">DEFAULT</a> is the same as using <a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a>.</p>
 
 <p>If coroutine <a href="../-job/index.html">Job</a> is cancelled before it even had a chance to start executing, then it will not start its
-execution at all, but complete with an exception.</p>
+execution at all, but will complete with an exception.</p>
 
 <p>Cancellability of coroutine at suspension points depends on the particular implementation details of
 suspending functions. Use <a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> to implement cancellable suspending functions.</p>

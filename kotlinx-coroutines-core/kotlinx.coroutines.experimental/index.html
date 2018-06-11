@@ -164,7 +164,7 @@ and fast access to its own cancellation status via <a href="-coroutine-scope/is-
 <td>
         <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code></div>
 
-        <p>Defines start option for coroutines builders.
+        <p>Defines start options for coroutines builders.
 It is used in <code>start</code> parameter of <a href="launch.html">launch</a>, <a href="async.html">async</a>, and other coroutine builder functions.</p>
 
       </td>
@@ -841,7 +841,7 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-thread-pool-dispatcher/index.html"><span class="identifier">ThreadPoolDispatcher</span></a></code></div>
 
-        <p>Creates new coroutine execution context with the a single thread and built-in <a href="yield.html">yield</a> and <a href="delay.html">delay</a> support.
+        <p>Creates a new coroutine execution context using a single thread with built-in <a href="yield.html">yield</a> and <a href="delay.html">delay</a> support.
 <strong>NOTE: The resulting <a href="-thread-pool-dispatcher/index.html">ThreadPoolDispatcher</a> owns native resources (its thread).Resources are reclaimed by <a href="-thread-pool-dispatcher/close.html">ThreadPoolDispatcher.close</a>.</strong></p>
 
       </td>

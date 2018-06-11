@@ -35,7 +35,7 @@
 
 <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">CoroutineStart</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/CoroutineStart.kt#L33">(source)</a></div>
 
-<p>Defines start option for coroutines builders.
+<p>Defines start options for coroutines builders.
 It is used in <code>start</code> parameter of <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, and other coroutine builder functions.</p>
 
 <p>The summary of coroutine start options is:</p>
@@ -83,7 +83,7 @@ It is used in <code>start</code> parameter of <a href="../launch.html">launch</a
       </td>
 <td>
 
-        <p>Atomically (in non-cancellable way) schedules coroutine for execution according to its context.
+        <p>Atomically (i.e., in a non-cancellable way) schedules coroutine for execution according to its context.
 This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine cannot be cancelled before it starts executing.</p>
 
       </td>
@@ -96,7 +96,7 @@ This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine 
       </td>
 <td>
 
-        <p>Immediately executes coroutine until its first suspension point <em>in the current thread</em> as if it the
+        <p>Immediately executes coroutine until its first suspension point <em>in the current thread</em> as if the
 coroutine was started using <a href="../-unconfined/index.html">Unconfined</a> dispatcher. However, when coroutine is resumed from suspension
 it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
 
