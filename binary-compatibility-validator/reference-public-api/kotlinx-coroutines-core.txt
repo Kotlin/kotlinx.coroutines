@@ -542,6 +542,7 @@ public abstract interface class kotlinx/coroutines/experimental/channels/ActorSc
 
 public final class kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel : kotlinx/coroutines/experimental/channels/AbstractSendChannel, kotlinx/coroutines/experimental/channels/BroadcastChannel {
 	public fun <init> (I)V
+	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun close (Ljava/lang/Throwable;)Z
 	public final fun getCapacity ()I
 	public fun open ()Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
@@ -566,12 +567,14 @@ public class kotlinx/coroutines/experimental/channels/ArrayChannel : kotlinx/cor
 
 public abstract interface class kotlinx/coroutines/experimental/channels/BroadcastChannel : kotlinx/coroutines/experimental/channels/SendChannel {
 	public static final field Factory Lkotlinx/coroutines/experimental/channels/BroadcastChannel$Factory;
+	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun open ()Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public abstract fun openSubscription ()Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public abstract synthetic fun openSubscription ()Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
 
 public final class kotlinx/coroutines/experimental/channels/BroadcastChannel$DefaultImpls {
+	public static synthetic fun cancel$default (Lkotlinx/coroutines/experimental/channels/BroadcastChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static fun open (Lkotlinx/coroutines/experimental/channels/BroadcastChannel;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public static synthetic fun openSubscription (Lkotlinx/coroutines/experimental/channels/BroadcastChannel;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 }
@@ -583,6 +586,13 @@ public final class kotlinx/coroutines/experimental/channels/BroadcastChannel$Fac
 public final class kotlinx/coroutines/experimental/channels/BroadcastChannelKt {
 	public static final fun BroadcastChannel (I)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
 	public static final synthetic fun use (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class kotlinx/coroutines/experimental/channels/BroadcastKt {
+	public static final fun broadcast (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
+	public static final fun broadcast (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;ILkotlinx/coroutines/experimental/CoroutineStart;)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
+	public static synthetic fun broadcast$default (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
+	public static synthetic fun broadcast$default (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;ILkotlinx/coroutines/experimental/CoroutineStart;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
 }
 
 public abstract interface class kotlinx/coroutines/experimental/channels/Channel : kotlinx/coroutines/experimental/channels/ReceiveChannel, kotlinx/coroutines/experimental/channels/SendChannel {
@@ -715,6 +725,7 @@ public final class kotlinx/coroutines/experimental/channels/ConflatedBroadcastCh
 	public static final field UNDEFINED Lkotlinx/coroutines/experimental/internal/Symbol;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Object;)V
+	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun close (Ljava/lang/Throwable;)Z
 	public fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
 	public final fun getValue ()Ljava/lang/Object;

@@ -39,7 +39,7 @@ object CommonPool : CoroutineDispatcher() {
      * Name of the property that controls default parallelism level of [CommonPool].
      * If the property is not specified, `Runtime.getRuntime().availableProcessors() - 1` will be used instead (or `1` for single-core JVM).
      * Note that until Java 10, if an application is run within a container,
-     * `Runtime.getRuntime().availableProcessors()` is not aware of container constraints and will return real number of cores.
+     * `Runtime.getRuntime().availableProcessors()` is not aware of container constraints and will return the real number of cores.
      */
     public const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
 

@@ -25,8 +25,8 @@ import kotlinx.coroutines.experimental.selects.*
  * Sender suspends only when buffer is full due to one of the receives being slow to consume and
  * receiver suspends only when buffer is empty.
  *
- * Note, that elements that are sent to the broadcast channel while there are no [openSubscription] subscribers are immediately
- * lost.
+ * **Note**, that elements that are sent to this channel while there are no
+ * [openSubscription] subscribers are immediately lost.
  *
  * This channel is created by `BroadcastChannel(capacity)` factory function invocation.
  *
@@ -68,16 +68,21 @@ class ArrayBroadcastChannel<E>(
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
 
-    override fun openSubscription(): ReceiveChannel<E> =
+    public override fun openSubscription(): ReceiveChannel<E> =
         Subscriber(this).also {
             updateHead(addSub = it)
         }
 
-    override fun close(cause: Throwable?): Boolean {
+    public override fun close(cause: Throwable?): Boolean {
         if (!super.close(cause)) return false
         checkSubOffers()
         return true
     }
+
+    public override fun cancel(cause: Throwable?): Boolean =
+        close(cause).also {
+            for (sub in subs) sub.cancel(cause)
+        }
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
     override fun offerInternal(element: E): Any {
@@ -210,7 +215,14 @@ class ArrayBroadcastChannel<E>(
         override fun cancel(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.updateHead(removeSub = this)
+                clearBuffer()
             }
+
+        private fun clearBuffer() {
+            subLock.withLock {
+                subHead = broadcastChannel.tail
+            }
+        }
 
         // returns true if subHead was updated and broadcast channel's head must be checked
         // this method is lock-free (it never waits on lock)

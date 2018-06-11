@@ -65,13 +65,25 @@ public interface BroadcastChannel<E> : SendChannel<E> {
     @Deprecated(message = "Renamed to `openSubscription`",
         replaceWith = ReplaceWith("openSubscription()"))
     public fun open(): SubscriptionReceiveChannel<E> = openSubscription() as SubscriptionReceiveChannel<E>
+
+    /**
+     * Cancels reception of remaining elements from this channel. This function closes the channel with
+     * the specified cause (unless it was already closed), removes all buffered sent elements from it,
+     * and [cancels][ReceiveChannel.cancel] all open subscriptions.
+     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
+     *
+     * A channel that was cancelled with non-null [cause] is called a _failed_ channel. Attempts to send or
+     * receive on a failed channel throw the specified [cause] exception.
+     */
+    public fun cancel(cause: Throwable? = null): Boolean
 }
 
 /**
  * Creates a broadcast channel with the specified buffer capacity.
  *
  * The resulting channel type depends on the specified [capacity] parameter:
- * * when `capacity` positive, but less than [UNLIMITED] -- creates [ArrayBroadcastChannel];
+ * * when `capacity` positive, but less than [UNLIMITED] -- creates [ArrayBroadcastChannel]
+ *   **Note:** this channel looses all items that are send to it until the first subscriber appears;
  * * when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
  * * otherwise -- throws [IllegalArgumentException].
  */

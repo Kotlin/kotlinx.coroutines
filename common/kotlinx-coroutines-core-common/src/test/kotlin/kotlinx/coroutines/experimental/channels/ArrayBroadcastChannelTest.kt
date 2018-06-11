@@ -184,5 +184,17 @@ class ArrayBroadcastChannelTest : TestBase() {
         subscription.receiveOrNull()
     }
 
+    @Test
+    fun testReceiveNoneAfterCancel() = runTest {
+        val channel = BroadcastChannel<Int>(10)
+        val sub = channel.openSubscription()
+        // generate into buffer & cancel
+        for (x in 1..5) channel.send(x)
+        channel.cancel()
+        assertTrue(channel.isClosedForSend)
+        assertTrue(sub.isClosedForReceive)
+        check(sub.receiveOrNull() == null)
+    }
+
     private class TestException : Exception()
 }

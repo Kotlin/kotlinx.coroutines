@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Defines start option for coroutines builders.
+ * Defines start options for coroutines builders.
  * It is used in `start` parameter of [launch], [async], and other coroutine builder functions.
  *
  * The summary of coroutine start options is:
@@ -42,7 +42,7 @@ public enum class CoroutineStart {
      * function, so starting coroutine with [Unconfined] dispatcher by [DEFAULT] is the same as using [UNDISPATCHED].
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
-     * execution at all, but complete with an exception.
+     * execution at all, but will complete with an exception.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions. Use [suspendCancellableCoroutine] to implement cancellable suspending functions.
@@ -56,12 +56,12 @@ public enum class CoroutineStart {
      * (like [launch] and [async]).
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
-     * execution at all, but complete with an exception.
+     * execution at all, but will complete with an exception.
      */
     LAZY,
 
     /**
-     * Atomically (in non-cancellable way) schedules coroutine for execution according to its context.
+     * Atomically (i.e., in a non-cancellable way) schedules coroutine for execution according to its context.
      * This is similar to [DEFAULT], but the coroutine cannot be cancelled before it starts executing.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
@@ -70,12 +70,12 @@ public enum class CoroutineStart {
     ATOMIC,
 
     /**
-     * Immediately executes coroutine until its first suspension point _in the current thread_ as if it the
+     * Immediately executes coroutine until its first suspension point _in the current thread_ as if the
      * coroutine was started using [Unconfined] dispatcher. However, when coroutine is resumed from suspension
      * it is dispatched according to the [CoroutineDispatcher] in its context.
      *
      * This is similar to [ATOMIC] in the sense that coroutine starts executing even if it was already cancelled,
-     * but the difference is that it start executing in the same thread.
+     * but the difference is that it starts executing in the same thread.
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
