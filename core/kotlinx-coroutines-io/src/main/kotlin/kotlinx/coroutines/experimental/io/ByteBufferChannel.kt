@@ -1428,7 +1428,10 @@ internal class ByteBufferChannel(
     private tailrec suspend fun writeFullySuspend(src: ByteArray, offset: Int, length: Int) {
         if (length == 0) return
         writeSuspendUnit(src, offset, length)
-        val copied = writeSuspendResult
+        val copied = writeSuspendResult.takeIf { it != -1 } ?:
+                joining?.let { resolveDelegation(this, it) }?.writeSuspendResult?.takeIf { it != -1 } ?:
+                error("-1 should be only set in case of joining")
+
         return writeFullySuspend(src, offset + copied, length - copied)
     }
 
@@ -1446,7 +1449,12 @@ internal class ByteBufferChannel(
         while (true) {
             tryWriteSuspend(1)
 
-            joining?.let { resolveDelegation(this, it)?.let { return it.writeSuspendUnit(src, offset, length) } }
+            joining?.let {
+                resolveDelegation(this, it)?.let {
+                    writeSuspendResult = -1;
+                    return it.writeSuspendUnit(src, offset, length)
+                }
+            }
 
             val size = writeAsMuchAsPossible(src, offset, length)
             if (size > 0) {

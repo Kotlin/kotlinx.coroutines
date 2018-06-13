@@ -1618,6 +1618,33 @@ class ByteBufferChannelTest : TestBase() {
         assertEquals(0x22, next.readByte())
     }
 
+    @Test
+    fun testJoiningDuringWriteFully() = runTest {
+        val bb = ByteArray(65536)
+        Random().nextBytes(bb)
+        val dest = ByteChannel()
+
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeFully(bb)
+            ch.flush()
+        }
+        yield()
+        expect(2)
+
+        launch {
+            expect(3)
+            ch.joinTo(dest, false)
+        }
+        yield()
+
+        val result = ByteArray(bb.size)
+        dest.readFully(result)
+
+        Assert.assertArrayEquals(bb, result)
+        finish(4)
+    }
+
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
         val builder = BytePacketBuilder(0, pktPool)
         try {
