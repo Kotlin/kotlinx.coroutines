@@ -1,5 +1,9 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.23.2
+
+* IO: fix joining and continuous writing byte array interference.
+
 ## Version 0.23.1
 
 * JS: Fix dependencies in NPM: add "kotlinx-atomicfu" dependency (see #370).
