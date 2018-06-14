@@ -1428,7 +1428,10 @@ internal class ByteBufferChannel(
     private tailrec suspend fun writeFullySuspend(src: ByteArray, offset: Int, length: Int) {
         if (length == 0) return
         writeSuspendUnit(src, offset, length)
-        val copied = writeSuspendResult
+        val copied = writeSuspendResult.takeIf { it != -1 } ?:
+                joining?.let { resolveDelegation(this, it) }?.writeSuspendResult?.takeIf { it != -1 } ?:
+                error("-1 should be only set in case of joining")
+
         return writeFullySuspend(src, offset + copied, length - copied)
     }
 
@@ -1446,7 +1449,12 @@ internal class ByteBufferChannel(
         while (true) {
             tryWriteSuspend(1)
 
-            joining?.let { resolveDelegation(this, it)?.let { return it.writeSuspendUnit(src, offset, length) } }
+            joining?.let {
+                resolveDelegation(this, it)?.let {
+                    writeSuspendResult = -1;
+                    return it.writeSuspendUnit(src, offset, length)
+                }
+            }
 
             val size = writeAsMuchAsPossible(src, offset, length)
             if (size > 0) {
@@ -1757,46 +1765,73 @@ internal class ByteBufferChannel(
     }
 
     override suspend fun writeSuspendSession(visitor: suspend WriterSuspendSession.() -> Unit) {
-        writing { byteBuffer, ringBufferCapacity ->
-            var locked = 0
+        var locked = 0
 
-            val session = object : WriterSuspendSession {
-                override fun request(min: Int): ByteBuffer? {
-                    locked += ringBufferCapacity.tryWriteAtLeast(0)
-                    if (locked < min) return null
-                    byteBuffer.prepareBuffer(writeByteOrder, writePosition, locked)
-                    if (byteBuffer.remaining() < min) return null
-                    if (joining != null) return null
+        var current = joining?.let { resolveDelegation(this, it) } ?: this
+        var byteBuffer = current.setupStateForWrite() ?: return writeSuspendSession(visitor)
+        var ringBufferCapacity = current.state.capacity
 
-                    return byteBuffer
-                }
+        val session = object : WriterSuspendSession {
+            override fun request(min: Int): ByteBuffer? {
+                locked += ringBufferCapacity.tryWriteAtLeast(0)
+                if (locked < min) return null
+                byteBuffer.prepareBuffer(writeByteOrder, writePosition, locked)
+                if (byteBuffer.remaining() < min) return null
+                if (current.joining != null) return null
 
-                override fun written(n: Int) {
-                    require(n >= 0)
-                    if (n > locked) throw IllegalStateException()
-                    locked -= n
-                    byteBuffer.bytesWritten(ringBufferCapacity, n)
-                }
-
-                override suspend fun tryAwait(n: Int) {
-                    if (locked >= n) return
-                    if (locked > 0) {
-                        ringBufferCapacity.completeRead(locked)
-                        locked = 0
-                    }
-
-                    return tryWriteSuspend(n)
-                }
+                return byteBuffer
             }
 
-            try {
-                visitor(session)
-            } finally {
+            override fun written(n: Int) {
+                require(n >= 0)
+                if (n > locked) throw IllegalStateException()
+                locked -= n
+                byteBuffer.bytesWritten(ringBufferCapacity, n)
+            }
+
+            override suspend fun tryAwait(n: Int) {
+                val joining = current.joining
+                if (joining != null) {
+                    return tryAwaitJoinSwitch(n, joining)
+                }
+
+                if (locked >= n) return
                 if (locked > 0) {
                     ringBufferCapacity.completeRead(locked)
                     locked = 0
                 }
+
+                return tryWriteSuspend(n)
             }
+
+            private suspend fun tryAwaitJoinSwitch(n: Int, joining: JoiningState) {
+                if (locked > 0) {
+                    ringBufferCapacity.completeRead(locked)
+                    locked = 0
+                }
+                flush()
+                restoreStateAfterWrite()
+                tryTerminate()
+
+                do {
+                    current.tryWriteSuspend(n)
+                    current = resolveDelegation(current, joining) ?: continue
+                    byteBuffer = current.setupStateForWrite() ?: continue
+                    ringBufferCapacity = current.state.capacity
+                } while (false)
+            }
+        }
+
+        try {
+            visitor(session)
+        } finally {
+            if (locked > 0) {
+                ringBufferCapacity.completeRead(locked)
+                locked = 0
+            }
+
+            current.restoreStateAfterWrite()
+            current.tryTerminate()
         }
     }
 

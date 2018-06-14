@@ -1546,6 +1546,105 @@ class ByteBufferChannelStressTest : TestBase() {
         sub.join()
     }
 
+    @Test
+    fun testWriteSuspendSessionSmokeTest() = runTest {
+        ch.writeSuspendSession {
+            val buffer = request(1)
+            assertNotNull(buffer)
+        }
+
+        ch.writeSuspendSession {
+            val buffer = request(1)!!
+            buffer.put(0x11)
+            written(1)
+        }
+
+        assertEquals(0, ch.availableForRead)
+        ch.flush()
+        assertEquals(1, ch.availableForRead)
+        assertEquals(0x11, ch.readByte())
+    }
+
+    @Test
+    fun testWriteSuspendSessionJoined() = runTest {
+        val next = ByteChannel()
+        launch(Unconfined) {
+            ch.joinTo(next, true)
+        }
+
+        yield()
+
+        ch.writeSuspendSession {
+            val buffer = request(1)
+            assertNotNull(buffer)
+            buffer!!.put(0x11)
+            written(1)
+        }
+
+        assertEquals(0, next.availableForRead)
+        ch.flush()
+        assertEquals(1, next.availableForRead)
+        assertEquals(0x11, next.readByte())
+    }
+
+    @Test
+    fun testWriteSuspendSessionJoinDuringWrite() = runTest {
+        val next = ByteChannel()
+
+        ch.writeSuspendSession {
+            var buffer = request(1)
+            assertNotNull(buffer)
+            buffer!!.put(0x11)
+            written(1)
+
+            launch(Unconfined) {
+                ch.joinTo(next, true)
+            }
+
+            yield()
+
+            assertNull(request(1))
+            tryAwait(1)
+            buffer = request(1)
+            assertNotNull(buffer)
+            buffer!!.put(0x22)
+            written(1)
+        }
+
+        ch.flush()
+
+        assertEquals(2, next.availableForRead)
+        assertEquals(0x11, next.readByte())
+        assertEquals(0x22, next.readByte())
+    }
+
+    @Test
+    fun testJoiningDuringWriteFully() = runTest {
+        val bb = ByteArray(65536)
+        Random().nextBytes(bb)
+        val dest = ByteChannel()
+
+        launch(coroutineContext) {
+            expect(1)
+            ch.writeFully(bb)
+            ch.flush()
+        }
+        yield()
+        expect(2)
+
+        launch {
+            expect(3)
+            ch.joinTo(dest, false)
+        }
+        yield()
+
+        val result = ByteArray(bb.size)
+        dest.readFully(result)
+
+        Assert.assertArrayEquals(bb, result)
+        finish(4)
+    }
+
     private inline fun buildPacket(block: ByteWritePacket.() -> Unit): ByteReadPacket {
         val builder = BytePacketBuilder(0, pktPool)
         try {

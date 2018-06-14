@@ -17,6 +17,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
@@ -70,6 +71,13 @@ interface ActorJob<in E> : SendChannel<E> {
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
+ *
+ * The kind of the resulting channel depends on the specified [capacity] parameter:
+ * * when `capacity` is 0 (default) -- uses [RendezvousChannel] without a buffer;
+ * * when `capacity` is [Channel.UNLIMITED] -- uses [LinkedListChannel] with buffer of unlimited size;
+ * * when `capacity` is [Channel.CONFLATED] -- uses [ConflatedChannel] that conflates back-to-back sends;
+ * * when `capacity` is positive, but less than [UNLIMITED] -- uses [ArrayChannel] with a buffer of the specified `capacity`;
+ * * otherwise -- throws [IllegalArgumentException].
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
@@ -163,8 +171,9 @@ private open class ActorCoroutine<E>(
     active: Boolean
 ) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E> {
     override fun onCancellation(cause: Throwable?) {
-        if (!_channel.cancel(cause) && cause != null)
-            handleCoroutineException(context, cause)
+        _channel.cancel(cause)
+        // Always propagate the exception, don't wait for actor senders
+        if (cause != null) handleCoroutineException(context, cause)
     }
 }
 
@@ -178,7 +187,7 @@ private class LazyActorCoroutine<E>(
         block.startCoroutineCancellable(this, this)
     }
 
-    suspend override fun send(element: E) {
+    override suspend fun send(element: E) {
         start()
         return super.send(element)
     }
@@ -197,4 +206,3 @@ private class LazyActorCoroutine<E>(
         super.onSend.registerSelectClause2(select, param, block)
     }
 }
-

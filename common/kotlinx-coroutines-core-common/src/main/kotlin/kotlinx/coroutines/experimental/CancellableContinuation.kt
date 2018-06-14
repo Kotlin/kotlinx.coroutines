@@ -126,12 +126,20 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
      *
      * At most one [handler] can be installed on one continuation
+     *
+     * @param invokeImmediately not used
+     * @param onCancelling not used
+     * @return not used
      */
     @Deprecated(
         message = "Disposable handlers on regular completion are no longer supported",
         replaceWith = ReplaceWith("invokeOnCancellation(handler)"),
-        level = DeprecationLevel.HIDDEN)
-    public fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle
+        level = DeprecationLevel.WARNING
+    )
+    public fun invokeOnCompletion(
+        onCancelling: Boolean = false,
+        invokeImmediately: Boolean = true,
+        handler: CompletionHandler): DisposableHandle
 
     /**
      * Registers handler that is **synchronously** invoked once on cancellation (both regular and exceptional) of this continuation.
@@ -142,7 +150,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
      *
-     * At most one [handler] can be installed on one continuation
+     * At most one [handler] can be installed on one continuation.
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
 
@@ -209,7 +217,7 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
 @Deprecated(
     message = "Disposable handlers on cancellation are no longer supported",
     replaceWith = ReplaceWith("removeOnCancellation(handler)"),
-    level = DeprecationLevel.HIDDEN)
+    level = DeprecationLevel.WARNING)
 public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
     removeOnCancellation(node)
     return NonDisposableHandle
@@ -233,7 +241,7 @@ public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedL
 @Deprecated(
     message = "Disposable handlers on regular completion are no longer supported",
     replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
-    level = DeprecationLevel.HIDDEN)
+    level = DeprecationLevel.WARNING)
 public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
     disposeOnCancellation(handle)
     return NonDisposableHandle
@@ -274,7 +282,8 @@ internal class CancellableContinuationImpl<in T>(
         initParentJobInternal(delegate.context[Job])
     }
 
-    override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle {
+    override fun invokeOnCompletion(onCancelling: Boolean,
+        invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle {
         invokeOnCancellation(handler)
         return NonDisposableHandle
     }

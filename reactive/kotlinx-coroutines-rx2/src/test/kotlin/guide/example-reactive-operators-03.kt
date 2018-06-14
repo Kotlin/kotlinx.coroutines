@@ -17,6 +17,7 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package guide.reactive.operators.example03
 
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.selects.*
@@ -24,14 +25,16 @@ import org.reactivestreams.*
 import kotlin.coroutines.experimental.*
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
-    val thisChannel = this@takeUntil.openSubscription() // explicitly open channel to Publisher<T>
-    val otherChannel = other.openSubscription() // explicitly open channel to Publisher<U>
-    whileSelect {
-        otherChannel.onReceive { false }          // bail out on any received element from `other`
-        thisChannel.onReceive { send(it); true }  // resend element from this channel and continue
+    this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
+        val current = this
+        other.openSubscription().consume { // explicitly open channel to Publisher<U>
+            val other = this
+            whileSelect {
+                other.onReceive { false }          // bail out on any received element from `other`
+                current.onReceive { send(it); true }  // resend element from this channel and continue
+            }
+        }
     }
-    thisChannel.cancel()
-    otherChannel.cancel()
 }
 
 fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {

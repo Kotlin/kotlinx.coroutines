@@ -5,16 +5,6 @@ import org.objectweb.asm.tree.*
 import java.io.*
 import java.util.jar.*
 
-fun main(args: Array<String>) {
-    val src = args.firstOrNull() ?: "kotlinx-coroutines-core"
-    println(src)
-    println("------------------\n")
-    val jarFile = "core/$src/build/libs/$src-0.22.5-SNAPSHOT.jar"
-    val visibilities = readKotlinVisibilities(File("""core/$src/build/visibilities.json"""))
-    getBinaryAPI(JarFile(jarFile), visibilities).filterOutNonPublic().dump()
-}
-
-
 fun JarFile.classEntries() = entries().asSequence().filter {
     !it.isDirectory && it.name.endsWith(".class") && !it.name.startsWith("META-INF/")
 }

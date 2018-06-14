@@ -13,6 +13,7 @@ task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDepe
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
     args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
+    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
 test.dependsOn testMochaNode
@@ -62,6 +63,7 @@ task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     script = file("$node.nodeModulesDir/node_modules/mocha-headless-chrome/bin/start")
     args = [compileTestKotlin2Js.outputFile, '--file', mochaChromeTestPage]
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
+    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
 // todo: Commented out because mocha-headless-chrome does not work on TeamCity

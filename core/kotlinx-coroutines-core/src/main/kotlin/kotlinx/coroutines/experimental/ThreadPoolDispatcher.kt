@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
- * Creates new coroutine execution context with the a single thread and built-in [yield] and [delay] support.
+ * Creates a new coroutine execution context using a single thread with built-in [yield] and [delay] support.
  * **NOTE: The resulting [ThreadPoolDispatcher] owns native resources (its thread).
  * Resources are reclaimed by [ThreadPoolDispatcher.close].**
  *

@@ -88,6 +88,7 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Fan-out](#fan-out)
   * [Fan-in](#fan-in)
   * [Buffered channels](#buffered-channels)
+  * [Ticker channels](#ticker-channels)
   * [Channels are fair](#channels-are-fair)
 * [Shared mutable state and concurrency](#shared-mutable-state-and-concurrency)
   * [The problem](#the-problem)
@@ -911,7 +912,7 @@ function is using.
 
 Coroutines can suspend on one thread and resume on another thread with [Unconfined] dispatcher or 
 with a default multi-threaded dispatcher. Even with a single-threaded dispatcher it might be hard to
-figure out what coroutine was doing what, where, and when. The common approach to debugging applications with 
+figure out what coroutine was doing, where, and when. The common approach to debugging applications with 
 threads is to print the thread name in the log file on each log statement. This feature is universally supported
 by logging frameworks. When using coroutines, the thread name alone does not give much of a context, so 
 `kotlinx.coroutines` includes debugging facilities to make it easier. 
@@ -996,7 +997,7 @@ same coroutine as you can see in the output below:
 <!--- TEST -->
 
 
-Note, that is example also uses `use` function from the Kotlin standard library to release threads that
+Note, that this example also uses `use` function from the Kotlin standard library to release threads that
 are created with [newSingleThreadContext] when they are no longer needed. 
 
 ### Job in the context
@@ -1665,6 +1666,65 @@ Sending 4
 <!--- TEST -->
 
 The first four elements are added to the buffer and the sender suspends when trying to send the fifth one.
+
+### Ticker channels
+
+Ticker channel is a special rendezvous channel that produces `Unit` every time given delay passes since last consumption from this channel.
+Though it may seem to be useless standalone, it is a useful building block to create complex time-based [produce] 
+pipelines and operators that do windowing and other time-dependend processing.
+Ticker channel can be used in [select] to perform "on tick" action.
+
+To create such channel use a factory method [ticker]. 
+To indicate that no further elements are needed use [ReceiveChannel.cancel] method on it.
+
+Now let's see how it works in practice:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val tickerChannel = ticker(delay = 100, initialDelay = 0) // create ticker channel
+    var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
+    println("Initial element is available immediately: $nextElement") // Initial delay hasn't passed yet
+
+    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // All subsequent elements has 100ms delay
+    println("Next element is not ready in 50 ms: $nextElement")
+
+    nextElement = withTimeoutOrNull(60) { tickerChannel.receive() }
+    println("Next element is ready in 100 ms: $nextElement")
+
+    // Emulate large consumption delays
+    println("Consumer pauses for 150ms")
+    delay(150)
+    // Next element is available immediately
+    nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
+    println("Next element is available immediately after large consumer delay: $nextElement")
+    // Note that the pause between `receive` calls is taken into account and next element arrives faster
+    nextElement = withTimeoutOrNull(60) { tickerChannel.receive() } 
+    println("Next element is ready in 50ms after consumer pause in 150ms: $nextElement")
+
+    tickerChannel.cancel() // indicate that no more elements are needed
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-10.kt)
+
+It prints following lines:
+
+```text
+Initial element is available immediately: kotlin.Unit
+Next element is not ready in 50 ms: null
+Next element is ready in 100 ms: kotlin.Unit
+Consumer pauses for 150ms
+Next element is available immediately after large consumer delay: kotlin.Unit
+Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit
+```
+
+<!--- TEST -->
+
+Note that [ticker] is aware of possible consumer pauses and, by default, adjusts next produced element 
+delay if a pause occurs, trying to maintain a fixed rate of produced elements.
+ 
+Optionally, a `mode` parameters equal to [TickerMode.FIXED_DELAY] can be specified to maintain a fixed
+delay between elements.  
 
 ### Channels are fair
 
@@ -2444,6 +2504,8 @@ Channel was closed
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
+[ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ticker.html
+[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html

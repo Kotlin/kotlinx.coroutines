@@ -1,3 +1,6 @@
+@file:JvmMultifileClass
+@file:JvmName("ChannelsKt")
+
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
