@@ -111,16 +111,19 @@ public interface SubscriptionReceiveChannel<out T> : ReceiveChannel<T>, Closeabl
 }
 
 /** @suppress **Deprecated**: Left here for migration from SubscriptionReceiveChannel */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Use `ReceiveChannel<*>.consume` instead")
-public inline fun <E, R> ReceiveChannel<E>.use(block: (ReceiveChannel<E>) -> R) {
+@Deprecated(
+    level = DeprecationLevel.WARNING,
+    message = "Use `ReceiveChannel<*>.consume` instead",
+    replaceWith = ReplaceWith("consume { let(block) }")
+)
+public inline fun <E, R> ReceiveChannel<E>.use(block: (ReceiveChannel<E>) -> R): R {
     var exception: Throwable? = null
     try {
-        block(this)
+        return block(this)
     } catch (t: Throwable) {
         exception = t
         throw t
-    }
-    finally {
+    } finally {
         this.cancel(exception)
     }
 }

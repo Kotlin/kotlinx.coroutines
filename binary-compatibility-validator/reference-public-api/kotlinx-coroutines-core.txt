@@ -585,7 +585,7 @@ public final class kotlinx/coroutines/experimental/channels/BroadcastChannel$Fac
 
 public final class kotlinx/coroutines/experimental/channels/BroadcastChannelKt {
 	public static final fun BroadcastChannel (I)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
-	public static final synthetic fun use (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/jvm/functions/Function1;)V
+	public static final fun use (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/experimental/channels/BroadcastKt {
