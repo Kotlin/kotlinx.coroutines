@@ -63,7 +63,7 @@ class ExampleApp : Application() {
     }
 }
 -->
-<!--- KNIT     kotlinx-coroutines-javafx/src/test/kotlin/guide/.*\.kt -->
+<!--- KNIT     kotlinx-coroutines-javafx/test/guide/.*\.kt -->
 
 # Guide to UI programming with coroutines
 
@@ -133,7 +133,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-01.kt)
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
 workstation and open the project in IDE. All the examples from this guide are in the test folder of 
@@ -220,7 +220,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-02.kt)
 
 So, what happens here? Because we are launching coroutine in UI context, we can freely update UI from 
 inside this coroutine and invoke _suspending functions_ like [delay] at the same time. UI is not frozen
@@ -247,7 +247,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-03.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-03.kt)
 
 Now, if the circle is clicked while countdown is still running, the countdown stops. 
 Note, that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
@@ -299,7 +299,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-01.kt)
 
 Note, that each time the circle is clicked, it starts a new coroutine and they all compete to 
 update the text. Try it. It does not look very good. We'll fix it later.
@@ -341,7 +341,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-02.kt)
   
 The key idea that underlies an integration of an actor coroutine and a regular event handler is that 
 there is an [offer][SendChannel.offer] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
@@ -394,7 +394,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-03.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-03.kt).
   On Android you need to update `val eventActor = ...` line from the previous example. 
 
 Now, if a circle is clicked while the animation is running, it restarts animation after the end of it. Just once. 
@@ -467,7 +467,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-01.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-01.kt).
   You can just copy the `fib` function and the body of the `setup` function to your Android project.
  
 Try clicking on the circle in this example. After around 30-40th click our naive computation is going to become
@@ -509,7 +509,7 @@ suspend fun fib(x: Int): Int = withContext(CommonPool) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-02.kt).
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-02.kt).
 
 You can run this code and verify that UI is not frozen while large Fibonacci numbers are being computed. 
 However, this code computes `fib` somewhat slower, because every recursive call to `fib` goes via `withContext`. This is 
@@ -531,7 +531,7 @@ fun fibBlocking(x: Int): Int =
     if (x <= 1) x else fibBlocking(x - 1) + fibBlocking(x - 2)
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-03.kt).
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-03.kt).
 
 You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `withContext(CommonPool)`.
 
@@ -641,7 +641,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-01.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-advanced-01.kt).
 
 When we start this code and click on a pinkish circle, the following messages are printed to the console:
  
@@ -683,7 +683,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-02.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-advanced-02.kt).
 
 It prints the following messages on click, confirming that code in the coroutine starts to execute immediately:
 
