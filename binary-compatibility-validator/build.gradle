@@ -11,7 +11,7 @@ dependencies {
     compile 'com.google.code.gson:gson:2.6.2'
 
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-    
+
     testArtifacts project(':kotlinx-coroutines-core')
 
     testArtifacts project(':kotlinx-coroutines-reactive')
@@ -23,6 +23,7 @@ dependencies {
     testArtifacts project(':kotlinx-coroutines-jdk8')
     testArtifacts project(':kotlinx-coroutines-nio')
     testArtifacts project(':kotlinx-coroutines-quasar')
+    testArtifacts project(':kotlinx-coroutines-slf4j')
 
     testArtifacts project(':kotlinx-coroutines-android')
     testArtifacts project(':kotlinx-coroutines-javafx')
