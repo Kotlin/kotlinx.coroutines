@@ -89,6 +89,14 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
 
+// Reconfigure source sets to avoid long "src/main/kotlin/fqn"
+configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
+    sourceSets {
+        main.kotlin.srcDirs = ["src/"]
+        test.kotlin.srcDirs = ["test/"]
+    }
+}
+
 // configure atomicfu
 configure(subprojects.findAll { !internal.contains(it.name) }) {
     def platform = platformOf(it)

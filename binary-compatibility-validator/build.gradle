@@ -37,7 +37,7 @@ compileTestKotlin {
 sourceSets {
     test {
         java {
-            srcDir "src/test/kotlin"
+            srcDir "test/cases"
         }
     }
 }
