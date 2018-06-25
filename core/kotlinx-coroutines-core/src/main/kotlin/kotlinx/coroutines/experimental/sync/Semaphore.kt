@@ -5,11 +5,19 @@ import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
+interface Semaphore {
+    fun tryAcquire(): Boolean
+    suspend fun acquire()
+    fun release()
+}
+
 /**
  * Counting semaphore for coroutines. This implementation is fair and
  * non-suspending when permits are available.
  */
-class Semaphore(initialPermits: Int) {
+fun Semaphore(initialPermits: Int): Semaphore = SemaphoreImpl(initialPermits)
+
+private class SemaphoreImpl(initialPermits: Int) : Semaphore {
 
     // permits: number of permits available to be acquired
     // waiters: number of coroutines waiting to acquire permits
@@ -19,12 +27,12 @@ class Semaphore(initialPermits: Int) {
     private class Waiter(val cont: Continuation<Unit>) :  LockFreeLinkedListNode()
     val queue = LockFreeLinkedListHead() // queue of waiters
 
-    suspend fun acquire() {
+    override suspend fun acquire() {
         if (tryAcquire()) return
         else return suspendCoroutineOrReturn { acquireCont(it) }
     }
 
-    fun tryAcquire(): Boolean {
+    override fun tryAcquire(): Boolean {
         return sm.transition { state ->
             if (state.permits > 0 && state.waiters == 0) {
                 Decision.Move(State(state.permits - 1, 0)) { true }
@@ -48,7 +56,7 @@ class Semaphore(initialPermits: Int) {
         }
     }
 
-    fun release() {
+    override fun release() {
         return sm.transition { state ->
             if (state.permits < 0 || state.waiters == 0) {
                 Decision.Move(State(state.permits + 1, state.waiters)) { }
