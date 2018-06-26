@@ -107,8 +107,8 @@ or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-cor
 
 ### Android
 
-And [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
-module as a dependency when using `kotlinx.coroutines` on Android:
+Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
+module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
 compile 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.3'
