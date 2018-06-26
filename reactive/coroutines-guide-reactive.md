@@ -245,6 +245,7 @@ import kotlinx.coroutines.experimental.reactive.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }     // ...
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
     source.openSubscription().consume { // open channel to the source
@@ -252,7 +253,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
         }
-        // `use` will close the channel when this block of code is complete
+        // `consume` will close the channel when this block of code is complete
     }
 }
 ```
@@ -272,13 +273,14 @@ Finally
 <!--- TEST -->
  
 With an explicit `openSubscription` we should [close][SubscriptionReceiveChannel.close] the corresponding 
-subscription to unsubscribe from the source. However, instead of invoking `close` explicitly, 
-this code relies on [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
+subscription to unsubscribe from the source. There is no need to invoke `close` explicitly -- under the hood
+`consume` relies on the [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
 function from Kotlin's standard library.
 The installed 
 [doFinally](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
-listener prints "Finally" to confirm that the subscription is actually being closed.
- 
+listener prints "Finally" to confirm that the subscription is actually being closed. Note that "OnComplete"
+is never printed because we did not consume all of the elements.
+
 We do not need to use an explicit `close` if iteration is performed over all the items that are emitted 
 by the publisher, because it is being closed automatically by `consumeEach`:
 
@@ -293,6 +295,7 @@ import kotlin.coroutines.experimental.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     // iterate over the source fully
     source.consumeEach { println(it) }
@@ -309,6 +312,7 @@ OnSubscribe
 2
 3
 4
+OnComplete
 Finally
 5
 ```
