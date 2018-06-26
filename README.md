@@ -105,6 +105,20 @@ repository {
 Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
 or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
 
+### Android
+
+And [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
+module as a dependency when using `kotlinx.coroutines` on Android:
+
+```groovy
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.3'
+```
+
+This gives you access to Android [UI](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/-u-i.html)
+coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
+exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
+threads are handled by Android runtime. 
+
 ### ProGuard
 
 In obfuscated code, fields with different types can have the same names,
