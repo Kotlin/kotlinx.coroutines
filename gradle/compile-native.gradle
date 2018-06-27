@@ -1,10 +1,5 @@
 apply plugin: 'konan'
 
-repositories {
-    jcenter()
-    maven { url "https://kotlin.bintray.com/kotlinx" }
-}
-
 def libraryName = project.name
 def testProgramName = libraryName + "-test"
 
