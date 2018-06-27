@@ -1,5 +1,9 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.23.4
+
+* Recompiled with Kotlin 1.2.51 to solve broken metadata problem (see [KT-24944](https://youtrack.jetbrains.com/issue/KT-24944)).
+
 ## Version 0.23.3
 
 * Kotlin 1.2.50.
