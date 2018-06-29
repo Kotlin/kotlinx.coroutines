@@ -1664,7 +1664,7 @@ The first four elements are added to the buffer and the sender suspends when try
 
 Ticker channel is a special rendezvous channel that produces `Unit` every time given delay passes since last consumption from this channel.
 Though it may seem to be useless standalone, it is a useful building block to create complex time-based [produce] 
-pipelines and operators that do windowing and other time-dependend processing.
+pipelines and operators that do windowing and other time-dependent processing.
 Ticker channel can be used in [select] to perform "on tick" action.
 
 To create such channel use a factory method [ticker]. 
@@ -1716,7 +1716,7 @@ Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit
 Note that [ticker] is aware of possible consumer pauses and, by default, adjusts next produced element 
 delay if a pause occurs, trying to maintain a fixed rate of produced elements.
  
-Optionally, a `mode` parameters equal to [TickerMode.FIXED_DELAY] can be specified to maintain a fixed
+Optionally, a `mode` parameter equal to [TickerMode.FIXED_DELAY] can be specified to maintain a fixed
 delay between elements.  
 
 ### Channels are fair
@@ -2499,6 +2499,7 @@ Channel was closed
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
 [ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ticker.html
 [ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
+[TickerMode.FIXED_DELAY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-ticker-mode/-f-i-x-e-d_-d-e-l-a-y.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html

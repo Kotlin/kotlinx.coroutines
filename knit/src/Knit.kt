@@ -52,6 +52,7 @@ const val LINES_START_UNORDERED_PREDICATE = "LINES_START_UNORDERED"
 const val LINES_START_PREDICATE = "LINES_START"
 
 val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_().]+)\\]($|[^\\[\\(])")
+val LINK_DEF_REGEX = Regex("^\\[([A-Za-z0-9_().]+)\\]: .*")
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
@@ -187,10 +188,16 @@ fun knit(markdownFileName: String): Boolean {
                 tocLines += "  ".repeat(i - 2) + "* [$name](#${makeSectionRef(name)})"
                 continue@mainLoop
             }
-            for (match in API_REF_REGEX.findAll(inLine)) {
-                val apiRef = ApiRef(lineNumber, match.groups[2]!!.value)
-                allApiRefs += apiRef
-                remainingApiRefNames += apiRef.name
+            val linkDefMatch = LINK_DEF_REGEX.matchEntire(inLine)
+            if (linkDefMatch != null) {
+                val name = linkDefMatch.groups[1]!!.value
+                remainingApiRefNames -= name
+            } else {
+                for (match in API_REF_REGEX.findAll(inLine)) {
+                    val apiRef = ApiRef(lineNumber, match.groups[2]!!.value)
+                    allApiRefs += apiRef
+                    remainingApiRefNames += apiRef.name
+                }
             }
             knitRegex?.find(inLine)?.let { knitMatch ->
                 val fileName = knitMatch.groups[1]!!.value
@@ -409,7 +416,7 @@ data class ApiIndexKey(
 
 val apiIndexCache: MutableMap<ApiIndexKey, Map<String, List<String>>> = HashMap()
 
-val REF_LINE_REGEX = Regex("<a href=\"([a-z/.\\-]+)\">([a-zA-z.]+)</a>")
+val REF_LINE_REGEX = Regex("<a href=\"([a-z_/.\\-]+)\">([a-zA-z.]+)</a>")
 val INDEX_HTML = "/index.html"
 val INDEX_MD = "/index.md"
 val FUNCTIONS_SECTION_HEADER = "### Functions"
