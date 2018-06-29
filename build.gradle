@@ -102,8 +102,9 @@ def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibil
 // Reconfigure source sets to avoid long "src/main/kotlin/fqn"
 configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
     sourceSets {
-        main.kotlin.srcDirs = ["src/"]
-        test.kotlin.srcDirs = ["test/"]
+        main.kotlin.srcDirs = ['src']
+        test.kotlin.srcDirs = ['test']
+        main.resources.srcDirs = ['resources']
     }
 }
 
