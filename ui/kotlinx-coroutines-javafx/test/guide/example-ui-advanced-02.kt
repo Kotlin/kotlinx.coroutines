@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package guide.ui.advanced.example02
+package kotlinx.coroutines.experimental.javafx.guide.advanced02
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*

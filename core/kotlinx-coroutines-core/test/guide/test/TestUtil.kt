@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package guide.test
+package kotlinx.coroutines.experimental.guide.test
 
 import kotlinx.coroutines.experimental.*
 import org.junit.Assert.assertEquals

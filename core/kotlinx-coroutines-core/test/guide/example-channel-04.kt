@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.channel.example04
+package kotlinx.coroutines.experimental.guide.channel04
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*

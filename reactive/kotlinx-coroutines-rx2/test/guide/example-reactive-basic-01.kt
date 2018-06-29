@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.reactive.basic.example01
+package kotlinx.coroutines.experimental.rx2.guide.basic01
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*

@@ -16,14 +16,15 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.reactive.$$1.example$$2
+package kotlinx.coroutines.experimental.rx2.guide.$$1$$2
 
 -->
 <!--- KNIT     kotlinx-coroutines-rx2/test/guide/.*\.kt -->
 <!--- TEST_OUT kotlinx-coroutines-rx2/test/guide/test/GuideReactiveTest.kt
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.test
+package kotlinx.coroutines.experimental.rx2.guide.test
 
+import kotlinx.coroutines.experimental.guide.test.*
 import org.junit.Test
 
 class GuideReactiveTest : ReactiveTestBase() {

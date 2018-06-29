@@ -16,14 +16,14 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.$$1.example$$2
+package kotlinx.coroutines.experimental.guide.$$1$$2
 
 import kotlinx.coroutines.experimental.*
 -->
 <!--- KNIT     core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT core/kotlinx-coroutines-core/test/guide/test/GuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.test
+package kotlinx.coroutines.experimental.guide.test
 
 import org.junit.Test
 

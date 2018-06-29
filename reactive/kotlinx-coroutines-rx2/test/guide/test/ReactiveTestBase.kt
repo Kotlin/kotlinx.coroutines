@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package guide.test
+package kotlinx.coroutines.experimental.rx2.guide.test
 
-import io.reactivex.Scheduler
-import io.reactivex.disposables.Disposable
-import io.reactivex.plugins.RxJavaPlugins
-import kotlinx.coroutines.experimental.ignoreLostThreads
-import org.junit.After
-import org.junit.Before
-import java.util.concurrent.TimeUnit
+import io.reactivex.*
+import io.reactivex.disposables.*
+import io.reactivex.plugins.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.guide.test.*
+import org.junit.*
+import java.util.concurrent.*
 
 open class ReactiveTestBase {
     @Before

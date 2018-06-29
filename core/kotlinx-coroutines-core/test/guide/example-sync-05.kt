@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.sync.example05
+package kotlinx.coroutines.experimental.guide.sync05
 
 import kotlinx.coroutines.experimental.*
 import kotlin.system.*

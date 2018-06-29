@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.reactive.basic.example06
+package kotlinx.coroutines.experimental.rx2.guide.basic06
 
 import io.reactivex.subjects.BehaviorSubject
 

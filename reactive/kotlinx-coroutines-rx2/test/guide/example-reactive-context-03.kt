@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.reactive.context.example03
+package kotlinx.coroutines.experimental.rx2.guide.context03
 
 import io.reactivex.*
 import kotlinx.coroutines.experimental.*

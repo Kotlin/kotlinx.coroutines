@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.cancel.example02
+package kotlinx.coroutines.experimental.guide.cancel02
 
 import kotlinx.coroutines.experimental.*
 

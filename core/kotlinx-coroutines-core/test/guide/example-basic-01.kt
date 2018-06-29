@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.basic.example01
+package kotlinx.coroutines.experimental.guide.basic01
 
 import kotlinx.coroutines.experimental.*
 

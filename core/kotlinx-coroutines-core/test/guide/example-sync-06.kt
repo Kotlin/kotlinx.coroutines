@@ -15,7 +15,7 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.sync.example06
+package kotlinx.coroutines.experimental.guide.sync06
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.sync.*
