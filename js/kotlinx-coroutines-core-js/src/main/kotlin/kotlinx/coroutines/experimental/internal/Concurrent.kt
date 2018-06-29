@@ -9,4 +9,4 @@ internal class NoOpLock {
     fun unlock(): Unit {}
 }
 
-internal actual fun <E> subscriberList(): MutableList<E> = ArrayList()
+internal actual fun <E> subscriberList(): SubscribersList<E> = CopyOnWriteList()

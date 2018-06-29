@@ -23,6 +23,29 @@ import kotlin.test.*
 class ConflatedBroadcastChannelTest : TestBase() {
 
     @Test
+    fun testConcurrentModification() = runTest {
+        val channel = ConflatedBroadcastChannel<Int>()
+        val s1 = channel.openSubscription()
+        val s2 = channel.openSubscription()
+
+        val job1 = launch(Unconfined, CoroutineStart.UNDISPATCHED) {
+            expect(1)
+            s1.receive()
+            s1.cancel()
+        }
+
+        val job2 = launch(Unconfined, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            s2.receive()
+        }
+
+        expect(3)
+        channel.send(1)
+        joinAll(job1, job2)
+        finish(4)
+    }
+
+    @Test
     fun testBasicScenario() = runTest {
         expect(1)
         val broadcast = ConflatedBroadcastChannel<String>()
