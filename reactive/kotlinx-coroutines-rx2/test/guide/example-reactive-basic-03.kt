@@ -25,6 +25,7 @@ import kotlinx.coroutines.experimental.reactive.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
     source.openSubscription().consume { // open channel to the source
@@ -32,6 +33,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
         }
-        // `use` will close the channel when this block of code is complete
+        // Note: `consume` cancels the channel when this block of code is complete
     }
 }

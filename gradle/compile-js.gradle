@@ -10,11 +10,6 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
 }
 
-repositories {
-    jcenter()
-    maven { url "https://kotlin.bintray.com/kotlinx" }
-}
-
 tasks.withType(compileKotlin2Js.getClass()) {
     kotlinOptions {
         moduleKind = "umd"

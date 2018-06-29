@@ -2,12 +2,12 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.23.3) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.23.3)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.23.4) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.23.4)
 
 Library support for Kotlin coroutines in
 [Kotlin/JVM](core/README.md) and
 [Kotlin/JS](js/README.md).
-This is a companion version for Kotlin 1.2.50 release.
+This is a companion version for Kotlin 1.2.51 release.
 
 ```kotlin
 launch {
@@ -64,7 +64,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.23.3</version>
+    <version>0.23.4</version>
 </dependency>
 ```
 
@@ -72,7 +72,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.50</kotlin.version>
+    <kotlin.version>1.2.51</kotlin.version>
 </properties>
 ```
 
@@ -81,14 +81,14 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.3'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.4'
 ```
 
 And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.50'
+    ext.kotlin_version = '1.2.51'
 }
 ```
 
@@ -104,6 +104,20 @@ repository {
 
 Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
 or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
+
+### Android
+
+Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
+module as dependency when using `kotlinx.coroutines` on Android:
+
+```groovy
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
+```
+
+This gives you access to Android [UI](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/-u-i.html)
+coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
+exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
+threads are handled by Android runtime. 
 
 ### ProGuard
 

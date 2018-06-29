@@ -53,6 +53,7 @@ class GuideReactiveTest : ReactiveTestBase() {
             "2",
             "3",
             "4",
+            "OnComplete",
             "Finally",
             "5"
         )

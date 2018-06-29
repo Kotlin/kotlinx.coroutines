@@ -29,8 +29,8 @@ fun produceNumbers() = produce<Int> {
 }
 
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
-    channel.consumeEach {
-        println("Processor #$id received $it")
+    for (msg in channel) {
+        println("Processor #$id received $msg")
     }    
 }
 

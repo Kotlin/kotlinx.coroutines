@@ -44,8 +44,14 @@ class ArrayBroadcastChannel<E>(
         require(capacity >= 1) { "ArrayBroadcastChannel capacity must be at least 1, but $capacity was specified" }
     }
 
+    /*
+     *  Writes to buffer are guarded by bufferLock, but reads from buffer are concurrent with writes
+     *    - Write element to buffer then write "tail" (volatile)
+     *    - Read "tail" (volatile), then read element from buffer
+     *  So read/writes to buffer need not be volatile
+     */
     private val bufferLock = ReentrantLock()
-    private val buffer = arrayOfNulls<Any?>(capacity) // guarded by bufferLock
+    private val buffer = arrayOfNulls<Any?>(capacity)
 
     // head & tail are Long (64 bits) and we assume that they never wrap around
     // head, tail, and size are guarded by bufferLock
@@ -56,14 +62,7 @@ class ArrayBroadcastChannel<E>(
     @Volatile
     private var size: Int = 0
 
-    /*
-        Writes to buffer are guarded by bufferLock, but reads from buffer are concurrent with writes
-          - Write element to buffer then write "tail" (volatile)
-          - Read "tail" (volatile), then read element from buffer
-        So read/writes to buffer need not be volatile
-     */
-
-    private val subs = subscriberList<Subscriber<E>>()
+    private val subscribers = subscriberList<Subscriber<E>>()
 
     override val isBufferAlwaysFull: Boolean get() = false
     override val isBufferFull: Boolean get() = size >= capacity
@@ -81,7 +80,7 @@ class ArrayBroadcastChannel<E>(
 
     public override fun cancel(cause: Throwable?): Boolean =
         close(cause).also {
-            for (sub in subs) sub.cancel(cause)
+            for (sub in subscribers) sub.cancel(cause)
         }
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
@@ -96,7 +95,7 @@ class ArrayBroadcastChannel<E>(
             this.size = size + 1
             this.tail = tail + 1
         }
-        // if offered successfully, then check subs outside of lock
+        // if offered successfully, then check subscribers outside of lock
         checkSubOffers()
         return OFFER_SUCCESS
     }
@@ -117,7 +116,7 @@ class ArrayBroadcastChannel<E>(
             this.size = size + 1
             this.tail = tail + 1
         }
-        // if offered successfully, then check subs outside of lock
+        // if offered successfully, then check subscribers outside of lock
         checkSubOffers()
         return OFFER_SUCCESS
     }
@@ -126,7 +125,7 @@ class ArrayBroadcastChannel<E>(
         var updated = false
         var hasSubs = false
         @Suppress("LoopToCallChain") // must invoke `checkOffer` on every sub
-        for (sub in subs) {
+        for (sub in subscribers) {
             hasSubs = true
             if (sub.checkOffer()) updated = true
         }
@@ -142,12 +141,12 @@ class ArrayBroadcastChannel<E>(
         bufferLock.withLock {
             if (addSub != null) {
                 addSub.subHead = tail // start from last element
-                val wasEmpty = subs.isEmpty()
-                subs.add(addSub)
+                val wasEmpty = subscribers.isEmpty()
+                subscribers.add(addSub)
                 if (!wasEmpty) return // no need to update when adding second and etc sub
             }
             if (removeSub != null) {
-                subs.remove(removeSub)
+                subscribers.remove(removeSub)
                 if (head != removeSub.subHead) return // no need to update
             }
             val minHead = computeMinHead()
@@ -190,7 +189,7 @@ class ArrayBroadcastChannel<E>(
 
     private fun computeMinHead(): Long {
         var minHead = Long.MAX_VALUE
-        for (sub in subs)
+        for (sub in subscribers)
             minHead = minHead.coerceAtMost(sub.subHead) // volatile (atomic) reads of subHead
         return minHead
     }

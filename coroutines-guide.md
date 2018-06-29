@@ -1531,8 +1531,8 @@ received number:
 
 ```kotlin
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
-    channel.consumeEach {
-        println("Processor #$id received $it")
+    for (msg in channel) {
+        println("Processor #$id received $msg")
     }    
 }
 ```
@@ -1570,6 +1570,11 @@ Processor #3 received 10
 
 Note, that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
 over the channel that processor coroutines are doing.
+
+Also, pay attention to how we explicitly iterate over channel with `for` loop to perform fan-out in `launchProcessor` code. 
+Unlike `consumeEach`, this `for` loop pattern is perfectly safe to use from multiple coroutines. If one of the processor 
+coroutines fails, then others would still be processing the channel, while a processor that is written via `consumeEach` 
+always consumes (cancels) the underlying channel on its normal or abnormal termination.     
 
 ### Fan-in
 

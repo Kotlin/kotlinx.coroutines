@@ -41,6 +41,12 @@ allprojects {
     if (useKotlinSnapshot) {
         kotlin_version = '1.2-SNAPSHOT'
     }
+
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+    }
 }
 
 

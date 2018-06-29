@@ -246,6 +246,7 @@ import kotlinx.coroutines.experimental.reactive.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
     source.openSubscription().consume { // open channel to the source
@@ -253,7 +254,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
         }
-        // `use` will close the channel when this block of code is complete
+        // Note: `consume` cancels the channel when this block of code is complete
     }
 }
 ```
@@ -272,16 +273,16 @@ Finally
 
 <!--- TEST -->
  
-With an explicit `openSubscription` we should [close][SubscriptionReceiveChannel.close] the corresponding 
-subscription to unsubscribe from the source. However, instead of invoking `close` explicitly, 
-this code relies on [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
-function from Kotlin's standard library.
+With an explicit `openSubscription` we should [cancel][SubscriptionReceiveChannel.cancel] the corresponding 
+subscription to unsubscribe from the source. There is no need to invoke `cancel` explicitly -- under the hood
+`consume` does that for us.
 The installed 
 [doFinally](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
-listener prints "Finally" to confirm that the subscription is actually being closed.
- 
-We do not need to use an explicit `close` if iteration is performed over all the items that are emitted 
-by the publisher, because it is being closed automatically by `consumeEach`:
+listener prints "Finally" to confirm that the subscription is actually being closed. Note that "OnComplete"
+is never printed because we did not consume all of the elements.
+
+We do not need to use an explicit `cancel` either if iteration is performed over all the items that are emitted 
+by the publisher, because it is being cancelled automatically by `consumeEach`:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -294,6 +295,7 @@ import kotlin.coroutines.experimental.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     // iterate over the source fully
     source.consumeEach { println(it) }
@@ -310,13 +312,14 @@ OnSubscribe
 2
 3
 4
+OnComplete
 Finally
 5
 ```
 
 <!--- TEST -->
 
-Notice, how "Finally" is printed before the last element "5". It happens because our `main` function in this
+Notice, how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
 example is a coroutine that we start with [runBlocking] coroutine builder.
 Our main coroutine receives on the channel using `source.consumeEach { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
@@ -1076,7 +1079,6 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html
-[SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
 [ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html
