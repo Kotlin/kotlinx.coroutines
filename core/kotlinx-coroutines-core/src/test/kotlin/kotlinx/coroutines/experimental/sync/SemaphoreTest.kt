@@ -35,6 +35,7 @@ class SemaphoreTest : TestBase() {
         launch(coroutineContext) {
             expect(2)
             sema.release()
+            yield() // immediately continue
             sema.release()
             expect(3)
         }

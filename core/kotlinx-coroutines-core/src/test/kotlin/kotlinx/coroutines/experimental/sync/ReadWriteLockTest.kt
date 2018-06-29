@@ -62,7 +62,6 @@ class ReadWriteLockTest : TestBase() {
 
         expect(5)
         rw.read.unlock()
-        yield()
         finish(6)
     }
 
