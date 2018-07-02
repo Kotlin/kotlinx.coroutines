@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 buildscript {
     ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
     if (useKotlinSnapshot) {
@@ -40,6 +44,12 @@ allprojects {
     if (deployVersion != null) version = deployVersion
     if (useKotlinSnapshot) {
         kotlin_version = '1.2-SNAPSHOT'
+    }
+
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 }
 
@@ -88,6 +98,15 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 // --------------- Configure sub-projects that are part of the library ---------------
 
 def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
+
+// Reconfigure source sets to avoid long "src/main/kotlin/fqn"
+configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
+    sourceSets {
+        main.kotlin.srcDirs = ['src']
+        test.kotlin.srcDirs = ['test']
+        main.resources.srcDirs = ['resources']
+    }
+}
 
 // configure atomicfu
 configure(subprojects.findAll { !internal.contains(it.name) }) {

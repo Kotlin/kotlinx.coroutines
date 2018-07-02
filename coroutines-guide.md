@@ -1,29 +1,17 @@
 <!--- INCLUDE .*/example-([a-z]+)-([0-9a-z]+)\.kt 
 /*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.$$1.example$$2
+package kotlinx.coroutines.experimental.guide.$$1$$2
 
 import kotlinx.coroutines.experimental.*
 -->
-<!--- KNIT     core/kotlinx-coroutines-core/src/test/kotlin/guide/.*\.kt -->
-<!--- TEST_OUT core/kotlinx-coroutines-core/src/test/kotlin/guide/test/GuideTest.kt
+<!--- KNIT     core/kotlinx-coroutines-core/test/guide/.*\.kt -->
+<!--- TEST_OUT core/kotlinx-coroutines-core/test/guide/test/GuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package guide.test
+package kotlinx.coroutines.experimental.guide.test
 
 import org.junit.Test
 
@@ -127,7 +115,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-01.kt)
 
 Run this code:
 
@@ -171,7 +159,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-02.kt)
 
 <!--- TEST
 Hello,
@@ -195,7 +183,7 @@ fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-02b.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-02b.kt)
 
 <!--- TEST
 Hello,
@@ -234,7 +222,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-03.kt)
 
 <!--- TEST
 Hello,
@@ -266,7 +254,7 @@ suspend fun doWorld() {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-04.kt)
 
 <!--- TEST
 Hello,
@@ -289,7 +277,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-05.kt)
 
 <!--- TEST lines.size == 1 && lines[0] == ".".repeat(100_000) -->
 
@@ -313,7 +301,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-basic-06.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-basic-06.kt)
 
 You can run and see that it prints three lines and terminates:
 
@@ -353,7 +341,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-01.kt)
 
 It produces the following output:
 
@@ -400,7 +388,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-02.kt)
 
 Run it to see that it continues to print "I'm sleeping" even after cancellation
 until the job completes by itself after five iterations.
@@ -444,7 +432,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-03.kt)
 
 As you can see, now this loop is cancelled. [isActive][CoroutineScope.isActive] is a property that is available inside
 the code of coroutines via [CoroutineScope] object.
@@ -482,7 +470,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-04.kt)
 
 Both [join][Job.join] and [cancelAndJoin] wait for all the finalization actions to complete, 
 so the example above produces the following output:
@@ -530,7 +518,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-05.kt)
 
 <!--- TEST
 I'm sleeping 0 ...
@@ -561,7 +549,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-06.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-06.kt)
 
 It produces the following output:
 
@@ -597,7 +585,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-cancel-07.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-cancel-07.kt)
 
 There is no longer an exception when running this code:
 
@@ -658,7 +646,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-compose-01.kt)
 
 It produces something like this:
 
@@ -691,7 +679,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-compose-02.kt)
 
 It produces something like this:
 
@@ -723,7 +711,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-compose-03.kt)
 
 It produces something like this:
 
@@ -780,7 +768,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-compose-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-compose-04.kt)
 
 <!--- TEST ARBITRARY_TIME
 The answer is 42
@@ -831,7 +819,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-01.kt)
 
 It produces the following output (maybe in different order):
 
@@ -891,7 +879,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-02.kt)
 
 Produces the output: 
  
@@ -939,7 +927,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-03.kt)
 
 There are three coroutines. The main coroutine (#1) -- `runBlocking` one, 
 and two coroutines computing deferred values `a` (#2) and `b` (#3).
@@ -982,7 +970,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-04.kt)
 
 It demonstrates several new techniques. One is using [runBlocking] with an explicitly specified context, and
 the other one is using [withContext] function to change a context of a coroutine while still staying in the
@@ -1015,7 +1003,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-05.kt)
 
 It produces something like that when running in [debug mode](#debugging-coroutines-and-threads):
 
@@ -1069,7 +1057,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-06.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-06.kt)
 
 The output of this code is:
 
@@ -1111,7 +1099,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-07.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-07.kt)
 
 The expected outcome of this code is: 
 
@@ -1148,7 +1136,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-08.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-08.kt)
 
 The result is going to be:
 
@@ -1192,7 +1180,7 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-09.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-09.kt)
 
 The output it produces with `-Dkotlinx.coroutines.debug` JVM option is similar to:
  
@@ -1244,7 +1232,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-context-10.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-10.kt)
 
 The output of this example is:
 
@@ -1292,7 +1280,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-01.kt)
 
 The output of this code is:
 
@@ -1330,7 +1318,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-02.kt)
 
 <!--- TEST 
 1
@@ -1363,7 +1351,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-03.kt)
 
 <!--- TEST 
 1
@@ -1407,7 +1395,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-04.kt)
 
 <!--- TEST 
 1
@@ -1478,7 +1466,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-05.kt)
 
 The output of this code is:
 
@@ -1531,8 +1519,8 @@ received number:
 
 ```kotlin
 fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
-    channel.consumeEach {
-        println("Processor #$id received $it")
+    for (msg in channel) {
+        println("Processor #$id received $msg")
     }    
 }
 ```
@@ -1548,7 +1536,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-06.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-06.kt)
 
 The output will be similar to the the following one, albeit the processor ids that receive
 each specific integer may be different:
@@ -1570,6 +1558,11 @@ Processor #3 received 10
 
 Note, that cancelling a producer coroutine closes its channel, thus eventually terminating iteration
 over the channel that processor coroutines are doing.
+
+Also, pay attention to how we explicitly iterate over channel with `for` loop to perform fan-out in `launchProcessor` code. 
+Unlike `consumeEach`, this `for` loop pattern is perfectly safe to use from multiple coroutines. If one of the processor 
+coroutines fails, then others would still be processing the channel, while a processor that is written via `consumeEach` 
+always consumes (cancels) the underlying channel on its normal or abnormal termination.     
 
 ### Fan-in
 
@@ -1605,7 +1598,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-07.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-07.kt)
 
 The output is:
 
@@ -1651,7 +1644,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-08.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-08.kt)
 
 It prints "sending" _five_ times using a buffered channel with capacity of _four_:
 
@@ -1671,7 +1664,7 @@ The first four elements are added to the buffer and the sender suspends when try
 
 Ticker channel is a special rendezvous channel that produces `Unit` every time given delay passes since last consumption from this channel.
 Though it may seem to be useless standalone, it is a useful building block to create complex time-based [produce] 
-pipelines and operators that do windowing and other time-dependend processing.
+pipelines and operators that do windowing and other time-dependent processing.
 Ticker channel can be used in [select] to perform "on tick" action.
 
 To create such channel use a factory method [ticker]. 
@@ -1705,7 +1698,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-10.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-10.kt)
 
 It prints following lines:
 
@@ -1723,7 +1716,7 @@ Next element is ready in 50ms after consumer pause in 150ms: kotlin.Unit
 Note that [ticker] is aware of possible consumer pauses and, by default, adjusts next produced element 
 delay if a pause occurs, trying to maintain a fixed rate of produced elements.
  
-Optionally, a `mode` parameters equal to [TickerMode.FIXED_DELAY] can be specified to maintain a fixed
+Optionally, a `mode` parameter equal to [TickerMode.FIXED_DELAY] can be specified to maintain a fixed
 delay between elements.  
 
 ### Channels are fair
@@ -1759,7 +1752,7 @@ suspend fun player(name: String, table: Channel<Ball>) {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-channel-09.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-channel-09.kt)
 
 The "ping" coroutine is started first, so it is the first one to receive the ball. Even though "ping"
 coroutine immediately starts receiving the ball again after sending it back to the table, the ball gets
@@ -1838,7 +1831,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-01.kt)
 
 <!--- TEST LINES_START
 Completed 1000000 actions in
@@ -1864,7 +1857,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-01b.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-01b.kt)
 
 <!--- TEST LINES_START
 Completed 1000000 actions in
@@ -1887,7 +1880,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-02.kt)
 
 <!--- TEST LINES_START
 Completed 1000000 actions in
@@ -1916,7 +1909,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-03.kt)
 
 <!--- TEST ARBITRARY_TIME
 Completed 1000000 actions in xxx ms
@@ -1948,7 +1941,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-04.kt)
 
 <!--- TEST ARBITRARY_TIME
 Completed 1000000 actions in xxx ms
@@ -1976,7 +1969,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-05.kt)
 
 <!--- TEST ARBITRARY_TIME
 Completed 1000000 actions in xxx ms
@@ -2009,7 +2002,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-06.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-06.kt)
 
 <!--- TEST ARBITRARY_TIME
 Completed 1000000 actions in xxx ms
@@ -2075,7 +2068,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-sync-07.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-07.kt)
 
 <!--- TEST ARBITRARY_TIME
 Completed 1000000 actions in xxx ms
@@ -2162,7 +2155,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-select-01.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-select-01.kt)
 
 The result of this code is: 
 
@@ -2226,7 +2219,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-select-02.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-select-02.kt)
 
 The result of this code is quite interesting, so we'll analyze it in mode detail:
 
@@ -2294,7 +2287,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ``` 
  
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-select-03.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-select-03.kt)
   
 So let us see what happens:
  
@@ -2361,7 +2354,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-select-04.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-select-04.kt)
 
 The output is:
 
@@ -2437,7 +2430,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/src/test/kotlin/guide/example-select-05.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-select-05.kt)
 
 The result of this code:
 
@@ -2506,6 +2499,7 @@ Channel was closed
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
 [ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ticker.html
 [ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
+[TickerMode.FIXED_DELAY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-ticker-mode/-f-i-x-e-d_-d-e-l-a-y.html
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html

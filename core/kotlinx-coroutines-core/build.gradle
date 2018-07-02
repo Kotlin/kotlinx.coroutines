@@ -1,3 +1,11 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+dependencies {
+    testCompile "com.devexperts.lincheck:core:$lincheck_version"
+}
+
 task checkJdk16() {
     // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
     doLast {
