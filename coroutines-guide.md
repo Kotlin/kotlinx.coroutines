@@ -1676,9 +1676,9 @@ Now let's see how it works in practice:
 fun main(args: Array<String>) = runBlocking<Unit> {
     val tickerChannel = ticker(delay = 100, initialDelay = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
-    println("Initial element is available immediately: $nextElement") // Initial delay hasn't passed yet
+    println("Initial element is available immediately: $nextElement") // initial delay hasn't passed yet
 
-    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // All subsequent elements has 100ms delay
+    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // all subsequent elements has 100ms delay
     println("Next element is not ready in 50 ms: $nextElement")
 
     nextElement = withTimeoutOrNull(60) { tickerChannel.receive() }
@@ -1983,7 +1983,7 @@ This now works much faster and produces correct result.
 Mutual exclusion solution to the problem is to protect all modifications of the shared state with a _critical section_
 that is never executed concurrently. In a blocking world you'd typically use `synchronized` or `ReentrantLock` for that.
 Coroutine's alternative is called [Mutex]. It has [lock][Mutex.lock] and [unlock][Mutex.unlock] functions to 
-delimit a critical section. The key difference is that `Mutex.lock` is a suspending function. It does not block a thread.
+delimit a critical section. The key difference is that `Mutex.lock()` is a suspending function. It does not block a thread.
 
 There is also [withLock] extension function that conveniently represents 
 `mutex.lock(); try { ... } finally { mutex.unlock() }` pattern: 
@@ -2015,7 +2015,7 @@ is confined to.
 
 ### Actors
 
-An actor is a combination of a coroutine, the state that is confined and is encapsulated into this coroutine,
+An [actor](https://en.wikipedia.org/wiki/Actor_model) is an entity made up of a combination of a coroutine, the state that is confined and encapsulated into this coroutine,
 and a channel to communicate with other coroutines. A simple actor can be written as a function, 
 but an actor with a complex state is better suited for a class. 
 
@@ -2077,7 +2077,7 @@ Counter = 1000000
 
 It does not matter (for correctness) what context the actor itself is executed in. An actor is
 a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
-works as a solution to the problem of shared mutable state.
+works as a solution to the problem of shared mutable state. Indeed, actors may modify their own private state, but can only affect each other through messages (avoiding the need for any locks).
 
 Actor is more efficient than locking under load, because in this case it always has work to do and it does not 
 have to switch to a different context at all.
@@ -2173,8 +2173,8 @@ buzz -> 'Buzz!'
 
 ### Selecting on close
 
-The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed and the corresponding
-`select` throws an exception. We can use [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] clause to perform a
+The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed causing the corresponding
+`select` to throw an exception. We can use [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] clause to perform a
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
