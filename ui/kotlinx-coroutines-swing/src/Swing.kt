@@ -4,16 +4,12 @@
 
 package kotlinx.coroutines.experimental.swing
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Delay
-import kotlinx.coroutines.experimental.DisposableHandle
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.swing.Swing.delay
-import java.awt.event.ActionListener
-import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
-import javax.swing.Timer
-import kotlin.coroutines.experimental.CoroutineContext
+import java.awt.event.*
+import java.util.concurrent.*
+import javax.swing.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
@@ -46,4 +42,8 @@ object Swing : CoroutineDispatcher(), Delay {
         }
 
     override fun toString() = "Swing"
+}
+
+class EventDispatchThreadChecker : BlockingChecker {
+    override fun runBlockingAllowed(): Boolean = !SwingUtilities.isEventDispatchThread()
 }

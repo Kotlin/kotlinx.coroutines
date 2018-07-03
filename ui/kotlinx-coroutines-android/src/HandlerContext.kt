@@ -4,12 +4,11 @@
 
 package kotlinx.coroutines.experimental.android
 
-import android.os.Handler
-import android.os.Looper
-import android.view.Choreographer
+import android.os.*
+import android.view.*
 import kotlinx.coroutines.experimental.*
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto Android main UI thread and provides native [delay][Delay.delay] support.
@@ -88,4 +87,8 @@ public class HandlerContext(
     override fun toString() = name ?: handler.toString()
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)
+}
+
+class MainLooperChecker : BlockingChecker {
+    override fun runBlockingAllowed(): Boolean = Looper.myLooper() != Looper.getMainLooper()
 }

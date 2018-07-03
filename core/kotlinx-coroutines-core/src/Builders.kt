@@ -7,6 +7,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.*
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
 
@@ -29,12 +30,19 @@ import kotlin.coroutines.experimental.*
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
+ * @throws IllegalStateException if blocking is not allowed in current thread.
+ *         Blocking is checked by [BlockingChecker] registered in [ServiceLoader]
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
+
+    if (blockingChecker?.runBlockingAllowed() == false) {
+        throw IllegalStateException("runBlocking is forbidden in $currentThread")
+    }
+
     val contextInterceptor = context[ContinuationInterceptor]
     val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
     val eventLoop = if (privateEventLoop) BlockingEventLoop(currentThread) else contextInterceptor as? EventLoop
@@ -44,6 +52,36 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop, privateEventLoop)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
+}
+
+/**
+ * Element of classpath which determines whether invoking [runBlocking] in current thread is allowed.
+ * [runBlocking] discovers all checkers via [ServiceLoader]
+ *
+ * Common example is checking whether we're not in UI thread:
+ * ```
+ * class UiFilter : BlockingFilter {
+ *    fun runBlockingAllowed(): Boolean = !UiFramework.isInUiThread()
+ * }
+ * ```
+ */
+interface BlockingChecker {
+
+    /**
+     * @return whether [runBlocking] calls are allowed in current thread
+     */
+    fun runBlockingAllowed(): Boolean
+}
+
+// Nullable to enable DCE when no filters are present in classpath
+private val blockingChecker: BlockingChecker? = loadBlockingCheckers()
+
+private fun loadBlockingCheckers(): BlockingChecker? {
+    val filters = ServiceLoader.load(BlockingChecker::class.java).toList().toTypedArray()
+    if (filters.isEmpty()) return null
+    return object : BlockingChecker {
+        override fun runBlockingAllowed(): Boolean = filters.all { it.runBlockingAllowed() }
+    }
 }
 
 private class BlockingCoroutine<T>(

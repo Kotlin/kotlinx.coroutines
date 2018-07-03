@@ -4,19 +4,15 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import com.sun.javafx.application.PlatformImpl
-import javafx.animation.AnimationTimer
-import javafx.animation.KeyFrame
-import javafx.animation.Timeline
-import javafx.application.Platform
-import javafx.event.ActionEvent
-import javafx.event.EventHandler
-import javafx.util.Duration
+import com.sun.javafx.application.*
+import javafx.animation.*
+import javafx.application.*
+import javafx.event.*
+import javafx.util.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.javafx.JavaFx.delay
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
@@ -43,14 +39,14 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(time, unit, EventHandler<ActionEvent> {
+        val timeline = schedule(time, unit, EventHandler {
             with(continuation) { resumeUndispatched(Unit) }
         })
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val timeline = schedule(time, unit, EventHandler<ActionEvent> {
+        val timeline = schedule(time, unit, EventHandler {
             block.run()
         })
         return object : DisposableHandle {
@@ -79,6 +75,10 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun toString() = "JavaFx"
+}
+
+class ApplicationThreadChecker : BlockingChecker {
+    override fun runBlockingAllowed(): Boolean = !Platform.isFxApplicationThread()
 }
 
 internal fun initPlatform() {

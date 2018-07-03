@@ -5,9 +5,10 @@
 package kotlinx.coroutines.experimental.swing
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Before
+import org.junit.*
 import org.junit.Test
-import javax.swing.SwingUtilities
+import javax.swing.*
+import kotlin.test.*
 
 class SwingTest : TestBase() {
     @Before
@@ -29,5 +30,20 @@ class SwingTest : TestBase() {
         }
         job.join()
         finish(6)
+    }
+
+    @Test
+    fun testRunBlockingForbidden() {
+        runBlocking(Swing) {
+            expect(1)
+            try {
+                runBlocking(Swing) {
+                    expectUnreached()
+                }
+            } catch (e: IllegalStateException) {
+                assertTrue(e.message!!.contains("runBlocking"))
+                finish(2)
+            }
+        }
     }
 }
