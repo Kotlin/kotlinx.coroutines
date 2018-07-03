@@ -1,3 +1,8 @@
+public final class kotlinx/coroutines/experimental/javafx/ApplicationThreadChecker : kotlinx/coroutines/experimental/BlockingChecker {
+	public fun <init> ()V
+	public fun runBlockingAllowed ()Z
+}
+
 public final class kotlinx/coroutines/experimental/javafx/JavaFx : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/javafx/JavaFx;
 	public final fun awaitPulse (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;

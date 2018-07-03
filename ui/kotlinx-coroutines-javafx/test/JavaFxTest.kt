@@ -4,10 +4,11 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import javafx.application.Platform
+import javafx.application.*
 import kotlinx.coroutines.experimental.*
-import org.junit.Before
+import org.junit.*
 import org.junit.Test
+import kotlin.test.*
 
 class JavaFxTest : TestBase() {
     @Before
@@ -35,6 +36,28 @@ class JavaFxTest : TestBase() {
             }
             job.join()
             finish(4)
+        }
+    }
+
+    @Test
+    fun testRunBlockingForbidden() {
+        try {
+            initPlatform()
+        } catch (e: UnsupportedOperationException) {
+            println("Skipping JavaFxTest in headless environment")
+            return // ignore test in headless environments
+        }
+
+        runBlocking(JavaFx) {
+            expect(1)
+            try {
+                runBlocking(JavaFx) {
+                    expectUnreached()
+                }
+            } catch (e: Exception) {
+                assertTrue(e.message!!.contains("runBlocking"))
+                finish(2)
+            }
         }
     }
 }
