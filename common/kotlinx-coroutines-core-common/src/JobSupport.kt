@@ -207,8 +207,17 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun completeUpdateState(expect: Incomplete, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
         // Do overridable processing before completion handlers
-        if (!expect.isCancelling) onCancellationInternal(exceptionally) // only notify when was not cancelling before
-        onCompletionInternal(update, mode)
+
+        /*
+         * 1) Invoke onCancellationInternal: exception handling, parent/resource cancellation etc.
+         * 2) Invoke completion handlers: .join(), callbacks etc. It's important to invoke them only AFTER exception handling, see #208
+         * 3) Invoke onCompletionInternal: onNext(), timeout deregistration etc. I should be last so all callbacks observe consistent state
+         *    of the job which doesn't depend on callback scheduling
+         *
+         * Only notify on cancellation once (expect.isCancelling)
+         */
+        if (!expect.isCancelling) onCancellationInternal(exceptionally)
+
         // Invoke completion handlers
         val cause = exceptionally?.cause
         if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
@@ -220,6 +229,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         } else {
             expect.list?.notifyCompletion(cause)
         }
+
+        onCompletionInternal(update, mode)
     }
 
     private inline fun <reified T: JobNode<*>> notifyHandlers(list: NodeList, cause: Throwable?) {

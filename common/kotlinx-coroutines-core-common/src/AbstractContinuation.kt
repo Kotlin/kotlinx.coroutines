@@ -188,7 +188,7 @@ internal abstract class AbstractContinuation<in T>(
         return updateStateToFinal(state, CancelledContinuation(this, cause), mode = MODE_ATOMIC_DEFAULT)
     }
 
-    private fun onCompletionInternal(mode: Int) {
+    private fun dispatchResume(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
         dispatch(mode)
@@ -326,9 +326,7 @@ internal abstract class AbstractContinuation<in T>(
 
     protected fun completeStateUpdate(expect: NotCompleted, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
-        onCompletionInternal(mode)
 
-        // Invoke cancellation handlers only if necessary
         if (update is CancelledContinuation && expect is CancelHandler) {
             try {
                 expect.invoke(exceptionally?.cause)
@@ -336,6 +334,10 @@ internal abstract class AbstractContinuation<in T>(
                 handleException(CompletionHandlerException("Exception in completion handler $expect for $this", ex))
             }
         }
+
+        // Notify all handlers before dispatching, otherwise behaviour will be timing-dependent
+        // and confusing with Unconfined
+        dispatchResume(mode)
     }
 
     private fun handleException(exception: Throwable) {
