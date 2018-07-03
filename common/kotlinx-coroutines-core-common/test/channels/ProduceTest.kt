@@ -9,6 +9,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ProduceTest : TestBase() {
+
     @Test
     fun testBasic() = runTest {
         val c = produce(coroutineContext) {
@@ -78,6 +79,35 @@ class ProduceTest : TestBase() {
             expectUnreached()
         } catch (e: TestException) {
             expect(5)
+        }
+    }
+
+    @Test
+    fun testCancelOnCompletionUnconfined() = runTest {
+        cancelOnCompletion(Unconfined)
+    }
+
+    @Test
+    fun testCancelOnCompletion() = runTest {
+        cancelOnCompletion(coroutineContext)
+    }
+
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) {
+        val source = Channel<Int>()
+        expect(1)
+        val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {
+            expect(2)
+            source.receive()
+        }
+
+        yield()
+        expect(3)
+        produced.cancel()
+        try {
+            source.receive()
+            // TODO shouldn't it be ClosedReceiveChannelException ?
+        } catch (e: JobCancellationException) {
+            finish(4)
         }
     }
 
