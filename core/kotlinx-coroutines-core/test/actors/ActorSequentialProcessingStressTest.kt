@@ -38,7 +38,7 @@ class ActorSequentialProcessingStressTest : TestBase() {
         }
     }
 
-    private inner class MonoTestActor : MonoActor<Unit>(actorContext) {
+    private inner class MonoTestActor : TypedActor<Unit>(actorContext) {
         var state = 0
         private var thread: Thread? = null
 

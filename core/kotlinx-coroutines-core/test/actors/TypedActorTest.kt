@@ -10,11 +10,11 @@ import java.util.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class MonoActorTest : TestBase() {
+class TypedActorTest : TestBase() {
 
-    private class DecomposingActor(ctx: CoroutineContext) : MonoActor<Int>(ctx) {
+    private class DecomposingActor(ctx: CoroutineContext) : TypedActor<Int>(ctx) {
 
-        private val workers: List<MonoActor<Int>>
+        private val workers: List<TypedActor<Int>>
         var result: Int = 0
 
         init {
@@ -31,6 +31,10 @@ class MonoActorTest : TestBase() {
                 throw AssertionError()
             }
             workers[Random().nextInt(2)].send(message)
+        }
+
+        override fun onClose() {
+            workers.forEach { it.close() }
         }
     }
 

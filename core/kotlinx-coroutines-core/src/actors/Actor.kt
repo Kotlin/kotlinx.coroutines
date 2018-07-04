@@ -28,7 +28,13 @@ import kotlin.coroutines.experimental.*
  * // Sender
  * exampleActor.sendInt(42)
  * ```
+ *
+ * @param context context in which actor's job will be launched
+ * @param parent optional parent of actor's job
+ * @param start start mode of actor's job
+ * @param channelCapacity capacity of actor's mailbox aka maximum count of pending messages
  */
+@Suppress("EXPOSED_SUPER_CLASS")
 abstract class Actor(
     context: CoroutineContext = DefaultDispatcher,
     parent: Job? = null,
