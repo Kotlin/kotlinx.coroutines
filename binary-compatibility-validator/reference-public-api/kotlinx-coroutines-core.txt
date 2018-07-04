@@ -457,16 +457,7 @@ public final class kotlinx/coroutines/experimental/YieldKt {
 	public static final fun yield (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 }
 
-public abstract class kotlinx/coroutines/experimental/actors/AbstractActor : kotlinx/coroutines/experimental/actors/ActorTraits {
-	public fun <init> ()V
-	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;I)V
-	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun close ()V
-	public final fun getJob ()Lkotlinx/coroutines/experimental/Job;
-	public fun kill ()V
-}
-
-public abstract class kotlinx/coroutines/experimental/actors/Actor : kotlinx/coroutines/experimental/actors/AbstractActor {
+public abstract class kotlinx/coroutines/experimental/actors/Actor {
 	public fun <init> ()V
 	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;I)V
 	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -475,21 +466,22 @@ public abstract class kotlinx/coroutines/experimental/actors/Actor : kotlinx/cor
 
 public abstract class kotlinx/coroutines/experimental/actors/ActorTraits {
 	public fun <init> ()V
+	public abstract fun cancel ()V
 	public abstract fun close ()V
 	public abstract fun getJob ()Lkotlinx/coroutines/experimental/Job;
 	public final fun join (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public abstract fun kill ()V
 	protected fun onClose ()V
+	protected fun onStart ()V
 }
 
 public final class kotlinx/coroutines/experimental/actors/ActorsKt {
-	public static final fun actor (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/experimental/actors/MonoActor;
-	public static final fun actor (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/actors/ActorTraits;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/experimental/actors/MonoActor;
-	public static synthetic fun actor$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/actors/MonoActor;
-	public static synthetic fun actor$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/actors/ActorTraits;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/actors/MonoActor;
+	public static final fun actor (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/experimental/actors/TypedActor;
+	public static final fun actor (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/actors/ActorTraits;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;)Lkotlinx/coroutines/experimental/actors/TypedActor;
+	public static synthetic fun actor$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/actors/TypedActor;
+	public static synthetic fun actor$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/actors/ActorTraits;Lkotlinx/coroutines/experimental/CoroutineStart;ILkotlin/jvm/functions/Function3;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/actors/TypedActor;
 }
 
-public abstract class kotlinx/coroutines/experimental/actors/MonoActor : kotlinx/coroutines/experimental/actors/AbstractActor {
+public abstract class kotlinx/coroutines/experimental/actors/TypedActor {
 	public fun <init> ()V
 	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;I)V
 	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlinx/coroutines/experimental/CoroutineStart;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
