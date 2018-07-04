@@ -5,31 +5,39 @@ import kotlin.coroutines.experimental.*
 
 
 /**
- * Launches a new [MonoActor] with given [block] as [message handler][MonoActor.receive]
+ * Creates a new [TypedActor] with given [block] as [message handler][TypedActor.receive]
+ *
+ * @param context context in which actor's job will be launched
+ * @param parent optional parent of actor's job
+ * @param start start mode of actor's job
+ * @param channelCapacity capacity of actor's mailbox aka maximum count of pending messages
+ * @param block actor's message handler
  */
 public fun <T> actor(
     context: CoroutineContext = DefaultDispatcher,
-    parent: ActorTraits? = null,
+    parent: ActorTraits,
     start: CoroutineStart = CoroutineStart.LAZY,
-    channelCapacity: Int = 16, block: suspend MonoActor<T>.(T) -> Unit
-): MonoActor<T> {
-    return object : MonoActor<T>(context, parent?.job, start, channelCapacity) {
-        override suspend fun receive(message: T) {
-            block(message)
-        }
-    }
+    channelCapacity: Int = 16, block: suspend TypedActor<T>.(T) -> Unit
+): TypedActor<T> {
+    return actor(context, parent.job, start, channelCapacity, block)
 }
 
 /**
- * Launches a new [MonoActor] with given [block] as [message handler][MonoActor.receive]
+ * Creates a new [TypedActor] with given [block] as [message handler][TypedActor.receive]
+ *
+ * @param context context in which actor's job will be launched
+ * @param parent optional parent of actor's job
+ * @param start start mode of actor's job
+ * @param channelCapacity capacity of actor's mailbox aka maximum count of pending messages
+ * @param block actor's message handler
  */
 public fun <T> actor(
     context: CoroutineContext = DefaultDispatcher,
-    parent: Job,
+    parent: Job? = null,
     start: CoroutineStart = CoroutineStart.LAZY,
-    channelCapacity: Int = 16, block: suspend MonoActor<T>.(T) -> Unit
-): MonoActor<T> {
-    return object : MonoActor<T>(context, parent, start, channelCapacity) {
+    channelCapacity: Int = 16, block: suspend TypedActor<T>.(T) -> Unit
+): TypedActor<T> {
+    return object : TypedActor<T>(context, parent, start, channelCapacity) {
         override suspend fun receive(message: T) {
             block(message)
         }

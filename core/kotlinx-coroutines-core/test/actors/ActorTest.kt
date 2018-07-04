@@ -36,6 +36,10 @@ class ActorTest : TestBase() {
             }
             workers[Random().nextInt(2)].onReceive(message)
         }
+
+        override fun onClose() {
+            workers.forEach { it.close() }
+        }
     }
 
     @Test

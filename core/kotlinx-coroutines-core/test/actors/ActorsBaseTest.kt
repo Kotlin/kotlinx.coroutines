@@ -25,17 +25,18 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
 
     enum class ActorType {
         Actor, // lower case for prettier test names
-        MonoActor
+        TypedActor
     }
 
     private fun TestActor(
         context: CoroutineContext,
         capacity: Int = 2, parent: Job? = null,
-        whenClosed: () -> Unit = {}
+        whenClosed: () -> Unit = {},
+        whenStarted: () -> Unit = {}
     ): TestActor {
         return when (actorType) {
-            ActorType.Actor -> ActTestActor(context.minusKey(Job), capacity, parent, whenClosed)
-            ActorType.MonoActor -> MonoTestActor(context.minusKey(Job), capacity, parent, whenClosed)
+            ActorType.Actor -> ActTestActor(context.minusKey(Job), capacity, parent, whenClosed, whenStarted)
+            ActorType.TypedActor -> TypedTestActor(context.minusKey(Job), capacity, parent, whenClosed, whenStarted)
         }
     }
 
@@ -43,22 +44,20 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
     private interface TestActor {
         suspend fun expectedSequence(expected: Int)
         suspend fun fail()
-        suspend fun launchChild()
-        suspend fun getChild(): Job
 
         public fun close()
-        public fun kill()
+        public fun cancel()
         public suspend fun join()
     }
 
-    private inner class MonoTestActor(
+    private inner class TypedTestActor(
         context: CoroutineContext,
         capacity: Int = 2,
         parent: Job? = null,
-        private val whenClosed: () -> Unit = {}
+        private val whenClosed: () -> Unit = {},
+        private val whenStarted: () -> Unit = {}
     ) : TestActor, Actor(context, parent, channelCapacity = capacity) {
 
-        private lateinit var launchedJob: Job
         private var isClosed = false
 
         override suspend fun expectedSequence(expected: Int) = act {
@@ -69,13 +68,8 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
             throw IOException()
         }
 
-        override suspend fun launchChild() = act {
-            launchedJob = launch(coroutineContext) { while (true) yield() }
-        }
-
-        override suspend fun getChild(): Job {
-            yield()
-            return launchedJob
+        override fun onStart() {
+            whenStarted()
         }
 
         override fun onClose() {
@@ -89,8 +83,9 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
         context: CoroutineContext,
         capacity: Int = 2,
         parent: Job? = null,
-        private val whenClosed: () -> Unit = {}
-    ) : MonoActor<Any>(context, parent, channelCapacity = capacity), TestActor {
+        private val whenClosed: () -> Unit = {},
+        private val whenStarted: () -> Unit = {}
+    ) : TypedActor<Any>(context, parent, channelCapacity = capacity), TestActor {
 
         private lateinit var launchedJob: Job
         private var isClosed = false
@@ -105,16 +100,13 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
             }
         }
 
+        override fun onStart() {
+            whenStarted()
+        }
+
         override suspend fun expectedSequence(expected: Int) = send(expected)
 
         override suspend fun fail() = send(IOException())
-
-        override suspend fun launchChild() = send(Unit)
-
-        override suspend fun getChild(): Job {
-            yield()
-            return launchedJob
-        }
 
         override fun onClose() {
             assertFalse(isClosed)
@@ -210,35 +202,45 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
     }
 
     @Test
-    fun testKill() = runTest {
+    fun testCancel() = runTest {
         val actor = TestActor(coroutineContext, 4)
         expect(1)
         actor.expectedSequence(2)
         actor.expectedSequence(3)
-        actor.kill()
+        actor.cancel()
         actor.join()
         finish(2)
     }
 
     @Test
-    fun testKillOnClose() = runTest {
-        val actor = TestActor(coroutineContext, 4, whenClosed = { expect(2) })
+    fun testOnCloseCancel() = runTest {
+        val actor = TestActor(coroutineContext, 4, whenClosed = { expect(3) })
         expect(1)
         actor.expectedSequence(2)
-        actor.expectedSequence(3)
-        actor.kill()
+        yield()
+        actor.cancel()
+        actor.join()
+        finish(4)
+    }
+
+    @Test
+    fun testOnCloseCancelNotStarted() = runTest {
+        val actor = TestActor(coroutineContext, 4, whenClosed = { expect(2) })
+        expect(1)
+        actor.expectedSequence(2) // is not invoked
+        actor.expectedSequence(3) // is not invoked
+        actor.cancel()
         actor.join()
         finish(3)
     }
 
     @Test
-    fun testParentChildLaunch() = runTest {
-        val actor = TestActor(coroutineContext)
-        actor.launchChild()
-        assertTrue(actor.getChild().isActive)
+    fun testOnCloseCloseNotStarted() = runTest {
+        val actor = TestActor(coroutineContext, 4, whenClosed = { expect(2) })
+        expect(1)
         actor.close()
         actor.join()
-        assertTrue(actor.getChild().isCancelled)
+        finish(3)
     }
 
     @Test
@@ -247,6 +249,29 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
         actor.close()
         actor.expectedSequence(1)
         expectUnreached()
+    }
+
+    @Test
+    fun testOnStart() = runTest {
+        val actor = TestActor(coroutineContext, whenStarted = { expect(1) })
+        actor.expectedSequence(2)
+        actor.close()
+        actor.join()
+        finish(3)
+    }
+
+    @Test
+    fun testOnStartNotCalled() = runTest {
+        val actor = TestActor(coroutineContext, whenStarted = { expectUnreached() })
+        actor.cancel()
+        actor.join()
+        finish(1)
+    }
+
+    @Test
+    fun testOnStartThrowing() = runTest(unhandled = unhandledFailures(2)) {
+        val actor = TestActor(coroutineContext.minusKey(Job), whenStarted = { throw IOException() })
+        actor.join()
     }
 
     @Test

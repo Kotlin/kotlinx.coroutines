@@ -1,15 +1,17 @@
 package kotlinx.coroutines.experimental.actors
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlin.coroutines.experimental.*
 
 /**
  * Base class for actors implementation, which provides implementation for [ActorTraits]
+ * This class is not designed to be extended outside of kotlinx.coroutines, so it's internal
  *
  * @param T type of messages which are stored in the mailbox
  */
-abstract class AbstractActor<T>(
+internal abstract class AbstractActor<T>(
     context: CoroutineContext = DefaultDispatcher,
     parent: Job? = null,
     start: CoroutineStart = CoroutineStart.LAZY,
@@ -18,34 +20,40 @@ abstract class AbstractActor<T>(
 
     internal val mailbox = Channel<T>(channelCapacity)
     public final override val job: Job
+    private val onCloseInvoked = atomic(0)
 
     init {
         job = launch(context, start, parent) { actorLoop() }
-        job.invokeOnCompletion { onClose() }
+        // Handler in case when actor was cancelled before start
+        job.invokeOnCompletion {
+            if (onCloseInvoked.compareAndSet(0, 1)) {
+                onClose()
+            }
+        }
     }
 
     public override fun close() {
         mailbox.close()
     }
 
-    public override fun kill() {
+    public override fun cancel() {
         job.cancel()
         mailbox.cancel()
     }
 
     private suspend fun actorLoop() {
-        var exception: Throwable? = null
         try {
             onStart()
             for (message in mailbox) {
                 onMessage(message)
             }
         } catch (e: Throwable) {
-            exception = e
             handleCoroutineException(coroutineContext, e)
         } finally {
-            job.cancel(exception)
             mailbox.close()
+            if (onCloseInvoked.compareAndSet(0, 1)) {
+                onClose()
+            }
         }
     }
 

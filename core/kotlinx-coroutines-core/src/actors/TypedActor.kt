@@ -5,9 +5,9 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlin.coroutines.experimental.*
 
 /**
- * [MonoActor] is the base for all stateful actors, who have to process one [type][T] of message
- * [MonoActor] has well-defined lifecycle described in [ActorTraits].
- * [MonoActor.receive] method is used to declare a message handler, which is parametrized by [T]
+ * [TypedActor] is the base for all stateful actors, which can process only one [type][T] of messages.
+ * [TypedActor] has well-defined lifecycle described in [ActorTraits].
+ * [TypedActor.receive] method is used to declare a message handler, which is parametrized by [T]
  * to provide better compile-type safety.
  *
  * Example:
@@ -24,8 +24,13 @@ import kotlin.coroutines.experimental.*
  * ```
  *
  * @param T type of the message this actor can handle
+ * @param context context in which actor's job will be launched
+ * @param parent optional parent of actor's job
+ * @param start start mode of actor's job
+ * @param channelCapacity capacity of actor's mailbox aka maximum count of pending messages
  */
-abstract class MonoActor<T>(
+@Suppress("EXPOSED_SUPER_CLASS")
+abstract class TypedActor<T>(
     context: CoroutineContext = DefaultDispatcher,
     parent: Job? = null,
     start: CoroutineStart = CoroutineStart.LAZY,
@@ -34,7 +39,7 @@ abstract class MonoActor<T>(
 
 
     /**
-     * Sends the message to the actor, which later will be processed by [receive]
+     * Sends the message to the actor, which later will be sequentially processed by [receive]
      *
      * @throws ClosedSendChannelException if actor is [closed][close]
      */
@@ -44,12 +49,11 @@ abstract class MonoActor<T>(
     }
 
     /**
-     * Handler, which handles all sent messages
+     * Handler, which handles all received messages
      *
      * @throws ClassCastException if actor was casted to raw type and [send] was invoked with wrong type of the argument
      */
     protected abstract suspend fun receive(message: T)
-
 
     internal override suspend fun onMessage(message: T) {
         receive(message)
