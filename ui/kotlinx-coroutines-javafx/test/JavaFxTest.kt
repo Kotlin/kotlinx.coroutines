@@ -11,6 +11,18 @@ import org.junit.Test
 import kotlin.test.*
 
 class JavaFxTest : TestBase() {
+
+    companion object {
+        val fxEnabled: Boolean = try {
+            initPlatform()
+            true
+        } catch (e: Throwable) {
+            println("Skipping JavaFxTest in headless environment")
+            false
+        }
+
+    }
+
     @Before
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-")
@@ -18,12 +30,9 @@ class JavaFxTest : TestBase() {
 
     @Test
     fun testDelay() {
-        try {
-            initPlatform()
-        } catch (e: UnsupportedOperationException) {
-            println("Skipping JavaFxTest in headless environment")
-            return // ignore test in headless environments
-        }
+       if (!fxEnabled) {
+           return // ignore test in headless environments
+       }
 
         runBlocking {
             expect(1)
@@ -41,10 +50,7 @@ class JavaFxTest : TestBase() {
 
     @Test
     fun testRunBlockingForbidden() {
-        try {
-            initPlatform()
-        } catch (e: UnsupportedOperationException) {
-            println("Skipping JavaFxTest in headless environment")
+        if (!fxEnabled) {
             return // ignore test in headless environments
         }
 
