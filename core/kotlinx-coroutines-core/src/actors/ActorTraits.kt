@@ -51,8 +51,14 @@ abstract class ActorTraits {
     public abstract fun kill()
 
     /**
+     *
+     */
+    protected open suspend fun onStart() {}
+
+    /**
      * Handler which is invoked when actor is closed or killed.
      * It's guaranteed that on the moment of invocation no more messages will be processed by the actor.
+     * This handler is invoked even if actor wasn't started
      */
     protected open fun onClose() {}
 

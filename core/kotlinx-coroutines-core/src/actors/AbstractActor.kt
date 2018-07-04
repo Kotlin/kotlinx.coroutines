@@ -36,6 +36,7 @@ abstract class AbstractActor<T>(
     private suspend fun actorLoop() {
         var exception: Throwable? = null
         try {
+            onStart()
             for (message in mailbox) {
                 onMessage(message)
             }

@@ -1,7 +1,6 @@
 package kotlinx.coroutines.experimental.actors
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
 import kotlin.coroutines.experimental.*
 
 
