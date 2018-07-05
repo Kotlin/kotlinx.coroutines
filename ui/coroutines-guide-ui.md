@@ -572,23 +572,21 @@ We also need a convenient way to retrieve a job for any view in the application.
 an activity is an Android `Context` of the views in it, so we can define the following `View.contextJob` extension property:
 
 ```kotlin
-val View.contextJob: Job
-    get() = (context as? JobHolder)?.job ?: NonCancellable
+val View.contextJob: Job?
+    get() = (context as? JobHolder)?.job
 ```
 
-Here we use [NonCancellable] implementation of the `Job` as a null-object for the case where our `contextJob`
-extension property is invoked in a context that does not have an attached job.
+A convenience of having a `contextJob` available is that we can simply use it as the parent of all the coroutines
+we start without having to worry about explicitly maintaining a list of the coroutines we had
+started. All the life-cycle management will be taken care of by the mechanics of parent-child relations between
+jobs.
 
-A convenience of having a `contextJob` available is that we can simply use it to start all the coroutines
-without having to worry about explicitly maintaining a list of the coroutines we had started. 
-All the life-cycle management will be taken care of by the mechanics of parent-child relations between jobs.
- 
-For example, `View.onClick` extension from the previous section can now be defined using `contextJob`:
- 
+For example, the `View.onClick` extension from the previous section can now be defined using `contextJob`:
+
 ```kotlin
 fun View.onClick(action: suspend () -> Unit) {
     // launch one actor as a parent of the context job
-    val eventActor = actor<Unit>(contextJob + UI, capacity = Channel.CONFLATED) {
+    val eventActor = actor<Unit>(UI, parent = contextJob, capacity = Channel.CONFLATED) {
         for (event in channel) action()
     }
     // install a listener to activate this actor
@@ -598,14 +596,13 @@ fun View.onClick(action: suspend () -> Unit) {
 }
 ```
 
-Notice how `contextJob + UI` expression is used to start an actor in the above code. It defines a coroutine context
-for our new actor that includes the job and the `UI` dispatcher. The coroutine that is started by this 
-`actor(contextJob + UI)` expression is going to become a child of the job of the corresponding context. When the 
-activity is destroyed and its job is cancelled all its children coroutines are cancelled, too. 
+Notice how we used `parent = contextJob` to start an actor in the above code. The coroutine that is started this
+way is going to become a child of the job of the corresponding context. When the activity is destroyed and its job
+is cancelled, all its children coroutines are cancelled, too.
 
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
-when the parent job is cancelled. An example of that is shown in 
+when the parent job is cancelled. An example of that is shown in the
 ["Children of a coroutine"](../coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
 
 ### Starting coroutine in UI event handlers without dispatch
