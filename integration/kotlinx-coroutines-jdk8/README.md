@@ -1,12 +1,12 @@
 # Module kotlinx-coroutines-jdk8
 
-Integration with JDK8 [`CompletableFuture`][java.util.concurrent.CompletableFuture] (Android API level 24).
+Integration with JDK8 [CompletableFuture] (Android API level 24).
 
 Coroutine builders:
 
-| **Name** | **Result** | **Scope**  | **Description**
-| -------- | ---------- | ---------- | ---------------
-| [future] | [CompletableFuture][java.util.concurrent.CompletableFuture] | [CoroutineScope] | Returns a single value with the future result 
+| **Name** | **Result**          | **Scope**        | **Description**
+| -------- | ------------------- | ---------------- | ---------------
+| [future] | [CompletableFuture] | [CoroutineScope] | Returns a single value with the future result 
 
 Extension functions:
 
@@ -47,7 +47,9 @@ that makes it especially bad choice for coroutine-based Kotlin code.
 
 # Package kotlinx.coroutines.experimental.future
 
-Integration with JDK8 [`CompletableFuture`][java.util.concurrent.CompletableFuture] (Android API level 24).
+Integration with JDK8 [CompletableFuture] (Android API level 24).
+
+[CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
 
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
