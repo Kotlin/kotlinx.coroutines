@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 dependencies {
     compile ("org.jetbrains.kotlinx:kotlinx-io-jvm:0.0.8") {
         exclude(group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib')
