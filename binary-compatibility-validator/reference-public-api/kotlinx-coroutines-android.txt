@@ -10,8 +10,10 @@ public final class kotlinx/coroutines/experimental/android/HandlerContext : kotl
 	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getImmediate ()Lkotlinx/coroutines/experimental/android/HandlerContext;
 	public fun hashCode ()I
 	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun isDispatchNeeded (Lkotlin/coroutines/experimental/CoroutineContext;)Z
 	public fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
