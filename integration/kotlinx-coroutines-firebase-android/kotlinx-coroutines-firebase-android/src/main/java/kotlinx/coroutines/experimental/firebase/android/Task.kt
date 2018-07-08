@@ -1,6 +1,7 @@
 package kotlinx.coroutines.experimental.firebase.android
 
 import com.google.android.gms.tasks.Task
+import kotlinx.coroutines.experimental.suspendCancellableCoroutine
 import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
@@ -13,14 +14,11 @@ import kotlin.coroutines.experimental.suspendCoroutine
  * Firebase [com.google.android.gms.tasks.OnCompleteListener] interface.
  *
  */
-private suspend fun <T> awaitTask(task: Task<T>): T = suspendCoroutine { continuation ->
-    task.addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            continuation.resume(task.result)
-        } else {
-            continuation.resumeWithException(task.exception!!)
-        }
-    }
+private suspend fun <T> awaitTask(task: Task<T>): T = suspendCancellableCoroutine { continuation ->
+    task
+            .addOnSuccessListener(continuation::resume)
+            .addOnFailureListener(continuation::resumeWithException)
+            .addOnCanceledListener { continuation.cancel() }
 }
 
 /**
