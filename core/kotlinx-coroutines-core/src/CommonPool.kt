@@ -58,7 +58,7 @@ object CommonPool : CoroutineDispatcher() {
         // Reflection on ForkJoinPool class so that it works on JDK 6 (which is absent there)
         val fjpClass = Try { Class.forName("java.util.concurrent.ForkJoinPool") }
             ?: return createPlainPool() // Fallback to plain thread pool
-        // Try to use commonPool unless parallelism was explicitly specified or int debug privatePool mode
+        // Try to use commonPool unless parallelism was explicitly specified or in debug privatePool mode
         if (!usePrivatePool && requestedParallelism < 0) {
             Try { fjpClass.getMethod("commonPool")?.invoke(null) as? ExecutorService }
                 ?.takeIf { isGoodCommonPool(fjpClass, it) }
@@ -74,8 +74,13 @@ object CommonPool : CoroutineDispatcher() {
     /**
      * Checks that this ForkJoinPool's parallelism is at least one to avoid pathological bugs.
      */
-    private fun isGoodCommonPool(fjpClass: Class<*>, executor: ExecutorService): Boolean {
-        val actual = Try { fjpClass.getMethod("getParallelism").invoke(executor) as? Int }
+    internal fun isGoodCommonPool(fjpClass: Class<*>, executor: ExecutorService): Boolean {
+        // We cannot use getParallelism, since it lies to us (always returns at least 1)
+        // So we submit a task and check that getPoolSize is at least one after that
+        // A broken FJP (that is configured for 0 parallelism) would not execute the task and
+        // would report its pool size as zero.
+        executor.submit {}
+        val actual = Try { fjpClass.getMethod("getPoolSize").invoke(executor) as? Int }
             ?: return false
         return actual >= 1
     }
