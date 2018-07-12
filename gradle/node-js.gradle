@@ -43,3 +43,12 @@ task populateNodeModules(type: Copy, dependsOn: [compileKotlin2Js]) {
 }
 
 npmInstall.dependsOn populateNodeModules
+
+// Workaround the problem with Node downloading
+repositories.whenObjectAdded {
+    if (it instanceof IvyArtifactRepository) {
+        metadataSources {
+            artifact()
+        }
+    }
+}

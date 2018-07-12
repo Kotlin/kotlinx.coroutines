@@ -101,10 +101,13 @@ def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibil
 
 // Reconfigure source sets to avoid long "src/main/kotlin/fqn"
 configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
+    def projectName = it.name
     sourceSets {
         main.kotlin.srcDirs = ['src']
         test.kotlin.srcDirs = ['test']
-        main.resources.srcDirs = ['resources']
+        if (!projectName.endsWith("-native")) {
+            main.resources.srcDirs = ['resources']
+        }
     }
 }
 
@@ -135,7 +138,7 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 // --------------- Configure sub-projects that are published ---------------
 
 // todo: native is not published yet
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'kotlinx-coroutines-core-native']
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"

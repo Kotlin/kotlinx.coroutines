@@ -5,8 +5,8 @@
 package kotlinx.coroutines.experimental.sync
 
 import kotlinx.coroutines.experimental.*
-import kotlin.test.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class MutexTest : TestBase() {
     @Test
@@ -87,7 +87,7 @@ class MutexTest : TestBase() {
 
         // owner firstOwner
         mutex.lock(firstOwner)
-        val secondLockJob = launch {
+        val secondLockJob = launch(coroutineContext) {
             mutex.lock(secondOwner)
         }
 

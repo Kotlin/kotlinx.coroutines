@@ -11,5 +11,8 @@ internal actual fun <E> arraycopy(
     destinationStart: Int,
     length: Int
 ) {
-    System.arraycopy(source, srcPos, destination, destinationStart, length)
+    var destinationIndex = destinationStart
+    for (sourceIndex in srcPos until srcPos + length) {
+        destination[destinationIndex++] = source[sourceIndex]
+    }
 }

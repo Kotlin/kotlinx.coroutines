@@ -43,7 +43,7 @@ internal class CopyOnWriteList<E>(private var array: Array<E> = emptyArray()) : 
     }
 
     override fun removeAt(index: Int): E {
-        modCount++
+        rangeCheck(index)
         val copy = array.asDynamic().slice()
         val result = if (index == lastIndex) {
             copy.pop()

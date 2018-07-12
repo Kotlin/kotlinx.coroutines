@@ -4,8 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
@@ -32,6 +31,7 @@ public open class LinkedListChannel<E> : AbstractChannel<E>() {
                     when (sendResult) {
                         null -> return OFFER_SUCCESS
                         is Closed<*> -> return sendResult
+                        else -> Unit // todo:KLUDGE: works around native BE bug
                     }
                     // otherwise there was receiver in queue, retry super.offerInternal
                 }

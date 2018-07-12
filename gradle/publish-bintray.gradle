@@ -8,38 +8,21 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+apply from: project.rootProject.file('gradle/maven-central.gradle')
+
 def platform = platformOf(project)
 def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 
-// --------------- pom configuration ---------------
-
-def pomConfig = {
-    licenses {
-        license {
-            name "The Apache Software License, Version 2.0"
-            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            distribution "repo"
-        }
-    }
-    developers {
-        developer {
-            id "JetBrains"
-            name "JetBrains Team"
-            organization "JetBrains"
-            organizationUrl "http://www.jetbrains.com"
-        }
-    }
-
-    scm {
-        url "https://github.com/Kotlin/kotlinx.coroutines"
-    }
-}
-
 // ------------- tasks
+
+def isNative = project.name.endsWith("native")
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
-    from sourceSets.main.allSource
+    if (!isNative) {
+        from sourceSets.main.allSource
+    }
+
     if (project.name == coroutines_core && platform != "common") {
         // add common source, too
         from rootProject.file("common/$project.name-common/src/main/kotlin")
@@ -47,18 +30,18 @@ task sourcesJar(type: Jar) {
 }
 
 publishing {
+    repositories {
+        maven { url = 'https://kotlin.bintray.com/kotlinx' }
+    }
+
     publications {
         maven(MavenPublication) {
-            from components.java
-            artifact javadocJar
-            artifact sourcesJar
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('name', project.name)
-                root.appendNode('description', 'Coroutines support libraries for Kotlin')
-                root.appendNode('url', 'https://github.com/Kotlin/kotlinx.coroutines')
-                root.children().last() + pomConfig
+            if (!isNative) {
+                from components.java
+                artifact javadocJar
+                artifact sourcesJar
             }
+            pom.withXml(configureMavenCentralMetadata)
         }
     }
 }
@@ -66,6 +49,7 @@ publishing {
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    override = true // for multi-platform Kotlin/Native publishing
     publications = ['maven']
     pkg {
         userOrg = 'kotlin'
@@ -74,11 +58,18 @@ bintray {
         version {
             name = project.version
             vcsTag = project.version
-            released  = new Date()
+            released = new Date()
         }
     }
 }
 
-bintrayUpload.doLast {
-    println("Uploaded $project.name version $project.version")
+// TODO :kludge this is required for K/N publishing
+bintrayUpload.dependsOn publishToMavenLocal
+
+// This is for easier debugging of bintray uploading problems
+bintrayUpload.doFirst {
+    publications = project.publishing.publications.findAll { !it.name.contains('-test') }.collect {
+        println("Uploading artifact '$it.groupId:$it.artifactId:$it.version' from publication '$it.name'")
+        it
+    }
 }

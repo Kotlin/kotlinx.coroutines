@@ -4,8 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.ALREADY_SELECTED
-import kotlinx.coroutines.experimental.selects.SelectInstance
+import kotlinx.coroutines.experimental.selects.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -43,6 +42,7 @@ public open class ConflatedChannel<E> : AbstractChannel<E>() {
                     when (sendResult) {
                         null -> return OFFER_SUCCESS
                         is Closed<*> -> return sendResult
+                        else -> Unit // todo:KLUDGE: works around native BE bug
                     }
                     // otherwise there was receiver in queue, retry super.offerInternal
                 }
