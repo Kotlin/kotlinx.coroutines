@@ -56,6 +56,8 @@ public interface Mutex {
      * This function can be used in [select] invocation with [onLock] clause.
      * Use [tryLock] to try acquire lock without waiting.
      *
+     * This function is fair; suspended callers are resumed in first-in-first-out order.
+     *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        is already locked with the same token (same identity), this function throws [IllegalStateException].
      */
