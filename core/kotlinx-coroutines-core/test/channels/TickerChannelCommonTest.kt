@@ -12,7 +12,7 @@ import org.junit.runners.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class TimerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
+class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic

@@ -172,8 +172,8 @@ public suspend inline fun <T> suspendCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
-    suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, resumeMode = MODE_CANCELLABLE)
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_CANCELLABLE)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
@@ -191,8 +191,8 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
-    suspendCoroutineOrReturn { cont ->
-        val cancellable = CancellableContinuationImpl(cont, resumeMode = MODE_ATOMIC_DEFAULT)
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_ATOMIC_DEFAULT)
         if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()

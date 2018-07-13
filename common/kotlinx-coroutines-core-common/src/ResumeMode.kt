@@ -4,7 +4,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 @PublishedApi internal const val MODE_ATOMIC_DEFAULT = 0 // schedule non-cancellable dispatch for suspendCoroutine
 @PublishedApi internal const val MODE_CANCELLABLE = 1    // schedule cancellable dispatch for suspendCancellableCoroutine
@@ -32,6 +33,28 @@ internal fun <T> Continuation<T>.resumeWithExceptionMode(exception: Throwable, m
         MODE_CANCELLABLE -> resumeCancellableWithException(exception)
         MODE_DIRECT -> resumeDirectWithException(exception)
         MODE_UNDISPATCHED -> (this as DispatchedContinuation).resumeUndispatchedWithException(exception)
+        MODE_IGNORE -> {}
+        else -> error("Invalid mode $mode")
+    }
+}
+
+internal fun <T> Continuation<T>.resumeUninterceptedMode(value: T, mode: Int) {
+    when (mode) {
+        MODE_ATOMIC_DEFAULT -> intercepted().resume(value)
+        MODE_CANCELLABLE -> intercepted().resumeCancellable(value)
+        MODE_DIRECT -> resume(value)
+        MODE_UNDISPATCHED -> resume(value)
+        MODE_IGNORE -> {}
+        else -> error("Invalid mode $mode")
+    }
+}
+
+internal fun <T> Continuation<T>.resumeUninterceptedWithExceptionMode(exception: Throwable, mode: Int) {
+    when (mode) {
+        MODE_ATOMIC_DEFAULT -> intercepted().resumeWithException(exception)
+        MODE_CANCELLABLE -> intercepted().resumeCancellableWithException(exception)
+        MODE_DIRECT -> resumeWithException(exception)
+        MODE_UNDISPATCHED -> resumeWithException(exception)
         MODE_IGNORE -> {}
         else -> error("Invalid mode $mode")
     }

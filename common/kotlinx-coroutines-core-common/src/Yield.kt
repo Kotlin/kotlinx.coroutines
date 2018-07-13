@@ -15,10 +15,10 @@ import kotlin.coroutines.experimental.intrinsics.*
  * If the [Job] of the current coroutine is cancelled or completed when this suspending function is invoked or while
  * this function is waiting for dispatching, it resumes with [CancellationException].
  */
-public suspend fun yield(): Unit = suspendCoroutineOrReturn sc@ { cont ->
-    val context = cont.context
+public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
+    val context = uCont.context
     context.checkCompletion()
-    if (cont !is DispatchedContinuation<Unit>) return@sc Unit
+    val cont = uCont.intercepted() as? DispatchedContinuation<Unit> ?: return@sc Unit
     if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
     cont.dispatchYield(Unit)
     COROUTINE_SUSPENDED

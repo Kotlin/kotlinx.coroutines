@@ -169,9 +169,8 @@ public interface SelectInstance<in R> {
  * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
  */
 public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    // TODO suspendCoroutineUnintercepted
-    suspendCoroutineOrReturn { cont ->
-        val scope = SelectBuilderImpl(cont)
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val scope = SelectBuilderImpl(uCont)
         try {
             builder(scope)
         } catch (e: Throwable) {
@@ -187,7 +186,7 @@ private val RESUMED: Any = Symbol("RESUMED")
 
 @PublishedApi
 internal class SelectBuilderImpl<in R>(
-    private val delegate: Continuation<R>
+    private val uCont: Continuation<R> // unintercepted delegate continuation
 ) : LockFreeLinkedListHead(), SelectBuilder<R>,
     SelectInstance<R>, Continuation<R> {
     // selection state is "this" (list of nodes) initially and is replaced by idempotent marker (or null) when selected
@@ -216,7 +215,7 @@ internal class SelectBuilderImpl<in R>(
               +-------------------+
      */
 
-    override val context: CoroutineContext get() = delegate.context
+    override val context: CoroutineContext get() = uCont.context
 
     override val completion: Continuation<R> get() = this
 
@@ -239,21 +238,21 @@ internal class SelectBuilderImpl<in R>(
     // Resumes in MODE_DIRECT
     override fun resume(value: R) {
         doResume({ value }) {
-            delegate.resumeDirect(value)
+            uCont.resume(value)
         }
     }
 
     // Resumes in MODE_DIRECT
     override fun resumeWithException(exception: Throwable) {
         doResume({ Fail(exception) }) {
-            delegate.resumeDirectWithException(exception)
+            uCont.resumeWithException(exception)
         }
     }
 
     // Resumes in MODE_CANCELLABLE
     override fun resumeSelectCancellableWithException(exception: Throwable) {
         doResume({ Fail(exception) }) {
-            delegate.resumeCancellableWithException(exception)
+            uCont.intercepted().resumeCancellableWithException(exception)
         }
     }
 

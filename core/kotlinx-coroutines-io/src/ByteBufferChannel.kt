@@ -2216,10 +2216,10 @@ internal class ByteBufferChannel(
     private suspend fun readSuspendImpl(size: Int): Boolean {
         if (!readSuspendPredicate(size)) return true
 
-        return suspendCoroutineOrReturn { raw ->
+        return suspendCoroutineUninterceptedOrReturn { uCont ->
             val c = readSuspendContinuationCache
             suspensionForSize(size, c)
-            c.swap(raw)
+            c.swap(uCont.intercepted())
         }
     }
 
@@ -2269,13 +2269,15 @@ internal class ByteBufferChannel(
 
         writeSuspensionSize = size
         if (attachedJob != null) {
-            return suspendCoroutineOrReturn(writeSuspension)
+            return suspendCoroutineUninterceptedOrReturn { uCont ->
+                writeSuspension(uCont.intercepted())
+            }
         }
 
-        return suspendCoroutineOrReturn { raw ->
+        return suspendCoroutineUninterceptedOrReturn { uCont ->
             val c = writeSuspendContinuationCache
             writeSuspension(c)
-            c.swap(raw)
+            c.swap(uCont.intercepted())
         }
     }
 

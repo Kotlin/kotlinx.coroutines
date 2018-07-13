@@ -253,16 +253,16 @@ private abstract class BlockingAdapter(val parent: Job? = null) {
     protected suspend inline fun rendezvous(rc: Int): Any {
         result.value = rc
 
-        return suspendCoroutineOrReturn { c ->
+        return suspendCoroutineUninterceptedOrReturn { uCont ->
             var thread: Thread? = null
 
             state.update { value ->
                 when (value) {
                     is Thread -> {
                         thread = value
-                        c
+                        uCont.intercepted()
                     }
-                    this -> c
+                    this -> uCont.intercepted()
                     else -> throw IllegalStateException("Already suspended or in finished state")
                 }
             }

@@ -19,8 +19,8 @@ import kotlin.coroutines.experimental.intrinsics.*
  * See [select] function description for all the other details.
  */
 public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<R>.() -> Unit): R =
-    suspendCoroutineOrReturn { cont ->
-        val scope = UnbiasedSelectBuilderImpl(cont)
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val scope = UnbiasedSelectBuilderImpl(uCont)
         try {
             builder(scope)
         } catch (e: Throwable) {
@@ -31,9 +31,9 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
 
 
 @PublishedApi
-internal class UnbiasedSelectBuilderImpl<in R>(cont: Continuation<R>) :
+internal class UnbiasedSelectBuilderImpl<in R>(uCont: Continuation<R>) :
     SelectBuilder<R> {
-    val instance = SelectBuilderImpl(cont)
+    val instance = SelectBuilderImpl(uCont)
     val clauses = arrayListOf<() -> Unit>()
 
     @PublishedApi

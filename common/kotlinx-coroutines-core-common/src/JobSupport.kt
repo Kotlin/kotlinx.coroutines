@@ -402,10 +402,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     public final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
-            return suspendCoroutineOrReturn { cont ->
-                cont.context.checkCompletion()
-                Unit // do not suspend
-            }
+            coroutineContext.checkCompletion()
+            return // do not suspend
         }
         return joinSuspend() // slow-path wait
     }

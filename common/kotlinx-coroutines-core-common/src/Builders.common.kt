@@ -106,27 +106,27 @@ public suspend fun <T> withContext(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
-): T = suspendCoroutineOrReturn sc@ { cont ->
-    val oldContext = cont.context
+): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
+    val oldContext = uCont.context
     // fast path #1 if there is no change in the actual context:
     if (context === oldContext || context is CoroutineContext.Element && oldContext[context.key] === context)
-        return@sc block.startCoroutineUninterceptedOrReturn(cont)
+        return@sc block.startCoroutineUninterceptedOrReturn(uCont)
     // compute new context
     val newContext = oldContext + context
     // fast path #2 if the result is actually the same
     if (newContext === oldContext)
-        return@sc block.startCoroutineUninterceptedOrReturn(cont)
+        return@sc block.startCoroutineUninterceptedOrReturn(uCont)
     // fast path #3 if the new dispatcher is the same as the old one.
     // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
     if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
-        val newContinuation = RunContinuationDirect(newContext, cont)
+        val newContinuation = RunContinuationDirect(newContext, uCont)
         return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
     }
     // slowest path otherwise -- use new interceptor, sync to its result via a full-blown instance of RunCompletion
     require(!start.isLazy) { "$start start is not supported" }
     val completion = RunCompletion(
         context = newContext,
-        delegate = cont,
+        delegate = uCont.intercepted(), // delegate to continuation intercepted with old dispatcher on completion
         resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE
     )
     completion.initParentJobInternal(newContext[Job]) // attach to job

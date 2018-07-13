@@ -19,9 +19,9 @@ internal class InlineRendezvousSwap<T : Any> {
     private val receiverCont = MutableDelegateContinuation<T>()
 
     @Suppress("NOTHING_TO_INLINE")
-    suspend inline fun send(e: T) = suspendCoroutineOrReturn<Unit> { c ->
+    suspend inline fun send(e: T) = suspendCoroutineUninterceptedOrReturn<Unit> { uCont ->
         val result = try {
-            senderCont.swap(c)
+            senderCont.swap(uCont.intercepted())
         } catch (t: Throwable) {
             receiverCont.resumeWithException(t)
             throw t
@@ -32,9 +32,9 @@ internal class InlineRendezvousSwap<T : Any> {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    suspend inline fun receive(): T = suspendCoroutineOrReturn { c ->
+    suspend inline fun receive(): T = suspendCoroutineUninterceptedOrReturn { uCont ->
         val result = try {
-            receiverCont.swap(c)
+            receiverCont.swap(uCont.intercepted())
         } catch (t: Throwable) {
             senderCont.resumeWithException(t)
             throw t

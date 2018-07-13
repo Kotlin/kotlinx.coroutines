@@ -51,8 +51,8 @@ public suspend fun <T> withTimeout(time: Int, block: suspend CoroutineScope.() -
  */
 public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T {
     if (time <= 0L) throw CancellationException("Timed out immediately")
-    return suspendCoroutineOrReturn { cont: Continuation<T> ->
-        setupTimeout(TimeoutCoroutine(time, unit, cont), block)
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
+        setupTimeout(TimeoutCoroutine(time, unit, uCont), block)
     }
 }
 
@@ -61,7 +61,7 @@ private fun <U, T: U> setupTimeout(
     block: suspend CoroutineScope.() -> T
 ): Any? {
     // schedule cancellation of this coroutine on time
-    val cont = coroutine.cont
+    val cont = coroutine.uCont
     val context = cont.context
     coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine.unit, coroutine))
     // restart block using new coroutine with new job,
@@ -79,8 +79,8 @@ public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISE
 private open class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
     @JvmField val unit: TimeUnit,
-    @JvmField val cont: Continuation<U>
-) : AbstractCoroutine<T>(cont.context, active = true), Runnable, Continuation<T> {
+    @JvmField val uCont: Continuation<U> // unintercepted continuation
+) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T> {
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
     @Suppress("LeakingThis")
@@ -91,9 +91,9 @@ private open class TimeoutCoroutine<U, in T: U>(
     @Suppress("UNCHECKED_CAST")
     internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally)
-            cont.resumeWithExceptionMode(state.cause, mode)
+            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
         else
-            cont.resumeMode(state as T, mode)
+            uCont.resumeUninterceptedMode(state as T, mode)
     }
 
     override fun nameString(): String =
@@ -140,8 +140,8 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
  */
 public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T? {
     if (time <= 0L) return null
-    return suspendCoroutineOrReturn { cont: Continuation<T?> ->
-        setupTimeout(TimeoutOrNullCoroutine(time, unit, cont), block)
+    return suspendCoroutineUninterceptedOrReturn { uCont ->
+        setupTimeout(TimeoutOrNullCoroutine(time, unit, uCont), block)
     }
 }
 
@@ -155,17 +155,17 @@ public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.M
 private class TimeoutOrNullCoroutine<T>(
     time: Long,
     unit: TimeUnit,
-    cont: Continuation<T?>
-) : TimeoutCoroutine<T?, T>(time, unit, cont) {
+    uCont: Continuation<T?> // unintercepted continuation
+) : TimeoutCoroutine<T?, T>(time, unit, uCont) {
     @Suppress("UNCHECKED_CAST")
     internal override fun onCompletionInternal(state: Any?, mode: Int) {
         if (state is CompletedExceptionally) {
             val exception = state.cause
             if (exception is TimeoutCancellationException && exception.coroutine === this)
-                cont.resumeMode(null, mode) else
-                cont.resumeWithExceptionMode(exception, mode)
+                uCont.resumeUninterceptedMode(null, mode) else
+                uCont.resumeUninterceptedWithExceptionMode(exception, mode)
         } else
-            cont.resumeMode(state as T, mode)
+            uCont.resumeUninterceptedMode(state as T, mode)
     }
 }
 
