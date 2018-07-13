@@ -3,12 +3,12 @@
  */
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental.selects
+package kotlinx.coroutines.selects
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class SelectRendezvousChannelTest : TestBase() {

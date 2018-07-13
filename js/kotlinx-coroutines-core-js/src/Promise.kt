@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.js.*
 
 /**
@@ -38,7 +38,7 @@ public fun <T> CoroutineScope.promise(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.*"])
+        imports = ["kotlinx.coroutines.*"])
 )
 public fun <T> promise(
     context: CoroutineContext = Dispatchers.Default,
@@ -55,7 +55,7 @@ public fun <T> promise(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.*"])
+        imports = ["kotlinx.coroutines.*"])
 )
 public fun <T> promise(
     context: CoroutineContext = Dispatchers.Default,

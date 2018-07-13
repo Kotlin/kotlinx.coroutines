@@ -535,7 +535,7 @@
 ## Version 0.11-rc
 
 * `select` expression with onJoin/onAwait/onSend/onReceive clauses.
-* `Mutex` is moved to `kotlinx.coroutines.experimental.sync` package.
+* `Mutex` is moved to `kotlinx.coroutines.sync` package.
 * `ClosedSendChannelException` is a subclass of `CancellationException` now.
 * New sections on "Shared mutable state and concurrency" and "Select expression" 
   in [coroutines guide](coroutines-guide.md).

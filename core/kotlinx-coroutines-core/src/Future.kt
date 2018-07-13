@@ -5,7 +5,7 @@
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import java.util.concurrent.*
 

@@ -2,17 +2,18 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.quasar
+package kotlinx.coroutines.quasar
 
 import co.paralleluniverse.fibers.Fiber
 import co.paralleluniverse.fibers.FiberAsync
 import co.paralleluniverse.fibers.SuspendExecution
 import co.paralleluniverse.fibers.Suspendable
 import co.paralleluniverse.strands.SuspendableCallable
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.*
 
 /**
  * Runs Quasar-instrumented suspendable code from Kotlin coroutine.
@@ -45,8 +46,12 @@ private class CoroutineAsync<T>(
 ) : FiberAsync<T, Throwable>(), Continuation<T> {
     override val context: CoroutineContext =
         GlobalScope.newCoroutineContext(Fiber.currentFiber().scheduler.executor.asCoroutineDispatcher())
-    override fun resume(value: T) { asyncCompleted(value) }
-    override fun resumeWithException(exception: Throwable) { asyncFailed(exception) }
+
+    override fun resumeWith(result: SuccessOrFailure<T>) {
+        result
+            .onSuccess { asyncCompleted(it) }
+            .onFailure { asyncFailed(it) }
+    }
 
     override fun requestAsync() {
         block.startCoroutine(completion = this)

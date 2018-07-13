@@ -4,6 +4,7 @@
 
 dependencies {
     testCompile "com.devexperts.lincheck:core:$lincheck_version"
+    testCompile "com.esotericsoftware:kryo:4.0.0"
 }
 
 task checkJdk16() {
@@ -27,7 +28,7 @@ tasks.withType(Test) {
     minHeapSize = '1g'
     maxHeapSize = '1g'
     enableAssertions = true
-    systemProperty 'java.security.manager', 'kotlinx.coroutines.experimental.TestSecurityManager'
+    systemProperty 'java.security.manager', 'kotlinx.coroutines.TestSecurityManager'
 }
 
 test {

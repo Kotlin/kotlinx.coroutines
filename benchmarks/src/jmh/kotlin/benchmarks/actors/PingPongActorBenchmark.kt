@@ -5,11 +5,11 @@
 package benchmarks.actors
 
 import benchmarks.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /*
  * Benchmark                                   (dispatcher)  Mode  Cnt    Score    Error  Units

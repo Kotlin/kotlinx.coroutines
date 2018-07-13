@@ -2,12 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.exceptions
+package kotlinx.coroutines.exceptions
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.exceptions.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.exceptions.*
+import kotlinx.coroutines.selects.*
 import java.io.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 /*
@@ -17,7 +18,7 @@ class SuppresionTests : TestBase() {
 
     @Test
     fun testCancellationTransparency() = runTest {
-        val deferred = async(kotlin.coroutines.experimental.coroutineContext, CoroutineStart.ATOMIC) {
+        val deferred = async(kotlin.coroutines.coroutineContext, CoroutineStart.ATOMIC) {
             expect(2)
             throw ArithmeticException()
         }
@@ -36,7 +37,7 @@ class SuppresionTests : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
-        val coroutineContext = kotlin.coroutines.experimental.coroutineContext // workaround for KT-22984
+        val coroutineContext = kotlin.coroutines.coroutineContext // workaround for KT-22984
         val coroutine = object : AbstractCoroutine<String>(coroutineContext, false) {
             override fun onStart() {
                 expect(3)

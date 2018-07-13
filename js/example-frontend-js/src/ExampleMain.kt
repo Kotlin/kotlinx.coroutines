@@ -18,14 +18,14 @@
  * limitations under the License.
  */
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlinx.html.*
 import kotlinx.html.div
 import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
 import kotlin.browser.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.math.*
 
 fun main(args: Array<String>) {

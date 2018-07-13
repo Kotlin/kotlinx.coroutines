@@ -5,12 +5,12 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 // --------------- basic coroutine builders ---------------
 
@@ -61,7 +61,7 @@ public fun CoroutineScope.launch(
  */
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.launch(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+    replaceWith = ReplaceWith("GlobalScope.launch(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
 )
 public fun launch(
     context: CoroutineContext = Dispatchers.Default,
@@ -77,7 +77,7 @@ public fun launch(
  */
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+    replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
 )
 public fun launch(
     context: CoroutineContext = Dispatchers.Default,
@@ -236,15 +236,9 @@ private class RunContinuationUnintercepted<in T>(
     override val context: CoroutineContext,
     private val continuation: Continuation<T>
 ): Continuation<T> {
-    override fun resume(value: T) {
+    override fun resumeWith(result: SuccessOrFailure<T>) {
         withCoroutineContext(continuation.context) {
-            continuation.resume(value)
-        }
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        withCoroutineContext(continuation.context) {
-            continuation.resumeWithException(exception)
+            continuation.resumeWith(result)
         }
     }
 }

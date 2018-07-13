@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")
@@ -27,24 +27,14 @@ internal class DispatchedContinuation<in T>(
     override val delegate: Continuation<T>
         get() = this
 
-    override fun resume(value: T) {
+    override fun resumeWith(result: SuccessOrFailure<T>) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context)) {
-            _state = value
+            _state = result.toState()
             resumeMode = MODE_ATOMIC_DEFAULT
             dispatcher.dispatch(context, this)
         } else
-            resumeUndispatched(value)
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context)) {
-            _state = CompletedExceptionally(exception)
-            resumeMode = MODE_ATOMIC_DEFAULT
-            dispatcher.dispatch(context, this)
-        } else
-            resumeUndispatchedWithException(exception)
+            resumeUndispatchedWith(result)
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
@@ -67,6 +57,13 @@ internal class DispatchedContinuation<in T>(
             dispatcher.dispatch(context, this)
         } else
             resumeUndispatchedWithException(exception)
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
+    inline fun resumeUndispatchedWith(result: SuccessOrFailure<T>) {
+        withCoroutineContext(context) {
+            continuation.resumeWith(result)
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack

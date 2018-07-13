@@ -2,15 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.quasar
+package kotlinx.coroutines.quasar
 
 import co.paralleluniverse.fibers.*
 import co.paralleluniverse.strands.*
 import co.paralleluniverse.strands.dataflow.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 class QuasarTest : TestBase() {
     @Before

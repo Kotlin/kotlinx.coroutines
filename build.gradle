@@ -13,6 +13,7 @@ buildscript {
     repositories {
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlinx" }
+        maven { url 'http://dl.bintray.com/kotlin/kotlin-dev' }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }

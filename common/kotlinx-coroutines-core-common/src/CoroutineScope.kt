@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
@@ -61,8 +61,8 @@ public interface CoroutineScope {
      *
      * This property is a shortcut for `coroutineContext.isActive` in the scope when
      * [CoroutineScope] is available.
-     * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
-     * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
+     * See [coroutineContext][kotlin.coroutines.coroutineContext],
+     * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
      *
      * @suppress **Deprecated**: Deprecated in favor of top-level extension property
      */
@@ -97,8 +97,8 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  *
  * This property is a shortcut for `coroutineContext.isActive` in the scope when
  * [CoroutineScope] is available.
- * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
- * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
+ * See [coroutineContext][kotlin.coroutines.coroutineContext],
+ * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public val CoroutineScope.isActive: Boolean

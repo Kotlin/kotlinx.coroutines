@@ -2,7 +2,7 @@
 
 Integration with asynchronous IO on JDK7+ (Android API level 26).
 
-# Package kotlinx.coroutines.experimental.nio
+# Package kotlinx.coroutines.nio
 
 Integration with asynchronous IO on JDK7+ (Android API level 26).
 

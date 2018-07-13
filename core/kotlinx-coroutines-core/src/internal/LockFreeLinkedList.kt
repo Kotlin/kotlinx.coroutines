@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 
@@ -538,7 +538,7 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Finds the head of the list (implementing [LockFreeLinkedListHead]) by following [next] pointers.
      *
-     * The code in [kotlinx.coroutines.experimental.JobSupport] performs upgrade of a single node to a list.
+     * The code in [kotlinx.coroutines.JobSupport] performs upgrade of a single node to a list.
      * It uses [addOneIfEmpty] to add the list head to "empty list of a single node" once.
      * During upgrade a transient state of the list looks like this:
      *

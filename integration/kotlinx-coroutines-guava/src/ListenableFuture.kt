@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.guava
+package kotlinx.coroutines.guava
 
 import com.google.common.util.concurrent.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
@@ -54,7 +54,7 @@ public fun <T> CoroutineScope.future(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
 )
 public fun <T> future(
     context: CoroutineContext = Dispatchers.Default,
@@ -71,7 +71,7 @@ public fun <T> future(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
 )
 public fun <T> future(
     context: CoroutineContext = Dispatchers.Default,
@@ -106,8 +106,11 @@ private class ListenableFutureCoroutine<T>(
 ) : AbstractFuture<T>(), Continuation<T>, CoroutineScope {
     override val coroutineContext: CoroutineContext get() = context
     override val isActive: Boolean get() = context[Job]!!.isActive
-    override fun resume(value: T) { set(value) }
-    override fun resumeWithException(exception: Throwable) { setException(exception) }
+    override fun resumeWith(result: SuccessOrFailure<T>) {
+        result
+            .onSuccess { set(it) }
+            .onFailure { setException(it) }
+    }
     override fun interruptTask() { context[Job]!!.cancel() }
 }
 
@@ -137,7 +140,7 @@ private class DeferredListenableFuture<T>(
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
+ * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  *
  * Note, that `ListenableFuture` does not support removal of installed listeners, so on cancellation of this wait
  * a few small objects will remain in the `ListenableFuture` list of listeners until the future completes. However, the
