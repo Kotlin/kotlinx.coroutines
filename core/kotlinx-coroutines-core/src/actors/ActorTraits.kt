@@ -55,7 +55,7 @@ abstract class ActorTraits {
     /**
      * Handler which is invoked when actor is started
      */
-    protected open fun onStart() {}
+    protected open suspend fun onStart() {}
 
     /**
      * Handler which is invoked when actor is closed or killed.

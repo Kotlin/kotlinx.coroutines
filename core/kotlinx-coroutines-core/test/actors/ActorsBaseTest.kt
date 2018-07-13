@@ -68,7 +68,7 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
             throw IOException()
         }
 
-        override fun onStart() {
+        override suspend fun onStart() {
             whenStarted()
         }
 
@@ -100,7 +100,7 @@ class ActorsBaseTest(private val actorType: ActorType) : TestBase() {
             }
         }
 
-        override fun onStart() {
+        override suspend fun onStart() {
             whenStarted()
         }
 
