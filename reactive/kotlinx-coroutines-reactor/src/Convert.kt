@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactor
+package kotlinx.coroutines.reactor
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import reactor.core.publisher.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Converts this job to the hot reactive mono that signals

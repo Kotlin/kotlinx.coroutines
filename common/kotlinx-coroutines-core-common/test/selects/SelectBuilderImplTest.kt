@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.selects
+package kotlinx.coroutines.selects
 
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.test.*
 
 class SelectBuilderImplTest {
@@ -14,11 +14,10 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resume(value: String) {
-                check(value === "OK")
+            override fun resumeWith(result: SuccessOrFailure<String>) {
+                check(result.getOrNull() == "OK")
                 resumed = true
             }
-            override fun resumeWithException(exception: Throwable) { error("Should not happen") }
         }
         val c = SelectBuilderImpl(delegate)
         // still running builder
@@ -40,11 +39,10 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resume(value: String) {
-                check(value === "OK")
+            override fun resumeWith(result: SuccessOrFailure<String>) {
+                check(result.getOrNull() == "OK")
                 resumed = true
             }
-            override fun resumeWithException(exception: Throwable) { error("Should not happen") }
         }
         val c = SelectBuilderImpl(delegate)
         check(c.getResult() === COROUTINE_SUSPENDED) // suspend first
@@ -66,9 +64,8 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resume(value: String) { error("Should not happen") }
-            override fun resumeWithException(exception: Throwable) {
-                check(exception is TestException)
+            override fun resumeWith(result: SuccessOrFailure<String>) {
+                check(result.exceptionOrNull() is TestException)
                 resumed = true
             }
         }
@@ -97,9 +94,8 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resume(value: String) { error("Should not happen") }
-            override fun resumeWithException(exception: Throwable) {
-                check(exception is TestException)
+            override fun resumeWith(result: SuccessOrFailure<String>) {
+                check(result.exceptionOrNull() is TestException)
                 resumed = true
             }
         }

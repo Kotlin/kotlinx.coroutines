@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -36,13 +36,13 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllLazy() = runTest {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) { 
-            expect(2); 
-            1 
+        val d = async(start = CoroutineStart.LAZY) {
+            expect(2);
+            1
         }
-        val d2 = async(start = CoroutineStart.LAZY) { 
-            expect(3); 
-            2 
+        val d2 = async(start = CoroutineStart.LAZY) {
+            expect(3);
+            2
         }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
         finish(4)

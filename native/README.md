@@ -48,7 +48,7 @@ dependencies {
 sourceSets {
     main {
         component {
-            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64" 
+            targets = ["ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"] 
             outputKinds = [EXECUTABLE]
         }
     }

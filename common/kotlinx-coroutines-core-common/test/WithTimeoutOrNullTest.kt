@@ -5,9 +5,9 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {

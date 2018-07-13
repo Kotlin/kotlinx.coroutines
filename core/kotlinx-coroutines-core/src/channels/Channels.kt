@@ -5,9 +5,9 @@
 @file:JvmMultifileClass
 @file:JvmName("ChannelsKt")
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 // -------- Operations on SendChannel  --------
 

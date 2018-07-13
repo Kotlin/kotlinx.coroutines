@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.internal
 
 @Suppress("UNCHECKED_CAST")
 internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(4)) : AbstractMutableList<E>() {

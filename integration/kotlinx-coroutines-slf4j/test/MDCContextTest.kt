@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.slf4j
+package kotlinx.coroutines.slf4j
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
 import org.slf4j.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class MDCContextTest : TestBase() {
@@ -99,7 +99,7 @@ class MDCContextTest : TestBase() {
     @Test
     fun testContextWithContext() = runTest {
         MDC.put("myKey", "myValue")
-        val mainDispatcher = kotlin.coroutines.experimental.coroutineContext[ContinuationInterceptor]!!
+        val mainDispatcher = kotlin.coroutines.coroutineContext[ContinuationInterceptor]!!
         withContext(Dispatchers.Default + MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
             withContext(mainDispatcher) {

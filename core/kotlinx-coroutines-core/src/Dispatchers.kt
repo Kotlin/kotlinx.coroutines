@@ -4,9 +4,9 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.scheduling.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.

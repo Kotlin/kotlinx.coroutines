@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-package kotlinx.coroutines.experimental.timeunit
+package kotlinx.coroutines.timeunit
 
 public actual enum class TimeUnit {
     MILLISECONDS,

@@ -23,14 +23,14 @@ runFiberBlocking {
 }
 ```
 
-# Package kotlinx.coroutines.experimental.quasar
+# Package kotlinx.coroutines.quasar
 
 Integration with [Quasar](http://docs.paralleluniverse.co/quasar/).
 
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
+<!--- INDEX kotlinx.coroutines -->
 <!--- MODULE kotlinx-coroutines-quasar -->
-<!--- INDEX kotlinx.coroutines.experimental.quasar -->
-[runSuspendable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-quasar/kotlinx.coroutines.experimental.quasar/run-suspendable.html
-[runFiberBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-quasar/kotlinx.coroutines.experimental.quasar/run-fiber-blocking.html
+<!--- INDEX kotlinx.coroutines.quasar -->
+[runSuspendable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-quasar/kotlinx.coroutines.quasar/run-suspendable.html
+[runFiberBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-quasar/kotlinx.coroutines.quasar/run-fiber-blocking.html
 <!--- END -->

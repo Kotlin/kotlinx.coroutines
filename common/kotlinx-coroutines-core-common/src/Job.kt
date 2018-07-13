@@ -5,11 +5,11 @@
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
 
 // --------------- core job interfaces ---------------
 
@@ -58,7 +58,7 @@ import kotlin.coroutines.experimental.*
  * ```
  *
  * A job in the
- * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * represents the coroutine itself.
  * A job is active while the coroutine is working and job's cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException].

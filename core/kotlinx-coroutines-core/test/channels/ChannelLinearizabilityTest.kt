@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
 import com.devexperts.dxlab.lincheck.*
 import com.devexperts.dxlab.lincheck.annotations.*
 import com.devexperts.dxlab.lincheck.paramgen.*
 import com.devexperts.dxlab.lincheck.stress.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import java.io.*
 

@@ -3,9 +3,9 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.compose06
+package kotlinx.coroutines.guide.compose06
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlin.system.*
 
 suspend fun doSomethingUsefulOne(): Int {

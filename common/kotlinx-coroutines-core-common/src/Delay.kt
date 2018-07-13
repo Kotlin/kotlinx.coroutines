@@ -2,18 +2,18 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.timeunit.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.timeunit.*
+import kotlin.coroutines.*
 
 /**
  * This dispatcher _feature_ is implemented by [CoroutineDispatcher] implementations that natively support
  * scheduled execution of tasks.
  *
  * Implementation of this interface affects operation of
- * [delay][kotlinx.coroutines.experimental.delay] and [withTimeout] functions.
+ * [delay][kotlinx.coroutines.delay] and [withTimeout] functions.
  */
 public interface Delay {
     /**
@@ -39,7 +39,7 @@ public interface Delay {
      * [continuation] when the code is already executing in the appropriate thread:
      *
      * ```kotlin
-     * with(continuation) { resumeUndispatched(Unit) }
+     * with(continuation) { resumeUndispatchedWith(Unit) }
      * ```
      */
     fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>)

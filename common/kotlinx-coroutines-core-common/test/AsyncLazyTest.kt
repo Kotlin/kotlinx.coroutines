@@ -4,7 +4,7 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 

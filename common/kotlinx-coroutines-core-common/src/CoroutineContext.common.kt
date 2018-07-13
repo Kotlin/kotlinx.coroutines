@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
@@ -12,7 +12,7 @@ public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 @Deprecated(
     message = "Use Dispatchers.Default",
     replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
+        imports = ["kotlinx.coroutines.Dispatchers"]))
 public expect val DefaultDispatcher: CoroutineDispatcher
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher

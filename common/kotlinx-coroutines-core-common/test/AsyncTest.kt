@@ -4,7 +4,7 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -145,7 +145,7 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testCancellationTransparency() = runTest {
-        val deferred = async(kotlin.coroutines.experimental.coroutineContext, CoroutineStart.ATOMIC) {
+        val deferred = async(kotlin.coroutines.coroutineContext, CoroutineStart.ATOMIC) {
             expect(2)
             throw TestException()
         }

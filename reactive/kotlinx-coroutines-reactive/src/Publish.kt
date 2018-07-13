@@ -2,15 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactive
+package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.sync.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -51,7 +51,7 @@ public fun <T> CoroutineScope.publish(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.publish(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactive.publish"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactive.publish"])
 )
 public fun <T> publish(
     context: CoroutineContext = Dispatchers.Default,
