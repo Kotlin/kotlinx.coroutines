@@ -2,11 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.guide.test
+package kotlinx.coroutines.guide.test
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
 import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*

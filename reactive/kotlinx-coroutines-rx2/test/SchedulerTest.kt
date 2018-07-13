@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+package kotlinx.coroutines.rx2
 
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.hamcrest.core.IsEqual
 import org.hamcrest.core.IsNot
 import org.junit.Assert.assertThat

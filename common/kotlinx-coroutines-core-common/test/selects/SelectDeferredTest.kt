@@ -4,9 +4,9 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental.selects
+package kotlinx.coroutines.selects
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlin.test.*
 
 class SelectDeferredTest : TestBase() {

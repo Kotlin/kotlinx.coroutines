@@ -2,9 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlinx.coroutines.timeunit.*
 
 internal val currentEventLoop = ArrayList<BlockingEventLoop>()
 
@@ -40,7 +41,7 @@ internal object DefaultExecutor : CoroutineDispatcher(), Delay {
 @Deprecated(
     message = "Use Dispatchers.Default",
     replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
+        imports = ["kotlinx.coroutines.Dispatchers"]))
 public actual val DefaultDispatcher: CoroutineDispatcher
     get() = Dispatchers.Default
 
@@ -51,8 +52,8 @@ internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== kotlinx.coroutines.experimental.DefaultDispatcher && combined[ContinuationInterceptor] == null)
-        combined + kotlinx.coroutines.experimental.DefaultDispatcher else combined
+    return if (combined !== kotlinx.coroutines.DefaultDispatcher && combined[ContinuationInterceptor] == null)
+        combined + kotlinx.coroutines.DefaultDispatcher else combined
 }
 
 // No debugging facilities on native

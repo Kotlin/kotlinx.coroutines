@@ -3,10 +3,10 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.exceptions04
+package kotlinx.coroutines.guide.exceptions04
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 

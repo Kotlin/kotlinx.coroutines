@@ -4,12 +4,12 @@
 
 package examples
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.swing.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.swing.*
 import java.text.*
 import java.util.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 fun log(msg: String) = println("${SimpleDateFormat("yyyyMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 

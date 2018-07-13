@@ -1,12 +1,16 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.*
+@file:UseExperimental(ExperimentalTypeInference::class)
+
+package kotlinx.coroutines.reactor
+
+import kotlinx.coroutines.*
 import reactor.core.*
 import reactor.core.publisher.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
@@ -27,6 +31,7 @@ import kotlin.coroutines.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 fun <T> CoroutineScope.mono(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
@@ -44,7 +49,7 @@ fun <T> CoroutineScope.mono(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.mono(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.mono"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactor.mono"])
 )
 fun <T> mono(
     context: CoroutineContext = Dispatchers.Default,

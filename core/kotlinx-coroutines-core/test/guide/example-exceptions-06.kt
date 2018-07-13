@@ -3,10 +3,10 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.exceptions06
+package kotlinx.coroutines.guide.exceptions06
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import java.io.*
 
 fun main(args: Array<String>) = runBlocking {

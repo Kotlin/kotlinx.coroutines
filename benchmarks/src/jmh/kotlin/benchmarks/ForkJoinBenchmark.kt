@@ -4,7 +4,7 @@
 
 package benchmarks
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 

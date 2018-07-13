@@ -4,15 +4,15 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.$$1$$2
+package kotlinx.coroutines.rx2.guide.$$1$$2
 
 -->
 <!--- KNIT     kotlinx-coroutines-rx2/test/guide/.*\.kt -->
 <!--- TEST_OUT kotlinx-coroutines-rx2/test/guide/test/GuideReactiveTest.kt
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.test
+package kotlinx.coroutines.rx2.guide.test
 
-import kotlinx.coroutines.experimental.guide.test.*
+import kotlinx.coroutines.guide.test.*
 import org.junit.Test
 
 class GuideReactiveTest : ReactiveTestBase() {
@@ -87,9 +87,9 @@ Every [receive][ReceiveChannel.receive] invocation consumes an element from the 
 Let us illustrate it with the following example:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -144,9 +144,9 @@ but where `source` used to have [ReceiveChannel] type, it now has reactive strea
 type.
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -224,9 +224,9 @@ as shown in the following example:
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.reactive.*
 -->
 
 ```kotlin
@@ -273,9 +273,9 @@ by the publisher, because it is being cancelled automatically by `consumeEach`:
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -334,9 +334,9 @@ The subscriber is slow. It takes 500 ms to process each item, which is simulated
 
 <!--- INCLUDE
 import io.reactivex.schedulers.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.rx2.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.rx2.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -421,8 +421,8 @@ You can subscribe to subjects from a coroutine just as with any other reactive s
    
 <!--- INCLUDE 
 import io.reactivex.subjects.BehaviorSubject
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.rx2.consumeEach
+import kotlinx.coroutines.*
+import kotlinx.coroutines.rx2.consumeEach
 -->   
    
 ```kotlin
@@ -464,9 +464,9 @@ sequence of updates and to release the main thread:
 
 <!--- INCLUDE
 import io.reactivex.subjects.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.rx2.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.rx2.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -500,9 +500,9 @@ that provides the same logic on top of coroutine channels directly,
 without going through the bridge to the reactive streams:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -564,9 +564,9 @@ It takes a lot of code.
 Here is the corresponding code with coroutines:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.CoroutineContext
 -->
 
 ```kotlin
@@ -611,10 +611,10 @@ are trivial to implement with coroutines. For a bit of challenge and showcase, l
 into the single `fusedFilterMap` operator: 
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -669,12 +669,12 @@ We need to relay all the elements from the source stream until the other stream 
 emits anything. However, we have [select] expression to rescue us in coroutines implementation:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlinx.coroutines.selects.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -741,10 +741,10 @@ us implement
 operator using the later approach:
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 ```kotlin
@@ -758,7 +758,7 @@ fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.p
 ```
 
 Notice, the use of 
-[coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+[coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
 in the invocation of [launch] coroutine builder. It is used to refer
 to the context of the enclosing `publish` coroutine. This way, all the coroutines that are
 being launched here are [children](../docs/coroutines-guide.md#children-of-a-coroutine) of the `publish`
@@ -815,7 +815,7 @@ And the results should be:
 ## Coroutine context
 
 All the example operators that are shown in the previous section have an explicit
-[CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/) 
+[CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/) 
 parameter. In Rx world it roughly corresponds to 
 a [Scheduler](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Scheduler.html).
 
@@ -868,9 +868,9 @@ so the previous example is similar to the following one:
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.CoroutineContext
 -->
 
 ```kotlin
@@ -917,10 +917,10 @@ operator. Let us modify the previous example to observe using `Schedulers.comput
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import io.reactivex.schedulers.Schedulers
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 -->
 
 ```kotlin
@@ -959,8 +959,8 @@ instead of using Rx `subscribe` operator:
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
@@ -1004,8 +1004,8 @@ simply waits its completion using [Job.join]:
 
 <!--- INCLUDE
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
@@ -1054,34 +1054,34 @@ where you can have an arbitrary complex processing in a coroutine. Usually, you 
 coroutines for complex pipelines with fan-in and fan-out between multiple worker coroutines.
 
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
-[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
-[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
-<!--- INDEX kotlinx.coroutines.experimental.channels -->
-[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
-[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
-[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
-[ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html
-[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
-[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
-[BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
-[ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html
-<!--- INDEX kotlinx.coroutines.experimental.selects -->
-[select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
-[whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html
+<!--- INDEX kotlinx.coroutines -->
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
+[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html
+[yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
+[Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
+<!--- INDEX kotlinx.coroutines.channels -->
+[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/index.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
+[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html
+[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/consume-each.html
+[ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/index.html
+[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html
+[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html
+[BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-broadcast-channel/index.html
+[ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-conflated-broadcast-channel/index.html
+<!--- INDEX kotlinx.coroutines.selects -->
+[select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/select.html
+[whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/while-select.html
 <!--- MODULE kotlinx-coroutines-reactive -->
-<!--- INDEX kotlinx.coroutines.experimental.reactive -->
-[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/kotlinx.coroutines.experimental.-coroutine-scope/publish.html
-[org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/consume-each.html
-[org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open-subscription.html
+<!--- INDEX kotlinx.coroutines.reactive -->
+[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/kotlinx.coroutines.-coroutine-scope/publish.html
+[org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/consume-each.html
+[org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.reactive/org.reactivestreams.-publisher/open-subscription.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
-<!--- INDEX kotlinx.coroutines.experimental.rx2 -->
-[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.experimental.rx2/kotlinx.coroutines.experimental.-coroutine-scope/rx-flowable.html
+<!--- INDEX kotlinx.coroutines.rx2 -->
+[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.rx2/kotlinx.coroutines.-coroutine-scope/rx-flowable.html
 <!--- END -->
 
 

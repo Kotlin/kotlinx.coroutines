@@ -3,9 +3,9 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.exceptions01
+package kotlinx.coroutines.guide.exceptions01
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 fun main(args: Array<String>) = runBlocking {
     val job = GlobalScope.launch {

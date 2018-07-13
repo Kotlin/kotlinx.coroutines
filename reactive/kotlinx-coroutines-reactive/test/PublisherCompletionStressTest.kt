@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactive
+package kotlinx.coroutines.reactive
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import java.util.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 class PublisherCompletionStressTest : TestBase() {
     private val N_REPEATS = 10_000 * stressTestMultiplier

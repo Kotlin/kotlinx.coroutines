@@ -3,9 +3,9 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.basic03
+package kotlinx.coroutines.guide.basic03
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 fun main(args: Array<String>) = runBlocking {
     val job = GlobalScope.launch { // launch new coroutine and keep a reference to its Job

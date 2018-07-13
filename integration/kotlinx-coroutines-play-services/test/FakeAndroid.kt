@@ -1,7 +1,7 @@
 package android.os
 
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class Handler(val looper: Looper) {
     fun post(r: Runnable): Boolean {

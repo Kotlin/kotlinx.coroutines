@@ -2,11 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import org.junit.*
-import java.util.concurrent.atomic.*
+import kotlinx.coroutines.*
+import org.junit.After
+import org.junit.Test
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
 

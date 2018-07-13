@@ -4,13 +4,13 @@
 
 @file:Suppress("FunctionName")
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.experimental.channels.Channel.Factory.RENDEZVOUS
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.selects.*
 
 /**
  * Sender's interface to [Channel].
@@ -384,7 +384,7 @@ public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
 /**
  * Creates a channel with the specified buffer capacity (or without a buffer by default).
  * See [Channel] interface documentation for details.
- * 
+ *
  * @throws IllegalArgumentException when [capacity] < -1
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =

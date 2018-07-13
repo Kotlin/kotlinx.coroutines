@@ -2,12 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+@file:UseExperimental(ExperimentalTypeInference::class)
+
+package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.functions.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [single][Single] that will run a given [block] in a coroutine.
@@ -27,6 +30,7 @@ import kotlin.coroutines.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T : Any> CoroutineScope.rxSingle(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T
@@ -44,7 +48,7 @@ public fun <T : Any> CoroutineScope.rxSingle(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.rxSingle(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxSingle"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxSingle"])
 )
 public fun <T : Any> rxSingle(
     context: CoroutineContext = Dispatchers.Default,

@@ -2,12 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+package kotlinx.coroutines
+
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
@@ -70,8 +73,8 @@ public interface CoroutineScope {
      *
      * This property is a shortcut for `coroutineContext.isActive` in the scope when
      * [CoroutineScope] is available.
-     * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
-     * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
+     * See [coroutineContext][kotlin.coroutines.coroutineContext],
+     * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
      *
      * @suppress **Deprecated**: Deprecated in favor of top-level extension property
      */
@@ -91,6 +94,7 @@ public interface CoroutineScope {
  *
  * This is a shorthand for `CoroutineScope(thisScope + context)`.
  */
+@BuilderInference
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
     ContextScope(coroutineContext + context)
 
@@ -106,10 +110,11 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  *
  * This property is a shortcut for `coroutineContext.isActive` in the scope when
  * [CoroutineScope] is available.
- * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
- * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
+ * See [coroutineContext][kotlin.coroutines.coroutineContext],
+ * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+@BuilderInference
 public val CoroutineScope.isActive: Boolean
     get() = coroutineContext[Job]?.isActive ?: true
 

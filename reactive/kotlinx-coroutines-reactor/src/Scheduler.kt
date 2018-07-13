@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactor
+package kotlinx.coroutines.reactor
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import reactor.core.Disposable
 import reactor.core.scheduler.Scheduler
-import java.util.concurrent.*
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher].

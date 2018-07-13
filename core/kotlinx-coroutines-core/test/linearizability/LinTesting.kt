@@ -2,18 +2,18 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import com.devexperts.dxlab.lincheck.Actor
 import com.devexperts.dxlab.lincheck.Result
 import com.devexperts.dxlab.lincheck.verifier.Verifier
 import java.lang.reflect.Method
 import java.util.*
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.startCoroutineUninterceptedOrReturn
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.startCoroutineUninterceptedOrReturn
 
 data class OpResult(val name: String, val value: Any?) {
     override fun toString(): String = "$name=$value"
@@ -45,12 +45,9 @@ class LinTesting {
                 override val context: CoroutineContext
                     get() = EmptyCoroutineContext
 
-                override fun resume(value: Any?) {
+                override fun resumeWith(result: kotlin.Result<Any?>) {
+                    val value = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
                     resumed.get() += OpResult(name, repr(value))
-                }
-
-                override fun resumeWithException(exception: Throwable) {
-                    resumed.get() += OpResult(name, repr(exception))
                 }
             }
             )

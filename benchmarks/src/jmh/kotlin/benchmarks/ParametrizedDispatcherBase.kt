@@ -5,13 +5,13 @@
 package benchmarks
 
 import benchmarks.actors.CORES_COUNT
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.TearDown
 import java.io.Closeable
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Base class to use different [CoroutineContext] in benchmarks via [Param] in inheritors.
