@@ -4,11 +4,11 @@
 
 package benchmarks
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 @Warmup(iterations = 10, time = 1)
 @Measurement(iterations = 10, time = 1)

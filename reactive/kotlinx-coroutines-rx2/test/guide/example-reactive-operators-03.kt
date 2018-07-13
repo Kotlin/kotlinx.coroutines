@@ -3,14 +3,14 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.operators03
+package kotlinx.coroutines.rx2.guide.operators03
 
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlinx.coroutines.selects.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = GlobalScope.publish<T>(context) {
     this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>

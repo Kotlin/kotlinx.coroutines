@@ -5,11 +5,11 @@
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
 
 // --------------- core job interfaces ---------------
 
@@ -63,7 +63,7 @@ import kotlin.coroutines.experimental.*
  * ```
  *
  * A `Job` instance in the
- * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * represents the coroutine itself.
  *
  * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.

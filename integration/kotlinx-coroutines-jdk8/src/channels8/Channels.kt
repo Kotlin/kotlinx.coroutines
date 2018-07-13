@@ -2,17 +2,17 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels8
+package kotlinx.coroutines.channels8
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.stream.Collector
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Creates a [ProducerJob] to read all element of the [Stream].

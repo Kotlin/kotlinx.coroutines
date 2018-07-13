@@ -2,13 +2,16 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+package kotlinx.coroutines.channels
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
@@ -115,6 +118,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * @param block the coroutine code.
  */
 @ObsoleteCoroutinesApi
+@BuilderInference
 public fun <E> CoroutineScope.actor(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
@@ -140,7 +144,7 @@ public fun <E> CoroutineScope.actor(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.actor(context, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.channels.actor"])
 )
 public fun <E> actor(
     context: CoroutineContext = Dispatchers.Default,
@@ -159,7 +163,7 @@ public fun <E> actor(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.actor(context + parent, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.channels.actor"])
 )
 public fun <E> actor(
     context: CoroutineContext = Dispatchers.Default,

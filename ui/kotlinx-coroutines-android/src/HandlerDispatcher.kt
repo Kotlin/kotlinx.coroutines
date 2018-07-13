@@ -4,15 +4,15 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.experimental.android
+package kotlinx.coroutines.android
 
 import android.os.*
 import android.support.annotation.*
 import android.view.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.MainDispatcherFactory
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.MainDispatcherFactory
 import java.lang.reflect.Constructor
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
@@ -95,7 +95,7 @@ private val MainDispatcher: HandlerDispatcher = Main // Alias
 @Deprecated(
     message = "Use HandlerDispatcher",
     replaceWith = ReplaceWith("HandlerDispatcher",
-        imports = ["kotlinx.coroutines.experimental.android.HandlerDispatcher"])
+        imports = ["kotlinx.coroutines.android.HandlerDispatcher"])
 )
 public class HandlerContext private constructor(
     private val handler: Handler,
@@ -148,10 +148,10 @@ public class HandlerContext private constructor(
      */
     @Deprecated(
         message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.android.awaitFrame()")
+        replaceWith = ReplaceWith("kotlinx.coroutines.android.awaitFrame()")
     )
     public suspend fun awaitFrame(): Long =
-        kotlinx.coroutines.experimental.android.awaitFrame()
+        kotlinx.coroutines.android.awaitFrame()
 
     override fun toString(): String =
         if (name != null) {

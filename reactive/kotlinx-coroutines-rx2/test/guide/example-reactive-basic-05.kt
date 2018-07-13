@@ -3,12 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.basic05
+package kotlinx.coroutines.rx2.guide.basic05
 
 import io.reactivex.schedulers.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.rx2.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.rx2.*
+import kotlin.coroutines.*
 
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread

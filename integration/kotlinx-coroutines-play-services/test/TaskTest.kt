@@ -2,18 +2,18 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.tasks
+package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Tasks
-import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.CoroutineStart
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.ignoreLostThreads
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.TestBase
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ignoreLostThreads
 import org.hamcrest.core.IsEqual
 import org.junit.Assert
 import org.junit.Before

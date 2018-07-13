@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2.guide.test
+package kotlinx.coroutines.rx2.guide.test
 
 import io.reactivex.*
 import io.reactivex.disposables.*
 import io.reactivex.plugins.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.guide.test.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.guide.test.*
 import org.junit.*
 import java.util.concurrent.*
 

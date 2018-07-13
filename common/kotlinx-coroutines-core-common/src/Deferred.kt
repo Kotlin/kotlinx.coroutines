@@ -2,11 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+package kotlinx.coroutines
+
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Deferred value is a non-blocking cancellable future &mdash; it is a [Job] that has a result.
@@ -27,7 +30,7 @@ import kotlin.coroutines.experimental.*
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  *
  * A deferred value is a [Job]. A job in the
- * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * of [async][CoroutineScope.async] builder represents the coroutine itself.
  *
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
@@ -99,6 +102,7 @@ public interface Deferred<out T> : Job {
 /**
  * @suppress **Deprecated**: onCompletion parameter is deprecated.
  */
+@BuilderInference
 @Deprecated("onCompletion parameter is deprecated")
 public fun <T> CoroutineScope.async(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -114,7 +118,7 @@ public fun <T> CoroutineScope.async(
  */
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.async(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+    replaceWith = ReplaceWith("GlobalScope.async(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
 )
 public fun <T> async(
     context: CoroutineContext = Dispatchers.Default,
@@ -130,7 +134,7 @@ public fun <T> async(
  */
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.async(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+    replaceWith = ReplaceWith("GlobalScope.async(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
 )
 public fun <T> async(
     context: CoroutineContext = Dispatchers.Default,

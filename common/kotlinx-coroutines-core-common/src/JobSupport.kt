@@ -2,14 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
@@ -843,7 +843,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
         }
     }
 
-    public final override val children: Sequence<Job> get() = buildSequence {
+    public final override val children: Sequence<Job> get() = sequence {
         val state = this@JobSupport.state
         when (state) {
             is ChildHandleNode -> yield(state.childJob)

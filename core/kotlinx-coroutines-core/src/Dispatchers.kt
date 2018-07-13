@@ -4,12 +4,11 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
 import java.util.*
-import kotlin.coroutines.experimental.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -71,7 +70,7 @@ public actual object Dispatchers {
      */
     @JvmStatic
     @ExperimentalCoroutinesApi
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.experimental.Unconfined
+    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 
     /**
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.

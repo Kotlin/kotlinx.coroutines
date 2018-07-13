@@ -2,12 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+@file:UseExperimental(ExperimentalTypeInference::class)
+
+package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.functions.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine.
@@ -28,6 +31,7 @@ import kotlin.coroutines.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.rxMaybe(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
@@ -45,7 +49,7 @@ public fun <T> CoroutineScope.rxMaybe(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.rxMaybe(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxMaybe"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxMaybe"])
 )
 public fun <T> rxMaybe(
     context: CoroutineContext = Dispatchers.Default,

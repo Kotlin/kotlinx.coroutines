@@ -2,11 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.intrinsics
+package kotlinx.coroutines.intrinsics
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
@@ -16,7 +16,7 @@ import kotlin.coroutines.experimental.intrinsics.*
  */
 @InternalCoroutinesApi
 public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) =
-    createCoroutineUnchecked(completion).resumeCancellable(Unit)
+    createCoroutineUnintercepted(completion).intercepted().resumeCancellable(Unit)
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
@@ -26,4 +26,4 @@ public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuat
  */
 @InternalCoroutinesApi
 public fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
-    createCoroutineUnchecked(receiver, completion).resumeCancellable(Unit)
+    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellable(Unit)

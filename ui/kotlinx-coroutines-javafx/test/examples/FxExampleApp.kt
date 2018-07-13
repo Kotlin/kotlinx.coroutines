@@ -11,11 +11,11 @@ import javafx.scene.layout.*
 import javafx.scene.paint.*
 import javafx.scene.shape.*
 import javafx.stage.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.javafx.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.javafx.*
 import java.text.*
 import java.util.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 fun main(args: Array<String>) {
     Application.launch(FxTestApp::class.java, *args)

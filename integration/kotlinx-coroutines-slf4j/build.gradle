@@ -5,8 +5,8 @@ dependencies {
     testRuntime 'ch.qos.logback:logback-core:1.2.3'
 }
 
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL("https://www.slf4j.org/apidocs/")
-    }
-}
+//tasks.withType(dokka.getClass()) {
+//    externalDocumentationLink {
+//        url = new URL("https://www.slf4j.org/apidocs/")
+//    }
+//}

@@ -1,84 +1,84 @@
-public final class kotlinx/coroutines/experimental/rx2/RxAwaitKt {
-	public static final fun await (Lio/reactivex/CompletableSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun await (Lio/reactivex/MaybeSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun await (Lio/reactivex/SingleSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitFirst (Lio/reactivex/ObservableSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitFirstOrDefault (Lio/reactivex/ObservableSource;Ljava/lang/Object;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitFirstOrElse (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitFirstOrNull (Lio/reactivex/ObservableSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitLast (Lio/reactivex/ObservableSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitOrDefault (Lio/reactivex/MaybeSource;Ljava/lang/Object;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun awaitSingle (Lio/reactivex/ObservableSource;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+public final class kotlinx/coroutines/rx2/RxAwaitKt {
+	public static final fun await (Lio/reactivex/CompletableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun await (Lio/reactivex/MaybeSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun await (Lio/reactivex/SingleSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirst (Lio/reactivex/ObservableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrDefault (Lio/reactivex/ObservableSource;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrElse (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitFirstOrNull (Lio/reactivex/ObservableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitLast (Lio/reactivex/ObservableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitOrDefault (Lio/reactivex/MaybeSource;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitSingle (Lio/reactivex/ObservableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxChannelKt {
-	public static final fun consumeEach (Lio/reactivex/MaybeSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun consumeEach (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static final synthetic fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
-	public static final fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
-	public static final synthetic fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
+public final class kotlinx/coroutines/rx2/RxChannelKt {
+	public static final fun consumeEach (Lio/reactivex/MaybeSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun consumeEach (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/channels/SubscriptionReceiveChannel;
+	public static final fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/channels/ReceiveChannel;
+	public static final synthetic fun openSubscription (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/channels/SubscriptionReceiveChannel;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxCompletableKt {
-	public static final fun rxCompletable (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Completable;
-	public static final fun rxCompletable (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Completable;
-	public static synthetic fun rxCompletable$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Completable;
-	public static synthetic fun rxCompletable$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Completable;
+public final class kotlinx/coroutines/rx2/RxCompletableKt {
+	public static final fun rxCompletable (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Completable;
+	public static final fun rxCompletable (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Completable;
+	public static synthetic fun rxCompletable$default (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Completable;
+	public static synthetic fun rxCompletable$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Completable;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxConvertKt {
-	public static final fun asCompletable (Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/CoroutineContext;)Lio/reactivex/Completable;
-	public static final fun asMaybe (Lkotlinx/coroutines/experimental/Deferred;Lkotlin/coroutines/experimental/CoroutineContext;)Lio/reactivex/Maybe;
-	public static final fun asObservable (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;)Lio/reactivex/Observable;
-	public static final fun asSingle (Lkotlinx/coroutines/experimental/Deferred;Lkotlin/coroutines/experimental/CoroutineContext;)Lio/reactivex/Single;
+public final class kotlinx/coroutines/rx2/RxConvertKt {
+	public static final fun asCompletable (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Completable;
+	public static final fun asMaybe (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Maybe;
+	public static final fun asObservable (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Observable;
+	public static final fun asSingle (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext;)Lio/reactivex/Single;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxFlowableKt {
-	public static final fun rxFlowable (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Flowable;
+public final class kotlinx/coroutines/rx2/RxFlowableKt {
+	public static final fun rxFlowable (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Flowable;
 	public static final fun rxFlowable (Lkotlin/jvm/functions/Function2;)Lio/reactivex/Flowable;
-	public static final fun rxFlowable (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Flowable;
-	public static synthetic fun rxFlowable$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Flowable;
-	public static synthetic fun rxFlowable$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Flowable;
+	public static final fun rxFlowable (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Flowable;
+	public static synthetic fun rxFlowable$default (Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Flowable;
+	public static synthetic fun rxFlowable$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Flowable;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxMaybeKt {
-	public static final fun rxMaybe (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Maybe;
-	public static final fun rxMaybe (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Maybe;
-	public static synthetic fun rxMaybe$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Maybe;
-	public static synthetic fun rxMaybe$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Maybe;
+public final class kotlinx/coroutines/rx2/RxMaybeKt {
+	public static final fun rxMaybe (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Maybe;
+	public static final fun rxMaybe (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Maybe;
+	public static synthetic fun rxMaybe$default (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Maybe;
+	public static synthetic fun rxMaybe$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Maybe;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxObservableKt {
-	public static final fun rxObservable (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Observable;
-	public static final fun rxObservable (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Observable;
-	public static synthetic fun rxObservable$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Observable;
-	public static synthetic fun rxObservable$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Observable;
+public final class kotlinx/coroutines/rx2/RxObservableKt {
+	public static final fun rxObservable (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Observable;
+	public static final fun rxObservable (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Observable;
+	public static synthetic fun rxObservable$default (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Observable;
+	public static synthetic fun rxObservable$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Observable;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxSchedulerKt {
-	public static final fun asCoroutineDispatcher (Lio/reactivex/Scheduler;)Lkotlinx/coroutines/experimental/rx2/SchedulerCoroutineDispatcher;
+public final class kotlinx/coroutines/rx2/RxSchedulerKt {
+	public static final fun asCoroutineDispatcher (Lio/reactivex/Scheduler;)Lkotlinx/coroutines/rx2/SchedulerCoroutineDispatcher;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/RxSingleKt {
-	public static final fun rxSingle (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Single;
-	public static final fun rxSingle (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Single;
-	public static synthetic fun rxSingle$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Single;
-	public static synthetic fun rxSingle$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Single;
+public final class kotlinx/coroutines/rx2/RxSingleKt {
+	public static final fun rxSingle (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Single;
+	public static final fun rxSingle (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lio/reactivex/Single;
+	public static synthetic fun rxSingle$default (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Single;
+	public static synthetic fun rxSingle$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/reactivex/Single;
 }
 
-public final class kotlinx/coroutines/experimental/rx2/SchedulerCoroutineDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
+public final class kotlinx/coroutines/rx2/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lio/reactivex/Scheduler;)V
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
+	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lio/reactivex/Scheduler;
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/CancellableContinuation;)V
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 

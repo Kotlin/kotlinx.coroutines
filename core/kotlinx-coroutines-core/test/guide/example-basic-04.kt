@@ -3,9 +3,9 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.basic04
+package kotlinx.coroutines.guide.basic04
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 fun main(args: Array<String>) = runBlocking { // this: CoroutineScope
     launch { 

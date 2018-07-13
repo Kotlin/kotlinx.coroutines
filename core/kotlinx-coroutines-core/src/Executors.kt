@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.internal.*
 import java.io.*
 import java.io.Closeable
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks.

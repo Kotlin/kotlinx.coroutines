@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.CoroutineStart.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.CoroutineStart.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.*
 
 /**
  * Abstract base class for implementation of coroutines in coroutine builders.
@@ -110,17 +110,10 @@ public abstract class AbstractCoroutine<in T>(
     internal open val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
 
     /**
-     * Completes execution of this coroutine normally with the specified [value].
+     * Completes execution of this with coroutine with the specified result.
      */
-    public final override fun resume(value: T) {
-        makeCompletingOnce(value, defaultResumeMode)
-    }
-
-    /**
-     * Completes execution of this with coroutine exceptionally with the specified [exception].
-     */
-    public final override fun resumeWithException(exception: Throwable) {
-        makeCompletingOnce(CompletedExceptionally(exception), defaultResumeMode)
+    public final override fun resumeWith(result: Result<T>) {
+        makeCompletingOnce(result.toState(), defaultResumeMode)
     }
 
     internal final override fun handleOnCompletionException(exception: Throwable) {

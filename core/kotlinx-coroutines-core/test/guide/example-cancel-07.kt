@@ -3,9 +3,9 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.cancel07
+package kotlinx.coroutines.guide.cancel07
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 fun main(args: Array<String>) = runBlocking {
     val result = withTimeoutOrNull(1300L) {

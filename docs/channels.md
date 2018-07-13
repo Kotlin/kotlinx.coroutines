@@ -4,15 +4,15 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.$$1$$2
+package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ChannelsGuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.test
+package kotlinx.coroutines.guide.test
 
 import org.junit.Test
 
@@ -228,7 +228,7 @@ Let's take pipelines to the extreme with an example that generates prime numbers
 of coroutines. We start with an infinite sequence of numbers. 
  
 <!--- INCLUDE  
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -266,7 +266,7 @@ The following example prints the first ten prime numbers,
 running the whole pipeline in the context of the main thread. Since all the coroutines are launched in
 the scope of the main [runBlocking] coroutine 
 we don't have to keep an explicit list of all the coroutines we have started. 
-We use [cancelChildren][kotlin.coroutines.experimental.CoroutineContext.cancelChildren] 
+We use [cancelChildren][kotlin.coroutines.CoroutineContext.cancelChildren] 
 extension function to cancel all the children coroutines after we have printed
 the first ten prime numbers. 
 
@@ -306,7 +306,7 @@ The output of this code is:
 <!--- TEST -->
 
 Note, that you can build the same pipeline using 
-[`buildIterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/build-iterator.html) 
+[`buildIterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/build-iterator.html) 
 coroutine builder from the standard library. 
 Replace `produce` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
 `ReceiveChannel` with `Iterator`, and get rid of the coroutine scope. You will not need `runBlocking` either.
@@ -403,7 +403,7 @@ For example, let us have a channel of strings, and a suspending function that
 repeatedly sends a specified string to this channel with a specified delay:
 
 <!--- INCLUDE  
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -466,7 +466,7 @@ similar to the `BlockingQueue` with a specified capacity, which blocks when buff
 Take a look at the behavior of the following code:
 
 <!--- INCLUDE  
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -512,7 +512,7 @@ gets the element. In the following example two coroutines "ping" and "pong" are
 receiving the "ball" object from the shared "table" channel. 
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -624,22 +624,21 @@ delay between elements.
 
 
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[kotlin.coroutines.experimental.CoroutineContext.cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
-[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
-<!--- INDEX kotlinx.coroutines.experimental.channels -->
-[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
-[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
-[SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
-[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
-[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
-[Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
-[ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ticker.html
-[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
-[TickerMode.FIXED_DELAY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-ticker-mode/-f-i-x-e-d_-d-e-l-a-y.html
-<!--- INDEX kotlinx.coroutines.experimental.selects -->
-[select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
+<!--- INDEX kotlinx.coroutines -->
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
+<!--- INDEX kotlinx.coroutines.channels -->
+[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/index.html
+[SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
+[SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/close.html
+[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html
+[consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/consume-each.html
+[Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel.html
+[ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/ticker.html
+[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/cancel.html
+[TickerMode.FIXED_DELAY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-ticker-mode/-f-i-x-e-d_-d-e-l-a-y.html
+<!--- INDEX kotlinx.coroutines.selects -->
+[select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/select.html
 <!--- END -->

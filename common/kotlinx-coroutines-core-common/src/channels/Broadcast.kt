@@ -2,13 +2,16 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
+package kotlinx.coroutines.channels
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -34,7 +37,7 @@ fun <E> ReceiveChannel<E>.broadcast(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith(
         "GlobalScope.broadcast(context + parent, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.broadcast"]
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.channels.broadcast"]
     )
 )
 public fun <E> broadcast(
@@ -43,7 +46,7 @@ public fun <E> broadcast(
     start: CoroutineStart = CoroutineStart.LAZY,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> =
     GlobalScope.broadcast(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
 
@@ -83,12 +86,13 @@ public fun <E> broadcast(
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)

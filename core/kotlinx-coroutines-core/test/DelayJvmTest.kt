@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import org.hamcrest.MatcherAssert.*
 import org.hamcrest.core.*
 import org.junit.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 class DelayJvmTest : TestBase() {
     /**
@@ -65,13 +65,8 @@ class DelayJvmTest : TestBase() {
         override val context: CoroutineContext
             get() = cont.context
 
-        override fun resume(value: T) {
-            pool.execute { cont.resume(value) }
-        }
-
-        override fun resumeWithException(exception: Throwable) {
-            pool.execute { cont.resumeWithException(exception) }
+        override fun resumeWith(result: Result<T>) {
+            pool.execute { cont.resumeWith(result) }
         }
     }
-
 }

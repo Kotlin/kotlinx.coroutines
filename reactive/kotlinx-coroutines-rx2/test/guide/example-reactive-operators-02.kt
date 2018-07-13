@@ -3,12 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.operators02
+package kotlinx.coroutines.rx2.guide.operators02
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 fun <T, R> Publisher<T>.fusedFilterMap(
     context: CoroutineContext,   // the context to execute this coroutine in

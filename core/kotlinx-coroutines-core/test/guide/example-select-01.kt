@@ -3,13 +3,13 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.select01
+package kotlinx.coroutines.guide.select01
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms

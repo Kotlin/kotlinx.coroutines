@@ -2,22 +2,21 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.swing
+package kotlinx.coroutines.swing
 
-import javafx.application.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import java.awt.event.*
 import java.util.concurrent.*
 import javax.swing.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
 @Suppress("unused")
 public val Dispatchers.Swing : SwingDispatcher
-    get() = kotlinx.coroutines.experimental.swing.Swing
+    get() = kotlinx.coroutines.swing.Swing
 
 /**
  * Dispatcher for Swing event dispatching thread.
@@ -75,7 +74,7 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
 @Deprecated(
     message = "Use Dispatchers.Swing",
     replaceWith = ReplaceWith("Dispatchers.Swing",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.swing.Swing"])
+        imports = ["kotlinx.coroutines.Dispatchers", "kotlinx.coroutines.swing.Swing"])
 )
 // todo: it will become an internal implementation object
 object Swing : SwingDispatcher() {

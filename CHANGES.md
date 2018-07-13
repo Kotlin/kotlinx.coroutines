@@ -74,9 +74,9 @@ Visible consequences of include more robust exception handling for large corouti
   * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
   * As a consequence, all nested coroutines launched via builders now automatically establish parent-child relationship and inherit `CoroutineDispatcher`.
   * All coroutine builders use `Dispatchers.Default` by default if `CoroutineInterceptor` is not present in their context.
-  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
+  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
   * `withContext` `block` argument has `CoroutineScope` as a receiver.
-  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
+  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
   * `currentScope` and `coroutineScope` builders are introduced to extract and provide `CoroutineScope`.
   * Factory methods to create `CoroutineScope` from `CoroutineContext` are introduced.
   * `CoroutineScope.isActive` became an extension property.
@@ -604,7 +604,7 @@ Visible consequences of include more robust exception handling for large corouti
 ## Version 0.11-rc
 
 * `select` expression with onJoin/onAwait/onSend/onReceive clauses.
-* `Mutex` is moved to `kotlinx.coroutines.experimental.sync` package.
+* `Mutex` is moved to `kotlinx.coroutines.sync` package.
 * `ClosedSendChannelException` is a subclass of `CancellationException` now.
 * New sections on "Shared mutable state and concurrency" and "Select expression" 
   in [coroutines guide](docs/coroutines-guide.md).

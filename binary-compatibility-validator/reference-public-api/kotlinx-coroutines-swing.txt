@@ -1,20 +1,20 @@
-public final class kotlinx/coroutines/experimental/swing/Swing : kotlinx/coroutines/experimental/swing/SwingDispatcher {
-	public static final field INSTANCE Lkotlinx/coroutines/experimental/swing/Swing;
-	public fun getImmediate ()Lkotlinx/coroutines/experimental/MainCoroutineDispatcher;
+public final class kotlinx/coroutines/swing/Swing : kotlinx/coroutines/swing/SwingDispatcher {
+	public static final field INSTANCE Lkotlinx/coroutines/swing/Swing;
+	public fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract class kotlinx/coroutines/experimental/swing/SwingDispatcher : kotlinx/coroutines/experimental/MainCoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
+public abstract class kotlinx/coroutines/swing/SwingDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
+	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/CancellableContinuation;)V
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 }
 
-public final class kotlinx/coroutines/experimental/swing/SwingDispatcherKt {
-	public static final fun getSwing (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/swing/SwingDispatcher;
+public final class kotlinx/coroutines/swing/SwingDispatcherKt {
+	public static final fun getSwing (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/swing/SwingDispatcher;
 }
 

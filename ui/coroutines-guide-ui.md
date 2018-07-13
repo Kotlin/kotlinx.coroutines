@@ -4,11 +4,11 @@
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.javafx.guide.$$1$$2
+package kotlinx.coroutines.javafx.guide.$$1$$2
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as Main
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -187,13 +187,13 @@ This section shows basic usage of coroutines in UI applications.
 ### Launch UI coroutine
 
 The `kotlinx-coroutines-javafx` module contains 
-[Dispatchers.JavaFx][kotlinx.coroutines.experimental.Dispatchers.JavaFx] 
+[Dispatchers.JavaFx][kotlinx.coroutines.Dispatchers.JavaFx] 
 dispatcher that dispatches coroutine execution to
 the JavaFx application thread. We import it as `Main` to make all the presented examples 
 easily portable to Android:
  
 ```kotlin
-import kotlinx.coroutines.experimental.javafx.JavaFx as Main
+import kotlinx.coroutines.javafx.JavaFx as Main
 ```
  
 <!--- CLEAR -->
@@ -703,27 +703,27 @@ After delay
 ```
   
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
-[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
-[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
-[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
-[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
-[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
-[CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
-<!--- INDEX kotlinx.coroutines.experimental.channels -->
-[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
-[SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/offer.html
-[SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/index.html
-[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/-c-o-n-f-l-a-t-e-d.html
+<!--- INDEX kotlinx.coroutines -->
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
+[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/current-scope.html
+[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
+[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
+[CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
+<!--- INDEX kotlinx.coroutines.channels -->
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
+[SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/offer.html
+[SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html
+[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/index.html
+[Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html
 <!--- MODULE kotlinx-coroutines-javafx -->
-<!--- INDEX kotlinx.coroutines.experimental.javafx -->
-[kotlinx.coroutines.experimental.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/kotlinx.coroutines.experimental.-dispatchers/-java-fx.html
+<!--- INDEX kotlinx.coroutines.javafx -->
+[kotlinx.coroutines.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.javafx/kotlinx.coroutines.-dispatchers/-java-fx.html
 <!--- MODULE kotlinx-coroutines-android -->
-<!--- INDEX kotlinx.coroutines.experimental.android -->
+<!--- INDEX kotlinx.coroutines.android -->
 <!--- END -->

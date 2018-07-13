@@ -2,12 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.future
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.*
+package kotlinx.coroutines.future
+
+import kotlinx.coroutines.*
 import java.util.concurrent.*
 import java.util.function.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
@@ -30,6 +33,7 @@ import kotlin.coroutines.experimental.*
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -73,7 +77,7 @@ public fun <T> CoroutineScope.future(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
 )
 public fun <T> future(
     context: CoroutineContext = Dispatchers.Default,
@@ -90,7 +94,7 @@ public fun <T> future(
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
 )
 public fun <T> future(
     context: CoroutineContext = Dispatchers.Default,
@@ -125,8 +129,11 @@ private class CompletableFutureCoroutine<T>(
 ) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
     override val coroutineContext: CoroutineContext get() = context
     override val isActive: Boolean get() = context[Job]!!.isActive
-    override fun resume(value: T) { complete(value) }
-    override fun resumeWithException(exception: Throwable) { completeExceptionally(exception) }
+    override fun resumeWith(result: Result<T>) {
+        result
+            .onSuccess { complete(it) }
+            .onFailure { completeExceptionally(it) }
+    }
 }
 
 /**
@@ -189,7 +196,7 @@ public suspend fun <T> CompletableFuture<T>.await(): T =
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
+ * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  * This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of [CompletableFuture].
  * If cancelling given stage is undesired, `stage.asDeferred().await()` should be used instead.
  */

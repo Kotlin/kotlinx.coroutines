@@ -2,23 +2,23 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.javafx
+package kotlinx.coroutines.javafx
 
 import javafx.animation.*
 import javafx.application.*
 import javafx.event.*
 import javafx.util.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
 @Suppress("unused")
 public val Dispatchers.JavaFx: JavaFxDispatcher
-    get() = kotlinx.coroutines.experimental.javafx.JavaFx
+    get() = kotlinx.coroutines.javafx.JavaFx
 
 /**
  * Dispatcher for JavaFx application thread with support for [awaitPulse].
@@ -74,7 +74,7 @@ private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
 @Deprecated(
     message = "Use Dispatchers.JavaFx",
     replaceWith = ReplaceWith("Dispatchers.JavaFx",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
+        imports = ["kotlinx.coroutines.Dispatchers", "kotlinx.coroutines.javafx.JavaFx"])
 )
 // todo: it will become an internal implementation object
 object JavaFx : JavaFxDispatcher() {
@@ -95,10 +95,10 @@ object JavaFx : JavaFxDispatcher() {
      */
     @Deprecated(
         message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.javafx.awaitPulse()")
+        replaceWith = ReplaceWith("kotlinx.coroutines.javafx.awaitPulse()")
     )
     suspend fun awaitPulse(): Long =
-        kotlinx.coroutines.experimental.javafx.awaitPulse()
+        kotlinx.coroutines.javafx.awaitPulse()
 
 
     override fun toString() = "JavaFx"
@@ -111,7 +111,7 @@ private val pulseTimer by lazy {
 /**
  * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
+ * immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  */
 public suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
     pulseTimer.onNext(cont)

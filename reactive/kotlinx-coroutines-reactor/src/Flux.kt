@@ -2,13 +2,16 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactor
+@file:UseExperimental(ExperimentalTypeInference::class)
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.reactive.*
+package kotlinx.coroutines.reactor
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.reactive.*
 import reactor.core.publisher.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
@@ -28,14 +31,15 @@ import kotlin.coroutines.experimental.*
  * | `send`                                       | `onNext`
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
- * 
+ *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
+@BuilderInference
 fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     Flux.from(publish(newCoroutineContext(context), block = block))
 
@@ -48,12 +52,12 @@ fun <T> CoroutineScope.flux(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith(
         "GlobalScope.flux(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.flux"]
+        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactor.flux"]
     )
 )
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> flux(
     context: CoroutineContext = Dispatchers.Default,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     GlobalScope.flux(context, block)

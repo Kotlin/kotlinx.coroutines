@@ -3,11 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.channel09
+package kotlinx.coroutines.guide.channel09
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 
 data class Ball(var hits: Int)
 

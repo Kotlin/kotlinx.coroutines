@@ -3,10 +3,10 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.context05
+package kotlinx.coroutines.guide.context05
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     println("My job is ${coroutineContext[Job]}")
