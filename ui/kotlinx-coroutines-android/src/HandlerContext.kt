@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
+import android.support.annotation.*
 import android.view.*
 import kotlinx.coroutines.experimental.*
 import java.util.concurrent.*
@@ -89,6 +90,11 @@ public class HandlerContext(
     override fun hashCode(): Int = System.identityHashCode(handler)
 }
 
+/**
+ * @suppress This is an internal impl class.
+ */
+@Keep
 class MainLooperChecker : BlockingChecker {
-    override fun runBlockingAllowed(): Boolean = Looper.myLooper() != Looper.getMainLooper()
+    override fun checkRunBlocking() =
+        check(Looper.myLooper() != Looper.getMainLooper()) { "runBlocking is not allowed in Android main looper thread" }
 }

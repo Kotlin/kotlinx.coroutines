@@ -1,6 +1,6 @@
 public final class kotlinx/coroutines/experimental/swing/EventDispatchThreadChecker : kotlinx/coroutines/experimental/BlockingChecker {
 	public fun <init> ()V
-	public fun runBlockingAllowed ()Z
+	public fun checkRunBlocking ()V
 }
 
 public final class kotlinx/coroutines/experimental/swing/Swing : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {

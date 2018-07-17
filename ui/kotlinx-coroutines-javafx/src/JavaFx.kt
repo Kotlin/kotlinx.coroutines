@@ -77,8 +77,12 @@ object JavaFx : CoroutineDispatcher(), Delay {
     override fun toString() = "JavaFx"
 }
 
+/**
+ * @suppress This is an internal impl class.
+ */
 class ApplicationThreadChecker : BlockingChecker {
-    override fun runBlockingAllowed(): Boolean = !Platform.isFxApplicationThread()
+    override fun checkRunBlocking() =
+        check(!Platform.isFxApplicationThread()) { "runBlocking is not allowed in JavaFx application thread" }
 }
 
 internal fun initPlatform() {

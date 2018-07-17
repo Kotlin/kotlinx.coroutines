@@ -37,12 +37,8 @@ import kotlin.coroutines.experimental.*
  */
 @Throws(InterruptedException::class)
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
+    blockingChecker?.checkRunBlocking()
     val currentThread = Thread.currentThread()
-
-    if (blockingChecker?.runBlockingAllowed() == false) {
-        throw IllegalStateException("runBlocking is forbidden in $currentThread")
-    }
-
     val contextInterceptor = context[ContinuationInterceptor]
     val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
     val eventLoop = if (privateEventLoop) BlockingEventLoop(currentThread) else contextInterceptor as? EventLoop
@@ -55,32 +51,31 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 }
 
 /**
- * Element of classpath which determines whether invoking [runBlocking] in current thread is allowed.
- * [runBlocking] discovers all checkers via [ServiceLoader]
+ * Extension point which determines whether invoking [runBlocking] in the current thread is allowed.
+ * [runBlocking] discovers all checkers via [ServiceLoader] and invokes [checkRunBlocking] on
+ * each attempt to invoke [runBlocking].
  *
  * Common example is checking whether we're not in UI thread:
+ *
  * ```
- * class UiFilter : BlockingFilter {
- *    fun runBlockingAllowed(): Boolean = !UiFramework.isInUiThread()
+ * class UiChecker : BlockingChecker {
+ *    fun checkRunBlocking() =
+ *        check(!UiFramework.isInUiThread()) { "runBlocking is not allowed in UI thread" }
  * }
  * ```
  */
-interface BlockingChecker {
-
+public interface BlockingChecker {
     /**
-     * @return whether [runBlocking] calls are allowed in current thread
+     * Throws [IllegalStateException] if [runBlocking] calls are not allowed in the current thread.
      */
-    fun runBlockingAllowed(): Boolean
+    fun checkRunBlocking()
 }
 
 // Nullable to enable DCE when no filters are present in classpath
-private val blockingChecker: BlockingChecker? = loadBlockingCheckers()
-
-private fun loadBlockingCheckers(): BlockingChecker? {
+private val blockingChecker: BlockingChecker? = run {
     val filters = ServiceLoader.load(BlockingChecker::class.java).toList().toTypedArray()
-    if (filters.isEmpty()) return null
-    return object : BlockingChecker {
-        override fun runBlockingAllowed(): Boolean = filters.all { it.runBlockingAllowed() }
+    if (filters.isEmpty()) null else object : BlockingChecker {
+        override fun checkRunBlocking() = filters.forEach { it.checkRunBlocking() }
     }
 }
 
