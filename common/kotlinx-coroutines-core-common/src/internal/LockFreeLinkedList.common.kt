@@ -24,6 +24,13 @@ public expect open class LockFreeLinkedListNode() {
     ): Boolean
 
     public open fun remove(): Boolean
+
+    /**
+     * Helps fully finish [remove] operation, must be invoked after [remove] if needed.
+     * Ensures that traversing the list via prev pointers sees this node as removed.
+     * No-op on JS
+     */
+    public fun helpRemove()
     public fun removeFirstOrNull(): LockFreeLinkedListNode?
     public inline fun <reified T> removeFirstIfIsInstanceOfOrPeekIf(predicate: (T) -> Boolean): T?
 }

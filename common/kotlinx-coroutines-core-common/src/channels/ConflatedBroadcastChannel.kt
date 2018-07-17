@@ -103,7 +103,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     @Suppress("UNCHECKED_CAST")
     public override fun openSubscription(): ReceiveChannel<E> {
-        val subscriber = Subscriber<E>(this)
+        val subscriber = Subscriber(this)
         _state.loop { state ->
             when (state) {
                 is Closed -> {
@@ -238,6 +238,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         block.startCoroutineUndispatched(receiver = this, completion = select.completion)
     }
 
+    @Suppress("DEPRECATION")
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
     ) : ConflatedChannel<E>(), ReceiveChannel<E>, SubscriptionReceiveChannel<E> {

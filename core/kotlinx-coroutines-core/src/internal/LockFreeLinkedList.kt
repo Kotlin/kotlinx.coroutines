@@ -4,8 +4,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.*
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -83,8 +82,6 @@ public actual open class LockFreeLinkedListNode {
         object : CondAddOp(node) {
             override fun prepare(affected: Node): Any? = if (condition()) null else CONDITION_FALSE
         }
-
-    public val isFresh: Boolean get() = _next.value === this
 
     public actual val isRemoved: Boolean get() = next is Removed
 
@@ -231,6 +228,10 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Removes this node from the list. Returns `true` when removed successfully, or `false` if the node was already
      * removed or if it was not added to any list in the first place.
+     *
+     * **Note**: Invocation of this operation does not guarantee that remove was actually complete if result was `false`.
+     * In particular, invoking [nextNode].[prevNode] might still return this node even though it is "already removed".
+     * Invoke [helpRemove] to make sure that remove was completed.
      */
     public actual open fun remove(): Boolean {
         while (true) { // lock-free loop on next
@@ -244,6 +245,11 @@ public actual open class LockFreeLinkedListNode {
                 return true
             }
         }
+    }
+
+    public actual fun helpRemove() {
+        val removed = this.next as? Removed ?: error("Must be invoked on a removed node")
+        finishRemove(removed.ref)
     }
 
     public open fun describeRemove() : AtomicDesc? {
