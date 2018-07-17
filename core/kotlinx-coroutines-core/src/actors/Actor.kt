@@ -46,7 +46,7 @@ abstract class Actor(
      * Schedules [block] as a message to the actor mailbox.
      * All messages sent via [act] will be processed sequentially in the actor context.
      * Act semantics is equivalent to sending lambda to channel with receiver, which invokes
-     * all sent lambdas
+     * all sent lambdas.
      *
      * @throws ClosedSendChannelException if actor is [closed][close]
      */

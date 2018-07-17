@@ -90,6 +90,19 @@ class TypedActorTest : TestBase() {
         assertEquals(50 * 101, actor.result)
     }
 
+    @Test
+    fun testOffer() = runTest {
+        val actor = actor<Int>(coroutineContext, channelCapacity = 2) { expect(it) }
+        expect(1)
+        assertTrue(actor.offer(3))
+        assertTrue(actor.offer(4))
+        assertFalse(actor.offer(5))
+        expect(2)
+        actor.close()
+        actor.join()
+        finish(5)
+    }
+
     private fun unhandledFailures(count: Int): List<(Throwable) -> Boolean> {
         return MutableList(count) { { e: Throwable -> e is AssertionError } }
     }

@@ -39,7 +39,9 @@ abstract class TypedActor<T>(
 
 
     /**
-     * Sends the message to the actor, which later will be sequentially processed by [receive]
+     * Sends the message to the actor, which later will be sequentially processed by [receive].
+     * Sender is suspended, if actor's channel capacity is reached. This suspension is cancellable
+     * and has semantics similar to [SendChannel.send]
      *
      * @throws ClosedSendChannelException if actor is [closed][close]
      */
@@ -49,7 +51,20 @@ abstract class TypedActor<T>(
     }
 
     /**
-     * Handler, which handles all received messages
+     * Attempts to send message to the actor, which later will be sequentially processed by [receive].
+     * Attempt is successful if actor's channel capacity restriction is not violated.
+     * This method is intended to be used from synchronous callbacks with [Channel.UNLIMITED]
+     *
+     * @throws ClosedSendChannelException if actor is [closed][close]
+     * @return `true` if offer was successful, false otherwise
+     */
+    fun offer(message: T): Boolean {
+        job.start()
+        return mailbox.offer(message)
+    }
+
+    /**
+     * Handler, which handles all received messages.
      *
      * @throws ClassCastException if actor was casted to raw type and [send] was invoked with wrong type of the argument
      */
