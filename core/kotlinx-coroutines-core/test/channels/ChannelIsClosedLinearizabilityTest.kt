@@ -1,9 +1,6 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-/*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- */
 
 package kotlinx.coroutines.experimental.channels
 
@@ -16,15 +13,14 @@ import org.junit.*
 import java.io.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class ChannelLinearizabilityTest : TestBase() {
+class ChannelIsClosedLinearizabilityTest : TestBase() {
 
     private val lt = LinTesting()
-    private var capacity = 0
     private lateinit var channel: Channel<Int>
 
     @Reset
     fun reset() {
-        channel = Channel(capacity)
+        channel = Channel()
     }
 
     @Operation(runOnce = true)
@@ -34,43 +30,22 @@ class ChannelLinearizabilityTest : TestBase() {
     fun send2(@Param(name = "value") value: Int) = lt.run("send2") { channel.send(value) }
 
     @Operation(runOnce = true)
-    fun send3(@Param(name = "value") value: Int) = lt.run("send3") { channel.send(value) }
-
-    @Operation(runOnce = true)
     fun receive1() = lt.run("receive1") { channel.receive() }
 
     @Operation(runOnce = true)
     fun receive2() = lt.run("receive2") { channel.receive() }
 
     @Operation(runOnce = true)
-    fun receive3() = lt.run("receive3") { channel.receive() }
-
-    @Operation(runOnce = true)
     fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
 
     @Operation(runOnce = true)
-    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
+    fun isClosedForReceive() = lt.run("isClosedForReceive") { channel.isClosedForReceive }
+
+    @Operation(runOnce = true)
+    fun isClosedForSend() = lt.run("isClosedForSend") { channel.isClosedForSend }
 
     @Test
-    fun testRendezvousChannelLinearizability() {
-        runTest(0)
-    }
-
-    @Test
-    fun testArrayChannelLinearizability() {
-        for (i in listOf(1, 2, 16)) {
-            runTest(i)
-        }
-    }
-
-    @Test
-    fun testConflatedChannelLinearizability() = runTest(Channel.CONFLATED)
-
-    @Test
-    fun testUnlimitedChannelLinearizability() = runTest(Channel.UNLIMITED)
-
-    private fun runTest(capacity: Int) {
-        this.capacity = capacity
+    fun testLinearizability() {
         val options = StressOptions()
             .iterations(100)
             .invocationsPerIteration(1000 * stressTestMultiplier)
@@ -78,6 +53,6 @@ class ChannelLinearizabilityTest : TestBase() {
             .addThread(1, 3)
             .addThread(1, 3)
             .verifier(LinVerifier::class.java)
-        LinChecker.check(ChannelLinearizabilityTest::class.java, options)
+        LinChecker.check(ChannelIsClosedLinearizabilityTest::class.java, options)
     }
 }

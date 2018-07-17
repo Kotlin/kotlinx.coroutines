@@ -71,13 +71,13 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Returns non-null closed token if it is last in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForSend: Closed<*>? get() = queue.prevNode as? Closed<*>
+    protected val closedForSend: Closed<*>? get() = (queue.prevNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Returns non-null closed token if it is first in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForReceive: Closed<*>? get() = queue.nextNode as? Closed<*>
+    protected val closedForReceive: Closed<*>? get() = (queue.nextNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Retrieves first sending waiter from the queue or returns closed token.
@@ -169,7 +169,9 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
-            result === OFFER_FAILED -> false
+            // We should check for closed token on offer as well, otherwise offer won't be linearizable
+            // in the face of concurrent close()
+            result === OFFER_FAILED ->  throw closedForSend?.sendException ?: return false
             result is Closed<*> -> throw result.sendException
             else -> error("offerInternal returned $result")
         }
@@ -231,23 +233,54 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     public override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
+
+        /*
+         * Try to commit close by adding a close token to the end of the queue.
+         * Successful -> we're now responsible for closing receivers
+         * Not successful -> help closing pending receivers to maintain invariant
+         * "if (!close()) next send will throw"
+         */
+        val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
+        if (!closeAdded) {
+            helpClose(queue.prevNode as Closed<*>)
+            return false
+        }
+
+        helpClose(closed)
+        onClosed(closed)
+        afterClose(cause)
+        return true
+    }
+
+    private fun helpClose(closed: Closed<*>) {
+        /*
+         * It's important to traverse list from right to left to avoid races with sender.
+         * Consider channel state
+         * head sentinel -> [receiver 1] -> [receiver 2] -> head sentinel
+         * T1 invokes receive()
+         * T2 invokes close()
+         * T3 invokes close() + send(value)
+         *
+         * If both will traverse list from left to right, following non-linearizable history is possible:
+         * [close -> false], [send -> transferred 'value' to receiver]
+         */
         while (true) {
-            val receive = takeFirstReceiveOrPeekClosed()
-            if (receive == null) {
-                // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(closed, { prev ->
-                    if (prev is Closed<*>) return false // already closed
-                    prev !is ReceiveOrClosed<*> // only add close if no waiting receive
-                })) {
-                    onClosed(closed)
-                    afterClose(cause)
-                    return true
-                }
-                continue // retry on failure
+            val previous = closed.prevNode
+            // Channel is empty or has no receivers
+            if (previous is LockFreeLinkedListHead || previous !is Receive<*>) {
+                break
             }
-            if (receive is Closed<*>) return false // already marked as closed -- nothing to do
-            receive as Receive<E> // type assertion
-            receive.resumeReceiveClosed(closed)
+
+            if (!previous.remove()) {
+                // failed to remove the node (due to race) -- retry finding non-removed prevNode
+                // NOTE: remove() DOES NOT help pending remove operation (that marked next pointer)
+                previous.helpRemove() // make sure remove is complete before continuing
+                continue
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            previous as Receive<E> // type assertion
+            previous.resumeReceiveClosed(closed)
         }
     }
 

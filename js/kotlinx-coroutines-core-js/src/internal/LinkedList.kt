@@ -70,6 +70,8 @@ public open class LinkedListNode {
         return true
     }
 
+    public fun helpRemove() {} // No concurrency on JS -> no removal
+
     public fun removeFirstOrNull(): Node? {
         val next = _next
         if (next === this) return null
