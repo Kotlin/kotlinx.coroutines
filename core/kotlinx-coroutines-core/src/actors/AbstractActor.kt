@@ -19,17 +19,28 @@ internal abstract class AbstractActor<T>(
 ) : ActorTraits() {
 
     internal val mailbox = Channel<T>(channelCapacity)
-    public final override val job: Job
+    public final override val job: Job = launch(context, start, parent) { actorLoop() }
+
+    /*
+     * Guard for onClose.
+     * It's necessary to invoke onClose in the end of actor body even when we have job completion:
+     * if actor decides to decompose its work, then onClose should be called *before* actor's body end,
+     * otherwise delegated work will never be closed, because job completion will await all created children
+     * to complete
+     */
     private val onCloseInvoked = atomic(0)
 
-    init {
-        job = launch(context, start, parent) { actorLoop() }
-        // Handler in case when actor was cancelled before start
-        job.invokeOnCompletion {
+    // Save an allocation
+    private inner class OnCloseNode : JobNode<Job>(job) {
+        override fun invoke(cause: Throwable?) {
             if (onCloseInvoked.compareAndSet(0, 1)) {
                 onClose()
             }
         }
+    }
+
+    init {
+        job.invokeOnCompletion(OnCloseNode())
     }
 
     public override fun close() {

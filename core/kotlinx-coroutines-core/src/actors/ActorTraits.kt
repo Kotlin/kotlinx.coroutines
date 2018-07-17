@@ -53,7 +53,10 @@ abstract class ActorTraits {
     public abstract fun cancel()
 
     /**
-     * Handler which is invoked when actor is started
+     * Handler which is invoked when actor is started.
+     * Actor is started according to its [start mode][CoroutineStart].
+     * This method will not be invoked is actor is started lazily and is cancelled before receiving any messages.
+     * If [onStart] throws an exception, actor is immediately [cancelled][cancel].
      */
     protected open suspend fun onStart() {}
 
@@ -61,7 +64,7 @@ abstract class ActorTraits {
      * Handler which is invoked when actor is closed or killed.
      * It's guaranteed that on the moment of invocation no more messages will be processed by the actor
      * and no more messages can be sent.
-     * This handler is invoked even if actor wasn't started to properly cleanup resources owned by actor
+     * This handler is invoked even if actor wasn't started to properly cleanup resources owned by the actor
      */
     protected open fun onClose() {}
 
