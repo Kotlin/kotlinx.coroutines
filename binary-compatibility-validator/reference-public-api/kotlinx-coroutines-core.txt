@@ -23,7 +23,7 @@ public final class kotlinx/coroutines/experimental/AwaitKt {
 }
 
 public abstract interface class kotlinx/coroutines/experimental/BlockingChecker {
-	public abstract fun runBlockingAllowed ()Z
+	public abstract fun checkRunBlocking ()V
 }
 
 public final class kotlinx/coroutines/experimental/BuildersKt {

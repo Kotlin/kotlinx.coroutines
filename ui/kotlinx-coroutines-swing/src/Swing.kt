@@ -44,6 +44,10 @@ object Swing : CoroutineDispatcher(), Delay {
     override fun toString() = "Swing"
 }
 
+/**
+ * @suppress This is an internal impl class.
+ */
 class EventDispatchThreadChecker : BlockingChecker {
-    override fun runBlockingAllowed(): Boolean = !SwingUtilities.isEventDispatchThread()
+    override fun checkRunBlocking() =
+        check(!SwingUtilities.isEventDispatchThread()) { "runBlocking is not allowed in Swing event dispatch thread" }
 }
