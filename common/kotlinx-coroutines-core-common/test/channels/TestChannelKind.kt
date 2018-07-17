@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
-import kotlinx.coroutines.experimental.selects.SelectClause1
+import kotlinx.coroutines.experimental.selects.*
 
 enum class TestChannelKind {
     RENDEZVOUS {
@@ -16,8 +16,8 @@ enum class TestChannelKind {
         override fun toString(): String = "ArrayChannel(1)"
     },
     ARRAY_10 {
-        override fun create(): Channel<Int> = ArrayChannel(8)
-        override fun toString(): String = "ArrayChannel(8)"
+        override fun create(): Channel<Int> = ArrayChannel(10)
+        override fun toString(): String = "ArrayChannel(10)"
     },
     LINKED_LIST {
         override fun create(): Channel<Int> = LinkedListChannel()
