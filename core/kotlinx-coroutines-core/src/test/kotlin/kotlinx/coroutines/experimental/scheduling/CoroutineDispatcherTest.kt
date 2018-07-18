@@ -18,7 +18,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testSingleThread() = runBlocking {
         expect(1)
         withContext(dispatcher) {
-            require(Thread.currentThread() is CoroutineScheduler.PoolWorker)
+            require(Thread.currentThread() is CoroutineScheduler.Worker)
             expect(2)
             val job = async(coroutineContext) {
                 expect(3)

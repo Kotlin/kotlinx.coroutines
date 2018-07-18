@@ -86,8 +86,8 @@ class CoroutineSchedulerTest : TestBase() {
 
     @Test
     fun testRngUniformDistribution() {
-        CoroutineScheduler(1).use { scheduler ->
-            val worker = scheduler.PoolWorker(1)
+        CoroutineScheduler(1, 128).use { scheduler ->
+            val worker = scheduler.Worker(1)
             testUniformDistribution(worker, 2)
             testUniformDistribution(worker, 4)
             testUniformDistribution(worker, 8)
@@ -111,7 +111,7 @@ class CoroutineSchedulerTest : TestBase() {
         ExperimentalCoroutineDispatcher(4, 1)
     }
 
-    private fun testUniformDistribution(worker: CoroutineScheduler.PoolWorker, bound: Int) {
+    private fun testUniformDistribution(worker: CoroutineScheduler.Worker, bound: Int) {
         val result = IntArray(bound)
         val iterations = 10_000_000
         repeat(iterations) {

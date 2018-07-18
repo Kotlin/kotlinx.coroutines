@@ -102,8 +102,8 @@ class WorkQueueStressTest : TestBase() {
     private fun validate() {
         val result = mutableSetOf<Long>()
         for (stolenTask in stolenTasks) {
-            require(stolenTask.isNotEmpty())
-            assertEquals(stolenTask.size, stolenTask.toSet().size)
+            require(!stolenTask.isEmpty())
+            assertEquals(stolenTask.size, stolenTask.size)
             result += stolenTask.map { it.submissionTime }
         }
 
@@ -113,10 +113,16 @@ class WorkQueueStressTest : TestBase() {
     }
 }
 
-internal class Queue : ArrayDeque<TimedTask>(), TaskQueue {
-    override fun pollBlockingMode(): TimedTask? = error("Should not be called")
+internal class Queue : GlobalQueue() {
+    override fun removeFirstBlockingModeOrNull(): Task? = error("Should not be called")
 
-    override fun add(element: TimedTask): Boolean {
-        return super.add(element)
+    fun addAll(tasks: Collection<Task>) {
+        tasks.forEach { addLast(it) }
+    }
+
+    fun <R> map(transform: (Task) -> R): List<R> {
+        val result = ArrayList<R>()
+        fold(Unit) { _, task -> result.add(transform(task)) }
+        return result
     }
 }

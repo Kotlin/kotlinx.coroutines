@@ -32,7 +32,7 @@ abstract class SchedulerTestBase : TestBase() {
          * Asserts that any number of pool worker threads in [range] exists at the time of method invocation
          */
         fun checkPoolThreadsExist(range: IntRange) {
-            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()
+            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }.count()
             require(threads in range) { "Expected threads in $range interval, but has $threads" }
         }
 
@@ -40,14 +40,14 @@ abstract class SchedulerTestBase : TestBase() {
          * Asserts that [expectedThreadsCount] of pool worker threads exists at the time of method invocation
          */
         fun checkPoolThreadsExist(expectedThreadsCount: Int = CORES_COUNT) {
-            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }.count()
+            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }.count()
             require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
         }
 
         fun initialPoolSize() = Runtime.getRuntime().availableProcessors().coerceAtMost(2)
 
         private fun maxSequenceNumber(): Int? {
-            return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.PoolWorker }
+            return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }
                 .map { sequenceNumber(it.name) }.max()
         }
 

@@ -8,22 +8,25 @@ internal const val BUFFER_CAPACITY = 1 shl BUFFER_CAPACITY_BASE
 internal const val MASK = BUFFER_CAPACITY - 1 // 128 by default
 
 /**
- * Unstable API and subject to change.
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
- * At any moment queue is used only by [CoroutineScheduler.PoolWorker] threads, has only one producer (worker owning this queue)
+ * At any moment queue is used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue)
  * and any amount of consumers, other pool workers which are trying to steal work.
  *
- * Fairness
+ * ### Fairness
+ *
  * [WorkQueue] provides semi-FIFO order, but with priority for most recently submitted task assuming
  * that these two (current one and submitted) are communicating and sharing state thus making such communication extremely fast.
  * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
  *
- * Work offloading
+ * ### Work offloading
+ * 
  * When the queue is full, half of existing tasks are offloaded to global queue which is regularly polled by other pool workers.
  * Offloading occurs in LIFO order for the sake of implementation simplicity: offloads should be extremely rare and occurs only in specific use-cases
  * (e.g. when coroutine starts heavy fork-join-like computation), so fairness is not important.
- * As an alternative, offloading directly to some [CoroutineScheduler.PoolWorker] may be used, but then the strategy of selecting any idle worker
+ * As an alternative, offloading directly to some [CoroutineScheduler.Worker] may be used, but then the strategy of selecting any idle worker
  * should be implemented and implementation should be aware multiple producers.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
  */
 internal class WorkQueue {
 
@@ -54,9 +57,8 @@ internal class WorkQueue {
      * Retrieves and removes task from the head of the queue
      * Invariant: this method is called only by the owner of the queue ([pollExternal] is not)
      */
-    fun poll(): Task? {
-        return lastScheduledTask.getAndSet(null) ?: pollExternal()
-    }
+    fun poll(): Task? =
+        lastScheduledTask.getAndSet(null) ?: pollExternal()
 
     /**
      * Invariant: this method is called only by the owner of the queue
@@ -70,20 +72,18 @@ internal class WorkQueue {
         return addLast(previous, globalQueue)
     }
 
-    // Called only by the owner
+    // Called only by the owner, returns true if no offloading happened, false otherwise
     fun addLast(task: Task, globalQueue: GlobalQueue): Boolean {
-        var addedToGlobalQueue = false
-
+        var noOffloadingHappened = true
         /*
          * We need the loop here because race possible not only on full queue,
          * but also on queue with one element during stealing
          */
         while (!tryAddLast(task)) {
             offloadWork(globalQueue)
-            addedToGlobalQueue = true
+            noOffloadingHappened = false
         }
-
-        return !addedToGlobalQueue
+        return noOffloadingHappened
     }
 
     /**
@@ -135,7 +135,7 @@ internal class WorkQueue {
     private fun offloadWork(target: GlobalQueue) {
         repeat((bufferSize / 2).coerceAtLeast(1)) {
             val task = pollExternal() ?: return
-            target.add(task)
+            target.addLast(task)
         }
     }
 

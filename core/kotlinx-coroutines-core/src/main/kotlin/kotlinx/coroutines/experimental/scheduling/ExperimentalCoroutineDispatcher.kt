@@ -6,8 +6,14 @@ import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
 // TODO make internal after integration wih Ktor
-class ExperimentalCoroutineDispatcher(corePoolSize: Int = CORE_POOL_SIZE, maxPoolSize: Int = MAX_POOL_SIZE) : CoroutineDispatcher(), Delay, Closeable {
+class ExperimentalCoroutineDispatcher(
+    corePoolSize: Int = CORE_POOL_SIZE,
+    maxPoolSize: Int = MAX_POOL_SIZE
+) : CoroutineDispatcher(), Delay, Closeable {
 
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 
