@@ -698,13 +698,16 @@ Note, that concurrency with coroutines is always explicit.
 There is a laziness option to [async] using an optional `start` parameter with a value of [CoroutineStart.LAZY]. 
 It starts coroutine only when its result is needed by some 
 [await][Deferred.await] or if a [start][Job.start] function 
-is invoked. Run the following example that differs from the previous one only by this option:
+is invoked. Run the following example:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val time = measureTimeMillis {
         val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
         val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
+        // some computation
+        one.start() // start the first one
+        two.start() // start the second one
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
@@ -717,14 +720,20 @@ It produces something like this:
 
 ```text
 The answer is 42
-Completed in 2017 ms
+Completed in 1017 ms
 ```
 
 <!--- TEST ARBITRARY_TIME -->
 
-So, we are back to sequential execution, because we _first_ start and await for `one`, _and then_ start and await
-for `two`. It is not the intended use-case for laziness. It is designed as a replacement for
-the standard `lazy` function in cases when computation of the value involves suspending functions.
+So, here the two coroutines are defined but not executed as in the previous example, but the control is given to
+the programmer about when exactly to start the execution by calling [start][Job.start] on it. We first 
+start `one`, then start `two`, and then await for the individual coroutines to finish. 
+
+Note, that if we have called [await][Deferred.await] in `println` and omitted [start][Job.start] on individual 
+coroutines, then we would have got the sequential behaviour as [await][Deferred.await] starts the coroutine 
+execution and waits for the execution to finish, which is not the intended use-case for laziness. 
+The use-case for `async(start = CoroutineStart.LAZY)` is a replacement for the 
+standard `lazy` function in cases when computation of the value involves suspending functions.
 
 ### Async-style functions
 

@@ -161,7 +161,7 @@ class GuideTest {
     fun testKotlinxCoroutinesExperimentalGuideCompose03() {
         test("KotlinxCoroutinesExperimentalGuideCompose03") { kotlinx.coroutines.experimental.guide.compose03.main(emptyArray()) }.verifyLinesArbitraryTime(
             "The answer is 42",
-            "Completed in 2017 ms"
+            "Completed in 1017 ms"
         )
     }
 
