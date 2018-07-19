@@ -8,28 +8,29 @@ import java.util.concurrent.*
 
 // 100us as default
 @JvmField
-internal val WORK_STEALING_TIME_RESOLUTION_NS = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.resolution.ns", 100000L)
+internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
+    "kotlinx.coroutines.scheduler.resolution.ns", 100000L)
 
 @JvmField
-internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.offload.threshold", 96L)
+internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = systemProp(
+    "kotlinx.coroutines.scheduler.offload.threshold", 96, maxValue = BUFFER_CAPACITY)
 
 @JvmField
-internal val BLOCKING_DEFAULT_PARALLELISM = readFromSystemProperties(
-        "kotlinx.coroutines.scheduler.blocking.parallelism", 16)
+internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
+    "kotlinx.coroutines.scheduler.blocking.parallelism", 16)
 
 @JvmField
-internal val CORE_POOL_SIZE = readFromSystemProperties("kotlinx.coroutines.scheduler.core.pool.size",
-    Runtime.getRuntime().availableProcessors().coerceAtLeast(2))
+internal val CORE_POOL_SIZE = systemProp("kotlinx.coroutines.scheduler.core.pool.size",
+    AVAILABLE_PROCESSORS.coerceAtLeast(2), minValue = 2)
 
 @JvmField
-internal val MAX_POOL_SIZE = readFromSystemProperties("kotlinx.coroutines.scheduler.max.pool.size",
-    (Runtime.getRuntime().availableProcessors() * 128).coerceIn(CORE_POOL_SIZE, CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE))
+internal val MAX_POOL_SIZE = systemProp("kotlinx.coroutines.scheduler.max.pool.size",
+    (AVAILABLE_PROCESSORS * 128).coerceIn(CORE_POOL_SIZE, CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE),
+    maxValue = CoroutineScheduler.MAX_SUPPORTED_POOL_SIZE)
 
 @JvmField
-internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(readFromSystemProperties(
-    "kotlinx.coroutines.scheduler.keep.alive.sec", 5L))
+internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
+    systemProp("kotlinx.coroutines.scheduler.keep.alive.sec", 5L))
 
 @JvmField
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
@@ -60,20 +61,4 @@ internal abstract class TimeSource {
 
 internal object NanoTimeSource : TimeSource() {
     override fun nanoTime() = System.nanoTime()
-}
-
-internal fun readFromSystemProperties(propertyName: String, defaultValue: Int): Int = readFromSystemProperties(propertyName, defaultValue.toLong()).toInt()
-
-internal fun readFromSystemProperties(propertyName: String, defaultValue: Long): Long {
-    val value = try {
-        System.getProperty(propertyName)
-    } catch (e: SecurityException) {
-        null
-    } ?: return defaultValue
-
-    val parsed = value.toLongOrNull() ?: error("System property '$propertyName' has unrecognized value '$value'")
-    if (parsed <= 0) {
-        error("System property '$propertyName' should be positive, but is '$parsed'")
-    }
-    return parsed
 }

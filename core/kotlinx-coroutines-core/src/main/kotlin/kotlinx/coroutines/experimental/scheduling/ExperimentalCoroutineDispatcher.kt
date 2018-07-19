@@ -14,7 +14,6 @@ class ExperimentalCoroutineDispatcher(
     corePoolSize: Int = CORE_POOL_SIZE,
     maxPoolSize: Int = MAX_POOL_SIZE
 ) : CoroutineDispatcher(), Delay, Closeable {
-
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
@@ -45,7 +44,11 @@ class ExperimentalCoroutineDispatcher(
     internal fun dispatchBlocking(block: Runnable, context: TaskMode, fair: Boolean): Unit = coroutineScheduler.dispatch(block, context, fair)
 }
 
-private class LimitingBlockingDispatcher(val parallelism: Int, val taskContext: TaskMode, val dispatcher: ExperimentalCoroutineDispatcher) : CoroutineDispatcher(), Delay {
+private class LimitingBlockingDispatcher(
+    val parallelism: Int,
+    val taskContext: TaskMode,
+    val dispatcher: ExperimentalCoroutineDispatcher
+) : CoroutineDispatcher(), Delay {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
     private val inFlightTasks = atomic(0)
@@ -145,5 +148,6 @@ private class LimitingBlockingDispatcher(val parallelism: Int, val taskContext: 
         }
     }
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) = dispatcher.scheduleResumeAfterDelay(time, unit, continuation)
+    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
+        dispatcher.scheduleResumeAfterDelay(time, unit, continuation)
 }

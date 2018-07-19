@@ -16,6 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
@@ -34,7 +35,6 @@ import kotlin.coroutines.experimental.*
  * privileged actions.
  */
 object CommonPool : CoroutineDispatcher() {
-
     /**
      * Name of the property that controls default parallelism level of [CommonPool].
      * If the property is not specified, `Runtime.getRuntime().availableProcessors() - 1` will be used instead (or `1` for single-core JVM).
@@ -43,18 +43,8 @@ object CommonPool : CoroutineDispatcher() {
      */
     public const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
 
-    private val parallelism = run<Int> {
-        val property = Try { System.getProperty(DEFAULT_PARALLELISM_PROPERTY_NAME) }
-        if (property == null) {
-            (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
-        } else {
-            val parallelism = property.toIntOrNull()
-            if (parallelism == null || parallelism < 1) {
-                error("Expected positive number in $DEFAULT_PARALLELISM_PROPERTY_NAME, but has $property")
-            }
-            parallelism
-        }
-    }
+    private val parallelism = systemProp(DEFAULT_PARALLELISM_PROPERTY_NAME,
+        (AVAILABLE_PROCESSORS - 1).coerceAtLeast(1))
 
     // For debug and tests
     private var usePrivatePool = false

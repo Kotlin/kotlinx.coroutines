@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental
 
-import sun.text.normalizer.UTF16.*
+import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
@@ -40,9 +40,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
-internal val DEBUG = run {
-    val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
-        catch (e: SecurityException) { null }
+internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     when (value) {
         DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
         DEBUG_PROPERTY_VALUE_ON, "" -> true

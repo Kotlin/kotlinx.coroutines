@@ -87,55 +87,54 @@ internal class WorkQueue {
     }
 
     /**
+     * Tries stealing from [victim] queue into this queue, using [globalQueue] to offload on overflow.
+     * 
      * @return whether any task was stolen
      */
     fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
         val time = schedulerTimeSource.nanoTime()
-
-        if (victim.bufferSize == 0) {
-            val lastScheduled = victim.lastScheduledTask.value ?: return false
-            if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
-                return false
-            }
-
-            if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
-                add(lastScheduled, globalQueue)
-                return true
-            }
-
-            return false
-        }
-
+        val bufferSize = victim.bufferSize
+        if (bufferSize == 0) return tryStealLastScheduled(time, victim, globalQueue)
         /*
          * Invariant: time is monotonically increasing (thanks to nanoTime), so we can stop as soon as we find the first task not satisfying a predicate.
          * If queue size is larger than QUEUE_SIZE_OFFLOAD_THRESHOLD then unconditionally steal tasks over this limit to prevent possible queue overflow
          */
-        var stolen = false
-        repeat((victim.bufferSize / 2).coerceAtLeast(1)) {
-            val task = victim.pollExternal { time - it.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
-                    ?: return@repeat
-            stolen = true
+        var wasStolen = false
+        repeat(((bufferSize / 2).coerceAtLeast(1))) {
+            val task = victim.pollExternal { task ->
+                time - task.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS || victim.bufferSize > QUEUE_SIZE_OFFLOAD_THRESHOLD }
+                    ?: return wasStolen // non-local return from trySteal as we're done
+            wasStolen = true
             add(task, globalQueue)
         }
-
-        return stolen
+        return wasStolen
     }
 
-    internal fun size(): Int {
-        if (lastScheduledTask.value != null) {
-            return bufferSize + 1
+    private fun tryStealLastScheduled(
+        time: Long,
+        victim: WorkQueue,
+        globalQueue: GlobalQueue
+    ): Boolean {
+        val lastScheduled = victim.lastScheduledTask.value ?: return false
+        if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
+            return false
         }
-
-        return bufferSize
+        if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
+            add(lastScheduled, globalQueue)
+            return true
+        }
+        return false
     }
+
+    internal fun size(): Int = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
 
     /**
-     * Offloads half of the current buffer to [target]
+     * Offloads half of the current buffer to [globalQueue]
      */
-    private fun offloadWork(target: GlobalQueue) {
+    private fun offloadWork(globalQueue: GlobalQueue) {
         repeat((bufferSize / 2).coerceAtLeast(1)) {
             val task = pollExternal() ?: return
-            target.addLast(task)
+            globalQueue.addLast(task)
         }
     }
 
@@ -151,7 +150,6 @@ internal class WorkQueue {
             if (!predicate(element)) {
                 return null
             }
-
             if (consumerIndex.compareAndSet(tailLocal, tailLocal + 1)) {
                 // 1) Help GC 2) Signal producer that this slot is consumed and may be used
                 return buffer.getAndSet(index, null)
