@@ -75,6 +75,8 @@ private class PublisherCoroutine<in T>(
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
     override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun invokeOnClose(handler: (Throwable?) -> Unit) =
+        throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
     override fun offer(element: T): Boolean {
         if (!mutex.tryLock()) return false

@@ -22,8 +22,7 @@ class ByteChannelJoinLinearizabilityTest : TestBase() {
     private val lr = LinTesting()
 
     @Reset
-    fun reset() {
-//        println("============== reset ====================")
+    fun resetChannel() {
         from = ByteChannel(true)
         to = ByteChannel(true)
     }

@@ -19,7 +19,7 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
     private lateinit var channel: Channel<Int>
 
     @Reset
-    fun reset() {
+    fun resetChannel() {
         channel = Channel()
     }
 

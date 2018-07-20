@@ -82,6 +82,40 @@ public interface SendChannel<in E> {
      * receive on a failed channel throw the specified [cause] exception.
      */
     public fun close(cause: Throwable? = null): Boolean
+
+    /**
+     * Registers handler which is synchronously invoked once the channel is [closed][close]
+     * or receiving side of this channel is [cancelled][ReceiveChannel.cancel].
+     * Only one handler can be attached to the channel during channel's lifetime.
+     * Handler is invoked when [isClosedForSend] starts to return `true`.
+     * If channel is already closed, handler is invoked immediately.
+     *
+     * The meaning of `cause` that is passed to the handler:
+     * * `null` if channel was closed or cancelled without corresponding argument
+     * * close or cancel cause otherwise.
+     *
+     * Example of usage (exception handling is omitted):
+     * ```
+     * val events = Channel(UNLIMITED)
+     * callbackBasedApi.registerCallback { event ->
+     *   events.offer(event)
+     * }
+     *
+     * val uiUpdater = launch(UI, parent = UILifecycle) {
+     *    events.consume {}
+     *    events.cancel()
+     * }
+     *
+     * events.invokeOnClose { callbackBasedApi.stop() }
+     *
+     * ```
+     *
+     * @throws UnsupportedOperationException if underlying channel doesn't support [invokeOnClose].
+     * Implementation note: currently, [invokeOnClose] is unsupported only by Rx-like integrations
+     *
+     * @throws IllegalStateException if another handler was already registered
+     */
+    public fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
 }
 
 /**

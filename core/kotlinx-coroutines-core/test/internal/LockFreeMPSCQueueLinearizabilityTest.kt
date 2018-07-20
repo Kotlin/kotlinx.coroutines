@@ -17,7 +17,7 @@ class LockFreeMPSCQueueLinearizabilityTest : TestBase() {
     private lateinit var q: LockFreeMPSCQueue<Int>
 
     @Reset
-    fun reset() {
+    fun resetQueue() {
         q = LockFreeMPSCQueue()
     }
 

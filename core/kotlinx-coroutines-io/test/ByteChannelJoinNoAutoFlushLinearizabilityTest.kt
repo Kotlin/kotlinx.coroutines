@@ -22,7 +22,7 @@ class ByteChannelJoinNoAutoFlushLinearizabilityTest : TestBase() {
     private val lr = LinTesting()
 
     @Reset
-    fun reset() {
+    fun resetChannel() {
         from = ByteChannel(false)
         to = ByteChannel(false)
     }
