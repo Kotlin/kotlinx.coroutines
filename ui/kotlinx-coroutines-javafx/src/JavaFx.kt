@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import com.sun.javafx.application.*
 import javafx.animation.*
 import javafx.application.*
 import javafx.event.*
@@ -86,5 +85,9 @@ class ApplicationThreadChecker : BlockingChecker {
 }
 
 internal fun initPlatform() {
-    PlatformImpl.startup {}
+    // Ad-hoc workaround for #443. Will be fixed with multi-release jar.
+    // If this code throws an exception (Java 9 + prohibited reflective access), initialize JavaFX directly
+    Class.forName("com.sun.javafx.application.PlatformImpl")
+        .getMethod("startup", java.lang.Runnable::class.java)
+        .invoke(null, java.lang.Runnable { })
 }
