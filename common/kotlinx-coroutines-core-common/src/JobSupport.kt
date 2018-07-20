@@ -10,7 +10,6 @@ import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
@@ -524,7 +523,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         if (!_state.compareAndSet(expect, Finishing(list, cancelled, false))) return false
         onFinishingInternal(cancelled)
         onCancellationInternal(cancelled)
-        notifyCancellation(list, cause)
+        // Materialize cause
+        notifyCancellation(list, cancelled.cause)
         return true
     }
 

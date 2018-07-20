@@ -157,4 +157,22 @@ class JobTest : TestBase() {
         parent.join()
         finish(6)
     }
+
+    @Test
+    fun testOnCancellingHandler() = runTest {
+        val job = launch(coroutineContext) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        job.invokeOnCompletion(onCancelling = true) {
+            assertNotNull(it)
+            expect(3)
+        }
+
+        expect(1)
+        yield()
+        job.cancelAndJoin()
+        finish(4)
+    }
 }
