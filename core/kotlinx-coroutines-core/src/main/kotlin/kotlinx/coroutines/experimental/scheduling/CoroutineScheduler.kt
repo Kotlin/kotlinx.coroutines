@@ -2,6 +2,7 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.internal.*
 import java.io.Closeable
 import java.util.*
@@ -63,6 +64,18 @@ internal class CoroutineScheduler(
         maxPoolSize: Int
     ) : this("CoroutineScheduler", corePoolSize, maxPoolSize)
 
+    init {
+        require(corePoolSize >= MIN_SUPPORTED_POOL_SIZE) {
+            "Core pool size $corePoolSize should be at least $MIN_SUPPORTED_POOL_SIZE"
+        }
+        require(maxPoolSize >= corePoolSize) {
+            "Max pool size $maxPoolSize should be greater than or equals to core pool size $corePoolSize"
+        }
+        require(maxPoolSize <= MAX_SUPPORTED_POOL_SIZE) {
+            "Max pool size $maxPoolSize should not exceed maximal supported number of threads $MAX_SUPPORTED_POOL_SIZE"
+        }
+    }
+
     private val globalQueue: GlobalQueue = GlobalQueue()
 
     /**
@@ -83,8 +96,35 @@ internal class CoroutineScheduler(
      * in most-recently used order, improving both performance and locality.
      * Moreover, it decreases threads thrashing, if the pool has n threads when only n / 2 is required,
      * the latter half will never be unparked and will terminate itself after [IDLE_WORKER_KEEP_ALIVE_NS].
+     *
+     * This long version consist of version bits with [PARKED_VERSION_MASK]
+     * and top worker thread index bits with [PARKED_INDEX_MASK].
      */
-    private val parkedWorkersStack = atomic<Worker?>(null)
+    private val parkedWorkersStack = atomic(0L)
+
+    /**
+     * Updates index of the worker at the top of [parkedWorkersStack].
+     * It always updates version to ensure interference with [parkedWorkersStackPop] operation
+     * that might have already decided to put this index to the top.
+     *
+     * Note, [newIndex] can be zero for the worker that is being terminated (removed from [workers]).
+     */
+    private fun parkedWorkersStackTopUpdate(oldIndex: Int, newIndex: Int)  {
+        require(oldIndex > 0 && newIndex >= 0)
+        parkedWorkersStack.loop { top ->
+            val index = (top and PARKED_INDEX_MASK).toInt()
+            val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
+            val updIndex = if (index == oldIndex) {
+                if (newIndex == 0)
+                    parkedWorkersStackNextIndex(workers[oldIndex]!!)
+                else
+                    newIndex
+            } else
+                index // no change to index, but update version
+            if (updIndex < 0) return@loop // retry
+            if (parkedWorkersStack.compareAndSet(top, updVersion or updIndex.toLong())) return
+        }
+    }
 
     /**
      * Pushes worker into [parkedWorkersStack].
@@ -98,12 +138,20 @@ internal class CoroutineScheduler(
         if (worker.nextParkedWorker !== NOT_IN_STACK) return // already in stack, bail out
         /*
          * The below loop can be entered only if this worker was not in the stack and, since no other thread
-         * can add it to the stack (ony the worker itself), this invariant holds while this loop executes.
+         * can add it to the stack (only the worker itself), this invariant holds while this loop executes.
          */
         parkedWorkersStack.loop { top ->
-            worker.nextParkedWorker = top
-            // Successful update of the stack top completes successful push
-            if (parkedWorkersStack.compareAndSet(top, worker)) return
+            val index = (top and PARKED_INDEX_MASK).toInt()
+            val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
+            val updIndex = worker.indexInArray
+            assert(updIndex != 0) // only this worker can push itself, cannot be terminated
+            worker.nextParkedWorker = workers[index]
+            /*
+             * Other thread can be changing this worker's index at this point, but it
+             * also invokes parkedWorkersStackTopUpdate which updates version to make next CAS fail.
+             * Successful CAS of the stack top completes successful push.
+             */
+            if (parkedWorkersStack.compareAndSet(top, updVersion or updIndex.toLong())) return
         }
     }
 
@@ -115,54 +163,84 @@ internal class CoroutineScheduler(
      */
     private fun parkedWorkersStackPop(): Worker? {
         parkedWorkersStack.loop { top ->
-            if (top == null) return null
-            val next = top.nextParkedWorker
-            if (next === NOT_IN_STACK) return@loop // we are too late -- other thread popped this element
+            val index = (top and PARKED_INDEX_MASK).toInt()
+            val worker = workers[index] ?: return null // stack is empty
+            val updVersion = (top + PARKED_VERSION_INC) and PARKED_VERSION_MASK
+            val updIndex = parkedWorkersStackNextIndex(worker)
+            if (updIndex < 0) return@loop // retry
             /*
-             * The following CAS does not suffer from a typical ABA problem of Treiber stack, because while this
-             * CAS is being executed nextParkedWorker !== NOT_IN_STACK so top worker cannot perform
-             * parkedWorkersStackPush and put itself into the top of parkedWorkersStack again.
+             * Other thread can be changing this worker's index at this point, but it
+             * also invokes parkedWorkersStackTopUpdate which updates version to make next CAS fail.
+             * Successful CAS of the stack top completes successful pop.
              */
-            if (parkedWorkersStack.compareAndSet(top, next as Worker?)) {
+            if (parkedWorkersStack.compareAndSet(top, updVersion or updIndex.toLong())) {
                 /**
                  * We've just took worker out of the stack, but nextParkerWorker is not reset yet, so if a worker is
                  * currently invoking parkedWorkersStackPush it would think it is in the stack and bail out without
                  * adding itself again. It does not matter, since we are going it invoke unpark on the thread
                  * that was popped out of parkedWorkersStack anyway.
                  */
-                top.nextParkedWorker = NOT_IN_STACK
-                return top
+                worker.nextParkedWorker = NOT_IN_STACK
+                return worker
             }
         }
     }
 
     /**
-     * State of worker threads
-     * [workers] is array of lazily created workers up to [maxPoolSize] workers
-     * [createdWorkers] is count of already created workers (worker with index lesser than [createdWorkers] exists)
-     * [blockingWorkers] is count of running workers which are executing [TaskMode.PROBABLY_BLOCKING] task
+     * Finds next usable index for [parkedWorkersStack]. The problem is that workers can
+     * be terminated at their [Worker.indexInArray] becomes zero, so they cannot be
+     * put at the top of the stack. In which case we are looking for next.
+     *
+     * Returns `index >= 0` or `-1` for retry.
      */
-    private val workers: Array<Worker?>
+    private fun parkedWorkersStackNextIndex(worker: Worker): Int {
+        var next = worker.nextParkedWorker
+        findNext@ while (true) {
+            when {
+                next === NOT_IN_STACK -> return -1 // we are too late -- other thread popped this element, retry
+                next === null -> return 0 // stack becomes empty
+                else -> {
+                    val nextWorker = next as Worker
+                    val updIndex = nextWorker.indexInArray
+                    if (updIndex != 0) return updIndex // found good index for next worker
+                    // Otherwise, this worker was terminated and we cannot put it to top anymore, check next
+                    next = nextWorker.nextParkedWorker
+                }
+            }
+        }
+    }
+
+    /**
+     * State of worker threads.
+     * [workers] is array of lazily created workers up to [maxPoolSize] workers.
+     * [createdWorkers] is count of already created workers (worker with index lesser than [createdWorkers] exists).
+     * [blockingWorkers] is count of running workers which are executing [TaskMode.PROBABLY_BLOCKING] task.
+     *
+     * **NOTE**: `workers[0]` is always `null` (never used, works as sentinel value).
+     */
+    private val workers: Array<Worker?> = arrayOfNulls(maxPoolSize + 1)
 
     /**
      * Long describing state of workers in this pool.
      * Currently includes created and blocking workers each occupying [BLOCKING_SHIFT] bits.
      */
     private val controlState = atomic(0L)
+
     private val createdWorkers: Int inline get() = (controlState.value and CREATED_MASK).toInt()
     private val blockingWorkers: Int inline get() = (controlState.value and BLOCKING_MASK shr BLOCKING_SHIFT).toInt()
 
     private inline fun createdWorkers(state: Long): Int = (state and CREATED_MASK).toInt()
     private inline fun blockingWorkers(state: Long): Int = (state and BLOCKING_MASK shr BLOCKING_SHIFT).toInt()
 
-    private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.addAndGet(1L))
-    private inline fun decrementCreatedWorkers(): Int = createdWorkers(controlState.addAndGet(-1L))
-    private inline fun incrementBlockingWorkers(): Int = blockingWorkers(controlState.addAndGet(1L shl BLOCKING_SHIFT))
-    private inline fun decrementBlockingWorkers(): Int = blockingWorkers(controlState.addAndGet(-(1L shl BLOCKING_SHIFT)))
+    private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.incrementAndGet())
+    private inline fun decrementCreatedWorkers(): Int = createdWorkers(controlState.getAndDecrement())
+
+    private inline fun incrementBlockingWorkers() { controlState.addAndGet(1L shl BLOCKING_SHIFT) }
+    private inline fun decrementBlockingWorkers() { controlState.addAndGet(-(1L shl BLOCKING_SHIFT)) }
 
     private val random = Random()
 
-    // This is used a "stop signal" for debugging only
+    // This is used a "stop signal" for debugging/tests only
     private val isTerminated = atomic(false)
 
     companion object {
@@ -196,54 +274,47 @@ internal class CoroutineScheduler(
         private const val CREATED_MASK: Long = (1L shl BLOCKING_SHIFT) - 1
         private const val BLOCKING_MASK: Long = CREATED_MASK shl BLOCKING_SHIFT
 
-        internal const val MAX_SUPPORTED_POOL_SIZE = 1 shl BLOCKING_SHIFT
+        internal const val MIN_SUPPORTED_POOL_SIZE = 1 // we support 1 for test purposes, but it is not usually used
+        internal const val MAX_SUPPORTED_POOL_SIZE = (1 shl BLOCKING_SHIFT) - 2
+
+        // Masks of parkedWorkersStack
+        private const val PARKED_INDEX_MASK = CREATED_MASK
+        private const val PARKED_VERSION_MASK = CREATED_MASK.inv()
+        private const val PARKED_VERSION_INC = 1L shl BLOCKING_SHIFT
     }
 
-    init {
-        require(corePoolSize >= 1) {
-            "Core pool size ($corePoolSize) should be positive"
-        }
-        require(maxPoolSize >= corePoolSize) {
-            "Max pool size ($maxPoolSize) should be greater than or equals to core pool size ($corePoolSize)"
-        }
-        require(maxPoolSize <= MAX_SUPPORTED_POOL_SIZE) {
-            "Max pool size ($maxPoolSize) should not exceed maximal supported number of threads ($MAX_SUPPORTED_POOL_SIZE)"
-        }
-
-        workers = arrayOfNulls(maxPoolSize)
-        // By default create at most 2 workers and allocate next ones lazily
-        val initialSize = corePoolSize.coerceAtMost(2)
-        for (i in 0 until initialSize) {
-            workers[i] = Worker(i).apply { start() }
-        }
-
-        controlState.value = initialSize.toLong()
-    }
+    override fun close() = shutdown(1000L)
 
     /*
-     * Closes current scheduler and waits until all threads are stopped.
+     * Shuts down current scheduler and waits until all threads are stopped.
      * This method uses unsafe API (unconditional unparks, ignoring interruptions etc.)
      * and intended to be used only for testing. Invocation has no additional effect if already closed.
      */
-    override fun close() {
+    fun shutdown(timeout: Long) {
         if (!isTerminated.compareAndSet(false, true)) return
         // Race with recently created threads which may park indefinitely
         var finishedThreads = 0
         while (finishedThreads < createdWorkers) {
             var finished = 0
-            for (i in 0 until createdWorkers) {
-                workers[i]?.also {
+            for (i in 1..createdWorkers) {
+                synchronized(workers) {
+                    // Get the worker from array and also clear reference in array under synchronization
+                    workers[i].also { workers[i] = null }
+                } ?.also {
                     if (it.isAlive) {
                         // Unparking alive thread is unsafe in general, but acceptable for testing purposes
                         LockSupport.unpark(it)
-                        it.join(100)
+                        it.join(timeout)
                     }
-
                     ++finished
                 }
             }
             finishedThreads = finished
         }
+        // cleanup state to make sure that tryUnpark tries to create new threads and crashes because it isTerminated
+        assert(cpuPermits.availablePermits() == corePoolSize)
+        parkedWorkersStack.value = 0L
+        controlState.value = 0L
     }
 
     /**
@@ -319,12 +390,21 @@ internal class CoroutineScheduler(
              * 4) Worker is terminated. No harm in resetting its counters either.
              */
             worker.idleResetBeforeUnpark()
-            /**
+            /*
              * Check that the thread we've found in the queue was indeed in parking state, before we
              * actually try to unpark it. 
              */
-            if (!worker.isParking) continue // find another thread that is in parking state
+            val wasParking = worker.isParking
+            /*
+             * Send unpark signal anyway, because the thread may have made decision to park but have not yet set its
+             * state to parking and this could be the last thread we have (unparking random thread would not harm).
+             */
             LockSupport.unpark(worker)
+            /*
+             * If this thread was not in parking state then we definitely need to find another thread.
+             * We err on the side of unparking more threads than needed here.
+             */
+            if (!wasParking) continue
             /*
              * Terminating worker could be selected.
              * If it's already TERMINATED or we cannot forbid it from terminating, then try find another worker.
@@ -340,21 +420,20 @@ internal class CoroutineScheduler(
 
     private fun createNewWorker(): Boolean {
         synchronized(workers) {
+            // for test purposes make sure we're not trying to resurrect terminated scheduler
+            require(!isTerminated.value) { "This scheduler was terminated "}
             val state = controlState.value
             val created = createdWorkers(state)
             val blocking = blockingWorkers(state)
             val cpuWorkers = created - blocking
             // Double check for overprovision
-            if (cpuWorkers >= corePoolSize) {
-                return false
-            }
-            if (created >= maxPoolSize || cpuPermits.availablePermits() == 0) {
-                return false
-            }
-            incrementCreatedWorkers()
-            require(workers[created] == null)
-            val worker = Worker(created).apply { start() }
-            workers[created] = worker
+            if (cpuWorkers >= corePoolSize) return false
+            if (created >= maxPoolSize || cpuPermits.availablePermits() == 0) return false
+            // start & register new worker
+            val newIndex = incrementCreatedWorkers()
+            require(newIndex > 0 && workers[newIndex] == null)
+            val worker = Worker(newIndex).apply { start() }
+            workers[newIndex] = worker
             return true
         }
     }
@@ -468,10 +547,11 @@ internal class CoroutineScheduler(
             isDaemon = true
         }
 
-        // guarded by scheduler lock
-        private var indexInArray = -1
+        // guarded by scheduler lock, index in workers array, 0 when not in array (terminated)
+        @Volatile // volatile for push/pop operation into parkedWorkersStack
+        var indexInArray = 0
             set(index) {
-                name = "$schedulerName-worker-${if (index < 0) "TERMINATED" else index.toString()}"
+                name = "$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}"
                 field = index
             }
 
@@ -574,6 +654,7 @@ internal class CoroutineScheduler(
         private var parkTimeNs = MIN_PARK_TIME_NS
         
         private var rngState = random.nextInt()
+        private var lastStealIndex = 0 // try in order repeated, reset when unparked
 
         override fun run() {
             var wasIdle = false // local variable to avoid extra idleReset invocations when tasks repeatedly arrive
@@ -597,7 +678,6 @@ internal class CoroutineScheduler(
                     afterTask(task)
                 }
             }
-
             tryReleaseCpu(WorkerState.TERMINATED)
         }
 
@@ -659,7 +739,6 @@ internal class CoroutineScheduler(
             if (mask and upperBound == 0) {
                 return rngState and mask
             }
-
             return (rngState and Int.MAX_VALUE) % upperBound
         }
 
@@ -722,15 +801,39 @@ internal class CoroutineScheduler(
                 if (!terminationState.compareAndSet(ALLOWED, TERMINATED)) return
                 /*
                  * At this point this thread is no longer considered as usable for scheduling.
-                 * Now move last worker into an index in array that was previously occupied by this worker.
+                 * We need multi-step choreography to reindex workers.
+                 * 
+                 * 1) Read current worker's index and reset it to zero.
                  */
-                val lastWorkerIndex = decrementCreatedWorkers()
-                val lastWorker = workers[lastWorkerIndex]!!
-                workers[indexInArray] = lastWorker
-                lastWorker.indexInArray = indexInArray
-                workers[lastWorkerIndex] = null
-                // Cleanup index of this worker for debugging purposes
-                indexInArray = -1
+                val oldIndex = indexInArray
+                indexInArray = 0
+                /*
+                 * Now this worker cannot become the top of parkedWorkersStack, but it can
+                 * still be at the stack top via oldIndex.
+                 * 
+                 * 2) Update top of stack if it was pointing to oldIndex and make sure no
+                 *    pending push/pop operation that might have already retrieved oldIndex could complete.
+                 */
+                parkedWorkersStackTopUpdate(oldIndex, 0)
+                /*
+                 * 3) Move last worker into an index in array that was previously occupied by this worker.
+                 */
+                val lastIndex = decrementCreatedWorkers()
+                val lastWorker = workers[lastIndex]!!
+                workers[oldIndex] = lastWorker
+                lastWorker.indexInArray = oldIndex
+                /*
+                 * Now lastWorker is available at both indices in the array, but it can
+                 * still be at the stack top on via its lastIndex
+                 *
+                 * 4) Update top of stack lastIndex -> oldIndex and make sure no
+                 *    pending push/pop operation that might have already retrieved lastIndex could complete.
+                 */
+                parkedWorkersStackTopUpdate(lastIndex, oldIndex)
+                /*
+                 * 5) It is safe to clear reference from workers array now.
+                 */
+                workers[lastIndex] = null
             }
             state = WorkerState.TERMINATED
         }
@@ -751,6 +854,7 @@ internal class CoroutineScheduler(
         // It is invoked by this worker when it finds a task
         private fun idleReset(mode: TaskMode) {
             terminationDeadline = 0L // reset deadline for termination
+            lastStealIndex = 0 // reset steal index (next time try random)
             if (state == WorkerState.PARKING) {
                 assert(mode == TaskMode.PROBABLY_BLOCKING)
                 state = WorkerState.BLOCKING
@@ -796,10 +900,13 @@ internal class CoroutineScheduler(
         private fun trySteal(): Task? {
             val created = createdWorkers
             // 0 to await an initialization and 1 to avoid excess stealing on single-core machines
-            if (created < 2) {
-                return null
-            }
-            val worker = workers[nextInt(created)]
+            if (created < 2) return null
+            var stealIndex = lastStealIndex
+            if (stealIndex == 0) stealIndex = nextInt(created) // start with random steal index
+            stealIndex++ // then go sequentially
+            if (stealIndex > created) stealIndex = 1
+            lastStealIndex = stealIndex
+            val worker = workers[stealIndex]
             if (worker !== null && worker !== this) {
                 if (localQueue.trySteal(worker.localQueue, globalQueue)) {
                     return localQueue.poll()

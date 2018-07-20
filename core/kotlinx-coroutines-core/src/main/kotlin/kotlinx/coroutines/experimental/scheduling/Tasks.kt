@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.scheduling
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.*
 
@@ -42,11 +43,14 @@ internal enum class TaskMode {
     PROBABLY_BLOCKING,
 }
 
-internal data class Task(
+internal class Task(
     val block: Runnable,
     val submissionTime: Long,
     val mode: TaskMode
-) : LockFreeMPMCQueueNode<Task>()
+) : LockFreeMPMCQueueNode<Task>() {
+    override fun toString(): String =
+        "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, $mode]"
+}
 
 // Open for tests
 internal open class GlobalQueue : LockFreeMPMCQueue<Task>() {

@@ -14,7 +14,7 @@ abstract class SchedulerTestBase : TestBase() {
          * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
-            val threadsCount = maxSequenceNumber()!! + 1
+            val threadsCount = maxSequenceNumber()!!
             require(threadsCount == expectedThreadsCount)
                 { "Expected $expectedThreadsCount pool threads, but has $threadsCount" }
         }
@@ -24,7 +24,7 @@ abstract class SchedulerTestBase : TestBase() {
          * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(range: IntRange) {
-            val maxSequenceNumber = maxSequenceNumber()!! + 1
+            val maxSequenceNumber = maxSequenceNumber()!!
             require(maxSequenceNumber in range) { "Expected pool threads to be in interval $range, but has $maxSequenceNumber" }
         }
 
@@ -44,7 +44,7 @@ abstract class SchedulerTestBase : TestBase() {
             require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
         }
 
-        fun initialPoolSize() = Runtime.getRuntime().availableProcessors().coerceAtMost(2)
+        fun initialPoolSize() = 1
 
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }
