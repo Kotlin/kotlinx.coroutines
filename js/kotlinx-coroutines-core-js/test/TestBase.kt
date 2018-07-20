@@ -51,6 +51,12 @@ public actual open class TestBase actual constructor() {
         finished = true
     }
 
+    public actual fun reset() {
+        check(actionIndex == 0 || finished) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        actionIndex = 0
+        finished = false
+    }
+
     // todo: The dynamic (promise) result is a work-around for missing suspend tests, see KT-22228
     @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
     public actual fun runTest(

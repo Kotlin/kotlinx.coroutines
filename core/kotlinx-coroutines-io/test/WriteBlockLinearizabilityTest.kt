@@ -20,7 +20,7 @@ class WriteBlockLinearizabilityTest : TestBase() {
     private val lr = LinTesting()
 
     @Reset
-    fun reset() {
+    fun resetChannel() {
         ch = ByteChannel(false)
         runBlocking {
             ch.writeLong(111)

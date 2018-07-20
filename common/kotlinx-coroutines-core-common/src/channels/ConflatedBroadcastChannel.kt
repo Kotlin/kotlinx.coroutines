@@ -38,6 +38,8 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
 
     private val _state = atomic<Any>(INITIAL_STATE) // State | Closed
     private val _updating = atomic(0)
+    // State transitions: null -> handler -> HANDLER_INVOKED
+    private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
         @JvmField
@@ -163,10 +165,36 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
                     val update = if (cause == null) CLOSED else Closed(cause)
                     if (_state.compareAndSet(state, update)) {
                         (state as State<E>).subscribers?.forEach { it.close(cause) }
+                        invokeOnCloseHandler(cause)
                         return true
                     }
                 }
                 else -> error("Invalid state $state")
+            }
+        }
+    }
+
+    private fun invokeOnCloseHandler(cause: Throwable?) {
+        val handler = onCloseHandler.value
+        if (handler !== null && handler !== HANDLER_INVOKED
+            && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+            (handler as Handler)(cause)
+        }
+    }
+
+    override fun invokeOnClose(handler: Handler) {
+        // Intricate dance for concurrent invokeOnClose and close
+        if (!onCloseHandler.compareAndSet(null, handler)) {
+            val value = onCloseHandler.value
+            if (value === HANDLER_INVOKED) {
+                throw IllegalStateException("Another handler was already registered and successfully invoked")
+            } else {
+                throw IllegalStateException("Another handler was already registered: $value")
+            }
+        } else {
+            val state = _state.value
+            if (state is Closed && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+                (handler)(state.closeCause)
             }
         }
     }

@@ -31,6 +31,45 @@ class BasicOperationsTest : TestBase() {
         TestChannelKind.values().forEach { kind -> testReceiveOrNullException(kind) }
     }
 
+    @Test
+    fun testInvokeOnClose() = TestChannelKind.values().forEach { kind ->
+        reset()
+        val channel = kind.create()
+        channel.invokeOnClose {
+            if (it is AssertionError) {
+                expect(3)
+            }
+        }
+        expect(1)
+        channel.offer(42)
+        expect(2)
+        channel.close(AssertionError())
+        finish(4)
+    }
+
+    @Test
+    fun testInvokeOnClosed() = TestChannelKind.values().forEach { kind ->
+        reset()
+        expect(1)
+        val channel = kind.create()
+        channel.close()
+        channel.invokeOnClose { expect(2) }
+        assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(3) } }
+        finish(3)
+    }
+
+    @Test
+    fun testMultipleInvokeOnClose() = TestChannelKind.values().forEach { kind ->
+        reset()
+        val channel = kind.create()
+        channel.invokeOnClose { expect(3) }
+        expect(1)
+        assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(4) } }
+        expect(2)
+        channel.close()
+        finish(4)
+    }
+
     private suspend fun testReceiveOrNull(kind: TestChannelKind) {
         val channel = kind.create()
         val d = async(coroutineContext) {

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
@@ -31,6 +32,9 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected abstract val isBufferFull: Boolean
+
+    // State transitions: null -> handler -> HANDLER_INVOKED
+    private val onCloseHandler = atomic<Any?>(null)
 
     // ------ internal functions for override by buffered channels ------
 
@@ -247,9 +251,38 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
 
         helpClose(closed)
+        invokeOnCloseHandler(cause)
+        // TODO We can get rid of afterClose
         onClosed(closed)
         afterClose(cause)
         return true
+    }
+
+    private fun invokeOnCloseHandler(cause: Throwable?) {
+        val handler = onCloseHandler.value
+        if (handler !== null && handler !== HANDLER_INVOKED
+            && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+            // CAS failed -> concurrent invokeOnClose() invoked handler
+            (handler as Handler)(cause)
+        }
+    }
+
+    override fun invokeOnClose(handler: Handler) {
+        // Intricate dance for concurrent invokeOnClose and close calls
+        if (!onCloseHandler.compareAndSet(null, handler)) {
+            val value = onCloseHandler.value
+            if (value === HANDLER_INVOKED) {
+                throw IllegalStateException("Another handler was already registered and successfully invoked")
+            }
+
+            throw IllegalStateException("Another handler was already registered: $value")
+        } else {
+            val closedToken = closedForSend
+            if (closedToken != null && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+                // CAS failed -> close() call invoked handler
+                (handler)(closedToken.closeCause)
+            }
+        }
     }
 
     private fun helpClose(closed: Closed<*>) {
@@ -983,6 +1016,9 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 /** @suppress **This is unstable API and it is subject to change.** */
 @JvmField internal val SEND_RESUMED = Symbol("SEND_RESUMED")
 
+internal typealias Handler = (Throwable?) -> Unit
+@JvmField internal val HANDLER_INVOKED = Any()
+
 /**
  * Represents sending waiter in the queue.
  * @suppress **This is unstable API and it is subject to change.**
@@ -1043,4 +1079,3 @@ private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed
     override val offerResult get() = OFFER_SUCCESS
     abstract fun resumeReceiveClosed(closed: Closed<*>)
 }
-
