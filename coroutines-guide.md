@@ -719,7 +719,10 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
-    println("Completed in $time ms")
+    // some computation
+    one.start() // start the first one
+    two.start() // start the second one
+    println("The answer is ${one.await() + two.await()}") // await for results on individual computations running in parallel
 }
 ```
 
@@ -729,14 +732,18 @@ It produces something like this:
 
 ```text
 The answer is 42
-Completed in 2017 ms
+Completed in 1017 ms
 ```
 
 <!--- TEST ARBITRARY_TIME -->
 
-So, we are back to sequential execution, because we _first_ start and await for `one`, _and then_ start and await
-for `two`. It is not the intended use-case for laziness. It is designed as a replacement for
-the standard `lazy` function in cases when computation of the value involves suspending functions.
+So, here the two coroutines are defined but not executed as in the previous example, but the control is given to
+the programmer about when exactly to start the execution by calling [start][Job.start] on it. We _first_ 
+start `one`, _and then_ start `two` and then await for the individual coroutines to finish. Note that if we would
+have called [await][Deferred.await] in `println` and omitted [start][Job.start] on individual coroutines, then we
+would have got the sequential behaviour as [await][Deferred.await] starts the coroutine execution and waits for the
+execution to finish, which is not the intended use-case for laziness. It is designed as a replacement for the 
+standard `lazy` function in cases when computation of the value involves suspending functions.
 
 ### Async-style functions
 
