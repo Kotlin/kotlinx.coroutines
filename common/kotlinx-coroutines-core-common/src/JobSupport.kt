@@ -104,7 +104,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         @Suppress("DEPRECATION")
         val handle = parent.attachChild(this)
         parentHandle = handle
-        // now check our state _after_ registering (see updateState order of actions)
+        // now check our state _after_ registering (see tryFinalizeState order of actions)
         if (isCompleted) {
             handle.dispose()
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
@@ -148,14 +148,64 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     // ------------ state update ------------
 
     /**
-     * Updates current [state] of this job. Returns `false` if current state is not equal to expected.
+     * Updates current [state] of this job to the final state, invoking all necessary handlers
+     * and/or `on*` methods.
+     *
+     * Returns `false` if current state is not equal to expected.
+     * If this method succeeds, state of this job will never be changed again
+     */
+    private fun tryFinalizeState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
+        val update = coerceProposedUpdate(expect, proposedUpdate)
+        if (!tryFinalizeState(expect, update)) return false
+        completeStateFinalization(expect, update, mode)
+        return true
+    }
+
+    /**
+     * Tries to update [_state] of this job to the final state and, if
+     * succeeds, disposes parent handle (de-attaching child from parent)
+     */
+    private fun tryFinalizeState(expect: Incomplete, update: Any?): Boolean  {
+        require(update !is Incomplete) // only incomplete -> completed transition is allowed
+        if (!_state.compareAndSet(expect, update)) return false
+        // Unregister from parent job
+        parentHandle?.let {
+            it.dispose() // volatile read parentHandle _after_ state was updated
+            parentHandle = NonDisposableHandle // release it just in case, to aid GC
+        }
+        return true // continues in completeStateFinalization
+    }
+
+    /**
+     * Completes update of the current [state] of this job.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    private fun updateState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
-        val update = coerceProposedUpdate(expect, proposedUpdate)
-        if (!tryUpdateState(expect, update)) return false
-        completeUpdateState(expect, update, mode)
-        return true
+    private fun completeStateFinalization(expect: Incomplete, update: Any?, mode: Int) {
+        val exceptionally = update as? CompletedExceptionally
+        // Do overridable processing before completion handlers
+
+        /*
+         * 1) Invoke onCancellationInternal: exception handling, parent/resource cancellation etc.
+         * 2) Invoke completion handlers: .join(), callbacks etc. It's important to invoke them only AFTER exception handling, see #208
+         * 3) Invoke onCompletionInternal: onNext(), timeout deregistration etc. I should be last so all callbacks observe consistent state
+         *    of the job which doesn't depend on callback scheduling
+         *
+         * Only notify on cancellation once (expect.isCancelling)
+         */
+        if (!expect.isCancelling) onCancellationInternal(exceptionally)
+
+        // Invoke completion handlers
+        val cause = exceptionally?.cause
+        if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
+            try {
+                expect.invoke(cause)
+            } catch (ex: Throwable) {
+                handleException(CompletionHandlerException("Exception in completion handler $expect for $this", ex))
+            }
+        } else {
+            expect.list?.notifyCompletion(cause)
+        }
+        onCompletionInternal(update, mode)
     }
 
     // when Job is in Cancelling state, it can only be promoted to Cancelled state,
@@ -184,55 +234,13 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         return Cancelled(this, exception)
     }
 
-    /**
-     * Tries to initiate update of the current [state] of this job.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    private fun tryUpdateState(expect: Incomplete, update: Any?): Boolean  {
-        require(update !is Incomplete) // only incomplete -> completed transition is allowed
-        if (!_state.compareAndSet(expect, update)) return false
-        // Unregister from parent job
-        parentHandle?.let {
-            it.dispose() // volatile read parentHandle _after_ state was updated
-            parentHandle = NonDisposableHandle // release it just in case, to aid GC
-        }
-        return true // continues in completeUpdateState
-    }
+    private fun NodeList.notifyCompletion(cause: Throwable?) =
+        notifyHandlers<JobNode<*>>(this, cause)
 
-    /**
-     * Completes update of the current [state] of this job.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    private fun completeUpdateState(expect: Incomplete, update: Any?, mode: Int) {
-        val exceptionally = update as? CompletedExceptionally
-        // Do overridable processing before completion handlers
+    private fun notifyCancellation(list: NodeList, cause: Throwable?) =
+        notifyHandlers<JobCancellationNode<*>>(list, cause)
 
-        /*
-         * 1) Invoke onCancellationInternal: exception handling, parent/resource cancellation etc.
-         * 2) Invoke completion handlers: .join(), callbacks etc. It's important to invoke them only AFTER exception handling, see #208
-         * 3) Invoke onCompletionInternal: onNext(), timeout deregistration etc. I should be last so all callbacks observe consistent state
-         *    of the job which doesn't depend on callback scheduling
-         *
-         * Only notify on cancellation once (expect.isCancelling)
-         */
-        if (!expect.isCancelling) onCancellationInternal(exceptionally)
-
-        // Invoke completion handlers
-        val cause = exceptionally?.cause
-        if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
-            try {
-                expect.invoke(cause)
-            } catch (ex: Throwable) {
-                handleException(CompletionHandlerException("Exception in completion handler $expect for $this", ex))
-            }
-        } else {
-            expect.list?.notifyCompletion(cause)
-        }
-
-        onCompletionInternal(update, mode)
-    }
-
-    private inline fun <reified T: JobNode<*>> notifyHandlers(list: NodeList, cause: Throwable?) {
+      private inline fun <reified T: JobNode<*>> notifyHandlers(list: NodeList, cause: Throwable?) {
         var exception: Throwable? = null
         list.forEach<T> { node ->
             try {
@@ -245,12 +253,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
         exception?.let { handleException(it) }
     }
-
-    private fun NodeList.notifyCompletion(cause: Throwable?) =
-        notifyHandlers<JobNode<*>>(this, cause)
-
-    private fun notifyCancellation(list: NodeList, cause: Throwable?) =
-        notifyHandlers<JobCancellationNode<*>>(list, cause)
 
     public final override fun start(): Boolean {
         loopOnState { state ->
@@ -472,14 +474,14 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
         ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
-        ON_CANCEL_MAKE_COMPLETING -> makeCompletingOnCancel(cause)
+        ON_CANCEL_MAKE_COMPLETING -> makeCompleting(Cancelled(this, cause))
         else -> error("Invalid onCancelMode $onCancelMode")
     }
 
     // we will be dispatching coroutine to process its cancellation exception, so there is no need for
     // an extra check for Job status in MODE_CANCELLABLE
     private fun updateStateCancelled(state: Incomplete, cause: Throwable?) =
-        updateState(state, Cancelled(this, cause), mode = MODE_ATOMIC_DEFAULT)
+        tryFinalizeState(state, Cancelled(this, cause), mode = MODE_ATOMIC_DEFAULT)
 
     // transitions to Cancelling state
     private fun makeCancelling(cause: Throwable?): Boolean {
@@ -528,9 +530,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         return true
     }
 
-    private fun makeCompletingOnCancel(cause: Throwable?): Boolean =
-        makeCompleting(Cancelled(this, cause))
-
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
@@ -565,7 +564,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val child: ChildJob? = firstChild(state) ?: // or else complete immediately w/o children
             when {
                 state !is Finishing && hasOnFinishingHandler(proposedUpdate) -> null // unless it has onFinishing handler
-                updateState(state, proposedUpdate, mode) -> return COMPLETING_COMPLETED
+                tryFinalizeState(state, proposedUpdate, mode) -> return COMPLETING_COMPLETED
                 else -> return@loopOnState
             }
             val list = state.list ?: // must promote to list to correctly operate on child lists
@@ -590,7 +589,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 if (state !is Finishing) onFinishingInternal(proposedUpdate)
                 if (child != null && tryWaitForChild(child, proposedUpdate))
                     return COMPLETING_WAITING_CHILDREN
-                if (updateState(completing, proposedUpdate, mode = MODE_ATOMIC_DEFAULT))
+                if (tryFinalizeState(completing, proposedUpdate, mode = MODE_ATOMIC_DEFAULT))
                     return COMPLETING_COMPLETED
             }
         }
@@ -628,7 +627,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             // try wait for next child
             if (waitChild != null && tryWaitForChild(waitChild, proposedUpdate)) return // waiting for next child
             // no more children to wait -- try update state
-            if (updateState(state, proposedUpdate, MODE_ATOMIC_DEFAULT)) return
+            if (tryFinalizeState(state, proposedUpdate, MODE_ATOMIC_DEFAULT)) return
         }
     }
 

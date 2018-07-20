@@ -27,7 +27,6 @@ open class CompletedExceptionally(
  * A specific subclass of [CompletedExceptionally] for cancelled jobs.
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
- * TODO rename to CancelledJob?
  *
  * @param job the job that was cancelled.
  * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException] is created.
