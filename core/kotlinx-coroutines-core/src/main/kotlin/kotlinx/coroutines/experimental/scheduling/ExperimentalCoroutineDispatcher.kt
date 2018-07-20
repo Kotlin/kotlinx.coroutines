@@ -9,12 +9,23 @@ import kotlin.coroutines.experimental.*
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-// TODO make internal after integration wih Ktor
+// TODO make internal (and rename) after complete integration
 class ExperimentalCoroutineDispatcher(
-    corePoolSize: Int = CORE_POOL_SIZE,
-    maxPoolSize: Int = MAX_POOL_SIZE
+    private val corePoolSize: Int,
+    private val maxPoolSize: Int,
+    private val idleWorkerKeepAliveNs: Long
 ) : CoroutineDispatcher(), Delay, Closeable {
-    private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
+    constructor(
+        corePoolSize: Int = CORE_POOL_SIZE,
+        maxPoolSize: Int = MAX_POOL_SIZE
+    ) : this(
+        corePoolSize,
+        maxPoolSize,
+        IDLE_WORKER_KEEP_ALIVE_NS
+    )
+
+    // This is variable for test purposes, so that we can reinitialize from clean state
+    private var coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit =
         coroutineScheduler.dispatch(block)
@@ -45,6 +56,17 @@ class ExperimentalCoroutineDispatcher(
 
     internal fun dispatchWithContext(block: Runnable, context: TaskContext?, fair: Boolean): Unit =
         coroutineScheduler.dispatch(block, context, fair)
+
+    // fot tests only
+    internal fun usePrivateScheduler() {
+        coroutineScheduler.shutdown(1000L)
+        coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
+    }
+
+    // for tests only
+    internal fun shutdown(timeout: Long) {
+        coroutineScheduler.shutdown(timeout)
+    }
 }
 
 private class LimitingBlockingDispatcher(

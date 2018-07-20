@@ -59,7 +59,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToSingle() {
-        val d = async(CommonPool) {
+        val d = async {
             delay(50)
             "OK"
         }
@@ -75,7 +75,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToSingleFail() {
-        val d = async(CommonPool) {
+        val d = async {
             delay(50)
             throw TestException("OK")
         }
@@ -93,7 +93,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservable() {
-        val c = produce(CommonPool) {
+        val c = produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)
@@ -107,7 +107,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservableFail() {
-        val c = produce(CommonPool) {
+        val c = produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)

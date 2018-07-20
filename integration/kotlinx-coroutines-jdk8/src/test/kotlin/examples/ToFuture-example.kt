@@ -16,7 +16,7 @@
 
 package examples
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.future.asCompletableFuture
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 fun main(args: Array<String>)  {
     log("Started")
-    val deferred = async(CommonPool) {
+    val deferred = async {
         log("Busy...")
         delay(1, TimeUnit.SECONDS)
         log("Done...")

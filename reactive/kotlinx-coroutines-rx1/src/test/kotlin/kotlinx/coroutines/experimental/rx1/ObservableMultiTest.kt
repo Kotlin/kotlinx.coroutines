@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.launch
@@ -32,7 +32,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             repeat(n) { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -43,11 +43,11 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable<Int>(CommonPool) {
+        val observable = rxObservable<Int>(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
-                launch(CommonPool) {
+                launch {
                     send(it)
                 }
             }
@@ -73,7 +73,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -83,11 +83,11 @@ class ObservableMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send("O")
             throw IOException("K")
         }
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             var result = ""
             try {
                 observable.consumeEach { result += it }

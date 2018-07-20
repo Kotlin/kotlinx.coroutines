@@ -23,7 +23,7 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
- * This coroutine builder uses [CommonPool] context by default.
+ * This coroutine builder uses [DefaultDispatcher] context by default.
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *

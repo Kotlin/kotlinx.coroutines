@@ -2,12 +2,13 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import org.junit.*
 import kotlin.coroutines.experimental.*
 
 abstract class SchedulerTestBase : TestBase() {
     companion object {
-        val CORES_COUNT = Runtime.getRuntime().availableProcessors()
+        val CORES_COUNT = AVAILABLE_PROCESSORS
 
         /**
          * Asserts that [expectedThreadsCount] pool worker threads were created.
@@ -44,8 +45,6 @@ abstract class SchedulerTestBase : TestBase() {
             require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
         }
 
-        fun initialPoolSize() = 1
-
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }
                 .map { sequenceNumber(it.name) }.max()
@@ -69,13 +68,17 @@ abstract class SchedulerTestBase : TestBase() {
 
     protected var corePoolSize = 1
     protected var maxPoolSize = 1024
-
+    protected var idleWorkerKeepAliveNs = IDLE_WORKER_KEEP_ALIVE_NS
 
     private var _dispatcher: ExperimentalCoroutineDispatcher? = null
     protected val dispatcher: CoroutineContext
         get() {
             if (_dispatcher == null) {
-                _dispatcher = ExperimentalCoroutineDispatcher(corePoolSize, maxPoolSize)
+                _dispatcher = ExperimentalCoroutineDispatcher(
+                    corePoolSize,
+                    maxPoolSize,
+                    idleWorkerKeepAliveNs
+                )
             }
 
             return _dispatcher!! + handler

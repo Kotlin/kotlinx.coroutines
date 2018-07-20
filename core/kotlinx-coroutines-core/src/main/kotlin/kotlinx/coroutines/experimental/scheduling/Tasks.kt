@@ -7,6 +7,8 @@ import java.util.concurrent.*
 
 // TODO most of these fields will be moved to 'object ExperimentalDispatcher'
 
+internal const val DEFAULT_SCHEDULER_NAME = "CoroutineScheduler"
+
 // 100us as default
 @JvmField
 internal val WORK_STEALING_TIME_RESOLUTION_NS = systemProp(
@@ -20,9 +22,12 @@ internal val QUEUE_SIZE_OFFLOAD_THRESHOLD = systemProp(
 internal val BLOCKING_DEFAULT_PARALLELISM = systemProp(
     "kotlinx.coroutines.scheduler.blocking.parallelism", 16)
 
+// NOTE: we coerce default to at least two threads to give us chances that multi-threading problems
+// get reproduced even on a single-core machine, but support explicit setting of 1 thread scheduler if needed.
 @JvmField
 internal val CORE_POOL_SIZE = systemProp("kotlinx.coroutines.scheduler.core.pool.size",
-    AVAILABLE_PROCESSORS.coerceAtLeast(2), minValue = 2)
+    AVAILABLE_PROCESSORS.coerceAtLeast(2), // !!! at least two here
+    minValue = CoroutineScheduler.MIN_SUPPORTED_POOL_SIZE)
 
 @JvmField
 internal val MAX_POOL_SIZE = systemProp("kotlinx.coroutines.scheduler.max.pool.size",

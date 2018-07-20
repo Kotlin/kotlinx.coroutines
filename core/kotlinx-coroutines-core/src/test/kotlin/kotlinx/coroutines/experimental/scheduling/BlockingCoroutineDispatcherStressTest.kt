@@ -84,8 +84,8 @@ class BlockingCoroutineDispatcherStressTest() : SchedulerTestBase() {
     @Test
     fun testBlockingTasksStarvation() = runBlocking {
         corePoolSize = 2 // Easier to reproduce race with unparks
-        val iterations = 5000 * stressTestMultiplier
-        val blockingLimit = CORES_COUNT * 3
+        val iterations = 50_000 * stressTestMultiplier
+        val blockingLimit = 4 // CORES_COUNT * 3
         val blocking = blockingDispatcher(blockingLimit)
 
         repeat(iterations) {

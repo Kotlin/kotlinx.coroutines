@@ -112,7 +112,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoNoWait() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             "OK"
         }
 
@@ -128,7 +128,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoEmitAndAwait() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             Mono.just("O").awaitSingle() + "K"
         }
 
@@ -139,7 +139,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoWithDelay() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K"
         }
 
@@ -150,7 +150,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoException() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             Flux.just("O", "K").awaitSingle() + "K"
         }
 
@@ -161,7 +161,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             Flux.just("O", "#").awaitFirst() + "K"
         }
 
@@ -172,7 +172,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             Flux.just("#", "O").awaitLast() + "K"
         }
 
@@ -183,7 +183,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromFlux() {
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             try {
                 Flux.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -198,7 +198,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val mono = mono<String>(CommonPool) {
+        val mono = mono<String>(DefaultDispatcher) {
             throw IllegalStateException(Flux.just("O").awaitSingle() + "K")
         }
 

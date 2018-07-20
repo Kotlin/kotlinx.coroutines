@@ -40,7 +40,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     fun testStressNotify()= runBlocking<Unit> {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
         val senders = List(nSenders) { senderId ->
-            launch(CommonPool + CoroutineName("Sender$senderId")) {
+            launch(DefaultDispatcher + CoroutineName("Sender$senderId")) {
                 repeat(nEvents) { i ->
                     if (i % nSenders == senderId) {
                         broadcast.offer(i)
@@ -52,7 +52,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
             }
         }
         val receivers = List(nReceivers) { receiverId ->
-            launch(CommonPool + CoroutineName("Receiver$receiverId")) {
+            launch(DefaultDispatcher + CoroutineName("Receiver$receiverId")) {
                 var last = -1
                 while (isActive) {
                     val i = waitForEvent()

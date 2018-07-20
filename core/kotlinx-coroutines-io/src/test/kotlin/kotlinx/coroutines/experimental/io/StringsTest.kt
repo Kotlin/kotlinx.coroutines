@@ -169,7 +169,7 @@ class StringsTest : TestBase() {
         }.toByteArray()
 
         runBlocking {
-            launch(CommonPool) {
+            launch {
                 channel.writeFully(text)
                 channel.close()
             }
@@ -211,7 +211,7 @@ class StringsTest : TestBase() {
         }
 
         runBlocking {
-            launch(CommonPool) {
+            launch {
                 for (part in lines) {
                     writeString(part + "\n")
                 }
@@ -289,7 +289,7 @@ class StringsTest : TestBase() {
     }
 
     private fun writeParts(vararg parts: String) {
-        launch(CommonPool) {
+        launch {
             parts.forEach { p ->
                 writeString(p)
                 yield()

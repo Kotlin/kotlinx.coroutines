@@ -532,7 +532,7 @@ class ByteBufferChannelTest : TestBase() {
         val bytes = ByteArray(65536)
         Random().nextBytes(bytes)
 
-        launch(CommonPool + CoroutineName("writer")) {
+        launch(DefaultDispatcher + CoroutineName("writer")) {
             for (i in 1..count) {
                 ch.writeFully(bytes)
                 ch.flush()
@@ -559,7 +559,7 @@ class ByteBufferChannelTest : TestBase() {
         val bytes = ByteArray(65536)
         Random().nextBytes(bytes)
 
-        launch(CommonPool + CoroutineName("writer")) {
+        launch(DefaultDispatcher + CoroutineName("writer")) {
             for (i in 1..count) {
                 ch.writeFully(ByteBuffer.wrap(bytes))
                 ch.flush()
@@ -601,7 +601,7 @@ class ByteBufferChannelTest : TestBase() {
 
     @Test
     fun testBigPacket() = runTest {
-        launch(CommonPool + CoroutineName("writer")) {
+        launch(DefaultDispatcher + CoroutineName("writer")) {
             val packet = buildPacket {
                 writeInt(0xffee)
                 writeStringUtf8(".".repeat(8192))

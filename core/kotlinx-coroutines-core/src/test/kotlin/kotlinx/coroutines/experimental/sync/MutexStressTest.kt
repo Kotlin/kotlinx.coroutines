@@ -27,7 +27,7 @@ class MutexStressTest : TestBase() {
         var shared = 0
         val mutex = Mutex()
         val jobs = List(n) {
-            launch(CommonPool) {
+            launch {
                 repeat(k) {
                     mutex.lock()
                     shared++

@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
@@ -32,11 +32,11 @@ class PublisherMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() = runBlocking<Unit> {
         val n = 10_000 * stressTestMultiplier
-        val observable = publish<Int>(CommonPool) {
+        val observable = publish<Int>(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
-                launch(CommonPool) {
+                launch {
                     send(it)
                 }
             }

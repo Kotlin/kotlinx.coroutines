@@ -23,7 +23,7 @@ class CoroutineSchedulerTest : TestBase() {
     @Test
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
-            val latch = CountDownLatch(1)
+            val latch = CountDownLatch(TaskMode.values().size)
             it.dispatch(Runnable {
                 for (mode in TaskMode.values()) {
                     it.dispatch(Runnable {

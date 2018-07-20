@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
@@ -31,7 +31,7 @@ import java.time.Duration.ofMillis
 class FluxSingleTest {
     @Test
     fun testSingleNoWait() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send("OK")
         }
 
@@ -47,7 +47,7 @@ class FluxSingleTest {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O").awaitSingle() + "K")
         }
 
@@ -58,7 +58,7 @@ class FluxSingleTest {
 
     @Test
     fun testSingleWithDelay() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K")
         }
 
@@ -69,7 +69,7 @@ class FluxSingleTest {
 
     @Test
     fun testSingleException() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O", "K").awaitSingle() + "K")
         }
 
@@ -80,7 +80,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirst() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O", "#").awaitFirst() + "K")
         }
 
@@ -91,7 +91,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrDefault() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.empty<String>().awaitFirstOrDefault("O") + "K")
         }
 
@@ -102,7 +102,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrDefaultWithValues() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O", "#").awaitFirstOrDefault("!") + "K")
         }
 
@@ -113,7 +113,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrNull() {
-        val flux = flux<String>(CommonPool) {
+        val flux = flux<String>(DefaultDispatcher) {
             send(Flux.empty<String>().awaitFirstOrNull() ?: "OK")
         }
 
@@ -124,7 +124,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrNullWithValues() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send((Flux.just("O", "#").awaitFirstOrNull() ?: "!") + "K")
         }
 
@@ -135,7 +135,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrElse() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.empty<String>().awaitFirstOrElse { "O" } + "K")
         }
 
@@ -146,7 +146,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitFirstOrElseWithValues() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("O", "#").awaitFirstOrElse { "!" } + "K")
         }
 
@@ -157,7 +157,7 @@ class FluxSingleTest {
 
     @Test
     fun testAwaitLast() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send(Flux.just("#", "O").awaitLast() + "K")
         }
 
@@ -168,7 +168,7 @@ class FluxSingleTest {
 
     @Test
     fun testExceptionFromObservable() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             try {
                 send(Flux.error<String>(RuntimeException("O")).awaitFirst())
             } catch (e: RuntimeException) {
@@ -183,7 +183,7 @@ class FluxSingleTest {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val flux = flux<String>(CommonPool) {
+        val flux = flux<String>(DefaultDispatcher) {
             error(Flux.just("O").awaitSingle() + "K")
         }
 
@@ -195,7 +195,7 @@ class FluxSingleTest {
 
     @Test
     fun testFluxIteration() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             var result = ""
             Flux.just("O", "K").consumeEach { result += it }
             send(result)
@@ -208,7 +208,7 @@ class FluxSingleTest {
 
     @Test
     fun testFluxIterationFailure() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             try {
                 Flux.error<String>(RuntimeException("OK")).consumeEach { fail("Should not be here") }
                 send("Fail")

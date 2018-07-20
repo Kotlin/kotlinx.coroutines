@@ -16,7 +16,7 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.withTimeout
@@ -39,7 +39,7 @@ class PublisherCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    range(CommonPool, 1, count).consumeEach { x ->
+                    range(DefaultDispatcher, 1, count).consumeEach { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

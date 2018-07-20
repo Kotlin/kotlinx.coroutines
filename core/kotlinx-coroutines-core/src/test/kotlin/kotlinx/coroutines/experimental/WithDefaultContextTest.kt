@@ -18,11 +18,11 @@ package kotlinx.coroutines.experimental
 
 import kotlin.test.*
 
-class WithContextCommonPoolTest : TestBase() {
+class WithDefaultContextTest : TestBase() {
     @Test
-    fun testCommonPoolNoSuspend() = runTest {
+    fun testNoSuspend() = runTest {
         expect(1)
-        val result = withContext(CommonPool) {
+        val result = withContext(DefaultDispatcher) {
             expect(2)
             "OK"
         }
@@ -31,9 +31,9 @@ class WithContextCommonPoolTest : TestBase() {
     }
 
     @Test
-    fun testCommonPoolWithSuspend() = runTest {
+    fun testWithSuspend() = runTest {
         expect(1)
-        val result = withContext(CommonPool) {
+        val result = withContext(DefaultDispatcher) {
             expect(2)
             delay(100)
             expect(3)

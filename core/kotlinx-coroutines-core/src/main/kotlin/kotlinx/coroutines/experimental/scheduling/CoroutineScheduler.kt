@@ -2,7 +2,6 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.internal.*
 import java.io.Closeable
 import java.util.*
@@ -55,15 +54,11 @@ import java.util.concurrent.locks.*
  */
 @Suppress("NOTHING_TO_INLINE")
 internal class CoroutineScheduler(
-    private val schedulerName: String,
     private val corePoolSize: Int,
-    private val maxPoolSize: Int
+    private val maxPoolSize: Int,
+    private val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
+    private val schedulerName: String = DEFAULT_SCHEDULER_NAME
 ) : Closeable {
-    constructor(
-        corePoolSize: Int,
-        maxPoolSize: Int
-    ) : this("CoroutineScheduler", corePoolSize, maxPoolSize)
-
     init {
         require(corePoolSize >= MIN_SUPPORTED_POOL_SIZE) {
             "Core pool size $corePoolSize should be at least $MIN_SUPPORTED_POOL_SIZE"
@@ -73,6 +68,9 @@ internal class CoroutineScheduler(
         }
         require(maxPoolSize <= MAX_SUPPORTED_POOL_SIZE) {
             "Max pool size $maxPoolSize should not exceed maximal supported number of threads $MAX_SUPPORTED_POOL_SIZE"
+        }
+        require(idleWorkerKeepAliveNs > 0) {
+            "Idle worker keep alive time $idleWorkerKeepAliveNs must be postiive"
         }
     }
 
@@ -454,6 +452,8 @@ internal class CoroutineScheduler(
      */
     private fun submitToLocalQueue(task: Task, fair: Boolean): Int {
         val worker = Thread.currentThread() as? Worker ?: return NOT_ADDED
+        if (worker.scheduler !== this) return NOT_ADDED // different scheduler's worker (!!!)
+
         var result = ADDED
 
         if (task.mode == TaskMode.NON_BLOCKING) {
@@ -569,6 +569,8 @@ internal class CoroutineScheduler(
         constructor(index: Int) : this() {
             indexInArray = index
         }
+
+        val scheduler get() = this@CoroutineScheduler
 
         val localQueue: WorkQueue = WorkQueue()
 
@@ -780,9 +782,9 @@ internal class CoroutineScheduler(
             if (!blockingQuiescence()) return
             terminationState.value = ALLOWED
             // set termination deadline the first time we are here (it is reset in idleReset)
-            if (terminationDeadline == 0L) terminationDeadline = System.nanoTime() + IDLE_WORKER_KEEP_ALIVE_NS
+            if (terminationDeadline == 0L) terminationDeadline = System.nanoTime() + idleWorkerKeepAliveNs
             // actually park
-            doPark(IDLE_WORKER_KEEP_ALIVE_NS)
+            doPark(idleWorkerKeepAliveNs)
             // try terminate when we are idle past termination deadline
             // note, that comparison is written like this to protect against potential nanoTime wraparound
             if (System.nanoTime() - terminationDeadline >= 0) {
@@ -813,7 +815,7 @@ internal class CoroutineScheduler(
                 /*
                  * At this point this thread is no longer considered as usable for scheduling.
                  * We need multi-step choreography to reindex workers.
-                 * 
+                 *
                  * 1) Read current worker's index and reset it to zero.
                  */
                 val oldIndex = indexInArray
@@ -821,7 +823,7 @@ internal class CoroutineScheduler(
                 /*
                  * Now this worker cannot become the top of parkedWorkersStack, but it can
                  * still be at the stack top via oldIndex.
-                 * 
+                 *
                  * 2) Update top of stack if it was pointing to oldIndex and make sure no
                  *    pending push/pop operation that might have already retrieved oldIndex could complete.
                  */

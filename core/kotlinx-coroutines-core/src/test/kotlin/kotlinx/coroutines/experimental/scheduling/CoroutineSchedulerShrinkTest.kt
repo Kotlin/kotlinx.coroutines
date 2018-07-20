@@ -14,27 +14,28 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
     @Before
     fun setUp() {
         corePoolSize = CORES_COUNT
+        // shutdown after 100ms
+        idleWorkerKeepAliveNs = TimeUnit.MILLISECONDS.toNanos(100)
         blocking = blockingDispatcher(100)
-
     }
 
-    @Test(timeout = 15_000)
+    @Test(timeout = 10_000)
     fun testShrinkOnlyBlockingTasks() = runBlocking {
         // Init dispatcher
         async(dispatcher) { }.await()
         // Pool is initialized with core size in the beginning
-        checkPoolThreadsExist(initialPoolSize()..initialPoolSize() + 1)
+        checkPoolThreadsExist(1..2)
 
         // Run blocking tasks and check increased threads count
         val blockingTasks = launchBlocking()
         checkBlockingTasks(blockingTasks)
 
-        delay(10, TimeUnit.SECONDS)
+        delay(2, TimeUnit.SECONDS)
         // Pool should shrink to core size +- eps
-        checkPoolThreadsExist(corePoolSize..corePoolSize + 3)
+        checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
     }
 
-    @Test(timeout = 15_000)
+    @Test(timeout = 10_000)
     fun testShrinkMixedWithWorkload() = runBlocking {
         // Block blockingTasksCount cores in blocking dispatcher
         val blockingTasks = launchBlocking()
@@ -55,9 +56,9 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         // Check blocking tasks succeeded properly
         checkBlockingTasks(blockingTasks)
 
-        delay(10, TimeUnit.SECONDS)
+        delay(2, TimeUnit.SECONDS)
         // Pool should shrink to core size
-        checkPoolThreadsExist(corePoolSize..corePoolSize + 3)
+        checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
     }
 
     private suspend fun checkBlockingTasks(blockingTasks: List<Deferred<*>>) {
@@ -66,8 +67,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         blockingTasks.joinAll()
     }
 
-    @Test(timeout = 15_000)
-    @Ignore // flaky and non deterministic
+    @Test(timeout = 10_000)
     fun testShrinkWithExternalTasks() = runBlocking {
         val nonBlockingBarrier = CyclicBarrier(CORES_COUNT + 1)
         val blockingTasks = launchBlocking()
@@ -94,9 +94,9 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
         checkBlockingTasks(blockingTasks)
 
-        delay(10, TimeUnit.SECONDS)
+        delay(2, TimeUnit.SECONDS)
         // Pool should shrink almost to core size (+/- eps)
-        checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 4)
+        checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
 
         busySpinTasks.forEach {
             require(it.isActive)
