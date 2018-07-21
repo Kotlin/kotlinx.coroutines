@@ -90,6 +90,8 @@ abstract class SchedulerTestBase : TestBase() {
         return _dispatcher!!.blocking(parallelism) + handler
     }
 
+    fun initialPoolSize() = corePoolSize.coerceAtMost(2)
+
     @After
     fun after() {
         runBlocking {
