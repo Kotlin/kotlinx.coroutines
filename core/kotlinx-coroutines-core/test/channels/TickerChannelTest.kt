@@ -9,51 +9,57 @@ import org.junit.*
 
 class TickerChannelTest : TestBase() {
     @Test
-    fun testFixedDelayChannelBackpressure() = runTest {
-        val delayChannel = ticker(delay = 100, initialDelay = 0, mode = TickerMode.FIXED_DELAY)
-        delayChannel.checkNotEmpty()
-        delayChannel.checkEmpty()
+    fun testFixedDelayChannelBackpressure() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = ticker(delay = 1000, initialDelay = 0, mode = TickerMode.FIXED_DELAY)
+            delayChannel.checkNotEmpty()
+            delayChannel.checkEmpty()
 
-        delay(150)
-        delayChannel.checkNotEmpty()
-        delay(50)
-        delayChannel.checkEmpty()
-        delay(52)
-        delayChannel.checkNotEmpty()
-        delayChannel.cancel()
+            delay(1500)
+            delayChannel.checkNotEmpty()
+            delay(500)
+            delayChannel.checkEmpty()
+            delay(520)
+            delayChannel.checkNotEmpty()
+            delayChannel.cancel()
+        }
     }
 
     @Test
-    fun testDelayChannelBackpressure() = runTest {
-        val delayChannel = ticker(delay = 100, initialDelay = 0)
-        delayChannel.checkNotEmpty()
-        delayChannel.checkEmpty()
+    fun testDelayChannelBackpressure() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = ticker(delay = 1000, initialDelay = 0)
+            delayChannel.checkNotEmpty()
+            delayChannel.checkEmpty()
 
-        delay(150)
-        delayChannel.checkNotEmpty()
-        delay(52)
-        delayChannel.checkNotEmpty()
-        delay(50)
-        delayChannel.checkEmpty()
-        delay(52)
-        delayChannel.checkNotEmpty()
-        delayChannel.cancel()
+            delay(1500)
+            delayChannel.checkNotEmpty()
+            delay(520)
+            delayChannel.checkNotEmpty()
+            delay(500)
+            delayChannel.checkEmpty()
+            delay(520)
+            delayChannel.checkNotEmpty()
+            delayChannel.cancel()
+        }
     }
 
     @Test
-    fun testDelayChannelBackpressure2() = runTest {
-        val delayChannel = ticker(delay = 100, initialDelay = 0)
-        delayChannel.checkNotEmpty()
-        delayChannel.checkEmpty()
+    fun testDelayChannelBackpressure2() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = ticker(delay = 1000, initialDelay = 0)
+            delayChannel.checkNotEmpty()
+            delayChannel.checkEmpty()
 
-        delay(250)
-        delayChannel.checkNotEmpty()
-        delay(51)
-        delayChannel.checkNotEmpty()
-        delay(51)
-        delayChannel.checkEmpty()
-        delay(51)
-        delayChannel.checkNotEmpty()
-        delayChannel.cancel()
+            delay(2500)
+            delayChannel.checkNotEmpty()
+            delay(510)
+            delayChannel.checkNotEmpty()
+            delay(510)
+            delayChannel.checkEmpty()
+            delay(510)
+            delayChannel.checkNotEmpty()
+            delayChannel.cancel()
+        }
     }
 }

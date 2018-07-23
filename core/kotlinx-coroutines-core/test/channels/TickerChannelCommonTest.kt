@@ -35,70 +35,77 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     }
 
     @Test
-    fun testDelay() = runTest {
-        val delayChannel = channelFactory(delay = 100)
-        delayChannel.checkNotEmpty()
-        delayChannel.checkEmpty()
+    fun testDelay() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = channelFactory(delay = 10000)
+            delayChannel.checkNotEmpty()
+            delayChannel.checkEmpty()
 
-        delay(50)
-        delayChannel.checkEmpty()
-        delay(51)
-        delayChannel.checkNotEmpty()
+            delay(5000)
+            delayChannel.checkEmpty()
+            delay(5100)
+            delayChannel.checkNotEmpty()
 
-        delayChannel.cancel()
-        delay(51)
-        delayChannel.checkEmpty()
-        delayChannel.cancel()
-    }
-
-    @Test
-    fun testInitialDelay() = runTest {
-        val delayChannel = channelFactory(initialDelay = 75, delay = 100)
-        delayChannel.checkEmpty()
-        delay(50)
-        delayChannel.checkEmpty()
-        delay(30)
-        delayChannel.checkNotEmpty()
-
-        // Regular delay
-        delay(75)
-        delayChannel.checkEmpty()
-        delay(26)
-        delayChannel.checkNotEmpty()
-        delayChannel.cancel()
-    }
-
-
-    @Test
-    fun testReceive() = runTest {
-        val delayChannel = channelFactory(delay = 100)
-        delayChannel.checkNotEmpty()
-        var value = withTimeoutOrNull(75) {
-            delayChannel.receive()
-            1
+            delayChannel.cancel()
+            delay(5100)
+            delayChannel.checkEmpty()
+            delayChannel.cancel()
         }
-
-        assertNull(value)
-        value = withTimeoutOrNull(26) {
-            delayChannel.receive()
-            1
-        }
-
-        assertNotNull(value)
-        delayChannel.cancel()
     }
 
     @Test
-    fun testComplexOperator() = runTest {
-        val producer = produce {
-            for (i in 1..7) {
-                send(i)
-                delay(100)
+    fun testInitialDelay() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = channelFactory(initialDelay = 750, delay = 1000)
+            delayChannel.checkEmpty()
+            delay(500)
+            delayChannel.checkEmpty()
+            delay(300)
+            delayChannel.checkNotEmpty()
+
+            // Regular delay
+            delay(750)
+            delayChannel.checkEmpty()
+            delay(260)
+            delayChannel.checkNotEmpty()
+            delayChannel.cancel()
+        }
+    }
+
+    @Test
+    fun testReceive() = withVirtualTimeSource {
+        runTest {
+            val delayChannel = channelFactory(delay = 1000)
+            delayChannel.checkNotEmpty()
+            var value = withTimeoutOrNull(750) {
+                delayChannel.receive()
+                1
             }
-        }
 
-        val averages = producer.averageInTimeWindow(300).toList()
-        assertEquals(listOf(2.0, 5.0, 7.0), averages)
+            assertNull(value)
+            value = withTimeoutOrNull(260) {
+                delayChannel.receive()
+                1
+            }
+
+            assertNotNull(value)
+            delayChannel.cancel()
+        }
+    }
+
+    @Test
+    fun testComplexOperator() = withVirtualTimeSource {
+        runTest {
+            val producer = produce {
+                for (i in 1..7) {
+                    send(i)
+                    delay(1000)
+                }
+            }
+
+            val averages = producer.averageInTimeWindow(3000).toList()
+            assertEquals(listOf(2.0, 5.0, 7.0), averages)
+        }
     }
 
     private fun ReceiveChannel<Int>.averageInTimeWindow(timespan: Long) = produce {
