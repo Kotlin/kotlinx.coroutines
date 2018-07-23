@@ -7,6 +7,7 @@ package kotlinx.coroutines.experimental
 import java.util.concurrent.locks.LockSupport
 
 internal interface TimeSource {
+    fun currentTimeMillis(): Long
     fun nanoTime(): Long
     fun trackTask(block: Runnable): Runnable
     fun unTrackTask()
@@ -17,6 +18,7 @@ internal interface TimeSource {
 }
 
 internal object DefaultTimeSource : TimeSource {
+    override fun currentTimeMillis(): Long = System.currentTimeMillis()
     override fun nanoTime(): Long = System.nanoTime()
     override fun trackTask(block: Runnable): Runnable = block
     override fun unTrackTask() {}

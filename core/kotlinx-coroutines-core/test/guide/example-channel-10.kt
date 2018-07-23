@@ -11,9 +11,9 @@ import kotlinx.coroutines.experimental.channels.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val tickerChannel = ticker(delay = 100, initialDelay = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
-    println("Initial element is available immediately: $nextElement") // Initial delay hasn't passed yet
+    println("Initial element is available immediately: $nextElement") // initial delay hasn't passed yet
 
-    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // All subsequent elements has 100ms delay
+    nextElement = withTimeoutOrNull(50) { tickerChannel.receive() } // all subsequent elements has 100ms delay
     println("Next element is not ready in 50 ms: $nextElement")
 
     nextElement = withTimeoutOrNull(60) { tickerChannel.receive() }

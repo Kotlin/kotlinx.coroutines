@@ -214,7 +214,9 @@ fun knit(markdownFileName: String): Boolean {
                         outLines += line
                     }
                 }
-                outLines += codeLines
+                for (code in codeLines) {
+                    outLines += code.replace("System.currentTimeMillis()", "timeSource.currentTimeMillis()")
+                }
                 codeLines.clear()
                 writeLinesIfNeeded(file, outLines)
             }

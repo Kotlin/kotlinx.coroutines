@@ -130,6 +130,7 @@ private class TestTimeSource(
 
     private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
 
+    override fun currentTimeMillis(): Long = TimeUnit.NANOSECONDS.toMillis(time)
     override fun nanoTime(): Long = time
 
     @Synchronized
