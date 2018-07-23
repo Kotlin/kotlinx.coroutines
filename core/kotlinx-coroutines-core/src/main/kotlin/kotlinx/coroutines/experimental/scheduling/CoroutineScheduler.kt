@@ -322,14 +322,14 @@ internal class CoroutineScheduler(
      * this [block] may execute blocking operations (IO, system calls, locking primitives etc.)
      *
      * @param block runnable to be dispatched
-     * @param mode mode of given [block] which is used as a hint to a dynamic resizing mechanism
+     * @param taskContext concurrency context of given [block]
      * @param fair whether the task should be dispatched fairly (strict FIFO) or not (semi-FIFO)
      */
-    fun dispatch(block: Runnable, mode: TaskMode = TaskMode.NON_BLOCKING, fair: Boolean = false) {
+    fun dispatch(block: Runnable, taskContext: TaskContext? = null, fair: Boolean = false) {
         // TODO at some point make DispatchTask extend Task and make its field settable to save an allocation
-        val task = Task(block, schedulerTimeSource.nanoTime(), mode)
+        val task = Task(block, schedulerTimeSource.nanoTime(), taskContext)
         // try to submit the task to the local queue and act depending on the result
-        when (submitToLocalQueue(task, mode, fair)) {
+        when (submitToLocalQueue(task, fair)) {
             ADDED -> return
             NOT_ADDED -> {
                 globalQueue.addLast(task) // offload task to local queue
@@ -452,11 +452,11 @@ internal class CoroutineScheduler(
     /**
      * Returns [ADDED], or [NOT_ADDED], or [ADDED_REQUIRES_HELP].
      */
-    private fun submitToLocalQueue(task: Task, mode: TaskMode, fair: Boolean): Int {
+    private fun submitToLocalQueue(task: Task, fair: Boolean): Int {
         val worker = Thread.currentThread() as? Worker ?: return NOT_ADDED
         var result = ADDED
 
-        if (mode == TaskMode.NON_BLOCKING) {
+        if (task.mode == TaskMode.NON_BLOCKING) {
             /*
              * If the worker is currently executing blocking task and tries to dispatch non-blocking task, it's one the following reasons:
              * 1) Blocking worker is finishing its block and resumes non-blocking continuation
@@ -685,23 +685,23 @@ internal class CoroutineScheduler(
                         wasIdle = false
                     }
                     beforeTask(task)
-                    runSafely(task.block)
+                    runSafely(task)
                     afterTask(task)
                 }
             }
             tryReleaseCpu(WorkerState.TERMINATED)
         }
 
-        private fun runSafely(block: Runnable) {
+        private fun runSafely(task: Task) {
             try {
-                block.run()
+                task.run()
             } catch (t: Throwable) {
                 uncaughtExceptionHandler.uncaughtException(this, t)
             }
         }
 
-        private fun beforeTask(job: Task) {
-            if (job.mode != TaskMode.NON_BLOCKING) {
+        private fun beforeTask(task: Task) {
+            if (task.mode != TaskMode.NON_BLOCKING) {
                 /*
                  * We should release CPU *before* checking for CPU starvation,
                  * otherwise requestCpuWorker() will not count current thread as blocking
@@ -720,7 +720,7 @@ internal class CoroutineScheduler(
                 return
             }
             val now = schedulerTimeSource.nanoTime()
-            if (now - job.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS &&
+            if (now - task.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS &&
                 now - lastExhaustionTime >= WORK_STEALING_TIME_RESOLUTION_NS * 5
             ) {
                 lastExhaustionTime = now
@@ -729,8 +729,8 @@ internal class CoroutineScheduler(
         }
 
 
-        private fun afterTask(job: Task) {
-            if (job.mode != TaskMode.NON_BLOCKING) {
+        private fun afterTask(task: Task) {
+            if (task.mode != TaskMode.NON_BLOCKING) {
                 decrementBlockingWorkers()
                 assert(state == WorkerState.BLOCKING) { "Expected BLOCKING state, but has $state" }
                 state = WorkerState.RETIRING

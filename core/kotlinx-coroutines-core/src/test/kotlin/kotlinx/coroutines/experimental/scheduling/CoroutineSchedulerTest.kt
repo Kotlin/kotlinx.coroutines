@@ -9,11 +9,11 @@ class CoroutineSchedulerTest : TestBase() {
     @Test
     fun testModesExternalSubmission() { // Smoke
         CoroutineScheduler(1, 1).use {
-            for (value in TaskMode.values()) {
+            for (mode in TaskMode.values()) {
                 val latch = CountDownLatch(1)
                 it.dispatch(Runnable {
                     latch.countDown()
-                }, mode = value)
+                }, TaskContextImpl(mode))
 
                 latch.await()
             }
@@ -25,10 +25,10 @@ class CoroutineSchedulerTest : TestBase() {
         CoroutineScheduler(2, 2).use {
             val latch = CountDownLatch(1)
             it.dispatch(Runnable {
-                for (value in TaskMode.values()) {
+                for (mode in TaskMode.values()) {
                     it.dispatch(Runnable {
                         latch.countDown()
-                    }, mode = value)
+                    }, TaskContextImpl(mode))
                 }
             })
 
@@ -125,5 +125,9 @@ class CoroutineSchedulerTest : TestBase() {
             check(ratio <= 1.1)
             check(ratio >= 0.9)
         }
+    }
+
+    private class TaskContextImpl(override val taskMode: TaskMode) : TaskContext {
+        override fun afterTask() {}
     }
 }

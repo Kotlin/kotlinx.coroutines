@@ -16,9 +16,11 @@ class ExperimentalCoroutineDispatcher(
 ) : CoroutineDispatcher(), Delay, Closeable {
     private val coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
+    override fun dispatch(context: CoroutineContext, block: Runnable): Unit =
+        coroutineScheduler.dispatch(block)
 
-    override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block, fair = true)
+    override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
+        coroutineScheduler.dispatch(block, fair = true)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>): Unit =
             DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
@@ -38,17 +40,18 @@ class ExperimentalCoroutineDispatcher(
      */
     fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
-        return LimitingBlockingDispatcher(parallelism, TaskMode.PROBABLY_BLOCKING, this)
+        return LimitingBlockingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
     }
 
-    internal fun dispatchBlocking(block: Runnable, context: TaskMode, fair: Boolean): Unit = coroutineScheduler.dispatch(block, context, fair)
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext?, fair: Boolean): Unit =
+        coroutineScheduler.dispatch(block, context, fair)
 }
 
 private class LimitingBlockingDispatcher(
+    val dispatcher: ExperimentalCoroutineDispatcher,
     val parallelism: Int,
-    val taskContext: TaskMode,
-    val dispatcher: ExperimentalCoroutineDispatcher
-) : CoroutineDispatcher(), Delay {
+    override val taskMode: TaskMode
+) : CoroutineDispatcher(), Delay, TaskContext {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
     private val inFlightTasks = atomic(0)
@@ -56,14 +59,14 @@ private class LimitingBlockingDispatcher(
     override fun dispatch(context: CoroutineContext, block: Runnable) = dispatch(block, false)
 
     private fun dispatch(block: Runnable, fair: Boolean) {
-        var taskToSchedule = wrap(block)
+        var taskToSchedule = block
         while (true) {
             // Commit in-flight tasks slot
             val inFlight = inFlightTasks.incrementAndGet()
 
             // Fast path, if parallelism limit is not reached, dispatch task and return
             if (inFlight <= parallelism) {
-                dispatcher.dispatchBlocking(taskToSchedule, taskContext, fair)
+                dispatcher.dispatchWithContext(taskToSchedule, this, fair)
                 return
             }
 
@@ -97,10 +100,6 @@ private class LimitingBlockingDispatcher(
         return "${super.toString()}[dispatcher = $dispatcher]"
     }
 
-    private fun wrap(block: Runnable): Runnable {
-        return block as? WrappedTask ?: WrappedTask(block)
-    }
-
     /**
      * Tries to dispatch tasks which were blocked due to reaching parallelism limit if there is any.
      *
@@ -114,11 +113,11 @@ private class LimitingBlockingDispatcher(
      * ```
      * it's more profitable to execute bar at the end of `blocking` rather than pending blocking task
      */
-    private fun afterTask() {
+    override fun afterTask() {
         var next = queue.poll()
         // If we have pending tasks in current blocking context, dispatch first
         if (next != null) {
-            dispatcher.dispatchBlocking(next, taskContext, true)
+            dispatcher.dispatchWithContext(next, this, true)
             return
         }
         inFlightTasks.decrementAndGet()
@@ -136,16 +135,6 @@ private class LimitingBlockingDispatcher(
          */
         next = queue.poll() ?: return
         dispatch(next, true)
-    }
-
-    private inner class WrappedTask(val runnable: Runnable) : Runnable {
-        override fun run() {
-            try {
-                runnable.run()
-            } finally {
-                afterTask()
-            }
-        }
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =

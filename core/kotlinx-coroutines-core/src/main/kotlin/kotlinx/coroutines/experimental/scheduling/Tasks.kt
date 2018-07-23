@@ -43,13 +43,32 @@ internal enum class TaskMode {
     PROBABLY_BLOCKING,
 }
 
+internal interface TaskContext {
+    val taskMode: TaskMode
+    fun afterTask()
+}
+
 internal class Task(
-    val block: Runnable,
-    val submissionTime: Long,
-    val mode: TaskMode
-) : LockFreeMPMCQueueNode<Task>() {
+    @JvmField val block: Runnable,
+    @JvmField val submissionTime: Long,
+    @JvmField val taskContext: TaskContext?
+) : Runnable, LockFreeMPMCQueueNode<Task>() {
+    val mode: TaskMode get() = taskContext?.taskMode ?: TaskMode.NON_BLOCKING
+    
+    override fun run() {
+        if (taskContext == null) {
+            block.run()
+        } else {
+            try {
+                block.run()
+            } finally {
+                taskContext.afterTask()
+            }
+        }
+    }
+
     override fun toString(): String =
-        "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, $mode]"
+        "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, $taskContext]"
 }
 
 // Open for tests
