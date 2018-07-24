@@ -4,11 +4,8 @@
 
 package kotlinx.coroutines.experimental
 
-import org.junit.After
-import org.junit.Before
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import org.junit.*
+import java.util.concurrent.atomic.*
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -86,6 +83,12 @@ public actual open class TestBase actual constructor() {
     public actual fun finish(index: Int) {
         expect(index)
         check(!finished.getAndSet(true)) { "Should call 'finish(...)' at most once" }
+    }
+
+    public actual fun reset() {
+        check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
+        actionIndex.set(0)
+        finished.set(false)
     }
 
     private lateinit var threadsBefore: Set<Thread>

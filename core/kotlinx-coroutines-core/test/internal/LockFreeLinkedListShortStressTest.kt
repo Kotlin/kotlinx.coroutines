@@ -4,12 +4,12 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.*
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Test
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.thread
+import java.util.concurrent.atomic.*
+import kotlin.concurrent.*
 
 /**
  * This stress test has 6 threads adding randomly first to the list and them immediately undoing
@@ -50,10 +50,13 @@ class LockFreeLinkedListShortStressTest : TestBase() {
                         }
                     }
                     if (node != null) {
-                        if (node.remove())
+                        if (node.remove()) {
                             undone.incrementAndGet()
-                        else
+                        } else {
+                            // randomly help other removal's completion
+                            if (rnd.nextBoolean()) node.helpRemove()
                             missed.incrementAndGet()
+                        }
                     }
                 }
                 completedAdder.incrementAndGet()

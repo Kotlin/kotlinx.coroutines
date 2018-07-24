@@ -20,7 +20,7 @@ class BufferReleaseLinearizabilityTest : TestBase() {
     private val lr = LinTesting()
 
     @Reset
-    fun reset() {
+    fun resetChannel() {
         ch = ByteChannel(false)
     }
 

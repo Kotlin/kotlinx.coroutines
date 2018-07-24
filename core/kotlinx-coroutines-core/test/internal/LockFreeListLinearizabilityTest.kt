@@ -18,7 +18,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
     lateinit var q: LockFreeLinkedListHead
 
     @Reset
-    fun reset() {
+    fun resetList() {
         q = LockFreeLinkedListHead()
     }
 

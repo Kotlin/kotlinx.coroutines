@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
@@ -31,6 +32,9 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * @suppress **This is unstable API and it is subject to change.**
      */
     protected abstract val isBufferFull: Boolean
+
+    // State transitions: null -> handler -> HANDLER_INVOKED
+    private val onCloseHandler = atomic<Any?>(null)
 
     // ------ internal functions for override by buffered channels ------
 
@@ -71,13 +75,13 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
      * Returns non-null closed token if it is last in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForSend: Closed<*>? get() = queue.prevNode as? Closed<*>
+    protected val closedForSend: Closed<*>? get() = (queue.prevNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Returns non-null closed token if it is first in the queue.
      * @suppress **This is unstable API and it is subject to change.**
      */
-    protected val closedForReceive: Closed<*>? get() = queue.nextNode as? Closed<*>
+    protected val closedForReceive: Closed<*>? get() = (queue.nextNode as? Closed<*>)?.also { helpClose(it) }
 
     /**
      * Retrieves first sending waiter from the queue or returns closed token.
@@ -169,7 +173,9 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         val result = offerInternal(element)
         return when {
             result === OFFER_SUCCESS -> true
-            result === OFFER_FAILED -> false
+            // We should check for closed token on offer as well, otherwise offer won't be linearizable
+            // in the face of concurrent close()
+            result === OFFER_FAILED ->  throw closedForSend?.sendException ?: return false
             result is Closed<*> -> throw result.sendException
             else -> error("offerInternal returned $result")
         }
@@ -231,23 +237,83 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
     public override fun close(cause: Throwable?): Boolean {
         val closed = Closed<E>(cause)
-        while (true) {
-            val receive = takeFirstReceiveOrPeekClosed()
-            if (receive == null) {
-                // queue empty or has only senders -- try add last "Closed" item to the queue
-                if (queue.addLastIfPrev(closed, { prev ->
-                    if (prev is Closed<*>) return false // already closed
-                    prev !is ReceiveOrClosed<*> // only add close if no waiting receive
-                })) {
-                    onClosed(closed)
-                    afterClose(cause)
-                    return true
-                }
-                continue // retry on failure
+
+        /*
+         * Try to commit close by adding a close token to the end of the queue.
+         * Successful -> we're now responsible for closing receivers
+         * Not successful -> help closing pending receivers to maintain invariant
+         * "if (!close()) next send will throw"
+         */
+        val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
+        if (!closeAdded) {
+            helpClose(queue.prevNode as Closed<*>)
+            return false
+        }
+
+        helpClose(closed)
+        invokeOnCloseHandler(cause)
+        // TODO We can get rid of afterClose
+        onClosed(closed)
+        afterClose(cause)
+        return true
+    }
+
+    private fun invokeOnCloseHandler(cause: Throwable?) {
+        val handler = onCloseHandler.value
+        if (handler !== null && handler !== HANDLER_INVOKED
+            && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+            // CAS failed -> concurrent invokeOnClose() invoked handler
+            (handler as Handler)(cause)
+        }
+    }
+
+    override fun invokeOnClose(handler: Handler) {
+        // Intricate dance for concurrent invokeOnClose and close calls
+        if (!onCloseHandler.compareAndSet(null, handler)) {
+            val value = onCloseHandler.value
+            if (value === HANDLER_INVOKED) {
+                throw IllegalStateException("Another handler was already registered and successfully invoked")
             }
-            if (receive is Closed<*>) return false // already marked as closed -- nothing to do
-            receive as Receive<E> // type assertion
-            receive.resumeReceiveClosed(closed)
+
+            throw IllegalStateException("Another handler was already registered: $value")
+        } else {
+            val closedToken = closedForSend
+            if (closedToken != null && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+                // CAS failed -> close() call invoked handler
+                (handler)(closedToken.closeCause)
+            }
+        }
+    }
+
+    private fun helpClose(closed: Closed<*>) {
+        /*
+         * It's important to traverse list from right to left to avoid races with sender.
+         * Consider channel state
+         * head sentinel -> [receiver 1] -> [receiver 2] -> head sentinel
+         * T1 invokes receive()
+         * T2 invokes close()
+         * T3 invokes close() + send(value)
+         *
+         * If both will traverse list from left to right, following non-linearizable history is possible:
+         * [close -> false], [send -> transferred 'value' to receiver]
+         */
+        while (true) {
+            val previous = closed.prevNode
+            // Channel is empty or has no receivers
+            if (previous is LockFreeLinkedListHead || previous !is Receive<*>) {
+                break
+            }
+
+            if (!previous.remove()) {
+                // failed to remove the node (due to race) -- retry finding non-removed prevNode
+                // NOTE: remove() DOES NOT help pending remove operation (that marked next pointer)
+                previous.helpRemove() // make sure remove is complete before continuing
+                continue
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            previous as Receive<E> // type assertion
+            previous.resumeReceiveClosed(closed)
         }
     }
 
@@ -950,6 +1016,9 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 /** @suppress **This is unstable API and it is subject to change.** */
 @JvmField internal val SEND_RESUMED = Symbol("SEND_RESUMED")
 
+internal typealias Handler = (Throwable?) -> Unit
+@JvmField internal val HANDLER_INVOKED = Any()
+
 /**
  * Represents sending waiter in the queue.
  * @suppress **This is unstable API and it is subject to change.**
@@ -1010,4 +1079,3 @@ private abstract class Receive<in E> : LockFreeLinkedListNode(), ReceiveOrClosed
     override val offerResult get() = OFFER_SUCCESS
     abstract fun resumeReceiveClosed(closed: Closed<*>)
 }
-
