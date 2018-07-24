@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.NotInitialized.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
@@ -155,6 +156,18 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * If this method succeeds, state of this job will never be changed again
      */
     private fun tryFinalizeState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
+        if (expect is Finishing && expect.cancelled != null) {
+            return tryFinalizeCancellingState(expect, proposedUpdate, mode)
+        }
+
+        val update = coerceProposedUpdate(expect, proposedUpdate)
+        if (!tryFinalizeState(expect, update)) return false
+        if (update is CompletedExceptionally) handleJobException(update.cause)
+        completeStateFinalization(expect, update, mode)
+        return true
+    }
+
+    private fun tryFinalizeCancellingState(expect: Finishing, proposedUpdate: Any?, mode: Int): Boolean {
         /*
          * If job is in 'cancelling' state and we're finalizing job state, we start intricate dance:
          * 1) Synchronize on state to avoid races with concurrent
@@ -164,38 +177,31 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
          *    collection
          * 4) Pass it upstream
          */
-        if (expect is Finishing && expect.cancelled != null) {
-            val finalException = synchronized(expect) {
-                if (_state.value !== expect) {
-                    return false
-                }
-
-                if (proposedUpdate is CompletedExceptionally) {
-                    expect.addLocked(proposedUpdate.cause)
-                }
-
-                /*
-                 * Note that new exceptions cannot be added concurrently: state is guarded by lock
-                 * and storage is sealed in the end, so all new exceptions will be reported separately
-                 */
-                buildException(expect).also { expect.seal() }
+        val finalException = synchronized(expect) {
+            if (_state.value !== expect) {
+                return false
             }
 
-            val update = Cancelled(this, finalException ?: expect.cancelled.cause)
-            handleJobException(update.cause)
-            // This CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
-            if (!tryFinalizeState(expect, update)) {
-                val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
-                handleOnCompletionException(error)
-                throw error
+            if (proposedUpdate is CompletedExceptionally) {
+                expect.addLocked(proposedUpdate.cause)
             }
 
-            completeStateFinalization(expect, update, mode)
-            return true
+            /*
+             * Note that new exceptions cannot be added concurrently: state is guarded by lock
+             * and storage is sealed in the end, so all new exceptions will be reported separately
+             */
+            buildException(expect).also { expect.seal() }
         }
 
-        val update = coerceProposedUpdate(expect, proposedUpdate)
-        if (!tryFinalizeState(expect, update)) return false
+        val update = Cancelled(this, finalException ?: expect.cancelled!!.cause)
+        handleJobException(update.cause)
+        // This CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
+        if (!tryFinalizeState(expect, update)) {
+            val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
+            handleOnCompletionException(error)
+            throw error
+        }
+
         completeStateFinalization(expect, update, mode)
         return true
     }
@@ -832,31 +838,58 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     // Cancelling or Completing
+    @Suppress("UNCHECKED_CAST")
     private class Finishing(
         override val list: NodeList,
         @JvmField val cancelled: Cancelled?, /* != null when cancelling */
         @JvmField val completing: Boolean /* true when completing */
     ) : Incomplete {
         override val isActive: Boolean get() = cancelled == null
-        val exceptions: List<Throwable> get() = _exceptionsHolder as List<Throwable>
 
-        // TODO optimize
-        private var _exceptionsHolder: Any? = if (cancelled == null) null else ArrayList<Throwable>(2)
+        val exceptions: List<Throwable> get() = when(_exceptionsHolder) {
+            NOT_INITIALIZED -> emptyList()
+            is Throwable -> listOf(_exceptionsHolder as Throwable) // EA should handle this
+            else -> (_exceptionsHolder as List<Throwable>)
+        }
+
+        private var _exceptionsHolder: Any? = if (cancelled == null) null else NOT_INITIALIZED
 
         fun addException(exception: Throwable): Boolean {
             synchronized(this) {
-                return if (_exceptionsHolder == null) {
-                    false
-                } else {
-                    @Suppress("UNCHECKED_CAST")
-                    (_exceptionsHolder as MutableList<Throwable>).add(exception)
-                    true
+                return when (_exceptionsHolder) {
+                    null -> false
+                    NOT_INITIALIZED -> {
+                        _exceptionsHolder = exception
+                        return true
+                    }
+                    is Throwable -> {
+                        val previous = _exceptionsHolder
+                        val list = ArrayList<Any?>(4)
+                        list.add(previous)
+                        list.add(exception)
+                        _exceptionsHolder = list
+                        return true
+                    }
+                    else -> (_exceptionsHolder as MutableList<Throwable>).add(exception)
                 }
             }
         }
 
         fun addLocked(exception: Throwable) {
-            (_exceptionsHolder as MutableList<Throwable>).add(exception)
+            // Cannot be null at this point here
+            when (_exceptionsHolder) {
+                NOT_INITIALIZED -> {
+                    _exceptionsHolder = exception
+                }
+                is Throwable -> {
+                    val previous = _exceptionsHolder
+                    val list = ArrayList<Any?>(4)
+                    list.add(previous)
+                    list.add(exception)
+                    _exceptionsHolder = list
+                }
+                else -> (_exceptionsHolder as MutableList<Throwable>).add(exception)
+            }
         }
 
         /**
@@ -987,6 +1020,10 @@ private const val TRUE = 1
 private val EmptyNew = Empty(false)
 @Suppress("PrivatePropertyName")
 private val EmptyActive = Empty(true)
+
+private enum class NotInitialized {
+    NOT_INITIALIZED
+}
 
 private class Empty(override val isActive: Boolean) : Incomplete {
     override val list: NodeList? get() = null

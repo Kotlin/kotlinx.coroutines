@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Assert.*
 
-@Ignore
 class TestCoroutineContextTest {
     private val injectedContext = TestCoroutineContext()
 

@@ -55,4 +55,8 @@ internal fun runBlock(
 internal fun runBlockForMultipleExceptions(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> Unit
-): List<Throwable>
+): List<Throwable> {
+    val handler = CapturingHandler()
+    runBlocking(context + handler, block = block)
+    return handler.unhandled
+}
