@@ -8,5 +8,4 @@ dependencies {
     }
 
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-    testCompile "com.devexperts.lincheck:core:$lincheck_version"
 }

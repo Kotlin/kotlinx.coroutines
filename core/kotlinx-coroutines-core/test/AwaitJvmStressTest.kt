@@ -6,7 +6,7 @@ package kotlinx.coroutines.experimental
 
 import org.junit.*
 
-class AwaitJvmTest : TestBase() {
+class AwaitJvmStressTest : TestBase() {
     @Test
     public fun testSecondLeak() = runTest {
         // This test is to make sure that handlers installed on the second deferred do not leak

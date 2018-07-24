@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.*
 import org.junit.*
 import kotlin.coroutines.experimental.*
 
-class RandevouzChannelStressTest : TestBase() {
+class RendezvousChannelStressTest : TestBase() {
 
     @Test
     fun testStress() = runTest {

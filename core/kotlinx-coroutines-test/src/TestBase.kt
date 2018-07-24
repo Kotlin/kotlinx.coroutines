@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.test.Tests
 import org.junit.After
 import org.junit.Before
 import java.util.concurrent.atomic.AtomicBoolean
@@ -17,9 +18,9 @@ import java.util.concurrent.atomic.AtomicReference
  * ```
  * class MyTest {
  *    @Test
- *    fun testSomething() = runBlocking<Unit> { // run in the context of the main thread
+ *    fun testSomething() = runTest { // run in the context of the main thread, with Exception handling
  *        expect(1) // initiate action counter
- *        val job = launch(context) { // use the context of the main thread
+ *        val job = launch(coroutineContext) { // use the context of the main thread
  *           expect(3) // the body of this coroutine in going to be executed in the 3rd step
  *        }
  *        expect(2) // launch just scheduled coroutine for exectuion later, so this line is executed second
@@ -30,17 +31,6 @@ import java.util.concurrent.atomic.AtomicReference
  * ```
  */
 public actual open class TestBase actual constructor() {
-    /**
-     * Is `true` when nightly stress test is done.
-     */
-    public actual val isStressTest = System.getProperty("stressTest") != null
-
-    public val stressTestMultiplierSqrt = if (isStressTest) 5 else 1
-
-    /**
-     * Multiply various constants in stress tests by this factor, so that they run longer during nightly stress test.
-     */
-    public actual val stressTestMultiplier = stressTestMultiplierSqrt * stressTestMultiplierSqrt
 
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
@@ -93,7 +83,7 @@ public actual open class TestBase actual constructor() {
 
     @Before
     fun before() {
-        CommonPool.usePrivatePool()
+        Tests.usePrivatePool()
         threadsBefore = currentThreads()
     }
 
@@ -101,8 +91,7 @@ public actual open class TestBase actual constructor() {
     fun onCompletion() {
         error.get()?.let { throw it }
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
-        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+        Tests.shutdown(SHUTDOWN_TIMEOUT)
         checkTestThreads(threadsBefore)
     }
 

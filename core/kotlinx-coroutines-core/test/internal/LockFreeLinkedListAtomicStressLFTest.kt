@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import kotlinx.atomicfu.LockFreedomTestEnvironment
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.*
 import org.junit.Assert.*
-import org.junit.Test
+import org.junit.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference

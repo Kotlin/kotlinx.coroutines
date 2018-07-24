@@ -8,4 +8,5 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 ## Modules
 
 * [kotlinx-coroutines-core-common](kotlinx-coroutines-core-common/README.md) -- common declarations for coroutine builders and primitives.
+* [kotlinx-coroutines-test-common](kotlinx-coroutines-test-common/README.md) -- common declarations for coroutine testing tools.
 

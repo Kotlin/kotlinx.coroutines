@@ -5,8 +5,6 @@
 package kotlinx.coroutines.experimental
 
 public expect open class TestBase constructor() {
-    public val isStressTest: Boolean
-    public val stressTestMultiplier: Int
 
     public fun error(message: Any, cause: Throwable? = null): Nothing
     public fun expect(index: Int)

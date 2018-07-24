@@ -4,13 +4,13 @@
 
 package kotlinx.coroutines.experimental
 
-import org.junit.Test
-import kotlin.concurrent.thread
+import org.junit.*
+import kotlin.concurrent.*
 
 /**
  * Tests concurrent cancel & dispose of the jobs.
  */
-class JobDisposeTest: TestBase() {
+class JobDisposeStressTest: TestBase() {
     private val TEST_DURATION = 3 * stressTestMultiplier // seconds
 
     @Volatile

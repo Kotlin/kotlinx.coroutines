@@ -5,11 +5,8 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.After
-import org.junit.Test
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.experimental.*
+import org.junit.*
+import java.util.concurrent.atomic.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
 

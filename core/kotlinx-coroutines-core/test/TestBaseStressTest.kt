@@ -6,7 +6,7 @@ package kotlinx.coroutines.experimental
 
 import org.junit.*
 
-class TestBaseTest : TestBase() {
+class TestBaseStressTest : TestBase() {
     @Test
     fun testThreadsShutdown() {
         val SHUTDOWN_TIMEOUT = 1_000L

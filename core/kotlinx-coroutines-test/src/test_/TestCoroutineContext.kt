@@ -48,10 +48,10 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      */
     public val exceptions: List<Throwable> get() = uncaughtExceptions
 
-    // -- CoroutineContext implementation 
+    // -- CoroutineContext implementation
 
     public override fun <R> fold(initial: R, operation: (R, CoroutineContext.Element) -> R): R =
-        operation(operation(initial, ctxDispatcher), ctxHandler)
+            operation(operation(initial, ctxDispatcher), ctxHandler)
 
     @Suppress("UNCHECKED_CAST")
     public override fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? = when {
@@ -73,7 +73,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      * @return The virtual clock-time
      */
     public fun now(unit: TimeUnit = TimeUnit.MILLISECONDS)=
-        unit.convert(time, TimeUnit.NANOSECONDS)
+            unit.convert(time, TimeUnit.NANOSECONDS)
 
     /**
      * Moves the CoroutineContext's virtual clock forward by a specified amount of time.
@@ -176,13 +176,13 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     }
 
     private fun post(block: Runnable) =
-        queue.addLast(TimedRunnable(block, counter++))
+            queue.addLast(TimedRunnable(block, counter++))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
-        TimedRunnable(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
-            .also {
-                queue.addLast(it)
-            }
+            TimedRunnable(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
+                    .also {
+                        queue.addLast(it)
+                    }
 
     private fun processNextEvent(): Long {
         val current = queue.peek()
@@ -202,7 +202,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
         }
     }
 
-    public override fun toString(): String = name ?: "TestCoroutineContext@$hexAddress"
+    public override fun toString(): String = name ?: defaultToStringTest()
 
     private inner class Dispatcher : CoroutineDispatcher(), Delay, EventLoop {
         override fun dispatch(context: CoroutineContext, block: Runnable) = post(block)
@@ -229,9 +229,9 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
 }
 
 private class TimedRunnable(
-    private val run: Runnable,
-    private val count: Long = 0,
-    @JvmField internal val time: Long = 0
+        private val run: Runnable,
+        private val count: Long = 0,
+        @JvmField internal val time: Long = 0
 ) : Comparable<TimedRunnable>, Runnable by run, ThreadSafeHeapNode {
     override var index: Int = 0
 

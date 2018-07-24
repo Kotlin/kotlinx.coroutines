@@ -35,6 +35,11 @@ class PublicApiTest {
     }
 
     @Test
+    fun kotlinxCoroutinesTest() {
+        snapshotAPIAndCompare("core/kotlinx-coroutines-test")
+    }
+
+    @Test
     fun kotlinxCoroutinesReactive() {
         snapshotAPIAndCompare("reactive/kotlinx-coroutines-reactive")
     }
