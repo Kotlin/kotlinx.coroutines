@@ -149,10 +149,12 @@ public interface Job : CoroutineContext.Element {
     public fun start(): Boolean
 
     /**
-     * Cancels this job with an optional cancellation [cause]. The result is `true` if this job was
-     * cancelled as a result of this invocation and `false` otherwise
-     * (if it was already _completed_ or if it is [NonCancellable]).
-     * Repeated invocations of this function have no effect and always produce `false`.
+     * Cancels this job with an optional cancellation [cause].
+     * The result is `true` if this job was either cancelled as a result of this invocation
+     * or it's being cancelled and given [cause] was successfully received by the job and will be properly handled, `false` otherwise.
+     *
+     * If this method returned `false`, then caller is responsible for handling [cause].
+     * If job is already completed, method returns `false`
      *
      * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing

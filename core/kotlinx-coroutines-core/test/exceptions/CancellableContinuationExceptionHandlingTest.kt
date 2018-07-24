@@ -2,8 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.exceptions
 
+import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
 import java.nio.channels.*
@@ -294,10 +295,4 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
 
         fail()
     }
-}
-
-// Workaround to run tests on JDK 8, this test is excluded from jdk16Test task
-fun Throwable.suppressed(): Array<Throwable> {
-    val method = this::class.java.getMethod("getSuppressed") ?: error("This test can only be run using JDK 1.8")
-    return method.invoke(this) as Array<Throwable>
 }

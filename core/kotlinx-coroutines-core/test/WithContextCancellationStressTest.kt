@@ -4,14 +4,17 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.exceptions.*
 import org.junit.*
+import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.*
 
 class WithContextCancellationStressTest : TestBase() {
 
-    private val iterations = 150_000 * stressTestMultiplier
+    private val iterations = 15_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(3, "WithContextCancellationStressTest")
 
     @After
@@ -29,7 +32,7 @@ class WithContextCancellationStressTest : TestBase() {
             val barrier = CyclicBarrier(4)
             val jobWithContext = async(pool) {
                 barrier.await()
-                withContext(wrapperDispatcher(coroutineContext)) {
+                withContext(wrapperDispatcher(coroutineContext), start = CoroutineStart.ATOMIC) {
                     throw IOException()
                 }
             }
@@ -45,29 +48,30 @@ class WithContextCancellationStressTest : TestBase() {
             }
 
             barrier.await()
-            val c1 = cancellerJob.await()
-            val c2 = cancellerJob2.await()
-            require(!(c1 && c2)) { "Same job cannot be cancelled twice" }
+            val aeCancelled = cancellerJob.await()
+            val aioobCancelled = cancellerJob2.await()
 
             try {
                 jobWithContext.await()
             } catch (e: Exception) {
                 when (e) {
-                    is IOException -> ++ioException
-                    is JobCancellationException -> {
-                        val cause = e.cause
-                        when (cause) {
-                            is ArithmeticException -> ++arithmeticException
-                            is ArrayIndexOutOfBoundsException -> ++aioobException
-                            else -> error("Unexpected exception")
-                        }
+                    is IOException -> {
+                        ++ioException
+                        e.checkSuppressed(aeException = aeCancelled, aioobException =  aioobCancelled)
+                    }
+                    is ArithmeticException -> {
+                        ++arithmeticException
+                        e.checkSuppressed(ioException = true, aioobException =  aioobCancelled)
+                    }
+                    is ArrayIndexOutOfBoundsException -> {
+                        ++aioobException
+                        e.checkSuppressed(ioException = true, aeException =  aeCancelled)
                     }
                     else -> error("Unexpected exception $e")
                 }
             }
         }
 
-        // Backward compatibility, no exceptional code paths were lost
         require(ioException > 0) { "At least one IOException expected" }
         require(arithmeticException > 0) { "At least one ArithmeticException expected" }
         require(aioobException > 0) { "At least one ArrayIndexOutOfBoundsException expected" }
@@ -79,6 +83,33 @@ class WithContextCancellationStressTest : TestBase() {
             override fun dispatch(context: CoroutineContext, block: Runnable) {
                 dispatcher.dispatch(context, block)
             }
+        }
+    }
+
+    private fun Throwable.checkSuppressed(
+        ioException: Boolean = false,
+        aeException: Boolean = false,
+        aioobException: Boolean = false
+    ) {
+        val suppressed = suppressed()
+
+        try {
+            if (ioException) {
+                assertTrue(suppressed.any { it is IOException }, "IOException should be present: $this")
+            }
+
+            if (aeException) {
+                assertTrue(suppressed.any { it is ArithmeticException }, "ArithmeticException should be present: $this")
+            }
+
+            if (aioobException) {
+                assertTrue(
+                    suppressed.any { it is ArrayIndexOutOfBoundsException },
+                    "ArrayIndexOutOfBoundsException should be present: $this"
+                )
+            }
+        } catch (e: Throwable) {
+            val a =2
         }
     }
 }

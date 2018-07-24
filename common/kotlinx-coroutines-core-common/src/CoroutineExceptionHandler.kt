@@ -12,26 +12,36 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * Helper function for coroutine builder implementations to handle uncaught exception in coroutines.
  *
  * It tries to handle uncaught exception in the following way:
- * * If there is [CoroutineExceptionHandler] in the context, then it is used.
- * * Otherwise, if exception is [CancellationException] then it is ignored
- *   (because that is the supposed mechanism to cancel the running coroutine)
- * * Otherwise:
- *     * if there is a [Job] in the context, then [Job.cancel] is invoked;
- *     * all instances of [CoroutineExceptionHandler] found via [ServiceLoader] are invoked;
- *     * current thread's [Thread.uncaughtExceptionHandler] is invoked.
+ * If current exception is [CancellationException], it's ignored: [CancellationException] is a normal way to cancel
+ * coroutine.
+ *
+ * If there is a [Job] in the context, then [Job.cancel] is invoked.
+ * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
+ * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used.
+ * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
     // if exception handling fails, make sure the original exception is not lost
     try {
+
+        // Ignore CancellationException (they are normal ways to terminate a coroutine)
+        if (exception is CancellationException) {
+            return
+        }
+
+        // If parent is successfully cancelled, we're done, it is now its responsibility to handle the exception
+        val parent = context[Job]
+        if (parent != null && parent.cancel(exception)) {
+            return
+        }
+
+        // If not, invoke exception handler from the context
         context[CoroutineExceptionHandler]?.let {
             it.handleException(context, exception)
             return
         }
-        // ignore CancellationException (they are normal means to terminate a coroutine)
-        if (exception is CancellationException) return
-        // try cancel job in the context
-        context[Job]?.cancel(exception)
-        // platform-specific
+
+        // If handler is not present in the context, fallback to the global handler
         handleCoroutineExceptionImpl(context, exception)
     } catch (handlerException: Throwable) {
         // simply rethrow if handler threw the original exception

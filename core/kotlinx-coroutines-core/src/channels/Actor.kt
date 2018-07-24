@@ -163,6 +163,10 @@ private open class ActorCoroutine<E>(
         // Always propagate the exception, don't wait for actor senders
         if (cause != null) handleCoroutineException(context, cause)
     }
+
+    override fun handleJobException(exception: Throwable) {
+        handleCoroutineException(context, exception)
+    }
 }
 
 private class LazyActorCoroutine<E>(

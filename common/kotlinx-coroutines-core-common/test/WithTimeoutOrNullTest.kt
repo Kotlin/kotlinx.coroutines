@@ -161,11 +161,9 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest(
-        expected = { it is TestException }
-    ) {
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
-        withTimeoutOrNull(100) {
+        val value = withTimeoutOrNull(100) {
             expect(2)
             try {
                 delay(1000)
@@ -176,7 +174,8 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached()
             "OK"
         }
-        expectUnreached()
+
+        assertNull(value)
     }
 
     private class TestException : Exception()

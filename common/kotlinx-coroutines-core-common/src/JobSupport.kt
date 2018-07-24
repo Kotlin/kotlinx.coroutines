@@ -155,10 +155,105 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * If this method succeeds, state of this job will never be changed again
      */
     private fun tryFinalizeState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
+        /*
+         * If job is in 'cancelling' state and we're finalizing job state, we start intricate dance:
+         * 1) Synchronize on state to avoid races with concurrent
+         *    mutations (e.g. when new child is added)
+         * 2) After synchronization check we're still in the expected state
+         * 3) Aggregate final exception under the same lock which protects exceptions
+         *    collection
+         * 4) Pass it upstream
+         */
+        if (expect is Finishing && expect.cancelled != null) {
+            val finalException = synchronized(expect) {
+                if (_state.value !== expect) {
+                    return false
+                }
+
+                if (proposedUpdate is CompletedExceptionally) {
+                    expect.addLocked(proposedUpdate.cause)
+                }
+
+                /*
+                 * Note that new exceptions cannot be added concurrently: state is guarded by lock
+                 * and storage is sealed in the end, so all new exceptions will be reported separately
+                 */
+                buildException(expect).also { expect.seal() }
+            }
+
+            val update = Cancelled(this, finalException ?: expect.cancelled.cause)
+            handleJobException(update.cause)
+            // This CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
+            if (!tryFinalizeState(expect, update)) {
+                val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
+                handleOnCompletionException(error)
+                throw error
+            }
+
+            completeStateFinalization(expect, update, mode)
+            return true
+        }
+
         val update = coerceProposedUpdate(expect, proposedUpdate)
         if (!tryFinalizeState(expect, update)) return false
         completeStateFinalization(expect, update, mode)
         return true
+    }
+
+    private fun buildException(state: Finishing): Throwable? {
+        val cancelled = state.cancelled!!
+        val suppressed = state.exceptions
+
+        /*
+         * This is a place where we step on our API limitation:
+         * We can't distinguish internal JobCancellationException from our parent
+         * from external cancellation, thus we ought to collect all exceptions.
+         *
+         * But it has negative consequences: same exception can be added as suppressed more than once.
+         * Consider concurrent parent-child relationship:
+         * 1) Child throws E1 and parent throws E2
+         * 2) Parent goes to "Cancelling(E1)" and cancels child with E1
+         * 3) Child goes to "Cancelling(E1)", but throws an exception E2
+         * 4) When child throws, it notifies parent that he is cancelling, adding its exception to parent list of exceptions
+         *    (again, parent don't know whether it's child exception or external exception)
+         * 5) Child builds final exception: E1 with suppressed E2, reports it to parent
+         * 6) Parent aggregates three exceptions: original E1, reported E2 and "final" E1.
+         *    It filters the third exception, but adds the second one to the first one, thus adding suppressed duplicate.
+         *
+         * Note that it's only happening when both parent and child throw exception simultaneously
+         */
+        var rootCause = cancelled.cause
+        if (rootCause is JobCancellationException) {
+            val cause = unwrap(rootCause)
+            rootCause = if (cause !== null) {
+                cause
+            } else {
+                suppressed.firstOrNull { unwrap(it) != null } ?: return rootCause
+            }
+        }
+
+        val seenExceptions = HashSet<Throwable>() // TODO it should be identity set
+        suppressed.forEach {
+            val unwrapped = unwrap(it)
+            if (unwrapped !== null && unwrapped !== rootCause) {
+                if (seenExceptions.add(unwrapped)) {
+                    rootCause.addSuppressedThrowable(unwrapped)
+                }
+            }
+        }
+
+        return rootCause
+    }
+
+    private tailrec fun unwrap(exception: Throwable): Throwable? {
+        if (exception is JobCancellationException) {
+            val cause = exception.cause
+            if (cause !== null) return unwrap(cause)
+            return null
+
+        } else {
+            return exception
+        }
     }
 
     /**
@@ -200,7 +295,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             try {
                 expect.invoke(cause)
             } catch (ex: Throwable) {
-                handleException(CompletionHandlerException("Exception in completion handler $expect for $this", ex))
+                handleOnCompletionException(CompletionHandlerException("Exception in completion handler $expect for $this", ex))
             }
         } else {
             expect.list?.notifyCompletion(cause)
@@ -225,8 +320,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         if (proposedUpdate !is CompletedExceptionally) return cancelled // not exception -- just use original cancelled
         val exception = proposedUpdate.cause
         if (cancelled.cause == exception) return cancelled // that is the cancelled we need already!
-        // todo: We need to rework this logic to keep original cancellation cause in the state and suppress other exceptions
-        //       that could have occurred while coroutine is being cancelled.
+        // That could have occurred while coroutine is being cancelled.
         // Do not spam with JCE in suppressed exceptions
         if (cancelled.cause !is JobCancellationException) {
             exception.addSuppressedThrowable(cancelled.cause)
@@ -251,7 +345,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 }
             }
         }
-        exception?.let { handleException(it) }
+        exception?.let { handleOnCompletionException(it) }
     }
 
     public final override fun start(): Boolean {
@@ -509,7 +603,15 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                     }
                 }
                 is Finishing -> { // Completing/Cancelling the job, may cancel
-                    if (state.cancelled != null) return false // already cancelling
+                    if (state.cancelled != null) {
+                        if (cause == null) {
+                            return true
+                        }
+
+                        // We either successfully added an exception or caller should handle it itself
+                        return cause.let { state.addException(it) }
+                    }
+
                     if (tryMakeCancelling(state, state.list, cause)) return true
                 }
                 else -> { // is inactive
@@ -666,20 +768,24 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * installed via [invokeOnCompletion].
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal open fun handleException(exception: Throwable) {
+    internal open fun handleOnCompletionException(exception: Throwable) {
         throw exception
     }
 
     /**
-     * This function is invoked once when job is cancelled or is completed, similarly to [invokeOnCompletion] with
-     * `onCancelling` set to `true`.
+     * This function is invoked once when job is cancelled or is completed.
+     * It's an optimization for [invokeOnCompletion] with `onCancelling` set to `true`.
+     *
      * @param exceptionally not null when the the job was cancelled or completed exceptionally,
      *               null when it has completed normally.
-     * @suppress **This is unstable API and it is subject to change.**
+     * @suppress **This is unstable API and it is subject to change.*
      */
-    internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {}
+    internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
+        // TODO rename to "onCancelling"
+    }
 
     /**
+     * Whether job has [onFinishingInternal] handler for given [update]
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal open fun hasOnFinishingHandler(update: Any?) = false
@@ -688,6 +794,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal open fun onFinishingInternal(update: Any?) {}
+
+    /**
+     * Method which is invoked once Job becomes `Cancelled`. It's guaranteed that at the moment
+     * of invocation the job and all its children are complete
+     */
+    internal open fun handleJobException(exception: Throwable) {}
 
     /**
      * Override for post-completion actions that need to do something with the state.
@@ -726,6 +838,36 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         @JvmField val completing: Boolean /* true when completing */
     ) : Incomplete {
         override val isActive: Boolean get() = cancelled == null
+        val exceptions: List<Throwable> get() = _exceptionsHolder as List<Throwable>
+
+        // TODO optimize
+        private var _exceptionsHolder: Any? = if (cancelled == null) null else ArrayList<Throwable>(2)
+
+        fun addException(exception: Throwable): Boolean {
+            synchronized(this) {
+                return if (_exceptionsHolder == null) {
+                    false
+                } else {
+                    @Suppress("UNCHECKED_CAST")
+                    (_exceptionsHolder as MutableList<Throwable>).add(exception)
+                    true
+                }
+            }
+        }
+
+        fun addLocked(exception: Throwable) {
+            (_exceptionsHolder as MutableList<Throwable>).add(exception)
+        }
+
+        /**
+         * Seals current state. After [seal] call all consecutive calls to [addException]
+         * return `false` forcing callers to handle pending exception by themselves.
+         * This call should be guarded by `synchronized(finishingState)`
+         */
+        fun seal() {
+            _exceptionsHolder = null
+        }
+
     }
 
     private val Incomplete.isCancelling: Boolean
@@ -854,6 +996,12 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 internal class JobImpl(parent: Job? = null) : JobSupport(true) {
     init { initParentJobInternal(parent) }
     override val onCancelMode: Int get() = ON_CANCEL_MAKE_COMPLETING
+
+    override fun cancel(cause: Throwable?): Boolean {
+        // JobImpl can't handle an exception, thus always returns false
+        super.cancel(cause)
+        return false
+    }
 }
 
 // -------- invokeOnCompletion nodes

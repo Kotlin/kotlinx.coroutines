@@ -40,7 +40,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableWithException() = runTest {
         expect(1)
-        val job = async(coroutineContext) {
+        val deferred = async(coroutineContext) {
             withContext(NonCancellable) {
                 expect(2)
                 yield()
@@ -53,14 +53,13 @@ class NonCancellableTest : TestBase() {
         }
 
         yield()
-        job.cancel(NumberFormatException())
+        deferred.cancel(NumberFormatException())
         expect(3)
-        assertTrue(job.isCancelled)
+        assertTrue(deferred.isCancelled)
         try {
-            job.await()
+            deferred.await()
             expectUnreached()
-        } catch (e: JobCancellationException) {
-            assertTrue(e.cause is NumberFormatException)
+        } catch (e: NumberFormatException) {
             finish(6)
         }
     }

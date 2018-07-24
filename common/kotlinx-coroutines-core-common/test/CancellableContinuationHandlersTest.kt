@@ -85,7 +85,7 @@ class CancellableContinuationHandlersTest : TestBase() {
     }
 
     @Test
-    fun testExceptionInHandler() = runTest({it is CancellationException}, listOf({e -> e is CompletionHandlerException})) {
+    fun testExceptionInHandler() = runTest({it is CompletionHandlerException}) {
         suspendCancellableCoroutine<Unit> { c ->
             c.invokeOnCancellation { throw AssertionError() }
             c.cancel()

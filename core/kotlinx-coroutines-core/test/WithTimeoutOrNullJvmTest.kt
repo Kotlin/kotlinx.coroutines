@@ -4,9 +4,32 @@
 
 package kotlinx.coroutines.experimental
 
+import java.io.*
 import kotlin.test.*
 
 class WithTimeoutOrNullJvmTest : TestBase() {
+
+
+    @Test
+    fun testCancellationSuppression() = runTest {
+
+        expect(1)
+        val value = withTimeoutOrNull(100) {
+            expect(2)
+            try {
+                delay(1000)
+            } catch (e: CancellationException) {
+                expect(3)
+                throw IOException()
+            }
+            expectUnreached()
+            "OK"
+        }
+
+        assertNull(value)
+        finish(4)
+    }
+
     @Test
     fun testOuterTimeoutFiredBeforeInner() = runTest {
         val result = withTimeoutOrNull(100) {
