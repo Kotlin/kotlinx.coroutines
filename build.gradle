@@ -110,8 +110,10 @@ configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "ben
     sourceSets {
         main.kotlin.srcDirs = ['src']
         test.kotlin.srcDirs = ['test']
+        // todo: do we still need this workaround?
         if (!projectName.endsWith("-native")) {
             main.resources.srcDirs = ['resources']
+            test.resources.srcDirs = ['test-resources']
         }
     }
 }

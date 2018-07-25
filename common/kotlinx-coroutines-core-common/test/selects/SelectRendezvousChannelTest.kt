@@ -310,6 +310,6 @@ class SelectRendezvousChannelTest : TestBase() {
     internal fun <R> SelectBuilder<R>.default(block: suspend () -> R) {
         this as SelectBuilderImpl // type assertion
         if (!trySelect(null)) return
-        block.startCoroutineUndispatched(this)
+        block.startCoroutineUnintercepted(this)
     }
 }

@@ -119,8 +119,11 @@ public suspend fun <T> withContext(
     // fast path #3 if the new dispatcher is the same as the old one.
     // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
     if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
-        val newContinuation = RunContinuationDirect(newContext, uCont)
-        return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
+        val newContinuation = RunContinuationUnintercepted(newContext, uCont)
+        // There are some other changes in the context, so this thread needs to be updated
+        withCoroutineContext(newContext) {
+            return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
+        }
     }
     // slowest path otherwise -- use new interceptor, sync to its result via a full-blown instance of RunCompletion
     require(!start.isLazy) { "$start start is not supported" }
@@ -130,7 +133,6 @@ public suspend fun <T> withContext(
         resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE
     )
     completion.initParentJobInternal(newContext[Job]) // attach to job
-    @Suppress("DEPRECATION")
     start(block, completion)
     completion.getResult()
 }
@@ -178,10 +180,22 @@ private class LazyStandaloneCoroutine(
     }
 }
 
-private class RunContinuationDirect<in T>(
+private class RunContinuationUnintercepted<in T>(
     override val context: CoroutineContext,
-    continuation: Continuation<T>
-) : Continuation<T> by continuation
+    private val continuation: Continuation<T>
+): Continuation<T> {
+    override fun resume(value: T) {
+        withCoroutineContext(continuation.context) {
+            continuation.resume(value)
+        }
+    }
+
+    override fun resumeWithException(exception: Throwable) {
+        withCoroutineContext(continuation.context) {
+            continuation.resumeWithException(exception)
+        }
+    }
+}
 
 @Suppress("UNCHECKED_CAST")
 private class RunCompletion<in T>(
