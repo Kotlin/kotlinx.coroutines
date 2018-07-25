@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import java.util.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
@@ -98,29 +99,12 @@ public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = 
  * Executes a block using a given coroutine context.
  */
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
-    val oldName = context.updateThreadContext()
+    val oldValue = updateThreadContext(context)
     try {
         return block()
     } finally {
-        restoreThreadContext(oldName)
+        restoreThreadContext(context, oldValue)
     }
-}
-
-@PublishedApi
-internal fun CoroutineContext.updateThreadContext(): String? {
-    if (!DEBUG) return null
-    val coroutineId = this[CoroutineId] ?: return null
-    val coroutineName = this[CoroutineName]?.name ?: "coroutine"
-    val currentThread = Thread.currentThread()
-    val oldName = currentThread.name
-    currentThread.name = buildString(oldName.length + coroutineName.length + 10) {
-        append(oldName)
-        append(" @")
-        append(coroutineName)
-        append('#')
-        append(coroutineId.id)
-    }
-    return oldName
 }
 
 internal actual val CoroutineContext.coroutineName: String? get() {
@@ -130,12 +114,31 @@ internal actual val CoroutineContext.coroutineName: String? get() {
     return "$coroutineName#${coroutineId.id}"
 }
 
-@PublishedApi
-internal fun restoreThreadContext(oldName: String?) {
-    if (oldName != null) Thread.currentThread().name = oldName
-}
+private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
-private class CoroutineId(val id: Long) : AbstractCoroutineContextElement(CoroutineId) {
+internal data class CoroutineId(
+    val id: Long
+) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
     companion object Key : CoroutineContext.Key<CoroutineId>
     override fun toString(): String = "CoroutineId($id)"
+
+    override fun updateThreadContext(context: CoroutineContext): String {
+        val coroutineName = context[CoroutineName]?.name ?: "coroutine"
+        val currentThread = Thread.currentThread()
+        val oldName = currentThread.name
+        var lastIndex = oldName.lastIndexOf(DEBUG_THREAD_NAME_SEPARATOR)
+        if (lastIndex < 0) lastIndex = oldName.length
+        currentThread.name = buildString(lastIndex + coroutineName.length + 10) {
+            append(oldName.substring(0, lastIndex))
+            append(DEBUG_THREAD_NAME_SEPARATOR)
+            append(coroutineName)
+            append('#')
+            append(id)
+        }
+        return oldName
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
+        Thread.currentThread().name = oldState
+    }
 }

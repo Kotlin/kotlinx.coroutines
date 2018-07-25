@@ -414,7 +414,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                     offerResult === ALREADY_SELECTED -> return
                     offerResult === OFFER_FAILED -> {} // retry
                     offerResult === OFFER_SUCCESS -> {
-                        block.startCoroutineUndispatched(receiver = this, completion = select.completion)
+                        block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                         return
                     }
                     offerResult is Closed<*> -> throw offerResult.sendException
@@ -753,7 +753,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                     pollResult === POLL_FAILED -> {} // retry
                     pollResult is Closed<*> -> throw pollResult.receiveException
                     else -> {
-                        block.startCoroutineUndispatched(pollResult as E, select.completion)
+                        block.startCoroutineUnintercepted(pollResult as E, select.completion)
                         return
                     }
                 }
@@ -788,14 +788,14 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                     pollResult is Closed<*> -> {
                         if (pollResult.closeCause == null) {
                             if (select.trySelect(null))
-                                block.startCoroutineUndispatched(null, select.completion)
+                                block.startCoroutineUnintercepted(null, select.completion)
                             return
                         } else
                             throw pollResult.closeCause
                     }
                     else -> {
                         // selected successfully
-                        block.startCoroutineUndispatched(pollResult as E, select.completion)
+                        block.startCoroutineUnintercepted(pollResult as E, select.completion)
                         return
                     }
                 }

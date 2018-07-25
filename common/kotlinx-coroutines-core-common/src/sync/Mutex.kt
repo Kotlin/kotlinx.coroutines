@@ -252,7 +252,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                         val failure = select.performAtomicTrySelect(TryLockDesc(this, owner))
                         when {
                             failure == null -> { // success
-                                block.startCoroutineUndispatched(receiver = this, completion = select.completion)
+                                block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                                 return
                             }
                             failure === ALREADY_SELECTED -> return // already selected -- bail out
