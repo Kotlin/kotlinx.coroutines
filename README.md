@@ -4,9 +4,7 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.23.4) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.23.4)
 
-Library support for Kotlin coroutines in
-[Kotlin/JVM](core/README.md) and
-[Kotlin/JS](js/README.md).
+Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
 This is a companion version for Kotlin 1.2.51 release.
 
 ```kotlin
@@ -22,12 +20,13 @@ launch {
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `delay` and `yield` top-level suspending functions.
-* [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `CommonPool` coroutine context (default on JVM);
   * `Channel` and `Mutex` communication and synchronization primitives;
   * `produce` and `actor` coroutine builders;
   * `select` expression support and more.
+* [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
+* [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
@@ -100,10 +99,13 @@ repository {
 }
 ```
 
-### Kotlin/JS
+### Multiplatform
 
-Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
-or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
+Core modules of `kotlinx.coroutines` are also available for 
+[Kotlin/JS](js/README.md) and [Kotlin/Native](native/README.md). If you write
+a common code that should get compiled or different platforms, add 
+[`org.jetbrains.kotlinx:kotlinx-coroutines-core-common:<version>`](common/kotlinx-coroutines-core-common/README.md) 
+to your common code dependencies.
 
 ### Android
 

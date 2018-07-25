@@ -42,7 +42,7 @@ if (platform == "jvm") {
             makeLinkMapping(it, rootProject.file("js/$project.name-js"))
             makeLinkMapping(it, rootProject.file("common/$project.name-common"))
             // source roots
-            impliedPlatforms = ['JVM', 'JS']
+            impliedPlatforms = ['JVM', 'JS', 'Native']
             sourceRoot {
                 path = rootProject.file("core/$project.name/src")
                 platforms = ['JVM']
@@ -52,9 +52,13 @@ if (platform == "jvm") {
                 platforms = ['JS']
             }
             sourceRoot {
+                path = rootProject.file("native/$project.name-native/src")
+                platforms = ['Native']
+            }
+            sourceRoot {
                 path = rootProject.file("common/$project.name-common/src")
             }
-            // depends on JS & Common, too
+            // depends on other platforms, too
             afterEvaluate {
                 dependsOn(tasks.getByPath(":$project.name:classes"))
                 dependsOn(tasks.getByPath(":$project.name-js:classes"))
