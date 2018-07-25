@@ -215,53 +215,6 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
         }
     }
 
-    @Test
-    fun testMultipleCancellations() = runTest {
-        var continuation: Continuation<Unit>? = null
-
-        val job = launch(coroutineContext) {
-            try {
-                expect(2)
-                suspendCancellableCoroutine<Unit> { c ->
-                    continuation = c
-                }
-            } catch (e: IOException) {
-                expect(3)
-            }
-        }
-
-        expect(1)
-        yield()
-        continuation!!.resumeWithException(IOException())
-        yield()
-        assertFailsWith<IllegalStateException> { continuation!!.resumeWithException(ClosedChannelException()) }
-        try {
-            job.join()
-        } finally {
-            finish(4)
-        }
-    }
-
-    @Test
-    fun testResumeAndCancel() = runTest {
-        var continuation: Continuation<Unit>? = null
-
-        val job = launch(coroutineContext) {
-            expect(2)
-            suspendCancellableCoroutine<Unit> { c ->
-                continuation = c
-            }
-            expect(3)
-        }
-
-        expect(1)
-        yield()
-        continuation!!.resume(Unit)
-        job.join()
-        assertFailsWith<IllegalStateException> { continuation!!.resumeWithException(ClosedChannelException()) }
-        finish(4)
-    }
-
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
         val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
         return object : CoroutineDispatcher() {
