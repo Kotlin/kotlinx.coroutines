@@ -53,6 +53,17 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
             .addThread(1, 3)
             .addThread(1, 3)
             .verifier(LinVerifier::class.java)
+            .injectExecution { actors, methods ->
+                actors[0].add(actorMethod(methods, "receive1"))
+                actors[0].add(actorMethod(methods, "receive2"))
+                actors[0].add(actorMethod(methods, "close1"))
+
+                actors[1].add(actorMethod(methods, "send2"))
+                actors[1].add(actorMethod(methods, "send1"))
+
+                actors[2].add(actorMethod(methods, "isClosedForSend"))
+            }
+
         LinChecker.check(ChannelIsClosedLinearizabilityTest::class.java, options)
     }
 }

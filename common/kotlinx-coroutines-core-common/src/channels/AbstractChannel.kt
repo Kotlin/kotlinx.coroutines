@@ -192,6 +192,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                     return@sc
                 }
                 is Closed<*> -> {
+                    helpClose(enqueueResult)
                     cont.resumeWithException(enqueueResult.sendException)
                     return@sc
                 }
@@ -205,6 +206,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                 }
                 offerResult === OFFER_FAILED -> continue@loop
                 offerResult is Closed<*> -> {
+                    helpClose(offerResult)
                     cont.resumeWithException(offerResult.sendException)
                     return@sc
                 }
