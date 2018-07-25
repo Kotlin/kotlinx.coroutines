@@ -58,8 +58,8 @@ class QuasarTest : TestBase() {
                 return value
             }
         }
-        fiber.start()
-        expect(2)
+        expect(2) // before starting fiber
+        fiber.start() // now start fiber
         started.await() // wait fiber to start
         expect(4)
         result.complete("OK") // send Ok to fiber
