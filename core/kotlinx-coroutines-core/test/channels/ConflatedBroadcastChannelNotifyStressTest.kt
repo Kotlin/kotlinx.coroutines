@@ -14,7 +14,7 @@ import kotlin.coroutines.experimental.*
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     val nSenders = 2
     val nReceivers = 3
-    val nEvents = 1_000_000 * stressTestMultiplier
+    val nEvents = 500_000 * stressTestMultiplier
     val timeLimit = 30_000L * stressTestMultiplier // 30 sec
 
     val broadcast = ConflatedBroadcastChannel<Int>()
