@@ -272,15 +272,17 @@ internal abstract class AbstractContinuation<in T>(
                         }
                     }
                 }
-
                 is NotCompleted -> {
                     if (updateStateToFinal(state, proposedUpdate, resumeMode)) return
                 }
                 is CancelledContinuation -> {
-                    if (proposedUpdate is NotCompleted || proposedUpdate is CompletedExceptionally) {
-                        error("Unexpected update, state: $state, update: $proposedUpdate")
-                    }
-                    // Coroutine is dispatched normally (e.g.via `delay()`) after cancellation
+                    /*
+                     * If continuation was cancelled, then all further updates (resumes or exceptions) must be
+                     * ignored, because cancellation is asynchronous and may race with resume/resumeWithException.
+                     * This race is normal.
+                     *
+                     * :todo: we should somehow remember the attempt to invoke resume and fail on the second attempt.
+                     */
                     return
                 }
                 else -> error("Already resumed, but proposed with update $proposedUpdate")
