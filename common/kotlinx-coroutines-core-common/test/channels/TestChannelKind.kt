@@ -55,9 +55,6 @@ private class ChannelViaBroadcast<E>(
     override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
     override val isEmpty: Boolean get() = sub.isEmpty
 
-    // Workaround for KT-23094
-    override suspend fun send(element: E) = broadcast.send(element)
-
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()

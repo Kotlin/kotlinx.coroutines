@@ -1,10 +1,8 @@
 public abstract class kotlinx/coroutines/experimental/AbstractCoroutine : kotlin/coroutines/experimental/Continuation, kotlinx/coroutines/experimental/CoroutineScope, kotlinx/coroutines/experimental/Job {
 	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun cancel (Ljava/lang/Throwable;)Z
 	public final fun getContext ()Lkotlin/coroutines/experimental/CoroutineContext;
 	public final fun getCoroutineContext ()Lkotlin/coroutines/experimental/CoroutineContext;
-	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	protected fun onCancellation (Ljava/lang/Throwable;)V
 	protected fun onCompleted (Ljava/lang/Object;)V
 	protected fun onCompletedExceptionally (Ljava/lang/Throwable;)V

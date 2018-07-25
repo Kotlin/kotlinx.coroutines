@@ -103,9 +103,6 @@ private open class BroadcastCoroutine<E>(
         if (!processed && cause != null)
             handleCoroutineException(context, cause)
     }
-
-    // Workaround for KT-23094
-    override suspend fun send(element: E) = _channel.send(element)
 }
 
 private class LazyBroadcastCoroutine<E>(

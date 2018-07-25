@@ -12,15 +12,7 @@ internal open class ChannelCoroutine<E>(
     protected val _channel: Channel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
-    val channel: Channel<E>
-        get() = this
-
-    // Workaround for KT-23094
-    override suspend fun receive(): E = _channel.receive()
-
-    override suspend fun send(element: E) = _channel.send(element)
-
-    override suspend fun receiveOrNull(): E? = _channel.receiveOrNull()
+    val channel: Channel<E> get() = this
 
     override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
 }
