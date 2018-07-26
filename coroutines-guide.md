@@ -841,7 +841,7 @@ It produces the following output (maybe in different order):
 
 <!--- TEST LINES_START_UNORDERED -->
 
-The default dispatcher that we've used in previous sections is representend by [DefaultDispatcher], which 
+The default dispatcher that we've used in previous sections is represented by [DefaultDispatcher], which 
 is equal to [CommonPool] in the current implementation. So, `launch { ... }` is the same 
 as `launch(DefaultDispatcher) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
 
