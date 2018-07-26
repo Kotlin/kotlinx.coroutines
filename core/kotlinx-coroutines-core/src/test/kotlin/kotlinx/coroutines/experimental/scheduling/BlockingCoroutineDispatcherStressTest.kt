@@ -5,7 +5,7 @@ import org.junit.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 
-class BlockingCoroutineDispatcherStressTest() : SchedulerTestBase() {
+class BlockingCoroutineDispatcherStressTest : SchedulerTestBase() {
 
     init {
         corePoolSize = CORES_COUNT
@@ -84,7 +84,7 @@ class BlockingCoroutineDispatcherStressTest() : SchedulerTestBase() {
     @Test
     fun testBlockingTasksStarvation() = runBlocking {
         corePoolSize = 2 // Easier to reproduce race with unparks
-        val iterations = 50_000 * stressTestMultiplier
+        val iterations = 10_000 * stressTestMultiplier
         val blockingLimit = 4 // CORES_COUNT * 3
         val blocking = blockingDispatcher(blockingLimit)
 

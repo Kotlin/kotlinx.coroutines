@@ -87,8 +87,8 @@ internal class WorkQueue {
     }
 
     /**
-     * Tries stealing from [victim] queue into this queue, using [globalQueue] to offload on overflow.
-     * 
+     * Tries stealing from [victim] queue into this queue, using [globalQueue] to offload stolen tasks in case of current queue overflow.
+     *
      * @return whether any task was stolen
      */
     fun trySteal(victim: WorkQueue, globalQueue: GlobalQueue): Boolean {
@@ -119,6 +119,7 @@ internal class WorkQueue {
         if (time - lastScheduled.submissionTime < WORK_STEALING_TIME_RESOLUTION_NS) {
             return false
         }
+
         if (victim.lastScheduledTask.compareAndSet(lastScheduled, null)) {
             add(lastScheduled, globalQueue)
             return true

@@ -37,14 +37,6 @@ abstract class SchedulerTestBase : TestBase() {
             require(threads in range) { "Expected threads in $range interval, but has $threads" }
         }
 
-        /**
-         * Asserts that [expectedThreadsCount] of pool worker threads exists at the time of method invocation
-         */
-        fun checkPoolThreadsExist(expectedThreadsCount: Int = CORES_COUNT) {
-            val threads = Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }.count()
-            require(threads == expectedThreadsCount) { "Expected $expectedThreadsCount threads, but has $threads" }
-        }
-
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.filter { it is CoroutineScheduler.Worker }
                 .map { sequenceNumber(it.name) }.max()

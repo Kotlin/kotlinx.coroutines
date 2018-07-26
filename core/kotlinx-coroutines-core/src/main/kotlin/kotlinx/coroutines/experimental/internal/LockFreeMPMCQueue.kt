@@ -23,6 +23,7 @@ internal open class LockFreeMPMCQueue<T : LockFreeMPMCQueueNode<T>> {
         atomic(LockFreeMPMCQueueNode<T>() as T) // sentinel
 
     private val tail = atomic(head.value)
+    internal val headValue: T get() = head.value
 
     public fun addLast(node: T): Boolean {
         tail.loop { curTail ->
@@ -47,8 +48,7 @@ internal open class LockFreeMPMCQueue<T : LockFreeMPMCQueueNode<T>> {
         }
     }
 
-    @PublishedApi internal val headValue: T get() = head.value
-    @PublishedApi internal fun headCas(curHead: T, update: T) = head.compareAndSet(curHead, update)
+    fun headCas(curHead: T, update: T) = head.compareAndSet(curHead, update)
 
     public inline fun removeFistOrNullIf(predicate: (T) -> Boolean): T? {
         while (true) {

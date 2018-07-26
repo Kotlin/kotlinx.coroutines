@@ -54,7 +54,7 @@ class ExperimentalCoroutineDispatcher(
         return LimitingBlockingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
     }
 
-    internal fun dispatchWithContext(block: Runnable, context: TaskContext?, fair: Boolean): Unit =
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean): Unit =
         coroutineScheduler.dispatch(block, context, fair)
 
     // fot tests only

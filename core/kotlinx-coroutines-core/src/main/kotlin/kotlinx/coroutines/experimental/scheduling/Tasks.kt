@@ -42,9 +42,15 @@ internal val IDLE_WORKER_KEEP_ALIVE_NS = TimeUnit.SECONDS.toNanos(
 internal var schedulerTimeSource: TimeSource = NanoTimeSource
 
 internal enum class TaskMode {
-    // Marker indicating that task is CPU-bound and will not block
+
+    /**
+     * Marker indicating that task is CPU-bound and will not block
+     */
     NON_BLOCKING,
-    // Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required
+
+    /**
+     * Marker indicating that task may potentially block, thus giving scheduler a hint that additional thread may be required
+     */
     PROBABLY_BLOCKING,
 }
 
@@ -53,22 +59,26 @@ internal interface TaskContext {
     fun afterTask()
 }
 
+internal object NonBlockingContext : TaskContext {
+    override val taskMode: TaskMode = TaskMode.NON_BLOCKING
+
+    override fun afterTask() {
+       // Nothing for non-blocking context
+    }
+}
+
 internal class Task(
     @JvmField val block: Runnable,
     @JvmField val submissionTime: Long,
-    @JvmField val taskContext: TaskContext?
+    @JvmField val taskContext: TaskContext
 ) : Runnable, LockFreeMPMCQueueNode<Task>() {
-    val mode: TaskMode get() = taskContext?.taskMode ?: TaskMode.NON_BLOCKING
+    val mode: TaskMode get() = taskContext.taskMode
     
     override fun run() {
-        if (taskContext == null) {
+        try {
             block.run()
-        } else {
-            try {
-                block.run()
-            } finally {
-                taskContext.afterTask()
-            }
+        } finally {
+            taskContext.afterTask()
         }
     }
 
