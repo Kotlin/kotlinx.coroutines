@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental.internal
 
-import internal.*
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import kotlin.test.*

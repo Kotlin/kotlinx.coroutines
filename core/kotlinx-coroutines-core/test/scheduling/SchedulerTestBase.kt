@@ -4,9 +4,9 @@
 
 package kotlinx.coroutines.experimental.scheduling
 
-import internal.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import org.junit.*
 import kotlin.coroutines.experimental.*
 

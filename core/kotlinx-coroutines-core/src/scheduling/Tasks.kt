@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines.experimental.scheduling
 
-import internal.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.*
 
 

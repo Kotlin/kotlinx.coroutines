@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package internal
+package kotlinx.coroutines.experimental.internal
 
 // number of processors at startup for consistent prop initialization
 internal val AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors()

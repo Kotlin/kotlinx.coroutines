@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.experimental
 
-import internal.*
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
-import kotlinx.coroutines.experimental.scheduling.*
 
 /**
  * Name of the property that control coroutine debugging. See [newCoroutineContext].
