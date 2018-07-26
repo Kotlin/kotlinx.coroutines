@@ -277,12 +277,16 @@ internal abstract class AbstractContinuation<in T>(
                 }
                 is CancelledContinuation -> {
                     /*
-                     * If continuation was cancelled, then all further updates (resumes or exceptions) must be
-                     * ignored, because cancellation is asynchronous and may race with resume/resumeWithException.
-                     * This race is normal.
+                     * If continuation was cancelled, then all further resumes must be
+                     * ignored, because cancellation is asynchronous and may race with resume.
+                     * Racy exception are reported so no exceptions are lost
                      *
                      * :todo: we should somehow remember the attempt to invoke resume and fail on the second attempt.
                      */
+                    if (proposedUpdate is CompletedExceptionally) {
+                        handleException(proposedUpdate.cause)
+                    }
+
                     return
                 }
                 else -> error("Already resumed, but proposed with update $proposedUpdate")

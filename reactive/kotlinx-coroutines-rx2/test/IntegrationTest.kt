@@ -32,7 +32,7 @@ class IntegrationTest(
         @JvmStatic
         fun params(): Collection<Array<Any>> = Ctx.values().flatMap { ctx ->
             listOf(false, true).map { delay ->
-                arrayOf<Any>(ctx, delay)
+                arrayOf(ctx, delay)
             }
         }
     }
@@ -95,6 +95,34 @@ class IntegrationTest(
         val channel = observable.openSubscription()
         checkNumbers(n, channel.asObservable(ctx(coroutineContext)))
         channel.cancel()
+    }
+
+    @Test
+    fun testCancelWithoutValue() = runTest {
+        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
+            rxObservable<String>(coroutineContext) {
+                yield()
+                expectUnreached()
+            }.awaitFirst()
+        }
+
+        job.cancel()
+        job.join()
+    }
+
+    @Test
+    fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
+        expect(1)
+        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
+            rxObservable<String>(coroutineContext) {
+                yield()
+                expect(2)
+                // Nothing to emit
+            }.awaitFirst()
+        }
+
+        job.join()
+        finish(3)
     }
 
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {
