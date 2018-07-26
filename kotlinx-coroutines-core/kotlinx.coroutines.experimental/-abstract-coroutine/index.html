@@ -33,7 +33,7 @@
 
 <h1 id="abstractcoroutine">AbstractCoroutine</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractCoroutine</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">JobSupport</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/AbstractCoroutine.kt#L44">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractCoroutine</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">JobSupport</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
 
 <p>Abstract base class for implementation of coroutines in coroutine builders.</p>
 
@@ -46,7 +46,7 @@ is cancelled through an intermediate <em>cancelling</em> state.</p>
 
 <ul>
   <li><a href="on-start.html">onStart</a> is invoked when coroutine is create in not active state and is <a href="../-job/start.html">started</a>.</li>
-  <li><a href="on-cancellation.html">onCancellation</a> is invoked as soon as coroutine is <a href="cancel.html">cancelled</a> (becomes <em>cancelling</em>)
+  <li><a href="on-cancellation.html">onCancellation</a> is invoked as soon as coroutine is <a href="#">cancelled</a> (becomes <em>cancelling</em>)
 or when it completes for any reason.</li>
   <li><a href="on-completed.html">onCompleted</a> is invoked when coroutine completes with a value.</li>
   <li><a href="on-completed-exceptionally.html">onCompletedExceptionally</a> in invoked when coroutines completes with exception.</li>
@@ -104,38 +104,6 @@ or when it completes for any reason.</li>
 <tr>
 <td>
 
-        <p><a href="cancel.html">cancel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.AbstractCoroutine$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="invoke-on-completion.html">invokeOnCompletion</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">invokeOnCompletion</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/onCancelling">onCancelling</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
-
-        <p>Registers handler that is <strong>synchronously</strong> invoked once on cancellation or completion of this job.
-When job is already cancelling or complete, then the handler is immediately invoked
-with a job’s cancellation cause or <code>null</code> unless <a href="invoke-on-completion.html#kotlinx.coroutines.experimental.AbstractCoroutine$invokeOnCompletion(kotlin.Boolean, kotlin.Boolean, kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/invokeImmediately">invokeImmediately</a> is set to false.
-Otherwise, handler will be invoked once when this job is cancelled or complete.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
         <p><a href="on-cancellation.html">onCancellation</a></p>
 
       </td>
@@ -143,7 +111,7 @@ Otherwise, handler will be invoked once when this job is cancelled or complete.<
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onCancellation</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.AbstractCoroutine$onCancellation(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>This function is invoked once when this coroutine is cancelled or is completed,
-similarly to <a href="invoke-on-completion.html">invokeOnCompletion</a> with <code>onCancelling</code> set to <code>true</code>.</p>
+similarly to <a href="#">invokeOnCompletion</a> with <code>onCancelling</code> set to <code>true</code>.</p>
 
       </td>
 </tr>

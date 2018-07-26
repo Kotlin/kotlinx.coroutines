@@ -33,21 +33,34 @@
 
 <h1 id="eventloop">EventLoop</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">EventLoop</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/thread">thread</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html"><span class="identifier">Thread</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Thread.currentThread()<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/parentJob">parentJob</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/EventLoop.kt#L70">(source)</a></div>
+<div class="overload-group" data-platform="JVM">
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
+  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">EventLoop</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/thread">thread</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html"><span class="identifier">Thread</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Thread.currentThread()<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/parentJob">parentJob</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
-<p>Creates a new event loop that is bound the specified <a href="-event-loop.html#kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/thread">thread</a> (current thread by default) and
+  <p><strong>Platform and version requirements:</strong> JVM</p>
+
+  <p>Creates a new event loop that is bound the specified <a href="-event-loop.html#kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/thread">thread</a> (current thread by default) and
 stops accepting new events when <a href="-event-loop.html#kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/parentJob">parentJob</a> completes. Every continuation that is scheduled
 onto this event loop unparks the specified thread via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/LockSupport.html#unpark(java.lang.Thread)">LockSupport.unpark</a>.</p>
 
-<p>The main event-processing loop using the resulting <code>eventLoop</code> object should look like this:</p>
+  <p>The main event-processing loop using the resulting <code>eventLoop</code> object should look like this:</p>
 
-<pre>while (needsToBeRunning) {
+  <pre>while (needsToBeRunning) {
     if (Thread.interrupted()) break // or handle somehow
     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
 }
 </pre>
+
+</div>
+<div class="overload-group" data-platform="Native">
+
+  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">EventLoop</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(kotlinx.coroutines.experimental.Job)/parentJob">parentJob</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
+
+  <p><strong>Platform and version requirements:</strong> Native</p>
+
+  <p>Creates a new event loop.</p>
+
+</div>
 
       </div>
     </main>

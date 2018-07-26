@@ -52,7 +52,20 @@
 
       </td>
 </tr>
-<tr>
+<tr data-platform="JVM"><td>
+
+        <p><a href="-blocking-checker/index.html">BlockingChecker</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">interface </span><span class="identifier">BlockingChecker</span></code></div>
+
+        <p>Extension point which determines whether invoking <a href="run-blocking.html">runBlocking</a> in the current thread is allowed.
+<a href="run-blocking.html">runBlocking</a> discovers all checkers via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> and invokes <a href="-blocking-checker/check-run-blocking.html">checkRunBlocking</a> on
+each attempt to invoke <a href="run-blocking.html">runBlocking</a>.</p>
+
+      </td>
+</tr><tr>
 <td>
 
         <p><a href="-cancellable-continuation/index.html">CancellableContinuation</a></p>
@@ -209,7 +222,7 @@ scheduled execution of tasks.</p>
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr data-platform="JVM, Native"><td>
 
         <p><a href="-event-loop/index.html">EventLoop</a></p>
 
@@ -477,6 +490,30 @@ It indicates <em>normal</em> cancellation of a coroutine.
 <tbody>
 <tr data-platform="JVM"><td>
 
+        <p><a href="-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">BLOCKING_CHECKER_PROPERTY_NAME</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">BLOCKING_CHECKER_PROPERTY_NAME</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+
+        <p>Name of the property to control whether <a href="run-blocking.html">runBlocking</a> builder
+is restricted via <a href="-blocking-checker/index.html">BlockingChecker</a> extension points.</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
+        <p><a href="-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-v-a-l-u-e_-d-i-s-a-b-l-e.html">BLOCKING_CHECKER_VALUE_DISABLE</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">BLOCKING_CHECKER_VALUE_DISABLE</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+
+        <p>Value of the <a href="-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">BLOCKING_CHECKER_PROPERTY_NAME</a> to disable installed
+<a href="-blocking-checker/index.html">BlockingChecker</a> and thus allow <a href="run-blocking.html">runBlocking</a> in any thread.</p>
+
+      </td>
+</tr><tr data-platform="JVM"><td>
+
         <p><a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-n-a-m-e.html">DEBUG_PROPERTY_NAME</a></p>
 
       </td>
@@ -571,7 +608,8 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="-event-loop.html">EventLoop</a></p>
 
@@ -583,8 +621,13 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 stops accepting new events when <a href="-event-loop.html#kotlinx.coroutines.experimental$EventLoop(java.lang.Thread, kotlinx.coroutines.experimental.Job)/parentJob">parentJob</a> completes. Every continuation that is scheduled
 onto this event loop unparks the specified thread via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/LockSupport.html#unpark(java.lang.Thread)">LockSupport.unpark</a>.</p>
 
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">EventLoop</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$EventLoop(kotlinx.coroutines.experimental.Job)/parentJob">parentJob</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
+
+        <p>Creates a new event loop.</p>
+
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="-job.html">Job</a></p>
@@ -856,7 +899,7 @@ The coroutine is cancelled when the resulting job is <a href="-job/cancel.html">
         <p>Starts new coroutine and returns its result as an implementation of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>.</p>
 
       </td>
-</tr><tr data-platform="JVM"><td>
+</tr><tr data-platform="JVM, Native"><td>
 
         <p><a href="run-blocking.html">runBlocking</a></p>
 

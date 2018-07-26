@@ -33,7 +33,7 @@
 
 <h1 id="lock">lock</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/sync/Mutex.kt#L74">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">lock</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.sync.Mutex$lock(kotlin.Any)/owner">owner</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
 <p>Locks this mutex, suspending caller while the mutex is locked.</p>
 
@@ -51,6 +51,8 @@ Use <a href="../../kotlinx.coroutines.experimental/yield.html">yield</a> or <a h
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="on-lock.html">onLock</a> clause.
 Use <a href="try-lock.html">tryLock</a> to try acquire lock without waiting.</p>
+
+<p>This function is fair; suspended callers are resumed in first-in-first-out order.</p>
 
 <h3 id="parameters">Parameters</h3>
 

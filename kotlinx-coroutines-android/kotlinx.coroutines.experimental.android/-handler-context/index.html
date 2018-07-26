@@ -37,12 +37,6 @@
 
 <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary Android <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a>.</p>
 
-<h3 id="parameters">Parameters</h3>
-
-<p><code>handler</code> - a handler.</p>
-
-<p><code>name</code> - an optional name for debugging.</p>
-
 <h3 id="constructors">Constructors</h3>
 
 <table class="api-docs-table">
@@ -56,7 +50,29 @@
 <td>
         <div class="signature"><code><span class="identifier">HandlerContext</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$&lt;init&gt;(android.os.Handler, kotlin.String)/handler">handler</span><span class="symbol">:</span>&nbsp;<a href="https://developer.android.com/reference/android/os/Handler.html"><span class="identifier">Handler</span></a><span class="symbol">, </span><span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$&lt;init&gt;(android.os.Handler, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span></code></div>
 
-        <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary Android <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a>.</p>
+        <p>Creates <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the given Android <a href="-init-.html#kotlinx.coroutines.experimental.android.HandlerContext$&lt;init&gt;(android.os.Handler, kotlin.String)/handler">handler</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="immediate.html">immediate</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="./index.md"><span class="identifier">HandlerContext</span></a></code></div>
+
+        <p>Returns dispatcher that executes coroutines immediately when it is already in the right handler context
+(current looper is the same as <a href="#">handler</a> looper). See <a href="is-dispatch-needed.html">isDispatchNeeded</a> documentation on
+why this should not be done by default.</p>
 
       </td>
 </tr>
@@ -121,6 +137,17 @@
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://developer.android.com/reference/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-runnable/index.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="is-dispatch-needed.html">isDispatchNeeded</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">isDispatchNeeded</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.android.HandlerContext$isDispatchNeeded(kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
       </td>
 </tr>

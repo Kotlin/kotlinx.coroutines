@@ -35,7 +35,7 @@
 
 <div class="overload-group" data-platform="JVM">
 
-  <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">TimeUnit</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/timeunit/TimeUnit.kt#L23">(source)</a></div>
+  <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">TimeUnit</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a></code></div>
 
   <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -44,7 +44,7 @@
 </div>
 <div class="overload-group" data-platform="JS">
 
-  <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><s><span class="identifier">TimeUnit</span></s></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/main/kotlin/kotlinx/coroutines/experimental/timeunit/TimeUnit.kt#L24">(source)</a></div>
+  <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><s><span class="identifier">TimeUnit</span></s></code></div>
 
   <p><strong>Deprecated:</strong> Using this TimeUnit enum in JS code is not recommended, use functions without it</p>
 
@@ -57,8 +57,7 @@
 
   <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
+<tr data-platform="JS, Native"><td>
 
           <p><a href="-time-unit/-m-i-l-l-i-s-e-c-o-n-d-s.html">MILLISECONDS</a></p>
 
@@ -68,9 +67,7 @@
           <p>Milliseconds.</p>
 
         </td>
-</tr>
-<tr>
-<td>
+</tr><tr data-platform="JS, Native"><td>
 
           <p><a href="-time-unit/-s-e-c-o-n-d-s.html">SECONDS</a></p>
 
@@ -80,16 +77,14 @@
           <p>Seconds.</p>
 
         </td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
 
   <h3 id="functions">Functions</h3>
 
   <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
+<tr data-platform="JS, Native"><td>
 
           <p><a href="-time-unit/to-millis.html">toMillis</a></p>
 
@@ -100,9 +95,15 @@
           <p>Converts time in this time unit to milliseconds.</p>
 
         </td>
-</tr>
-</tbody>
+</tr></tbody>
 </table>
+
+</div>
+<div class="overload-group" data-platform="Native">
+
+  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toNanos</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.timeunit.TimeUnit$toNanos(kotlin.Long)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+
+  <p><strong>Platform and version requirements:</strong> Native</p>
 
 </div>
 

@@ -33,7 +33,7 @@
 
 <h1 id="commonpool">CommonPool</h1>
 
-<div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/CommonPool.kt#L36">(source)</a></div>
+<div class="signature"><code><span class="keyword">object </span><span class="identifier">CommonPool</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -104,6 +104,21 @@ Note that until Java 10, if an application is run within a container,
 
 <table class="api-docs-table">
 <tbody>
+<tr>
+<td>
+
+        <p><a href="../-coroutine-dispatcher/dispatch-yield.html">dispatchYield</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">dispatchYield</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatchYield(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineDispatcher$dispatchYield(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="../-runnable/index.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Dispatches execution of a runnable <a href="../-coroutine-dispatcher/dispatch-yield.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatchYield(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</a> onto another thread in the given <a href="../-coroutine-dispatcher/dispatch-yield.html#kotlinx.coroutines.experimental.CoroutineDispatcher$dispatchYield(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</a>
+with a hint for dispatcher that current dispatch is triggered by <a href="../yield.html">yield</a> call, so execution of this
+continuation may be delayed in favor of already dispatched coroutines.</p>
+
+      </td>
+</tr>
 <tr>
 <td>
 

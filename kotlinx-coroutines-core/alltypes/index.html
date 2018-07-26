@@ -100,6 +100,18 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/-blocking-checker/index.html">kotlinx.coroutines.experimental.BlockingChecker</a></p>
+      </td>
+<td>
+
+        <p>Extension point which determines whether invoking <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> in the current thread is allowed.
+<a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> discovers all checkers via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> and invokes <a href="../kotlinx.coroutines.experimental/-blocking-checker/check-run-blocking.html">checkRunBlocking</a> on
+each attempt to invoke <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.BroadcastChannel</a></p>
       </td>
 <td>

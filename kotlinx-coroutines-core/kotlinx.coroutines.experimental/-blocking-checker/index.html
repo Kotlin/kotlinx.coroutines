@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BlockingChecker - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-blocking-checker/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="./index.html">BlockingChecker</a></div>
+
+<h1 id="blockingchecker">BlockingChecker</h1>
+
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">BlockingChecker</span></code></div>
+
+<p><strong>Platform and version requirements:</strong> JVM</p>
+
+<p>Extension point which determines whether invoking <a href="../run-blocking.html">runBlocking</a> in the current thread is allowed.
+<a href="../run-blocking.html">runBlocking</a> discovers all checkers via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> and invokes <a href="check-run-blocking.html">checkRunBlocking</a> on
+each attempt to invoke <a href="../run-blocking.html">runBlocking</a>.</p>
+
+<p>Common example is checking whether we’re not in UI thread:</p>
+
+<pre>class UiChecker : BlockingChecker {
+   fun checkRunBlocking() =
+       check(!UiFramework.isInUiThread()) { "runBlocking is not allowed in UI thread" }
+}
+</pre>
+
+<p>Installed checkers are ignored if “<code>kotlinx.coroutines.blocking.checker</code>” (<a href="../-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">BLOCKING_CHECKER_PROPERTY_NAME</a>)
+system property is set to the value “<code>disable</code>” (<a href="../-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-v-a-l-u-e_-d-i-s-a-b-l-e.html">BLOCKING_CHECKER_VALUE_DISABLE</a>).</p>
+
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="check-run-blocking.html">checkRunBlocking</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">checkRunBlocking</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if <a href="../run-blocking.html">runBlocking</a> calls are not allowed in the current thread.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

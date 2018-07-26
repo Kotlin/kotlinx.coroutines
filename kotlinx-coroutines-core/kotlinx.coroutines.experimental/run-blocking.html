@@ -33,9 +33,9 @@
 
 <h1 id="runblocking">runBlocking</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-blocking.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-blocking.html#T"><span class="identifier">T</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/main/kotlin/kotlinx/coroutines/experimental/Builders.kt#L48">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">runBlocking</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$runBlocking(kotlin.coroutines.experimental.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.runBlocking.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="run-blocking.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="run-blocking.html#T"><span class="identifier">T</span></a></code></div>
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
+<p><strong>Platform and version requirements:</strong> JVM, Native</p>
 
 <p>Runs new coroutine and <strong>blocks</strong> current thread <em>interruptibly</em> until its completion.
 This function should not be used from coroutine. It is designed to bridge regular blocking code
@@ -54,6 +54,12 @@ this event loop is processed using its <a href="-event-loop/process-next-event.h
 this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>
 
 <p>See <a href="new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+
+<h3 id="exceptions">Exceptions</h3>
+
+<p><code>IllegalStateException</code> - if blocking is not allowed in current thread.
+    Blocking is checked by <a href="-blocking-checker/index.html">BlockingChecker</a> that is registered via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a>,
+    unless <a href="-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-p-r-o-p-e-r-t-y_-n-a-m-e.html">BLOCKING_CHECKER_PROPERTY_NAME</a> system property is set to <a href="-b-l-o-c-k-i-n-g_-c-h-e-c-k-e-r_-v-a-l-u-e_-d-i-s-a-b-l-e.html">BLOCKING_CHECKER_VALUE_DISABLE</a>.</p>
 
 <h3 id="parameters">Parameters</h3>
 

@@ -33,7 +33,7 @@
 
 <h1 id="arraybroadcastchannel">ArrayBroadcastChannel</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/main/kotlin/kotlinx/coroutines/experimental/channels/ArrayBroadcastChannel.kt#L37">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
 
 <p>Broadcast channel with array buffer of a fixed <a href="capacity.html">capacity</a>.
 Sender suspends only when buffer is full due to one of the receives being slow to consume and
@@ -218,6 +218,23 @@ broadcast channel.</p>
         <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">afterClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$afterClose(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Invoked after successful <a href="../-abstract-send-channel/close.html">close</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../-abstract-send-channel/invoke-on-close.html">invokeOnClose</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">invokeOnClose</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.AbstractSendChannel$invokeOnClose(kotlin.Function1((kotlin.Throwable, kotlin.Unit)))/handler">handler</span><span class="symbol">:</span>&nbsp;<span class="identifier">Handler</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Registers handler which is synchronously invoked once the channel is <a href="../-abstract-send-channel/close.html">closed</a>
+or receiving side of this channel is <a href="../-receive-channel/cancel.html">cancelled</a>.
+Only one handler can be attached to the channel during channel’s lifetime.
+Handler is invoked when <a href="../-abstract-send-channel/is-closed-for-send.html">isClosedForSend</a> starts to return <code>true</code>.
+If channel is already closed, handler is invoked immediately.</p>
 
       </td>
 </tr>
