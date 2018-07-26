@@ -321,8 +321,8 @@ This section covers coroutine cancellation and timeouts.
 
 ### Cancelling coroutine execution
 
-In small application the return from "main" method might sound like a good idea to get all coroutines 
-implicitly terminated. In a larger, long-running application, you need finer-grained control.
+In a small application the return from "main" method might sound like a good idea to get all coroutines 
+implicitly terminated but in a larger, long-running application, you need finer-grained control.
 The [launch] function returns a [Job] that can be used to cancel running coroutine:
  
 ```kotlin
@@ -448,7 +448,7 @@ main: Now I can quit.
 ### Closing resources with finally
 
 Cancellable suspending functions throw [CancellationException] on cancellation which can be handled in 
-all the usual way. For example, `try {...} finally {...}` expression and Kotlin `use` function execute their
+the usual way. For example, `try {...} finally {...}` expression and Kotlin `use` function execute their
 finalization actions normally when coroutine is cancelled:
  
 ```kotlin
@@ -532,7 +532,7 @@ main: Now I can quit.
 
 ### Timeout
 
-The most obvious reason to cancel coroutine execution in practice, 
+The most obvious reason to cancel coroutine execution in practice 
 is because its execution time has exceeded some timeout.
 While you can manually track the reference to the corresponding [Job] and launch a separate coroutine to cancel 
 the tracked one after delay, there is a ready to use [withTimeout] function that does it.
