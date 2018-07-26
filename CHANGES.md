@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.24.0
+
+* Fully multiplatform release with Kotlin/Native support (see #246):
+  * Only single-threaded operation inside `runBlocking` event loop is supported at this moment.
+  * See details on setting up build environment [here](native/README.md). 
+* Improved channels:
+  * Introduced `SendChannel.invokeOnClose` (see #341).
+  * Make `close`, `cancel`, `isClosedForSend`, `isClosedForReceive` and `offer` linearizable with other operations (see #359).
+  * Fixed bug when send operation can be stuck in channel forever.
+  * Fixed broadcast channels on JS (see #412).
+* Provides `BlockingChecker` mechanism which checks current context (see #227).
+  * Attempts to use `runBlocking` from any supported UI thread (Android, JavaFx, Swing) will result in exception.
+* Android: 
+  * Worked around Android bugs with zero-size ForkJoinPool initialization (see #432, #288).
+  * Introduced `UI.immediate` extension as performance-optimization to immediately execute tasks which are invoked from the UI thread  (see #381). 
+    * Use it only when absolutely needed. It breaks asynchrony of coroutines and may lead to surprising and unexpected results.
+* Fixed materialization of a `cause` exception for `Job` onCancelling handlers (see #436).  
+* Fixed JavaFx `UI` on Java 9 (see #443).
+* Fixed and documented the order between cancellation handlers and continuation resume (see #415).
+* Fixed resumption of cancelled continuation (see #450).
+* Includes multiple fixes to documentation contributed by @paolop, @SahilLone, @rocketraman, @bdavisx, @mtopolnik, @Groostav.   
+* Experimental coroutines scheduler preview (JVM only):
+  * Written from scratch and optimized for communicating coroutines.
+  * Performs significantly better than ForkJoinPool on coroutine benchmarks and for connected applications with [ktor](http://ktor.io).
+  * Supports automatic creating of new threads for blocking operations running on the same thread pool (with an eye on solving #79), but there is no stable public API for it just yet.
+  * For preview, run JVM with `-Dkotlinx.coroutines.scheduler` option. In this case `DefaultDispatcher` is set to new experimental scheduler instead of FJP-based `CommonPool`.
+  * Submit your feedback to issue #261.
+
 ## Version 0.23.4
 
 * Recompiled with Kotlin 1.2.51 to solve broken metadata problem (see [KT-24944](https://youtrack.jetbrains.com/issue/KT-24944)).
