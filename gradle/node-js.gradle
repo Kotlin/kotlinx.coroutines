@@ -1,3 +1,6 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 
 apply plugin: 'com.moowork.node'
 
@@ -40,3 +43,12 @@ task populateNodeModules(type: Copy, dependsOn: [compileKotlin2Js]) {
 }
 
 npmInstall.dependsOn populateNodeModules
+
+// Workaround the problem with Node downloading
+repositories.whenObjectAdded {
+    if (it instanceof IvyArtifactRepository) {
+        metadataSources {
+            artifact()
+        }
+    }
+}

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 buildscript {
     ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
     if (useKotlinSnapshot) {
@@ -40,6 +44,12 @@ allprojects {
     if (deployVersion != null) version = deployVersion
     if (useKotlinSnapshot) {
         kotlin_version = '1.2-SNAPSHOT'
+    }
+
+    repositories {
+        jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 }
 
@@ -89,6 +99,18 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
 
+// Reconfigure source sets to avoid long "src/main/kotlin/fqn"
+configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
+    def projectName = it.name
+    sourceSets {
+        main.kotlin.srcDirs = ['src']
+        test.kotlin.srcDirs = ['test']
+        if (!projectName.endsWith("-native")) {
+            main.resources.srcDirs = ['resources']
+        }
+    }
+}
+
 // configure atomicfu
 configure(subprojects.findAll { !internal.contains(it.name) }) {
     def platform = platformOf(it)
@@ -116,7 +138,7 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
 // --------------- Configure sub-projects that are published ---------------
 
 // todo: native is not published yet
-def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'kotlinx-coroutines-core-native']
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js']
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
 def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"

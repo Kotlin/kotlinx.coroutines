@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 // Configures generation of JavaDoc & Dokka artifacts
 
 def platform = platformOf(project)
@@ -7,7 +11,7 @@ def makeLinkMapping(dokka, projectDir) {
     dokka.linkMapping {
         def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
         dir = "$projectDir/src/main/kotlin"
-        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src/main/kotlin"
+        url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"
         suffix = "#L"
     }
 }
@@ -38,19 +42,23 @@ if (platform == "jvm") {
             makeLinkMapping(it, rootProject.file("js/$project.name-js"))
             makeLinkMapping(it, rootProject.file("common/$project.name-common"))
             // source roots
-            impliedPlatforms = ['JVM', 'JS']
+            impliedPlatforms = ['JVM', 'JS', 'Native']
             sourceRoot {
-                path = rootProject.file("core/$project.name/src/main/kotlin")
+                path = rootProject.file("core/$project.name/src")
                 platforms = ['JVM']
             }
             sourceRoot {
-                path = rootProject.file("js/$project.name-js/src/main/kotlin")
+                path = rootProject.file("js/$project.name-js/src")
                 platforms = ['JS']
             }
             sourceRoot {
-                path = rootProject.file("common/$project.name-common/src/main/kotlin")
+                path = rootProject.file("native/$project.name-native/src")
+                platforms = ['Native']
             }
-            // depends on JS & Common, too
+            sourceRoot {
+                path = rootProject.file("common/$project.name-common/src")
+            }
+            // depends on other platforms, too
             afterEvaluate {
                 dependsOn(tasks.getByPath(":$project.name:classes"))
                 dependsOn(tasks.getByPath(":$project.name-js:classes"))

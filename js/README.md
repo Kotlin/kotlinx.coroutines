@@ -1,11 +1,16 @@
 # Coroutines core for Kotlin/JS
 
 This directory contains modules that provide core coroutines support on Kotlin/JS.
-Module name below corresponds to the artifact name in Maven/Gradle.
 
-## Modules
+## Using in your projects
 
-* [kotlinx-coroutines-core-js](kotlinx-coroutines-core-js/README.md) -- core coroutine builders and primitives.
+Use [`org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>`](kotlinx-coroutines-core-js/README.md)
+module in your Gradle/Maven dependencies 
+or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM.
+
+Since Kotlin/JS does not generally provide binary compatibility between versions, 
+you should use the same version of Kotlin compiler as was used to build `kotlinx.coroutines`. 
+See [gradle.properties](../gradle.properties). 
 
 ## Examples
 

@@ -1,37 +1,31 @@
-apply plugin: 'konan'
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 
-repositories {
-    jcenter()
-    maven { url "https://kotlin.bintray.com/kotlinx" }
-}
+apply plugin: "kotlin-platform-native"
 
-def libraryName = project.name
-def testProgramName = libraryName + "-test"
+apply from: project.rootProject.file('gradle/maven-central.gradle')
 
-konanArtifacts {
-    library(libraryName, targets: ["ios_arm64", "ios_x64", "macos_x64"]) {
-        artifactName libraryName.replace('-', '_')
-        enableMultiplatform true
-        dependencies {
-            "artifact$libraryName" "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
-        }
-    }
-    // TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
-    if (!rootProject.properties["publish"]) {
-        program(testProgramName, targets: ["macos_x64"]) {
-            srcDir 'src/test/kotlin'
-            commonSourceSet 'test'
-            libraries {
-                artifact libraryName
+sourceSets {
+    main {
+        component {
+            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"
+            outputKinds = [KLIBRARY]
+            pom {
+                withXml(configureMavenCentralMetadata)
             }
-            extraOpts '-tr'
         }
     }
 }
 
-task test(dependsOn: run)
+dependencies {
+    expectedBy project(':kotlinx-coroutines-core-common')
+}
 
-// TODO: THIS IS A WORKAROUND: Cannot do tests together with publishing in Kotlin/Native
-if (rootProject.properties["publish"]) {
-    publishToMavenLocal.dependsOn(build)
+if (project.hasProperty("teamcity")) {
+    afterEvaluate {
+        runTestDebug {
+            args '--ktest_logger=TEAMCITY'
+        }
+    }
 }

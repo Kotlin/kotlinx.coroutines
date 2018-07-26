@@ -1,29 +1,18 @@
 <!--- INCLUDE .*/example-reactive-([a-z]+)-([0-9]+)\.kt 
 /*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.reactive.$$1.example$$2
+package kotlinx.coroutines.experimental.rx2.guide.$$1$$2
 
 -->
-<!--- KNIT     kotlinx-coroutines-rx2/src/test/kotlin/guide/.*\.kt -->
-<!--- TEST_OUT kotlinx-coroutines-rx2/src/test/kotlin/guide/test/GuideReactiveTest.kt
+<!--- KNIT     kotlinx-coroutines-rx2/test/guide/.*\.kt -->
+<!--- TEST_OUT kotlinx-coroutines-rx2/test/guide/test/GuideReactiveTest.kt
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package guide.test
+package kotlinx.coroutines.experimental.rx2.guide.test
 
+import kotlinx.coroutines.experimental.guide.test.*
 import org.junit.Test
 
 class GuideReactiveTest : ReactiveTestBase() {
@@ -52,7 +41,7 @@ You are welcome to clone
 [`kotlinx.coroutines` project](https://github.com/Kotlin/kotlinx.coroutines)
 from GitHub to your workstation in order to
 run all the presented examples. They are contained in 
-[reactive/kotlinx-coroutines-rx2/src/test/kotlin/guide](kotlinx-coroutines-rx2/src/test/kotlin/guide)
+[reactive/kotlinx-coroutines-rx2/test/guide](kotlinx-coroutines-rx2/test/guide)
 directory of the project.
  
 ## Table of contents
@@ -127,7 +116,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-01.kt)
 
 This code produces the following output: 
 
@@ -185,7 +174,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-02.kt)
 
 Now the output of this code changes to:
 
@@ -245,6 +234,7 @@ import kotlinx.coroutines.experimental.reactive.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     var cnt = 0 
     source.openSubscription().consume { // open channel to the source
@@ -252,12 +242,12 @@ fun main(args: Array<String>) = runBlocking<Unit> {
             println(x)
             if (++cnt >= 3) break // break when 3 elements are printed
         }
-        // `use` will close the channel when this block of code is complete
+        // Note: `consume` cancels the channel when this block of code is complete
     }
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-03.kt)
 
 It produces the following output:
  
@@ -271,16 +261,16 @@ Finally
 
 <!--- TEST -->
  
-With an explicit `openSubscription` we should [close][SubscriptionReceiveChannel.close] the corresponding 
-subscription to unsubscribe from the source. However, instead of invoking `close` explicitly, 
-this code relies on [use](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html)
-function from Kotlin's standard library.
+With an explicit `openSubscription` we should [cancel][ReceiveChannel.cancel] the corresponding 
+subscription to unsubscribe from the source. There is no need to invoke `cancel` explicitly -- under the hood
+`consume` does that for us.
 The installed 
 [doFinally](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#doFinally(io.reactivex.functions.Action))
-listener prints "Finally" to confirm that the subscription is actually being closed.
- 
-We do not need to use an explicit `close` if iteration is performed over all the items that are emitted 
-by the publisher, because it is being closed automatically by `consumeEach`:
+listener prints "Finally" to confirm that the subscription is actually being closed. Note that "OnComplete"
+is never printed because we did not consume all of the elements.
+
+We do not need to use an explicit `cancel` either if iteration is performed over all the items that are emitted 
+by the publisher, because it is being cancelled automatically by `consumeEach`:
 
 <!--- INCLUDE
 import io.reactivex.*
@@ -293,13 +283,14 @@ import kotlin.coroutines.experimental.*
 fun main(args: Array<String>) = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
+        .doOnComplete { println("OnComplete") }   // ...
         .doFinally { println("Finally") }         // ... into what's going on
     // iterate over the source fully
     source.consumeEach { println(it) }
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-04.kt)
 
 We get the following output:
 
@@ -309,13 +300,14 @@ OnSubscribe
 2
 3
 4
+OnComplete
 Finally
 5
 ```
 
 <!--- TEST -->
 
-Notice, how "Finally" is printed before the last element "5". It happens because our `main` function in this
+Notice, how "OnComplete" and "Finally" are printed before the last element "5". It happens because our `main` function in this
 example is a coroutine that we start with [runBlocking] coroutine builder.
 Our main coroutine receives on the channel using `source.consumeEach { ... }` expression.
 The main coroutine is _suspended_ while it waits for the source to emit an item.
@@ -369,7 +361,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-05.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-05.kt)
 
 The output of this code nicely illustrates how backpressure works with coroutines:
 
@@ -413,7 +405,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-06.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-06.kt)
 
 This code prints the current state of the subject on subscription and all its further updates:
 
@@ -450,7 +442,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```   
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-07.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-07.kt)
 
 The result is the same:
 
@@ -496,7 +488,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-08.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-08.kt)
 
 Now coroutine process (prints) only the most recent update:
 
@@ -532,7 +524,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-basic-09.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-basic-09.kt)
 
 It produces the same output as the previous example based on `BehaviorSubject`:
 
@@ -596,7 +588,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-operators-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-01.kt)
 
 The result of this code is quite expected:
    
@@ -656,7 +648,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-operators-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-02.kt)
 
 It is not hard to see, that the result is going to be:
 
@@ -729,7 +721,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-operators-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-03.kt)
 
 Producing 
 
@@ -804,7 +796,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-operators-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-operators-04.kt)
 
 And the results should be: 
 
@@ -854,7 +846,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-context-01.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-01.kt)
 
 We are explicitly passing the 
 [Schedulers.computation()](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/schedulers/Schedulers.html#computation()) 
@@ -896,7 +888,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-context-02.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-02.kt)
 
 The produced output is going to be similar to:
 
@@ -947,7 +939,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-context-03.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-03.kt)
 
 Here is the difference in output, notice "RxComputationThreadPool":
 
@@ -987,7 +979,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-context-04.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-04.kt)
 
 The resulting messages are going to be printed in the main thread:
 
@@ -1035,7 +1027,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-rx2/src/test/kotlin/guide/example-reactive-context-05.kt)
+> You can get full code [here](kotlinx-coroutines-rx2/test/guide/example-reactive-context-05.kt)
 
 Now, the output shows that the code of the coroutine is executing in the Rx computation thread pool, just
 like our initial example using Rx `subscribe` operator.
@@ -1075,7 +1067,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [ReceiveChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html
-[SubscriptionReceiveChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-subscription-receive-channel/close.html
+[ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
 [ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html

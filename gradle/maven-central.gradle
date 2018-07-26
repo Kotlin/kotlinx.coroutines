@@ -1,0 +1,37 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+// --------------- pom configuration ---------------
+
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "JetBrains"
+            name "JetBrains Team"
+            organization "JetBrains"
+            organizationUrl "http://www.jetbrains.com"
+        }
+    }
+
+    scm {
+        url "https://github.com/Kotlin/kotlinx.coroutines"
+    }
+}
+
+project.ext.configureMavenCentralMetadata = {
+    def root = it.asNode()
+    // NOTE: Don't try to move top-level things (especially "description") to the pomConfig block
+    //       because they would resolve incorrectly to top-level project properties in Gradle/Groovy
+    root.appendNode('name', project.name)
+    root.appendNode('description', 'Coroutines support libraries for Kotlin')
+    root.appendNode('url', 'https://github.com/Kotlin/kotlinx.coroutines')
+    root.children().last() + pomConfig
+}

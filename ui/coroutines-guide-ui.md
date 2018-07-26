@@ -1,22 +1,10 @@
 <!--- INCLUDE .*/example-ui-([a-z]+)-([0-9]+)\.kt 
 /*
- * Copyright 2016-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package guide.ui.$$1.example$$2
+package kotlinx.coroutines.experimental.javafx.guide.$$1$$2
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
@@ -63,7 +51,7 @@ class ExampleApp : Application() {
     }
 }
 -->
-<!--- KNIT     kotlinx-coroutines-javafx/src/test/kotlin/guide/.*\.kt -->
+<!--- KNIT     kotlinx-coroutines-javafx/test/guide/.*\.kt -->
 
 # Guide to UI programming with coroutines
 
@@ -133,7 +121,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-01.kt)
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
 workstation and open the project in IDE. All the examples from this guide are in the test folder of 
@@ -173,7 +161,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.2"
+compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4"
 ```
 
 Coroutines are experimental feature in Kotlin.
@@ -220,7 +208,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-02.kt)
 
 So, what happens here? Because we are launching coroutine in UI context, we can freely update UI from 
 inside this coroutine and invoke _suspending functions_ like [delay] at the same time. UI is not frozen
@@ -247,7 +235,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-basic-03.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-03.kt)
 
 Now, if the circle is clicked while countdown is still running, the countdown stops. 
 Note, that [Job.cancel] is completely thread-safe and non-blocking. It just signals the coroutine to cancel 
@@ -299,7 +287,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-01.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-01.kt)
 
 Note, that each time the circle is clicked, it starts a new coroutine and they all compete to 
 update the text. Try it. It does not look very good. We'll fix it later.
@@ -341,7 +329,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-02.kt)
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-02.kt)
   
 The key idea that underlies an integration of an actor coroutine and a regular event handler is that 
 there is an [offer][SendChannel.offer] function on [SendChannel] that does not wait. It sends an element to the actor immediately,
@@ -394,7 +382,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 }
 ```  
 
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-actor-03.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-actor-03.kt).
   On Android you need to update `val eventActor = ...` line from the previous example. 
 
 Now, if a circle is clicked while the animation is running, it restarts animation after the end of it. Just once. 
@@ -467,7 +455,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-01.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-01.kt).
   You can just copy the `fib` function and the body of the `setup` function to your Android project.
  
 Try clicking on the circle in this example. After around 30-40th click our naive computation is going to become
@@ -509,7 +497,7 @@ suspend fun fib(x: Int): Int = withContext(CommonPool) {
 }
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-02.kt).
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-02.kt).
 
 You can run this code and verify that UI is not frozen while large Fibonacci numbers are being computed. 
 However, this code computes `fib` somewhat slower, because every recursive call to `fib` goes via `withContext`. This is 
@@ -531,7 +519,7 @@ fun fibBlocking(x: Int): Int =
     if (x <= 1) x else fibBlocking(x - 1) + fibBlocking(x - 2)
 ```
 
-> You can get full code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-blocking-03.kt).
+> You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-03.kt).
 
 You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `withContext(CommonPool)`.
 
@@ -584,23 +572,21 @@ We also need a convenient way to retrieve a job for any view in the application.
 an activity is an Android `Context` of the views in it, so we can define the following `View.contextJob` extension property:
 
 ```kotlin
-val View.contextJob: Job
-    get() = (context as? JobHolder)?.job ?: NonCancellable
+val View.contextJob: Job?
+    get() = (context as? JobHolder)?.job
 ```
 
-Here we use [NonCancellable] implementation of the `Job` as a null-object for the case where our `contextJob`
-extension property is invoked in a context that does not have an attached job.
+A convenience of having a `contextJob` available is that we can simply use it as the parent of all the coroutines
+we start without having to worry about explicitly maintaining a list of the coroutines we had
+started. All the life-cycle management will be taken care of by the mechanics of parent-child relations between
+jobs.
 
-A convenience of having a `contextJob` available is that we can simply use it to start all the coroutines
-without having to worry about explicitly maintaining a list of the coroutines we had started. 
-All the life-cycle management will be taken care of by the mechanics of parent-child relations between jobs.
- 
-For example, `View.onClick` extension from the previous section can now be defined using `contextJob`:
- 
+For example, the `View.onClick` extension from the previous section can now be defined using `contextJob`:
+
 ```kotlin
 fun View.onClick(action: suspend () -> Unit) {
     // launch one actor as a parent of the context job
-    val eventActor = actor<Unit>(contextJob + UI, capacity = Channel.CONFLATED) {
+    val eventActor = actor<Unit>(UI, parent = contextJob, capacity = Channel.CONFLATED) {
         for (event in channel) action()
     }
     // install a listener to activate this actor
@@ -610,14 +596,13 @@ fun View.onClick(action: suspend () -> Unit) {
 }
 ```
 
-Notice how `contextJob + UI` expression is used to start an actor in the above code. It defines a coroutine context
-for our new actor that includes the job and the `UI` dispatcher. The coroutine that is started by this 
-`actor(contextJob + UI)` expression is going to become a child of the job of the corresponding context. When the 
-activity is destroyed and its job is cancelled all its children coroutines are cancelled, too. 
+Notice how we used `parent = contextJob` to start an actor in the above code. The coroutine that is started this
+way is going to become a child of the job of the corresponding context. When the activity is destroyed and its job
+is cancelled, all its children coroutines are cancelled, too.
 
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
-when the parent job is cancelled. An example of that is shown in 
+when the parent job is cancelled. An example of that is shown in the
 ["Children of a coroutine"](../coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
 
 ### Starting coroutine in UI event handlers without dispatch
@@ -641,7 +626,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-01.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-advanced-01.kt).
 
 When we start this code and click on a pinkish circle, the following messages are printed to the console:
  
@@ -683,7 +668,7 @@ fun setup(hello: Text, fab: Circle) {
 }
 ```
  
-> You can get full JavaFx code [here](kotlinx-coroutines-javafx/src/test/kotlin/guide/example-ui-advanced-02.kt).
+> You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-advanced-02.kt).
 
 It prints the following messages on click, confirming that code in the coroutine starts to execute immediately:
 
@@ -702,7 +687,6 @@ After delay
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
-[NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html

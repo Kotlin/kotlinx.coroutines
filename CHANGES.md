@@ -1,5 +1,15 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.23.4
+
+* Recompiled with Kotlin 1.2.51 to solve broken metadata problem (see [KT-24944](https://youtrack.jetbrains.com/issue/KT-24944)).
+
+## Version 0.23.3
+
+* Kotlin 1.2.50.
+* JS: Moved to atomicfu version 0.10.3 that properly matches NPM & Kotlin/JS module names (see #396).
+* Improve source-code compatibility with previous (0.22.x) version of `openChannel().use { ... }` pattern by providing deprecated extension function `use` on `ReceiveChannel`.
+
 ## Version 0.23.2
 
 * IO: fix joining and continuous writing byte array interference.

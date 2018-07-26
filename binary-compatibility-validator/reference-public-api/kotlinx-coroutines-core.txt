@@ -1,10 +1,8 @@
 public abstract class kotlinx/coroutines/experimental/AbstractCoroutine : kotlin/coroutines/experimental/Continuation, kotlinx/coroutines/experimental/CoroutineScope, kotlinx/coroutines/experimental/Job {
 	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun cancel (Ljava/lang/Throwable;)Z
 	public final fun getContext ()Lkotlin/coroutines/experimental/CoroutineContext;
 	public final fun getCoroutineContext ()Lkotlin/coroutines/experimental/CoroutineContext;
-	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	protected fun onCancellation (Ljava/lang/Throwable;)V
 	protected fun onCompleted (Ljava/lang/Object;)V
 	protected fun onCompletedExceptionally (Ljava/lang/Throwable;)V
@@ -20,6 +18,10 @@ public final class kotlinx/coroutines/experimental/AwaitKt {
 	public static final fun awaitAll ([Lkotlinx/coroutines/experimental/Deferred;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun joinAll (Ljava/util/Collection;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun joinAll ([Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class kotlinx/coroutines/experimental/BlockingChecker {
+	public abstract fun checkRunBlocking ()V
 }
 
 public final class kotlinx/coroutines/experimental/BuildersKt {
@@ -501,6 +503,7 @@ public abstract class kotlinx/coroutines/experimental/channels/AbstractSendChann
 	protected final fun getClosedForSend ()Lkotlinx/coroutines/experimental/channels/Closed;
 	public final fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
 	protected final fun getQueue ()Lkotlinx/coroutines/experimental/internal/LockFreeLinkedListHead;
+	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	protected abstract fun isBufferAlwaysFull ()Z
 	protected abstract fun isBufferFull ()Z
 	public final fun isClosedForSend ()Z
@@ -586,7 +589,7 @@ public final class kotlinx/coroutines/experimental/channels/BroadcastChannel$Fac
 
 public final class kotlinx/coroutines/experimental/channels/BroadcastChannelKt {
 	public static final fun BroadcastChannel (I)Lkotlinx/coroutines/experimental/channels/BroadcastChannel;
-	public static final synthetic fun use (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/jvm/functions/Function1;)V
+	public static final fun use (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/experimental/channels/BroadcastKt {
@@ -731,6 +734,7 @@ public final class kotlinx/coroutines/experimental/channels/ConflatedBroadcastCh
 	public fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun getValueOrNull ()Ljava/lang/Object;
+	public fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public fun isClosedForSend ()Z
 	public fun isFull ()Z
 	public fun offer (Ljava/lang/Object;)Z
@@ -829,6 +833,7 @@ public abstract interface class kotlinx/coroutines/experimental/channels/Send {
 public abstract interface class kotlinx/coroutines/experimental/channels/SendChannel {
 	public abstract fun close (Ljava/lang/Throwable;)Z
 	public abstract fun getOnSend ()Lkotlinx/coroutines/experimental/selects/SelectClause2;
+	public abstract fun invokeOnClose (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun isClosedForSend ()Z
 	public abstract fun isFull ()Z
 	public abstract fun offer (Ljava/lang/Object;)Z

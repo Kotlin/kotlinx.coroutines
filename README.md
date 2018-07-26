@@ -2,12 +2,10 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.23.2) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.23.2)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.23.4) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.23.4)
 
-Library support for Kotlin coroutines in
-[Kotlin/JVM](core/README.md) and
-[Kotlin/JS](js/README.md).
-This is a companion version for Kotlin 1.2.21 release.
+Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
+This is a companion version for Kotlin 1.2.51 release.
 
 ```kotlin
 launch {
@@ -22,12 +20,13 @@ launch {
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `delay` and `yield` top-level suspending functions.
-* [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `CommonPool` coroutine context (default on JVM);
   * `Channel` and `Mutex` communication and synchronization primitives;
   * `produce` and `actor` coroutine builders;
   * `select` expression support and more.
+* [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
+* [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
@@ -64,7 +63,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.23.2</version>
+    <version>0.23.4</version>
 </dependency>
 ```
 
@@ -72,7 +71,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.21</kotlin.version>
+    <kotlin.version>1.2.51</kotlin.version>
 </properties>
 ```
 
@@ -81,14 +80,14 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.2'
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.23.4'
 ```
 
 And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.51'
 }
 ```
 
@@ -100,10 +99,27 @@ repository {
 }
 ```
 
-### Kotlin/JS
+### Multiplatform
 
-Use `org.jetbrains.kotlinx:kotlinx-coroutines-core-js:<version>` artifact in your Gradle/Maven dependencies 
-or install [`kotlinx-coroutines-core`](https://www.npmjs.com/package/kotlinx-coroutines-core) package via NPM. 
+Core modules of `kotlinx.coroutines` are also available for 
+[Kotlin/JS](js/README.md) and [Kotlin/Native](native/README.md). If you write
+a common code that should get compiled or different platforms, add 
+[`org.jetbrains.kotlinx:kotlinx-coroutines-core-common:<version>`](common/kotlinx-coroutines-core-common/README.md) 
+to your common code dependencies.
+
+### Android
+
+Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
+module as dependency when using `kotlinx.coroutines` on Android:
+
+```groovy
+compile 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.23.4'
+```
+
+This gives you access to Android [UI](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/-u-i.html)
+coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
+exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
+threads are handled by Android runtime. 
 
 ### ProGuard
 

@@ -1,6 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
 
-// todo: this does not work in Kotlin/Native
-
-//dependencies {
-//    compile "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
-//}
+dependencies {
+    implementation "org.jetbrains.kotlinx:atomicfu-native:$atomicFU_version"
+}

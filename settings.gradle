@@ -1,4 +1,9 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 rootProject.name = 'kotlinx.coroutines'
+enableFeaturePreview('GRADLE_METADATA')
 
 def module(String path) {
     int i = path.lastIndexOf('/')
@@ -39,5 +44,4 @@ module('js/kotlinx-coroutines-core-js')
 module('js/js-stub')
 module('js/example-frontend-js')
 
-//module('native/kotlinx-coroutines-core-native')
-
+module('native/kotlinx-coroutines-core-native')
