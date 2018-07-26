@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    jmh 'com.typesafe.akka:akka-actor:2.0.2'
+    jmh 'com.typesafe.akka:akka-actor_2.12:2.5.0'
     jmh project(':kotlinx-coroutines-core-common')
     jmh project(':kotlinx-coroutines-core')
     jmh project(':kotlinx-coroutines-core').sourceSets.test.output

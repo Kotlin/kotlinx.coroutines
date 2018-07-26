@@ -21,7 +21,7 @@ class IntegrationTest(
 
     enum class Ctx {
         MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context },
-        COMMON_POOL { override fun invoke(context: CoroutineContext): CoroutineContext = CommonPool },
+        COMMON_POOL { override fun invoke(context: CoroutineContext): CoroutineContext = DefaultDispatcher },
         UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Unconfined };
 
         abstract operator fun invoke(context: CoroutineContext): CoroutineContext

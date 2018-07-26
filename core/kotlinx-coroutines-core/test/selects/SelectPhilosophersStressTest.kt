@@ -41,7 +41,7 @@ class SelectPhilosophersStressTest : TestBase() {
         println("--- SelectPhilosophersStressTest")
         val timeLimit = System.currentTimeMillis() + TEST_DURATION
         val philosophers = List<Deferred<Int>>(n) { id ->
-            async(CommonPool) {
+            async {
                 val desc = "Philosopher $id"
                 var eatsCount = 0
                 while (System.currentTimeMillis() < timeLimit) {

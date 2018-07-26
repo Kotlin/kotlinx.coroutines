@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental
 
 import org.junit.*
+import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
 
 /**
@@ -96,7 +97,7 @@ public actual open class TestBase actual constructor() {
 
     @Before
     fun before() {
-        CommonPool.usePrivatePool()
+        initPoolsBeforeTest()
         threadsBefore = currentThreads()
     }
 
@@ -104,9 +105,19 @@ public actual open class TestBase actual constructor() {
     fun onCompletion() {
         error.get()?.let { throw it }
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
-        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+        shutdownPoolsAfterTest()
         checkTestThreads(threadsBefore)
+    }
+
+    fun initPoolsBeforeTest() {
+        CommonPool.usePrivatePool()
+        if (useCoroutinesScheduler) (DefaultDispatcher as ExperimentalCoroutineDispatcher).usePrivateScheduler()
+    }
+
+    fun shutdownPoolsAfterTest() {
+        CommonPool.shutdown(SHUTDOWN_TIMEOUT)
+        if (useCoroutinesScheduler) (DefaultDispatcher as ExperimentalCoroutineDispatcher).shutdown(SHUTDOWN_TIMEOUT)
+        DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
     }
 
     @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")

@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 class ObservableSingleTest {
     @Test
     fun testSingleNoWait() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send("OK")
         }
 
@@ -29,7 +29,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleNullNoWait() {
-        val observable = rxObservable<String?>(CommonPool) {
+        val observable = rxObservable<String?>(DefaultDispatcher) {
             send(null)
         }
 
@@ -45,7 +45,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -56,7 +56,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleWithDelay() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K")
         }
 
@@ -67,7 +67,7 @@ class ObservableSingleTest {
 
     @Test
     fun testSingleException() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("O", "K").awaitSingle() + "K")
         }
 
@@ -78,7 +78,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirst() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("O", "#").awaitFirst() + "K")
         }
 
@@ -89,7 +89,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrDefault() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.empty<String>().awaitFirstOrDefault("O") + "K")
         }
 
@@ -100,7 +100,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrDefaultWithValues() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("O", "#").awaitFirstOrDefault("!") + "K")
         }
 
@@ -111,7 +111,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrNull() {
-        val observable = rxObservable<String>(CommonPool) {
+        val observable = rxObservable<String>(DefaultDispatcher) {
             send(Observable.empty<String>().awaitFirstOrNull() ?: "OK")
         }
 
@@ -122,7 +122,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrNullWithValues() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send((Observable.just("O", "#").awaitFirstOrNull() ?: "!") + "K")
         }
 
@@ -133,7 +133,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrElse() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.empty<String>().awaitFirstOrElse { "O" } + "K")
         }
 
@@ -144,7 +144,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitFirstOrElseWithValues() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("O", "#").awaitFirstOrElse { "!" } + "K")
         }
 
@@ -155,7 +155,7 @@ class ObservableSingleTest {
 
     @Test
     fun testAwaitLast() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             send(Observable.just("#", "O").awaitLast() + "K")
         }
 
@@ -166,7 +166,7 @@ class ObservableSingleTest {
 
     @Test
     fun testExceptionFromObservable() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             try {
                 send(Observable.error<String>(RuntimeException("O")).awaitFirst())
             } catch (e: RuntimeException) {
@@ -181,7 +181,7 @@ class ObservableSingleTest {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val observable = rxObservable<String>(CommonPool) {
+        val observable = rxObservable<String>(DefaultDispatcher) {
             error(Observable.just("O").awaitSingle() + "K")
         }
 
@@ -193,7 +193,7 @@ class ObservableSingleTest {
 
     @Test
     fun testObservableIteration() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             var result = ""
             Observable.just("O", "K").consumeEach {result += it }
             send(result)
@@ -206,7 +206,7 @@ class ObservableSingleTest {
 
     @Test
     fun testObservableIterationFailure() {
-        val observable = rxObservable(CommonPool) {
+        val observable = rxObservable(DefaultDispatcher) {
             try {
                 Observable.error<String>(RuntimeException("OK")).consumeEach { fail("Should not be here") }
                 send("Fail")

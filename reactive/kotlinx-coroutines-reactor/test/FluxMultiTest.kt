@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.DefaultDispatcher
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.Unconfined
 import kotlinx.coroutines.experimental.launch
@@ -21,7 +21,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             repeat(n) { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -32,11 +32,11 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux<Int>(CommonPool) {
+        val flux = flux<Int>(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
-                launch(CommonPool) {
+                launch {
                     send(it)
                 }
             }
@@ -62,7 +62,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -72,11 +72,11 @@ class FluxMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val flux = flux(CommonPool) {
+        val flux = flux(DefaultDispatcher) {
             send("O")
             throw IOException("K")
         }
-        val mono = mono(CommonPool) {
+        val mono = mono(DefaultDispatcher) {
             var result = ""
             try {
                 flux.consumeEach { result += it }

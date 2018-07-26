@@ -66,6 +66,16 @@ public abstract class CoroutineDispatcher :
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
     /**
+     * Dispatches execution of a runnable [block] onto another thread in the given [context]
+     * with a hint for dispatcher that current dispatch is triggered by [yield] call, so execution of this
+     * continuation may be delayed in favor of already dispatched coroutines.
+     *
+     * **Implementation note** though yield marker may be passed as a part of [context], this
+     * is a separate method for performance reasons
+     */
+    public open fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatch(context, block)
+
+    /**
      * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
      */
     public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =

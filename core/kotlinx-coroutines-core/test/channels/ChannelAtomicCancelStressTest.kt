@@ -95,7 +95,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     }
 
     fun launchSender() {
-        sender = launch(CommonPool, start = CoroutineStart.ATOMIC) {
+        sender = launch(DefaultDispatcher, start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(senderDone) {
                 var counter = 0
@@ -120,7 +120,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     }
 
     fun launchReceiver() {
-        receiver = launch(CommonPool, start = CoroutineStart.ATOMIC) {
+        receiver = launch(DefaultDispatcher, start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(receiverDone) {
                 while (true) {

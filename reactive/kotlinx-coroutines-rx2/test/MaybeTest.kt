@@ -99,7 +99,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeNoWait() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             "OK"
         }
 
@@ -120,7 +120,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeEmitAndAwait() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             Maybe.just("O").await() + "K"
         }
 
@@ -131,7 +131,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeWithDelay() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -142,7 +142,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeException() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -153,7 +153,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -164,7 +164,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -175,7 +175,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val maybe = rxMaybe(CommonPool) {
+        val maybe = rxMaybe(DefaultDispatcher) {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -190,7 +190,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val maybe = rxMaybe<String>(CommonPool) {
+        val maybe = rxMaybe<String>(DefaultDispatcher) {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 

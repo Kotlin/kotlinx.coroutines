@@ -4,10 +4,10 @@
 
 package kotlinx.coroutines.experimental
 
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.ContinuationInterceptor
-import kotlin.coroutines.experimental.CoroutineContext
+import internal.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.experimental.scheduling.*
 
 /**
  * Name of the property that control coroutine debugging. See [newCoroutineContext].
@@ -29,9 +29,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
-internal val DEBUG = run {
-    val value = try { System.getProperty(DEBUG_PROPERTY_NAME) }
-        catch (e: SecurityException) { null }
+internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     when (value) {
         DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
         DEBUG_PROPERTY_VALUE_ON, "" -> true
@@ -47,6 +45,16 @@ internal fun resetCoroutineId() {
     COROUTINE_ID.set(0)
 }
 
+internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.scheduler"
+
+internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->
+    when (value) {
+        null -> false
+        "", "on" -> true
+        else -> error("System property '$COROUTINES_SCHEDULER_PROPERTY_NAME' has unrecognized value '$value'")
+    }
+}
+
 /**
  * This is the default [CoroutineDispatcher] that is used by all standard builders like
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
@@ -54,7 +62,8 @@ internal fun resetCoroutineId() {
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher = CommonPool
+public actual val DefaultDispatcher: CoroutineDispatcher =
+    if (useCoroutinesScheduler) ExperimentalCoroutineDispatcher() else CommonPool
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor

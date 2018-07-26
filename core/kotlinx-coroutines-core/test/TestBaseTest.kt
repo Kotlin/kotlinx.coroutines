@@ -9,19 +9,17 @@ import org.junit.*
 class TestBaseTest : TestBase() {
     @Test
     fun testThreadsShutdown() {
-        val SHUTDOWN_TIMEOUT = 1_000L
         repeat(1000 * stressTestMultiplier) { _ ->
-            CommonPool.usePrivatePool()
+            initPoolsBeforeTest()
             val threadsBefore = currentThreads()
             runBlocking {
-                val sub = launch(DefaultDispatcher) {
+                val sub = launch {
                     delay(10000000L)
                 }
                 sub.cancel()
                 sub.join()
             }
-            CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-            DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+            shutdownPoolsAfterTest()
             checkTestThreads(threadsBefore)
         }
 

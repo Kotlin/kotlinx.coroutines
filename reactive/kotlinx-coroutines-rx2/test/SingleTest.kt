@@ -84,7 +84,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleNoWait() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             "OK"
         }
 
@@ -100,7 +100,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             Single.just("O").await() + "K"
         }
 
@@ -111,7 +111,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleWithDelay() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -122,7 +122,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleException() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -133,7 +133,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -144,7 +144,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -155,7 +155,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val single = rxSingle(CommonPool) {
+        val single = rxSingle(DefaultDispatcher) {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -170,7 +170,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val single = rxSingle<String>(CommonPool) {
+        val single = rxSingle<String>(DefaultDispatcher) {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 

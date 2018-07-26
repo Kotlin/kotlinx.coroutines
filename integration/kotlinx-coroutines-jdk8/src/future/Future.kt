@@ -11,7 +11,7 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
- * This coroutine builder uses [CommonPool] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
+ * This coroutine builder uses [DefaultDispatcher] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
@@ -203,6 +203,6 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompl
 @Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
 public fun <T> future(
-    context: CoroutineContext = CommonPool,
+    context: CoroutineContext = DefaultDispatcher,
     block: suspend () -> T
 ): CompletableFuture<T> = future(context = context) { block() }

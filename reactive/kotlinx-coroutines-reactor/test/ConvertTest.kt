@@ -48,7 +48,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMono() {
-        val d = async(CommonPool) {
+        val d = async {
             delay(50)
             "OK"
         }
@@ -64,7 +64,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMonoEmpty() {
-        val d = async(CommonPool) {
+        val d = async {
             delay(50)
             null
         }
@@ -76,7 +76,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMonoFail() {
-        val d = async(CommonPool) {
+        val d = async {
             delay(50)
             throw TestException("OK")
         }
@@ -92,7 +92,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToFlux() {
-        val c = produce(CommonPool) {
+        val c = produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)
@@ -106,7 +106,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToFluxFail() {
-        val c = produce(CommonPool) {
+        val c = produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)
