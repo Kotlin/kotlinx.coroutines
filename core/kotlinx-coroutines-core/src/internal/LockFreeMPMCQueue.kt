@@ -39,7 +39,7 @@ internal open class LockFreeMPMCQueue<T : LockFreeMPMCQueueNode<T>> {
         }
     }
 
-    public fun removeFistOrNull(): T? {
+    public fun removeFirstOrNull(): T? {
         head.loop { curHead ->
             val next = curHead.next.value ?: return null
             if (head.compareAndSet(curHead, next)) {
@@ -50,7 +50,7 @@ internal open class LockFreeMPMCQueue<T : LockFreeMPMCQueueNode<T>> {
 
     fun headCas(curHead: T, update: T) = head.compareAndSet(curHead, update)
 
-    public inline fun removeFistOrNullIf(predicate: (T) -> Boolean): T? {
+    public inline fun removeFirstOrNullIf(predicate: (T) -> Boolean): T? {
         while (true) {
             val curHead = headValue
             val next = curHead.nextValue ?: return null

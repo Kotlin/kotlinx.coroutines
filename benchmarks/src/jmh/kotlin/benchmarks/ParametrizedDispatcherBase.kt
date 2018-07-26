@@ -4,7 +4,7 @@ import benchmarks.actors.CORES_COUNT
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.ThreadPoolDispatcher
 import kotlinx.coroutines.experimental.newFixedThreadPoolContext
-import scheduling.ExperimentalCoroutineDispatcher
+import kotlinx.coroutines.experimental.scheduling.*
 import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.TearDown

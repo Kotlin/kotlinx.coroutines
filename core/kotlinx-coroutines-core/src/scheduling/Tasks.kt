@@ -105,7 +105,7 @@ internal class Task(
 internal open class GlobalQueue : LockFreeMPMCQueue<Task>() {
     // Open for tests
     public open fun removeFirstBlockingModeOrNull(): Task? =
-        removeFistOrNullIf { it.mode == TaskMode.PROBABLY_BLOCKING }
+        removeFirstOrNullIf { it.mode == TaskMode.PROBABLY_BLOCKING }
 }
 
 internal abstract class TimeSource {

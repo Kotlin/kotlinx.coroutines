@@ -41,7 +41,7 @@ class WorkQueueStressTest : TestBase() {
         threads += thread(name = "producer") {
             startLatch.await()
             for (i in 1..offerIterations) {
-                while (producerQueue.bufferSize == BUFFER_CAPACITY - 1) {
+                while (producerQueue.bufferSize > BUFFER_CAPACITY / 2) {
                     Thread.yield()
                 }
 
@@ -55,7 +55,7 @@ class WorkQueueStressTest : TestBase() {
             threads += thread(name = "stealer $i") {
                 val myQueue = WorkQueue()
                 startLatch.await()
-                while (!producerFinished || producerQueue.bufferSize != 0) {
+                while (!producerFinished || producerQueue.size() != 0) {
                     myQueue.trySteal(producerQueue, stolenTasks[i])
                 }
 
@@ -106,8 +106,7 @@ class WorkQueueStressTest : TestBase() {
     private fun validate() {
         val result = mutableSetOf<Long>()
         for (stolenTask in stolenTasks) {
-            require(!stolenTask.isEmpty())
-            assertEquals(stolenTask.size, stolenTask.size)
+            assertEquals(stolenTask.size, stolenTask.map { it }.toSet().size)
             result += stolenTask.map { it.submissionTime }
         }
 

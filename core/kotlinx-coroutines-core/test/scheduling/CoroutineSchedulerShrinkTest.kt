@@ -5,6 +5,7 @@ import org.junit.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
+@Ignore // these tests are too unstable on Windows, should be virtualized
 class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
     private val blockingTasksCount = CORES_COUNT * 3

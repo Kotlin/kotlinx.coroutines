@@ -2,8 +2,8 @@ package benchmarks.actors
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.scheduling.*
 import org.openjdk.jmh.annotations.*
-import scheduling.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 

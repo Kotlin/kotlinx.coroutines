@@ -36,8 +36,6 @@ class BlockingCoroutineDispatcherStressTest : SchedulerTestBase() {
 
         tasks.forEach { it.await() }
         require(tasks.isNotEmpty())
-        // Simple sanity, test is too short to guarantee that every possible state was observed
-        require(observedConcurrency.size >= 3.coerceAtMost(CORES_COUNT))
         for (i in CORES_COUNT + 1..CORES_COUNT * 2) {
             require(i !in observedConcurrency.keys) { "Unexpected state: $observedConcurrency" }
         }

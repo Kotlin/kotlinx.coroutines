@@ -248,7 +248,7 @@ internal class CoroutineScheduler(
     private val random = Random()
 
     // This is used a "stop signal" for debugging/tests only
-    private val isTerminated = atomic(false)
+    private val isTerminated = atomic(0) // workaround for atomicfu bug
 
     companion object {
         private const val MAX_SPINS = 1000
@@ -298,7 +298,7 @@ internal class CoroutineScheduler(
      * and intended to be used only for testing. Invocation has no additional effect if already closed.
      */
     fun shutdown(timeout: Long) {
-        if (!isTerminated.compareAndSet(false, true)) return
+        if (!isTerminated.compareAndSet(0, 1)) return
         // Race with recently created threads which may park indefinitely
         var finishedThreads = 0
         while (finishedThreads < createdWorkers) {
@@ -439,7 +439,7 @@ internal class CoroutineScheduler(
     private fun createNewWorker(): Int {
         synchronized(workers) {
             // for test purposes make sure we're not trying to resurrect terminated scheduler
-            require(!isTerminated.value) { "This scheduler was terminated "}
+            require(isTerminated.value == 0) { "This scheduler was terminated "}
             val state = controlState.value
             val created = createdWorkers(state)
             val blocking = blockingWorkers(state)
@@ -683,7 +683,7 @@ internal class CoroutineScheduler(
 
         override fun run() {
             var wasIdle = false // local variable to avoid extra idleReset invocations when tasks repeatedly arrive
-            while (!isTerminated.value && state != WorkerState.TERMINATED) {
+            while (isTerminated.value == 0 && state != WorkerState.TERMINATED) {
                 val task = findTask()
                 if (task == null) {
                     // Wait for a job with potential park
@@ -918,9 +918,9 @@ internal class CoroutineScheduler(
              * once per two core pool size iterations
              */
             val globalFirst = nextInt(2 * corePoolSize) == 0
-            if (globalFirst) globalQueue.removeFistOrNull()?.let { return it }
+            if (globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             localQueue.poll()?.let { return it }
-            if (!globalFirst) globalQueue.removeFistOrNull()?.let { return it }
+            if (!globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             return trySteal()
         }
 

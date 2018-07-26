@@ -121,10 +121,10 @@ class WorkQueueTest : TestBase() {
 
 internal fun GlobalQueue.asTimeList(): List<Long> {
     val result = mutableListOf<Long>()
-    var next = removeFistOrNull()
+    var next = removeFirstOrNull()
     while (next != null) {
         result += next.submissionTime
-        next = removeFistOrNull()
+        next = removeFirstOrNull()
     }
 
     return result

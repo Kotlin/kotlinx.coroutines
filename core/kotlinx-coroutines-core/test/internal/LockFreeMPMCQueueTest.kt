@@ -13,12 +13,12 @@ class LockFreeMPMCQueueTest : TestBase() {
     @Test
     fun testBasic() {
         val q = LockFreeMPMCQueue<Node>()
-        assertEquals(null, q.removeFistOrNull())
+        assertEquals(null, q.removeFirstOrNull())
         assertTrue(q.isEmpty())
         q.addLast(Node(1))
         assertEquals(1, q.size)
-        assertEquals(Node(1), q.removeFistOrNull())
-        assertEquals(null, q.removeFistOrNull())
+        assertEquals(Node(1), q.removeFirstOrNull())
+        assertEquals(null, q.removeFirstOrNull())
         assertTrue(q.isEmpty())
     }
 

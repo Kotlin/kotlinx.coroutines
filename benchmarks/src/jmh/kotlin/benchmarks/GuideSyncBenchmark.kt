@@ -45,36 +45,36 @@ open class GuideSyncBenchmark {
 
     @Benchmark
     fun sync01Problem() {
-        guide.sync.example01.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync01.main(emptyArray())
     }
 
     @Benchmark
     fun sync02Volatile() {
-        guide.sync.example02.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync02.main(emptyArray())
     }
 
     @Benchmark
     fun sync03AtomicInt() {
-        guide.sync.example03.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync03.main(emptyArray())
     }
 
     @Benchmark
     fun sync04ConfineFine() {
-        guide.sync.example04.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync04.main(emptyArray())
     }
 
     @Benchmark
     fun sync05ConfineCoarse() {
-        guide.sync.example05.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync05.main(emptyArray())
     }
 
     @Benchmark
     fun sync06Mutex() {
-        guide.sync.example06.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync06.main(emptyArray())
     }
 
     @Benchmark
     fun sync07Actor() {
-        guide.sync.example07.main(emptyArray())
+        kotlinx.coroutines.experimental.guide.sync07.main(emptyArray())
     }
 }
