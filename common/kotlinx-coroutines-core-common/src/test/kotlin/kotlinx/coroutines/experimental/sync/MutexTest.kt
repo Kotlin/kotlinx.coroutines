@@ -20,10 +20,17 @@ import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 import kotlin.coroutines.experimental.*
 
-class MutexTest : TestBase() {
+class MutexTest : AbstractMutexTest() {
+    override fun createMutex() = Mutex()
+}
+
+abstract class AbstractMutexTest : TestBase() {
+
+    abstract fun createMutex(): Mutex
+
     @Test
     fun testSimple() = runTest {
-        val mutex = Mutex()
+        val mutex = createMutex()
         expect(1)
         launch(coroutineContext) {
             expect(4)
@@ -45,7 +52,7 @@ class MutexTest : TestBase() {
 
     @Test
     fun tryLockTest() {
-        val mutex = Mutex()
+        val mutex = createMutex()
         assertFalse(mutex.isLocked)
         assertTrue(mutex.tryLock())
         assertTrue(mutex.isLocked)
@@ -63,7 +70,7 @@ class MutexTest : TestBase() {
 
     @Test
     fun withLockTest() = runTest {
-        val mutex = Mutex()
+        val mutex = createMutex()
         assertFalse(mutex.isLocked)
         mutex.withLock {
             assertTrue(mutex.isLocked)
@@ -72,9 +79,10 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun testUnconfinedStackOverflow() {
+    open fun testUnconfinedStackOverflow() = runTest {
         val waiters = 10000
-        val mutex = Mutex(true)
+        val mutex = createMutex()
+        mutex.lock()
         var done = 0
         repeat(waiters) {
             launch(Unconfined) {  // a lot of unconfined waiters
@@ -88,8 +96,8 @@ class MutexTest : TestBase() {
     }
 
     @Test
-    fun holdLock() = runTest {
-        val mutex = Mutex()
+    open fun holdLock() = runTest {
+        val mutex = createMutex()
         val firstOwner = Any()
         val secondOwner = Any()
 

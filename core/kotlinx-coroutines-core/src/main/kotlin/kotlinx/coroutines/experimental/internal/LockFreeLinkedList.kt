@@ -152,7 +152,7 @@ public actual open class LockFreeLinkedListNode {
         }
     }
 
-    public fun <T : Node> describeAddLast(node: T): AddLastDesc<T> = AddLastDesc(this, node)
+    public actual fun <T : Node> describeAddLast(node: T): AddLastDesc<T> = AddLastDesc(this, node)
 
     /**
      * Adds last item to this list atomically if the [condition] is true.
