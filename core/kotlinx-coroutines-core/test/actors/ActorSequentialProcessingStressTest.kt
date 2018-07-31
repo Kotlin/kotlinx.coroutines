@@ -38,7 +38,7 @@ class ActorSequentialProcessingStressTest : TestBase() {
         }
     }
 
-    private inner class MonoTestActor : TypedActor<Unit>(actorContext) {
+    private inner class TestTypedActor : TypedActor<Unit>(actorContext) {
         var state = 0
         private var thread: Thread? = null
 
@@ -74,10 +74,10 @@ class ActorSequentialProcessingStressTest : TestBase() {
     }
 
     @Test
-    fun testMonoActor() = runTest {
+    fun testTypedActor() = runTest {
         val startBarrier = CyclicBarrier(5)
 
-        val actor = MonoTestActor()
+        val actor = TestTypedActor()
         val tasks = (1..4).map {
             async(senderContext) {
                 startBarrier.await()

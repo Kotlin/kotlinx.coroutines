@@ -12,7 +12,7 @@ import kotlin.coroutines.experimental.*
  *
  * Example:
  * ```
- * class ExampleActor : MonoActor<String>() {
+ * class ExampleActor : TypedActor<String>() {
  *
  *   override suspend fun receive(string: String) = act {
  *     println("Received $string")
