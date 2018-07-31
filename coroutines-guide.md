@@ -1504,7 +1504,7 @@ multiple CPU cores if you run it in [CommonPool] context.
 
 Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
-built using `buildSeqeunce`/`buildIterator`, because they do not allow arbitrary suspension, unlike
+built using `buildSequence`/`buildIterator`, because they do not allow arbitrary suspension, unlike
 `produce`, which is fully asynchronous.
  
 ### Fan-out
