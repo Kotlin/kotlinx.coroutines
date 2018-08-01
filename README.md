@@ -80,7 +80,7 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0'
 ```
 
 And make sure that you use the latest Kotlin version:
@@ -113,7 +113,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-compile 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.24.0'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.24.0'
 ```
 
 This gives you access to Android [UI](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/-u-i.html)
