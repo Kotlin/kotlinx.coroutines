@@ -8,7 +8,7 @@ Use [`org.jetbrains.kotlinx:kotlinx-coroutines-core-native:<version>`](kotlinx-c
 module in your Gradle/Maven dependencies. 
 Only single-threaded code (JS-style) is currently supported. 
 
-Kotlin/Native supports only Gradle version 4.7 or later 
+Kotlin/Native libraries would only work under Gradle version 4.7 (**exactly**) 
 and you should use `kotlin-platform-native` plugin.
 
 First of all, you'll need to enable Gradle metadata in your
