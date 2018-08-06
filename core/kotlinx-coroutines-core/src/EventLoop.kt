@@ -18,7 +18,7 @@ import kotlin.jvm.*
  * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
  */
-public interface EventLoop {
+public interface EventLoop: ContinuationInterceptor {
     /**
      * Processes next event in this event loop.
      *
