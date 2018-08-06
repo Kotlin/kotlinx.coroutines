@@ -55,7 +55,7 @@ public interface EventLoop {
  * ```
  */
 @Suppress("FunctionName")
-public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
+public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): EventLoop =
     EventLoopImpl(thread).apply {
         if (parentJob != null) initParentJob(parentJob)
     }
