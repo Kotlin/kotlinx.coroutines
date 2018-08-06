@@ -95,8 +95,8 @@ private class DeferredListenableFuture<T>(
         deferred.invokeOnCompletion {
             try {
                 set(deferred.getCompleted())
-            } catch (exception: Exception) {
-                setException(exception)
+            } catch (t: Throwable) {
+                setException(t)
             }
         }
     }

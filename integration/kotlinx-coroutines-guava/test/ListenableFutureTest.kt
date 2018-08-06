@@ -154,6 +154,21 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
+    fun testAsListenableFutureThrowable() {
+        val deferred = async {
+            throw OutOfMemoryError()
+        }
+
+        val future = deferred.asListenableFuture()
+        try {
+            future.get()
+        } catch (e: ExecutionException) {
+            assertTrue(future.isDone)
+            assertTrue(e.cause is OutOfMemoryError)
+        }
+    }
+
+    @Test
     fun testCancellableAwait() = runBlocking {
         expect(1)
         val toAwait = SettableFuture.create<String>()

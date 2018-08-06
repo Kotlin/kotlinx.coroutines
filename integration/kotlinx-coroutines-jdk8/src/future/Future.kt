@@ -93,8 +93,8 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     invokeOnCompletion {
         try {
             future.complete(getCompleted())
-        } catch (exception: Exception) {
-            future.completeExceptionally(exception)
+        } catch (t: Throwable) {
+            future.completeExceptionally(t)
         }
     }
     return future

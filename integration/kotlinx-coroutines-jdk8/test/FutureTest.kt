@@ -22,16 +22,6 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testSimpleAwait() {
-        val future = future {
-            CompletableFuture.supplyAsync {
-                "O"
-            }.await() + "K"
-        }
-        assertThat(future.get(), IsEqual("OK"))
-    }
-
-    @Test
     fun testCompletedFuture() {
         val toAwait = CompletableFuture<String>()
         toAwait.complete("O")
@@ -184,6 +174,21 @@ class FutureTest : TestBase() {
         val future = deferred.asCompletableFuture()
         assertThat(future.await(), IsEqual("OK")) // await yields main thread to deferred coroutine
         finish(4)
+    }
+
+    @Test
+    fun testAsCompletableFutureThrowable() {
+        val deferred = async {
+            throw OutOfMemoryError()
+        }
+
+        val future = deferred.asCompletableFuture()
+        try {
+            future.get()
+        } catch (e: ExecutionException) {
+            assertTrue(future.isCompletedExceptionally)
+            assertTrue(e.cause is OutOfMemoryError)
+        }
     }
 
     @Test
