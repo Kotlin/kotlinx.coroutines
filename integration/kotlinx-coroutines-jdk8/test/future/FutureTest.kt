@@ -22,6 +22,16 @@ class FutureTest : TestBase() {
     }
 
     @Test
+    fun testSimpleAwait() {
+        val future = future {
+            CompletableFuture.supplyAsync {
+                "O"
+            }.await() + "K"
+        }
+        assertThat(future.get(), IsEqual("OK"))
+    }
+
+    @Test
     fun testCompletedFuture() {
         val toAwait = CompletableFuture<String>()
         toAwait.complete("O")
