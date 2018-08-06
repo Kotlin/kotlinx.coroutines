@@ -281,9 +281,16 @@ public abstract interface class kotlinx/coroutines/experimental/DisposableHandle
 	public abstract fun dispose ()V
 }
 
-public abstract interface class kotlinx/coroutines/experimental/EventLoop {
+public abstract interface class kotlinx/coroutines/experimental/EventLoop : kotlin/coroutines/experimental/ContinuationInterceptor {
 	public static final field Factory Lkotlinx/coroutines/experimental/EventLoop$Factory;
 	public abstract fun processNextEvent ()J
+}
+
+public final class kotlinx/coroutines/experimental/EventLoop$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/experimental/EventLoop;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/experimental/EventLoop;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/experimental/EventLoop;Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/experimental/EventLoop;Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
 }
 
 public final class kotlinx/coroutines/experimental/EventLoop$Factory {
@@ -292,8 +299,10 @@ public final class kotlinx/coroutines/experimental/EventLoop$Factory {
 }
 
 public final class kotlinx/coroutines/experimental/EventLoopKt {
-	public static final fun EventLoop (Ljava/lang/Thread;Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final synthetic fun EventLoop (Ljava/lang/Thread;Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final fun EventLoop (Ljava/lang/Thread;Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/EventLoop;
 	public static synthetic fun EventLoop$default (Ljava/lang/Thread;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static synthetic fun EventLoop$default (Ljava/lang/Thread;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/EventLoop;
 }
 
 public abstract class kotlinx/coroutines/experimental/ExecutorCoroutineDispatcherBase : kotlinx/coroutines/experimental/CloseableCoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
