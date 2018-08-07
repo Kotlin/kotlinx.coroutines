@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
@@ -38,7 +42,8 @@ class CapturingHandler : AbstractCoroutineContextElement(CoroutineExceptionHandl
     }
 
     fun getException(): Throwable {
-        assert(unhandled.size == 1) { "Expected one unhandled exception, but have ${unhandled.size}: $unhandled" }
+        val size = unhandled.size
+        assert(size == 1) { "Expected one unhandled exception, but have $size: $unhandled" }
         return unhandled[0]
     }
 }

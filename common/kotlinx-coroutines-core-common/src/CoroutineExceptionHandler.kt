@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlin.coroutines.experimental.*
 
 internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
@@ -15,12 +16,13 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * If current exception is [CancellationException], it's ignored: [CancellationException] is a normal way to cancel
  * coroutine.
  *
- * If there is a [Job] in the context, then [Job.cancel] is invoked.
+ * If there is a [Job] in the context and it's not a [caller], then [Job.cancel] is invoked.
  * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
  * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used.
  * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
-public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
+@JvmOverloads // binary compatibility
+public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
     // if exception handling fails, make sure the original exception is not lost
     try {
 
@@ -31,7 +33,8 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
 
         // If parent is successfully cancelled, we're done, it is now its responsibility to handle the exception
         val parent = context[Job]
-        if (parent != null && parent.cancel(exception)) {
+        // E.g. actor registers itself in the context, in that case we should invoke handler
+        if (parent !== null && parent !== caller && parent.cancel(exception)) {
             return
         }
 

@@ -166,6 +166,8 @@ public final class kotlinx/coroutines/experimental/CoroutineExceptionHandler$Key
 public final class kotlinx/coroutines/experimental/CoroutineExceptionHandlerKt {
 	public static final fun CoroutineExceptionHandler (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/CoroutineExceptionHandler;
 	public static final fun handleCoroutineException (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;)V
+	public static final fun handleCoroutineException (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;Lkotlinx/coroutines/experimental/Job;)V
+	public static synthetic fun handleCoroutineException$default (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)V
 }
 
 public final class kotlinx/coroutines/experimental/CoroutineName : kotlin/coroutines/experimental/AbstractCoroutineContextElement {

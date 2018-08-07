@@ -101,7 +101,7 @@ private open class BroadcastCoroutine<E>(
             else -> _channel.close(cause) // producer coroutine has completed -- close channel
         }
         if (!processed && cause != null)
-            handleCoroutineException(context, cause)
+            handleCoroutineException(context, cause, this)
     }
 }
 

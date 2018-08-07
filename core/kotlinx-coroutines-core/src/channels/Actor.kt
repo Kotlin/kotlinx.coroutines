@@ -160,12 +160,10 @@ private open class ActorCoroutine<E>(
 ) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E> {
     override fun onCancellation(cause: Throwable?) {
         _channel.cancel(cause)
-        // Always propagate the exception, don't wait for actor senders
-        if (cause != null) handleCoroutineException(context, cause)
     }
 
     override fun handleJobException(exception: Throwable) {
-        handleCoroutineException(context, exception)
+        handleCoroutineException(context, exception, this)
     }
 }
 

@@ -2,10 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package exceptions
+package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.exceptions.*
+import kotlinx.coroutines.experimental.selects.*
 import java.io.*
 import kotlin.test.*
 

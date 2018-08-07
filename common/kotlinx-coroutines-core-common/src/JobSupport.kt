@@ -162,7 +162,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
         val update = coerceProposedUpdate(expect, proposedUpdate)
         if (!tryFinalizeState(expect, update)) return false
-        if (update is CompletedExceptionally) handleJobException(update.cause)
         completeStateFinalization(expect, update, mode)
         return true
     }
@@ -194,7 +193,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
 
         val update = Cancelled(this, finalException ?: expect.cancelled!!.cause)
-        handleJobException(update.cause)
         // This CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
         if (!tryFinalizeState(expect, update)) {
             val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
@@ -238,7 +236,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             }
         }
 
-        val seenExceptions = HashSet<Throwable>() // TODO it should be identity set
+        // TODO it should be identity set and optimized for small footprints
+        val seenExceptions = HashSet<Throwable>(suppressed.size)
         suppressed.forEach {
             val unwrapped = unwrap(it)
             if (unwrapped !== null && unwrapped !== rootCause) {
@@ -269,6 +268,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun tryFinalizeState(expect: Incomplete, update: Any?): Boolean  {
         require(update !is Incomplete) // only incomplete -> completed transition is allowed
         if (!_state.compareAndSet(expect, update)) return false
+        if (update is CompletedExceptionally) handleJobException(update.cause)
         // Unregister from parent job
         parentHandle?.let {
             it.dispose() // volatile read parentHandle _after_ state was updated
@@ -614,12 +614,26 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                             return true
                         }
 
-                        // We either successfully added an exception or caller should handle it itself
-                        return cause.let { state.addException(it) }
+                        /*
+                         * If we failed to add an exception, then `seal` was successfully called
+                         * and `seal` is called only after state update => retry is liveness-safe
+                         */
+                        if (state.addException(cause)) {
+                            return true
+                        } else {
+                            return@loopOnState
+                        }
                     }
 
                     if (tryMakeCancelling(state, state.list, cause)) return true
                 }
+
+                /*
+                 * Filter out duplicates due to race in the following pattern:
+                 * T1: parent -> completion sequence
+                 * T2: child -> set final state -> signal with final exception to the parent
+                 */
+                is CompletedExceptionally -> return state.cause === cause
                 else -> { // is inactive
                     return false
                 }
@@ -694,6 +708,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val cancelled = (state as? Finishing)?.cancelled ?: (proposedUpdate as? Cancelled)
             val completing = Finishing(list, cancelled, true)
             if (_state.compareAndSet(state, completing)) {
+                (state as? Finishing)?.transferExceptions(completing)
                 if (state !is Finishing) onFinishingInternal(proposedUpdate)
                 if (child != null && tryWaitForChild(child, proposedUpdate))
                     return COMPLETING_WAITING_CHILDREN
@@ -802,8 +817,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     internal open fun onFinishingInternal(update: Any?) {}
 
     /**
-     * Method which is invoked once Job becomes `Cancelled`. It's guaranteed that at the moment
-     * of invocation the job and all its children are complete
+     * Method which is invoked once Job becomes [Cancelled] or [CompletedExceptionally].
+     * It's guaranteed that at the moment of invocation the job and all its children are complete
      */
     internal open fun handleJobException(exception: Throwable) {}
 
@@ -875,6 +890,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             }
         }
 
+        // guarded by `synchronized(this)`
         fun addLocked(exception: Throwable) {
             // Cannot be null at this point here
             when (_exceptionsHolder) {
@@ -901,6 +917,18 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             _exceptionsHolder = null
         }
 
+        fun transferExceptions(to: Finishing) {
+            synchronized(this) {
+                synchronized(to) {
+                    val holder = _exceptionsHolder
+                    when(holder) {
+                        is Throwable -> to.addLocked(holder)
+                        is List<*> -> holder.forEach { to.addLocked(it as Throwable) }
+                    }
+                    seal()
+                }
+            }
+        }
     }
 
     private val Incomplete.isCancelling: Boolean

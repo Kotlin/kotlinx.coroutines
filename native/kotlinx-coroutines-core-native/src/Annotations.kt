@@ -7,6 +7,9 @@ package kotlinx.coroutines.experimental.internalAnnotations
 @Target(AnnotationTarget.FILE, AnnotationTarget.FUNCTION)
 internal actual annotation class JvmName(actual val name: String)
 
+@Target(AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION)
+internal actual annotation class JvmOverloads
+
 @Target(AnnotationTarget.FILE)
 internal actual annotation class JvmMultifileClass
 

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
@@ -109,8 +113,7 @@ class JobNestedExceptionsTest : TestBase() {
             finish(5)
         }
 
-        assertEquals(2, exceptions.size)
-        assertTrue(exceptions[0] === exceptions[1]) // Sad part about sharing exceptions :(
+        assertEquals(1, exceptions.size)
         val exception = exceptions[0]
         val suppressed = exception.suppressed()
         checkException<IOException>(suppressed[0])

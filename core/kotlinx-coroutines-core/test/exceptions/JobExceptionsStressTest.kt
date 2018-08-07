@@ -2,10 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package exceptions
+package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.exceptions.*
 import org.junit.*
 import org.junit.Test
 import java.io.*
@@ -69,7 +68,7 @@ class JobExceptionsStressTest : TestBase() {
                     "Failed to remove ${throwable::class} from $suppressedExceptions")
             }
 
-            assertTrue(classes.isEmpty())
+            assertTrue(classes.isEmpty(), "Expected all exception to be present, but following exceptions are missing: $classes")
         }
     }
 }

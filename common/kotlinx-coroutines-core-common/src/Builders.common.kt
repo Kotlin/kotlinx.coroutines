@@ -159,7 +159,7 @@ private open class StandaloneCoroutine(
     override fun hasOnFinishingHandler(update: Any?) = update is CompletedExceptionally
 
     override fun handleJobException(exception: Throwable) {
-        handleCoroutineException(parentContext, exception)
+        handleCoroutineException(parentContext, exception, this)
     }
 
     override fun onFinishingInternal(update: Any?) {

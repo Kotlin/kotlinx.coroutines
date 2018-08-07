@@ -111,7 +111,7 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     internal final override fun handleOnCompletionException(exception: Throwable) {
-        handleCoroutineException(parentContext, exception)
+        handleCoroutineException(parentContext, exception, this)
     }
 
     internal override fun nameString(): String {
