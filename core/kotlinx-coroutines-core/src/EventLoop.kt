@@ -137,7 +137,6 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         return nextTime
     }
 
-    @Suppress("MemberVisibilityCanBePrivate") // todo: remove suppress when KT-22030 is fixed
     internal fun execute(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
