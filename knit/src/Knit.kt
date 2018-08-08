@@ -2,12 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import java.io.File
-import java.io.IOException
-import java.io.LineNumberReader
-import java.io.Reader
+import java.io.*
 import java.util.*
-import kotlin.properties.Delegates
+import kotlin.properties.*
 
 // --- props in knit.properties
 
@@ -49,6 +46,7 @@ const val ARBITRARY_TIME_PREDICATE = "ARBITRARY_TIME"
 const val FLEXIBLE_TIME_PREDICATE = "FLEXIBLE_TIME"
 const val FLEXIBLE_THREAD_PREDICATE = "FLEXIBLE_THREAD"
 const val LINES_START_UNORDERED_PREDICATE = "LINES_START_UNORDERED"
+const val EXCEPTION_MODE = "EXCEPTION"
 const val LINES_START_PREDICATE = "LINES_START"
 
 val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_().]+)\\]($|[^\\[\\(])")
@@ -267,9 +265,10 @@ fun makeTest(testOutLines: MutableList<String>, pgk: String, test: List<String>,
         FLEXIBLE_TIME_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesFlexibleTime", test)
         FLEXIBLE_THREAD_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesFlexibleThread", test)
         LINES_START_UNORDERED_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStartUnordered", test)
+        EXCEPTION_MODE -> makeTestLines(testOutLines, prefix, "verifyExceptions", test)
         LINES_START_PREDICATE -> makeTestLines(testOutLines, prefix, "verifyLinesStart", test)
         else -> {
-            testOutLines += prefix +  ".also { lines ->"
+            testOutLines += "$prefix.also { lines ->"
             testOutLines += "            check($predicate)"
             testOutLines += "        }"
         }

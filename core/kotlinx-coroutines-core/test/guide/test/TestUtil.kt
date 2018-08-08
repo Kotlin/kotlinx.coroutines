@@ -169,6 +169,18 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) {
     sorted().verifyLinesStart(*expectedSorted)
 }
 
+fun List<String>.verifyExceptions(vararg expected: String) {
+    val actual = filter { !it.startsWith("\tat ") }
+
+    val n = minOf(actual.size, expected.size)
+    for (i in 0 until n) {
+        val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
+        val act = sanitize(actual[i], SanitizeMode.FLEXIBLE_THREAD)
+        assertEquals("Line ${i + 1}", exp, act)
+    }
+}
+
+
 fun List<String>.verifyLinesStart(vararg expected: String) {
     val n = minOf(size, expected.size)
     for (i in 0 until n) {
