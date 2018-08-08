@@ -131,7 +131,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         barrier.await()
         blockingTasks.joinAll()
         // There may be race when multiple CPU threads are trying to lazily created one more
-        checkPoolThreadsCreated(104..110)
+        checkPoolThreadsCreated(104..120)
     }
 
     @Test

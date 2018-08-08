@@ -17,7 +17,16 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     private var dispatcher: ExperimentalCoroutineDispatcher = ExperimentalCoroutineDispatcher()
     private val observedThreads = ConcurrentHashMap<Thread, Long>()
-    private val tasksNum = 2_000_000 * stressTestMultiplier
+    private val tasksNum = 2_000_000 * stressMemoryMultiplier()
+
+    private fun stressMemoryMultiplier(): Int {
+        return if (isStressTest) {
+            Runtime.getRuntime().availableProcessors() * 4
+        } else {
+            1
+        }
+    }
+
     private val processed = AtomicInteger(0)
     private val finishLatch = CountDownLatch(1)
 
@@ -48,27 +57,20 @@ class CoroutineSchedulerStressTest : TestBase() {
             // Submit million tasks
             blockingThread = Thread.currentThread()
             var submittedTasks = 0
-            val processedCounter = AtomicLong(0)
-            while (submittedTasks <= tasksNum) {
-                for (i in 1..120) {
-                    if (++submittedTasks > tasksNum) {
-                        // Block current thread
-                        finishLatch.await()
-                        return@Runnable
-                    }
+            while (submittedTasks < tasksNum) {
 
-                    dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-                        processTask()
-                        processedCounter.incrementAndGet()
-                    })
-                }
+                ++submittedTasks
+                dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+                    processTask()
+                })
 
-                while (processedCounter.get() < 100) {
+                while (submittedTasks - processed.get() > 100) {
                     Thread.yield()
                 }
-
-                processedCounter.set(0L)
             }
+
+            // Block current thread
+            finishLatch.await()
         })
 
         finishLatch.await()
@@ -92,7 +94,7 @@ class CoroutineSchedulerStressTest : TestBase() {
         })
 
         finishLatch.await()
-        assertEquals(Runtime.getRuntime().availableProcessors(), observedThreads.size)
+        assertTrue(Runtime.getRuntime().availableProcessors() in (observedThreads.size - 1)..observedThreads.size)
         validateResults()
     }
 
