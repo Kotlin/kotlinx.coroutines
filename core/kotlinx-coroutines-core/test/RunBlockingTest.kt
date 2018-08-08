@@ -8,6 +8,19 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class RunBlockingTest : TestBase() {
+
+    @Test
+    fun testWithTimeoutBusyWait() = runBlocking {
+        val value = withTimeoutOrNull(10) {
+            while (isActive) {
+                // Busy wait
+            }
+            "value"
+        }
+
+        assertEquals("value", value)
+    }
+
     @Test
     fun testPrivateEventLoop() {
         expect(1)

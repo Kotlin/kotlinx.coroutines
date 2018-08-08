@@ -9,7 +9,6 @@ import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.timeunit.*
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
-import kotlin.jvm.*
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -111,9 +110,6 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
         schedule(DelayedResumeTask(time, unit, continuation))
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(time, unit, block).also { schedule(it) }
-
     override fun processNextEvent(): Long {
         if (!isCorrectThread()) return Long.MAX_VALUE
         // queue all delayed tasks that are due to be executed
@@ -141,8 +137,9 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
-        } else
+        } else {
             DefaultExecutor.execute(task)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -266,23 +263,26 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
-        fun rescheduleOnShutdown() = synchronized(this) {
+        @Synchronized
+        fun rescheduleOnShutdown() {
             if (state != DELAYED) return
             if (_delayed.value!!.remove(this)) {
                 state = RESCHEDULED
                 DefaultExecutor.schedule(this)
-            } else
-                state = REMOVED
-        }
-
-        final override fun dispose() = synchronized(this) {
-                when (state) {
-                    DELAYED -> _delayed.value?.remove(this)
-                    RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
-                    else -> return
-                }
+            } else {
                 state = REMOVED
             }
+        }
+
+        @Synchronized
+        final override fun dispose() {
+            when (state) {
+                DELAYED -> _delayed.value?.remove(this)
+                RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
+                else -> return
+            }
+            state = REMOVED
+        }
 
         override fun toString(): String = "Delayed[nanos=$nanoTime]"
     }
@@ -302,7 +302,8 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
     }
 
-    private inner class DelayedRunnableTask(
+    // Cannot be moved to DefaultExecutor due to BE bug
+    internal inner class DelayedRunnableTask(
         time: Long, timeUnit: TimeUnit,
         private val block: Runnable
     ) : DelayedTask(time, timeUnit) {
