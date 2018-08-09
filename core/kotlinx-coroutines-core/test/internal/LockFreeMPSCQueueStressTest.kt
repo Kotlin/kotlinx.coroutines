@@ -21,7 +21,7 @@ class LockFreeMPSCQueueStressTest : TestBase() {
     private val consumed = atomic(0L)
     private var expected = LongArray(nProducers)
 
-    private var queue = atomic<LockFreeMPSCQueue<Item>?>(null)
+    private val queue = atomic<LockFreeMPSCQueue<Item>?>(null)
     private val done = atomic(0)
     private val doneProducers = atomic(0)
 

@@ -59,7 +59,7 @@ abstract class SchedulerTestBase : TestBase() {
         suspend fun Iterable<Job>.joinAll() = forEach { it.join() }
     }
 
-    private var exception = atomic<Throwable?>(null)
+    private val exception = atomic<Throwable?>(null)
     private val handler = CoroutineExceptionHandler({ _, e -> exception.value = e })
 
     protected var corePoolSize = 1
