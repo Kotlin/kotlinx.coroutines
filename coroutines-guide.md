@@ -85,7 +85,10 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Thread confinement fine-grained](#thread-confinement-fine-grained)
   * [Thread confinement coarse-grained](#thread-confinement-coarse-grained)
   * [Mutual exclusion](#mutual-exclusion)
-  * [Actors](#actors)
+* [Actors](#actors)
+  * [Implementing simple actor](#implementing-simple-actor)
+  * [Typesafe actors](#typesafe-actors)
+  * [Actors API](#actors-api)
 * [Select expression](#select-expression)
   * [Selecting from channels](#selecting-from-channels)
   * [Selecting on close](#selecting-on-close)
@@ -2022,79 +2025,164 @@ The locking in this example is fine-grained, so it pays the price. However, it i
 where you absolutely must modify some shared state periodically, but there is no natural thread that this state
 is confined to.
 
-### Actors
+## Actors
 
 An [actor](https://en.wikipedia.org/wiki/Actor_model) is an entity made up of a combination of a coroutine, the state that is confined and encapsulated into this coroutine,
-and a channel to communicate with other coroutines. A simple actor can be written as a function, 
-but an actor with a complex state is better suited for a class. 
+and a channel to receive messages from other coroutines. A simple actor can be written as a function, but an actor with a complex state is better suited for a class.
+For the sake of simplicity, actor may be considered as a channel and a job, which receives and processes messages from the channel in a sequential manner. 
+If you are familiar with [Active Object](https://en.wikipedia.org/wiki/Active_object) pattern, then you may notice that actors are very similar to it.
+`kotlinx.coroutines` actors differ from classic Hewitt's actors such as ones from Erlang or Akka to provide simpler programming model, but with restricted capabilities if compare with classic actors model.
 
-There is an [actor] coroutine builder that conveniently combines actor's mailbox channel into its 
-scope to receive messages from and combines the send channel into the resulting job object, so that a 
-single reference to the actor can be carried around as its handle.
 
-The first step of using an actor is to define a class of messages that an actor is going to process.
+### Implementing simple actor
+
+There is an [TypedActor] base class and shortcut builder [actor] to declare actors which can process only one type of messages.
 Kotlin's [sealed classes](https://kotlinlang.org/docs/reference/sealed-classes.html) are well suited for that purpose.
-We define `CounterMsg` sealed class with `IncCounter` message to increment a counter and `GetCounter` message
-to get its value. The later needs to send a response. A [CompletableDeferred] communication
-primitive, that represents a single value that will be known (communicated) in the future,
-is used here for that purpose.
+
+Let's start with example and write counting actor. We define `CounterMsg` sealed class with `IncCounter` message to increment a counter and `GetCounter` message
+to get its value. The later needs to send a response. A [CompletableDeferred] communication primitive,
+ that represents a single value that will be known (communicated) in the future, is used here for that purpose.
+
+<!--- INCLUDE
+import kotlinx.coroutines.experimental.actors.*
+import kotlinx.coroutines.experimental.guide.sync01.*
+-->
 
 ```kotlin
-// Message types for counterActor
+// Message types for counter actor
 sealed class CounterMsg
 object IncCounter : CounterMsg() // one-way message to increment counter
 class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg() // a request with reply
-```
 
-Then we define a function that launches an actor using an [actor] coroutine builder:
-
-```kotlin
-// This function launches a new counter actor
-fun counterActor() = actor<CounterMsg> {
-    var counter = 0 // actor state
-    for (msg in channel) { // iterate over incoming messages
-        when (msg) {
+class CountingActor : TypedActor<CounterMsg>() {
+    
+    private var counter: Int = 0
+    
+     override suspend fun onStart() {
+       println("CountingActor started")
+     }
+    
+    override suspend fun receive(message: CounterMsg) {
+        when (message) {
             is IncCounter -> counter++
-            is GetCounter -> msg.response.complete(counter)
+            is GetCounter -> message.response.complete(counter)
         }
     }
 }
 ```
 
-The main code is straightforward:
+The main code is straightforward, messages can be sent to the actor using `send` method:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val counter = counterActor() // create the actor
+    val counter = CountingActor() // create the actor
+    println("Preparing to send a lot of inc requests")
     massiveRun(CommonPool) {
         counter.send(IncCounter)
     }
+    
     // send a message to get a counter value from an actor
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
-    counter.close() // shutdown the actor
+    counter.close()
+    counter.join() // shutdown the actor and wait for it
 }
 ```
 
-> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-sync-07.kt)
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-actors-01.kt)
 
 <!--- TEST ARBITRARY_TIME
+Preparing to send a lot of inc requests
+CountingActor started
 Completed 1000000 actions in xxx ms
 Counter = 1000000
 -->
 
-It does not matter (for correctness) what context the actor itself is executed in. An actor is
+Note that the same actor, but without `onStart` handler, can be implemented using more compact [actor] builder: 
+```kolin
+fun createCountingActor(): TypedActor<CounterMsg> = actor { message ->
+    when (message) {
+        is IncCounter -> counter++
+        is GetCounter -> message.response.complete(counter)
+    }
+}
+```
+
+ `counter` is not protected by any synchronization, because actor processes messages sequentially one by one.
+It does not matter for correctness what context the actor itself is executed in. An actor is
 a coroutine and a coroutine is executed sequentially, so confinement of the state to the specific coroutine
 works as a solution to the problem of shared mutable state. Indeed, actors may modify their own private state, but can only affect each other through messages (avoiding the need for any locks).
 
 Actor is more efficient than locking under load, because in this case it always has work to do and it does not 
 have to switch to a different context at all.
 
-> Note, that an [actor] coroutine builder is a dual of [produce] coroutine builder. An actor is associated 
-  with the channel that it receives messages from, while a producer is associated with the channel that it 
-  sends elements to.
+### Typesafe actors
+What is usually counterintuitive about Actor-based API is the absence of meaningful method names and requirement to introduce `sealed` classes for every actor
+which processes more than one type of messages. And in any real-world project it's very likely that any actor can process more than only one kind of requests.
+For this purposes we have [Actor] base class. With [Actor], any method with any arguments can act like `send` method of `TypedActor`, the only requirement is to define methods
+using [act][Actor.act].
 
+Let's implement the same `CountingActor` as in the previous example;  
+
+<!--- INCLUDE
+import kotlinx.coroutines.experimental.actors.*
+import kotlinx.coroutines.experimental.guide.sync01.*
+-->
+
+```kotlin
+class CountingActor : Actor() {
+    
+    private var counter: Int = 0
+    
+    override suspend fun onStart() {
+      println("CountingActor started")
+    }
+    
+    suspend fun increment() = act { // <- note act {} extension
+      counter++
+    }
+    
+    suspend fun counter(response: CompletableDeferred<Int>) = act {
+          response.complete(counter)
+    }
+}
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val counter = CountingActor() // create the actor
+    println("Preparing to send a lot of inc requests")
+    massiveRun(CommonPool) {
+        counter.increment()
+    }
+    
+    val response = CompletableDeferred<Int>()
+    counter.counter(response)
+    println("Counter = ${response.await()}")
+    counter.close()
+    counter.join() // shutdown the actor and wait for it
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-actors-02.kt)
+
+<!--- TEST ARBITRARY_TIME
+Preparing to send a lot of inc requests
+CountingActor started
+Completed 1000000 actions in xxx ms
+Counter = 1000000
+-->
+
+The idea behind `act` is to put to the actor mailbox not the arguments of the message, but `act`'s lambda with all captured method parameters. From API behaviour standpoint, `Actor` behave the same way as
+`TypedActor` -- all methods are invoked in the context of the actor sequentially.
+
+### Actors API
+From previous paragraphs it may look like actor API is very limited. But both [Actor] and [TypedActor] come with a lot of handy parameters, such as underlying channel capacity, 
+context to be executed in, start and close hooks. The whole description of extension points and configuration parameters can be found in [ActorTraits] interface and constructors of corresponding classes.
+
+Actors are started lazily and always have an underlying [Job] associated with it, available in their `coroutineContext`, thus actors actors can transparently launch more actors 
+or jobs (even in another context), which will be organized into parent-child relationship.
+
+ 
 ## Select expression
 
 Select expression makes it possible to await multiple suspending functions simultaneously and _select_
@@ -2515,4 +2603,9 @@ Channel was closed
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/on-send.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
+<!--- INDEX kotlinx.coroutines.experimental.actors -->
+[TypedActor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.actors/-typed-actor/index.html
+[Actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.actors/-actor/index.html
+[Actor.act]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.actors/-actor/act.html
+[ActorTraits]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.actors/-actor-traits/index.html
 <!--- END -->

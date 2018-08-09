@@ -440,8 +440,20 @@ class GuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideSync07() {
-        test("KotlinxCoroutinesExperimentalGuideSync07") { kotlinx.coroutines.experimental.guide.sync07.main(emptyArray()) }.verifyLinesArbitraryTime(
+    fun testKotlinxCoroutinesExperimentalGuideActors01() {
+        test("KotlinxCoroutinesExperimentalGuideActors01") { kotlinx.coroutines.experimental.guide.actors01.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Preparing to send a lot of inc requests",
+            "CountingActor started",
+            "Completed 1000000 actions in xxx ms",
+            "Counter = 1000000"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideActors02() {
+        test("KotlinxCoroutinesExperimentalGuideActors02") { kotlinx.coroutines.experimental.guide.actors02.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "Preparing to send a lot of inc requests",
+            "CountingActor started",
             "Completed 1000000 actions in xxx ms",
             "Counter = 1000000"
         )
