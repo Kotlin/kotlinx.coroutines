@@ -15,7 +15,6 @@ dependencies {
     jmh project(':kotlinx-coroutines-core-common')
     jmh project(':kotlinx-coroutines-core')
     jmh project(':kotlinx-coroutines-core').sourceSets.test.output
-    jmh project(':kotlinx-coroutines-io')
 }
 
 jmh.jmhVersion = '1.19'

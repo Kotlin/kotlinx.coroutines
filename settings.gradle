@@ -23,7 +23,6 @@ module('binary-compatibility-validator')
 module('common/kotlinx-coroutines-core-common')
 
 module('core/kotlinx-coroutines-core')
-module('core/kotlinx-coroutines-io')
 
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
