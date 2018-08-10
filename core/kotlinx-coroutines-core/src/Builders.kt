@@ -32,8 +32,7 @@ import kotlin.coroutines.experimental.*
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
  * @throws IllegalStateException if blocking is not allowed in current thread.
- *         Blocking is checked by [BlockingChecker] that is registered via [ServiceLoader],
- *         unless [BLOCKING_CHECKER_PROPERTY_NAME] system property is set to [BLOCKING_CHECKER_VALUE_DISABLE].
+ *         Blocking is checked by [BlockingChecker] registered in [ServiceLoader]
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
  */
@@ -53,18 +52,6 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 }
 
 /**
- * Name of the property to control whether [runBlocking] builder
- * is restricted via [BlockingChecker] extension points.
- */
-public const val BLOCKING_CHECKER_PROPERTY_NAME = "kotlinx.coroutines.blocking.checker"
-
-/**
- * Value of the [BLOCKING_CHECKER_PROPERTY_NAME] to disable installed
- * [BlockingChecker] and thus allow [runBlocking] in any thread.
- */
-public const val BLOCKING_CHECKER_VALUE_DISABLE = "disable"
-
-/**
  * Extension point which determines whether invoking [runBlocking] in the current thread is allowed.
  * [runBlocking] discovers all checkers via [ServiceLoader] and invokes [checkRunBlocking] on
  * each attempt to invoke [runBlocking].
@@ -77,9 +64,6 @@ public const val BLOCKING_CHECKER_VALUE_DISABLE = "disable"
  *        check(!UiFramework.isInUiThread()) { "runBlocking is not allowed in UI thread" }
  * }
  * ```
- *
- * Installed checkers are ignored if "`kotlinx.coroutines.blocking.checker`" ([BLOCKING_CHECKER_PROPERTY_NAME])
- * system property is set to the value "`disable`" ([BLOCKING_CHECKER_VALUE_DISABLE]).
  */
 public interface BlockingChecker {
     /**
@@ -88,24 +72,11 @@ public interface BlockingChecker {
     fun checkRunBlocking()
 }
 
-private class BlockingCheckerList(private val checkers: Array<BlockingChecker>) : BlockingChecker {
-    override fun checkRunBlocking() = checkers.forEach { it.checkRunBlocking() }
-}
-
 // Nullable to enable DCE when no filters are present in classpath
 private val blockingChecker: BlockingChecker? = run {
-    val value = systemProp(BLOCKING_CHECKER_PROPERTY_NAME)
-    when (value) {
-        BLOCKING_CHECKER_VALUE_DISABLE -> null
-        null -> {
-            val checkers = ServiceLoader.load(BlockingChecker::class.java).toList()
-            when (checkers.size) {
-                0 -> null
-                1 -> checkers[0]
-                else -> BlockingCheckerList(checkers.toTypedArray())
-            }
-        }
-        else -> error("System property '$BLOCKING_CHECKER_PROPERTY_NAME' has unrecognized value '$value'")
+    val filters = ServiceLoader.load(BlockingChecker::class.java).toList().toTypedArray()
+    if (filters.isEmpty()) null else object : BlockingChecker {
+        override fun checkRunBlocking() = filters.forEach { it.checkRunBlocking() }
     }
 }
 

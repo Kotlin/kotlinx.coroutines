@@ -25,8 +25,6 @@ public abstract interface class kotlinx/coroutines/experimental/BlockingChecker 
 }
 
 public final class kotlinx/coroutines/experimental/BuildersKt {
-	public static final field BLOCKING_CHECKER_PROPERTY_NAME Ljava/lang/String;
-	public static final field BLOCKING_CHECKER_VALUE_DISABLE Ljava/lang/String;
 	public static final synthetic fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final synthetic fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
