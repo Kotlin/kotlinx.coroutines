@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.NotInitialized.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
@@ -83,7 +82,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      */
 
     // Note: use shared objects while we have no listeners
-    private val _state = atomic<Any?>(if (active) EmptyActive else EmptyNew)
+    private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
     @Volatile
     private var parentHandle: DisposableHandle? = null
@@ -105,7 +104,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         @Suppress("DEPRECATION")
         val handle = parent.attachChild(this)
         parentHandle = handle
-        // now check our state _after_ registering (see tryFinalizeState order of actions)
+        // now check our state _after_ registering (see tryFinalizeStateActually order of actions)
         if (isCompleted) {
             handle.dispose()
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
@@ -155,17 +154,15 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * Returns `false` if current state is not equal to expected.
      * If this method succeeds, state of this job will never be changed again
      */
-    private fun tryFinalizeState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean {
+    private fun tryFinalizeState(expect: Incomplete, proposedUpdate: Any?, mode: Int): Boolean =
         if (expect is Finishing && expect.cancelled != null) {
-            return tryFinalizeCancellingState(expect, proposedUpdate, mode)
+            tryFinalizeCancellingState(expect, proposedUpdate, mode)
+        } else {
+            val update = coerceProposedUpdate(expect, proposedUpdate)
+            tryFinalizeStateActually(expect, update, mode)
         }
 
-        val update = coerceProposedUpdate(expect, proposedUpdate)
-        if (!tryFinalizeState(expect, update)) return false
-        completeStateFinalization(expect, update, mode)
-        return true
-    }
-
+    // Finalizes Cancelling -> Cancelled transition
     private fun tryFinalizeCancellingState(expect: Finishing, proposedUpdate: Any?, mode: Int): Boolean {
         /*
          * If job is in 'cancelling' state and we're finalizing job state, we start intricate dance:
@@ -180,34 +177,26 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             if (_state.value !== expect) {
                 return false
             }
-
             if (proposedUpdate is CompletedExceptionally) {
-                expect.addLocked(proposedUpdate.cause)
+                expect.addExceptionLocked(proposedUpdate.cause)
             }
-
             /*
              * Note that new exceptions cannot be added concurrently: state is guarded by lock
              * and storage is sealed in the end, so all new exceptions will be reported separately
              */
             buildException(expect).also { expect.seal() }
         }
-
         val update = Cancelled(this, finalException ?: expect.cancelled!!.cause)
-        // This CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
-        if (!tryFinalizeState(expect, update)) {
-            val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
-            handleOnCompletionException(error)
-            throw error
-        }
-
-        completeStateFinalization(expect, update, mode)
-        return true
+        if (tryFinalizeStateActually(expect, update, mode)) return true
+        //  ^^^^ this CAS never fails: we're in the state when no jobs can be attached, because state is already sealed
+        val error = AssertionError("Unexpected state: ${_state.value}, expected: $expect, update: $update")
+        handleOnCompletionException(error)
+        throw error
     }
 
     private fun buildException(state: Finishing): Throwable? {
         val cancelled = state.cancelled!!
         val suppressed = state.exceptions
-
         /*
          * This is a place where we step on our API limitation:
          * We can't distinguish internal JobCancellationException from our parent
@@ -235,7 +224,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 suppressed.firstOrNull { unwrap(it) != null } ?: return rootCause
             }
         }
-
         // TODO it should be identity set and optimized for small footprints
         val seenExceptions = HashSet<Throwable>(suppressed.size)
         suppressed.forEach {
@@ -246,56 +234,58 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 }
             }
         }
-
         return rootCause
     }
 
-    private tailrec fun unwrap(exception: Throwable): Throwable? {
+    private tailrec fun unwrap(exception: Throwable): Throwable? =
         if (exception is JobCancellationException) {
             val cause = exception.cause
-            if (cause !== null) return unwrap(cause)
-            return null
-
+            if (cause !== null) unwrap(cause) else null
         } else {
-            return exception
+            exception
         }
-    }
 
     /**
-     * Tries to update [_state] of this job to the final state and, if
-     * succeeds, disposes parent handle (de-attaching child from parent)
+     * Tries to actually update [state] of this job to the final state and, if
+     * succeeds, disposes parent handle (detaching child from parent), and
+     * invokes all the handlers to notify on the final state transition.
      */
-    private fun tryFinalizeState(expect: Incomplete, update: Any?): Boolean  {
+    private fun tryFinalizeStateActually(expect: Incomplete, update: Any?, mode: Int): Boolean {
         require(update !is Incomplete) // only incomplete -> completed transition is allowed
-        if (!_state.compareAndSet(expect, update)) return false
-        if (update is CompletedExceptionally) handleJobException(update.cause)
-        // Unregister from parent job
+        if (!_state.compareAndSet(expect, update)) return false // failed
+        completeStateFinalization(expect, update, mode)
+        return true
+    }
+
+    private fun completeStateFinalization(expect: Incomplete, update: Any?, mode: Int) {
+        /*
+         * Now the job in THE FINAL state. We need to properly handle the resulting state.
+         * Order of various invocations here is important.
+         *
+         * 1) Standalone coroutines (launch/job) cancel their parent.
+         */
+        if (update is CompletedExceptionally) {
+            handleJobException(update.cause)
+        }
+        /*
+         * 2) Unregister from parent job.
+         */
         parentHandle?.let {
             it.dispose() // volatile read parentHandle _after_ state was updated
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
         }
-        return true // continues in completeStateFinalization
-    }
-
-    /**
-     * Completes update of the current [state] of this job.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    private fun completeStateFinalization(expect: Incomplete, update: Any?, mode: Int) {
         val exceptionally = update as? CompletedExceptionally
-        // Do overridable processing before completion handlers
-
         /*
-         * 1) Invoke onCancellationInternal: exception handling, parent/resource cancellation etc.
-         * 2) Invoke completion handlers: .join(), callbacks etc. It's important to invoke them only AFTER exception handling, see #208
-         * 3) Invoke onCompletionInternal: onNext(), timeout deregistration etc. I should be last so all callbacks observe consistent state
-         *    of the job which doesn't depend on callback scheduling
-         *
-         * Only notify on cancellation once (expect.isCancelling)
+         * 3) Invoke onCancellationInternal: exception handling, resource cancellation etc.
+         *    Only notify on cancellation once (expect.isCancelling)
          */
-        if (!expect.isCancelling) onCancellationInternal(exceptionally)
-
-        // Invoke completion handlers
+        if (!expect.isCancelling) {
+            onCancellationInternal(exceptionally)
+        }
+        /*
+         * 4) Invoke completion handlers: .join(), callbacks etc.
+         *    It's important to invoke them only AFTER exception handling, see #208
+         */
         val cause = exceptionally?.cause
         if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
             try {
@@ -306,6 +296,11 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         } else {
             expect.list?.notifyCompletion(cause)
         }
+        /*
+         * 5) Invoke onCompletionInternal: onNext(), timeout deregistration etc.
+         *    It should be last so all callbacks observe consistent state
+         *    of the job which doesn't depend on callback scheduling.
+         */
         onCompletionInternal(update, mode)
     }
 
@@ -371,7 +366,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         when (state) {
             is Empty -> { // EMPTY_X state -- no completion handlers
                 if (state.isActive) return FALSE // already active
-                if (!_state.compareAndSet(state, EmptyActive)) return RETRY
+                if (!_state.compareAndSet(state, EMPTY_ACTIVE)) return RETRY
                 onStartInternal()
                 return TRUE
             }
@@ -555,7 +550,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 is JobNode<*> -> { // SINGE/SINGLE+ state -- one completion handler
                     if (state !== node) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
-                    if (_state.compareAndSet(state, EmptyActive)) return
+                    if (_state.compareAndSet(state, EMPTY_ACTIVE)) return
                 }
                 is Incomplete -> { // may have a list of completion handlers
                     // remove node from the list if there is a list
@@ -613,7 +608,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                         if (cause == null) {
                             return true
                         }
-
                         /*
                          * If we failed to add an exception, then `seal` was successfully called
                          * and `seal` is called only after state update => retry is liveness-safe
@@ -624,10 +618,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                             return@loopOnState
                         }
                     }
-
                     if (tryMakeCancelling(state, state.list, cause)) return true
                 }
-
                 /*
                  * Filter out duplicates due to race in the following pattern:
                  * T1: parent -> completion sequence
@@ -818,7 +810,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     /**
      * Method which is invoked once Job becomes [Cancelled] or [CompletedExceptionally].
-     * It's guaranteed that at the moment of invocation the job and all its children are complete
+     * It's guaranteed that at the moment of invocation the job and all its children are complete.
      */
     internal open fun handleJobException(exception: Throwable) {}
 
@@ -861,57 +853,46 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     ) : Incomplete {
         override val isActive: Boolean get() = cancelled == null
 
+        // guarded by `synchronized(this)`
         val exceptions: List<Throwable> get() = when(_exceptionsHolder) {
             NOT_INITIALIZED -> emptyList()
             is Throwable -> listOf(_exceptionsHolder as Throwable) // EA should handle this
             else -> (_exceptionsHolder as List<Throwable>)
         }
 
+        // guarded by `synchronized(this)`
+        // Contains null | NOT_INITIALIZED | Throwable | ArrayList
         private var _exceptionsHolder: Any? = if (cancelled == null) null else NOT_INITIALIZED
 
-        fun addException(exception: Throwable): Boolean {
+        fun addException(exception: Throwable): Boolean =
             synchronized(this) {
-                return when (_exceptionsHolder) {
-                    null -> false
-                    NOT_INITIALIZED -> {
-                        _exceptionsHolder = exception
-                        return true
-                    }
-                    is Throwable -> {
-                        val previous = _exceptionsHolder
-                        val list = ArrayList<Any?>(4)
-                        list.add(previous)
-                        list.add(exception)
-                        _exceptionsHolder = list
-                        return true
-                    }
-                    else -> (_exceptionsHolder as MutableList<Throwable>).add(exception)
-                }
+                addExceptionLocked(exception)
             }
-        }
 
         // guarded by `synchronized(this)`
-        fun addLocked(exception: Throwable) {
-            // Cannot be null at this point here
+        fun addExceptionLocked(exception: Throwable): Boolean =
             when (_exceptionsHolder) {
+                null -> false
                 NOT_INITIALIZED -> {
                     _exceptionsHolder = exception
+                    true
                 }
                 is Throwable -> {
                     val previous = _exceptionsHolder
-                    val list = ArrayList<Any?>(4)
-                    list.add(previous)
-                    list.add(exception)
-                    _exceptionsHolder = list
+                    _exceptionsHolder = ArrayList<Any?>(4).apply {
+                        add(previous)
+                        add(exception)
+
+                    }
+                    true
                 }
-                else -> (_exceptionsHolder as MutableList<Throwable>).add(exception)
+                else -> (_exceptionsHolder as ArrayList<Throwable>).add(exception)
             }
-        }
 
         /**
          * Seals current state. After [seal] call all consecutive calls to [addException]
          * return `false` forcing callers to handle pending exception by themselves.
-         * This call should be guarded by `synchronized(finishingState)`
+         * This call should be guarded by `synchronized(this)`
          */
         fun seal() {
             _exceptionsHolder = null
@@ -922,8 +903,11 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 synchronized(to) {
                     val holder = _exceptionsHolder
                     when(holder) {
-                        is Throwable -> to.addLocked(holder)
-                        is List<*> -> holder.forEach { to.addLocked(it as Throwable) }
+                        // Note: "to" cannot be sealed at this point and adding exception there mush succeed.
+                        is Throwable -> require(to.addExceptionLocked(holder))
+                        is List<*> -> holder.forEach {
+                            require(to.addExceptionLocked(it as Throwable))
+                        }
                     }
                     seal()
                 }
@@ -1031,7 +1015,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 }
 
-// --------------- helper classes to simplify job implementation
+// --------------- helper classes & constants for job implementation
 
 internal const val ON_CANCEL_MAKE_CANCELLING = 0
 internal const val ON_CANCEL_MAKE_COMPLETING = 1
@@ -1044,14 +1028,10 @@ private const val RETRY = -1
 private const val FALSE = 0
 private const val TRUE = 1
 
-@Suppress("PrivatePropertyName")
-private val EmptyNew = Empty(false)
-@Suppress("PrivatePropertyName")
-private val EmptyActive = Empty(true)
+private val NOT_INITIALIZED = Symbol("NOT_INITIALIZED")
 
-private enum class NotInitialized {
-    NOT_INITIALIZED
-}
+private val EMPTY_NEW = Empty(false)
+private val EMPTY_ACTIVE = Empty(true)
 
 private class Empty(override val isActive: Boolean) : Incomplete {
     override val list: NodeList? get() = null

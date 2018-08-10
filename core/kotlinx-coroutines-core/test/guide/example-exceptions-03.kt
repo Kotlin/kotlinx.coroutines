@@ -17,7 +17,6 @@ fun main(args: Array<String>) = runBlocking {
                 println("Child is cancelled")
             }
         }
-
         yield()
         println("Cancelling child")
         child.cancel()
@@ -25,6 +24,5 @@ fun main(args: Array<String>) = runBlocking {
         yield()
         println("Parent is not cancelled")
     }
-
     job.join()
 }

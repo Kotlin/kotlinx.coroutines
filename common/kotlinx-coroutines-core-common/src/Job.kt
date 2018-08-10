@@ -154,7 +154,7 @@ public interface Job : CoroutineContext.Element {
      * or it's being cancelled and given [cause] was successfully received by the job and will be properly handled, `false` otherwise.
      *
      * If this method returned `false`, then caller is responsible for handling [cause].
-     * If job is already completed, method returns `false`
+     * If job is already completed, method returns `false`.
      *
      * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing

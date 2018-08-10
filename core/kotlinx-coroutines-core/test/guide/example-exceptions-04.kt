@@ -9,27 +9,26 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking {
-     val handler = CoroutineExceptionHandler { _, exception -> println("Caught $exception") }
-   
-       val job = launch(handler) {
-           val child1 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
-               try {
-                   delay(Long.MAX_VALUE)
-               } finally {
-                   withContext(NonCancellable) {
-                       println("Children are cancelled, but exception is not handled until children are terminated completely")
-                       delay(100)
-                       println("Last child finished its non cancellable block")
-                   }
-               }
-           }
-   
-           val child2 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
-               delay(10)
-               println("Child throws an exception")
-               throw ArithmeticException()
-           }
-       }
-   
-       job.join()
+    val handler = CoroutineExceptionHandler { _, exception -> 
+        println("Caught $exception") 
+    }
+    val job = launch(handler) {
+        val child1 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                withContext(NonCancellable) {
+                    println("Children are cancelled, but exception is not handled until all children terminate")
+                    delay(100)
+                    println("Last child finished its non cancellable block")
+                }
+            }
+        }
+        val child2 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+            delay(10)
+            println("Second child throws an exception")
+            throw ArithmeticException()
+        }
+    }
+    job.join()
 }

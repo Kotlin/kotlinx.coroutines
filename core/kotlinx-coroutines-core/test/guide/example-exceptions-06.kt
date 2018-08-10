@@ -6,30 +6,27 @@
 package kotlinx.coroutines.experimental.guide.exceptions06
 
 import kotlinx.coroutines.experimental.*
-import java.io.*
 import kotlin.coroutines.experimental.*
+import java.io.*
 
 fun main(args: Array<String>) = runBlocking {
-  val handler = CoroutineExceptionHandler { _, exception ->
-         println("Caught original $exception")
-     }
- 
-     val job = launch(handler) {
-         val inner = launch(coroutineContext) {
-             launch(coroutineContext) {
-                 launch(coroutineContext) {
-                     throw IOException()
-                 }
-             }
-         }
- 
-         try {
-             inner.join()
-         } catch (e: JobCancellationException) {
-             println("Rethrowing JobCancellationException with original cause")
-             throw e
-         }
-     }
- 
-     job.join()
+    val handler = CoroutineExceptionHandler { _, exception ->
+        println("Caught original $exception")
+    }
+    val job = launch(handler) {
+        val inner = launch(coroutineContext) {
+            launch(coroutineContext) {
+                launch(coroutineContext) {
+                    throw IOException()
+                }
+            }
+        }
+        try {
+            inner.join()
+        } catch (e: JobCancellationException) {
+            println("Rethrowing JobCancellationException with original cause")
+            throw e
+        }
+    }
+    job.join()
 }

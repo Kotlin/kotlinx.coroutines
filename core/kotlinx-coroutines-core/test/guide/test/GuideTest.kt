@@ -1,7 +1,7 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.experimental.guide.test
 
-import org.junit.*
+import org.junit.Test
 
 class GuideTest {
 
@@ -297,8 +297,8 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideExceptions04() {
         test("KotlinxCoroutinesExperimentalGuideExceptions04") { kotlinx.coroutines.experimental.guide.exceptions04.main(emptyArray()) }.verifyLines(
-            "Child throws an exception",
-            "Children are cancelled, but exception is not handled until children are terminated completely",
+            "Second child throws an exception",
+            "Children are cancelled, but exception is not handled until all children terminate",
             "Last child finished its non cancellable block",
             "Caught java.lang.ArithmeticException"
         )

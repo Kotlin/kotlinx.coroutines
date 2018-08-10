@@ -8,15 +8,14 @@ package kotlinx.coroutines.experimental.guide.exceptions02
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking {
-    val handler = CoroutineExceptionHandler { _, exception -> println("Caught $exception") }
-
+    val handler = CoroutineExceptionHandler { _, exception -> 
+        println("Caught $exception") 
+    }
     val job = launch(handler) {
         throw AssertionError()
     }
-
     val deferred = async(handler) {
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
-
     joinAll(job, deferred)
 }
