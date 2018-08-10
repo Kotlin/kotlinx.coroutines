@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.scheduling.SchedulerTestBase.Companion.checkPoolThreadsCreated
 import org.junit.*
 import org.junit.Test
@@ -14,14 +15,13 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CoroutineSchedulerStressTest : TestBase() {
-
     private var dispatcher: ExperimentalCoroutineDispatcher = ExperimentalCoroutineDispatcher()
     private val observedThreads = ConcurrentHashMap<Thread, Long>()
     private val tasksNum = 2_000_000 * stressMemoryMultiplier()
 
     private fun stressMemoryMultiplier(): Int {
         return if (isStressTest) {
-            Runtime.getRuntime().availableProcessors() * 4
+            AVAILABLE_PROCESSORS * 4
         } else {
             1
         }
@@ -81,7 +81,7 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     private fun stressTest(submissionInitiator: CoroutineDispatcher) {
         /*
-         * Run 1 million tasks and validate that
+         * Run 2 million tasks and validate that
          * 1) All of them are completed successfully
          * 2) Every thread executed task at least once
          */
@@ -94,7 +94,9 @@ class CoroutineSchedulerStressTest : TestBase() {
         })
 
         finishLatch.await()
-        assertTrue(Runtime.getRuntime().availableProcessors() in (observedThreads.size - 1)..observedThreads.size)
+        val n = observedThreads.size
+        println("Observed $n threads with $AVAILABLE_PROCESSORS available processors")
+        assertTrue(AVAILABLE_PROCESSORS in (n - 1)..n)
         validateResults()
     }
 
@@ -110,7 +112,6 @@ class CoroutineSchedulerStressTest : TestBase() {
     private fun validateResults() {
         val result = observedThreads.values.sum()
         assertEquals(tasksNum.toLong(), result)
-        checkPoolThreadsCreated(Runtime.getRuntime().availableProcessors())
+        checkPoolThreadsCreated(AVAILABLE_PROCESSORS)
     }
-
 }
