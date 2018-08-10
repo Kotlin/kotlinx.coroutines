@@ -4,10 +4,9 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import javafx.application.Platform
+import javafx.application.*
 import kotlinx.coroutines.experimental.*
-import org.junit.Before
-import org.junit.Test
+import org.junit.*
 
 class JavaFxTest : TestBase() {
     @Before
@@ -19,7 +18,7 @@ class JavaFxTest : TestBase() {
     fun testDelay() {
         try {
             initPlatform()
-        } catch (e: UnsupportedOperationException) {
+        } catch (e: Exception) {
             println("Skipping JavaFxTest in headless environment")
             return // ignore test in headless environments
         }
