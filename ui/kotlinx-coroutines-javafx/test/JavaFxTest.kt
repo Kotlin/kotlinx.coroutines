@@ -4,25 +4,12 @@
 
 package kotlinx.coroutines.experimental.javafx
 
-import javafx.application.*
+import javafx.application.Platform
 import kotlinx.coroutines.experimental.*
-import org.junit.*
+import org.junit.Before
 import org.junit.Test
-import kotlin.test.*
 
 class JavaFxTest : TestBase() {
-
-    companion object {
-        val fxEnabled: Boolean = try {
-            initPlatform()
-            true
-        } catch (e: Throwable) {
-            println("Skipping JavaFxTest in headless environment")
-            false
-        }
-
-    }
-
     @Before
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-")
@@ -30,9 +17,12 @@ class JavaFxTest : TestBase() {
 
     @Test
     fun testDelay() {
-       if (!fxEnabled) {
-           return // ignore test in headless environments
-       }
+        try {
+            initPlatform()
+        } catch (e: UnsupportedOperationException) {
+            println("Skipping JavaFxTest in headless environment")
+            return // ignore test in headless environments
+        }
 
         runBlocking {
             expect(1)
@@ -45,25 +35,6 @@ class JavaFxTest : TestBase() {
             }
             job.join()
             finish(4)
-        }
-    }
-
-    @Test
-    fun testRunBlockingForbidden() {
-        if (!fxEnabled) {
-            return // ignore test in headless environments
-        }
-
-        runBlocking(JavaFx) {
-            expect(1)
-            try {
-                runBlocking(JavaFx) {
-                    expectUnreached()
-                }
-            } catch (e: Exception) {
-                assertTrue(e.message!!.contains("runBlocking"))
-                finish(2)
-            }
         }
     }
 }

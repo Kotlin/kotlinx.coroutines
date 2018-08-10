@@ -10,8 +10,9 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.javafx.JavaFx.delay
-import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
@@ -74,14 +75,6 @@ object JavaFx : CoroutineDispatcher(), Delay {
     }
 
     override fun toString() = "JavaFx"
-}
-
-/**
- * @suppress This is an internal impl class.
- */
-class ApplicationThreadChecker : BlockingChecker {
-    override fun checkRunBlocking() =
-        check(!Platform.isFxApplicationThread()) { "runBlocking is not allowed in JavaFx application thread" }
 }
 
 internal fun initPlatform() {
