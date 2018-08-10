@@ -71,7 +71,7 @@ public actual val DefaultDispatcher: CoroutineDispatcher =
  *
  * **Debugging facilities:** In debug mode every coroutine is assigned a unique consecutive identifier.
  * Every thread that executes a coroutine has its name modified to include the name and identifier of the
- * currently currently running coroutine.
+ * currently running coroutine.
  * When one coroutine is suspended and resumes another coroutine that is dispatched in the same thread,
  * then the thread name displays
  * the whole stack of coroutine descriptions that are being executed on this thread.
