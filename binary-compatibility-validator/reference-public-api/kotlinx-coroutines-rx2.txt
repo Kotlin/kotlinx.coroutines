@@ -12,6 +12,8 @@ public final class kotlinx/coroutines/experimental/rx2/RxAwaitKt {
 }
 
 public final class kotlinx/coroutines/experimental/rx2/RxChannelKt {
+	public static final fun consumeEach (Lio/reactivex/MaybeSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun consumeEach (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final synthetic fun consumeEach (Lio/reactivex/ObservableSource;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun iterator (Lio/reactivex/ObservableSource;)Lkotlinx/coroutines/experimental/channels/ChannelIterator;
 	public static final fun open (Lio/reactivex/MaybeSource;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;

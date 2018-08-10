@@ -5,7 +5,7 @@
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.24.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.24.0)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin 1.2.51 release.
+This is a companion version for Kotlin 1.2.60 release.
 
 ```kotlin
 launch {
@@ -71,7 +71,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.51</kotlin.version>
+    <kotlin.version>1.2.60</kotlin.version>
 </properties>
 ```
 
@@ -87,7 +87,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.51'
+    ext.kotlin_version = '1.2.60'
 }
 ```
 
