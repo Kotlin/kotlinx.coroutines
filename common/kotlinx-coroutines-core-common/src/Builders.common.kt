@@ -7,7 +7,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internalAnnotations.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*

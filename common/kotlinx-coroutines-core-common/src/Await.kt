@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.experimental.internalAnnotations.Volatile
+import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.internal.*
 
 /**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
