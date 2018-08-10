@@ -20,10 +20,6 @@ public final class kotlinx/coroutines/experimental/AwaitKt {
 	public static final fun joinAll ([Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class kotlinx/coroutines/experimental/BlockingChecker {
-	public abstract fun checkRunBlocking ()V
-}
-
 public final class kotlinx/coroutines/experimental/BuildersKt {
 	public static final synthetic fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;

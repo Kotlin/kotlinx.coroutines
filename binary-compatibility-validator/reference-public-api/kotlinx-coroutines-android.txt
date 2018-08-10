@@ -23,8 +23,3 @@ public final class kotlinx/coroutines/experimental/android/HandlerContextKt {
 	public static final fun getUI ()Lkotlinx/coroutines/experimental/android/HandlerContext;
 }
 
-public final class kotlinx/coroutines/experimental/android/MainLooperChecker : kotlinx/coroutines/experimental/BlockingChecker {
-	public fun <init> ()V
-	public fun checkRunBlocking ()V
-}
-

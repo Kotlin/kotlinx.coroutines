@@ -5,11 +5,10 @@
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
-import android.support.annotation.*
 import android.view.*
 import kotlinx.coroutines.experimental.*
-import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Dispatches execution onto Android main UI thread and provides native [delay][Delay.delay] support.
@@ -113,13 +112,4 @@ public class HandlerContext private constructor(
     override fun toString() = name ?: handler.toString()
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)
-}
-
-/**
- * @suppress This is an internal impl class.
- */
-@Keep
-class MainLooperChecker : BlockingChecker {
-    override fun checkRunBlocking() =
-        check(Looper.myLooper() != Looper.getMainLooper()) { "runBlocking is not allowed in Android main looper thread" }
 }
