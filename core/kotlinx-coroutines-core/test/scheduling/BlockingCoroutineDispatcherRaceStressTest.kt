@@ -33,7 +33,7 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
             tasks.forEach { it.await() }
         }
 
-        checkPoolThreadsCreated(2..3)
+        checkPoolThreadsCreated(2..4)
     }
 
     @Test
