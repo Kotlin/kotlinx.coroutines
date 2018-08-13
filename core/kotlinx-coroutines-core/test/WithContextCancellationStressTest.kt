@@ -31,8 +31,8 @@ class WithContextCancellationStressTest : TestBase() {
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
             val jobWithContext = async(pool) {
-                barrier.await()
                 withContext(wrapperDispatcher(coroutineContext), start = CoroutineStart.ATOMIC) {
+                    barrier.await()
                     throw IOException()
                 }
             }

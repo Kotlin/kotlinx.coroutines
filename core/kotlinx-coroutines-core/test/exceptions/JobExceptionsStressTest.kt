@@ -28,7 +28,7 @@ class JobExceptionsStressTest : TestBase() {
          * Owner: launch 3 children, every of it throws an exception, and then call delay()
          * Result: one of the exceptions with the rest two as suppressed
          */
-        repeat(100 * stressTestMultiplier) {
+        repeat(1000 * stressTestMultiplier) {
             val exception = runBlock(executor) {
                 val barrier = CyclicBarrier(4)
                 val job = launch(coroutineContext.minusKey(Job)) {

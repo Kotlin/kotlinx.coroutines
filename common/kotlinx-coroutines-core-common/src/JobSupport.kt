@@ -252,7 +252,17 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      */
     private fun tryFinalizeStateActually(expect: Incomplete, update: Any?, mode: Int): Boolean {
         require(update !is Incomplete) // only incomplete -> completed transition is allowed
-        if (!_state.compareAndSet(expect, update)) return false // failed
+
+        /*
+         * We're publishing CompletedExceptionally as OpDescriptor to avoid races with parent:
+         * Job can't report exception before CAS (as it can fail), but after CAS there is a small window
+         * where the parent is considering this job (child) completed, though child has not yet reported its exception.
+         */
+        val updateValue = if (update is CompletedExceptionally) HandleExceptionOp(update) else update
+        if (!_state.compareAndSet(expect, updateValue)) return false // failed
+        if (updateValue is HandleExceptionOp) {
+            updateValue.perform(this) // help perform
+        }
         completeStateFinalization(expect, update, mode)
         return true
     }
@@ -262,13 +272,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
          * Now the job in THE FINAL state. We need to properly handle the resulting state.
          * Order of various invocations here is important.
          *
-         * 1) Standalone coroutines (launch/job) cancel their parent.
-         */
-        if (update is CompletedExceptionally) {
-            handleJobException(update.cause)
-        }
-        /*
-         * 2) Unregister from parent job.
+         * 1) Unregister from parent job.
          */
         parentHandle?.let {
             it.dispose() // volatile read parentHandle _after_ state was updated
@@ -276,14 +280,14 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
         val exceptionally = update as? CompletedExceptionally
         /*
-         * 3) Invoke onCancellationInternal: exception handling, resource cancellation etc.
+         * 2) Invoke onCancellationInternal: exception handling, resource cancellation etc.
          *    Only notify on cancellation once (expect.isCancelling)
          */
         if (!expect.isCancelling) {
             onCancellationInternal(exceptionally)
         }
         /*
-         * 4) Invoke completion handlers: .join(), callbacks etc.
+         * 3) Invoke completion handlers: .join(), callbacks etc.
          *    It's important to invoke them only AFTER exception handling, see #208
          */
         val cause = exceptionally?.cause
@@ -297,7 +301,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             expect.list?.notifyCompletion(cause)
         }
         /*
-         * 5) Invoke onCompletionInternal: onNext(), timeout deregistration etc.
+         * 4) Invoke onCompletionInternal: onNext(), timeout deregistration etc.
          *    It should be last so all callbacks observe consistent state
          *    of the job which doesn't depend on callback scheduling.
          */
@@ -1012,6 +1016,18 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             select.resumeSelectCancellableWithException(state.cause)
         else
             block.startCoroutineCancellable(state as T, select.completion)
+    }
+
+    class HandleExceptionOp(val original: CompletedExceptionally) : OpDescriptor() {
+
+        override fun perform(affected: Any?): Any? {
+            val job = (affected as JobSupport)
+            if (job._state.compareAndSet(this, original)) {
+                job.handleJobException(original.cause)
+            }
+
+            return null
+        }
     }
 }
 
