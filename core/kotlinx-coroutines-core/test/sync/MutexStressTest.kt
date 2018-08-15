@@ -24,7 +24,6 @@ class MutexStressTest : TestBase() {
             }
         }
         jobs.forEach { it.join() }
-        println("Shared value = $shared")
         assertEquals(n * k, shared)
     }
 }

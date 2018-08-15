@@ -24,12 +24,10 @@ class SchedulerTest : TestBase() {
         val mainThread = Thread.currentThread()
         withContext(Schedulers.single().asCoroutineDispatcher()) {
             val t1 = Thread.currentThread()
-            println(t1)
             assertThat(t1, IsNot(IsEqual(mainThread)))
             expect(2)
             delay(100)
             val t2 = Thread.currentThread()
-            println(t2)
             assertThat(t2, IsNot(IsEqual(mainThread)))
             expect(3)
         }

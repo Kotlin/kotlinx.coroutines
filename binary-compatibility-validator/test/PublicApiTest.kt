@@ -99,14 +99,12 @@ class PublicApiTest {
         val jarFile = getJarPath(base, jarPattern)
         val kotlinJvmMappingsFiles = listOf(base.resolve("../visibilities.json"))
 
-        println("Reading kotlin visibilities from $kotlinJvmMappingsFiles")
         val publicPackagePrefixes = publicPackages.map { it.replace('.', '/') + '/' }
         val visibilities =
                 kotlinJvmMappingsFiles
                         .map { readKotlinVisibilities(it).filterKeys { name -> publicPackagePrefixes.none { name.startsWith(it) } } }
                         .reduce { m1, m2 -> m1 + m2 }
 
-        println("Reading binary API from $jarFile")
         val api = getBinaryAPI(JarFile(jarFile), visibilities).filterOutNonPublic(nonPublicPackages)
 
         val target = File("reference-public-api")

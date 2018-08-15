@@ -11,7 +11,6 @@ internal class CopyOnWriteList<E>(private var array: Array<Any?> = arrayOfNulls(
     override val size: Int get() = _size
 
     override fun add(element: E): Boolean {
-        println("Add")
         val newSize = if (_size == array.size) array.size * 2 else  array.size
         val update = array.copyOf(newSize)
         update[_size++] = element

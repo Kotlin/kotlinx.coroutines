@@ -94,9 +94,8 @@ class CoroutineSchedulerStressTest : TestBase() {
         })
 
         finishLatch.await()
-        val n = observedThreads.size
-        println("Observed $n threads with $AVAILABLE_PROCESSORS available processors")
-        assertTrue(AVAILABLE_PROCESSORS in (n - 1)..n)
+        val observed = observedThreads.size
+        assertTrue(AVAILABLE_PROCESSORS in (observed - 1)..observed, "Observed $observed threads with $AVAILABLE_PROCESSORS available processors")
         validateResults()
     }
 

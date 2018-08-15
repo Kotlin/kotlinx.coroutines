@@ -155,12 +155,3 @@ private fun compute(coefficients: LongArray, start: Int, end: Int): Double {
 
     return result
 }
-
-
-fun main(args: Array<String>) {
-    // Hand-rollled test
-    val arr = LongArray(BATCH_SIZE * 8) { ThreadLocalRandom.current().nextLong(0, 100) }
-
-    println(ForkJoinPool.commonPool().submit(ForkJoinBenchmark.Task(arr, 0, arr.size)).join())
-    println(ForkJoinBenchmark.RecursiveAction(arr, 0, arr.size).invoke())
-}
