@@ -60,7 +60,7 @@ abstract class SchedulerTestBase : TestBase() {
     }
 
     private val exception = atomic<Throwable?>(null)
-    private val handler = CoroutineExceptionHandler({ _, e -> exception.value = e })
+    private val handler = CoroutineExceptionHandler { _, e -> exception.value = e }
 
     protected var corePoolSize = 1
     protected var maxPoolSize = 1024
@@ -87,6 +87,11 @@ abstract class SchedulerTestBase : TestBase() {
     protected fun blockingDispatcher(parallelism: Int): CoroutineContext {
         val intitialize = dispatcher
         return _dispatcher!!.blocking(parallelism) + handler
+    }
+
+    protected fun view(parallelism: Int): CoroutineContext {
+        val intitialize = dispatcher
+        return _dispatcher!!.limited(parallelism) + handler
     }
 
     fun initialPoolSize() = corePoolSize.coerceAtMost(2)
