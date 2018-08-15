@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
-import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
@@ -18,7 +17,7 @@ class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long
-) : CoroutineDispatcher(), Delay, Closeable {
+) : ExecutorCoroutineDispatcher(), Delay {
     constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE
@@ -27,6 +26,9 @@ class ExperimentalCoroutineDispatcher(
         maxPoolSize,
         IDLE_WORKER_KEEP_ALIVE_NS
     )
+
+    override val executor: Executor
+        get() = coroutineScheduler
 
     // This is variable for test purposes, so that we can reinitialize from clean state
     private var coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
@@ -40,6 +42,7 @@ class ExperimentalCoroutineDispatcher(
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>): Unit =
             DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
 
+    // TODO throw error when this API becomes public and close it in tests via another method
     override fun close() = coroutineScheduler.close()
 
     override fun toString(): String {
@@ -90,10 +93,17 @@ private class LimitingDispatcher(
     val dispatcher: ExperimentalCoroutineDispatcher,
     val parallelism: Int,
     override val taskMode: TaskMode
-) : CoroutineDispatcher(), Delay, TaskContext {
+) : ExecutorCoroutineDispatcher(), Delay, TaskContext, Executor {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
     private val inFlightTasks = atomic(0)
+
+    override val executor: Executor
+        get() = this
+
+    override fun execute(command: Runnable) = dispatch(command, false)
+
+    override fun close(): Unit = error("Close cannot be invoked on LimitingBlockingDispatcher")
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = dispatch(block, false)
 

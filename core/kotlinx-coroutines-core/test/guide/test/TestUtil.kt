@@ -100,7 +100,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
     for (i in 0 until n) {
         val thread = threads[i]
         if (thread is PoolThread)
-            thread.dispatcher.executor.apply {
+            (thread.dispatcher.executor as ExecutorService).apply {
                 shutdown()
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
                 shutdownNow().forEach { DefaultExecutor.execute(it) }
