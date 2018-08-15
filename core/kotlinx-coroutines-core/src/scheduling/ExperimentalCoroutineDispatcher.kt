@@ -48,14 +48,27 @@ class ExperimentalCoroutineDispatcher(
 
     /**
      * Creates new coroutine execution context with limited parallelism to execute tasks which may potentially block.
-     * Resulting [CoroutineDispatcher] doesn't own any resources (its threads) and piggybacks on the original [ExperimentalCoroutineDispatcher],
-     * executing tasks in this context, giving original dispatcher hint to adjust its behaviour.
+     * Resulting [CoroutineDispatcher] doesn't own any resources (its threads) and provides a view of the original [ExperimentalCoroutineDispatcher],
+     * giving it additional hints to adjust its behaviour.
      *
-     * @param parallelism parallelism level, indicating how many threads can execute tasks in given context in parallel.
+     * @param parallelism parallelism level, indicating how many threads can execute tasks in the resulting dispatcher parallel.
      */
-    fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
+    public fun blocking(parallelism: Int = BLOCKING_DEFAULT_PARALLELISM): CoroutineDispatcher {
         require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
-        return LimitingBlockingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
+        return LimitingDispatcher(this, parallelism, TaskMode.PROBABLY_BLOCKING)
+    }
+
+    /**
+     * Creates new coroutine execution context with limited parallelism to execute CPU-intensive tasks.
+     * Resulting [CoroutineDispatcher] doesn't own any resources (its threads) and provides a view of the original [ExperimentalCoroutineDispatcher],
+     * giving it additional hints to adjust its behaviour.
+     *
+     * @param parallelism parallelism level, indicating how many threads can execute tasks in the resulting dispatcher parallel.
+     */
+    public fun limited(parallelism: Int): CoroutineDispatcher {
+        require(parallelism > 0) { "Expected positive parallelism level, but have $parallelism" }
+        require(parallelism <= corePoolSize) { "Expected parallelism level lesser than core pool size ($corePoolSize), but have $parallelism" }
+        return LimitingDispatcher(this, parallelism, TaskMode.NON_BLOCKING)
     }
 
     internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean): Unit =
@@ -73,7 +86,7 @@ class ExperimentalCoroutineDispatcher(
     }
 }
 
-private class LimitingBlockingDispatcher(
+private class LimitingDispatcher(
     val dispatcher: ExperimentalCoroutineDispatcher,
     val parallelism: Int,
     override val taskMode: TaskMode
