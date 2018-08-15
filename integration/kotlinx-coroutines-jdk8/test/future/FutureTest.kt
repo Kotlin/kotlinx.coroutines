@@ -12,6 +12,7 @@ import org.junit.Assert.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
+import java.util.function.Supplier
 import kotlin.concurrent.*
 import kotlin.coroutines.experimental.*
 
@@ -312,6 +313,23 @@ class FutureTest : TestBase() {
             assertEquals("something went wrong", cause.message)
             assertSame(e, deferred.getCompletionExceptionOrNull()) // same exception is returns as thrown
         }
+    }
+
+    private val threadLocal = ThreadLocal<String>()
+
+    @Test
+    fun testApiBridge() = runTest {
+        val result = newSingleThreadContext("ctx").use {
+            val future = CompletableFuture.supplyAsync(Supplier { threadLocal.set("value") }, it.executor)
+            val job = async(it) {
+                future.await()
+                threadLocal.get()
+            }
+
+            job.await()
+        }
+
+        assertEquals("value", result)
     }
 
     class TestException(message: String) : Exception(message)

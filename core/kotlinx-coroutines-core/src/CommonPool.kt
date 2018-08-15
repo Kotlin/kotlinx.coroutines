@@ -21,7 +21,7 @@ import kotlin.coroutines.experimental.*
  * pool is created. This is to work around the fact that ForkJoinPool creates threads that cannot perform
  * privileged actions.
  */
-object CommonPool : CoroutineDispatcher() {
+object CommonPool : ExecutorCoroutineDispatcher() {
 
     /**
      * Name of the property that controls default parallelism level of [CommonPool].
@@ -30,6 +30,9 @@ object CommonPool : CoroutineDispatcher() {
      * `Runtime.getRuntime().availableProcessors()` is not aware of container constraints and will return the real number of cores.
      */
     public const val DEFAULT_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.default.parallelism"
+
+    override val executor: Executor
+        get() = pool ?: getOrCreatePoolSync()
 
     // Equals to -1 if not explicitly specified
     private val requestedParallelism = run<Int> {
@@ -132,4 +135,6 @@ object CommonPool : CoroutineDispatcher() {
     }
 
     override fun toString(): String = "CommonPool"
+
+    override fun close(): Unit = error("Close cannot be invoked on CommonPool")
 }

@@ -62,7 +62,7 @@ internal class CoroutineScheduler(
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long = IDLE_WORKER_KEEP_ALIVE_NS,
     private val schedulerName: String = DEFAULT_SCHEDULER_NAME
-) : Closeable {
+) : Executor, Closeable {
     init {
         require(corePoolSize >= MIN_SUPPORTED_POOL_SIZE) {
             "Core pool size $corePoolSize should be at least $MIN_SUPPORTED_POOL_SIZE"
@@ -289,6 +289,8 @@ internal class CoroutineScheduler(
         private const val PARKED_VERSION_MASK = CREATED_MASK.inv()
         private const val PARKED_VERSION_INC = 1L shl BLOCKING_SHIFT
     }
+
+    override fun execute(command: Runnable) = dispatch(command)
 
     override fun close() = shutdown(1000L)
 
