@@ -144,7 +144,7 @@ public interface DispatchedTask<in T> : Runnable {
                 else {
                     val exception = getExceptionalResult(state)
                     if (exception != null)
-                        continuation.resumeWithException(exception)
+                        continuation.resumeWithException(augmentException(exception))
                     else
                         continuation.resume(getSuccessfulResult(state))
                 }
