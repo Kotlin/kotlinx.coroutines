@@ -70,7 +70,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitSuccess() = runBlocking<Unit> {
+    fun testAwaitSuccess() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(3)
@@ -81,7 +81,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitFailure() = runBlocking<Unit> {
+    fun testAwaitFailure() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(3)

@@ -1,3 +1,6 @@
 package kotlinx.coroutines.experimental.internal
 
-internal actual fun <E: Throwable> augmentException(e: E): E = e
+import kotlin.coroutines.experimental.*
+
+internal actual fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E = exception
+internal actual fun <E : Throwable> recoverStackTrace(exception: E): E = exception

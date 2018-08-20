@@ -144,7 +144,7 @@ public interface DispatchedTask<in T> : Runnable {
                 else {
                     val exception = getExceptionalResult(state)
                     if (exception != null)
-                        continuation.resumeWithException(augmentException(exception))
+                        continuation.resumeWithException(recoverStackTrace(exception, continuation))
                     else
                         continuation.resume(getSuccessfulResult(state))
                 }
@@ -176,7 +176,7 @@ public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
     val state = takeState()
     val exception = getExceptionalResult(state)
     if (exception != null) {
-        delegate.resumeWithExceptionMode(exception, useMode)
+        delegate.resumeWithExceptionMode(recoverStackTrace(exception, delegate), useMode)
     } else {
         delegate.resumeMode(getSuccessfulResult(state), useMode)
     }

@@ -46,10 +46,10 @@ class ChannelLinearizabilityTest : TestBase() {
     fun receive3() = lt.run("receive3") { channel.receive() }
 
     @Operation(runOnce = true)
-    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
+    fun close1() = lt.run("close1") { channel.close(NonAugmentableException(1, "close1")) }
 
     @Operation(runOnce = true)
-    fun close2() = lt.run("close2") { channel.close(IOException("close2")) }
+    fun close2() = lt.run("close2") { channel.close(NonAugmentableException(2, "close2")) }
 
     @Test
     fun testRendezvousChannelLinearizability() {

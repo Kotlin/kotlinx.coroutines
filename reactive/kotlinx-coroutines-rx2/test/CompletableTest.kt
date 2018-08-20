@@ -12,7 +12,7 @@ import kotlin.coroutines.experimental.*
 
 class CompletableTest : TestBase() {
     @Test
-    fun testBasicSuccess() = runBlocking<Unit> {
+    fun testBasicSuccess() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(4)
@@ -27,7 +27,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testBasicFailure() = runBlocking<Unit> {
+    fun testBasicFailure() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(4)
@@ -70,7 +70,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitSuccess() = runBlocking<Unit> {
+    fun testAwaitSuccess() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(3)
@@ -81,7 +81,7 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitFailure() = runBlocking<Unit> {
+    fun testAwaitFailure() = runBlocking {
         expect(1)
         val completable = rxCompletable(coroutineContext) {
             expect(3)
