@@ -66,4 +66,20 @@ class RunBlockingTest : TestBase() {
         finish(4)
         thread.close()
     }
+
+
+    @Test
+    fun testCancellation() {
+        val job = launch(DefaultDispatcher) {
+            runBlocking(coroutineContext) {
+                while(true) {
+                    yield()
+                }
+            }
+        }
+
+        runBlocking {
+            job.cancelAndJoin()
+        }
+    }
 }
