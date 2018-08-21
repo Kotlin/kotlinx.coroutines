@@ -279,7 +279,7 @@ internal class SelectBuilderImpl<in R>(
         if (isSelected) newRegistration.dispose()
     }
 
-    private inner class SelectOnCancellation(job: Job) : JobCancellationNode<Job>(job) {
+    private inner class SelectOnCancellation(job: Job) : JobCancellationNode(job) {
         // Note: may be invoked multiple times, but only the first trySelect succeeds anyway
         override fun invoke(cause: Throwable?) {
             if (trySelect(null))

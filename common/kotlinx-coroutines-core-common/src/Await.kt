@@ -61,7 +61,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     suspend fun await(): List<T> = suspendCancellableCoroutine { cont ->
         // Intricate dance here
         // Step 1: Create nodes and install them as completion handlers, they may fire!
-        val nodes = Array<AwaitAllNode>(deferreds.size) { i ->
+        val nodes = Array(deferreds.size) { i ->
             val deferred = deferreds[i]
             deferred.start() // To properly await lazily started deferreds
             AwaitAllNode(cont, deferred).apply {
@@ -90,7 +90,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         override fun toString(): String = "DisposeHandlersOnCancel[$nodes]"
     }
 
-    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode<Job>(job) {
+    private inner class AwaitAllNode(private val continuation: CancellableContinuation<List<T>>, job: Job) : JobNode(job) {
         lateinit var handle: DisposableHandle
 
         @Volatile
