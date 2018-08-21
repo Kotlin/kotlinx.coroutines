@@ -2,26 +2,26 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-plugins {
-    id "me.champeau.gradle.jmh" version "0.4.4"
-}
+apply plugin: "net.ltgt.apt"
+apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: "me.champeau.gradle.jmh"
 
 repositories {
     maven { url "http://repo.typesafe.com/typesafe/releases/" }
 }
 
-dependencies {
-    jmh 'com.typesafe.akka:akka-actor_2.12:2.5.0'
-    jmh project(':kotlinx-coroutines-core-common')
-    jmh project(':kotlinx-coroutines-core')
-    jmh project(':kotlinx-coroutines-core').sourceSets.test.output
+jmh.jmhVersion = '1.21'
+
+jmhJar {
+    baseName 'benchmarks'
+    classifier = null
+    version = null
 }
 
-jmh.jmhVersion = '1.19'
-
-jmhJar.archiveName = 'benchmarks.jar'
-
-//jmh {
-//    include = ['.*Channel.*Benchmark']
-//    exclude = ['.*Guice.*', '.*PingPong.*']
-//}
+dependencies {
+    compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
+    compile project(':kotlinx-coroutines-core-common')
+    compile project(':kotlinx-coroutines-core')
+    compile project(':kotlinx-coroutines-core').sourceSets.test.output
+    compile "org.openjdk.jmh:jmh-core:1.21"
+}
