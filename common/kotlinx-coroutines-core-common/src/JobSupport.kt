@@ -956,12 +956,15 @@ internal abstract class JobCancellationNode(job: Job) : JobNode(job)
 
 private class InvokeOnCancellation(
     job: Job,
-    private val handler: CompletionHandler
+    handler: CompletionHandler
 ) : JobCancellationNode(job)  {
-    // delegate handler shall be invoked at most once, so here is an additional flag
-    private val _invoked = atomic(0)
+    // delegate handler shall be invoked at most once, so here is an additional protection
+    private val handler = atomic<CompletionHandler?>(handler)
     override fun invoke(cause: Throwable?) {
-        if (_invoked.compareAndSet(0, 1)) handler.invoke(cause)
+        val previous = handler.value
+        if (previous != null && handler.compareAndSet(previous, null)) {
+            previous.invoke(cause)
+        }
     }
     override fun toString() = "InvokeOnCancellation[$classSimpleName@$hexAddress]"
 }
