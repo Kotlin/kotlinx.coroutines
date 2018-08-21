@@ -12,7 +12,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {
-
     /**
      * Tests a case of no timeout and no suspension inside.
      */
