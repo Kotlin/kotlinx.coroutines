@@ -12,36 +12,42 @@ import kotlin.coroutines.experimental.*
  * every time the coroutine with this element in the context is resumed on a thread.
  *
  * Implementations of this interface define a type [S] of the thread-local state that they need to store on
- * resume of a coroutine and restore later on suspend and the infrastructure provides the corresponding storage.
+ * resume of a coroutine and restore later on suspend. The infrastructure provides the corresponding storage.
  *
  * Example usage looks like this:
  *
  * ```
- * // declare thread local variable holding MyData
- * private val myThreadLocal = ThreadLocal<MyData?>()
- *
- * // declare context element holding MyData
- * class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
+ * // Appends "name" of a coroutine to a current thread name when coroutine is executed
+ * class CoroutineName(val name: String) : ThreadContextElement<String> {
  *     // declare companion object for a key of this element in coroutine context
- *     companion object Key : CoroutineContext.Key<MyElement>
+ *     companion object Key : CoroutineContext.Key<CoroutineName>
  *
  *     // provide the key of the corresponding context element
- *     override val key: CoroutineContext.Key<MyElement>
+ *     override val key: CoroutineContext.Key<CoroutineName>
  *         get() = Key
  *
  *     // this is invoked before coroutine is resumed on current thread
- *     override fun updateThreadContext(context: CoroutineContext): MyData? {
- *         val oldState = myThreadLocal.get()
- *         myThreadLocal.set(data)
- *         return oldState
+ *     override fun updateThreadContext(context: CoroutineContext): String {
+ *         val previousName = Thread.currentThread().name
+ *         Thread.currentThread().name = "$previousName # $name"
+ *         return previousName
  *     }
  *
  *     // this is invoked after coroutine has suspended on current thread
- *     override fun restoreThreadContext(context: CoroutineContext, oldState: MyData?) {
- *         myThreadLocal.set(oldState)
+ *     override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
+ *         Thread.currentThread().name = oldState
  *     }
  * }
+ *
+ * // Usage
+ * launch(UI + CoroutineName("Progress bar coroutine")) { ... }
  * ```
+ *
+ * Every time this coroutine is resumed on a thread, UI thread name is updated to
+ * "UI thread original name # Progress bar coroutine" and the thread name is restored to the original one when
+ * this coroutine suspends.
+ *
+ * To use [ThreadLocal] variable within the coroutine use [ThreadLocal.asContextElement][asContextElement] function.
  */
 public interface ThreadContextElement<S> : CoroutineContext.Element {
     /**
@@ -67,87 +73,44 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
     public fun restoreThreadContext(context: CoroutineContext, oldState: S)
 }
 
-private val ZERO = Symbol("ZERO")
-
-// Used when there are >= 2 active elements in the context
-private class ThreadState(val context: CoroutineContext, n: Int) {
-    private var a = arrayOfNulls<Any>(n)
-    private var i = 0
-
-    fun append(value: Any?) { a[i++] = value }
-    fun take() = a[i++]
-    fun start() { i = 0 }
-}
-
-// Counts ThreadContextElements in the context
-// Any? here is Int | ThreadContextElement (when count is one)
-private val countAll =
-    fun (countOrElement: Any?, element: CoroutineContext.Element): Any? {
-        if (element is ThreadContextElement<*>) {
-            val inCount = countOrElement as? Int ?: 1
-            return if (inCount == 0) element else inCount + 1
-        }
-        return countOrElement
-    }
-
-// Find one (first) ThreadContextElement in the context, it is used when we know there is exactly one
-private val findOne =
-    fun (found: ThreadContextElement<*>?, element: CoroutineContext.Element): ThreadContextElement<*>? {
-        if (found != null) return found
-        return element as? ThreadContextElement<*>
-    }
-
-// Updates state for ThreadContextElements in the context using the given ThreadState
-private val updateState =
-    fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
-        if (element is ThreadContextElement<*>) {
-            state.append(element.updateThreadContext(state.context))
-        }
-        return state
-    }
-
-// Restores state for all ThreadContextElements in the context from the given ThreadState
-private val restoreState =
-    fun (state: ThreadState, element: CoroutineContext.Element): ThreadState {
-        @Suppress("UNCHECKED_CAST")
-        if (element is ThreadContextElement<*>) {
-            (element as ThreadContextElement<Any?>).restoreThreadContext(state.context, state.take())
-        }
-        return state
-    }
-
-internal fun updateThreadContext(context: CoroutineContext): Any? {
-    val count = context.fold(0, countAll)
-    @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
-    return when {
-        count === 0 -> ZERO // very fast path when there are no active ThreadContextElements
-        //    ^^^ identity comparison for speed, we know zero always has the same identity
-        count is Int -> {
-            // slow path for multiple active ThreadContextElements, allocates ThreadState for multiple old values
-            context.fold(ThreadState(context, count), updateState)
-        }
-        else -> {
-            // fast path for one ThreadContextElement (no allocations, no additional context scan)
-            @Suppress("UNCHECKED_CAST")
-            val element = count as ThreadContextElement<Any?>
-            element.updateThreadContext(context)
-        }
-    }
-}
-
-internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
-    when {
-        oldState === ZERO -> return // very fast path when there are no ThreadContextElements
-        oldState is ThreadState -> {
-            // slow path with multiple stored ThreadContextElements
-            oldState.start()
-            context.fold(oldState, restoreState)
-        }
-        else -> {
-            // fast path for one ThreadContextElement, but need to find it
-            @Suppress("UNCHECKED_CAST")
-            val element = context.fold(null, findOne) as ThreadContextElement<Any?>
-            element.restoreThreadContext(context, oldState)
-        }
-    }
-}
+/**
+ * Wraps [ThreadLocal] into [ThreadContextElement]. The resulting [ThreadContextElement]
+ * maintains the given [value] of the given [ThreadLocal] for coroutine regardless of the actual thread its is resumed on.
+ * By default [ThreadLocal.get] is used as a value for the thread-local variable, but it can be overridden with [value] parameter.
+ *
+ * Example usage looks like this:
+ *
+ * ```
+ * val myThreadLocal = ThreadLocal<String?>()
+ * ...
+ * println(myThreadLocal.get()) // Prints "null"
+ * launch(CommonPool + myThreadLocal.asContextElement(initialValue = "foo")) {
+ *   println(myThreadLocal.get()) // Prints "foo"
+ *   withContext(UI) {
+ *     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
+ *   }
+ * }
+ * println(myThreadLocal.get()) // Prints "null"
+ * ```
+ *
+ * Note that the context element does not track modifications of the thread-local variable, for example:
+ *
+ * ```
+ * myThreadLocal.set("main")
+ * withContext(UI) {
+ *   println(myThreadLocal.get()) // Prints "main"
+ *   myThreadLocal.set("UI")
+ * }
+ * println(myThreadLocal.get()) // Prints "main", not "UI"
+ * ```
+ *
+ * Use `withContext` to update the corresponding thread-local variable to a different value, for example:
+ *
+ * ```
+ * withContext(myThreadLocal.asContextElement("foo")) {
+ *     println(myThreadLocal.get()) // Prints "foo"
+ * }
+ * ```
+ */
+public fun <T> ThreadLocal<T>.asContextElement(value: T = get()): ThreadContextElement<T> =
+    ThreadLocalElement(value, this)
