@@ -52,6 +52,39 @@ class ThreadContextElementTest : TestBase() {
         job.join()
         assertNull(myThreadLocal.get())
     }
+
+
+    @Test
+    fun testWithContext() = runTest {
+        expect(1)
+        newSingleThreadContext("withContext").use {
+            val data = MyData()
+            async(CommonPool + MyElement(data)) {
+                assertSame(data, myThreadLocal.get())
+                expect(2)
+
+                val newData = MyData()
+                async(it + MyElement(newData)) {
+                    assertSame(newData, myThreadLocal.get())
+                    expect(3)
+                }.await()
+
+                withContext(it + MyElement(newData)) {
+                    assertSame(newData, myThreadLocal.get())
+                    expect(4)
+                }
+
+                async(it) {
+                    assertNull(myThreadLocal.get())
+                    expect(5)
+                }.await()
+
+                expect(6)
+            }.await()
+        }
+
+        finish(7)
+    }
 }
 
 class MyData

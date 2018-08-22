@@ -446,6 +446,11 @@ public final class kotlinx/coroutines/experimental/ThreadContextElement$DefaultI
 	public static fun plus (Lkotlinx/coroutines/experimental/ThreadContextElement;Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
 }
 
+public final class kotlinx/coroutines/experimental/ThreadContextElementKt {
+	public static final fun asContextElement (Ljava/lang/ThreadLocal;Ljava/lang/Object;)Lkotlinx/coroutines/experimental/ThreadContextElement;
+	public static synthetic fun asContextElement$default (Ljava/lang/ThreadLocal;Ljava/lang/Object;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/ThreadContextElement;
+}
+
 public final class kotlinx/coroutines/experimental/ThreadPoolDispatcher : kotlinx/coroutines/experimental/ExecutorCoroutineDispatcherBase {
 	public fun close ()V
 	public fun getExecutor ()Ljava/util/concurrent/Executor;

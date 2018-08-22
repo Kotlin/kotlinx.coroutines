@@ -268,6 +268,16 @@ class GuideTest {
     }
 
     @Test
+    fun testKotlinxCoroutinesExperimentalGuideContext11() {
+        test("KotlinxCoroutinesExperimentalGuideContext11") { kotlinx.coroutines.experimental.guide.context11.main(emptyArray()) }.verifyLinesFlexibleThread(
+            "Pre-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'",
+            "Launch start, current thread: Thread[main @coroutine#2,5,main], thread local value: 'launch'",
+            "After yield, current thread: Thread[ForkJoinPool.commonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'",
+            "Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'"
+        )
+    }
+
+    @Test
     fun testKotlinxCoroutinesExperimentalGuideExceptions01() {
         test("KotlinxCoroutinesExperimentalGuideExceptions01") { kotlinx.coroutines.experimental.guide.exceptions01.main(emptyArray()) }.verifyExceptions(
             "Throwing exception from launch",
