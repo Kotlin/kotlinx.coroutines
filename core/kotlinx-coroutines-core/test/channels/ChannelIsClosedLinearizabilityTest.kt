@@ -36,7 +36,7 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
     fun receive2() = lt.run("receive2") { channel.receive() }
 
     @Operation(runOnce = true)
-    fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
+    fun close1() = lt.run("close1") { channel.close(NonAugmentableException(1, "close1")) }
 
     @Operation(runOnce = true)
     fun isClosedForReceive() = lt.run("isClosedForReceive") { channel.isClosedForReceive }

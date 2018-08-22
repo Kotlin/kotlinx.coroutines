@@ -766,7 +766,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result
-                if (state is CompletedExceptionally) throw state.cause
+                if (state is CompletedExceptionally) throw recoverStackTrace(state.cause)
                 return state
 
             }

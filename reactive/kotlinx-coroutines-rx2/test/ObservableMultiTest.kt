@@ -31,7 +31,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable<Int>(DefaultDispatcher) {
+        val observable = rxObservable(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -43,7 +43,7 @@ class ObservableMultiTest : TestBase() {
         }
         checkSingleValue(observable.toList()) { list ->
             assertEquals(n, list.size)
-            assertEquals((0..n - 1).toList(), list.sorted())
+            assertEquals((0 until n).toList(), list.sorted())
         }
     }
 
@@ -54,7 +54,7 @@ class ObservableMultiTest : TestBase() {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
@@ -65,7 +65,7 @@ class ObservableMultiTest : TestBase() {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 

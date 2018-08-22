@@ -241,8 +241,9 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
                 throw thrownException
             }
         } catch (e: Exception) {
-            assertTrue(e is T)
-            exceptionChecker(e as T)
+            val target = e as? CancellationException ?: e.cause
+            assertTrue(target is T)
+            exceptionChecker(target as T)
             finish(3)
             return
         }
