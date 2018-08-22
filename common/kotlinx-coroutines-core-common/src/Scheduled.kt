@@ -134,17 +134,17 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
 public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T? {
     if (time <= 0L) return null
 
-    var coroutine: TimeoutCoroutine<T?, T?>? = null
+    // Workaround for K/N bug
+    val array = arrayOfNulls<TimeoutCoroutine<T?, T?>>(1)
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
-            TimeoutCoroutine(time, unit, uCont).let {
-                coroutine = it
-                setupTimeout<T?, T?>(it, block)
-            }
+            val timeoutCoroutine = TimeoutCoroutine(time, unit, uCont)
+            array[0] = timeoutCoroutine
+            setupTimeout<T?, T?>(timeoutCoroutine, block)
         }
     } catch (e: TimeoutCancellationException) {
         // Return null iff it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
-        if (e.coroutine === coroutine) {
+        if (e.coroutine === array[0]) {
             return null
         }
         throw e
