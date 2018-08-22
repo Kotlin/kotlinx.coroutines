@@ -38,7 +38,6 @@ class SelectPhilosophersStressTest : TestBase() {
 
     @Test
     fun testPhilosophers() = runBlocking<Unit> {
-        println("--- SelectPhilosophersStressTest")
         val timeLimit = System.currentTimeMillis() + TEST_DURATION
         val philosophers = List<Deferred<Int>>(n) { id ->
             async {

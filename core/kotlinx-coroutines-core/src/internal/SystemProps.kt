@@ -18,6 +18,16 @@ internal fun systemProp(
 
 internal fun systemProp(
     propertyName: String,
+    defaultValue: Boolean
+): Boolean =
+    try {
+        System.getProperty(propertyName)?.toBoolean() ?: defaultValue
+    } catch (e: SecurityException) {
+        defaultValue
+    }
+
+internal fun systemProp(
+    propertyName: String,
     defaultValue: Int,
     minValue: Int = 1,
     maxValue: Int = Int.MAX_VALUE

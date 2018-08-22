@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.guide.test
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
@@ -21,14 +22,17 @@ private inline fun <T> outputException(name: String, block: () -> T): T =
     }
 
 private const val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
+private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 
 fun test(name: String, block: () -> Unit): List<String> = outputException(name) {
-    println("--- Running test$name")
-    val oldOut = System.out
+    val sout = System.out
+    val oldOut = if (OUT_ENABLED) System.out else NullOut
     val oldErr = System.err
     val bytesOut = ByteArrayOutputStream()
     val tee = TeeOutput(bytesOut, oldOut)
     val ps = PrintStream(tee)
+
+    oldOut.println("--- Running test$name")
     System.setErr(ps)
     System.setOut(ps)
     CommonPool.usePrivatePool()
@@ -53,7 +57,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
             CommonPool.restore()
             if (tee.flushLine()) oldOut.println()
             oldOut.println("--- done")
-            System.setOut(oldOut)
+            System.setOut(sout)
             System.setErr(oldErr)
             checkTestThreads(threadsBefore)
         }
@@ -144,27 +148,27 @@ private fun List<String>.checkEqualNumberOfLines(expected: Array<out String>) {
         error("Expected ${expected.size} lines, but found $size")
 }
 
-fun List<String>.verifyLines(vararg expected: String) {
+fun List<String>.verifyLines(vararg expected: String) = verify {
     verifyCommonLines(expected)
     checkEqualNumberOfLines(expected)
 }
 
-fun List<String>.verifyLinesStartWith(vararg expected: String) {
+fun List<String>.verifyLinesStartWith(vararg expected: String) = verify {
     verifyCommonLines(expected)
     assertTrue("Number of lines", expected.size <= size)
 }
 
-fun List<String>.verifyLinesArbitraryTime(vararg expected: String) {
+fun List<String>.verifyLinesArbitraryTime(vararg expected: String) = verify {
     verifyCommonLines(expected, SanitizeMode.ARBITRARY_TIME)
     checkEqualNumberOfLines(expected)
 }
 
-fun List<String>.verifyLinesFlexibleThread(vararg expected: String) {
+fun List<String>.verifyLinesFlexibleThread(vararg expected: String) = verify {
     verifyCommonLines(expected, SanitizeMode.FLEXIBLE_THREAD)
     checkEqualNumberOfLines(expected)
 }
 
-fun List<String>.verifyLinesStartUnordered(vararg expected: String) {
+fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
     val expectedSorted = expected.sorted().toTypedArray()
     sorted().verifyLinesStart(*expectedSorted)
 }
@@ -181,7 +185,7 @@ fun List<String>.verifyExceptions(vararg expected: String) {
 }
 
 
-fun List<String>.verifyLinesStart(vararg expected: String) {
+fun List<String>.verifyLinesStart(vararg expected: String) = verify {
     val n = minOf(size, expected.size)
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
@@ -189,4 +193,23 @@ fun List<String>.verifyLinesStart(vararg expected: String) {
         assertEquals("Line ${i + 1}", exp, act.substring(0, minOf(act.length, exp.length)))
     }
     checkEqualNumberOfLines(expected)
+}
+
+private object NullOut : PrintStream(NullOutputStream())
+
+private class NullOutputStream : OutputStream() {
+    override fun write(b: Int) = Unit
+}
+
+private inline fun List<String>.verify(verification: () -> Unit) {
+    try {
+        verification()
+    } catch (t: Throwable) {
+        if (!OUT_ENABLED) {
+            println("Printing [delayed] test output")
+            forEach { println(it) }
+        }
+
+        throw t
+    }
 }

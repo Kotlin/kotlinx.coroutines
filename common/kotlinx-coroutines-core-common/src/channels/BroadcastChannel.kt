@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.internalAnnotations.*
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers

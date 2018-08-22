@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.internalAnnotations.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 

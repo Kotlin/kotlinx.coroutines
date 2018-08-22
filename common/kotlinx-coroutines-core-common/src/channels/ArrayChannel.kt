@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.internalAnnotations.Volatile
 import kotlinx.coroutines.experimental.selects.*
 
 /**

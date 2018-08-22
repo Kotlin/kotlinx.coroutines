@@ -56,22 +56,6 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
     }
 
     @Test(timeout = 1_000)
-    fun testNoExcessContextSwitches() = runTest {
-        val job = launch(dispatcher) {
-            val thread = Thread.currentThread()
-
-            val blockingJob = launch(blockingDispatcher.value) {
-                require(thread === Thread.currentThread())
-            }
-
-            blockingJob.join()
-            require(thread === Thread.currentThread())
-        }
-
-        job.join()
-    }
-
-    @Test(timeout = 1_000)
     fun testNoCpuStarvation() = runBlocking {
         val tasksNum = 100
         val barrier = CyclicBarrier(tasksNum + 1)

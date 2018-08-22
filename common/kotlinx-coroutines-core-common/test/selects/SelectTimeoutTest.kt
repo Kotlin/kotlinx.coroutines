@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectTimeoutTest : TestBase() {
-
     @Test
     fun testBasic() = runTest {
         expect(1)
@@ -70,13 +69,13 @@ class SelectTimeoutTest : TestBase() {
         val iterations =10_000
         for (i in 0..iterations) {
             val result = selectUnbiased<Int> {
-                onTimeout(-10) {
+                onTimeout(-1000) {
                     0
                 }
                 onTimeout(0) {
                     1
                 }
-                onTimeout(10) {
+                onTimeout(1000) {
                     expectUnreached()
                     2
                 }

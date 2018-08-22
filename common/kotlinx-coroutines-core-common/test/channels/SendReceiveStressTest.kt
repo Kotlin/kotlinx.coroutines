@@ -28,7 +28,7 @@ class SendReceiveStressTest : TestBase() {
     }
 
     private suspend fun testStress(channel: Channel<Int>) {
-        val n = 1_000 // Do not increase, otherwise node.js will fail with timeout :(
+        val n = 100 // Do not increase, otherwise node.js will fail with timeout :(
         val sender = launch(coroutineContext) {
             for (i in 1..n) {
                 channel.send(i)

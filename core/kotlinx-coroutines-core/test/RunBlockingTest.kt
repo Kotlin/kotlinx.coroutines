@@ -66,4 +66,20 @@ class RunBlockingTest : TestBase() {
         finish(4)
         thread.close()
     }
+
+
+    @Test
+    fun testCancellation() = newFixedThreadPoolContext(2, "testCancellation").use {
+        val job = launch(it) {
+            runBlocking(coroutineContext) {
+                while (true) {
+                    yield()
+                }
+            }
+        }
+
+        runBlocking {
+            job.cancelAndJoin()
+        }
+    }
 }

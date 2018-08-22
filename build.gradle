@@ -36,6 +36,11 @@ buildscript {
         classpath "org.jetbrains.kotlinx:atomicfu-gradle-plugin:$atomicFU_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
+
+        // JMH plugins
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.2"
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.7"
+        classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
     }
 }
 
@@ -165,11 +170,10 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
-
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+        // dump declarations from main JVM module for binary-compatibility-validator
+        compileKotlin {
             kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
         }
-
     }
 }
 

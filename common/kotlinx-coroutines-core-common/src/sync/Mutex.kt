@@ -10,7 +10,6 @@ import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internalAnnotations.*
 
 /**
  * Mutual exclusion for coroutines.
