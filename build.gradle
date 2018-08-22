@@ -170,11 +170,10 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
-
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+        // dump declarations from main JVM module for binary-compatibility-validator
+        compileKotlin {
             kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
         }
-
     }
 }
 
