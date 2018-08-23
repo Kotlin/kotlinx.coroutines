@@ -35,10 +35,12 @@
 
 <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-<p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+<p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>.
+The result is <code>true</code> if this job was either cancelled as a result of this invocation
+or it’s being cancelled and given <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a> was successfully received by the job and will be properly handled, <code>false</code> otherwise.</p>
+
+<p>If this method returned <code>false</code>, then caller is responsible for handling <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>.
+If job is already completed, method returns <code>false</code>.</p>
 
 <p>When cancellation has a clear reason in the code, an instance of <a href="../-cancellation-exception/index.html">CancellationException</a> should be created
 at the corresponding original cancellation site and passed into this method to aid in debugging by providing

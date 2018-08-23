@@ -272,7 +272,7 @@ This clause never fails, even if the job completes exceptionally.</p>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
-returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.</p>
+returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally or was cancelled.</p>
 
       </td>
 </tr>
@@ -322,10 +322,9 @@ returning the resulting value or throwing the corresponding exception if the def
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Cancels this job with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+        <p>Cancels this job with an optional cancellation <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>.
+The result is <code>true</code> if this job was either cancelled as a result of this invocation
+or it’s being cancelled and given <a href="../-job/cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a> was successfully received by the job and will be properly handled, <code>false</code> otherwise.</p>
 
       </td>
 </tr>
@@ -425,18 +424,7 @@ if it was already started or completed.</p>
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JS"><td>
-
-        <p><a href="../as-promise.html">asPromise</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../as-promise.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">asPromise</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html"><span class="identifier">Promise</span></a><span class="symbol">&lt;</span><a href="../as-promise.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Converts this deferred value to the instance of <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.js/-promise/index.html">Promise</a>.</p>
-
-      </td>
-</tr><tr>
+<tr>
 <td>
 
         <p><a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html">cancel</a></p>
@@ -464,7 +452,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
 
@@ -476,7 +465,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="../dispose-on-completion.html">disposeOnCompletion</a></p>

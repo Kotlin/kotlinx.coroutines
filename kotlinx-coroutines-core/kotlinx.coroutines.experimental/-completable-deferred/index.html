@@ -130,7 +130,7 @@ completed as a result of this invocation and <code>false</code> otherwise (if it
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">await</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-deferred/index.html#T"><span class="identifier">T</span></a></code></div>
 
         <p>Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
-returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.</p>
+returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally or was cancelled.</p>
 
       </td>
 </tr>
@@ -220,7 +220,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
 
@@ -232,7 +233,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="../dispose-on-completion.html">disposeOnCompletion</a></p>

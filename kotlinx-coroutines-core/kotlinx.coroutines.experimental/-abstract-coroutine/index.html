@@ -253,7 +253,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
 
@@ -265,7 +266,8 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="../dispose-on-completion.html">disposeOnCompletion</a></p>
@@ -305,7 +307,7 @@ this job is complete.</p>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">&gt;</span> <a href="./index.md"><span class="identifier">AbstractCoroutine</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">startUndispatchedOrReturn</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/receiver">receiver</span><span class="symbol">:</span>&nbsp;<a href="../../kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.R, kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html#R"><span class="identifier">R</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../../kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span></code></div>
 
         <p>Starts this coroutine with the given code <a href="../../kotlinx.coroutines.experimental.intrinsics/start-undispatched-or-return.html#kotlinx.coroutines.experimental.intrinsics$startUndispatchedOrReturn(kotlinx.coroutines.experimental.AbstractCoroutine((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)), kotlin.SuspendFunction0((kotlinx.coroutines.experimental.intrinsics.startUndispatchedOrReturn.T)))/block">block</a> in the same context and returns result when it
-completes without suspnesion.
+completes without suspension.
 This function shall be invoked at most once on this coroutine.</p>
 
       </td>

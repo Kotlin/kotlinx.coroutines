@@ -33,16 +33,30 @@
 
 <h1 id="sendblocking">sendBlocking</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+<div class="overload-group" data-platform="JVM">
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">&lt;</span><a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$sendBlocking(((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-<p>Adds <a href="send-blocking.html#kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="-send-channel/is-full.html">Channel.isFull</a>,
-or throws exception if the channel <a href="-send-channel/is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="-send-channel/close.html">Channel.close</a> for details).</p>
+  <p><strong>Platform and version requirements:</strong> JVM</p>
 
-<p>This is a way to call <a href="-send-channel/send.html">Channel.send</a> method inside a blocking code using <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a>,
+  <p>Adds <a href="send-blocking.html#kotlinx.coroutines.experimental.channels$sendBlocking(((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="#">Channel.isFull</a>,
+or throws exception if the channel <a href="#">Channel.isClosedForSend</a> (see <a href="#">Channel.close</a> for details).</p>
+
+  <p>This is a way to call <a href="#">Channel.send</a> method inside a blocking code using <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a>,
 so this function should not be used from coroutine.</p>
 
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">sendBlocking</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</span><span class="symbol">:</span>&nbsp;<a href="send-blocking.html#E"><span class="identifier">E</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+  <p>Adds <a href="send-blocking.html#kotlinx.coroutines.experimental.channels$sendBlocking(kotlinx.coroutines.experimental.channels.SendChannel((kotlinx.coroutines.experimental.channels.sendBlocking.E)), kotlinx.coroutines.experimental.channels.sendBlocking.E)/element">element</a> into to this channel, <strong>blocking</strong> the caller while this channel <a href="-send-channel/is-full.html">Channel.isFull</a>,
+or throws exception if the channel <a href="-send-channel/is-closed-for-send.html">Channel.isClosedForSend</a> (see <a href="-send-channel/close.html">Channel.close</a> for details).</p>
+
+  <p>This is a way to call <a href="-send-channel/send.html">Channel.send</a> method inside a blocking code using <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a>,
+so this function should not be used from coroutine.</p>
+
+</div>
 
       </div>
     </main>

@@ -33,12 +33,15 @@
 
 <h1 id="defaultdispatcher">DefaultDispatcher</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">DefaultDispatcher</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">DefaultDispatcher</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
 
-<p>This is the default <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is used by all standard builders like
+<p>The default <a href="#">CoroutineDispatcher</a> that is used by all standard builders like
 <a href="#">launch</a>, <a href="#">async</a>, etc if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
 
-<p>It is currently equal to <a href="-common-pool/index.html">CommonPool</a>, but the value is subject to change in the future.</p>
+<p>It is currently equal to <a href="-common-pool/index.html">CommonPool</a>, but the value is subject to change in the future.
+You can set system property “<code>kotlinx.coroutines.scheduler</code>” (either no value or to the value of “<code>on</code>”)
+to use an experimental coroutine dispatcher that shares threads with <a href="-i-o.html">IO</a> dispatcher and thus can switch to
+<a href="-i-o.html">IO</a> context without performing an actual thread context switch.</p>
 
 
       </div>

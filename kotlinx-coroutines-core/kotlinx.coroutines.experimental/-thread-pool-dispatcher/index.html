@@ -33,12 +33,32 @@
 
 <h1 id="threadpooldispatcher">ThreadPoolDispatcher</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">ThreadPoolDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">ExecutorCoroutineDispatcherBase</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">ThreadPoolDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">ExecutorCoroutineDispatcherBase</span></code></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
 created with <a href="../new-single-thread-context.html">newSingleThreadContext</a> and <a href="../new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</p>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="executor.html">executor</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">executor</span><span class="symbol">: </span><a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html"><span class="identifier">Executor</span></a></code></div>
+
+        <p>Underlying executor of current <a href="#">CoroutineDispatcher</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="functions">Functions</h3>
 

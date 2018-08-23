@@ -242,10 +242,9 @@ This clause never fails, even if the job completes exceptionally.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this job was
-cancelled as a result of this invocation and <code>false</code> otherwise
-(if it was already <em>completed</em> or if it is <a href="../-non-cancellable/index.html">NonCancellable</a>).
-Repeated invocations of this function have no effect and always produce <code>false</code>.</p>
+        <p>Cancels this job with an optional cancellation <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a>.
+The result is <code>true</code> if this job was either cancelled as a result of this invocation
+or it’s being cancelled and given <a href="cancel.html#kotlinx.coroutines.experimental.Job$cancel(kotlin.Throwable)/cause">cause</a> was successfully received by the job and will be properly handled, <code>false</code> otherwise.</p>
 
       </td>
 </tr>
@@ -387,7 +386,8 @@ for all of them. Unlike <a href="cancel.html">Job.cancel</a> on this job as a wh
 
       </td>
 </tr>
-<tr data-platform="JVM"><td>
+<tr>
+<td>
 
         <p><a href="../cancel-future-on-completion.html">cancelFutureOnCompletion</a></p>
 
@@ -399,7 +399,8 @@ for all of them. Unlike <a href="cancel.html">Job.cancel</a> on this job as a wh
 This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).</p>
 
       </td>
-</tr><tr>
+</tr>
+<tr>
 <td>
 
         <p><a href="../dispose-on-completion.html">disposeOnCompletion</a></p>

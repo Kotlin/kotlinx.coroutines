@@ -100,18 +100,6 @@ Sender suspends only when buffer is fully and receiver suspends only when buffer
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-blocking-checker/index.html">kotlinx.coroutines.experimental.BlockingChecker</a></p>
-      </td>
-<td>
-
-        <p>Extension point which determines whether invoking <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> in the current thread is allowed.
-<a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a> discovers all checkers via <a href="http://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html">ServiceLoader</a> and invokes <a href="../kotlinx.coroutines.experimental/-blocking-checker/check-run-blocking.html">checkRunBlocking</a> on
-each attempt to invoke <a href="../kotlinx.coroutines.experimental/run-blocking.html">runBlocking</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.BroadcastChannel</a></p>
       </td>
 <td>
@@ -154,16 +142,6 @@ but it has suspending operations instead of blocking ones and it can be closed.<
 
         <p>Iterator for <a href="../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>. Instances of this interface are <em>not thread-safe</em> and shall not be used
 from concurrent coroutines.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/-closeable-coroutine-dispatcher/index.html">kotlinx.coroutines.experimental.CloseableCoroutineDispatcher</a></p>
-      </td>
-<td>
-
-        <p><a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that implements <a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a></p>
 
       </td>
 </tr>
@@ -236,7 +214,7 @@ exception on send attempts.</p>
       </td>
 <td>
 
-        <p>This exception gets thrown if an exception is caught while processing <a href="../kotlinx.coroutines.experimental/-completion-handler.html">CompletionHandler</a> invocation for <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a>.</p>
+        <p>This exception gets thrown if an exception is caught while processing <a href="#">CompletionHandler</a> invocation for <a href="#">Job</a>.</p>
 
       </td>
 </tr>
@@ -362,7 +340,7 @@ scheduled execution of tasks.</p>
       </td>
 <td>
 
-        <p>Implemented by <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that have event loop inside and can
+        <p>Implemented by <a href="#">CoroutineDispatcher</a> implementations that have event loop inside and can
 be asked to process next event from their event queue.</p>
 
       </td>
@@ -372,6 +350,17 @@ be asked to process next event from their event queue.</p>
         <p><a href="../kotlinx.coroutines.experimental/java.util.concurrent.-executor/index.html">java.util.concurrent.Executor</a> (extensions in package kotlinx.coroutines.experimental)</p>
       </td>
 <td>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-executor-coroutine-dispatcher/index.html">kotlinx.coroutines.experimental.ExecutorCoroutineDispatcher</a></p>
+      </td>
+<td>
+
+        <p><a href="#">CoroutineDispatcher</a> that has underlying <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executor.html">Executor</a> for dispatching tasks.
+Instances of <a href="../kotlinx.coroutines.experimental/-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> should be closed by the owner of the dispatcher.</p>
 
       </td>
 </tr>
@@ -409,9 +398,9 @@ or completion of parent immediately cancels all its <a href="../kotlinx.coroutin
       </td>
 <td>
 
-        <p>Thrown by cancellable suspending functions if the <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> of the coroutine is cancelled or completed
+        <p>Thrown by cancellable suspending functions if the <a href="#">Job</a> of the coroutine is cancelled or completed
 without cause, or with a cause or exception that is not <a href="../kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>
-(see <a href="../kotlinx.coroutines.experimental/-job/get-cancellation-exception.html">Job.getCancellationException</a>).</p>
+(see <a href="#">Job.getCancellationException</a>).</p>
 
       </td>
 </tr>
@@ -590,6 +579,25 @@ open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-s
 
         <p>This <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html">CoroutineContext</a> dispatcher can be used to simulate virtual time to speed up
 code, especially tests, that deal with delays and timeouts in Coroutines.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-thread-context-element/index.html">kotlinx.coroutines.experimental.ThreadContextElement</a></p>
+      </td>
+<td>
+
+        <p>Defines elements in <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html">CoroutineContext</a> that are installed into thread context
+every time the coroutine with this element in the context is resumed on a thread.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/java.lang.-thread-local/index.html">java.lang.ThreadLocal</a> (extensions in package kotlinx.coroutines.experimental)</p>
+      </td>
+<td>
 
       </td>
 </tr>
