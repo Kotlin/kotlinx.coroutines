@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Name of the property that control coroutine debugging. See [newCoroutineContext].
+ * Name of the property that controls coroutine debugging. See [newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
@@ -56,14 +56,34 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
 }
 
 /**
- * This is the default [CoroutineDispatcher] that is used by all standard builders like
+ * The default [CoroutineDispatcher] that is used by all standard builders like
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  *
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
+ * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")
+ * to use an experimental coroutine dispatcher that shares threads with [IO] dispatcher and thus can switch to
+ * [IO] context without performing an actual thread context switch.
  */
 @Suppress("PropertyName")
 public actual val DefaultDispatcher: CoroutineDispatcher =
-    if (useCoroutinesScheduler) ExperimentalCoroutineDispatcher() else CommonPool
+    if (useCoroutinesScheduler) BackgroundDispatcher else CommonPool
+
+/**
+ * Name of the property that defines the maximal number of threads that are used by [IO] coroutines dispatcher.
+ */
+public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
+
+/**
+ * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
+ *
+ * Additional threads in this pool are created and are shutdown on demand.
+ * The number of threads used by this dispatcher is limited by the value of
+ * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
+ * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+ */
+public val IO by lazy {
+    BackgroundDispatcher.blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+}
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
