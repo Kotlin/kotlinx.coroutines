@@ -9,18 +9,3 @@ dependencies {
     testCompile "org.jetbrains.kotlinx:atomicfu:$atomicFU_version"
 }
 
-atomicFU {
-    inputFiles = sourceSets.main.output.classesDirs
-    outputDir = file("$buildDir/classes-atomicfu/main")
-    classPath = sourceSets.main.runtimeClasspath
-}
-
-jar {
-    mainSpec.sourcePaths.clear() // hack to clear existing paths
-    from files(atomicFU.outputs, sourceSets.main.output.resourcesDir)
-}
-
-test {
-    classpath = files(configurations.testRuntime, atomicFU.outputs, sourceSets.test.output.classesDirs,
-            sourceSets.main.output.resourcesDir)
-}
