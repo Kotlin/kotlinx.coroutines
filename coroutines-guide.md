@@ -847,7 +847,7 @@ It produces the following output (maybe in different order):
 
 <!--- TEST LINES_START_UNORDERED -->
 
-The default dispatcher that we've used in previous sections is representend by [DefaultDispatcher], which 
+The default dispatcher that we've used in previous sections is represented by [DefaultDispatcher], which 
 is equal to [CommonPool] in the current implementation. So, `launch { ... }` is the same 
 as `launch(DefaultDispatcher) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
 
@@ -1849,7 +1849,7 @@ multiple CPU cores if you run it in [CommonPool] context.
 
 Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
-built using `buildSeqeunce`/`buildIterator`, because they do not allow arbitrary suspension, unlike
+built using `buildSequence`/`buildIterator`, because they do not allow arbitrary suspension, unlike
 `produce`, which is fully asynchronous.
  
 ### Fan-out
