@@ -81,7 +81,7 @@ public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.paralleli
  * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
  * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
  */
-public val IO by lazy {
+public val IO: CoroutineDispatcher by lazy {
     BackgroundDispatcher.blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
 }
 
