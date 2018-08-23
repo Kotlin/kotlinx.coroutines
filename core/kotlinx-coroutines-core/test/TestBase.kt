@@ -117,12 +117,12 @@ public actual open class TestBase actual constructor() {
 
     fun initPoolsBeforeTest() {
         CommonPool.usePrivatePool()
-        if (useCoroutinesScheduler) (DefaultDispatcher as ExperimentalCoroutineDispatcher).usePrivateScheduler()
+        BackgroundDispatcher.usePrivateScheduler()
     }
 
     fun shutdownPoolsAfterTest() {
         CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-        if (useCoroutinesScheduler) (DefaultDispatcher as ExperimentalCoroutineDispatcher).shutdown(SHUTDOWN_TIMEOUT)
+        BackgroundDispatcher.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
     }
 

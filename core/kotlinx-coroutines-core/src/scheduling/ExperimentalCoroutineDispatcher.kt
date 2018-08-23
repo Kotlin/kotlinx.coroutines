@@ -10,10 +10,15 @@ import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
+ * Default instance of coroutine dispatcher for background coroutines (as opposed to UI coroutines).
+ */
+internal object BackgroundDispatcher : ExperimentalCoroutineDispatcher()
+
+/**
  * @suppress **This is unstable API and it is subject to change.**
  */
 // TODO make internal (and rename) after complete integration
-class ExperimentalCoroutineDispatcher(
+open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long

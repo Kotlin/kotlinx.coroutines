@@ -132,7 +132,9 @@ public final class kotlinx/coroutines/experimental/CoroutineContextKt {
 	public static final field DEBUG_PROPERTY_VALUE_AUTO Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_OFF Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
+	public static final field IO_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
 	public static final fun getDefaultDispatcher ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final fun getIO ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun newCoroutineContext (Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
 	public static final fun newCoroutineContext (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;)Lkotlin/coroutines/experimental/CoroutineContext;
 	public static synthetic fun newCoroutineContext$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlin/coroutines/experimental/CoroutineContext;
