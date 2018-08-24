@@ -53,7 +53,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
-    // Allocated only only once
+    // Allocated only once
     private val _delayed = atomic<ThreadSafeHeap<DelayedTask>?>(null)
 
     protected abstract val isCompleted: Boolean
