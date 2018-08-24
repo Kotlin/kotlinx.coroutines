@@ -70,10 +70,6 @@ scores.forEach(::println)
 It's important to mention that since this modules exposes coroutines, 
 they must be run inside a context like `launch {}`, `async {}` or `runBlocking` for testing purpose.
 
-### Test results
-
-![JUnit test report](.art/test-results.png)
-
 # Package kotlinx.coroutines.firebase.android
 
 Integration with Firebase [Task](https://developers.google.com/android/reference/com/google/android/gms/tasks/Task) and [DatabaseReference](https://firebase.google.com/docs/reference/android/com/google/firebase/database/DatabaseReference) for Android.
