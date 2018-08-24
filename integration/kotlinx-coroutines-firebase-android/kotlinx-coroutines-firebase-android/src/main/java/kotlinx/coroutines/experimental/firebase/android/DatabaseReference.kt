@@ -40,14 +40,8 @@ private suspend fun <T : Any> readReference(
          * @param error The error occurred.
          * @throws FirebaseException When the error happens within Firebase SDK.
          */
-        override fun onCancelled(error: DatabaseError) {
-            val exception = when (error.toException()) {
-                is FirebaseException -> error.toException()
-                else -> Exception("The Firebase call was canceled")
-            }
-
-            continuation.resumeWithException(exception)
-        }
+        override fun onCancelled(error: DatabaseError) =
+                continuation.resumeWithException(error.toException())
 
         /**
          * Callback to handle Firebase Database queries
@@ -139,14 +133,8 @@ private suspend fun <T : Any> readReferences(
          * @param error The error occurred.
          * @throws FirebaseException When the error happens within Firebase SDK.
          */
-        override fun onCancelled(error: DatabaseError) {
-            val exception = when (error.toException()) {
-                is FirebaseException -> error.toException()
-                else -> Exception("The Firebase call was canceled")
-            }
-
-            continuation.resumeWithException(exception)
-        }
+        override fun onCancelled(error: DatabaseError) =
+                continuation.resumeWithException(error.toException())
 
         /**
          * Callback to handle Firebase Database queries
