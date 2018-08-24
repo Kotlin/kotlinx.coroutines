@@ -84,7 +84,7 @@ private suspend fun <T : Any> readReference(
  * @param T The type of the expected value from Firebase Database.
  * @return The persisted object of the type T informed.
  */
-suspend fun <T : Any> DatabaseReference.readValue(type: Class<T>): T = readReference(this, type)
+public suspend fun <T : Any> DatabaseReference.readValue(type: Class<T>): T = readReference(this, type)
 
 /**
  * Coroutine to read a single value from Firebase Database
@@ -100,7 +100,7 @@ suspend fun <T : Any> DatabaseReference.readValue(type: Class<T>): T = readRefer
  * @param T The type of the expected value from Firebase Database.
  * @return The persisted object of the type T informed.
  */
-suspend inline fun <reified T : Any> DatabaseReference.readValue(): T = readValue(T::class.java)
+public suspend inline fun <reified T : Any> DatabaseReference.readValue(): T = readValue(T::class.java)
 
 /**
  * Coroutine to read a collection of values from Firebase Database
@@ -181,7 +181,7 @@ private suspend fun <T : Any> readReferences(
  * @param T The type of the expected value from Firebase Database.
  * @return The persisted object of the type T informed.
  */
-suspend fun <T : Any> DatabaseReference.readList(type: Class<T>): List<T> = readReferences(this, type)
+public suspend fun <T : Any> DatabaseReference.readList(type: Class<T>): List<T> = readReferences(this, type)
 
 /**
  * Coroutine to read a list of values from Firebase Database
@@ -204,10 +204,10 @@ suspend fun <T : Any> DatabaseReference.readList(type: Class<T>): List<T> = read
  */
 suspend inline fun <reified T : Any> DatabaseReference.readList(): List<T> = readList(T::class.java)
 
-suspend fun <T : Any> DatabaseReference.saveValue(value: T): Unit =
+public suspend fun <T : Any> DatabaseReference.saveValue(value: T): Unit =
         setValue(value).await().let { kotlin.Unit }
 
-suspend fun <T : Any> DatabaseReference.pushValue(value: T): Unit = push().saveValue(value)
+public suspend fun <T : Any> DatabaseReference.pushValue(value: T): Unit = push().saveValue(value)
 
 private suspend fun <T : Any> awaitQuerySingleValue(query: Query, type: Class<T>): T =
         suspendCancellableCoroutine { continuation ->
@@ -226,9 +226,9 @@ private suspend fun <T : Any> awaitQuerySingleValue(query: Query, type: Class<T>
             continuation.invokeOnCompletion { query.removeEventListener(listener) }
         }
 
-suspend fun <T : Any> Query.readValue(type: Class<T>): T = awaitQuerySingleValue(this, type)
+public suspend fun <T : Any> Query.readValue(type: Class<T>): T = awaitQuerySingleValue(this, type)
 
-suspend inline fun <reified T : Any> Query.readValue(): T = readValue(T::class.java)
+public suspend inline fun <reified T : Any> Query.readValue(): T = readValue(T::class.java)
 
 private suspend fun <T : Any> awaitQueryListValue(query: Query, type: Class<T>): List<T> =
         suspendCancellableCoroutine { continuation ->
@@ -249,6 +249,6 @@ private suspend fun <T : Any> awaitQueryListValue(query: Query, type: Class<T>):
             continuation.invokeOnCompletion { query.removeEventListener(listener) }
         }
 
-suspend fun <T : Any> Query.readList(type: Class<T>): List<T> = awaitQueryListValue(this, type)
+public suspend fun <T : Any> Query.readList(type: Class<T>): List<T> = awaitQueryListValue(this, type)
 
-suspend inline fun <reified T : Any> Query.readList(): List<T> = readList(T::class.java)
+public suspend inline fun <reified T : Any> Query.readList(): List<T> = readList(T::class.java)

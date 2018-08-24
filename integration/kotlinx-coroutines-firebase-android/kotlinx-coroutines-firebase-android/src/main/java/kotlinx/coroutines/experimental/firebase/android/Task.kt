@@ -40,7 +40,7 @@ import java.lang.Exception
  * @throws Exception Thrown in case of network error or other reasons described in the Firebase docs
  * @return The value returned by the Firebase success callback
  */
-suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
+public suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
     val consumer = FirebaseCallbackConsumer(continuation)
 
     this
