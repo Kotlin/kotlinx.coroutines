@@ -1,7 +1,13 @@
 package kotlinx.coroutines.experimental.firebase.android
 
+import com.google.android.gms.tasks.OnCanceledListener
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
+import kotlinx.coroutines.experimental.cancel
 import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import kotlin.coroutines.experimental.Continuation
+import java.lang.Exception
 
 /**
  * Coroutine support to Firebase Task interface
@@ -23,10 +29,10 @@ import kotlinx.coroutines.experimental.suspendCancellableCoroutine
  *
  * ```
  * try {
- *   val user = auth.getUserByEmail(email).await()
- *   println(user)
+ *     val user = auth.getUserByEmail(email).await()
+ *     println(user)
  * } catch (exception: Exception) {
- *   println(exception)
+ *     println(exception)
  * }
  * ```
  *
@@ -35,8 +41,23 @@ import kotlinx.coroutines.experimental.suspendCancellableCoroutine
  * @return The value returned by the Firebase success callback
  */
 suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
-    task
-            .addOnSuccessListener(continuation::resume)
-            .addOnFailureListener(continuation::resumeWithException)
-            .addOnCanceledListener { continuation.cancel() }
+    val consumer = FirebaseCallbackConsumer(continuation)
+
+    this
+            .addOnSuccessListener { consumer.onSuccess(it) }
+            .addOnFailureListener { consumer.onFailure(it) }
+            .addOnCanceledListener{ consumer.onCanceled() }
+}
+
+private class FirebaseCallbackConsumer<T>(
+        val continuation: Continuation<T>
+) : OnSuccessListener<T>, OnFailureListener, OnCanceledListener {
+
+    override fun onSuccess(result: T) = continuation.resume(result)
+
+    override fun onFailure(exception: Exception) = continuation.resumeWithException(exception)
+
+    override fun onCanceled() {
+        continuation.context.cancel()
+    }
 }
