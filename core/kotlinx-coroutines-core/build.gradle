@@ -7,6 +7,13 @@ dependencies {
     testCompile "com.esotericsoftware:kryo:4.0.0"
 }
 
+jar {
+    manifest {
+        instruction 'Import-Package', '!kotlinx.coroutines.*, !kotlinx.atomicfu.*, *'
+        instruction 'Export-Package', '!kotlinx.coroutines.internal, !kotlinx.coroutines.scheduling, *'
+    }
+}
+
 task checkJdk16() {
     // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
     doLast {
