@@ -1,0 +1,8 @@
+apply plugin: 'osgi'
+
+jar {
+    manifest {
+        instruction 'Bundle-Vendor', 'JetBrains'
+        license 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    }
+}

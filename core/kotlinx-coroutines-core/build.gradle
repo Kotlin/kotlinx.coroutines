@@ -6,6 +6,13 @@ dependencies {
     testCompile "com.devexperts.lincheck:core:$lincheck_version"
 }
 
+jar {
+    manifest {
+        instruction 'Import-Package', '!kotlinx.coroutines.*, !kotlinx.atomicfu.*, *'
+        instruction 'Export-Package', '!kotlinx.coroutines.experimental.internal, !kotlinx.coroutines.experimental.scheduling, *'
+    }
+}
+
 task checkJdk16() {
     // only fail w/o JDK_16 when actually trying to compile, not during project setup phase
     doLast {

@@ -142,6 +142,11 @@ configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotli
     }
 }
 
+// configure OSGI manifest
+configure(subprojects.findAll { !internal.contains(it.name) && platformOf(it) == 'jvm' }) {
+    apply from: rootProject.file("gradle/osgi.gradle")
+}
+
 // --------------- Configure sub-projects that are published ---------------
 
 // todo: native is not published yet
