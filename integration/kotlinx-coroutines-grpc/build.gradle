@@ -1,0 +1,6 @@
+ext.grpc_version = '1.14.0'
+
+dependencies {
+    compile "io.grpc:grpc-protobuf:$grpc_version"
+    compile "io.grpc:grpc-stub:$grpc_version"
+}

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_outer_classname = "HeroProto";
+
+message Hero {
+    string name = 1;
+    string super_power = 2;
+}
+
+message Sidekick {
+    string name = 1;
+    string super_power = 2;
+    Hero hero = 3;
+}
+
+message GetHeroByNameRequest {
+    string name = 1;
+}
+
+message GetHerosByNameResponse{
+    repeated Hero hero = 1;
+}
+
+service HeroService {
+
+    //Unary
+    rpc GetHeroByNameUnary(GetHeroByNameRequest) returns(Hero);
+
+    //Client Streaming
+    rpc GetHerosByName(stream GetHeroByNameRequest) returns(GetHerosByNameResponse);
+
+    //Server Streaming
+    rpc GetSidekicksByHero(Hero) returns(stream Sidekick);
+
+    //Bidi Streaming
+    rpc GetSidekicksByHeros(stream Hero) returns(stream Sidekick);
+}
+
