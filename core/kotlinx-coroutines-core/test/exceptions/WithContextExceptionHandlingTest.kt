@@ -7,12 +7,10 @@ package kotlinx.coroutines.experimental.exceptions
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
-import java.nio.channels.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class CancellableContinuationExceptionHandlingTest : TestBase() {
-
+class WithContextExceptionHandlingTest : TestBase() {
     @Test
     fun testCancellation() = runTest {
         /*
@@ -20,7 +18,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          * Continuation itself throws ISE
          * Result: ISE with suppressed CancellationException
          */
-        runCancellation(coroutineContext, null, IllegalStateException()) { e ->
+        runCancellation(null, IllegalStateException()) { e ->
             assertNull(e.cause)
             val suppressed = e.suppressed()
             assertTrue(suppressed.size == 1)
@@ -39,7 +37,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          * Result: ISE with suppressed CancellationException(IOE)
          */
         val cancellationCause = IOException()
-        runCancellation(coroutineContext, cancellationCause, IllegalStateException()) { e ->
+        runCancellation(cancellationCause, IllegalStateException()) { e ->
             assertNull(e.cause)
             val suppressed = e.suppressed()
             assertTrue(suppressed.size == 1)
@@ -58,7 +56,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          * Result: ISE
          */
         val cancellationCause = IllegalStateException()
-        runCancellation(coroutineContext, cancellationCause, cancellationCause) { e ->
+        runCancellation(cancellationCause, cancellationCause) { e ->
             assertNull(e.cause)
             val suppressed = e.suppressed()
             assertTrue(suppressed.isEmpty())
@@ -73,7 +71,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          * Result: CE
          */
         val cancellationCause = CancellationException()
-        runCancellation(coroutineContext, cancellationCause, cancellationCause) { e ->
+        runCancellation(cancellationCause, cancellationCause) { e ->
             assertNull(e.cause)
             assertSame(e, cancellationCause)
             val suppressed = e.suppressed()
@@ -91,7 +89,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
         val cancellationCause = CancellationException()
         val exception = IOException()
         cancellationCause.initCause(exception)
-        runCancellation(coroutineContext, cancellationCause, exception) { e ->
+        runCancellation(cancellationCause, exception) { e ->
             assertNull(e.cause)
             assertSame(exception, e)
             assertTrue(e.suppressed().isEmpty())
@@ -108,7 +106,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
         val cancellationCause = IllegalStateException()
         val thrown = CancellationException()
         thrown.initCause(IOException())
-        runCancellation(coroutineContext, cancellationCause, thrown) { e ->
+        runCancellation(cancellationCause, thrown) { e ->
             assertSame(thrown, e)
             assertEquals(1, thrown.suppressed().size)
 
@@ -127,7 +125,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          */
         val cancellationCause = IllegalStateException()
         val thrown = CancellationException()
-        runCancellation(coroutineContext, cancellationCause, thrown) { e ->
+        runCancellation(cancellationCause, thrown) { e ->
             assertSame(thrown, e)
             assertEquals(1, thrown.suppressed().size)
 
@@ -147,7 +145,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          */
         val cancellationCause = CancellationException()
         val thrown = CancellationException()
-        runCancellation(coroutineContext, cancellationCause, thrown) { e ->
+        runCancellation(cancellationCause, thrown) { e ->
             assertSame(thrown, e)
             assertNull(e.cause)
             assertTrue(e.suppressed().isEmpty())
@@ -164,7 +162,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
          * Result: CE(ISE)
          */
         thrown.initCause(cancellationCause)
-        runCancellation(coroutineContext, cancellationCause, thrown) { e ->
+        runCancellation(cancellationCause, thrown) { e ->
             assertSame(thrown, e)
             assertSame(cancellationCause, e.cause)
             assertEquals(0, thrown.suppressed().size)
@@ -175,7 +173,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
     @Test
     fun testThrowingCancellation() = runTest {
         val thrown = CancellationException()
-        runThrowingContinuation(coroutineContext, thrown) { e ->
+        runThrowing(thrown) { e ->
             assertSame(thrown, e)
         }
     }
@@ -184,14 +182,14 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
     fun testThrowingCancellationWithCause() = runTest {
         val thrown = CancellationException()
         thrown.initCause(IOException())
-        runThrowingContinuation(coroutineContext, thrown) { e ->
+        runThrowing(thrown) { e ->
             assertSame(thrown, e)
         }
     }
 
     @Test
     fun testCancel() = runTest {
-        runOnlyCancellation(coroutineContext, null) { e ->
+        runOnlyCancellation(null) { e ->
             assertNull(e.cause)
             assertTrue(e.suppressed().isEmpty())
         }
@@ -200,7 +198,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
     @Test
     fun testCancelWithCause() = runTest {
         val cause = IOException()
-        runOnlyCancellation(coroutineContext, cause) { e ->
+        runOnlyCancellation(cause) { e ->
             assertSame(cause, e.cause)
             assertTrue(e.suppressed().isEmpty())
         }
@@ -209,7 +207,7 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
     @Test
     fun testCancelWithCancellationException() = runTest {
         val cause = CancellationException()
-        runThrowingContinuation(coroutineContext, cause) { e ->
+        runThrowing(cause) { e ->
             assertSame(cause, e)
             assertNull(e.cause)
             assertTrue(e.suppressed().isEmpty())
@@ -225,19 +223,17 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
         }
     }
 
-    private suspend inline fun <reified T : Exception> CoroutineScope.runCancellation(
-        coroutineContext: CoroutineContext,
+    private suspend inline fun <reified T : Exception> runCancellation(
         cancellationCause: Exception?,
-        thrownException: T, exceptionChecker: (T) -> Unit
+        thrownException: T,
+        exceptionChecker: (T) -> Unit
     ) {
-
         expect(1)
         val job = Job()
         job.cancel(cancellationCause)
-
         try {
             withContext(wrapperDispatcher(coroutineContext) + job, CoroutineStart.ATOMIC) {
-                require(isActive)
+                require(!isActive) // already cancelled
                 expect(2)
                 throw thrownException
             }
@@ -247,15 +243,13 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
             finish(3)
             return
         }
-
         fail()
     }
 
-    private suspend inline fun <reified T : Exception> CoroutineScope.runThrowingContinuation(
-        coroutineContext: CoroutineContext,
-        thrownException: T, exceptionChecker: (T) -> Unit
+    private suspend inline fun <reified T : Exception> runThrowing(
+        thrownException: T,
+        exceptionChecker: (T) -> Unit
     ) {
-
         expect(1)
         try {
             withContext(wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) {
@@ -269,21 +263,19 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
             finish(3)
             return
         }
-
         fail()
     }
 
-    private suspend inline fun CoroutineScope.runOnlyCancellation(
-        coroutineContext: CoroutineContext,
-        cancellationCause: Exception?, exceptionChecker: (CancellationException) -> Unit
+    private suspend inline fun runOnlyCancellation(
+        cancellationCause: Exception?,
+        exceptionChecker: (CancellationException) -> Unit
     ) {
-
         expect(1)
         val job = Job()
         job.cancel(cancellationCause)
         try {
             withContext(wrapperDispatcher(coroutineContext) + job, CoroutineStart.ATOMIC) {
-                require(isActive)
+                require(!isActive) // is already cancelled
                 expect(2)
             }
         } catch (e: Exception) {
@@ -292,7 +284,6 @@ class CancellableContinuationExceptionHandlingTest : TestBase() {
             finish(3)
             return
         }
-
         fail()
     }
 }

@@ -12,7 +12,7 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testBasic() = runTest {
-        val c = produce(coroutineContext) {
+        val c = produce {
             expect(2)
             send(1)
             expect(3)
@@ -30,7 +30,7 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithoutCause() = runTest {
-        val c = produce(coroutineContext) {
+        val c = produce {
             expect(2)
             send(1)
             expect(3)
@@ -54,7 +54,7 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest {
-        val c = produce(coroutineContext) {
+        val c = produce {
             expect(2)
             send(1)
             expect(3)
@@ -92,7 +92,7 @@ class ProduceTest : TestBase() {
         cancelOnCompletion(coroutineContext)
     }
 
-    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) {
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = currentScope {
         val source = Channel<Int>()
         expect(1)
         val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {

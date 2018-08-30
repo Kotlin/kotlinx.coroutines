@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
@@ -125,16 +126,13 @@ public interface Deferred<out T> : Job {
 /**
  * Creates new coroutine and returns its future result as an implementation of [Deferred].
  *
- * The running coroutine is cancelled when the resulting object is [cancelled][Job.cancel].
+ * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
+ * Parent of the created coroutine is inherited from the provided [CoroutineScope].
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
- * of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -142,20 +140,18 @@ public interface Deferred<out T> : Job {
  * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
  * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
+public fun <T> CoroutineScope.async(
+    context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> {
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
         DeferredCoroutine<T>(newContext, active = true)
@@ -164,6 +160,39 @@ public fun <T> async(
     return coroutine
 }
 
+/**
+ * Creates new coroutine and returns its future result as an implementation of [Deferred].
+ * @suppress **Deprecated**. Use [CoroutineScope.async] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.async(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+)
+public fun <T> async(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> =
+    GlobalScope.async(context, start, onCompletion, block)
+
+/**
+ * Creates new coroutine and returns its future result as an implementation of [Deferred].
+ * @suppress **Deprecated**. Use [CoroutineScope.async] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.async(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+)
+public fun <T> async(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> =
+    GlobalScope.async(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> async(
@@ -171,7 +200,8 @@ public fun <T> async(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> T
-): Deferred<T> = async(context, start, parent, block = block)
+): Deferred<T> =
+    GlobalScope.async(context + (parent ?: EmptyCoroutineContext), start, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -180,7 +210,7 @@ public fun <T> async(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> =
-    async(context, start, block = block)
+    GlobalScope.async(context, start, block = block)
 
 /**
  * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
@@ -188,7 +218,7 @@ public fun <T> async(
 @Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
     replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
 public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
+    GlobalScope.async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
 
 /**
  * @suppress **Deprecated**: `defer` was renamed to `async`.
@@ -196,7 +226,7 @@ public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend C
 @Deprecated(message = "`defer` was renamed to `async`", level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("async(context, block = block)"))
 public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    async(context, block = block)
+    GlobalScope.async(context, block = block)
 
 @Suppress("UNCHECKED_CAST")
 private open class DeferredCoroutine<T>(

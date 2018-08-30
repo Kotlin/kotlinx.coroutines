@@ -26,7 +26,7 @@ class MDCContextTest : TestBase() {
     fun testContextIsNotPassedByDefaultBetweenCoroutines() = runTest {
         expect(1)
         MDC.put("myKey", "myValue")
-        launch {
+        GlobalScope.launch {
             assertEquals(null, MDC.get("myKey"))
             expect(2)
         }.join()

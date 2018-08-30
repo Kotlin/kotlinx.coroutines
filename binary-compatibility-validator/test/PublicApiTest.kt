@@ -12,6 +12,7 @@ import java.util.*
 import java.util.jar.*
 import kotlin.collections.ArrayList
 
+@Ignore
 @RunWith(Parameterized::class)
 class PublicApiTest(
     private val rootDir: String,

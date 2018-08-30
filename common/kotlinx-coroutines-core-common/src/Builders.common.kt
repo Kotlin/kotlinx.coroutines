@@ -18,17 +18,13 @@ import kotlin.coroutines.experimental.intrinsics.*
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
  * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
- * of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
- * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
+ * Other start options can be specified via `start` parameter. See [CoroutineStart] for details.
  * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,
  * the coroutine [Job] is created in _new_ state. It can be explicitly started with [start][Job.start] function
  * and will be started implicitly on the first invocation of [join][Job.join].
@@ -39,20 +35,18 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
- * @param block the coroutine code.
- */
-public fun launch(
-    context: CoroutineContext = DefaultDispatcher,
+ * @param block the coroutine code which will be invoked in the context of the provided scope
+ **/
+public fun CoroutineScope.launch(
+    context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> Unit
 ): Job {
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val coroutine = if (start.isLazy)
         LazyStandaloneCoroutine(newContext, block) else
         StandaloneCoroutine(newContext, active = true)
@@ -60,6 +54,40 @@ public fun launch(
     coroutine.start(start, coroutine, block)
     return coroutine
 }
+
+/**
+ * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
+ * @suppress **Deprecated** Use [CoroutineScope.launch] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.launch(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+)
+public fun launch(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> Unit
+): Job =
+    GlobalScope.launch(context, start, onCompletion, block)
+
+/**
+ * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
+ * @suppress **Deprecated** Use [CoroutineScope.launch] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release",
+    replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
+)
+public fun launch(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null, // nullable for binary compatibility
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> Unit
+): Job =
+    GlobalScope.launch(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun launch(
@@ -67,7 +95,8 @@ public fun launch(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> Unit
-): Job = launch(context, start, parent, block = block)
+): Job =
+    GlobalScope.launch(context + (parent ?: EmptyCoroutineContext), start, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -84,7 +113,7 @@ public fun launch(
 @Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
     replaceWith = ReplaceWith("launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
 public fun launch(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> Unit): Job =
-    launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
+    GlobalScope.launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
 
 /**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
@@ -103,6 +132,19 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
 public suspend fun <T> withContext(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): T =
+    // todo: optimize fast-path to work without allocation (when there is a already a coroutine implementing scope)
+    withContextImpl(context, start) {
+        currentScope {
+            block()
+        }
+    }
+
+// todo: optimize it to reduce allocations
+private suspend fun <T> withContextImpl(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
@@ -137,6 +179,16 @@ public suspend fun <T> withContext(
     completion.getResult()
 }
 
+/** @suppress **Deprecated**: Binary compatibility */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+@JvmName("withContext")
+public suspend fun <T> withContext0(
+    context: CoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend () -> T
+): T =
+    withContextImpl(context, start, block)
+
 /** @suppress **Deprecated**: Renamed to [withContext]. */
 @Deprecated(message = "Renamed to `withContext`", level=DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("withContext(context, start, block)"))
@@ -145,12 +197,12 @@ public suspend fun <T> run(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
 ): T =
-    withContext(context, start, block)
+    withContextImpl(context, start, block)
 
 /** @suppress **Deprecated** */
 @Deprecated(message = "It is here for binary compatibility only", level=DeprecationLevel.HIDDEN)
 public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
-    withContext(context, start = CoroutineStart.ATOMIC, block = block)
+    withContextImpl(context, start = CoroutineStart.ATOMIC, block = block)
 
 // --------------- implementation ---------------
 

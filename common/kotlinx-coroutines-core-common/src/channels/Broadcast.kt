@@ -7,6 +7,7 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
@@ -27,6 +28,29 @@ fun <E> ReceiveChannel<E>.broadcast(
     }
 
 /**
+ * Launches new coroutine to produce a stream of values by sending them to a broadcast channel.
+ * Deprecated, use [CoroutineScope.broadcast] instead.
+ */
+@Deprecated(message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release")
+public fun <E> broadcast(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 1,
+    start: CoroutineStart = CoroutineStart.LAZY,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend ProducerScope<E>.() -> Unit
+): BroadcastChannel<E> {
+    val channel = BroadcastChannel<E>(capacity)
+    val newContext = newCoroutineContext(context, parent)
+    val coroutine = if (start.isLazy)
+        LazyBroadcastCoroutine(newContext, channel, block) else
+        BroadcastCoroutine(newContext, channel, active = true)
+    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
+    coroutine.start(start, coroutine, block)
+    return coroutine
+}
+
+/**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel
  * and returns a reference to the coroutine as a [BroadcastChannel]. The resulting
  * object can be used to [subscribe][BroadcastChannel.openSubscription] to elements produced by this coroutine.
@@ -36,13 +60,10 @@ fun <E> ReceiveChannel<E>.broadcast(
  * [send][SendChannel.send] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
@@ -62,20 +83,18 @@ fun <E> ReceiveChannel<E>.broadcast(
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param capacity capacity of the channel's buffer (1 by default).
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-public fun <E> broadcast(
-    context: CoroutineContext = DefaultDispatcher,
+public fun <E> CoroutineScope.broadcast(
+    context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> {
+    val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)
-    val newContext = newCoroutineContext(context, parent)
     val coroutine = if (start.isLazy)
         LazyBroadcastCoroutine(newContext, channel, block) else
         BroadcastCoroutine(newContext, channel, active = true)
@@ -89,6 +108,9 @@ private open class BroadcastCoroutine<E>(
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
+
+    override val isActive: Boolean get() = super<AbstractCoroutine>.isActive
+
     override val channel: SendChannel<E>
         get() = this
 

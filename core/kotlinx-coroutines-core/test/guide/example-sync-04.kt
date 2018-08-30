@@ -6,15 +6,15 @@
 package kotlinx.coroutines.experimental.guide.sync04
 
 import kotlinx.coroutines.experimental.*
-import kotlin.system.*
 import kotlin.coroutines.experimental.*
+import kotlin.system.*
 
 suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
     val n = 1000 // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
         val jobs = List(n) {
-            launch(context) {
+             launch(context) {
                 repeat(k) { action() }
             }
         }

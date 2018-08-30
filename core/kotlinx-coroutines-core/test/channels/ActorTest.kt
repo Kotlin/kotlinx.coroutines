@@ -11,7 +11,6 @@ import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
 import java.io.*
-import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class ActorTest(private val capacity: Int) : TestBase() {
@@ -25,7 +24,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testEmpty() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext, capacity) {
+        val actor = actor<String>(capacity = capacity) {
             expect(3)
         }
         actor as Job // type assertion
@@ -43,7 +42,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testOne() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext, capacity) {
+        val actor = actor<String>(capacity = capacity) {
             expect(3)
             assertThat(receive(), IsEqual("OK"))
             expect(6)
@@ -70,7 +69,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCloseWithoutCause() = runTest {
-        val actor = actor<Int>(coroutineContext, capacity) {
+        val actor = actor<Int>(capacity = capacity) {
             val element = channel.receiveOrNull()
             expect(2)
             assertEquals(42, element)
@@ -89,7 +88,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCloseWithCause() = runTest {
-        val actor = actor<Int>(coroutineContext, capacity) {
+        val actor = actor<Int>(capacity = capacity) {
             val element = channel.receiveOrNull()
             expect(2)
             require(element!! == 42)
@@ -110,7 +109,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCancelEnclosingJob() = runTest {
-        val job = async(coroutineContext) {
+        val job = async {
             actor<Int>(coroutineContext, capacity) {
                 expect(1)
                 channel.receiveOrNull()
@@ -138,7 +137,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testThrowingActor() = runTest(unhandled = listOf({e -> e is IllegalArgumentException})) {
         val parent = Job()
-        val actor = actor<Int>(context = coroutineContext, parent = parent) {
+        val actor = actor<Int>(parent) {
             channel.consumeEach {
                 expect(1)
                 throw IllegalArgumentException()
@@ -154,7 +153,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testChildJob() = runTest {
         val parent = Job()
-        actor<Int>(context = coroutineContext, parent = parent) {
+        actor<Int>(parent) {
             launch(coroutineContext) {
                 try {
                     delay(Long.MAX_VALUE)

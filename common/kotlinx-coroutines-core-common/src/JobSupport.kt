@@ -132,7 +132,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    public final override val isActive: Boolean get() {
+    public override val isActive: Boolean get() {
         val state = this.state
         return state is Incomplete && state.isActive
     }

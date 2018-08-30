@@ -1,0 +1,164 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+package kotlinx.coroutines.experimental
+
+import kotlin.test.*
+
+class CoroutineScopeTest : TestBase() {
+
+    @Test
+    fun testScope() = runTest {
+        suspend fun callJobScoped() = coroutineScope {
+            expect(2)
+
+            launch {
+                expect(4)
+            }
+
+            launch {
+                expect(5)
+
+                launch {
+                    expect(7)
+                }
+
+                expect(6)
+
+            }
+
+            expect(3)
+            42
+        }
+
+
+        expect(1)
+        val result = callJobScoped()
+        assertEquals(42, result)
+        yield() // Check we're not cancelled
+        finish(8)
+    }
+
+    @Test
+    fun testScopeCancelledFromWithin() = runTest {
+        expect(1)
+        suspend fun callJobScoped() = coroutineScope {
+
+            launch {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            }
+
+            launch {
+                expect(3)
+                throw IllegalArgumentException()
+            }
+        }
+
+        try {
+            callJobScoped()
+            expectUnreached()
+        } catch (e: IllegalArgumentException) {
+            expect(4)
+        }
+
+        yield() // Check we're not cancelled
+        finish(5)
+    }
+
+    @Test
+    fun testScopeBlockThrows() = runTest {
+        expect(1)
+        suspend fun callJobScoped(): Unit = coroutineScope {
+
+            launch {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            }
+
+            yield() // let launch sleep
+            throw NotImplementedError()
+        }
+
+        try {
+            callJobScoped()
+            expectUnreached()
+        } catch (e: NotImplementedError) {
+            expect(3)
+        }
+
+        yield() // Check we're not cancelled
+        finish(4)
+    }
+
+    @Test
+    fun testOuterJobIsCancelled() = runTest {
+
+        suspend fun callJobScoped() = coroutineScope {
+
+            launch {
+                expect(3)
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(4)
+                }
+            }
+
+            expect(2)
+            delay(Long.MAX_VALUE)
+            42
+        }
+
+
+        val outerJob = launch(coroutineContext.minusKey(Job)) {
+            expect(1)
+            try {
+                callJobScoped()
+                expectUnreached()
+            } catch (e: JobCancellationException) {
+                expect(5)
+                assertNull(e.cause)
+            }
+        }
+
+        repeat(3) { yield() } // let everything to start properly
+        outerJob.cancel()
+        outerJob.join()
+        finish(6)
+    }
+
+    @Test
+    @Suppress("UNREACHABLE_CODE")
+    fun testDocumentationExample() = runTest {
+        suspend fun loadData() = coroutineScope {
+            expect(1)
+            val data = async {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(3)
+                }
+            }
+
+            yield()
+
+            // UI updater
+            withContext(coroutineContext) {
+                expect(2)
+                throw AssertionError()
+                data.await() // Actually unreached
+                expectUnreached()
+            }
+        }
+
+
+        try {
+            loadData()
+            expectUnreached()
+        } catch (e: AssertionError) {
+            finish(4)
+        }
+    }
+}

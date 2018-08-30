@@ -6,7 +6,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AsyncTest : TestBase() {
@@ -219,6 +218,23 @@ class AsyncTest : TestBase() {
         }
         assertTrue(d.await() === bad)
         finish(2)
+    }
+
+    @Test
+    fun testOverriddenParent() = runTest {
+        val parent = Job()
+        val deferred = async(parent, CoroutineStart.ATOMIC) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        parent.cancel()
+        try {
+            expect(1)
+            deferred.await()
+        } catch (e: JobCancellationException) {
+            finish(3)
+        }
     }
 
     private class TestException : Exception()

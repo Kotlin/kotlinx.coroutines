@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.exceptions
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class JobNestedExceptionsTest : TestBase() {
@@ -69,10 +68,10 @@ class JobNestedExceptionsTest : TestBase() {
     fun testNestedAtomicThrow() {
         val exception = runBlock {
             expect(1)
-            val job = launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
+            val job = GlobalScope.launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
                 expect(2)
 
-                launch(coroutineContext, CoroutineStart.ATOMIC) {
+                GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
                     expect(3)
                     throw IOException()
                 }
@@ -92,12 +91,12 @@ class JobNestedExceptionsTest : TestBase() {
     fun testChildThrowsDuringCompletion() {
         val exceptions = runBlockForMultipleExceptions {
             expect(1)
-            val job = launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
+            val job = GlobalScope.launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
                 expect(2)
 
-                launch(coroutineContext, CoroutineStart.ATOMIC) {
+                GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
                     expect(3)
-                    launch(coroutineContext, CoroutineStart.ATOMIC) {
+                    GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
                         // This child attaches to the parent and throws after parent completion
                         expect(4)
                         throw NullPointerException()

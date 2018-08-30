@@ -6,14 +6,13 @@
 package kotlinx.coroutines.experimental.guide.exceptions06
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import java.io.*
 
 fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
-    val job = launch(handler) {
+    val job = GlobalScope.launch(handler) {
         val inner = launch(coroutineContext) {
             launch(coroutineContext) {
                 launch(coroutineContext) {
