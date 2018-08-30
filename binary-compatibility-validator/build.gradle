@@ -24,6 +24,7 @@ dependencies {
     testArtifacts project(':kotlinx-coroutines-nio')
     testArtifacts project(':kotlinx-coroutines-quasar')
     testArtifacts project(':kotlinx-coroutines-slf4j')
+    testArtifacts project(':kotlinx-coroutines-play-services')
 
     testArtifacts project(':kotlinx-coroutines-android')
     testArtifacts project(':kotlinx-coroutines-javafx')
