@@ -290,7 +290,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
          *    It's important to invoke them only AFTER exception handling, see #208
          */
         val cause = exceptionally?.cause
-        if (expect is JobNode<*>) { // SINGLE/SINGLE+ state -- one completion handler (common case)
+        if (expect is JobNode) { // SINGLE/SINGLE+ state -- one completion handler (common case)
             try {
                 expect.invoke(cause)
             } catch (ex: Throwable) {
@@ -333,12 +333,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     private fun NodeList.notifyCompletion(cause: Throwable?) =
-        notifyHandlers<JobNode<*>>(this, cause)
+        notifyHandlers<JobNode>(this, cause)
 
     private fun notifyCancellation(list: NodeList, cause: Throwable?) =
-        notifyHandlers<JobCancellationNode<*>>(list, cause)
+        notifyHandlers<JobCancellationNode>(list, cause)
 
-      private inline fun <reified T: JobNode<*>> notifyHandlers(list: NodeList, cause: Throwable?) {
+      private inline fun <reified T: JobNode> notifyHandlers(list: NodeList, cause: Throwable?) {
         var exception: Throwable? = null
         list.forEach<T> { node ->
             try {
@@ -438,7 +438,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         invokeImmediately: Boolean,
         handler: CompletionHandler
     ): DisposableHandle {
-        var nodeCache: JobNode<*>? = null
+        var nodeCache: JobNode? = null
         loopOnState { state ->
             when (state) {
                 is Empty -> { // EMPTY_X state -- no completion handlers
@@ -452,7 +452,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 is Incomplete -> {
                     val list = state.list
                     if (list == null) { // SINGLE/SINGLE+
-                        promoteSingleToNodeList(state as JobNode<*>)
+                        promoteSingleToNodeList(state as JobNode)
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
                             // installing cancellation handler on job that is being cancelled
@@ -473,16 +473,16 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode<*> {
+    private fun makeNode(handler: CompletionHandler, onCancelling: Boolean): JobNode {
         return if (onCancelling)
-            (handler as? JobCancellationNode<*>)?.also { require(it.job === this) }
+            (handler as? JobCancellationNode)?.also { require(it.job === this) }
                 ?: InvokeOnCancellation(this, handler)
         else
-            (handler as? JobNode<*>)?.also { require(it.job === this && it !is JobCancellationNode) }
+            (handler as? JobNode)?.also { require(it.job === this && it !is JobCancellationNode) }
                 ?: InvokeOnCompletion(this, handler)
     }
 
-    private fun addLastAtomic(expect: Any, list: NodeList, node: JobNode<*>) =
+    private fun addLastAtomic(expect: Any, list: NodeList, node: JobNode) =
         list.addLastIf(node) { this.state === expect }
 
     private fun promoteEmptyToNodeList(state: Empty) {
@@ -490,7 +490,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         _state.compareAndSet(state, NodeList(state.isActive))
     }
 
-    private fun promoteSingleToNodeList(state: JobNode<*>) {
+    private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
         state.addOneIfEmpty(NodeList(active = true))
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
@@ -546,11 +546,11 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
-    internal fun removeNode(node: JobNode<*>) {
+    internal fun removeNode(node: JobNode) {
         // remove logic depends on the state of the job
         loopOnState { state ->
             when (state) {
-                is JobNode<*> -> { // SINGE/SINGLE+ state -- one completion handler
+                is JobNode -> { // SINGE/SINGLE+ state -- one completion handler
                     if (state !== node) return // a different job node --> we were already removed
                     // try remove and revert back to empty state
                     if (_state.compareAndSet(state, EMPTY_ACTIVE)) return
@@ -594,7 +594,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                         if (updateStateCancelled(state, cause)) return true
                     }
                 }
-                is JobNode<*> -> { // SINGLE/SINGLE+ state -- one completion handler
+                is JobNode -> { // SINGLE/SINGLE+ state -- one completion handler
                     promoteSingleToNodeList(state)
                 }
                 is NodeList -> { // LIST -- a list of completion handlers (either new or active)
@@ -690,7 +690,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                     promoteEmptyToNodeList(state)
                     return@loopOnState // retry
                 }
-                is JobNode<*> -> {
+                is JobNode -> {
                     promoteSingleToNodeList(state)
                     return@loopOnState // retry
                 }
@@ -1071,8 +1071,8 @@ internal interface Incomplete {
     val list: NodeList? // is null only for Empty and JobNode incomplete state objects
 }
 
-internal abstract class JobNode<out J : Job>(
-    @JvmField val job: J
+internal abstract class JobNode(
+    @JvmField val job: Job
 ) : CompletionHandlerBase(), DisposableHandle, Incomplete {
     override val isActive: Boolean get() = true
     override val list: NodeList? get() = null
@@ -1098,7 +1098,7 @@ internal class NodeList(
         append(if (isActive) "{Active}" else "{New}")
         append("[")
         var first = true
-        this@NodeList.forEach<JobNode<*>> { node ->
+        this@NodeList.forEach<JobNode> { node ->
             if (first) first = false else append(", ")
             append(node)
         }
@@ -1109,7 +1109,7 @@ internal class NodeList(
 private class InvokeOnCompletion(
     job: Job,
     private val handler: CompletionHandler
-) : JobNode<Job>(job)  {
+) : JobNode(job)  {
     override fun invoke(cause: Throwable?) = handler.invoke(cause)
     override fun toString() = "InvokeOnCompletion[$classSimpleName@$hexAddress]"
 }
@@ -1117,7 +1117,7 @@ private class InvokeOnCompletion(
 private class ResumeOnCompletion(
     job: Job,
     private val continuation: Continuation<Unit>
-) : JobNode<Job>(job)  {
+) : JobNode(job)  {
     override fun invoke(cause: Throwable?) = continuation.resume(Unit)
     override fun toString() = "ResumeOnCompletion[$continuation]"
 }
@@ -1125,7 +1125,7 @@ private class ResumeOnCompletion(
 internal class DisposeOnCompletion(
     job: Job,
     private val handle: DisposableHandle
-) : JobNode<Job>(job) {
+) : JobNode(job) {
     override fun invoke(cause: Throwable?) = handle.dispose()
     override fun toString(): String = "DisposeOnCompletion[$handle]"
 }
@@ -1134,7 +1134,7 @@ private class SelectJoinOnCompletion<R>(
     job: JobSupport,
     private val select: SelectInstance<R>,
     private val block: suspend () -> R
-) : JobNode<JobSupport>(job) {
+) : JobNode(job) {
     override fun invoke(cause: Throwable?) {
         if (select.trySelect(null))
             block.startCoroutineCancellable(select.completion)
@@ -1146,10 +1146,10 @@ private class SelectAwaitOnCompletion<T, R>(
     job: JobSupport,
     private val select: SelectInstance<R>,
     private val block: suspend (T) -> R
-) : JobNode<JobSupport>(job) {
+) : JobNode(job) {
     override fun invoke(cause: Throwable?) {
         if (select.trySelect(null))
-            job.selectAwaitCompletion(select, block)
+            (job as JobSupport).selectAwaitCompletion(select, block)
     }
     override fun toString(): String = "SelectAwaitOnCompletion[$select]"
 }
@@ -1160,12 +1160,12 @@ private class SelectAwaitOnCompletion<T, R>(
  * Marker for node that shall be invoked on cancellation (in _cancelling_ state).
  * **Note: may be invoked multiple times during cancellation.**
  */
-internal abstract class JobCancellationNode<out J : Job>(job: J) : JobNode<J>(job)
+internal abstract class JobCancellationNode(job: Job) : JobNode(job)
 
 private class InvokeOnCancellation(
     job: Job,
     private val handler: CompletionHandler
-) : JobCancellationNode<Job>(job)  {
+) : JobCancellationNode(job)  {
     // delegate handler shall be invoked at most once, so here is an additional flag
     private val _invoked = atomic(0)
     override fun invoke(cause: Throwable?) {
@@ -1177,7 +1177,7 @@ private class InvokeOnCancellation(
 internal class ChildJob(
     parent: JobSupport,
     @JvmField val childJob: Job
-) : JobCancellationNode<JobSupport>(parent) {
+) : JobCancellationNode(parent) {
     override fun invoke(cause: Throwable?) {
         // Always materialize the actual instance of parent's completion exception and cancel child with it
         childJob.cancel(job.getCancellationException())
@@ -1189,7 +1189,7 @@ internal class ChildJob(
 internal class ChildContinuation(
     parent: Job,
     @JvmField val child: AbstractContinuation<*>
-) : JobCancellationNode<Job>(parent) {
+) : JobCancellationNode(parent) {
     override fun invoke(cause: Throwable?) {
         child.cancel(job.getCancellationException())
     }
@@ -1200,7 +1200,7 @@ private class ChildCompletion(
     private val parent: JobSupport,
     private val child: ChildJob,
     private val proposedUpdate: Any?
-) : JobNode<Job>(child.childJob) {
+) : JobNode(child.childJob) {
     override fun invoke(cause: Throwable?) {
         parent.continueCompleting(child, proposedUpdate)
     }
