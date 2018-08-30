@@ -7,6 +7,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.channels.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
@@ -82,6 +83,23 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
+    fun testSmallTimeout() = runTest {
+        val channel = Channel<Int>(1)
+        val value = withTimeoutOrNull(1) {
+            channel.receive()
+        }
+
+        assertNull(value)
+    }
+
+    @Test
+    fun testThrowException() = runTest(expected = {it is AssertionError}) {
+        withTimeoutOrNull(Long.MAX_VALUE) {
+            throw AssertionError()
+        }
+    }
+
+    @Test
     fun testInnerTimeoutTest() = runTest(
         expected = { it is CancellationException }
     ) {
@@ -94,6 +112,19 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached() // will timeout
         }
         expectUnreached() // will timeout
+    }
+
+    @Test
+    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
+        withTimeoutOrNull(Long.MAX_VALUE) {
+            // Exception from this withTimeout is not suppressed by withTimeoutOrNull
+            withTimeout(10) {
+                delay(Long.MAX_VALUE)
+                1
+            }
+        }
+
+        expectUnreached()
     }
 
     @Test
@@ -159,11 +190,9 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest(
-        expected = { it is TestException }
-    ) {
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
-        withTimeoutOrNull(100) {
+        val value = withTimeoutOrNull(100) {
             expect(2)
             try {
                 delay(1000)
@@ -174,7 +203,8 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached()
             "OK"
         }
-        expectUnreached()
+
+        assertNull(value)
     }
 
     private class TestException : Exception()

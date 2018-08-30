@@ -76,7 +76,7 @@ class JoinStressTest : TestBase() {
                     exceptionalJob.await()
                 } catch (e: TestException) {
                     0
-                } catch (e: CancellationException) {
+                } catch (e: IOException) {
                     1
                 }
             }
@@ -87,21 +87,21 @@ class JoinStressTest : TestBase() {
             }
 
             barrier.await()
-            val result = exceptionalJob.cancel()
-            ++results[awaiterJob.await()]
+            val awaiterResult = awaiterJob.await()
             val cancellerResult = canceller.await()
-
-            // None or one cancel can succeed
-            require(!(result && cancellerResult))
+            if (awaiterResult == 1) {
+                assertTrue(cancellerResult)
+            }
+            ++results[awaiterResult]
             require(!exceptionalJob.cancel())
 
-            if (result || cancellerResult) {
+            if (cancellerResult) {
                 ++successfulCancellations
             }
         }
 
-        assertEquals(iterations, results[0], results.toList().toString())
-        assertEquals(0, results[1], results.toList().toString())
+        assertTrue(results[0] > 0, results.toList().toString())
+        assertTrue(results[1] > 0, results.toList().toString())
         require(successfulCancellations > 0) { "Cancellation never succeeds, something wrong with stress test infra" }
     }
 }

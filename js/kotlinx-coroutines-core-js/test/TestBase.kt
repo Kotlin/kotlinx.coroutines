@@ -27,6 +27,12 @@ public actual open class TestBase actual constructor() {
         throw exception
     }
 
+    private fun printError(message: String, cause: Throwable) {
+        if (error == null) error = cause
+        println("$message: $cause")
+        console.log(cause)
+    }
+
     /**
      * Asserts that this invocation is `index`-th in the execution sequence (counting from one).
      */
@@ -69,10 +75,12 @@ public actual open class TestBase actual constructor() {
         return promise(block = block, context = CoroutineExceptionHandler { context, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
-            if (exCount > unhandled.size)
-                error("Too many unhandled exceptions $exCount, expected ${unhandled.size}", e)
-            if (!unhandled[exCount - 1](e))
-                error("Unhandled exception was unexpected", e)
+            when {
+                exCount > unhandled.size ->
+                    printError("Too many unhandled exceptions $exCount, expected ${unhandled.size}, got: $e", e)
+                !unhandled[exCount - 1](e) ->
+                    printError("Unhandled exception was unexpected: $e", e)
+            }
             context[Job]?.cancel(e)
         }).catch { e ->
             ex = e

@@ -67,6 +67,12 @@ You need to add a dependency on `kotlinx-coroutines-core` module as explained
   * [Parental responsibilities](#parental-responsibilities)
   * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
   * [Cancellation via explicit job](#cancellation-via-explicit-job)
+  * [Thread-local data](#thread-local-data)
+* [Exception handling](#exception-handling)
+  * [Exception propagation](#exception-propagation)
+  * [CoroutineExceptionHandler](#coroutineexceptionhandler)
+  * [Cancellation and exceptions](#cancellation-and-exceptions)
+  * [Exceptions aggregation](#exceptions-aggregation)
 * [Channels](#channels)
   * [Channel basics](#channel-basics)
   * [Closing and iteration over channels](#closing-and-iteration-over-channels)
@@ -841,7 +847,7 @@ It produces the following output (maybe in different order):
 
 <!--- TEST LINES_START_UNORDERED -->
 
-The default dispatcher that we've used in previous sections is representend by [DefaultDispatcher], which 
+The default dispatcher that we've used in previous sections is represented by [DefaultDispatcher], which 
 is equal to [CommonPool] in the current implementation. So, `launch { ... }` is the same 
 as `launch(DefaultDispatcher) { ... }`, which is the same as `launch(CommonPool) { ... }`. 
 
@@ -1261,6 +1267,345 @@ and cancel it when activity is destroyed. We cannot `join` them in the case of A
 since it is synchronous, but this joining ability is useful when building backend services to ensure bounded 
 resource usage.
 
+### Thread-local data
+
+Sometimes it is very convenient to have an ability to pass some thread-local data, but, for coroutines, which 
+are not bound to any particular thread, it is hard to achieve it manually without writing a lot of boilerplate.
+
+For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html), 
+[asContextElement] is here for the rescue. It creates an additional context element, 
+which keep the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
+
+It is easy to demonstrate it in action:
+
+<!--- INCLUDE
+import kotlin.coroutines.experimental.*
+-->
+
+```kotlin
+val threadLocal = ThreadLocal<String?>() // declare thread-local variable
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    threadLocal.set("main")
+    println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+    val job = launch(CommonPool + threadLocal.asContextElement(value = "launch"), start = CoroutineStart.UNDISPATCHED) {
+        println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+        yield()
+        println("After yield, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+    }
+    job.join()
+    println("Post-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+}
+```                                                                                         
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-11.kt)
+
+The output of this example is:
+
+```text
+Pre-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'
+Launch start, current thread: Thread[main @coroutine#2,5,main], thread local value: 'launch'
+After yield, current thread: Thread[ForkJoinPool.commonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'
+Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'
+```
+
+<!--- TEST FLEXIBLE_THREAD -->
+
+Note how thread-local value is restored properly, no matter on what thread the coroutine is executed. 
+`ThreadLocal` has first-class support and can be used with any primitive `kotlinx.corotuines` provides.
+It has one key limitation: when thread-local is mutated, a new value is not propagated to the coroutine caller 
+(as context element cannot track all `ThreadLocal` object accesses) and updated value is lost on the next suspension.
+Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
+
+Alternatively, a value can be stored in a mutable box like `class Counter(var i: Int)`, which is, in turn, 
+is stored in a thread-local variable. However, in this case you are fully responsible to synchronize 
+potentially concurrent modifications to the variable in this box.
+
+For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
+which internally use thread-locals for passing data, see documentation for [ThreadContextElement] interface 
+that should be implemented. 
+
+## Exception handling
+
+<!--- INCLUDE .*/example-exceptions-([0-9]+).kt
+-->
+
+This section covers exception handling and cancellation on exceptions.
+We already know that cancelled coroutine throws [CancellationException] in suspension points and that it 
+is ignored by coroutines machinery. But what happens if an exception is thrown during cancellation or multiple children of the same 
+coroutine throw an exception?
+
+### Exception propagation
+
+Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or exposing them to users ([async] and [produce]).
+The former treat exceptions as unhandled, similar to Java's `Thread.uncaughExceptionHandler`, while the latter are relying on the user to consume the final 
+exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
+([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](#channels) section).
+
+It can be demonstrated by a simple example:
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val job = launch {
+        println("Throwing exception from launch")
+        throw IndexOutOfBoundsException() // Will be printed to the console by Thread.defaultUncaughtExceptionHandler
+    }
+    job.join()
+    println("Joined failed job")
+    val deferred = async {
+        println("Throwing exception from async")
+        throw ArithmeticException() // Nothing is printed, relying on user to call await
+    }
+    try {
+        deferred.await()
+        println("Unreached")
+    } catch (e: ArithmeticException) {
+        println("Caught ArithmeticException")
+    }
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-01.kt)
+
+The output of this code is:
+
+```text
+Throwing exception from launch
+Exception in thread "ForkJoinPool.commonPool-worker-2 @coroutine#2" java.lang.IndexOutOfBoundsException
+Joined failed job
+Throwing exception from async
+Caught ArithmeticException
+```
+
+<!--- TEST EXCEPTION-->
+
+### CoroutineExceptionHandler
+
+But what if one does not want to print all exceptions to the console?
+[CoroutineExceptionHandler] context element is used as generic `catch` block of coroutine where custom logging or exception handling may take place.
+It is similar to using [`Thread.uncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)).
+
+On JVM it's possible to redefine global exception handler for all coroutines by registering [CoroutineExceptionHandler] via
+[`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
+Global exception handler is similar to 
+[`Thread.defaultUncaughtExceptionHandler`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#setDefaultUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler)) 
+which is used when no more specific handlers are registered.
+On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exception handler.
+
+[CoroutineExceptionHandler] is invoked only on exceptions which are not expected to be handled by the user, 
+so registering it in [async] builder and the like of it has no effect.
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val handler = CoroutineExceptionHandler { _, exception -> 
+        println("Caught $exception") 
+    }
+    val job = launch(handler) {
+        throw AssertionError()
+    }
+    val deferred = async(handler) {
+        throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
+    }
+    joinAll(job, deferred)
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-02.kt)
+
+The output of this code is:
+
+```text
+Caught java.lang.AssertionError
+```
+
+<!--- TEST-->
+
+### Cancellation and exceptions
+
+Cancellation is tightly bound with exceptions. Coroutines internally use `CancellationException` for cancellation, these
+exceptions are ignored by all handlers, so they should be used only as the source of additional debug information, which can
+be obtained by `catch` block.
+When a coroutine is cancelled using [Job.cancel] without a cause, it terminates, but it does not cancel its parent.
+Cancelling without cause is a mechanism for parent to cancel its children without cancelling itself. 
+
+<!--- INCLUDE
+import kotlin.coroutines.experimental.*
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val job = launch(coroutineContext, parent = Job()) {
+        val child = launch(coroutineContext) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                println("Child is cancelled")
+            }
+        }
+        yield()
+        println("Cancelling child")
+        child.cancel()
+        child.join()
+        yield()
+        println("Parent is not cancelled")
+    }
+    job.join()
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-03.kt)
+
+The output of this code is:
+
+```text
+Cancelling child
+Child is cancelled
+Parent is not cancelled
+```
+
+<!--- TEST-->
+
+If a coroutine encounters exception other than `CancellationException`, it cancels its parent with that exception. 
+This behaviour cannot be overridden and is used to provide stable coroutines hierarchies which do not depend on [CoroutineExceptionHandler] implementation.
+The original exception is handled by the parent when all its children terminate.
+
+<!--- INCLUDE
+import kotlin.coroutines.experimental.*
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val handler = CoroutineExceptionHandler { _, exception -> 
+        println("Caught $exception") 
+    }
+    val job = launch(handler) {
+        val child1 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                withContext(NonCancellable) {
+                    println("Children are cancelled, but exception is not handled until all children terminate")
+                    delay(100)
+                    println("Last child finished its non cancellable block")
+                }
+            }
+        }
+        val child2 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+            delay(10)
+            println("Second child throws an exception")
+            throw ArithmeticException()
+        }
+    }
+    job.join()
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-04.kt)
+
+The output of this code is:
+
+```text
+Second child throws an exception
+Children are cancelled, but exception is not handled until all children terminate
+Last child finished its non cancellable block
+Caught java.lang.ArithmeticException
+```
+<!--- TEST-->
+
+### Exceptions aggregation
+
+What happens if multiple children of a coroutine throw an exception?
+The general rule is "the first exception wins", so the first thrown exception is exposed to the handler.
+But that may cause lost exceptions, for example if coroutine throws an exception in its `finally` block.
+
+One of the solutions would have been to report each exception separately, 
+but then [Deferred.await] should have had the same mechanism to avoid behavioural inconsistency and this 
+would cause implementation details of a coroutines (whether it had delegate parts of its work to its children or not)
+to leak to its exception handler.
+
+To avoid that, additional exceptions are suppressed. 
+
+<!--- INCLUDE
+import kotlinx.coroutines.experimental.exceptions.*
+import kotlin.coroutines.experimental.*
+import java.io.*
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val handler = CoroutineExceptionHandler { _, exception ->
+        println("Caught $exception with suppressed ${exception.suppressed().contentToString()}")
+    }
+    val job = launch(handler + coroutineContext, parent = Job()) {
+        launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                throw ArithmeticException()
+            }
+        }
+        launch(coroutineContext) {
+            throw IOException()
+        }
+        delay(Long.MAX_VALUE)
+    }
+    job.join()
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-05.kt)
+
+The output of this code is:
+
+```text
+Caught java.io.IOException with suppressed [java.lang.ArithmeticException]
+```
+<!--- TEST-->
+
+Note that this mechanism currently works only on Java version 1.7+. 
+Limitation on JS and Native is temporary and will be fixed in the future.
+
+Cancellation exceptions are transparent and unwrapped by default:
+
+<!--- INCLUDE
+import kotlin.coroutines.experimental.*
+import java.io.*
+-->
+
+```kotlin
+fun main(args: Array<String>) = runBlocking {
+    val handler = CoroutineExceptionHandler { _, exception ->
+        println("Caught original $exception")
+    }
+    val job = launch(handler) {
+        val inner = launch(coroutineContext) {
+            launch(coroutineContext) {
+                launch(coroutineContext) {
+                    throw IOException()
+                }
+            }
+        }
+        try {
+            inner.join()
+        } catch (e: JobCancellationException) {
+            println("Rethrowing JobCancellationException with original cause")
+            throw e
+        }
+    }
+    job.join()
+}
+```
+
+> You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-exceptions-06.kt)
+
+The output of this code is:
+
+```text
+Rethrowing JobCancellationException with original cause
+Caught original java.io.IOException
+```
+<!--- TEST-->
+
 ## Channels
 
 Deferred values provide a convenient way to transfer a single value between coroutines.
@@ -1504,7 +1849,7 @@ multiple CPU cores if you run it in [CommonPool] context.
 
 Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
-built using `buildSeqeunce`/`buildIterator`, because they do not allow arbitrary suspension, unlike
+built using `buildSequence`/`buildIterator`, because they do not allow arbitrary suspension, unlike
 `produce`, which is fully asynchronous.
  
 ### Fan-out
@@ -2490,6 +2835,9 @@ Channel was closed
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html
 [CoroutineName]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-name/index.html
 [Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html
+[asContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/java.lang.-thread-local/as-context-element.html
+[ThreadContextElement]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-thread-context-element/index.html
+[CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-exception-handler/index.html
 [kotlin.coroutines.experimental.CoroutineContext.cancelChildren]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
 [CompletableDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-completable-deferred/index.html
 [Deferred.onAwait]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/on-await.html
@@ -2499,17 +2847,17 @@ Channel was closed
 [Mutex.unlock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/-mutex/unlock.html
 [withLock]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.sync/with-lock.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
+[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
-[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
 [SendChannel.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/close.html
-[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
 [consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/consume-each.html
 [Channel()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel.html
 [ticker]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/ticker.html
 [ReceiveChannel.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/cancel.html
 [TickerMode.FIXED_DELAY]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-ticker-mode/-f-i-x-e-d_-d-e-l-a-y.html
-[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/on-receive-or-null.html
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/on-send.html

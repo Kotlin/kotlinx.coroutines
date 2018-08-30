@@ -16,9 +16,11 @@ class CoroutineExceptionHandlerTest : TestBase() {
             coroutineException = ex
             expect(3)
         }
-        val job = launch(coroutineContext + handler) {
+
+        val job = launch(coroutineContext + handler, parent = Job()) {
             throw TestException()
         }
+
         expect(2)
         job.join()
         finish(4)

@@ -69,13 +69,6 @@ private fun <U, T: U> setupTimeout(
     return coroutine.startUndispatchedOrReturn(coroutine, block)
 }
 
-/**
- * @suppress **Deprecated**: for binary compatibility only
- */
-@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
-public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T =
-    withTimeout(time, unit) { block() }
-
 private open class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
     @JvmField val unit: TimeUnit,
@@ -106,8 +99,8 @@ private open class TimeoutCoroutine<U, in T: U>(
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [TimeoutCancellationException].
- * Even if the code in the block suppresses [TimeoutCancellationException], this
- * invocation of `withTimeoutOrNull` still returns `null`.
+ * **NB**: this method is exception-unsafe. Even if the code in the block suppresses [TimeoutCancellationException], this
+ * invocation of `withTimeoutOrNull` still returns `null` and thrown exception will be ignored.
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -126,8 +119,8 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [TimeoutCancellationException].
- * Even if the code in the block suppresses [TimeoutCancellationException], this
- * invocation of `withTimeoutOrNull` still returns `null`.
+ * **NB**: this method is exception-unsafe. Even if the code in the block suppresses [TimeoutCancellationException], this
+ * invocation of `withTimeoutOrNull` still returns `null` and thrown exception will be ignored.
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -140,32 +133,21 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
  */
 public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T? {
     if (time <= 0L) return null
-    return suspendCoroutineUninterceptedOrReturn { uCont ->
-        setupTimeout(TimeoutOrNullCoroutine(time, unit, uCont), block)
-    }
-}
 
-/**
- * @suppress **Deprecated**: for binary compatibility only
- */
-@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
-public suspend fun <T> withTimeoutOrNull(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> T): T? =
-    withTimeoutOrNull(time, unit) { block() }
-
-private class TimeoutOrNullCoroutine<T>(
-    time: Long,
-    unit: TimeUnit,
-    uCont: Continuation<T?> // unintercepted continuation
-) : TimeoutCoroutine<T?, T>(time, unit, uCont) {
-    @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int) {
-        if (state is CompletedExceptionally) {
-            val exception = state.cause
-            if (exception is TimeoutCancellationException && exception.coroutine === this)
-                uCont.resumeUninterceptedMode(null, mode) else
-                uCont.resumeUninterceptedWithExceptionMode(exception, mode)
-        } else
-            uCont.resumeUninterceptedMode(state as T, mode)
+    // Workaround for K/N bug
+    val array = arrayOfNulls<TimeoutCoroutine<T?, T?>>(1)
+    try {
+        return suspendCoroutineUninterceptedOrReturn { uCont ->
+            val timeoutCoroutine = TimeoutCoroutine(time, unit, uCont)
+            array[0] = timeoutCoroutine
+            setupTimeout<T?, T?>(timeoutCoroutine, block)
+        }
+    } catch (e: TimeoutCancellationException) {
+        // Return null iff it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
+        if (e.coroutine === array[0]) {
+            return null
+        }
+        throw e
     }
 }
 

@@ -124,6 +124,6 @@ private class ProducerCoroutine<E>(
             else -> _channel.close(cause) // producer coroutine has completed -- close channel
         }
         if (!processed && cause != null)
-            handleCoroutineException(context, cause)
+            handleCoroutineException(context, cause, this)
     }
 }

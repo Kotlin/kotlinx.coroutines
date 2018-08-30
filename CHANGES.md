@@ -1,5 +1,36 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.25.0
+
+* Major rework on exception-handling and cancellation in coroutines (see #333, #452 and #451):
+  * New ["Exception Handling" section in the guide](coroutines-guide.md#exception-handling) explains exceptions in coroutines. 
+  * Semantics of `Job.cancel` resulting `Boolean` value changed &mdash; `true` means exception was handled by the job, caller shall handle otherwise.
+  * Exceptions are properly propagated from children to parents.
+  * Installed `CoroutineExceptionHandler` for a family of coroutines receives one aggregated exception in case of failure.
+  * Change `handleCoroutineException` contract, so custom exception handlers can't break coroutines machinery. 
+  * Unwrap `JobCancellationException` properly to provide exception transparency over whole call chain.
+* Introduced support for thread-local elements in coroutines context (see #119):
+  * `ThreadContextElement` API for custom thread-context sensitive context elements.
+  * `ThreadLocal.asContextElement()` extension function to convert an arbitrary thread-local into coroutine context element.
+  * New ["Thread-local data" subsection in the guide](coroutines-guide.md#thread-local-data) with examples.
+  * SLF4J Mapped Diagnostic Context (MDC) integration is provided via `MDCContext` element defined in [`kotlinx-coroutines-slf4j`](integration/kotlinx-coroutines-slf4j/README.md) integration module.
+* Introduced IO dispatcher to offload blocking I/O-intensive tasks (see #79).
+* Introduced `ExecutorCoroutineDispatcher` instead of `CloseableCoroutineDispatcher` (see #385). 
+* Built with Kotlin 1.2.61 and Kotlin/Native 0.8.2.
+* JAR files for `kotlinx-coroutines` are now [JEP 238](http://openjdk.java.net/jeps/238) multi-release JAR files.
+  * On JDK9+ `VarHandle` is used for atomic operations instead of `Atomic*FieldUpdater` for better performance.
+  * See [AtomicFu](https://github.com/Kotlin/kotlinx.atomicfu/blob/master/README.md) project for details.
+* Reversed addition of `BlockingChecker` extension point to control where `runBlocking` can be used (see #227).
+  * `runBlocking` can be used anywhere without limitations (again), but it would still cause problems if improperly used on UI thread.
+* Corrected return-type of `EventLoop` pseudo-constructor (see #477, PR by @Groostav).  
+* Fixed `as*Future()` integration functions to catch all `Throwable` exceptions (see #469).
+* Fixed `runBlocking` cancellation (see #501).
+* Fixed races and timing bugs in `withTimeoutOrNull` (see #498).
+* Execute `EventLoop.invokeOnTimeout` in `DefaultDispatcher` to allow busy-wait loops inside `runBlocking` (see #479).
+* Removed `kotlinx-coroutines-io` module from the project, it has moved to [kotlinx-io](https://github.com/kotlin/kotlinx-io/).
+* Provide experimental API to create limited view of experimental dispatcher (see #475). 
+* Various minor fixes by @LouisCAD, @Dmitry-Borodin.
+
 ## Version 0.24.0
 
 * Fully multiplatform release with Kotlin/Native support (see #246):

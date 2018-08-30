@@ -10,6 +10,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AsyncLazyTest : TestBase() {
+
     @Test
     fun testSimple() = runTest {
         expect(1)
@@ -180,7 +181,7 @@ class AsyncLazyTest : TestBase() {
         assertTrue(d.isActive && !d.isCompleted && !d.isCancelled)
         assertTrue(d.cancel())
         assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // cancelling !
-        assertTrue(!d.cancel())
+        assertTrue(d.cancel())
         assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // still cancelling
         finish(6)
         assertTrue(d.await() == 42) // await shall throw CancellationException

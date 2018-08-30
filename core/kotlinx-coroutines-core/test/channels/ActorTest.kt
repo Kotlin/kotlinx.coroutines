@@ -150,4 +150,24 @@ class ActorTest(private val capacity: Int) : TestBase() {
         parent.join()
         finish(2)
     }
+
+    @Test
+    fun testChildJob() = runTest {
+        val parent = Job()
+        actor<Int>(context = coroutineContext, parent = parent) {
+            launch(coroutineContext) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(1)
+                }
+            }
+        }
+
+        yield()
+        yield()
+        parent.cancel()
+        parent.join()
+        finish(2)
+    }
 }

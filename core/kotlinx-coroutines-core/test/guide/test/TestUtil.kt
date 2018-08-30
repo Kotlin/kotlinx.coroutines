@@ -100,7 +100,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
     for (i in 0 until n) {
         val thread = threads[i]
         if (thread is PoolThread)
-            thread.dispatcher.executor.apply {
+            (thread.dispatcher.executor as ExecutorService).apply {
                 shutdown()
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
                 shutdownNow().forEach { DefaultExecutor.execute(it) }
@@ -172,6 +172,18 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
     val expectedSorted = expected.sorted().toTypedArray()
     sorted().verifyLinesStart(*expectedSorted)
 }
+
+fun List<String>.verifyExceptions(vararg expected: String) {
+    val actual = filter { !it.startsWith("\tat ") }
+
+    val n = minOf(actual.size, expected.size)
+    for (i in 0 until n) {
+        val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
+        val act = sanitize(actual[i], SanitizeMode.FLEXIBLE_THREAD)
+        assertEquals("Line ${i + 1}", exp, act)
+    }
+}
+
 
 fun List<String>.verifyLinesStart(vararg expected: String) = verify {
     val n = minOf(size, expected.size)

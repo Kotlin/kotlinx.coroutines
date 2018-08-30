@@ -8,6 +8,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AsyncJvmTest : TestBase() {
+
     // This must be a common test but it fails on JS because of KT-21961
     @Test
     fun testAsyncWithFinally() = runTest {
@@ -28,11 +29,11 @@ class AsyncJvmTest : TestBase() {
         expect(2)
         yield() // to async
         expect(4)
-        check(d.isActive && !d.isCompleted && !d.isCompletedExceptionally && !d.isCancelled)
+        check(d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
         check(d.cancel())
-        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally && d.isCancelled)
-        check(!d.cancel()) // second attempt returns false
-        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally && d.isCancelled)
+        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
+        check(d.cancel()) // second attempt returns false
+        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
         expect(5)
         try {
             d.await() // awaits

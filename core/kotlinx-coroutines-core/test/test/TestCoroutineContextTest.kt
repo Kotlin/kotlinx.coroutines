@@ -5,9 +5,8 @@
 package kotlinx.coroutines.experimental.test
 
 import kotlinx.coroutines.experimental.*
-import org.junit.After
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Test
 
 class TestCoroutineContextTest {
     private val injectedContext = TestCoroutineContext()

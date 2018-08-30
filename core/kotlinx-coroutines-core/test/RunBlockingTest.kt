@@ -69,10 +69,10 @@ class RunBlockingTest : TestBase() {
 
 
     @Test
-    fun testCancellation() {
-        val job = launch(DefaultDispatcher) {
+    fun testCancellation() = newFixedThreadPoolContext(2, "testCancellation").use {
+        val job = launch(it) {
             runBlocking(coroutineContext) {
-                while(true) {
+                while (true) {
                     yield()
                 }
             }

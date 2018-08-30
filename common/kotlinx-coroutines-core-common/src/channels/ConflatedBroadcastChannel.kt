@@ -262,7 +262,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
             select.resumeSelectCancellableWithException(it.sendException)
             return
         }
-        block.startCoroutineUndispatched(receiver = this, completion = select.completion)
+        block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
     }
 
     @Suppress("DEPRECATION")

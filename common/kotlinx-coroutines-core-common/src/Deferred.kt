@@ -77,7 +77,7 @@ public interface Deferred<out T> : Job {
 
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
-     * returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally.
+     * returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally or was cancelled.
      *
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function

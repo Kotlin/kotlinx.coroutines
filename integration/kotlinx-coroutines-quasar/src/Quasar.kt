@@ -43,7 +43,8 @@ fun <T> runFiberBlocking(block: suspend () -> T): T =
 private class CoroutineAsync<T>(
     private val block: suspend () -> T
 ) : FiberAsync<T, Throwable>(), Continuation<T> {
-    override val context: CoroutineContext = Fiber.currentFiber().scheduler.executor.asCoroutineDispatcher()
+    override val context: CoroutineContext =
+        newCoroutineContext(Fiber.currentFiber().scheduler.executor.asCoroutineDispatcher())
     override fun resume(value: T) { asyncCompleted(value) }
     override fun resumeWithException(exception: Throwable) { asyncFailed(exception) }
 

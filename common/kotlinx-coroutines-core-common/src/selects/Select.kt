@@ -407,7 +407,7 @@ internal class SelectBuilderImpl<in R>(
     override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {
         if (time <= 0L) {
             if (trySelect(null))
-                block.startCoroutineUndispatched(completion)
+                block.startCoroutineUnintercepted(completion)
             return
         }
         val action = Runnable {

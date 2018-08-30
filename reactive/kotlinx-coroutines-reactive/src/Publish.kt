@@ -121,7 +121,7 @@ private class PublisherCoroutine<in T>(
         } catch (e: Throwable) {
             try {
                 if (!cancel(e))
-                    handleCoroutineException(context, e)
+                    handleCoroutineException(context, e, this)
             } finally {
                 doLockedSignalCompleted()
             }
@@ -162,7 +162,7 @@ private class PublisherCoroutine<in T>(
                     else
                         subscriber.onComplete()
                 } catch (e: Throwable) {
-                    handleCoroutineException(context, e)
+                    handleCoroutineException(context, e, this)
                 }
             }
         } finally {

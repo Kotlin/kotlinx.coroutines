@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Name of the property that control coroutine debugging. See [newCoroutineContext].
+ * Name of the property that controls coroutine debugging. See [newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
@@ -56,14 +56,34 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
 }
 
 /**
- * This is the default [CoroutineDispatcher] that is used by all standard builders like
+ * The default [CoroutineDispatcher] that is used by all standard builders like
  * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  *
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
+ * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")
+ * to use an experimental coroutine dispatcher that shares threads with [IO] dispatcher and thus can switch to
+ * [IO] context without performing an actual thread context switch.
  */
 @Suppress("PropertyName")
 public actual val DefaultDispatcher: CoroutineDispatcher =
-    if (useCoroutinesScheduler) ExperimentalCoroutineDispatcher() else CommonPool
+    if (useCoroutinesScheduler) BackgroundDispatcher else CommonPool
+
+/**
+ * Name of the property that defines the maximal number of threads that are used by [IO] coroutines dispatcher.
+ */
+public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
+
+/**
+ * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
+ *
+ * Additional threads in this pool are created and are shutdown on demand.
+ * The number of threads used by this dispatcher is limited by the value of
+ * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
+ * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+ */
+public val IO: CoroutineDispatcher by lazy {
+    BackgroundDispatcher.blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+}
 
 /**
  * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
@@ -98,29 +118,12 @@ public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = 
  * Executes a block using a given coroutine context.
  */
 internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
-    val oldName = context.updateThreadContext()
+    val oldValue = updateThreadContext(context)
     try {
         return block()
     } finally {
-        restoreThreadContext(oldName)
+        restoreThreadContext(context, oldValue)
     }
-}
-
-@PublishedApi
-internal fun CoroutineContext.updateThreadContext(): String? {
-    if (!DEBUG) return null
-    val coroutineId = this[CoroutineId] ?: return null
-    val coroutineName = this[CoroutineName]?.name ?: "coroutine"
-    val currentThread = Thread.currentThread()
-    val oldName = currentThread.name
-    currentThread.name = buildString(oldName.length + coroutineName.length + 10) {
-        append(oldName)
-        append(" @")
-        append(coroutineName)
-        append('#')
-        append(coroutineId.id)
-    }
-    return oldName
 }
 
 internal actual val CoroutineContext.coroutineName: String? get() {
@@ -130,12 +133,31 @@ internal actual val CoroutineContext.coroutineName: String? get() {
     return "$coroutineName#${coroutineId.id}"
 }
 
-@PublishedApi
-internal fun restoreThreadContext(oldName: String?) {
-    if (oldName != null) Thread.currentThread().name = oldName
-}
+private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 
-private class CoroutineId(val id: Long) : AbstractCoroutineContextElement(CoroutineId) {
+internal data class CoroutineId(
+    val id: Long
+) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
     companion object Key : CoroutineContext.Key<CoroutineId>
     override fun toString(): String = "CoroutineId($id)"
+
+    override fun updateThreadContext(context: CoroutineContext): String {
+        val coroutineName = context[CoroutineName]?.name ?: "coroutine"
+        val currentThread = Thread.currentThread()
+        val oldName = currentThread.name
+        var lastIndex = oldName.lastIndexOf(DEBUG_THREAD_NAME_SEPARATOR)
+        if (lastIndex < 0) lastIndex = oldName.length
+        currentThread.name = buildString(lastIndex + coroutineName.length + 10) {
+            append(oldName.substring(0, lastIndex))
+            append(DEBUG_THREAD_NAME_SEPARATOR)
+            append(coroutineName)
+            append('#')
+            append(id)
+        }
+        return oldName
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
+        Thread.currentThread().name = oldState
+    }
 }

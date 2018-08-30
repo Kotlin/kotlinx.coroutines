@@ -28,6 +28,7 @@ module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
 module('integration/kotlinx-coroutines-nio')
 module('integration/kotlinx-coroutines-quasar')
+module('integration/kotlinx-coroutines-slf4j')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
