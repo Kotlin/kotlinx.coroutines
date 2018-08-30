@@ -6,13 +6,12 @@
 package kotlinx.coroutines.experimental.guide.context06
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // launch a coroutine to process some kind of incoming request
-    val request = launch {
+    val request = GlobalScope.launch {
         // it spawns two other jobs, one with its separate context
-        val job1 = launch {
+        val job1 = GlobalScope.launch {
             println("job1: I have my own context and execute independently!")
             delay(1000)
             println("job1: I am not affected by cancellation of the request")

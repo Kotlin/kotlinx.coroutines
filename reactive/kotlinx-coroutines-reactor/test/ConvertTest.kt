@@ -9,15 +9,14 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.reactive.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
 
 class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)
 
     @Test
-    fun testJobToMonoSuccess() = runBlocking<Unit> {
+    fun testJobToMonoSuccess() = runBlocking {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
         }
         val mono = job.asMono(coroutineContext)
@@ -30,9 +29,9 @@ class ConvertTest : TestBase() {
     }
 
     @Test
-    fun testJobToMonoFail() = runBlocking<Unit> {
+    fun testJobToMonoFail() = runBlocking {
         expect(1)
-        val job = async(coroutineContext + NonCancellable) { // don't kill parent on exception
+        val job = async(NonCancellable) { // don't kill parent on exception
             expect(3)
             throw RuntimeException("OK")
         }
@@ -76,7 +75,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMonoFail() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             throw TestException("OK")
         }
@@ -92,7 +91,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToFlux() {
-        val c = produce(DefaultDispatcher) {
+        val c = GlobalScope.produce {
             delay(50)
             send("O")
             delay(50)
@@ -106,7 +105,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToFluxFail() {
-        val c = produce(DefaultDispatcher) {
+        val c = GlobalScope.produce {
             delay(50)
             send("O")
             delay(50)

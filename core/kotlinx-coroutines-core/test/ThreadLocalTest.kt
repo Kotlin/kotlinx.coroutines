@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental
 
 import org.junit.*
 import org.junit.Test
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 @Suppress("RedundantAsync")
@@ -79,8 +78,7 @@ class ThreadLocalTest : TestBase() {
     fun testConflictingThreadLocals() = runTest {
         intThreadLocal.set(42)
 
-        val deferred = async(CommonPool
-                + intThreadLocal.asContextElement(1)) {
+        val deferred = GlobalScope.async(intThreadLocal.asContextElement(1)) {
             assertEquals(1, intThreadLocal.get())
 
             withContext(executor + intThreadLocal.asContextElement(42)) {
@@ -89,14 +87,14 @@ class ThreadLocalTest : TestBase() {
 
             assertEquals(1, intThreadLocal.get())
 
-            val deferred = async(coroutineContext + intThreadLocal.asContextElement(53)) {
+            val deferred = GlobalScope.async(coroutineContext + intThreadLocal.asContextElement(53)) {
                 assertEquals(53, intThreadLocal.get())
             }
 
             deferred.await()
             assertEquals(1, intThreadLocal.get())
 
-            val deferred2 = async(executor) {
+            val deferred2 = GlobalScope.async(executor) {
                 assertNull(intThreadLocal.get())
             }
 
@@ -173,12 +171,12 @@ class ThreadLocalTest : TestBase() {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = 42
-            async(CommonPool + intThreadLocal.asContextElement(42)) {
+            GlobalScope.async(CommonPool + intThreadLocal.asContextElement(42)) {
 
                 assertSame(data, intThreadLocal.get())
                 expect(2)
 
-                async(it + intThreadLocal.asContextElement(31)) {
+                GlobalScope.async(it + intThreadLocal.asContextElement(31)) {
                     assertEquals(31, intThreadLocal.get())
                     expect(3)
                 }.await()
@@ -188,7 +186,7 @@ class ThreadLocalTest : TestBase() {
                     expect(4)
                 }
 
-                async(it) {
+                GlobalScope.async(it) {
                     assertNull(intThreadLocal.get())
                     expect(5)
                 }.await()
@@ -198,5 +196,20 @@ class ThreadLocalTest : TestBase() {
         }
 
         finish(7)
+    }
+
+    @Test
+    fun testScope() = runTest {
+        intThreadLocal.set(42)
+        val mainThread = Thread.currentThread()
+        GlobalScope.async {
+          assertNull(intThreadLocal.get())
+            assertNotSame(mainThread, Thread.currentThread())
+        }.await()
+
+        GlobalScope.async(intThreadLocal.asContextElement()) {
+            assertEquals(42, intThreadLocal.get())
+            assertNotSame(mainThread, Thread.currentThread())
+        }.await()
     }
 }

@@ -8,13 +8,12 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
 
 class ActorLazyTest : TestBase() {
     @Test
-    fun testEmptyStart() = runBlocking<Unit> {
+    fun testEmptyStart() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext, start = CoroutineStart.LAZY) {
+        val actor = actor<String>(start = CoroutineStart.LAZY) {
             expect(5)
         }
         actor as Job // type assertion
@@ -38,9 +37,9 @@ class ActorLazyTest : TestBase() {
     }
 
     @Test
-    fun testOne() = runBlocking<Unit> {
+    fun testOne() = runBlocking {
         expect(1)
-        val actor = actor<String>(coroutineContext, start = CoroutineStart.LAZY) {
+        val actor = actor<String>(start = CoroutineStart.LAZY) {
             expect(4)
             assertThat(receive(), IsEqual("OK"))
             expect(5)

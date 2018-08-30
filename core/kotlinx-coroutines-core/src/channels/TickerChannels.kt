@@ -64,8 +64,8 @@ public fun ticker(
 ): ReceiveChannel<Unit> {
     require(delay >= 0) { "Expected non-negative delay, but has $delay" }
     require(initialDelay >= 0) { "Expected non-negative initial delay, but has $initialDelay" }
-    return produce(Unconfined + context, capacity = 0) {
-        when(mode) {
+    return GlobalScope.produce(Unconfined + context, capacity = 0) {
+        when (mode) {
             TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delay, unit, initialDelay, channel)
             TickerMode.FIXED_DELAY -> fixedDelayTicker(delay, unit, initialDelay, channel)
         }

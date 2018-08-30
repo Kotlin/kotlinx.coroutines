@@ -96,7 +96,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     @Test
     fun testComplexOperator() = withVirtualTimeSource {
         runTest {
-            val producer = produce {
+            val producer = GlobalScope.produce {
                 for (i in 1..7) {
                     send(i)
                     delay(1000)
@@ -108,7 +108,7 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         }
     }
 
-    private fun ReceiveChannel<Int>.averageInTimeWindow(timespan: Long) = produce {
+    private fun ReceiveChannel<Int>.averageInTimeWindow(timespan: Long) = GlobalScope.produce {
         val delayChannel = channelFactory(delay = timespan, initialDelay = timespan)
         var sum = 0
         var n = 0

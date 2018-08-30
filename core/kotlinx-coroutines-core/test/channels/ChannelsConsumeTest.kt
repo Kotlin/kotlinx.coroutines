@@ -15,7 +15,7 @@ class ChannelsConsumeTest {
     private val sourceList = (1..10).toList()
 
     // test source with numbers 1..10
-    private fun testSource(context: CoroutineContext) = produce(context) {
+    private fun testSource(context: CoroutineContext) = CoroutineScope(context).produce {
         for (i in sourceList) {
             send(i)
         }
@@ -479,7 +479,7 @@ class ChannelsConsumeTest {
     fun testFlatMap() {
         checkTransform(sourceList.flatMap { listOf("A$it", "B$it") }) { ctx ->
             flatMap(ctx) {
-                produce {
+                GlobalScope.produce {
                     send("A$it")
                     send("B$it")
                 }

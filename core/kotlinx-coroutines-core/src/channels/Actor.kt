@@ -6,6 +6,7 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
@@ -35,6 +36,22 @@ interface ActorJob<in E> : SendChannel<E> {
 
 /**
  * Launches new coroutine that is receiving messages from its mailbox channel
+ * and returns a reference to its mailbox channel as a [SendChannel].
+ * Deprecated, use [CoroutineScope.actor] instead.
+ */
+@Deprecated(message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release")
+public fun <E> actor(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend ActorScope<E>.() -> Unit
+): SendChannel<E> =
+    CoroutineScope(context).actor(parent ?: EmptyCoroutineContext, capacity, start, onCompletion, block)
+
+/**
+ * Launches new coroutine that is receiving messages from its mailbox channel
  * and returns a reference to its mailbox channel as a [SendChannel]. The resulting
  * object can be used to [send][SendChannel.send] messages to this coroutine.
  *
@@ -43,13 +60,10 @@ interface ActorJob<in E> : SendChannel<E> {
  * [receive][ReceiveChannel.receive] directly. The channel is [closed][SendChannel.close]
  * when the coroutine completes.
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -98,7 +112,7 @@ interface ActorJob<in E> : SendChannel<E> {
  *
  * ```
  * val job = Job()
- * val c = actor(parent = job) {  ... }
+ * val c = actor(context = job) {  ... }
  * ...
  * // abort the actor
  * job.cancel()
@@ -108,22 +122,20 @@ interface ActorJob<in E> : SendChannel<E> {
  * "`for (msg in channel)`" and other cancellable suspending functions throw [CancellationException] and actor
  * completes without processing remaining messages.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).*
  * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
+public fun <E> CoroutineScope.actor(
+    context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend ActorScope<E>.() -> Unit
 ): SendChannel<E> {
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val channel = Channel<E>(capacity)
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
