@@ -1,0 +1,82 @@
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+ext.tasks_version = '15.0.1'
+
+repositories {
+    google()
+}
+
+def attr = Attribute.of("artifactType", String.class)
+configurations {
+    aar {
+        attributes { attribute(attr, ArtifactTypeDefinition.JAR_TYPE) }
+        sourceSets.main.compileClasspath += it
+        sourceSets.test.compileClasspath += it
+        sourceSets.test.runtimeClasspath += it
+    }
+}
+
+dependencies {
+    registerTransform {
+        from.attribute(attr, "aar")
+        to.attribute(attr, "jar")
+        artifactTransform(ExtractJars.class)
+    }
+
+    aar("com.google.android.gms:play-services-tasks:$tasks_version") {
+        exclude group: 'com.android.support'
+    }
+}
+
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        url = new URL("https://developers.google.com/android/reference/")
+    }
+}
+
+class ExtractJars extends ArtifactTransform {
+    @Override
+    List<File> transform(File input) {
+        unzip(input)
+
+        List<File> jars = new ArrayList<>()
+        outputDirectory.traverse(nameFilter: ~/.*\.jar/) { jars += it }
+
+        return jars
+    }
+
+    private void unzip(File zipFile) {
+        ZipFile zip
+        try {
+            zip = new ZipFile(zipFile)
+            for (entry in zip.entries()) {
+                unzipEntryTo(zip, entry)
+            }
+        } finally {
+            if (zip != null) zip.close()
+        }
+    }
+
+    private void unzipEntryTo(ZipFile zip, ZipEntry entry) {
+        File output = new File(outputDirectory, entry.name)
+        if (entry.isDirectory()) {
+            output.mkdirs()
+        } else {
+            InputStream stream
+            try {
+                stream = zip.getInputStream(entry)
+                Files.copy(stream, output.toPath())
+            } catch (NoSuchFileException ignored) {
+            } finally {
+                if (stream != null) stream.close()
+            }
+        }
+    }
+}
