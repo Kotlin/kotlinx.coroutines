@@ -2,7 +2,7 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.25.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.25.0)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.25.2) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.25.2)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
 This is a companion version for Kotlin 1.2.61 release.
@@ -63,7 +63,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.25.0</version>
+    <version>0.25.2</version>
 </dependency>
 ```
 
@@ -80,7 +80,7 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.25.0'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.25.2'
 ```
 
 And make sure that you use the latest Kotlin version:
@@ -113,7 +113,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.25.0'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.25.2'
 ```
 
 This gives you access to Android [UI](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/-u-i.html)
