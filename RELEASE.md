@@ -68,7 +68,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    `git fetch` 
    
 8. Merge release from `master`:<br>
-   `git merge master`
+   `git merge origin/master`
    
 9. Push updates to `develop`:<br>
    `git push`      

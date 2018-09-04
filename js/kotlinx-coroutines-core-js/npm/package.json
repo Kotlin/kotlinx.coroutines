@@ -20,9 +20,6 @@
     "JavaScript",
     "JetBrains"
   ],
-  "dependencies": {
-    "kotlinx-atomicfu": "$atomicFU_version"
-  },
   "peerDependencies": {
     $kotlinDependency
   }
