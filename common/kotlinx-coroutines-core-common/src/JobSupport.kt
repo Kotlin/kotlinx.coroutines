@@ -853,7 +853,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         override val list: NodeList,
         @JvmField val cancelled: Cancelled?, /* != null when cancelling */
         @JvmField val completing: Boolean /* true when completing */
-    ) : Incomplete {
+    ) : SynchronizedObject(), Incomplete {
         override val isActive: Boolean get() = cancelled == null
 
         // guarded by `synchronized(this)`
