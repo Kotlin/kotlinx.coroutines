@@ -6,6 +6,7 @@
 
 package kotlinx.coroutines.experimental.tasks
 
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Task
@@ -20,15 +21,21 @@ import java.util.concurrent.Executor
 /**
  * Converts this deferred value to the instance of [Task].
  */
-public fun <T> Deferred<T>.asTask(): Task<T> = TaskCompletionSource<T>().apply {
+public fun <T> Deferred<T>.asTask(): Task<T> {
+    val cancellation = CancellationTokenSource()
+    val source = TaskCompletionSource<T>(cancellation.token)
+
     invokeOnCompletion {
-        try {
-            setResult(getCompleted())
-        } catch (t: Throwable) {
-            setException(t as? Exception ?: RuntimeExecutionException(t))
+        val t = getCompletionExceptionOrNull()
+        when (t) {
+            null -> source.setResult(getCompleted())
+            is CancellationException -> cancellation.cancel()
+            else -> source.setException(t as? Exception ?: RuntimeExecutionException(t))
         }
     }
-}.task
+
+    return source.task
+}
 
 /**
  * Converts this task to an instance of [Deferred].

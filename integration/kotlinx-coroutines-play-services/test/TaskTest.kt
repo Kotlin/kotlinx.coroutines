@@ -70,9 +70,7 @@ class TaskTest : TestBase() {
             runBlocking { task.await(executor) }
         } catch (e: Exception) {
             Assert.assertTrue(e is CancellationException)
-            // There's no cancelled API in TaskCompletionSource yet
-            Assert.assertTrue(/*task.isCanceled*/true)
-            Assert.assertFalse(task.isSuccessful)
+            Assert.assertTrue(task.isCanceled)
         }
     }
 
