@@ -84,7 +84,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * val myThreadLocal = ThreadLocal<String?>()
  * ...
  * println(myThreadLocal.get()) // Prints "null"
- * launch(CommonPool + myThreadLocal.asContextElement(initialValue = "foo")) {
+ * launch(CommonPool + myThreadLocal.asContextElement(value = "foo")) {
  *   println(myThreadLocal.get()) // Prints "foo"
  *   withContext(UI) {
  *     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
