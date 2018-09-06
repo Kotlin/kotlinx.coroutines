@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.tasks
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.TestBase
@@ -18,18 +17,13 @@ import org.hamcrest.core.IsEqual
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.Callable
-import java.util.concurrent.Executor
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.experimental.coroutineContext
 
 class TaskTest : TestBase() {
-    private lateinit var executor: Executor
-
     @Before
     fun setup() {
-        executor = CommonPool.executor
         ignoreLostThreads("ForkJoinPool.commonPool-worker-")
     }
 
@@ -55,7 +49,7 @@ class TaskTest : TestBase() {
         }
         expect(2)
         val task = deferred.asTask()
-        Assert.assertThat(task.await(executor), IsEqual("OK"))
+        Assert.assertThat(task.await(), IsEqual("OK"))
         finish(4)
     }
 
@@ -67,7 +61,7 @@ class TaskTest : TestBase() {
 
         val task = deferred.asTask()
         try {
-            runBlocking { task.await(executor) }
+            runBlocking { task.await() }
         } catch (e: Exception) {
             Assert.assertTrue(e is CancellationException)
             Assert.assertTrue(task.isCanceled)
@@ -82,7 +76,7 @@ class TaskTest : TestBase() {
 
         val task = deferred.asTask()
         try {
-            runBlocking { task.await(executor) }
+            runBlocking { task.await() }
         } catch (e: RuntimeExecutionException) {
             Assert.assertFalse(task.isSuccessful)
             Assert.assertTrue(e.cause is OutOfMemoryError)
@@ -93,9 +87,9 @@ class TaskTest : TestBase() {
     fun testTaskStageAsDeferred() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = Tasks.call(executor, Callable {
+        val deferred: Deferred<Int> = Tasks.call {
             lock.withLock { 42 }
-        }).asDeferred(executor)
+        }.asDeferred()
 
         Assert.assertFalse(deferred.isCompleted)
         lock.unlock()
@@ -145,9 +139,9 @@ class TaskTest : TestBase() {
     fun testTaskWithExceptionAsDeferred() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = Tasks.call(executor, Callable {
+        val deferred: Deferred<Int> = Tasks.call {
             lock.withLock { throw TestException("something went wrong") }
-        }).asDeferred(executor)
+        }.asDeferred()
 
         Assert.assertFalse(deferred.isCompleted)
         lock.unlock()
