@@ -5,12 +5,22 @@
 package kotlinx.coroutines.experimental
 
 import java.util.*
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
+
+/**
+ * A list of globally installed [CoroutineExceptionHandler] instances.
+ *
+ * Note, that Android may have dummy [Thread.contextClassLoader] which is used by one-argument [ServiceLoader.load] function,
+ * see (https://stackoverflow.com/questions/13407006/android-class-loader-may-fail-for-processes-that-host-multiple-applications).
+ * So here we explicitly use two-argument `load` with a class-loader of [CoroutineExceptionHandler] class.
+ */
+private val handlers: List<CoroutineExceptionHandler> = CoroutineExceptionHandler::class.java.let { serviceClass ->
+    ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
+}
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // use additional extension handlers
-    ServiceLoader.load(CoroutineExceptionHandler::class.java).forEach { handler ->
+    for (handler in handlers) {
         handler.handleException(context, exception)
     }
     // use thread's handler
