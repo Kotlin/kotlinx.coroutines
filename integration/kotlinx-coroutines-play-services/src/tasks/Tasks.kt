@@ -24,10 +24,8 @@ public fun <T> Deferred<T>.asTask(): Task<T> = TaskCompletionSource<T>().apply {
     invokeOnCompletion {
         try {
             setResult(getCompleted())
-        } catch (e: Exception) {
-            setException(e)
         } catch (t: Throwable) {
-            setException(RuntimeExecutionException(t))
+            setException(t as? Exception ?: RuntimeExecutionException(t))
         }
     }
 }.task
@@ -75,7 +73,11 @@ public suspend fun <T> Task<T>.await(executor: Executor? = null): T {
     if (isComplete) {
         val e = exception
         return if (e == null) {
-            if (isCanceled) throw CancellationException() else result
+            if (isCanceled) {
+                throw CancellationException("Task $this was cancelled normally.")
+            } else {
+                result
+            }
         } else {
             throw e
         }

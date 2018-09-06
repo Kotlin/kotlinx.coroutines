@@ -6,6 +6,8 @@ package kotlinx.coroutines.experimental.tasks
 
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.TestBase
@@ -18,16 +20,16 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.Executor
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.experimental.coroutineContext
 
 class TaskTest : TestBase() {
-    private val executor: Executor = ForkJoinPool.commonPool()
+    private lateinit var executor: Executor
 
     @Before
     fun setup() {
+        executor = CommonPool.executor
         ignoreLostThreads("ForkJoinPool.commonPool-worker-")
     }
 
@@ -55,6 +57,23 @@ class TaskTest : TestBase() {
         val task = deferred.asTask()
         Assert.assertThat(task.await(executor), IsEqual("OK"))
         finish(4)
+    }
+
+    @Test
+    fun testTaskCancelled() {
+        val deferred = async {
+            throw CancellationException()
+        }
+
+        val task = deferred.asTask()
+        try {
+            runBlocking { task.await(executor) }
+        } catch (e: Exception) {
+            Assert.assertTrue(e is CancellationException)
+            // There's no cancelled API in TaskCompletionSource yet
+            Assert.assertTrue(/*task.isCanceled*/true)
+            Assert.assertFalse(task.isSuccessful)
+        }
     }
 
     @Test
@@ -91,6 +110,19 @@ class TaskTest : TestBase() {
     fun testTaskAsDeferred() = runBlocking {
         val deferred = Tasks.forResult(42).asDeferred()
         Assert.assertEquals(42, deferred.await())
+    }
+
+    @Test
+    fun testCancelledTaskAsDeferred() = runBlocking {
+        val deferred = Tasks.forCanceled<Int>().asDeferred()
+
+        Assert.assertTrue(deferred.isCancelled)
+        try {
+            deferred.await()
+            Assert.fail("deferred.await() should be cancelled")
+        } catch (e: Exception) {
+            Assert.assertTrue(e is CancellationException)
+        }
     }
 
     @Test
