@@ -456,7 +456,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
                             // installing cancellation handler on job that is being cancelled
-                            if (invokeImmediately) handler(state.cancelled.cause)
+                            if (invokeImmediately) handler.invokeIt(state.cancelled.cause)
                             return NonDisposableHandle
                         }
                         val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
