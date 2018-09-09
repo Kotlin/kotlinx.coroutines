@@ -10,13 +10,16 @@ import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class InvokeOnCloseStressTest : TestBase() {
+class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
 
     private val iterations = 1000 * stressTestMultiplier
 
     private val pool = newFixedThreadPoolContext(3, "InvokeOnCloseStressTest")
+    override val coroutineContext: CoroutineContext
+        get() = pool
 
     @After
     fun tearDown() {
@@ -39,17 +42,17 @@ class InvokeOnCloseStressTest : TestBase() {
             val channel = kind.create()
 
             val latch = CountDownLatch(1)
-            val j1 = async(pool) {
+            val j1 = async {
                 latch.await()
                 channel.close()
             }
 
-            val j2 = async(pool) {
+            val j2 = async {
                 latch.await()
                 channel.invokeOnClose { counter.incrementAndGet() }
             }
 
-            val j3 = async(pool) {
+            val j3 = async {
                 latch.await()
                 channel.invokeOnClose { counter.incrementAndGet() }
             }

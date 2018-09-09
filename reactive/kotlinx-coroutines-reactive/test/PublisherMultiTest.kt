@@ -4,23 +4,19 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
-import org.hamcrest.core.IsEqual
-import org.junit.Assert.assertThat
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.hamcrest.core.*
+import org.junit.*
+import org.junit.Assert.*
 
 /**
  * Test emitting multiple values with [publish].
  */
 class PublisherMultiTest : TestBase() {
     @Test
-    fun testConcurrentStress() = runBlocking<Unit> {
+    fun testConcurrentStress() = runBlocking {
         val n = 10_000 * stressTestMultiplier
-        val observable = publish<Int>(DefaultDispatcher) {
+        val observable = publish(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch

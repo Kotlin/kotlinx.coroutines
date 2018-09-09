@@ -6,19 +6,21 @@
 package kotlinx.coroutines.experimental.guide.context08
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    // launch a coroutine to process some kind of incoming request
-    val request = launch {
-        repeat(3) { i -> // launch a few children jobs
-            launch(coroutineContext)  {
-                delay((i + 1) * 200L) // variable delay 200ms, 400ms, 600ms
-                println("Coroutine $i is done")
-            }
-        }
-        println("request: I'm done and I don't explicitly join my children that are still active")
+fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+    log("Started main coroutine")
+    // run two background value computations
+    val v1 = async(CoroutineName("v1coroutine")) {
+        delay(500)
+        log("Computing v1")
+        252
     }
-    request.join() // wait for completion of the request, including all its children
-    println("Now processing of the request is complete")
+    val v2 = async(CoroutineName("v2coroutine")) {
+        delay(1000)
+        log("Computing v2")
+        6
+    }
+    log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
 }

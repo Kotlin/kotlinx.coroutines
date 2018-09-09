@@ -111,7 +111,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
     private suspend fun launchBlocking(): List<Deferred<*>> {
         val result = (1..blockingTasksCount).map {
-            async(blocking) {
+            GlobalScope.async(blocking) {
                 blockingTasksBarrier.await()
             }
         }

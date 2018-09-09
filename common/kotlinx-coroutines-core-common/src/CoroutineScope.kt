@@ -92,7 +92,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  *
  * Check this property in long-running computation loops to support cancellation:
  * ```
- * while (_isActive) {
+ * while (isActive) {
  *     // do some computation
  * }
  * ```
@@ -113,7 +113,8 @@ public val CoroutineScope.isActive: Boolean
  * and are not cancelled prematurely.
  * Another use of the global scope is [Unconfined] operators, which don't have any job associated with them.
  *
- * Application code usually should use application-defined [CoroutineScope], using [async] or [launch]
+ * Application code usually should use application-defined [CoroutineScope], using
+ * [async][CoroutineScope.async] or [launch][CoroutineScope.launch]
  * on the instance of [GlobalScope] is highly discouraged.
  *
  * Usage of this interface may look like this:
@@ -172,7 +173,7 @@ object GlobalScope : CoroutineScope {
  *
  * Method may throw [JobCancellationException] if the current job was cancelled externally
  * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
- * (for example, from a crashed coroutine that was started with [launch] in this scope).
+ * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     // todo: optimize implementation to a single allocated object

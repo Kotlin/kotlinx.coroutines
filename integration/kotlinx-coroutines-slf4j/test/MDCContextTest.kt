@@ -26,6 +26,7 @@ class MDCContextTest : TestBase() {
     fun testContextIsNotPassedByDefaultBetweenCoroutines() = runTest {
         expect(1)
         MDC.put("myKey", "myValue")
+        // Standalone launch
         GlobalScope.launch {
             assertEquals(null, MDC.get("myKey"))
             expect(2)
@@ -37,12 +38,30 @@ class MDCContextTest : TestBase() {
     fun testContextCanBePassedBetweenCoroutines() = runTest {
         expect(1)
         MDC.put("myKey", "myValue")
+        // Scoped launch with MDCContext element
         launch(MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
             expect(2)
         }.join()
 
         finish(3)
+    }
+
+    @Test
+    fun testContextInheritance() = runTest {
+        expect(1)
+        MDC.put("myKey", "myValue")
+        withContext(MDCContext()) {
+            MDC.put("myKey", "myValue2")
+            // Scoped launch with inherited MDContext element
+            launch(DefaultDispatcher) {
+                assertEquals("myValue", MDC.get("myKey"))
+                expect(2)
+            }.join()
+
+            finish(3)
+        }
+        assertEquals("myValue", MDC.get("myKey"))
     }
 
     @Test

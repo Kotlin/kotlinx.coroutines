@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class BasicOperationsTest : TestBase() {
@@ -70,9 +69,9 @@ class BasicOperationsTest : TestBase() {
         finish(4)
     }
 
-    private suspend fun testReceiveOrNull(kind: TestChannelKind) {
+    private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async(coroutineContext) {
+        val d = async {
             channel.receive()
         }
 
@@ -87,9 +86,9 @@ class BasicOperationsTest : TestBase() {
         assertTrue(d.getCancellationException().cause is ClosedReceiveChannelException)
     }
 
-    private suspend fun testReceiveOrNullException(kind: TestChannelKind) {
+    private suspend fun testReceiveOrNullException(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async(coroutineContext) {
+        val d = async {
             channel.receive()
         }
 
@@ -110,9 +109,9 @@ class BasicOperationsTest : TestBase() {
     }
 
 
-    private suspend fun testOffer(kind: TestChannelKind) {
+    private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async(coroutineContext) { channel.send(42) }
+        val d = async { channel.send(42) }
         yield()
         channel.close()
 
@@ -129,10 +128,9 @@ class BasicOperationsTest : TestBase() {
         d.await()
     }
 
-    private suspend fun testSendReceive(kind: TestChannelKind, iterations: Int) {
+    private suspend fun testSendReceive(kind: TestChannelKind, iterations: Int) = coroutineScope {
         val channel = kind.create()
-
-        launch(coroutineContext) {
+        launch {
             repeat(iterations) { channel.send(it) }
             channel.close()
         }

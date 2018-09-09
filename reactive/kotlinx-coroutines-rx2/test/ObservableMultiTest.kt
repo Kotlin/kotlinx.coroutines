@@ -4,14 +4,11 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Observable
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import java.io.IOException
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.junit.Assert.*
+import java.io.*
 
 /**
  * Test emitting multiple values with [rxObservable].
@@ -24,14 +21,14 @@ class ObservableMultiTest : TestBase() {
             repeat(n) { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable<Int>(DefaultDispatcher) {
+        val observable = rxObservable(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -43,7 +40,7 @@ class ObservableMultiTest : TestBase() {
         }
         checkSingleValue(observable.toList()) { list ->
             assertEquals(n, list.size)
-            assertEquals((0..n - 1).toList(), list.sorted())
+            assertEquals((0 until n).toList(), list.sorted())
         }
     }
 
@@ -54,7 +51,7 @@ class ObservableMultiTest : TestBase() {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
@@ -65,7 +62,7 @@ class ObservableMultiTest : TestBase() {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 

@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CoroutineExceptionHandlerTest : TestBase() {
@@ -17,7 +16,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
             expect(3)
         }
 
-        val job = launch(coroutineContext + handler, parent = Job()) {
+        val job = launch(handler + Job()) {
             throw TestException()
         }
 

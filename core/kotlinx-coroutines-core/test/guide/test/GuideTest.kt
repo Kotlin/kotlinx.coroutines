@@ -38,23 +38,49 @@ class GuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideBasic04() {
-        test("KotlinxCoroutinesExperimentalGuideBasic04") { kotlinx.coroutines.experimental.guide.basic04.main(emptyArray()) }.verifyLines(
+    fun testKotlinxCoroutinesExperimentalGuideBasic03s() {
+        test("KotlinxCoroutinesExperimentalGuideBasic03s") { kotlinx.coroutines.experimental.guide.basic03s.main(emptyArray()) }.verifyLines(
             "Hello,",
             "World!"
         )
     }
 
     @Test
+    fun testKotlinxCoroutinesExperimentalGuideBasic04() {
+        test("KotlinxCoroutinesExperimentalGuideBasic04") { kotlinx.coroutines.experimental.guide.basic04.main(emptyArray()) }.verifyLines(
+            "Task from coroutine scope",
+            "Task from runBlocking",
+            "Task from nested launch",
+            "Coroutine scope is over"
+        )
+    }
+
+    @Test
     fun testKotlinxCoroutinesExperimentalGuideBasic05() {
-        test("KotlinxCoroutinesExperimentalGuideBasic05") { kotlinx.coroutines.experimental.guide.basic05.main(emptyArray()) }.also { lines ->
+        test("KotlinxCoroutinesExperimentalGuideBasic05") { kotlinx.coroutines.experimental.guide.basic05.main(emptyArray()) }.verifyLines(
+            "Hello,",
+            "World!"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideBasic05s() {
+        test("KotlinxCoroutinesExperimentalGuideBasic05s") { kotlinx.coroutines.experimental.guide.basic05s.main(emptyArray()) }.verifyLines(
+            "Hello,",
+            "World!"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideBasic06() {
+        test("KotlinxCoroutinesExperimentalGuideBasic06") { kotlinx.coroutines.experimental.guide.basic06.main(emptyArray()) }.also { lines ->
             check(lines.size == 1 && lines[0] == ".".repeat(100_000))
         }
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideBasic06() {
-        test("KotlinxCoroutinesExperimentalGuideBasic06") { kotlinx.coroutines.experimental.guide.basic06.main(emptyArray()) }.verifyLines(
+    fun testKotlinxCoroutinesExperimentalGuideBasic07() {
+        test("KotlinxCoroutinesExperimentalGuideBasic07") { kotlinx.coroutines.experimental.guide.basic07.main(emptyArray()) }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ..."
@@ -174,22 +200,39 @@ class GuideTest {
     }
 
     @Test
+    fun testKotlinxCoroutinesExperimentalGuideCompose05() {
+        test("KotlinxCoroutinesExperimentalGuideCompose05") { kotlinx.coroutines.experimental.guide.compose05.main(emptyArray()) }.verifyLinesArbitraryTime(
+            "The answer is 42",
+            "Completed in 1017 ms"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideCompose06() {
+        test("KotlinxCoroutinesExperimentalGuideCompose06") { kotlinx.coroutines.experimental.guide.compose06.main(emptyArray()) }.verifyLines(
+            "Second child throws an exception",
+            "First child was cancelled",
+            "Computation failed with ArithmeticException"
+        )
+    }
+
+    @Test
     fun testKotlinxCoroutinesExperimentalGuideContext01() {
         test("KotlinxCoroutinesExperimentalGuideContext01") { kotlinx.coroutines.experimental.guide.context01.main(emptyArray()) }.verifyLinesStartUnordered(
-            "      'Unconfined': I'm working in thread main",
-            "      'CommonPool': I'm working in thread ForkJoinPool.commonPool-worker-1",
-            "          'newSTC': I'm working in thread MyOwnThread",
-            "'coroutineContext': I'm working in thread main"
+            "Unconfined            : I'm working in thread main",
+            "DefaultDispatcher     : I'm working in thread CommonPool-worker-1",
+            "newSingleThreadContext: I'm working in thread MyOwnThread",
+            "main runBlocking      : I'm working in thread main"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext02() {
         test("KotlinxCoroutinesExperimentalGuideContext02") { kotlinx.coroutines.experimental.guide.context02.main(emptyArray()) }.verifyLinesStart(
-            "      'Unconfined': I'm working in thread main",
-            "'coroutineContext': I'm working in thread main",
-            "      'Unconfined': After delay in thread kotlinx.coroutines.DefaultExecutor",
-            "'coroutineContext': After delay in thread main"
+            "Unconfined      : I'm working in thread main",
+            "main runBlocking: I'm working in thread main",
+            "Unconfined      : After delay in thread kotlinx.coroutines.DefaultExecutor",
+            "main runBlocking: After delay in thread main"
         )
     }
 
@@ -221,7 +264,7 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext06() {
         test("KotlinxCoroutinesExperimentalGuideContext06") { kotlinx.coroutines.experimental.guide.context06.main(emptyArray()) }.verifyLines(
-            "job1: I have my own context and execute independently!",
+            "job1: I run in GlobalScope and execute independently!",
             "job2: I am a child of the request coroutine",
             "job1: I am not affected by cancellation of the request",
             "main: Who has survived request cancellation?"
@@ -231,14 +274,6 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext07() {
         test("KotlinxCoroutinesExperimentalGuideContext07") { kotlinx.coroutines.experimental.guide.context07.main(emptyArray()) }.verifyLines(
-            "job: I am a child of the request coroutine, but with a different dispatcher",
-            "main: Who has survived request cancellation?"
-        )
-    }
-
-    @Test
-    fun testKotlinxCoroutinesExperimentalGuideContext08() {
-        test("KotlinxCoroutinesExperimentalGuideContext08") { kotlinx.coroutines.experimental.guide.context08.main(emptyArray()) }.verifyLines(
             "request: I'm done and I don't explicitly join my children that are still active",
             "Coroutine 0 is done",
             "Coroutine 1 is done",
@@ -248,22 +283,29 @@ class GuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideContext09() {
-        test("KotlinxCoroutinesExperimentalGuideContext09") { kotlinx.coroutines.experimental.guide.context09.main(emptyArray()) }.verifyLinesFlexibleThread(
+    fun testKotlinxCoroutinesExperimentalGuideContext08() {
+        test("KotlinxCoroutinesExperimentalGuideContext08") { kotlinx.coroutines.experimental.guide.context08.main(emptyArray()) }.verifyLinesFlexibleThread(
             "[main @main#1] Started main coroutine",
-            "[ForkJoinPool.commonPool-worker-1 @v1coroutine#2] Computing v1",
-            "[ForkJoinPool.commonPool-worker-2 @v2coroutine#3] Computing v2",
+            "[main @v1coroutine#2] Computing v1",
+            "[main @v2coroutine#3] Computing v2",
             "[main @main#1] The answer for v1 / v2 = 42"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideContext09() {
+        test("KotlinxCoroutinesExperimentalGuideContext09") { kotlinx.coroutines.experimental.guide.context09.main(emptyArray()) }.verifyLines(
+            "I'm working in thread CommonPool-worker-1 @test#2"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext10() {
         test("KotlinxCoroutinesExperimentalGuideContext10") { kotlinx.coroutines.experimental.guide.context10.main(emptyArray()) }.verifyLines(
-            "Launched 10 coroutines",
+            "Launched coroutines",
             "Coroutine 0 is done",
             "Coroutine 1 is done",
-            "Cancelling the job!"
+            "Destroying activity!"
         )
     }
 
@@ -271,8 +313,8 @@ class GuideTest {
     fun testKotlinxCoroutinesExperimentalGuideContext11() {
         test("KotlinxCoroutinesExperimentalGuideContext11") { kotlinx.coroutines.experimental.guide.context11.main(emptyArray()) }.verifyLinesFlexibleThread(
             "Pre-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'",
-            "Launch start, current thread: Thread[main @coroutine#2,5,main], thread local value: 'launch'",
-            "After yield, current thread: Thread[ForkJoinPool.commonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'",
+            "Launch start, current thread: Thread[CommonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'",
+            "After yield, current thread: Thread[CommonPool-worker-2 @coroutine#2,5,main], thread local value: 'launch'",
             "Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'"
         )
     }
@@ -309,7 +351,7 @@ class GuideTest {
         test("KotlinxCoroutinesExperimentalGuideExceptions04") { kotlinx.coroutines.experimental.guide.exceptions04.main(emptyArray()) }.verifyLines(
             "Second child throws an exception",
             "Children are cancelled, but exception is not handled until all children terminate",
-            "Last child finished its non cancellable block",
+            "The first child finished its non cancellable block",
             "Caught java.lang.ArithmeticException"
         )
     }
@@ -424,6 +466,16 @@ class GuideTest {
     }
 
     @Test
+    fun testKotlinxCoroutinesExperimentalGuideChannel09() {
+        test("KotlinxCoroutinesExperimentalGuideChannel09") { kotlinx.coroutines.experimental.guide.channel09.main(emptyArray()) }.verifyLines(
+            "ping Ball(hits=1)",
+            "pong Ball(hits=2)",
+            "ping Ball(hits=3)",
+            "pong Ball(hits=4)"
+        )
+    }
+
+    @Test
     fun testKotlinxCoroutinesExperimentalGuideChannel10() {
         test("KotlinxCoroutinesExperimentalGuideChannel10") { kotlinx.coroutines.experimental.guide.channel10.main(emptyArray()) }.verifyLines(
             "Initial element is available immediately: kotlin.Unit",
@@ -436,19 +488,9 @@ class GuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideChannel09() {
-        test("KotlinxCoroutinesExperimentalGuideChannel09") { kotlinx.coroutines.experimental.guide.channel09.main(emptyArray()) }.verifyLines(
-            "ping Ball(hits=1)",
-            "pong Ball(hits=2)",
-            "ping Ball(hits=3)",
-            "pong Ball(hits=4)"
-        )
-    }
-
-    @Test
     fun testKotlinxCoroutinesExperimentalGuideSync01() {
         test("KotlinxCoroutinesExperimentalGuideSync01") { kotlinx.coroutines.experimental.guide.sync01.main(emptyArray()) }.verifyLinesStart(
-            "Completed 1000000 actions in",
+            "Completed 100000 actions in",
             "Counter ="
         )
     }
@@ -456,7 +498,7 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync01b() {
         test("KotlinxCoroutinesExperimentalGuideSync01b") { kotlinx.coroutines.experimental.guide.sync01b.main(emptyArray()) }.verifyLinesStart(
-            "Completed 1000000 actions in",
+            "Completed 100000 actions in",
             "Counter ="
         )
     }
@@ -464,7 +506,7 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync02() {
         test("KotlinxCoroutinesExperimentalGuideSync02") { kotlinx.coroutines.experimental.guide.sync02.main(emptyArray()) }.verifyLinesStart(
-            "Completed 1000000 actions in",
+            "Completed 100000 actions in",
             "Counter ="
         )
     }
@@ -472,40 +514,40 @@ class GuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync03() {
         test("KotlinxCoroutinesExperimentalGuideSync03") { kotlinx.coroutines.experimental.guide.sync03.main(emptyArray()) }.verifyLinesArbitraryTime(
-            "Completed 1000000 actions in xxx ms",
-            "Counter = 1000000"
+            "Completed 100000 actions in xxx ms",
+            "Counter = 100000"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync04() {
         test("KotlinxCoroutinesExperimentalGuideSync04") { kotlinx.coroutines.experimental.guide.sync04.main(emptyArray()) }.verifyLinesArbitraryTime(
-            "Completed 1000000 actions in xxx ms",
-            "Counter = 1000000"
+            "Completed 100000 actions in xxx ms",
+            "Counter = 100000"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync05() {
         test("KotlinxCoroutinesExperimentalGuideSync05") { kotlinx.coroutines.experimental.guide.sync05.main(emptyArray()) }.verifyLinesArbitraryTime(
-            "Completed 1000000 actions in xxx ms",
-            "Counter = 1000000"
+            "Completed 100000 actions in xxx ms",
+            "Counter = 100000"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync06() {
         test("KotlinxCoroutinesExperimentalGuideSync06") { kotlinx.coroutines.experimental.guide.sync06.main(emptyArray()) }.verifyLinesArbitraryTime(
-            "Completed 1000000 actions in xxx ms",
-            "Counter = 1000000"
+            "Completed 100000 actions in xxx ms",
+            "Counter = 100000"
         )
     }
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideSync07() {
         test("KotlinxCoroutinesExperimentalGuideSync07") { kotlinx.coroutines.experimental.guide.sync07.main(emptyArray()) }.verifyLinesArbitraryTime(
-            "Completed 1000000 actions in xxx ms",
-            "Counter = 1000000"
+            "Completed 100000 actions in xxx ms",
+            "Counter = 100000"
         )
     }
 

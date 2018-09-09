@@ -3,17 +3,16 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.channel03
+package kotlinx.coroutines.experimental.guide.basic07
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-
-fun CoroutineScope.produceSquares() = produce<Int> {
-    for (x in 1..5) send(x * x)
-}
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val squares = produceSquares()
-    squares.consumeEach { println(it) }
-    println("Done!")
+    GlobalScope.launch {
+        repeat(1000) { i ->
+            println("I'm sleeping $i ...")
+            delay(500L)
+        }
+    }
+    delay(1300L) // just quit after delay
 }

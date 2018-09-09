@@ -15,11 +15,11 @@ class JobNestedExceptionsTest : TestBase() {
     fun testExceptionUnwrapping() {
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job) {
+            launch(job) {
                 expect(2)
-                launch(coroutineContext) {
-                    launch(coroutineContext) {
-                        launch(coroutineContext) {
+                launch {
+                    launch {
+                        launch {
                             throw IllegalStateException()
                         }
                     }
@@ -39,12 +39,12 @@ class JobNestedExceptionsTest : TestBase() {
     fun testExceptionUnwrappingWithSuspensions() {
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job) {
+            launch(job) {
                 expect(2)
-                launch(coroutineContext) {
-                    launch(coroutineContext) {
-                        launch(coroutineContext) {
-                            launch(coroutineContext) {
+                launch {
+                    launch {
+                        launch {
+                            launch {
                                 throw IOException()
                             }
                             yield()

@@ -57,7 +57,7 @@ public abstract class CoroutineDispatcher :
      * "use `yield` if you need to ....". This is error-prone. JS-style approach is more consistent
      * and does not require programmers to think about whether they need to yield or not.
      *
-     * However, coroutine builders like [launch] and [async] accept an optional [CoroutineStart]
+     * However, coroutine builders like [launch][CoroutineScope.launch] and [async][CoroutineScope.async] accept an optional [CoroutineStart]
      * parameter that allows one to optionally choose C#-style [CoroutineStart.UNDISPATCHED] behaviour
      * whenever it is needed for efficiency.
      */

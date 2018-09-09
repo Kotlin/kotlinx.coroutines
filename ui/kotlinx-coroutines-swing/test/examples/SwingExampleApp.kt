@@ -4,11 +4,11 @@
 
 package examples
 
-import kotlinx.coroutines.experimental.future.await
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.swing.Swing
-import java.awt.Insets
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
+import kotlinx.coroutines.experimental.swing.*
+import java.awt.*
+import java.util.concurrent.*
 import javax.swing.*
 
 private fun createAndShowGUI() {
@@ -33,7 +33,7 @@ private fun createAndShowGUI() {
     frame.pack()
     frame.isVisible = true
 
-    launch(Swing) {
+    GlobalScope.launch(Swing) {
         for (i in 1..10) {
             // 'append' method and consequent 'jProgressBar.setValue' are called
             // within Swing event dispatch thread

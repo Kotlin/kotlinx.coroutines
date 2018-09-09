@@ -3,17 +3,18 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.basic05
+package kotlinx.coroutines.experimental.guide.basic05s
 
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    launch { doWorld() }
+    launchDoWorld()
     println("Hello,")
 }
 
 // this is your first suspending function
-suspend fun doWorld() {
-    delay(1000L)
-    println("World!")
+suspend fun launchDoWorld() = currentScope {
+        launch {
+        println("World!")
+    }
 }

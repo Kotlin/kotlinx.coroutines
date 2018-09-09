@@ -12,7 +12,7 @@ import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Scope for [actor] coroutine builder.
+ * Scope for [actor][GlobalScope.actor] coroutine builder.
  */
 public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
     /**
@@ -33,22 +33,6 @@ interface ActorJob<in E> : SendChannel<E> {
     @Deprecated(message = "Use SendChannel itself")
     val channel: SendChannel<E>
 }
-
-/**
- * Launches new coroutine that is receiving messages from its mailbox channel
- * and returns a reference to its mailbox channel as a [SendChannel].
- * Deprecated, use [CoroutineScope.actor] instead.
- */
-@Deprecated(message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release")
-public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
-    capacity: Int = 0,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend ActorScope<E>.() -> Unit
-): SendChannel<E> =
-    CoroutineScope(context).actor(parent ?: EmptyCoroutineContext, capacity, start, onCompletion, block)
 
 /**
  * Launches new coroutine that is receiving messages from its mailbox channel
@@ -145,6 +129,45 @@ public fun <E> CoroutineScope.actor(
     return coroutine
 }
 
+/**
+ * Launches new coroutine that is receiving messages from its mailbox channel
+ * and returns a reference to its mailbox channel as a [SendChannel].
+ * @suppress **Deprecated** Use [CoroutineScope.actor] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.actor(context, capacity, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
+)
+public fun <E> actor(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend ActorScope<E>.() -> Unit
+): SendChannel<E> =
+    GlobalScope.actor(context, capacity, start, onCompletion, block)
+
+/**
+ * Launches new coroutine that is receiving messages from its mailbox channel
+ * and returns a reference to its mailbox channel as a [SendChannel].
+ * @suppress **Deprecated** Use [CoroutineScope.actor] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.actor(context + parent, capacity, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
+)
+public fun <E> actor(
+    context: CoroutineContext = DefaultDispatcher,
+    capacity: Int = 0,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend ActorScope<E>.() -> Unit
+): SendChannel<E> =
+    GlobalScope.actor(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
+
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> actor(
@@ -153,7 +176,8 @@ public fun <E> actor(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend ActorScope<E>.() -> Unit
-): SendChannel<E> = actor(context, capacity, start, parent, block = block)
+): SendChannel<E> =
+    GlobalScope.actor(context + (parent ?: EmptyCoroutineContext), capacity, start, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -163,7 +187,7 @@ public fun <E> actor(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend ActorScope<E>.() -> Unit
 ): ActorJob<E> =
-    actor(context, capacity, start, block = block) as ActorJob<E>
+    GlobalScope.actor(context, capacity, start, block = block) as ActorJob<E>
 
 private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,

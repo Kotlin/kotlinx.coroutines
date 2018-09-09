@@ -4,10 +4,9 @@
 
 package benchmarks
 
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.CyclicBarrier
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 /*
  * Benchmark to measure scheduling overhead in comparison with FJP.
@@ -34,13 +33,13 @@ open class LaunchBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun massiveLaunch() {
         repeat(submitters) {
-            launch(benchmarkContext) {
+            launch {
                 // Wait until all cores are occupied
                 allLaunched.await()
                 allLaunched.reset()
 
                 (1..jobsToLaunch).map {
-                    launch(coroutineContext) {
+                    launch {
                         // do nothing
                     }
                 }.map { it.join() }

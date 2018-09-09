@@ -97,7 +97,7 @@ class IntegrationTest(
 
     @Test
     fun testCancelWithoutValue() = runTest {
-        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String>(coroutineContext) {
                 yield()
                 expectUnreached()
@@ -111,7 +111,7 @@ class IntegrationTest(
     @Test
     fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
         expect(1)
-        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
             publish<String>(coroutineContext) {
                 yield()
                 expect(2)

@@ -130,6 +130,37 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
+    fun testAsyncCancellation() = runTest {
+        try {
+            expect(1)
+            failedConcurrentSum()
+            expectUnreached()
+        } catch (e: IndexOutOfBoundsException) {
+            finish(5)
+        }
+    }
+
+    private suspend fun failedConcurrentSum(): Int = coroutineScope {
+        val one = async<Int> {
+            println("First child throws an exception")
+            expect(3)
+            throw IndexOutOfBoundsException()
+        }
+        val two = async<Int>(start = CoroutineStart.ATOMIC) {
+            try {
+                expect(4)
+                delay(Long.MAX_VALUE) // Emulates very long computation
+                42
+            } finally {
+                println("Second child was cancelled")
+            }
+        }
+
+        expect(2)
+        one.await() + two.await()
+    }
+
+    @Test
     @Suppress("UNREACHABLE_CODE")
     fun testDocumentationExample() = runTest {
         suspend fun loadData() = coroutineScope {

@@ -10,10 +10,6 @@ import kotlin.coroutines.experimental.*
 private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
 
-/**
- * This is the default [CoroutineDispatcher] that is used by all standard builders like
- * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
- */
 @Suppress("PropertyName", "UnsafeCastFromDynamic")
 public actual val DefaultDispatcher: CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.

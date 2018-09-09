@@ -47,7 +47,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMono() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             "OK"
         }
@@ -63,7 +63,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testDeferredToMonoEmpty() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             null
         }

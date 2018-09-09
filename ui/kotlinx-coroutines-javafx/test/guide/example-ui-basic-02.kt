@@ -51,7 +51,7 @@ class ExampleApp : Application() {
 }
 
 fun setup(hello: Text, fab: Circle) {
-    launch(UI) { // launch coroutine in UI context
+    GlobalScope.launch(UI) { // launch coroutine in UI context
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second

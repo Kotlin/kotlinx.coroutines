@@ -278,7 +278,7 @@ class ChannelsConsumeTest {
     fun testFilterIndexedToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             filterIndexedTo(channel) { index, _ -> index % 2 == 0 }
             channel.close()
             assertEquals(listOf(1, 3, 5, 7, 9), result.await())
@@ -305,7 +305,7 @@ class ChannelsConsumeTest {
     fun testFilterNotNullToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             filterNotNullTo(channel)
             channel.close()
             assertEquals((1..10).toList(), result.await())
@@ -325,7 +325,7 @@ class ChannelsConsumeTest {
     fun testFilterNotToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             filterNotTo(channel) { it % 2 == 0 }
             channel.close()
             assertEquals(listOf(1, 3, 5, 7, 9), result.await())
@@ -345,7 +345,7 @@ class ChannelsConsumeTest {
     fun testFilterToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             filterTo(channel) { it % 2 == 0 }
             channel.close()
             assertEquals(listOf(2, 4, 6, 8, 10), result.await())
@@ -418,7 +418,7 @@ class ChannelsConsumeTest {
     fun testToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             toChannel(channel)
             channel.close()
             assertEquals(sourceList, result.await())
@@ -555,7 +555,7 @@ class ChannelsConsumeTest {
     fun testMapIndexedNotNullToChannel() {
         checkTerminal {
             val channel = Channel<String>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             mapIndexedNotNullTo(channel) { index, v -> "$index$v".takeIf { v % 2 == 0 } }
             channel.close()
             assertEquals(sourceList.mapIndexedNotNull { index, v -> "$index$v".takeIf { v % 2 == 0 } }, result.await())
@@ -575,7 +575,7 @@ class ChannelsConsumeTest {
     fun testMapIndexedToChannel() {
         checkTerminal {
             val channel = Channel<String>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             mapIndexedTo(channel) { index, v -> "$index$v" }
             channel.close()
             assertEquals(sourceList.mapIndexed { index, v -> "$index$v" }, result.await())
@@ -602,7 +602,7 @@ class ChannelsConsumeTest {
     fun testMapNotNullToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             mapNotNullTo(channel) { (it + 3).takeIf { it % 2 == 0 } }
             channel.close()
             assertEquals(sourceList.mapNotNull { (it + 3).takeIf { it % 2 == 0 } }, result.await())
@@ -622,7 +622,7 @@ class ChannelsConsumeTest {
     fun testMapToChannel() {
         checkTerminal {
             val channel = Channel<Int>()
-            val result = async { channel.toList() }
+            val result = GlobalScope.async { channel.toList() }
             mapTo(channel) { it + 3 }
             channel.close()
             assertEquals(sourceList.map { it + 3 }, result.await())

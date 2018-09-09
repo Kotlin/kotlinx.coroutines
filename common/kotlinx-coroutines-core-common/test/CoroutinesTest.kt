@@ -268,7 +268,7 @@ class CoroutinesTest : TestBase() {
     fun testCancelAndJoinChildren() = runTest {
         expect(1)
         val parent = Job()
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED, parent = parent) {
+        launch(parent, CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // to be cancelled

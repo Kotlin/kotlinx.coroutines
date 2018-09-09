@@ -65,7 +65,7 @@ fun fib(x: Int): Int =
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    launch(UI) {
+    GlobalScope.launch(UI) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"

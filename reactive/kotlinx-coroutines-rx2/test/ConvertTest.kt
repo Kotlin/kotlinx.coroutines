@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
 
 class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)
@@ -46,7 +45,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToMaybe() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             "OK"
         }
@@ -62,7 +61,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToMaybeEmpty() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             null
         }
@@ -74,7 +73,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToMaybeFail() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             throw TestException("OK")
         }
@@ -90,7 +89,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToSingle() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             "OK"
         }
@@ -106,7 +105,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToSingleFail() {
-        val d = async {
+        val d = GlobalScope.async {
             delay(50)
             throw TestException("OK")
         }
@@ -122,7 +121,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservable() {
-        val c = produce(DefaultDispatcher) {
+        val c = GlobalScope.produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)
@@ -136,7 +135,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservableFail() {
-        val c = produce(DefaultDispatcher) {
+        val c = GlobalScope.produce(DefaultDispatcher) {
             delay(50)
             send("O")
             delay(50)

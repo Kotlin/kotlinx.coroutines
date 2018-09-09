@@ -4,15 +4,12 @@
 
 package benchmarks.actors
 
-import benchmarks.ParametrizedDispatcherBase
-import benchmarks.actors.PingPongActorBenchmark.Letter
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.runBlocking
+import benchmarks.*
+import benchmarks.actors.PingPongActorBenchmark.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 /*
  * Cores count actors chained into single cycle pass message and process it using its private state.
@@ -68,7 +65,7 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
         trailingActor.send(Letter(Start(), previous))
     }
 
-    private fun lastActor(stopChannel: Channel<Unit>) = actor<Letter>(benchmarkContext, capacity = 1024) {
+    private fun lastActor(stopChannel: Channel<Unit>) = actor<Letter>(capacity = 1024) {
         var nextChannel: SendChannel<Letter>? = null
         val state = LongArray(actorStateSize) { ThreadLocalRandom.current().nextLong(1024) }
 
@@ -90,7 +87,7 @@ open class CycledActorsBenchmark : ParametrizedDispatcherBase() {
         }
     }
 
-    private fun createActor(nextActor: SendChannel<Letter>, stopChannel: Channel<Unit>) = actor<Letter>(benchmarkContext, capacity = 1024) {
+    private fun createActor(nextActor: SendChannel<Letter>, stopChannel: Channel<Unit>) = actor<Letter>(capacity = 1024) {
         var received = 0
         val state = LongArray(actorStateSize) { ThreadLocalRandom.current().nextLong(1024) }
 

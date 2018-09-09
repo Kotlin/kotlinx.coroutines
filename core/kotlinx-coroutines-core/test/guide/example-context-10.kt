@@ -8,18 +8,42 @@ package kotlinx.coroutines.experimental.guide.context10
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = Job() // create a job object to manage our lifecycle
-    // now launch ten coroutines for a demo, each working for a different time
-    val coroutines = List(10) { i ->
-        // they are all children of our job object
-        launch(coroutineContext, parent = job) { // we use the context of main runBlocking thread, but with our parent job
-            delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
-            println("Coroutine $i is done")
+class Activity : CoroutineScope {
+    lateinit var job: Job
+
+    fun create() {
+        job = Job()
+    }
+
+    fun destroy() {
+        job.cancel()
+    }
+    // to be continued ...
+
+    // class Activity continues
+    override val coroutineContext: CoroutineContext
+        get() = DefaultDispatcher + job
+    // to be continued ...
+
+    // class Activity continues
+    fun doSomething() {
+        // launch ten coroutines for a demo, each working for a different time
+        repeat(10) { i ->
+            launch {
+                delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
+                println("Coroutine $i is done")
+            }
         }
     }
-    println("Launched ${coroutines.size} coroutines")
+} // class Activity ends
+
+fun main(args: Array<String>) = runBlocking<Unit> {
+    val activity = Activity()
+    activity.create() // create an activity
+    activity.doSomething() // run test function
+    println("Launched coroutines")
     delay(500L) // delay for half a second
-    println("Cancelling the job!")
-    job.cancelAndJoin() // cancel all our coroutines and wait for all of them to complete
+    println("Destroying activity!")
+    activity.destroy() // cancels all coroutines
+    delay(1000) // visually confirm that they don't work
 }

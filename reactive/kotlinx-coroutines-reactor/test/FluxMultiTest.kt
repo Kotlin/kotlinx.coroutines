@@ -4,15 +4,12 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.reactive.consumeEach
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import reactor.core.publisher.Flux
-import java.io.IOException
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
+import org.junit.*
+import org.junit.Assert.*
+import reactor.core.publisher.*
+import java.io.*
 
 /**
  * Test emitting multiple values with [flux].
@@ -25,14 +22,14 @@ class FluxMultiTest : TestBase() {
             repeat(n) { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux<Int>(DefaultDispatcher) {
+        val flux = flux(DefaultDispatcher) {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -44,7 +41,7 @@ class FluxMultiTest : TestBase() {
         }
         checkMonoValue(flux.collectList()) { list ->
             assertEquals(n, list.size)
-            assertEquals((0..n - 1).toList(), list.sorted())
+            assertEquals((0 until n).toList(), list.sorted())
         }
     }
 
@@ -55,7 +52,7 @@ class FluxMultiTest : TestBase() {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
@@ -66,7 +63,7 @@ class FluxMultiTest : TestBase() {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 

@@ -12,7 +12,6 @@ import org.junit.*
 import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 
 class ListenableFutureTest : TestBase() {
     @Before
@@ -155,7 +154,7 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testAsListenableFutureThrowable() {
-        val deferred = async {
+        val deferred = GlobalScope.async {
             throw OutOfMemoryError()
         }
 

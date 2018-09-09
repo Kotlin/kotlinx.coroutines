@@ -11,10 +11,12 @@ import kotlin.coroutines.experimental.*
  * It executes initial continuation of the coroutine _right here_ in the current call-frame
  * and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
  * mandating any specific threading policy.
+ * **Note: use with extreme caution, not for general code**.
  *
  * Note, that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
  * but still want to execute it in the current call-frame until its first suspension, then you can use
- * an optional [CoroutineStart] parameter in coroutine builders like [launch] and [async] setting it to the
+ * an optional [CoroutineStart] parameter in coroutine builders like
+ * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to the
  * the value of [CoroutineStart.UNDISPATCHED].
  */
 public object Unconfined : CoroutineDispatcher() {

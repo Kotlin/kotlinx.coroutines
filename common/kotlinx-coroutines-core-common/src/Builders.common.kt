@@ -76,7 +76,7 @@ public fun launch(
  * @suppress **Deprecated** Use [CoroutineScope.launch] instead.
  */
 @Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release",
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
     replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
 )
 public fun launch(
@@ -105,7 +105,7 @@ public fun launch(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
 ): Job =
-    launch(context, start, block = block)
+    GlobalScope.launch(context, start, block = block)
 
 /**
  * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter

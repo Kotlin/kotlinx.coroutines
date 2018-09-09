@@ -6,7 +6,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CompletableDeferredTest : TestBase() {
@@ -167,7 +166,7 @@ class CompletableDeferredTest : TestBase() {
     fun testCancelAndAwaitParentWaitChildren() = runTest {
         expect(1)
         val parent = CompletableDeferred<String>()
-        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+        launch(parent, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // will get cancelled
@@ -189,7 +188,7 @@ class CompletableDeferredTest : TestBase() {
     fun testCompleteAndAwaitParentWaitChildren() = runTest {
         expect(1)
         val parent = CompletableDeferred<String>()
-        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+        launch(parent, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // will get cancelled

@@ -10,12 +10,12 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
 import java.util.*
 
-fun asyncString(time: Int) = async {
+fun CoroutineScope.asyncString(time: Int) = async {
     delay(time.toLong())
     "Waited for $time ms"
 }
 
-fun asyncStringsList(): List<Deferred<String>> {
+fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
     val random = Random(3)
     return List(12) { asyncString(random.nextInt(1000)) }
 }

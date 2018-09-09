@@ -19,12 +19,12 @@ suspend fun doSomethingUsefulTwo(): Int {
 }
 
 // The result type of somethingUsefulOneAsync is Deferred<Int>
-fun somethingUsefulOneAsync() = async {
+fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()
 }
 
 // The result type of somethingUsefulTwoAsync is Deferred<Int>
-fun somethingUsefulTwoAsync() = async {
+fun somethingUsefulTwoAsync() = GlobalScope.async {
     doSomethingUsefulTwo()
 }
 

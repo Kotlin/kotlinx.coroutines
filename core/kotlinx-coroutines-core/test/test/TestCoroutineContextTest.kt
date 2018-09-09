@@ -7,6 +7,7 @@ package kotlinx.coroutines.experimental.test
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Assert.*
+import kotlin.coroutines.experimental.*
 
 class TestCoroutineContextTest {
     private val injectedContext = TestCoroutineContext()
@@ -386,20 +387,24 @@ class TestCoroutineContextTest {
 
 
 /* Some helper functions */
+// todo: deprecate, replace, see https://github.com/Kotlin/kotlinx.coroutines/issues/541
 private fun TestCoroutineContext.launch(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
         onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> Unit
-) = launch(this, start, parent, onCompletion, block)
+) =
+    GlobalScope.launch(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
 
+// todo: deprecate, replace, see https://github.com/Kotlin/kotlinx.coroutines/issues/541
 private fun <T> TestCoroutineContext.async(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
         onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> T
 
-) = async(this, start, parent, onCompletion, block)
+) =
+    GlobalScope.async(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
 
 private fun <T> TestCoroutineContext.runBlocking(
         block: suspend CoroutineScope.() -> T

@@ -13,7 +13,7 @@ class ChannelsJvmTest : TestBase() {
     @Test
     fun testBlocking() {
         val ch = Channel<Int>()
-        val sum = async {
+        val sum = GlobalScope.async {
             ch.sumBy { it }
         }
         repeat(10) {
