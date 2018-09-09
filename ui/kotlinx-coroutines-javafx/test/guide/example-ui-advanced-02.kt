@@ -53,7 +53,7 @@ class ExampleApp : Application() {
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
+        GlobalScope.launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
             println("Inside coroutine")
             delay(100)                            // <--- And this is where coroutine suspends      
             println("After delay")

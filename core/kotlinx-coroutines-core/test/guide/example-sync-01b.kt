@@ -9,12 +9,12 @@ import kotlinx.coroutines.experimental.*
 import kotlin.system.*
 import kotlin.coroutines.experimental.*
 
-suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
-    val n = 1000 // number of coroutines to launch
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
         val jobs = List(n) {
-            launch(context) {
+            launch {
                 repeat(k) { action() }
             }
         }
@@ -27,7 +27,7 @@ val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define cont
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    massiveRun(mtContext) { // use it instead of CommonPool in this sample and below 
+    CoroutineScope(mtContext).massiveRun { // use it instead of DefaultDispatcher in this sample and below 
         counter++
     }
     println("Counter = $counter")

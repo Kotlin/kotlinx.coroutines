@@ -91,9 +91,9 @@ context object for your favourite UI library, even if it is not included out of 
   * [Event conflation](#event-conflation)
 * [Blocking operations](#blocking-operations)
   * [The problem of UI freezes](#the-problem-of-ui-freezes)
+  * [Structured concurrency, lifecycle and coroutine parent-child hierarchy](#structured-concurrency,-lifecycle-and-coroutine-parent-child-hierarchy)
   * [Blocking operations](#blocking-operations)
 * [Advanced topics](#advanced-topics)
-  * [Lifecycle and coroutine parent-child hierarchy](#lifecycle-and-coroutine-parent-child-hierarchy)
   * [Starting coroutine in UI event handlers without dispatch](#starting-coroutine-in-ui-event-handlers-without-dispatch)
 
 <!--- END_TOC -->
@@ -186,10 +186,6 @@ The `kotlinx-coroutines-javafx` module contains [JavaFx] context that dispatches
 the JavaFx application thread. We import it as `UI` to make all the presented examples 
 easily portable to Android:
  
-```kotlin
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
-```
- 
 <!--- CLEAR -->
 
 Coroutines confined to the UI thread can freely update anything in UI and suspend without blocking the UI thread.
@@ -198,7 +194,7 @@ text with a 10 to 1 countdown twice a second, using [launch] coroutine builder:
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
-    launch(UI) { // launch coroutine in UI context
+    GlobalScope.launch(UI) { // launch coroutine in UI context
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second
@@ -224,7 +220,7 @@ coroutine when we want to stop it. Let us cancel the coroutine when pinkish circ
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
-    val job = launch(UI) { // launch coroutine in UI context
+    val job = GlobalScope.launch(UI) { // launch coroutine in UI context
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second
@@ -280,7 +276,7 @@ passes the corresponding mouse event into the supplied action (just in case we n
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     onMouseClicked = EventHandler { event ->
-        launch(UI) {
+        GlobalScope.launch(UI) {
             action(event)
         }
     }
@@ -299,7 +295,7 @@ update the text. Try it. It does not look very good. We'll fix it later.
 ```kotlin
 fun View.onClick(action: suspend () -> Unit) {
     setOnClickListener { 
-        launch(UI) {
+        GlobalScope.launch(UI) {
             action()
         }
     }
@@ -319,7 +315,7 @@ not be performed concurrently. Let us change `onClick` extension implementation:
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
-    val eventActor = actor<MouseEvent>(UI) {
+    val eventActor = GlobalScope.actor<MouseEvent>(UI) {
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
@@ -346,7 +342,7 @@ the `receive` is active.
 ```kotlin
 fun View.onClick(action: suspend (View) -> Unit) {
     // launch one actor
-    val eventActor = actor<View>(UI) {
+    val eventActor = GlobalScope.actor<View>(UI) {
         for (event in channel) action(event)
     }
     // install a listener to activate this actor
@@ -372,7 +368,7 @@ change is only to the line that creates an actor:
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
-    val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) { // <--- Changed here
+    val eventActor = GlobalScope.actor<MouseEvent>(UI, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
@@ -439,7 +435,7 @@ and is constantly updating the text in the UI context:
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    launch(UI) {
+    GlobalScope.launch(UI) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"
@@ -457,10 +453,98 @@ fun setup(hello: Text, fab: Circle) {
  
 > You can get full JavaFx code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-01.kt).
   You can just copy the `fib` function and the body of the `setup` function to your Android project.
- 
+
 Try clicking on the circle in this example. After around 30-40th click our naive computation is going to become
 quite slow and you would immediately see how the UI thread freezes, because the animation stops running 
 during UI freeze.
+
+### Structured concurrency, lifecycle and coroutine parent-child hierarchy
+
+A typical UI application has a number of elements with a lifecycle. Windows, UI controls, activities, views, fragments
+and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background 
+computation, can retain references to the corresponding UI elements for longer than it is needed, preventing garbage 
+collection of the whole trees of UI objects that were already destroyed and will not be displayed anymore.
+
+The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
+all the coroutines in the context of this job. But passing associated job object to every coroutine builder is error-prone, 
+it is easy to forget it. For this purpose, [CoroutineScope] interface should be implemented by UI owner, and then every
+coroutine builder defined as an extension on [CoroutineScope] will inherit UI job without explicit mentioning.
+
+For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
+needed and when its memory must be released. A natural solution is to attach an 
+instance of a `Job` to an instance of an `Activity`:
+<!--- CLEAR -->
+
+```kotlin
+abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope {
+    override val coroutineContext: CoroutineContext by lazy { job + UI }
+    protected lateinit var job: Job
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        job = Job()
+    }
+        
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    } 
+}
+```
+
+Now, an activity that is associated with a job has to extend ScopedAppActivity
+
+```kotlin
+class MainActivity : ScopedAppActivity() {
+
+    fun asyncShowData() = launch { // Is invoked in UI context with Activity's job as a parent
+        // actual implementation
+    }
+    
+    suspend fun showIOData() {
+        val deferred = async(IO) {
+            // impl      
+        }
+        withContext(UI) {
+          val data = deferred.await()
+          // Show data in UI
+        }
+    }
+}
+```
+
+Every coroutine launched from within a `MainActivity` will have its job as a parent and will be cancelled if
+activity is destroyed.
+
+To propagate activity scope to its views and presenters, one can use [currentScope] builder which captures current 
+scope. Another solution is to implement [CoroutineScope] in child elements using delegation, for example:
+
+```kotlin
+class ActivityWithPresenters: ScopedAppActivity() {
+    fun init() {
+        val presenter = Presenter()
+        val presenter2 = NonSuspendingPresenter(this)
+    }
+}
+
+class Presenter {
+    suspend fun loadData() = currentScope {
+        // Now we're in the scope of ActivityWithPresenters
+    }
+}
+
+class NonSuspendingPresenter(scope: CoroutineScope): CoroutineScope by scope {
+    fun loadData() = launch { // Extension on ActivityWithPresenters's scope
+        // Implementation
+    }
+}
+``` 
+
+Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
+the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
+when the parent job is cancelled. An example of that is shown in the
+["Children of a coroutine"](../coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
+<!--- CLEAR -->
 
 ### Blocking operations
 
@@ -475,7 +559,7 @@ it is invoked from anymore, but suspends its execution when the computation in t
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    launch(UI) {
+    GlobalScope.launch(UI) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"
@@ -530,80 +614,6 @@ It can saturate at most one CPU core.
 ## Advanced topics
 
 This section covers various advanced topics. 
- 
-### Lifecycle and coroutine parent-child hierarchy
-
-A typical UI application has a number of elements with a lifecycle. Windows, UI controls, activities, views, fragments
-and other visual elements are created and destroyed. A long-running coroutine, performing some IO or a background 
-computation, can retain references to the corresponding UI elements for longer than it is needed, preventing garbage 
-collection of the whole trees of UI objects that were already destroyed and will not be displayed anymore.
-
-The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
-all the coroutines in the context of this job.
-
-For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
-needed and when its memory must be released. A natural solution is to attach an 
-instance of a `Job` to an instance of an `Activity`. We can create a mini-framework for that, 
-by defining the following `JobHolder` interface:
-
-```kotlin
-interface JobHolder {
-    val job: Job
-}
-```
-
-Now, an activity that is associated with a job needs to implement this `JobHolder` interface and define
-its `onDestroy` function to cancel the corresponding job:
-
-```kotlin
-class MainActivity : AppCompatActivity(), JobHolder {
-    override val job: Job = Job() // the instance of a Job for this activity
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel() // cancel the job when activity is destroyed
-    }
- 
-    // the rest of code
-}
-```
-
-We also need a convenient way to retrieve a job for any view in the application. This is straightforward, because
-an activity is an Android `Context` of the views in it, so we can define the following `View.contextJob` extension property:
-
-```kotlin
-val View.contextJob: Job?
-    get() = (context as? JobHolder)?.job
-```
-
-A convenience of having a `contextJob` available is that we can simply use it as the parent of all the coroutines
-we start without having to worry about explicitly maintaining a list of the coroutines we had
-started. All the life-cycle management will be taken care of by the mechanics of parent-child relations between
-jobs.
-
-For example, the `View.onClick` extension from the previous section can now be defined using `contextJob`:
-
-```kotlin
-fun View.onClick(action: suspend () -> Unit) {
-    // launch one actor as a parent of the context job
-    val eventActor = actor<Unit>(UI, parent = contextJob, capacity = Channel.CONFLATED) {
-        for (event in channel) action()
-    }
-    // install a listener to activate this actor
-    setOnClickListener {
-        eventActor.offer(Unit)
-    }
-}
-```
-
-Notice how we used `parent = contextJob` to start an actor in the above code. The coroutine that is started this
-way is going to become a child of the job of the corresponding context. When the activity is destroyed and its job
-is cancelled, all its children coroutines are cancelled, too.
-
-Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
-the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
-when the parent job is cancelled. An example of that is shown in the
-["Children of a coroutine"](../coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
 
 ### Starting coroutine in UI event handlers without dispatch
 
@@ -616,7 +626,7 @@ from the UI thread:
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        launch(UI) { 
+        GlobalScope.launch(UI) { 
             println("Inside coroutine")
             delay(100)
             println("After delay")
@@ -658,7 +668,7 @@ coroutine immediately until its first suspension point as the following example 
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
+        GlobalScope.launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
             println("Inside coroutine")
             delay(100)                            // <--- And this is where coroutine suspends      
             println("After delay")
@@ -685,6 +695,8 @@ After delay
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
+[currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
 [CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html

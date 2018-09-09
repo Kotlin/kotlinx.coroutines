@@ -18,7 +18,7 @@ import kotlin.coroutines.experimental.*
  * culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
  * or completion of parent immediately cancels all its [children].
  *
- * The most basic instances of [Job] are created with [launch] coroutine builder or with a
+ * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
  * `Job()` factory function.  Other coroutine builders and primitives like
  * [Deferred] also implement [Job] interface.
  *
@@ -177,7 +177,8 @@ public interface Job : CoroutineContext.Element {
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
      *   complete in _completing_ or _cancelling_ state.
      * * Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-     *   children created with [launch] coroutine builder. Note, that [async] and other future-like
+     *   children created with [launch][CoroutineScope.launch] coroutine builder. Note, that
+     *   [async][CoroutineScope.async] and other future-like
      *   coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
      *   caught and are encapsulated in their result.
      */

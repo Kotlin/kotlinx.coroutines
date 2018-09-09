@@ -19,10 +19,10 @@ class AsyncTest : TestBase() {
         }
         expect(2)
         assertTrue(d.isActive)
-        assertTrue(d.await() == 42)
+        assertEquals(d.await(), 42)
         assertTrue(!d.isActive)
         expect(4)
-        assertTrue(d.await() == 42) // second await -- same result
+        assertEquals(d.await(), 42) // second await -- same result
         finish(5)
     }
 
@@ -35,7 +35,7 @@ class AsyncTest : TestBase() {
         }
         expect(3)
         assertTrue(!d.isActive)
-        assertTrue(d.await() == 42)
+        assertEquals(d.await(), 42)
         finish(4)
     }
 
@@ -66,7 +66,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testLostException() = runTest {
         expect(1)
-        val deferred = async(coroutineContext, parent = Job()) {
+        val deferred = async(Job()) {
             expect(2)
             throw Exception()
         }
@@ -78,8 +78,8 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testParallelDecompositionCaughtException() = runTest {
-        val deferred = async(coroutineContext, parent = Job()) {
-            val decomposed = async(coroutineContext) {
+        val deferred = async(Job()) {
+            val decomposed = async {
                 throw AssertionError()
                 1
             }
@@ -130,8 +130,8 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testParallelDecompositionUncaughtException() = runTest(expected = { it is AssertionError }) {
-        val deferred = async(coroutineContext, parent = Job()) {
-            val decomposed = async(coroutineContext) {
+        val deferred = async(Job()) {
+            val decomposed = async {
                 throw AssertionError()
                 1
             }
@@ -185,13 +185,13 @@ class AsyncTest : TestBase() {
         expect(2)
         launch(coroutineContext) {
             expect(6)
-            assertTrue(d.await() == 42)
+            assertEquals(d.await(), 42)
             expect(11)
         }
         expect(3)
         launch(coroutineContext) {
             expect(7)
-            assertTrue(d.await() == 42)
+            assertEquals(d.await(), 42)
             expect(12)
         }
         expect(4)
@@ -216,7 +216,7 @@ class AsyncTest : TestBase() {
             expect(1)
             bad
         }
-        assertTrue(d.await() === bad)
+        assertSame(d.await(), bad)
         finish(2)
     }
 

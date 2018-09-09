@@ -27,15 +27,15 @@ class SendReceiveStressTest : TestBase() {
         testStress(RendezvousChannel())
     }
 
-    private suspend fun testStress(channel: Channel<Int>) {
+    private suspend fun testStress(channel: Channel<Int>) = coroutineScope {
         val n = 100 // Do not increase, otherwise node.js will fail with timeout :(
-        val sender = launch(coroutineContext) {
+        val sender = launch {
             for (i in 1..n) {
                 channel.send(i)
             }
             expect(2)
         }
-        val receiver = launch(coroutineContext) {
+        val receiver = launch {
             for (i in 1..n) {
                 val next = channel.receive()
                 check(next == i)

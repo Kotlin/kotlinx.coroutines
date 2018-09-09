@@ -12,7 +12,7 @@ import org.junit.Assert.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
-import java.util.function.Supplier
+import java.util.function.*
 import kotlin.concurrent.*
 import kotlin.coroutines.experimental.*
 
@@ -189,7 +189,7 @@ class FutureTest : TestBase() {
 
     @Test
     fun testAsCompletableFutureThrowable() {
-        val deferred = async {
+        val deferred = GlobalScope.async {
             throw OutOfMemoryError()
         }
 

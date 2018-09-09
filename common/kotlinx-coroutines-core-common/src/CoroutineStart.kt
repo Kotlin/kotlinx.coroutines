@@ -10,7 +10,7 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Defines start options for coroutines builders.
- * It is used in `start` parameter of [launch], [async], and other coroutine builder functions.
+ * It is used in `start` parameter of [launch][CoroutineScope.launch], [async][CoroutineScope.async], and other coroutine builder functions.
  *
  * The summary of coroutine start options is:
  * * [DEFAULT] -- immediately schedules coroutine for execution according to its context;
@@ -41,7 +41,7 @@ public enum class CoroutineStart {
      * Starts coroutine lazily, only when it is needed.
      *
      * See the documentation for the corresponding coroutine builders for details
-     * (like [launch] and [async]).
+     * (like [launch][CoroutineScope.launch] and [async][CoroutineScope.async]).
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but will complete with an exception.

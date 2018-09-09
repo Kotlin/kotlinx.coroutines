@@ -57,7 +57,8 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
 
 /**
  * The default [CoroutineDispatcher] that is used by all standard builders like
- * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
+ * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
+ * if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
  *
  * It is currently equal to [CommonPool], but the value is subject to change in the future.
  * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")

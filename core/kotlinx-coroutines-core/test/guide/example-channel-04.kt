@@ -8,12 +8,12 @@ package kotlinx.coroutines.experimental.guide.channel04
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 
-fun produceNumbers() = produce<Int> {
+fun CoroutineScope.produceNumbers() = produce<Int> {
     var x = 1
     while (true) send(x++) // infinite stream of integers starting from 1
 }
 
-fun square(numbers: ReceiveChannel<Int>) = produce<Int> {
+fun CoroutineScope.square(numbers: ReceiveChannel<Int>) = produce<Int> {
     for (x in numbers) send(x * x)
 }
 
@@ -22,6 +22,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     val squares = square(numbers) // squares integers
     for (i in 1..5) println(squares.receive()) // print first five
     println("Done!") // we are done
-    squares.cancel() // need to cancel these coroutines in a larger app
-    numbers.cancel()
+    coroutineContext.cancelChildren() // cancel children coroutines
 }

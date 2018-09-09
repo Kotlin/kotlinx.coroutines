@@ -175,7 +175,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellationWithException() = runTest(unhandled = listOf({e -> e is AssertionError})) {
         expect(1)
         var job: Job? = null
-        job = launch(coroutineContext, parent = Job()) {
+        job = launch(Job()) {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
@@ -205,7 +205,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellation() = runTest(unhandled = listOf({e -> e is AssertionError})) {
         expect(1)
         var job: Job? = null
-        job = launch(coroutineContext, parent = Job()) {
+        job = launch(Job()) {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {

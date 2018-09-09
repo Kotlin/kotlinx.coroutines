@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.CoroutineStart.*
 import org.junit.Test
 import java.io.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class JobExceptionHandlingTest : TestBase() {
@@ -22,7 +21,7 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job, start = ATOMIC) {
+            launch(job, start = ATOMIC) {
                 expect(2)
                 throw IllegalStateException()
             }
@@ -47,7 +46,7 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            val child = launch(coroutineContext, parent = job, start = ATOMIC) {
+            val child = launch(job, start = ATOMIC) {
                 expect(2)
                 throw IllegalStateException()
             }
@@ -71,7 +70,7 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            val child = launch(coroutineContext, parent = job, start = ATOMIC) {
+            val child = launch(job, start = ATOMIC) {
                 expect(2)
                 throw IOException()
             }
@@ -100,10 +99,10 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job) {
+            launch(job) {
                 expect(2) // <- child is launched successfully
 
-                launch(coroutineContext) {
+                launch {
                     expect(3) // <- child's child is launched successfully
                     try {
                         yield()
@@ -136,9 +135,9 @@ class JobExceptionHandlingTest : TestBase() {
         */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job, start = ATOMIC) {
+            launch(job, start = ATOMIC) {
                 expect(2)
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(3) // <- child's child is launched successfully
                     throw ArithmeticException()
                 }
@@ -164,9 +163,9 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job) {
+            launch(job) {
                 expect(2) // <- child is launched successfully
-                launch(coroutineContext) {
+                launch {
                     expect(3) // <- child's child is launched successfully
                     try {
                         yield()
@@ -203,19 +202,19 @@ class JobExceptionHandlingTest : TestBase() {
           */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job, start = ATOMIC) {
+            launch(job, start = ATOMIC) {
                 expect(2)
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(3)
                     throw ArithmeticException()
                 }
 
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(4)
                     throw IOException()
                 }
 
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(5)
                     throw IllegalArgumentException()
                 }
@@ -245,18 +244,17 @@ class JobExceptionHandlingTest : TestBase() {
          */
         val exception = runBlock {
             val job = Job()
-            launch(coroutineContext, parent = job, start = ATOMIC) {
+            launch(job, start = ATOMIC) {
                 expect(2)
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(3)
                     throw IOException()
                 }
 
-                launch(coroutineContext, start = ATOMIC) {
+                launch(start = ATOMIC) {
                     expect(4)
                     throw IllegalArgumentException()
                 }
-
 
                 throw AssertionError()
             }

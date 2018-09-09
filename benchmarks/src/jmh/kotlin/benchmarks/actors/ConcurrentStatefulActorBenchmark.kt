@@ -4,16 +4,12 @@
 
 package benchmarks.actors
 
-import benchmarks.ParametrizedDispatcherBase
-import benchmarks.actors.StatefulActorBenchmark.Letter
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.runBlocking
+import benchmarks.*
+import benchmarks.actors.StatefulActorBenchmark.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
 
 /*
  * Noisy benchmarks useful to measure scheduling fairness and migration of affinity-sensitive tasks.
@@ -70,8 +66,8 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun multipleComputationsUnfair() = runBlocking {
         val resultChannel: Channel<Unit> = Channel(1)
-        val computations = (0 until CORES_COUNT).map { computationActor(benchmarkContext, stateSize) }
-        val requestor = requestorActorUnfair(benchmarkContext, computations, resultChannel)
+        val computations = (0 until CORES_COUNT).map { computationActor(stateSize) }
+        val requestor = requestorActorUnfair(computations, resultChannel)
         requestor.send(Letter(Start(), Channel(0)))
         resultChannel.receive()
     }
@@ -79,58 +75,65 @@ open class ConcurrentStatefulActorBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun multipleComputationsFair() = runBlocking {
         val resultChannel: Channel<Unit> = Channel(1)
-        val computations = (0 until CORES_COUNT).map { computationActor(benchmarkContext, stateSize) }
-        val requestor = requestorActorFair(benchmarkContext, computations, resultChannel)
+        val computations = (0 until CORES_COUNT).map { computationActor(stateSize) }
+        val requestor = requestorActorFair(computations, resultChannel)
         requestor.send(Letter(Start(), Channel(0)))
         resultChannel.receive()
     }
 
-    fun requestorActorUnfair(context: CoroutineContext, computations: List<SendChannel<Letter>>,
-                             stopChannel: Channel<Unit>) = actor<Letter>(context, 1024) {
-        var received = 0
-        for (letter in channel) with(letter) {
-            when (message) {
-                is Start -> {
-                    computations.shuffled().forEach { it.send(Letter(ThreadLocalRandom.current().nextLong(), channel)) }
-                }
-                is Long -> {
-                    if (++received >= ROUNDS * 8) {
-                        stopChannel.send(Unit)
-                        return@actor
-                    } else {
-                        sender.send(Letter(ThreadLocalRandom.current().nextLong(), channel))
+    fun requestorActorUnfair(
+        computations: List<SendChannel<Letter>>,
+        stopChannel: Channel<Unit>
+    ) =
+        actor<Letter>(capacity = 1024) {
+            var received = 0
+            for (letter in channel) with(letter) {
+                when (message) {
+                    is Start -> {
+                        computations.shuffled()
+                            .forEach { it.send(Letter(ThreadLocalRandom.current().nextLong(), channel)) }
                     }
-                }
-                else -> error("Cannot happen: $letter")
-            }
-        }
-    }
-
-
-    fun requestorActorFair(context: CoroutineContext, computations: List<SendChannel<Letter>>,
-                           stopChannel: Channel<Unit>) = actor<Letter>(context, 1024) {
-        val received = hashMapOf(*computations.map { it to 0 }.toTypedArray())
-        var receivedTotal = 0
-
-        for (letter in channel) with(letter) {
-            when (message) {
-                is Start -> {
-                    computations.shuffled().forEach { it.send(Letter(ThreadLocalRandom.current().nextLong(), channel)) }
-                }
-                is Long -> {
-                    if (++receivedTotal >= ROUNDS * computations.size) {
-                        stopChannel.send(Unit)
-                        return@actor
-                    } else {
-                        val receivedFromSender = received[sender]!!
-                        if (receivedFromSender <= ROUNDS) {
-                            received[sender] = receivedFromSender + 1
+                    is Long -> {
+                        if (++received >= ROUNDS * 8) {
+                            stopChannel.send(Unit)
+                            return@actor
+                        } else {
                             sender.send(Letter(ThreadLocalRandom.current().nextLong(), channel))
                         }
                     }
+                    else -> error("Cannot happen: $letter")
                 }
-                else -> error("Cannot happen: $letter")
             }
         }
-    }
+
+    fun requestorActorFair(
+        computations: List<SendChannel<Letter>>,
+        stopChannel: Channel<Unit>
+    ) =
+        actor<Letter>(capacity = 1024) {
+            val received = hashMapOf(*computations.map { it to 0 }.toTypedArray())
+            var receivedTotal = 0
+
+            for (letter in channel) with(letter) {
+                when (message) {
+                    is Start -> {
+                        computations.shuffled()
+                            .forEach { it.send(Letter(ThreadLocalRandom.current().nextLong(), channel)) }
+                    }
+                    is Long -> {
+                        if (++receivedTotal >= ROUNDS * computations.size) {
+                            stopChannel.send(Unit)
+                            return@actor
+                        } else {
+                            val receivedFromSender = received[sender]!!
+                            if (receivedFromSender <= ROUNDS) {
+                                received[sender] = receivedFromSender + 1
+                                sender.send(Letter(ThreadLocalRandom.current().nextLong(), channel))
+                            }
+                        }
+                    }
+                    else -> error("Cannot happen: $letter")
+                }
+            }
+        }
 }

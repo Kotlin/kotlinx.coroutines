@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.sync
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class MutexTest : TestBase() {
@@ -65,7 +64,7 @@ class MutexTest : TestBase() {
         val mutex = Mutex(true)
         var done = 0
         repeat(waiters) {
-            launch(Unconfined) {  // a lot of unconfined waiters
+            GlobalScope.launch(Unconfined) {  // a lot of unconfined waiters
                 mutex.withLock {
                     done++
                 }

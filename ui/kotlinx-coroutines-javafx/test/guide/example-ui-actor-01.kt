@@ -62,7 +62,7 @@ fun setup(hello: Text, fab: Circle) {
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     onMouseClicked = EventHandler { event ->
-        launch(UI) {
+        GlobalScope.launch(UI) {
             action(event)
         }
     }

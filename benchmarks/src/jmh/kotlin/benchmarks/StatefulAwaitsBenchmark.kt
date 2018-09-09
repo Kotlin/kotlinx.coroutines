@@ -5,12 +5,9 @@
 package benchmarks
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.channels.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
 
 /*
  * Benchmark which launches multiple async jobs each with either own private or global shared state,
@@ -71,7 +68,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     fun independentStateAsync() = runBlocking {
         val broadcastChannel = BroadcastChannel<Int>(1)
         val subscriptionChannel = Channel<Int>(jobsCount)
-        val jobs= (0 until jobsCount).map { launchJob(it, benchmarkContext, broadcastChannel, subscriptionChannel) }.toList()
+        val jobs= (0 until jobsCount).map { launchJob(it, broadcastChannel, subscriptionChannel) }.toList()
 
         repeat(jobsCount) {
             subscriptionChannel.receive() // await all jobs to start
@@ -86,7 +83,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     fun dependentStateAsync() = runBlocking {
         val broadcastChannel = BroadcastChannel<Int>(1)
         val subscriptionChannel = Channel<Int>(jobsCount)
-        val jobs= (0 until jobsCount).map { launchJob(0, benchmarkContext, broadcastChannel, subscriptionChannel) }.toList()
+        val jobs= (0 until jobsCount).map { launchJob(0, broadcastChannel, subscriptionChannel) }.toList()
 
         repeat(jobsCount) {
             subscriptionChannel.receive() // await all jobs to start
@@ -97,10 +94,12 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
         jobs.forEach { it.await() }
     }
 
-    private fun launchJob(stateNum: Int, dispatcher: CoroutineContext,
-                          channel: BroadcastChannel<Int>,
-                          subscriptionChannel: Channel<Int>): Deferred<Long> {
-        return async(dispatcher) {
+    private fun launchJob(
+        stateNum: Int,
+        channel: BroadcastChannel<Int>,
+        subscriptionChannel: Channel<Int>
+    ): Deferred<Long> =
+        async {
             val subscription = channel.openSubscription()
             subscriptionChannel.send(1)
             subscription.receive()
@@ -115,8 +114,6 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
 
                 yield()
             }
-
             sum
         }
-    }
 }

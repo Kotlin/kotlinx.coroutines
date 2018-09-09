@@ -12,7 +12,7 @@ import kotlin.coroutines.experimental.*
 /**
  * Deferred value is a non-blocking cancellable future.
  *
- * It is created with [async] coroutine builder or via constructor of [CompletableDeferred] class.
+ * It is created with [async][CoroutineScope.async] coroutine builder or via constructor of [CompletableDeferred] class.
  * It is in [active][isActive] state while the value is being computed.
  *
  * Deferred value has the following states:
@@ -28,7 +28,7 @@ import kotlin.coroutines.experimental.*
  * | _Failed_    (final state)               | `false`    | `true`        | `true`                     | `false`       |
  *
  * Usually, a deferred value is created in _active_ state (it is created and started).
- * However, [async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
+ * However, [async][CoroutineScope.async] coroutine builder has an optional `start` parameter that creates a deferred value in _new_ state
  * when this parameter is set to [CoroutineStart.LAZY].
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  *
@@ -54,7 +54,7 @@ import kotlin.coroutines.experimental.*
  *
  * A deferred value is a [Job]. A job in the
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
- * of [async] builder represents the coroutine itself.
+ * of [async][CoroutineScope.async] builder represents the coroutine itself.
  * A deferred value is active while the coroutine is working and cancellation aborts the coroutine when
  * the coroutine is suspended on a _cancellable_ suspension point by throwing [CancellationException]
  * or the cancellation cause inside the coroutine.

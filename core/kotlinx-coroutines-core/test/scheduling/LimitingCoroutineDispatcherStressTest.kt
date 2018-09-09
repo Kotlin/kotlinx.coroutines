@@ -44,14 +44,12 @@ class LimitingCoroutineDispatcherStressTest : SchedulerTestBase() {
         tasks.awaitAll()
     }
 
-    private fun task(ctx: CoroutineContext, maxLimit: Int): Deferred<Unit> {
-        return async(ctx) {
-            try {
-                val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                assertTrue(currentlyExecuting <= maxLimit, "Executing: $currentlyExecuting, max limit: $maxLimit")
-            } finally {
-                concurrentWorkers.decrementAndGet()
-            }
+    private fun task(ctx: CoroutineContext, maxLimit: Int): Deferred<Unit> = GlobalScope.async(ctx) {
+        try {
+            val currentlyExecuting = concurrentWorkers.incrementAndGet()
+            assertTrue(currentlyExecuting <= maxLimit, "Executing: $currentlyExecuting, max limit: $maxLimit")
+        } finally {
+            concurrentWorkers.decrementAndGet()
         }
     }
 }

@@ -5,15 +5,17 @@
 package kotlinx.coroutines.experimental.test
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.internal.*
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
  * This [CoroutineContext] dispatcher can be used to simulate virtual time to speed up
  * code, especially tests, that deal with delays and timeouts in Coroutines.
  *
- * Provide an instance of this TestCoroutineContext when calling the *non-blocking* [launch] or [async]
+ * Provide an instance of this TestCoroutineContext when calling the *non-blocking*
+ * [launch][CoroutineScope.launch] or [async][CoroutineScope.async]
  * and then advance time or trigger the actions to make the co-routines execute as soon as possible.
  *
  * This works much like the *TestScheduler* in RxJava2, which allows to speed up tests that deal
@@ -44,7 +46,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     private var time = 0L
 
     /**
-     * Exceptions that were caught during a [launch] or a [async] + [Deferred.await].
+     * Exceptions that were caught during a [launch][CoroutineScope.launch] or a [async][CoroutineScope.async] + [Deferred.await].
      */
     public val exceptions: List<Throwable> get() = uncaughtExceptions
 
@@ -265,9 +267,8 @@ private class TimedRunnable(
 public fun withTestContext(testContext: TestCoroutineContext = TestCoroutineContext(), testBody: TestCoroutineContext.() -> Unit) {
     with (testContext) {
         testBody()
-
         if (!exceptions.all { it is CancellationException }) {
-            throw AssertionError("Coroutine encountered unhandled exceptions:\n${exceptions}")
+            throw AssertionError("Coroutine encountered unhandled exceptions:\n$exceptions")
         }
     }
 }

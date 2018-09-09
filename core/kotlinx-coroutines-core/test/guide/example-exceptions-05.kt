@@ -14,15 +14,15 @@ fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed().contentToString()}")
     }
-    val job = launch(handler + coroutineContext, parent = Job()) {
-        launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+    val job = GlobalScope.launch(handler) {
+        launch {
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 throw ArithmeticException()
             }
         }
-        launch(coroutineContext) {
+        launch {
             throw IOException()
         }
         delay(Long.MAX_VALUE)

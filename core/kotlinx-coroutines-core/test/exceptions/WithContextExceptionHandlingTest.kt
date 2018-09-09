@@ -21,7 +21,7 @@ class WithContextExceptionHandlingTest : TestBase() {
         runCancellation(null, IllegalStateException()) { e ->
             assertNull(e.cause)
             val suppressed = e.suppressed()
-            assertTrue(suppressed.size == 1)
+            assertEquals(suppressed.size, 1)
 
             val cancellation = suppressed[0] as CancellationException
             assertNull(cancellation.cause)
@@ -40,7 +40,7 @@ class WithContextExceptionHandlingTest : TestBase() {
         runCancellation(cancellationCause, IllegalStateException()) { e ->
             assertNull(e.cause)
             val suppressed = e.suppressed()
-            assertTrue(suppressed.size == 1)
+            assertEquals(suppressed.size, 1)
 
             val cancellation = suppressed[0] as CancellationException
             assertSame(cancellation.cause, cancellationCause)

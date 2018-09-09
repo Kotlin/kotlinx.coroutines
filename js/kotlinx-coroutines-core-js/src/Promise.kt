@@ -35,7 +35,7 @@ public fun <T> promise(
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): Promise<T> =
-    async(context, start, parent, onCompletion, block = block).asPromise()
+    GlobalScope.async(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block = block).asPromise()
 
 /**
  * Converts this deferred value to the instance of [Promise].
@@ -61,7 +61,7 @@ public fun <T> Deferred<T>.asPromise(): Promise<T> {
 public fun <T> Promise<T>.asDeferred(): Deferred<T> {
     val deferred = asDynamic().deferred
     @Suppress("UnsafeCastFromDynamic")
-    return deferred ?: async(start = CoroutineStart.UNDISPATCHED) { await() }
+    return deferred ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
 /**

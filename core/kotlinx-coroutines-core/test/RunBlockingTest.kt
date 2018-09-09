@@ -70,7 +70,7 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testCancellation() = newFixedThreadPoolContext(2, "testCancellation").use {
-        val job = launch(it) {
+        val job = GlobalScope.launch(it) {
             runBlocking(coroutineContext) {
                 while (true) {
                     yield()

@@ -4,23 +4,18 @@
 
 package examples
 
-import javafx.application.Application
-import javafx.scene.Node
-import javafx.scene.Scene
-import javafx.scene.control.Button
-import javafx.scene.layout.FlowPane
-import javafx.scene.layout.Pane
-import javafx.scene.paint.Color
-import javafx.scene.shape.Circle
-import javafx.scene.shape.Rectangle
-import javafx.stage.Stage
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.javafx.JavaFx
-import kotlinx.coroutines.experimental.launch
-import java.text.SimpleDateFormat
+import javafx.application.*
+import javafx.scene.*
+import javafx.scene.control.*
+import javafx.scene.layout.*
+import javafx.scene.paint.*
+import javafx.scene.shape.*
+import javafx.stage.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.javafx.*
+import java.text.*
 import java.util.*
+import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) {
     Application.launch(FxTestApp::class.java, *args)
@@ -28,7 +23,7 @@ fun main(args: Array<String>) {
 
 fun log(msg: String) = println("${SimpleDateFormat("yyyyMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 
-class FxTestApp : Application() {
+class FxTestApp : Application(), CoroutineScope {
     val buttons = FlowPane().apply {
         children += Button("Rect").apply {
             setOnAction { doRect() }
@@ -54,14 +49,14 @@ class FxTestApp : Application() {
     }
 
     val random = Random()
-    val animations = arrayListOf<Job>()
     var animationIndex = 0
+    var job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = JavaFx + job
 
     private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
-        val job = launch(JavaFx, block = block)
-        animations += job
-        job.invokeOnCompletion { root.children -= node }
+        launch(onCompletion = { root.children -= node }, block = block)
     }
 
     fun doRect() {
@@ -130,6 +125,7 @@ class FxTestApp : Application() {
     }
 
     fun doClear() {
-        animations.forEach { it.cancel() }
+        job.cancel()
+        job = Job()
     }
 }

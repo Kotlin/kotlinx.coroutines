@@ -4,14 +4,9 @@
 
 package benchmarks
 
-import benchmarks.ForkJoinBenchmark.Companion.BATCH_SIZE
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.CoroutineContext
 
 /*
  * Comparison of fork-join tasks using specific FJP API and classic [async] jobs.
@@ -59,12 +54,12 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
 
     @Benchmark
     fun asyncFjp() = runBlocking {
-        startAsync(coefficients, 0, coefficients.size, CommonPool).await()
+        CoroutineScope(CommonPool).startAsync(coefficients, 0, coefficients.size).await()
     }
 
     @Benchmark
     fun asyncExperimental() = runBlocking {
-        startAsync(coefficients, 0, coefficients.size, benchmarkContext).await()
+        startAsync(coefficients, 0, coefficients.size).await()
     }
 
     @Benchmark
@@ -79,12 +74,12 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
         return ForkJoinPool.commonPool().submit(task).join()
     }
 
-    suspend fun startAsync(coefficients: LongArray, start: Int, end: Int, dispatcher: CoroutineContext): Deferred<Double> = async(dispatcher) {
+    suspend fun CoroutineScope.startAsync(coefficients: LongArray, start: Int, end: Int): Deferred<Double> = async {
         if (end - start <= BATCH_SIZE) {
             compute(coefficients, start, end)
         } else {
-            val first = startAsync(coefficients, start, start + (end - start) / 2, dispatcher)
-            val second = startAsync(coefficients, start + (end - start) / 2, end, dispatcher)
+            val first = startAsync(coefficients, start, start + (end - start) / 2)
+            val second = startAsync(coefficients, start + (end - start) / 2, end)
             first.await() + second.await()
         }
     }

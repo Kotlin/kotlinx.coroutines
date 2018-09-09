@@ -4,16 +4,11 @@
 
 package benchmarks.actors
 
-import benchmarks.ParametrizedDispatcherBase
-import kotlinx.coroutines.experimental.channels.Channel
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.runBlocking
+import benchmarks.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import org.openjdk.jmh.annotations.*
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
-
+import java.util.concurrent.*
 
 /*
  * kotlinx-based counterpart of [StatefulActorAkkaBenchmark]
@@ -70,8 +65,8 @@ open class StatefulActorBenchmark : ParametrizedDispatcherBase() {
 
     private suspend fun run(computationActorsCount: Int, requestorActorsCount: Int) {
         val resultChannel: Channel<Unit> = Channel(requestorActorsCount)
-        val computations = (0 until computationActorsCount).map { computationActor(benchmarkContext) }
-        val requestors = (0 until requestorActorsCount).map { requestorActor(benchmarkContext, computations, resultChannel) }
+        val computations = (0 until computationActorsCount).map { computationActor() }
+        val requestors = (0 until requestorActorsCount).map { requestorActor(computations, resultChannel) }
 
         for (requestor in requestors) {
             requestor.send(Letter(1L, Channel()))
@@ -82,40 +77,42 @@ open class StatefulActorBenchmark : ParametrizedDispatcherBase() {
         }
     }
 
-    private fun requestorActor(context: CoroutineContext, computations: List<SendChannel<Letter>>, stopChannel: Channel<Unit>) = actor<Letter>(context, 1024) {
-        var received = 0
+    private fun CoroutineScope.requestorActor(computations: List<SendChannel<Letter>>, stopChannel: Channel<Unit>) =
+        actor<Letter>(capacity = 1024) {
+            var received = 0
+            for (letter in channel) with(letter) {
+                when (message) {
+                    is Long -> {
+                        if (++received >= ROUNDS) {
+                            stopChannel.send(Unit)
+                            return@actor
+                        } else {
+                            computations[ThreadLocalRandom.current().nextInt(0, computations.size)]
+                                    .send(Letter(ThreadLocalRandom.current().nextLong(), channel))
+                        }
+                    }
+                    else -> error("Cannot happen: $letter")
+                }
+            }
+        }
+}
+
+fun CoroutineScope.computationActor(stateSize: Int = STATE_SIZE) =
+    actor<StatefulActorBenchmark.Letter>(capacity = 1024) {
+        val coefficients = LongArray(stateSize) { ThreadLocalRandom.current().nextLong(0, 100) }
+
         for (letter in channel) with(letter) {
             when (message) {
                 is Long -> {
-                    if (++received >= ROUNDS) {
-                        stopChannel.send(Unit)
-                        return@actor
-                    } else {
-                        computations[ThreadLocalRandom.current().nextInt(0, computations.size)]
-                                .send(Letter(ThreadLocalRandom.current().nextLong(), channel))
+                    var result = 0L
+                    for (coefficient in coefficients) {
+                        result += message * coefficient
                     }
+
+                    sender.send(StatefulActorBenchmark.Letter(result, channel))
                 }
+                is Stop -> return@actor
                 else -> error("Cannot happen: $letter")
             }
         }
     }
-}
-
-fun computationActor(context: CoroutineContext, stateSize: Int = STATE_SIZE) = actor<StatefulActorBenchmark.Letter>(context, 1024) {
-    val coefficients = LongArray(stateSize) { ThreadLocalRandom.current().nextLong(0, 100) }
-
-    for (letter in channel) with(letter) {
-        when (message) {
-            is Long -> {
-                var result = 0L
-                for (coefficient in coefficients) {
-                    result += message * coefficient
-                }
-
-                sender.send(StatefulActorBenchmark.Letter(result, channel))
-            }
-            is Stop -> return@actor
-            else -> error("Cannot happen: $letter")
-        }
-    }
-}

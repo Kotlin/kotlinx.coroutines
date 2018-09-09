@@ -11,14 +11,14 @@ import kotlinx.coroutines.experimental.selects.*
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
-fun fizz(context: CoroutineContext) = produce<String>(context) {
+fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms
         delay(300)
         send("Fizz")
     }
 }
 
-fun buzz(context: CoroutineContext) = produce<String>(context) {
+fun CoroutineScope.buzz() = produce<String> {
     while (true) { // sends "Buzz!" every 500 ms
         delay(500)
         send("Buzz!")
@@ -37,8 +37,8 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val fizz = fizz(coroutineContext)
-    val buzz = buzz(coroutineContext)
+    val fizz = fizz()
+    val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }

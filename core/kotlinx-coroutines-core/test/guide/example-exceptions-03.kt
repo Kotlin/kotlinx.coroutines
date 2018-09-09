@@ -9,8 +9,8 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking {
-    val job = launch(coroutineContext, parent = Job()) {
-        val child = launch(coroutineContext) {
+    val job = launch {
+        val child = launch {
             try {
                 delay(Long.MAX_VALUE)
             } finally {

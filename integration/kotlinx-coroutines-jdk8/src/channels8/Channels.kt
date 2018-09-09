@@ -4,11 +4,8 @@
 
 package kotlinx.coroutines.experimental.channels8
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.channels.produce
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -20,10 +17,11 @@ import kotlin.coroutines.experimental.CoroutineContext
 /**
  * Creates a [ProducerJob] to read all element of the [Stream].
  */
-public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = DefaultDispatcher): ReceiveChannel<E> = produce(context) {
-    for (element in this@asReceiveChannel)
-        send(element)
-}
+public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = DefaultDispatcher): ReceiveChannel<E> =
+    GlobalScope.produce(context) {
+        for (element in this@asReceiveChannel)
+            send(element)
+    }
 
 /**
  * Creates a [Stream] of elements in this [ReceiveChannel].
