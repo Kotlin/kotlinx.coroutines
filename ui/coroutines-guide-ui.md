@@ -468,7 +468,7 @@ collection of the whole trees of UI objects that were already destroyed and will
 The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
 all the coroutines in the context of this job. But passing associated job object to every coroutine builder is error-prone, 
 it is easy to forget it. For this purpose, [CoroutineScope] interface should be implemented by UI owner, and then every
-coroutine builder defined as an extension on [CoroutineScope] will inherit UI job without explicit mentioning.
+coroutine builder defined as an extension on [CoroutineScope] inherits UI job without explicitly mentioning it.
 
 For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
 needed and when its memory must be released. A natural solution is to attach an 
@@ -477,8 +477,9 @@ instance of a `Job` to an instance of an `Activity`:
 
 ```kotlin
 abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope {
-    override val coroutineContext: CoroutineContext by lazy { job + UI }
     protected lateinit var job: Job
+    override val coroutineContext: CoroutineContext 
+        get() = job + UI
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -513,7 +514,7 @@ class MainActivity : ScopedAppActivity() {
 }
 ```
 
-Every coroutine launched from within a `MainActivity` will have its job as a parent and will be cancelled if
+Every coroutine launched from within a `MainActivity` has its job as a parent and is immediately cancelled when
 activity is destroyed.
 
 To propagate activity scope to its views and presenters, one can use [currentScope] builder which captures current 

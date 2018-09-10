@@ -125,9 +125,7 @@ public interface Deferred<out T> : Job {
 
 /**
  * Creates new coroutine and returns its future result as an implementation of [Deferred].
- *
  * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
- * Parent of the created coroutine is inherited from the provided [CoroutineScope].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.

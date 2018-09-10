@@ -9,7 +9,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * User-specified name of coroutine. This name is used in debugging mode.
- * See [newCoroutineContext] for the description of coroutine debugging facilities.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for the description of coroutine debugging facilities.
  */
 public data class CoroutineName(
     /**

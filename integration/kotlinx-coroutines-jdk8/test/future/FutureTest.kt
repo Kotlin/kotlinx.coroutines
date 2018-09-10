@@ -24,7 +24,7 @@ class FutureTest : TestBase() {
 
     @Test
     fun testSimpleAwait() {
-        val future = future {
+        val future = GlobalScope.future {
             CompletableFuture.supplyAsync {
                 "O"
             }.await() + "K"
@@ -36,7 +36,7 @@ class FutureTest : TestBase() {
     fun testCompletedFuture() {
         val toAwait = CompletableFuture<String>()
         toAwait.complete("O")
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertThat(future.get(), IsEqual("OK"))
@@ -47,7 +47,7 @@ class FutureTest : TestBase() {
         val completable = CompletableFuture<String>()
         completable.complete("O")
         val toAwait: CompletionStage<String> = completable
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertThat(future.get(), IsEqual("OK"))
@@ -56,7 +56,7 @@ class FutureTest : TestBase() {
     @Test
     fun testWaitForFuture() {
         val toAwait = CompletableFuture<String>()
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertFalse(future.isDone)
@@ -68,7 +68,7 @@ class FutureTest : TestBase() {
     fun testWaitForCompletionStage() {
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertFalse(future.isDone)
@@ -80,7 +80,7 @@ class FutureTest : TestBase() {
     fun testCompletedFutureExceptionally() {
         val toAwait = CompletableFuture<String>()
         toAwait.completeExceptionally(TestException("O"))
-        val future = future {
+        val future = GlobalScope.future {
             try {
                 toAwait.await()
             } catch (e: TestException) {
@@ -96,7 +96,7 @@ class FutureTest : TestBase() {
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
         completable.completeExceptionally(TestException("O"))
-        val future = future {
+        val future = GlobalScope.future {
             try {
                 toAwait.await()
             } catch (e: TestException) {
@@ -132,7 +132,7 @@ class FutureTest : TestBase() {
     fun testWaitForCompletionStageWithException() {
         val completable = CompletableFuture<String>()
         val toAwait: CompletionStage<String> = completable
-        val future = future {
+        val future = GlobalScope.future {
             try {
                 toAwait.await()
             } catch (e: TestException) {
@@ -146,7 +146,7 @@ class FutureTest : TestBase() {
 
     @Test
     fun testExceptionInsideCoroutine() {
-        val future = future {
+        val future = GlobalScope.future {
             if (CompletableFuture.supplyAsync { true }.await()) {
                 throw IllegalStateException("OK")
             }
@@ -226,7 +226,7 @@ class FutureTest : TestBase() {
     @Test
     fun testContinuationWrapped() {
         val depth = AtomicInteger()
-        val future = future(wrapContinuation {
+        val future = GlobalScope.future(wrapContinuation {
             depth.andIncrement
             it()
             depth.andDecrement

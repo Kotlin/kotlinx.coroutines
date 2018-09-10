@@ -25,6 +25,3 @@ internal class ScopeOwnerCoroutine<R>(
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
 }
-
-internal fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext =
-    newCoroutineContext(coroutineContext + context, parent = null)

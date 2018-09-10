@@ -41,15 +41,10 @@ public actual val DefaultDispatcher: CoroutineDispatcher = DefaultExecutor
 
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
-/**
- * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
- * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
- */
-@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
-    val wp = if (parent == null) context else context + parent
-    return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
-        wp + DefaultDispatcher else wp
+public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
+    val combined = coroutineContext + context
+    return if (combined !== kotlinx.coroutines.experimental.DefaultDispatcher && combined[ContinuationInterceptor] == null)
+        combined + kotlinx.coroutines.experimental.DefaultDispatcher else combined
 }
 
 // No debugging facilities on native

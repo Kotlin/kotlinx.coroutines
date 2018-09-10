@@ -11,17 +11,12 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
- * This coroutine builder uses [DefaultDispatcher] context by default.
- *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -29,7 +24,7 @@ import kotlin.coroutines.experimental.*
  * (since `ListenableFuture` framework does not provide the corresponding capability) and
  * produces [IllegalArgumentException].
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
@@ -37,15 +32,14 @@ import kotlin.coroutines.experimental.*
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-public fun <T> future(
+public fun <T> CoroutineScope.future(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): ListenableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val job = Job(newContext[Job])
     val future = ListenableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
@@ -54,6 +48,41 @@ public fun <T> future(
     return future
 }
 
+/**
+ * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
+ * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): ListenableFuture<T> =
+    GlobalScope.future(context, start, onCompletion, block)
+
+/**
+ * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
+ * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): ListenableFuture<T> =
+    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> future(
@@ -61,7 +90,8 @@ public fun <T> future(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> = future(context, start, parent, block = block)
+): ListenableFuture<T> =
+    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -70,7 +100,7 @@ public fun <T> future(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): ListenableFuture<T> =
-    future(context, start, block = block)
+    GlobalScope.future(context, start, block = block)
 
 private class ListenableFutureCoroutine<T>(
     override val context: CoroutineContext
@@ -108,7 +138,7 @@ private class DeferredListenableFuture<T>(
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the future and immediately resumes with [CancellationException].
+ * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
  *
  * Note, that `ListenableFuture` does not support removal of installed listeners, so on cancellation of this wait
  * a few small objects will remain in the `ListenableFuture` list of listeners until the future completes. However, the

@@ -10,7 +10,7 @@ import kotlin.test.*
 
 class PromiseTest : TestBase() {
     @Test
-    fun testPromiseResolvedAsDeferred() = promise {
+    fun testPromiseResolvedAsDeferred() = GlobalScope.promise {
         val promise = Promise<String> { resolve, _ ->
             resolve("OK")
         }
@@ -19,7 +19,7 @@ class PromiseTest : TestBase() {
     }
     
     @Test
-    fun testPromiseRejectedAsDeferred() = promise {
+    fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
         lateinit var promiseReject: (Throwable) -> Unit
         val promise = Promise<String> { _, reject ->
             promiseReject = reject
@@ -37,7 +37,7 @@ class PromiseTest : TestBase() {
     }
 
     @Test
-    fun testCompletedDeferredAsPromise() = promise {
+    fun testCompletedDeferredAsPromise() = GlobalScope.promise {
         val deferred = async(coroutineContext, CoroutineStart.UNDISPATCHED) {
             // completed right away
             "OK"
@@ -47,7 +47,7 @@ class PromiseTest : TestBase() {
     }
 
     @Test
-    fun testWaitForDeferredAsPromise() = promise {
+    fun testWaitForDeferredAsPromise() = GlobalScope.promise {
         val deferred = async(coroutineContext) {
             // will complete later
             "OK"
@@ -57,7 +57,7 @@ class PromiseTest : TestBase() {
     }
 
     @Test
-    fun testCancellableAwaitPromise() = promise {
+    fun testCancellableAwaitPromise() = GlobalScope.promise {
         lateinit var r: (String) -> Unit
         val toAwait = Promise<String> { resolve, _ -> r = resolve }
         val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
@@ -68,7 +68,7 @@ class PromiseTest : TestBase() {
     }
 
     @Test
-    fun testAsPromiseAsDeferred() = promise {
+    fun testAsPromiseAsDeferred() = GlobalScope.promise {
         val deferred = async { "OK" }
         val promise = deferred.asPromise()
         val d2 = promise.asDeferred()
