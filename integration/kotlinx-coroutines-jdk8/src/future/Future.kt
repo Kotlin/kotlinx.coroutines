@@ -11,18 +11,13 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
- * This coroutine builder uses [DefaultDispatcher] context by default and is conceptually similar to [CompletableFuture.supplyAsync].
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
- * of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
@@ -30,23 +25,21 @@ import kotlin.coroutines.experimental.*
  * (since `CompletableFuture` framework does not provide the corresponding capability) and
  * produces [IllegalArgumentException].
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
  * @param context context of the coroutine. The default value is [DefaultDispatcher].
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
-public fun <T> future(
+public fun <T> CoroutineScope.future(
     context: CoroutineContext = DefaultDispatcher,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): CompletableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = this.newCoroutineContext(context)
     val job = Job(newContext[Job])
     val future = CompletableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
@@ -55,6 +48,41 @@ public fun <T> future(
     start(block, receiver=future, completion=future) // use the specified start strategy
     return future
 }
+
+/**
+ * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
+ * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): CompletableFuture<T> =
+    GlobalScope.future(context, start, onCompletion, block)
+
+/**
+ * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
+ * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
+)
+public fun <T> future(
+    context: CoroutineContext = DefaultDispatcher,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    parent: Job? = null,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): CompletableFuture<T> =
+    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -72,7 +100,7 @@ public fun <T> future(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): CompletableFuture<T> =
-    future(context, start, block = block)
+    GlobalScope.future(context, start, block = block)
 
 private class CompletableFutureCoroutine<T>(
     override val context: CoroutineContext
@@ -205,4 +233,5 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompl
 public fun <T> future(
     context: CoroutineContext = DefaultDispatcher,
     block: suspend () -> T
-): CompletableFuture<T> = future(context = context) { block() }
+): CompletableFuture<T> =
+    GlobalScope.future(context = context, block = { block() })

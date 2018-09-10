@@ -65,7 +65,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * * when `capacity` is positive, but less than [UNLIMITED] -- uses [ArrayChannel] with a buffer of the specified `capacity`;
  * * otherwise -- throws [IllegalArgumentException].
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
  * ### Using actors
  *

@@ -6,7 +6,7 @@ package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.*
 
-public expect fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext
+public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
 @Suppress("PropertyName")
 public expect val DefaultDispatcher: CoroutineDispatcher

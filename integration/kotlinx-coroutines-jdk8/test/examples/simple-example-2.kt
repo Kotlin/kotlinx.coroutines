@@ -4,13 +4,12 @@
 
 package kotlinx.coroutines.experimental.examples
 
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.future.future
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
+import java.util.concurrent.*
 
 // this function returns a CompletableFuture using Kotlin coroutines
-fun supplyTheAnswerAsync(): CompletableFuture<Int> = future {
+fun supplyTheAnswerAsync(): CompletableFuture<Int> = GlobalScope.future {
     println("We might be doing some asynchronous IO here or something else...")
     delay(1, TimeUnit.SECONDS) // just do a non-blocking delay
     42 // The answer!

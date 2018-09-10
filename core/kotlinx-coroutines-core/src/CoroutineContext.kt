@@ -10,22 +10,22 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Name of the property that controls coroutine debugging. See [newCoroutineContext].
+ * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
 /**
- * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_ON = "on"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
@@ -106,14 +106,24 @@ public val IO: CoroutineDispatcher by lazy {
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
  */
+public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
+    val combined = coroutineContext + context
+    val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
+    return if (combined !== DefaultDispatcher && combined[ContinuationInterceptor] == null)
+        debug + DefaultDispatcher else debug
+}
+
+/**
+ * @suppress **Deprecated**: Use extension on CoroutineScope.
+ */
 @JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
-    val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
-    val wp = if (parent == null) debug else debug + parent
-    return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
-        wp + DefaultDispatcher else wp
-}
+@Deprecated(
+    message = "Use extension on CoroutineScope",
+    replaceWith = ReplaceWith("GlobalScope.newCoroutineContext(context + parent)")
+)
+public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext =
+    GlobalScope.newCoroutineContext(context + (parent ?: EmptyCoroutineContext))
 
 /**
  * Executes a block using a given coroutine context.

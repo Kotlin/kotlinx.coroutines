@@ -27,7 +27,7 @@ import kotlin.coroutines.experimental.*
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
  *
- * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
+ * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
  * @param context context of the coroutine. The default value is an implementation of [EventLoop].
  * @param block the coroutine code.
@@ -38,7 +38,7 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val contextInterceptor = context[ContinuationInterceptor]
     val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
     val eventLoop = if (privateEventLoop) BlockingEventLoop(currentThread) else contextInterceptor as? EventLoop
-    val newContext = newCoroutineContext(
+    val newContext = GlobalScope.newCoroutineContext(
         if (privateEventLoop) context + (eventLoop as ContinuationInterceptor) else context
     )
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop, privateEventLoop)

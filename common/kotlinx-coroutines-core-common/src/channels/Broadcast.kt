@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
@@ -21,7 +20,7 @@ fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
 ) : BroadcastChannel<E> =
-    broadcast(Unconfined, capacity = capacity, start = start, onCompletion = consumes()) {
+    GlobalScope.broadcast(Unconfined, capacity = capacity, start = start, onCompletion = consumes()) {
         for (e in this@broadcast) {
             send(e)
         }
@@ -29,9 +28,13 @@ fun <E> ReceiveChannel<E>.broadcast(
 
 /**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel.
- * Deprecated, use [CoroutineScope.broadcast] instead.
+ * @suppress **Deprecated**: use [CoroutineScope.broadcast] instead.
  */
-@Deprecated(message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead. This API will be hidden in the next release")
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.broadcast(context + parent, capacity, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.broadcast"])
+)
 public fun <E> broadcast(
     context: CoroutineContext = DefaultDispatcher,
     capacity: Int = 1,
@@ -39,16 +42,8 @@ public fun <E> broadcast(
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend ProducerScope<E>.() -> Unit
-): BroadcastChannel<E> {
-    val channel = BroadcastChannel<E>(capacity)
-    val newContext = newCoroutineContext(context, parent)
-    val coroutine = if (start.isLazy)
-        LazyBroadcastCoroutine(newContext, channel, block) else
-        BroadcastCoroutine(newContext, channel, active = true)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
-    coroutine.start(start, coroutine, block)
-    return coroutine
-}
+): BroadcastChannel<E> =
+    GlobalScope.broadcast(context + (parent ?: DefaultDispatcher), capacity, start, onCompletion, block)
 
 /**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel

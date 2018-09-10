@@ -38,7 +38,7 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
         newEventLoop
     } else
         contextInterceptor as? EventLoop
-    val newContext = newCoroutineContext(
+    val newContext = GlobalScope.newCoroutineContext(
         if (privateEventLoop) context + (eventLoop as ContinuationInterceptor) else context
     )
     val coroutine = BlockingCoroutine<T>(newContext, eventLoop, privateEventLoop)

@@ -72,7 +72,7 @@ public actual open class TestBase actual constructor() {
     ): dynamic {
         var exCount = 0
         var ex: Throwable? = null
-        return promise(block = block, context = CoroutineExceptionHandler { context, e ->
+        return GlobalScope.promise(block = block, context = CoroutineExceptionHandler { context, e ->
             if (e is CancellationException) return@CoroutineExceptionHandler // are ignored
             exCount++
             when {
