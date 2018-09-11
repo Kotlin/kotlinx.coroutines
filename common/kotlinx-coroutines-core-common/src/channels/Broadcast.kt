@@ -45,7 +45,7 @@ public fun <E> broadcast(
     onCompletion: CompletionHandler? = null,
     block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> =
-    GlobalScope.broadcast(context + (parent ?: Dispatchers.Default), capacity, start, onCompletion, block)
+    GlobalScope.broadcast(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
 
 /**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel
@@ -141,4 +141,3 @@ private class LazyBroadcastCoroutine<E>(
         block.startCoroutineCancellable(this, this)
     }
 }
-

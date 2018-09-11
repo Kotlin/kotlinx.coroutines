@@ -18,6 +18,11 @@ public final class kotlinx/coroutines/experimental/android/HandlerContext : kotl
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class kotlinx/coroutines/experimental/android/HandlerContextKt {
+	public static final synthetic fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerContext;
+	public static final fun getUI ()Lkotlinx/coroutines/experimental/android/HandlerContext;
+}
+
 public abstract class kotlinx/coroutines/experimental/android/HandlerDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
 	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public abstract fun getImmediate ()Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
@@ -25,10 +30,8 @@ public abstract class kotlinx/coroutines/experimental/android/HandlerDispatcher 
 }
 
 public final class kotlinx/coroutines/experimental/android/HandlerDispatcherKt {
-	public static final synthetic fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerContext;
 	public static final fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
 	public static final fun awaitFrame (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun getMain (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public static final fun getUI ()Lkotlinx/coroutines/experimental/android/HandlerContext;
 }
 
