@@ -26,7 +26,8 @@ class MDCContextTest : TestBase() {
     fun testContextIsNotPassedByDefaultBetweenCoroutines() = runTest {
         expect(1)
         MDC.put("myKey", "myValue")
-        launch {
+        // Standalone launch
+        GlobalScope.launch {
             assertEquals(null, MDC.get("myKey"))
             expect(2)
         }.join()
@@ -37,12 +38,30 @@ class MDCContextTest : TestBase() {
     fun testContextCanBePassedBetweenCoroutines() = runTest {
         expect(1)
         MDC.put("myKey", "myValue")
+        // Scoped launch with MDCContext element
         launch(MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
             expect(2)
         }.join()
 
         finish(3)
+    }
+
+    @Test
+    fun testContextInheritance() = runTest {
+        expect(1)
+        MDC.put("myKey", "myValue")
+        withContext(MDCContext()) {
+            MDC.put("myKey", "myValue2")
+            // Scoped launch with inherited MDContext element
+            launch(Dispatchers.Default) {
+                assertEquals("myValue", MDC.get("myKey"))
+                expect(2)
+            }.join()
+
+            finish(3)
+        }
+        assertEquals("myValue", MDC.get("myKey"))
     }
 
     @Test
@@ -81,7 +100,7 @@ class MDCContextTest : TestBase() {
     fun testContextWithContext() = runTest {
         MDC.put("myKey", "myValue")
         val mainDispatcher = kotlin.coroutines.experimental.coroutineContext[ContinuationInterceptor]!!
-        withContext(DefaultDispatcher + MDCContext()) {
+        withContext(Dispatchers.Default + MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
             withContext(mainDispatcher) {
                 assertEquals("myValue", MDC.get("myKey"))

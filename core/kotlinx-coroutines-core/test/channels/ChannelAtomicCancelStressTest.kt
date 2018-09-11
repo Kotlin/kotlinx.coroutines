@@ -5,13 +5,13 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.select
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import kotlinx.coroutines.experimental.selects.*
+import org.junit.*
+import org.junit.Assert.*
+import org.junit.runner.*
+import org.junit.runners.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.*
 
 /**
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
@@ -95,7 +95,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     }
 
     fun launchSender() {
-        sender = launch(DefaultDispatcher, start = CoroutineStart.ATOMIC) {
+        sender = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(senderDone) {
                 var counter = 0
@@ -120,7 +120,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     }
 
     fun launchReceiver() {
-        receiver = launch(DefaultDispatcher, start = CoroutineStart.ATOMIC) {
+        receiver = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(receiverDone) {
                 while (true) {

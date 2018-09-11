@@ -8,7 +8,7 @@ package kotlinx.coroutines.experimental.guide.channel03
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 
-fun produceSquares() = produce<Int> {
+fun CoroutineScope.produceSquares() = produce<Int> {
     for (x in 1..5) send(x * x)
 }
 

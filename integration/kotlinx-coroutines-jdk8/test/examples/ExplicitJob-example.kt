@@ -4,20 +4,19 @@
 
 package kotlinx.coroutines.experimental.examples
 
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.future.future
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
 import java.util.concurrent.CancellationException
 
 fun main(args: Array<String>) {
     val job = Job()
     log("Starting futures f && g")
-    val f = future(job) {
+    val f = GlobalScope.future(job) {
         log("Started f")
         delay(500)
         log("f should not execute this line")
     }
-    val g = future(job) {
+    val g = GlobalScope.future(job) {
         log("Started g")
         try {
             delay(500)

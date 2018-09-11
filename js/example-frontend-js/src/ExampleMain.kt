@@ -25,6 +25,7 @@ import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
 import kotlin.browser.*
+import kotlin.coroutines.experimental.*
 import kotlin.math.*
 
 fun main(args: Array<String>) {
@@ -53,13 +54,15 @@ private fun HTMLElement.setPosition(x: Double, y: Double) {
 @Suppress("DEPRECATION")
 private fun random() = kotlin.js.Math.random()
 
-class Application {
+class Application : CoroutineScope {
     private val body get() = document.body!!
     private val scene get() = document.getElementById("scene") as HTMLElement
     private val sw = 800.0
     private val sh = 600.0
     private var animationIndex = 0
-    private val animations = mutableSetOf<Job>()
+    private var job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job
 
     fun start() {
         body.append.div("content") {
@@ -90,13 +93,8 @@ class Application {
     private fun animation(cls: String, size: Double, block: suspend CoroutineScope.(HTMLElement) -> Unit) {
         val elem = scene.append.div(cls)
         elem.setSize(size, size)
-        val job = launch {
+        launch(onCompletion = { scene.removeChild(elem) }) {
             block(elem)
-        }
-        animations += job
-        job.invokeOnCompletion {
-            animations -= job
-            scene.removeChild(elem)
         }
     }
 
@@ -191,7 +189,8 @@ class Application {
     }
 
     private fun onClear() {
-        animations.forEach { it.cancel() }
+        job.cancel()
+        job = Job()
     }
 }
 

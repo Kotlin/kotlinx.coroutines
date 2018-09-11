@@ -10,32 +10,61 @@ import kotlin.js.*
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
- * of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
  * By default, the coroutine is immediately scheduled for execution.
  * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+public fun <T> CoroutineScope.promise(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): Promise<T> =
+    async(context, start, onCompletion, block = block).asPromise()
+
+/**
+ * Starts new coroutine and returns its result as an implementation of [Promise].
+ * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.*"])
+)
 public fun <T> promise(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> T
+): Promise<T> =
+    GlobalScope.promise(context, start, onCompletion, block = block)
+
+/**
+ * Starts new coroutine and returns its result as an implementation of [Promise].
+ * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.*"])
+)
+public fun <T> promise(
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): Promise<T> =
-    async(context, start, parent, onCompletion, block = block).asPromise()
+    GlobalScope.promise(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block = block)
 
 /**
  * Converts this deferred value to the instance of [Promise].
@@ -61,7 +90,7 @@ public fun <T> Deferred<T>.asPromise(): Promise<T> {
 public fun <T> Promise<T>.asDeferred(): Deferred<T> {
     val deferred = asDynamic().deferred
     @Suppress("UnsafeCastFromDynamic")
-    return deferred ?: async(start = CoroutineStart.UNDISPATCHED) { await() }
+    return deferred ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
 /**

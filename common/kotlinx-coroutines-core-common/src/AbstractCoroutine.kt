@@ -36,7 +36,9 @@ public abstract class AbstractCoroutine<in T>(
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
     @Deprecated("Replaced with context", replaceWith = ReplaceWith("context"))
-    public final override val coroutineContext: CoroutineContext get() = context
+    public override val coroutineContext: CoroutineContext get() = context
+
+    override val isActive: Boolean get() = super<JobSupport>.isActive
 
     /**
      * Initializes parent job from the `parentContext` of this coroutine that was passed to it during construction.

@@ -8,11 +8,11 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.future.*
 
 fun main(args: Array<String>) {
-    fun slow(s: String) = future {
+    fun slow(s: String) = GlobalScope.future {
         delay(500L)
         s
     }
-    val f = future<String> {
+    val f = GlobalScope.future {
         log("Started f")
         val a = slow("A").await()
         log("a = $a")

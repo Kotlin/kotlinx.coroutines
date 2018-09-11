@@ -12,19 +12,19 @@ fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
-    val job = launch(handler) {
-        val child1 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+    val job = GlobalScope.launch(handler) {
+        launch { // the first child
             try {
                 delay(Long.MAX_VALUE)
             } finally {
                 withContext(NonCancellable) {
                     println("Children are cancelled, but exception is not handled until all children terminate")
                     delay(100)
-                    println("Last child finished its non cancellable block")
+                    println("The first child finished its non cancellable block")
                 }
             }
         }
-        val child2 = launch(coroutineContext, start = CoroutineStart.ATOMIC) {
+        launch { // the second child
             delay(10)
             println("Second child throws an exception")
             throw ArithmeticException()

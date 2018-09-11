@@ -4,15 +4,13 @@
 
 package kotlinx.coroutines.experimental.examples
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.future.asCompletableFuture
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
+import java.util.concurrent.*
 
 fun main(args: Array<String>)  {
     log("Started")
-    val deferred = async(CommonPool) {
+    val deferred = GlobalScope.async {
         log("Busy...")
         delay(1, TimeUnit.SECONDS)
         log("Done...")

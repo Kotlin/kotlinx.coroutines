@@ -18,7 +18,7 @@ public interface ThreadSafeHeapNode {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
+public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
     @JvmField @PublishedApi @Volatile
@@ -96,7 +96,7 @@ public class ThreadSafeHeap<T> where T: ThreadSafeHeapNode, T: Comparable<T> {
     @PublishedApi
     internal fun addImpl(node: T) {
         val a = realloc()
-        var i = size++
+        val i = size++
         a[i] = node
         node.index = i
         siftUpFrom(i)

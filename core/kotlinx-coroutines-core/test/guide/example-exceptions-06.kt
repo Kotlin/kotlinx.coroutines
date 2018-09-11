@@ -13,10 +13,10 @@ fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
-    val job = launch(handler) {
-        val inner = launch(coroutineContext) {
-            launch(coroutineContext) {
-                launch(coroutineContext) {
+    val job = GlobalScope.launch(handler) {
+        val inner = launch {
+            launch {
+                launch {
                     throw IOException()
                 }
             }

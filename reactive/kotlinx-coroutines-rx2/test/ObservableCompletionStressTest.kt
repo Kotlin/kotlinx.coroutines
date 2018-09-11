@@ -4,18 +4,15 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.withTimeout
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.junit.*
 import java.util.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 class ObservableCompletionStressTest : TestBase() {
-    val N_REPEATS = 10_000 * stressTestMultiplier
+    private val N_REPEATS = 10_000 * stressTestMultiplier
 
-    fun range(context: CoroutineContext, start: Int, count: Int) = rxObservable<Int>(context) {
+    private fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = rxObservable(context) {
         for (x in start until start + count) send(x)
     }
 
@@ -27,7 +24,7 @@ class ObservableCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    range(DefaultDispatcher, 1, count).consumeEach { x ->
+                    range(Dispatchers.Default, 1, count).consumeEach { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

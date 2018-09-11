@@ -4,13 +4,13 @@
 
 package kotlinx.coroutines.experimental.examples
 
-import kotlinx.coroutines.experimental.future.await
-import kotlinx.coroutines.experimental.future.future
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
+import java.util.concurrent.*
 
 fun main(args: Array<String>) {
     // this example shows how easy it is to perform multiple async operations with coroutines
-    val future = future {
+    val future = GlobalScope.future {
         (1..5).map { // loops are no problem at all
             startLongAsyncOperation(it).await() // suspend while the long method is running
         }.joinToString("\n")

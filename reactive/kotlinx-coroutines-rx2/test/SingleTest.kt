@@ -10,11 +10,7 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 
-/**
- * Tests emitting single item with [rxSingle].
- */
 class SingleTest : TestBase() {
     @Before
     fun setup() {
@@ -22,9 +18,9 @@ class SingleTest : TestBase() {
     }
 
     @Test
-    fun testBasicSuccess() = runBlocking<Unit> {
+    fun testBasicSuccess() = runBlocking {
         expect(1)
-        val single = rxSingle(coroutineContext) {
+        val single = rxSingle {
             expect(4)
             "OK"
         }
@@ -39,9 +35,9 @@ class SingleTest : TestBase() {
     }
 
     @Test
-    fun testBasicFailure() = runBlocking<Unit> {
+    fun testBasicFailure() = runBlocking {
         expect(1)
-        val single = rxSingle(coroutineContext) {
+        val single = rxSingle {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -60,9 +56,9 @@ class SingleTest : TestBase() {
 
 
     @Test
-    fun testBasicUnsubscribe() = runBlocking<Unit> {
+    fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val single = rxSingle(coroutineContext) {
+        val single = rxSingle {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -84,7 +80,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleNoWait() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             "OK"
         }
 
@@ -100,7 +96,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleEmitAndAwait() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             Single.just("O").await() + "K"
         }
 
@@ -111,7 +107,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleWithDelay() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -122,7 +118,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testSingleException() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -133,7 +129,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -144,7 +140,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -155,7 +151,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -170,7 +166,7 @@ class SingleTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val single = rxSingle<String>(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle<String> {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 

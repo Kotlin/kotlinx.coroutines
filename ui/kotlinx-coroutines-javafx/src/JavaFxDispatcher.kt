@@ -10,21 +10,37 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.javafx.JavaFx.delay
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
-object JavaFx : CoroutineDispatcher(), Delay {
+public val Dispatchers.JavaFx: JavaFxDispatcher
+    get() = kotlinx.coroutines.experimental.javafx.JavaFx
+
+/**
+ * Dispatcher for JavaFx application thread with support for [awaitPulse].
+ *
+ * This class provides type-safety and a point for future extensions.
+ */
+public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay {
+}
+
+/**
+ * Dispatches execution onto JavaFx application thread and provides native [delay] support.
+ * @suppress **Deprecated**: Use [Dispatchers.JavaFx].
+ */
+@Deprecated(
+    message = "Use Dispatchers.Main",
+    replaceWith = ReplaceWith("Dispatchers.JavaFx",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
+)
+// todo: it will become an internal implementation object
+object JavaFx : JavaFxDispatcher(), Delay {
     init {
         // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
         initPlatform()
-    }
-
-    private val pulseTimer by lazy {
-        PulseTimer().apply { start() }
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
@@ -33,10 +49,15 @@ object JavaFx : CoroutineDispatcher(), Delay {
      * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
      * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
      * immediately resumes with [CancellationException] .
+     *
+     * @suppress **Deprecated**: Use top-level [awaitPulse].
      */
-    suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
-        pulseTimer.onNext(cont)
-    }
+    @Deprecated(
+        message = "Use top-level awaitFrame",
+        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.javafx.awaitPulse()")
+    )
+    suspend fun awaitPulse(): Long =
+        kotlinx.coroutines.experimental.javafx.awaitPulse()
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
         val timeline = schedule(time, unit, EventHandler {
@@ -59,22 +80,35 @@ object JavaFx : CoroutineDispatcher(), Delay {
     private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
         Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }
 
-    private class PulseTimer : AnimationTimer() {
-        val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
+    override fun toString() = "JavaFx"
+}
 
-        override fun handle(now: Long) {
-            val cur = next.toTypedArray()
-            next.clear()
-            for (cont in cur)
-                with (cont) { resumeUndispatched(now) }
-        }
+private val pulseTimer by lazy {
+    PulseTimer().apply { start() }
+}
 
-        fun onNext(cont: CancellableContinuation<Long>) {
-            next += cont
-        }
+/**
+ * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
+ * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+ * immediately resumes with [CancellationException] .
+ */
+public suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
+    pulseTimer.onNext(cont)
+}
+
+private class PulseTimer : AnimationTimer() {
+    val next = CopyOnWriteArrayList<CancellableContinuation<Long>>()
+
+    override fun handle(now: Long) {
+        val cur = next.toTypedArray()
+        next.clear()
+        for (cont in cur)
+            with (cont) { JavaFx.resumeUndispatched(now) }
     }
 
-    override fun toString() = "JavaFx"
+    fun onNext(cont: CancellableContinuation<Long>) {
+        next += cont
+    }
 }
 
 internal fun initPlatform() {

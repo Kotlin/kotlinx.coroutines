@@ -8,7 +8,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.timeunit.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class DelayTest : TestBase() {
@@ -47,9 +46,9 @@ class DelayTest : TestBase() {
         finish(4)
     }
 
-    private suspend fun runAndCancel(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
+    private suspend fun runAndCancel(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) = coroutineScope {
         expect(1)
-        val deferred = async(coroutineContext) {
+        val deferred = async {
             expect(2)
             delay(time, unit)
             expectUnreached()

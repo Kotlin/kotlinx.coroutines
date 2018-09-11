@@ -10,7 +10,7 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
 
-fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
+fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
     var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
         val next = select<Deferred<String>?> { // return next deferred value from this select or null
@@ -31,14 +31,14 @@ fun switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String
     }
 }
 
-fun asyncString(str: String, time: Long) = async {
+fun CoroutineScope.asyncString(str: String, time: Long) = async {
     delay(time)
     str
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val chan = Channel<Deferred<String>>() // the channel for test
-    launch(coroutineContext) { // launch printing coroutine
+    launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
             println(s) // print each received string
     }

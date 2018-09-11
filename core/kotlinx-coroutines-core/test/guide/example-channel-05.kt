@@ -9,21 +9,21 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlin.coroutines.experimental.*
 
-fun numbersFrom(context: CoroutineContext, start: Int) = produce<Int>(context) {
+fun CoroutineScope.numbersFrom(start: Int) = produce<Int> {
     var x = start
     while (true) send(x++) // infinite stream of integers from start
 }
 
-fun filter(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) = produce<Int>(context) {
+fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<Int> {
     for (x in numbers) if (x % prime != 0) send(x)
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    var cur = numbersFrom(coroutineContext, 2)
+    var cur = numbersFrom(2)
     for (i in 1..10) {
         val prime = cur.receive()
         println(prime)
-        cur = filter(coroutineContext, cur, prime)
+        cur = filter(cur, prime)
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
 }

@@ -11,13 +11,17 @@ public final class kotlinx/coroutines/experimental/future/FutureKt {
 	public static final synthetic fun await (Ljava/util/concurrent/CompletableFuture;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun await (Ljava/util/concurrent/CompletionStage;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final synthetic fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function1;)Ljava/util/concurrent/CompletableFuture;
+	public static final fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
 	public static final synthetic fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
 	public static final fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
 	public static final synthetic fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
+	public static final fun future (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun future$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun future$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun future$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun future$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
 	public static synthetic fun future$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
+	public static synthetic fun future$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/util/concurrent/CompletableFuture;
 	public static final fun toCompletableFuture (Lkotlinx/coroutines/experimental/Deferred;)Ljava/util/concurrent/CompletableFuture;
 }
 

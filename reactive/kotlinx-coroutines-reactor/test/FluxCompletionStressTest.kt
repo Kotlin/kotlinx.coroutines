@@ -4,19 +4,16 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.reactive.consumeEach
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.withTimeout
-import org.junit.Test
-import java.util.Random
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
+import org.junit.*
+import java.util.*
+import kotlin.coroutines.experimental.*
 
 class FluxCompletionStressTest : TestBase() {
-    val N_REPEATS = 10_000 * stressTestMultiplier
+    private val N_REPEATS = 10_000 * stressTestMultiplier
 
-    fun range(context: CoroutineContext, start: Int, count: Int) = flux(context) {
+    private fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = flux(context) {
         for (x in start until start + count) send(x)
     }
 
@@ -28,7 +25,7 @@ class FluxCompletionStressTest : TestBase() {
             runBlocking {
                 withTimeout(5000) {
                     var received = 0
-                    range(DefaultDispatcher, 1, count).consumeEach { x ->
+                    range(Dispatchers.Default, 1, count).consumeEach { x ->
                         received++
                         if (x != received) error("$x != $received")
                     }

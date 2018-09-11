@@ -96,7 +96,7 @@ import kotlin.coroutines.experimental.*
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
-    val source = produce<Int>(coroutineContext) {
+    val source = produce<Int> {
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
             delay(200) // wait for 200ms
@@ -153,7 +153,7 @@ import kotlin.coroutines.experimental.*
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
-    val source = publish<Int>(coroutineContext) {
+    val source = publish<Int> {
     //           ^^^^^^^  <---  Difference from the previous examples is here
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
@@ -343,7 +343,7 @@ import kotlin.coroutines.experimental.*
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
-    val source = rxFlowable(coroutineContext) {
+    val source = rxFlowable {
         for (x in 1..3) {
             send(x) // this is a suspending function
             println("Sent $x") // print after successfully sent item
@@ -422,9 +422,7 @@ You can subscribe to subjects from a coroutine just as with any other reactive s
    
 <!--- INCLUDE 
 import io.reactivex.subjects.BehaviorSubject
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.consumeEach
 -->   
    
@@ -434,7 +432,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print everything
-    launch(Unconfined) { // launch coroutine in unconfined context
+    GlobalScope.launch(Dispatchers.Unconfined) { // launch coroutine in unconfined context
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
@@ -454,7 +452,7 @@ four
 
 <!--- TEST -->
 
-Here we use [Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
+Here we use [Dispatchers.Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
 It basically means that the launched coroutine is going to be immediately executed in the same thread that 
 is emitting elements. Contexts are covered in more details in a [separate section](#coroutine-context).
 
@@ -478,7 +476,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print the most recent update
-    launch(coroutineContext) { // use the context of the main thread for a coroutine
+    launch { // use the context of the main thread for a coroutine
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
@@ -514,7 +512,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     broadcast.offer("one")
     broadcast.offer("two")
     // now launch a coroutine to print the most recent update
-    launch(coroutineContext) { // use the context of the main thread for a coroutine
+    launch { // use the context of the main thread for a coroutine
         broadcast.consumeEach { println(it) }
     }
     broadcast.offer("three")
@@ -571,12 +569,12 @@ import kotlin.coroutines.experimental.CoroutineContext
 -->
 
 ```kotlin
-fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
     for (x in start until start + count) send(x)
 }
 ```
 
-In this code `CoroutineContext` is used instead of an `Executor` and all the backpressure aspects are taken care
+In this code `CoroutineScope` and `context` are used instead of an `Executor` and all the backpressure aspects are taken care
 of by the coroutines machinery. Note, that this implementation depends only on the small reactive streams library
 that defines `Publisher` interface and its friends.
 
@@ -584,7 +582,8 @@ It is straightforward to use from a coroutine:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    range(CommonPool, 1, 5).consumeEach { println(it) }
+    // Range inherits parent job from runBlocking, but overrides dispatcher with Dispatchers.Default
+    range(Dispatchers.Default, 1, 5).consumeEach { println(it) }
 }
 ```
 
@@ -622,7 +621,7 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     context: CoroutineContext,   // the context to execute this coroutine in
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
-) = publish<R>(context) {
+) = GlobalScope.publish<R>(context) {
     consumeEach {                // consume the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
@@ -635,14 +634,14 @@ by filtering for even numbers and mapping them to strings:
 
 <!--- INCLUDE
 
-fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) send(x)
 }
 -->
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-   range(coroutineContext, 1, 5)
+   range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings
 }
@@ -678,7 +677,7 @@ import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
-fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
+fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = GlobalScope.publish<T>(context) {
     this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
         val current = this
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
@@ -703,7 +702,7 @@ is used for testing. It is coded using a `publish` coroutine builder
 (its pure-Rx implementation is shown in later sections):
 
 ```kotlin
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -715,8 +714,8 @@ The following code shows how `takeUntil` works:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(coroutineContext, 200, 1, 10)         // numbers with 200ms interval
-    val stop = rangeWithInterval(coroutineContext, 500, 1, 10)             // the first one after 500ms
+    val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
     slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
 }
 ```
@@ -748,9 +747,9 @@ import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
-fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = publish<T>(context) {
+fun <T> Publisher<Publisher<T>>.merge(context: CoroutineContext) = GlobalScope.publish<T>(context) {
   consumeEach { pub ->                 // for each publisher received on the source channel
-      launch(coroutineContext) {       // launch a child coroutine
+      launch {  // launch a child coroutine
           pub.consumeEach { send(it) } // resend all element from this publisher
       }
   }
@@ -771,7 +770,7 @@ producer that sends its results twice with some delay:
 
 <!--- INCLUDE
 
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -780,10 +779,10 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 -->
 
 ```kotlin
-fun testPub(context: CoroutineContext) = publish<Publisher<Int>>(context) {
-    send(rangeWithInterval(context, 250, 1, 4)) // number 1 at 250ms, 2 at 500ms, 3 at 750ms, 4 at 1000ms 
+fun CoroutineScope.testPub() = publish<Publisher<Int>> {
+    send(rangeWithInterval(250, 1, 4)) // number 1 at 250ms, 2 at 500ms, 3 at 750ms, 4 at 1000ms 
     delay(100) // wait for 100 ms
-    send(rangeWithInterval(context, 500, 11, 3)) // number 11 at 600ms, 12 at 1100ms, 13 at 1600ms
+    send(rangeWithInterval(500, 11, 3)) // number 11 at 600ms, 12 at 1100ms, 13 at 1600ms
     delay(1100) // wait for 1.1s - done in 1.2 sec after start
 }
 ```
@@ -792,7 +791,7 @@ The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    testPub(coroutineContext).merge(coroutineContext).consumeEach { println(it) } // print the whole stream
+    testPub().merge(coroutineContext).consumeEach { println(it) } // print the whole stream
 }
 ```
 
@@ -863,7 +862,7 @@ it is going to be executed in Rx computation thread pool. The output is going to
 
 ### Threads with coroutines
 
-In the world of coroutines `Schedulers.computation()` roughly corresponds to [CommonPool], 
+In the world of coroutines `Schedulers.computation()` roughly corresponds to [Dispatchers.Default], 
 so the previous example is similar to the following one:
 
 <!--- INCLUDE
@@ -874,7 +873,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 -->
 
 ```kotlin
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -882,7 +881,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) {
-    Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
+    Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }
@@ -902,8 +901,8 @@ The produced output is going to be similar to:
 
 Here we've used Rx 
 [subscribe](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#subscribe(io.reactivex.functions.Consumer))
-operator that does not have its own scheduler and operates on the same thread that the publisher -- on a `CommonPool`
-in this example.
+operator that does not have its own scheduler and operates on the same thread that the publisher -- on a default
+shared pool of threads in this example.
 
 ### Rx observeOn 
 
@@ -924,7 +923,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 -->
 
 ```kotlin
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -932,7 +931,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) {
-    Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
+    Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
@@ -997,9 +996,9 @@ Most Rx operators do not have any specific thread (scheduler) associated with th
 in whatever thread that they happen to be invoked in. We've seen it on the example of `subscribe` operator 
 in the [threads with Rx](#threads-with-rx) section.
  
-In the world of coroutines, [Unconfined] context serves a similar role. Let us modify our previous example,
+In the world of coroutines, [Dispatchers.Unconfined] context serves a similar role. Let us modify our previous example,
 but instead of iterating over the source `Flowable` from the `runBlocking` coroutine that is confined 
-to the main thread, we launch a new coroutine in `Unconfined` context, while the main coroutine
+to the main thread, we launch a new coroutine in `Dispatchers.Unconfined` context, while the main coroutine
 simply waits its completion using [Job.join]:
 
 <!--- INCLUDE
@@ -1019,7 +1018,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = launch(Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
+    val job = launch(Dispatchers.Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
         rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
             .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
     }
@@ -1040,12 +1039,12 @@ like our initial example using Rx `subscribe` operator.
 
 <!--- TEST LINES_START -->
 
-Note, that [Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
+Note, that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
 and makes it harder to reason about asynchronicity of the code that is using it. 
 
 If a coroutine sends an element to a channel, then the thread that invoked the 
-[send][SendChannel.send] may start executing the code of a coroutine with [Unconfined] dispatcher.
+[send][SendChannel.send] may start executing the code of a coroutine with [Dispatchers.Unconfined] dispatcher.
 The original producer coroutine that invoked `send`  is paused until the unconfined consumer coroutine hits its next
 suspension point. This is very similar to a lock-step single-threaded `onNext` execution in Rx world in the absense
 of thread-shifting operators. It is a normal default for Rx, because operators are usually doing very small chunks
@@ -1056,10 +1055,10 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
+[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
@@ -1077,12 +1076,12 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html
 <!--- MODULE kotlinx-coroutines-reactive -->
 <!--- INDEX kotlinx.coroutines.experimental.reactive -->
-[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/publish.html
+[publish]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/kotlinx.coroutines.experimental.-coroutine-scope/publish.html
 [org.reactivestreams.Publisher.consumeEach]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/consume-each.html
 [org.reactivestreams.Publisher.openSubscription]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactive/kotlinx.coroutines.experimental.reactive/org.reactivestreams.-publisher/open-subscription.html
 <!--- MODULE kotlinx-coroutines-rx2 -->
 <!--- INDEX kotlinx.coroutines.experimental.rx2 -->
-[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.experimental.rx2/rx-flowable.html
+[rxFlowable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx2/kotlinx.coroutines.experimental.rx2/kotlinx.coroutines.experimental.-coroutine-scope/rx-flowable.html
 <!--- END -->
 
 

@@ -30,27 +30,6 @@ public fun <T> Observable<T>.openSubscription(request: Int = 0): SubscriptionRec
     openSubscription(request) as SubscriptionReceiveChannel<T>
 
 /**
- * @suppress **Deprecated**: Renamed to [openSubscription]
- */
-@Deprecated(message = "Renamed to `openSubscription`",
-    replaceWith = ReplaceWith("openSubscription()"))
-public fun <T> Observable<T>.open(): SubscriptionReceiveChannel<T> =
-    openSubscription() as SubscriptionReceiveChannel<T>
-
-/**
- * Subscribes to this [Observable] and returns an iterator to receive elements emitted by it.
- *
- * This is a shortcut for `open().iterator()`. See [openSubscription] if you need an ability to manually
- * unsubscribe from the observable.
- */
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated(message =
-"This iteration operator for `for (x in source) { ... }` loop is deprecated, " +
-    "because it leaves code vulnerable to leaving unclosed subscriptions on exception. " +
-    "Use `source.consumeEach { x -> ... }`.")
-public operator fun <T> Observable<T>.iterator() = openSubscription().iterator()
-
-/**
  * Subscribes to this [Observable] and performs the specified action for each received element.
  */
 public suspend inline fun <T> Observable<T>.consumeEach(action: (T) -> Unit) {
@@ -58,13 +37,6 @@ public suspend inline fun <T> Observable<T>.consumeEach(action: (T) -> Unit) {
     for (x in channel) action(x)
     channel.cancel()
 }
-
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Observable<T>.consumeEach(action: suspend (T) -> Unit) =
-    consumeEach { action(it) }
 
 private class SubscriptionChannel<T>(
     private val request: Int

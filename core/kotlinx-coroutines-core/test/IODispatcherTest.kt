@@ -2,7 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import kotlinx.coroutines.experimental.*
+package kotlinx.coroutines.experimental
+
 import org.junit.Test
 import kotlin.test.*
 
@@ -12,7 +13,7 @@ class IODispatcherTest : TestBase() {
         // just a very basic test that is dispatcher works and indeed uses background thread
         val mainThread = Thread.currentThread()
         expect(1)
-        withContext(IO) {
+        withContext(Dispatchers.IO) {
             expect(2)
             assertNotSame(mainThread, Thread.currentThread())
         }

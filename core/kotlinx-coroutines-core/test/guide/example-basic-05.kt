@@ -8,11 +8,12 @@ package kotlinx.coroutines.experimental.guide.basic05
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val jobs = List(100_000) { // launch a lot of coroutines and list their jobs
-        launch {
-            delay(1000L)
-            print(".")
-        }
-    }
-    jobs.forEach { it.join() } // wait for all jobs to complete
+    launch { doWorld() }
+    println("Hello,")
+}
+
+// this is your first suspending function
+suspend fun doWorld() {
+    delay(1000L)
+    println("World!")
 }

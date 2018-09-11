@@ -10,12 +10,12 @@ import kotlinx.coroutines.experimental.channels.*
 import kotlin.system.*
 import kotlin.coroutines.experimental.*
 
-suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
-    val n = 1000 // number of coroutines to launch
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
     val k = 1000 // times an action is repeated by each coroutine
     val time = measureTimeMillis {
         val jobs = List(n) {
-            launch(context) {
+            launch {
                 repeat(k) { action() }
             }
         }
@@ -30,7 +30,7 @@ object IncCounter : CounterMsg() // one-way message to increment counter
 class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg() // a request with reply
 
 // This function launches a new counter actor
-fun counterActor() = actor<CounterMsg> {
+fun CoroutineScope.counterActor() = actor<CounterMsg> {
     var counter = 0 // actor state
     for (msg in channel) { // iterate over incoming messages
         when (msg) {
@@ -42,7 +42,7 @@ fun counterActor() = actor<CounterMsg> {
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val counter = counterActor() // create the actor
-    massiveRun(CommonPool) {
+    GlobalScope.massiveRun {
         counter.send(IncCounter)
     }
     // send a message to get a counter value from an actor

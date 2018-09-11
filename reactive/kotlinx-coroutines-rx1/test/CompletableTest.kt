@@ -8,13 +8,12 @@ import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
 
 class CompletableTest : TestBase() {
     @Test
-    fun testBasicSuccess() = runBlocking<Unit> {
+    fun testBasicSuccess() = runBlocking {
         expect(1)
-        val completable = rxCompletable(coroutineContext) {
+        val completable = rxCompletable {
             expect(4)
         }
         expect(2)
@@ -27,9 +26,9 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testBasicFailure() = runBlocking<Unit> {
+    fun testBasicFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable(coroutineContext) {
+        val completable = rxCompletable {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -47,9 +46,9 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testBasicUnsubscribe() = runBlocking<Unit> {
+    fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val completable = rxCompletable(coroutineContext) {
+        val completable = rxCompletable {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -70,9 +69,9 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitSuccess() = runBlocking<Unit> {
+    fun testAwaitSuccess() = runBlocking {
         expect(1)
-        val completable = rxCompletable(coroutineContext) {
+        val completable = rxCompletable {
             expect(3)
         }
         expect(2)
@@ -81,9 +80,9 @@ class CompletableTest : TestBase() {
     }
 
     @Test
-    fun testAwaitFailure() = runBlocking<Unit> {
+    fun testAwaitFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable(coroutineContext) {
+        val completable = rxCompletable {
             expect(3)
             throw RuntimeException("OK")
         }

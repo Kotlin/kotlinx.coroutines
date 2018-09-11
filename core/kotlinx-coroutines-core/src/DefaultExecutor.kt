@@ -44,7 +44,8 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
      * runBlocking(eventLoop) { withTimeout { while(isActive) { ... } } }
      * ```
      *
-     * Livelock is possible only if runBlocking is called on [DefaultDispatcher], but it's not exposed as public API
+     * Livelock is possible only if `runBlocking` is called on internal default executed (which is used by default [delay]),
+     * but it's not exposed as public API.
      */
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
         DelayedRunnableTask(time, unit, block).also { schedule(it) }

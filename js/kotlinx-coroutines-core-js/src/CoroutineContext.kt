@@ -11,11 +11,18 @@ private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
 
 /**
- * This is the default [CoroutineDispatcher] that is used by all standard builders like
- * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
+ * The default [CoroutineDispatcher] that is used by all standard builders.
+ * @suppress **Deprecated**: Use [Dispatchers.Default].
  */
-@Suppress("PropertyName", "UnsafeCastFromDynamic")
-public actual val DefaultDispatcher: CoroutineDispatcher = when {
+@Suppress("PropertyName")
+@Deprecated(
+    message = "Use Dispatchers.Default",
+    replaceWith = ReplaceWith("Dispatchers.Default",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
+public actual val DefaultDispatcher: CoroutineDispatcher
+    get() = Dispatchers.Default
+
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
     // The problem is that ReactNative has a `window` object with `addEventListener`, but it does not  really work.
     // For details see https://github.com/Kotlin/kotlinx.coroutines/issues/236
@@ -29,17 +36,13 @@ public actual val DefaultDispatcher: CoroutineDispatcher = when {
     else -> NodeDispatcher()
 }
 
-internal actual val DefaultDelay: Delay = DefaultDispatcher as Delay
+internal actual val DefaultDelay: Delay
+    get() = Dispatchers.Default as Delay
 
-/**
- * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
- * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
- */
-@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
-    val wp = if (parent == null) context else context + parent
-    return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
-        wp + DefaultDispatcher else wp
+public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
+    val combined = coroutineContext + context
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        combined + Dispatchers.Default else combined
 }
 
 // No debugging facilities on JS

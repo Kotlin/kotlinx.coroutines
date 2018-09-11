@@ -8,7 +8,7 @@ package kotlinx.coroutines.experimental.guide.basic03
 import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = launch { // launch new coroutine and keep a reference to its Job
+    val job = GlobalScope.launch { // launch new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
     }

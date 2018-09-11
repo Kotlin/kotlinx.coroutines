@@ -132,7 +132,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    public final override val isActive: Boolean get() {
+    public override val isActive: Boolean get() {
         val state = this.state
         return state is Incomplete && state.isActive
     }
@@ -456,7 +456,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                     } else {
                         if (state is Finishing && state.cancelled != null && onCancelling) {
                             // installing cancellation handler on job that is being cancelled
-                            if (invokeImmediately) handler(state.cancelled.cause)
+                            if (invokeImmediately) handler.invokeIt(state.cancelled.cause)
                             return NonDisposableHandle
                         }
                         val node = nodeCache ?: makeNode(handler, onCancelling).also { nodeCache = it }
@@ -853,7 +853,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         override val list: NodeList,
         @JvmField val cancelled: Cancelled?, /* != null when cancelling */
         @JvmField val completing: Boolean /* true when completing */
-    ) : Incomplete {
+    ) : SynchronizedObject(), Incomplete {
         override val isActive: Boolean get() = cancelled == null
 
         // guarded by `synchronized(this)`

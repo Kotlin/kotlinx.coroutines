@@ -4,12 +4,12 @@
 
 package kotlinx.coroutines.experimental.examples
 
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.future.future
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.future.*
 
 
 fun main(args: Array<String>) {
-    val f = future {
+    val f = GlobalScope.future {
         try {
             log("Started f")
             delay(500)

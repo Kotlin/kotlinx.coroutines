@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class JobTest : TestBase() {
@@ -143,7 +142,7 @@ class JobTest : TestBase() {
     fun testCancelAndJoinParentWaitChildren() = runTest {
         expect(1)
         val parent = Job()
-        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED, parent = parent) {
+        launch(parent, start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // will get cancelled
@@ -174,5 +173,19 @@ class JobTest : TestBase() {
         yield()
         job.cancelAndJoin()
         finish(4)
+    }
+
+    @Test
+    fun testOverriddenParent() = runTest {
+        val parent = Job()
+        val deferred = launch(parent, CoroutineStart.ATOMIC) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        parent.cancel()
+        expect(1)
+        deferred.join()
+        finish(3)
     }
 }

@@ -12,7 +12,7 @@ class BroadcastTest : TestBase() {
     @Test
     fun testBroadcastBasic() = runTest {
         expect(1)
-        val b = broadcast(coroutineContext) {
+        val b = broadcast {
             expect(4)
             send(1) // goes to receiver
             expect(5)

@@ -145,8 +145,7 @@ class WithContextTest : TestBase() {
 
         try {
             withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) {
-                require(isActive)
-                // but start atomically
+                require(!isActive) // but it had still started, because atomically
                 expect(2)
                 yield() // but will cancel here
                 expectUnreached()
@@ -165,7 +164,7 @@ class WithContextTest : TestBase() {
         val job = Job()
         job.cancel() // try to cancel before it has a chance to run
         withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
-            require(isActive)
+            require(!isActive) // but it had still started, because undispatched
             finish(2)
             yield() // but will cancel here
             expectUnreached()
@@ -176,7 +175,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellationWithException() = runTest(unhandled = listOf({e -> e is AssertionError})) {
         expect(1)
         var job: Job? = null
-        job = launch(coroutineContext, parent = Job()) {
+        job = launch(Job()) {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
@@ -206,7 +205,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellation() = runTest(unhandled = listOf({e -> e is AssertionError})) {
         expect(1)
         var job: Job? = null
-        job = launch(coroutineContext, parent = Job()) {
+        job = launch(Job()) {
             try {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {

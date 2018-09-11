@@ -4,12 +4,11 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CoroutinesJvmTest : TestBase() {
     @Test
-    fun testNotCancellableCodeWithExceptionCancelled() = runTest {
+    fun testNotCancellableCodeWithExceptionCancelled() = runTest(expected = {e -> e is TestException}) {
         expect(1)
         // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
         val job = launch(start = CoroutineStart.ATOMIC) {
@@ -37,5 +36,5 @@ class CoroutinesJvmTest : TestBase() {
 
     private fun throwTestException(): Unit = throw TestException()
 
-    private class TestException() : Exception()
+    private class TestException : Exception()
 }

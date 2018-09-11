@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
  * @suppress **Deprecated**: `Deferred` incorporates functionality of `LazyDeferred`. See [Deferred].
@@ -14,7 +14,7 @@ import kotlin.coroutines.experimental.CoroutineContext
 typealias LazyDeferred<T> = Deferred<T>
 
 /**
- * @suppress **Deprecated**: Replace with `async(context, start = false) { ... }`. See [async].
+ * @suppress **Deprecated**: Replace with `async(context, start = false) { ... }`. See [CoroutineScope.async].
  */
 @Suppress("DEPRECATION")
 @Deprecated(message = "This functionality is incorporated into `async", level = DeprecationLevel.WARNING,

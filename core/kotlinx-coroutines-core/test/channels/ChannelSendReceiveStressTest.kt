@@ -49,7 +49,7 @@ class ChannelSendReceiveStressTest(
         println("--- ChannelSendReceiveStressTest $kind with nSenders=$nSenders, nReceivers=$nReceivers")
         val receivers = List(nReceivers) { receiverIndex ->
             // different event receivers use different code
-            launch(DefaultDispatcher + CoroutineName("receiver$receiverIndex")) {
+            launch(Dispatchers.Default + CoroutineName("receiver$receiverIndex")) {
                 when (receiverIndex % 5) {
                     0 -> doReceive(receiverIndex)
                     1 -> doReceiveOrNull(receiverIndex)
@@ -61,7 +61,7 @@ class ChannelSendReceiveStressTest(
             }
         }
         val senders = List(nSenders) { senderIndex ->
-            launch(DefaultDispatcher + CoroutineName("sender$senderIndex")) {
+            launch(Dispatchers.Default + CoroutineName("sender$senderIndex")) {
                 when (senderIndex % 2) {
                     0 -> doSend(senderIndex)
                     1 -> doSendSelect(senderIndex)

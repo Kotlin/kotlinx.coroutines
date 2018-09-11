@@ -7,13 +7,12 @@ package kotlinx.coroutines.experimental.reactor
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
-import kotlin.coroutines.experimental.*
 
 class FluxTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val flux = flux(coroutineContext) {
+        val flux = flux {
             expect(4)
             send("OK")
         }
@@ -30,7 +29,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val flux = flux<String>(coroutineContext) {
+        val flux = flux<String> {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -50,7 +49,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val flux = flux<String>(coroutineContext) {
+        val flux = flux<String> {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

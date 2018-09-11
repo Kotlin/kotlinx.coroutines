@@ -9,7 +9,6 @@ import org.junit.*
 import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class JobExceptionsStressTest : TestBase() {
@@ -31,7 +30,7 @@ class JobExceptionsStressTest : TestBase() {
         repeat(1000 * stressTestMultiplier) {
             val exception = runBlock(executor) {
                 val barrier = CyclicBarrier(4)
-                val job = launch(coroutineContext.minusKey(Job)) {
+                val job = GlobalScope.launch(coroutineContext.minusKey(Job)) {
 
                     launch(coroutineContext) {
                         barrier.await()

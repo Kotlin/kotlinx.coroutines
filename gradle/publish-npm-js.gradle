@@ -21,11 +21,12 @@ def npmDeployTag = distTag(version)
 def authToken = prop("kotlin.npmjs.auth.token", "")
 def dryRun = prop("dryRun", "false")
 
-task preparePublishNpm(type: Copy, dependsOn: [compileKotlin2Js]) {
+// Note: publish transformed files using dependency on sourceSets.main.output
+task preparePublishNpm(type: Copy) {
     from(npmTemplateDir) {
         expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
     }
-    from("$buildDir/classes/kotlin/main")
+    from(sourceSets.main.output)
     into npmDeployDir
 }
 

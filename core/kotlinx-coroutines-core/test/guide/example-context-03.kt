@@ -11,11 +11,11 @@ import kotlin.coroutines.experimental.*
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val a = async(coroutineContext) {
+    val a = async {
         log("I'm computing a piece of the answer")
         6
     }
-    val b = async(coroutineContext) {
+    val b = async {
         log("I'm computing another piece of the answer")
         7
     }

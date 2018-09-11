@@ -4,14 +4,11 @@
 
 package kotlinx.coroutines.experimental.rx1
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import rx.Observable
-import java.io.IOException
+import kotlinx.coroutines.experimental.*
+import org.junit.*
+import org.junit.Assert.*
+import rx.*
+import java.io.*
 
 /**
  * Test emitting multiple values with [rxObservable].
@@ -20,18 +17,18 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             repeat(n) { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable<Int>(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -43,39 +40,39 @@ class ObservableMultiTest : TestBase() {
         }
         checkSingleValue(observable.toList()) { list ->
             assertEquals(n, list.size)
-            assertEquals((0..n - 1).toList(), list.sorted())
+            assertEquals((0 until n).toList(), list.sorted())
         }
     }
 
     @Test
-    fun testIteratorResendUnconfined() {
+    fun testIteratorResendDispatchers() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(Unconfined) {
+        val observable = GlobalScope.rxObservable(Dispatchers.Unconfined) {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testSendAndCrash() {
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             send("O")
             throw IOException("K")
         }
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             var result = ""
             try {
                 observable.consumeEach { result += it }

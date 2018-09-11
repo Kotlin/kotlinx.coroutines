@@ -5,18 +5,18 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Test
+import org.junit.*
 
 class DoubleChannelCloseStressTest : TestBase() {
-    val nTimes = 1000 * stressTestMultiplier
+    private val nTimes = 1000 * stressTestMultiplier
 
     @Test
     fun testDoubleCloseStress() {
         repeat(nTimes) {
-            val actor = actor<Int>(DefaultDispatcher + CoroutineName("actor"), start = CoroutineStart.LAZY) {
+            val actor = GlobalScope.actor<Int>(CoroutineName("actor"), start = CoroutineStart.LAZY) {
                 // empty -- just closes channel
             }
-            launch(DefaultDispatcher + CoroutineName("sender")) {
+            GlobalScope.launch(CoroutineName("sender")) {
                 actor.send(1)
             }
             Thread.sleep(1)

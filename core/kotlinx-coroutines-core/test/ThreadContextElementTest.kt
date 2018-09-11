@@ -9,6 +9,7 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ThreadContextElementTest : TestBase() {
+
     @Test
     fun testExample() = runTest {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
@@ -17,7 +18,7 @@ class ThreadContextElementTest : TestBase() {
         val data = MyData()
         val element = MyElement(data)
         assertNull(myThreadLocal.get())
-        val job = launch(element + exceptionHandler) {
+        val job = GlobalScope.launch(element + exceptionHandler) {
             assertTrue(mainThread != Thread.currentThread())
             assertSame(element, coroutineContext[MyElement])
             assertSame(data, myThreadLocal.get())
@@ -40,8 +41,8 @@ class ThreadContextElementTest : TestBase() {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
         val data = MyData()
         val element = MyElement(data)
-        val job = launch(
-            context = DefaultDispatcher + exceptionHandler + element,
+        val job = GlobalScope.launch(
+            context = Dispatchers.Default + exceptionHandler + element,
             start = CoroutineStart.UNDISPATCHED
         ) {
             assertSame(data, myThreadLocal.get())
@@ -59,12 +60,12 @@ class ThreadContextElementTest : TestBase() {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = MyData()
-            async(CommonPool + MyElement(data)) {
+            GlobalScope.async(Dispatchers.Default + MyElement(data)) {
                 assertSame(data, myThreadLocal.get())
                 expect(2)
 
                 val newData = MyData()
-                async(it + MyElement(newData)) {
+                GlobalScope.async(it + MyElement(newData)) {
                     assertSame(newData, myThreadLocal.get())
                     expect(3)
                 }.await()
@@ -74,7 +75,7 @@ class ThreadContextElementTest : TestBase() {
                     expect(4)
                 }
 
-                async(it) {
+                GlobalScope.async(it) {
                     assertNull(myThreadLocal.get())
                     expect(5)
                 }.await()

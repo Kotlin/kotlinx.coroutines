@@ -4,35 +4,29 @@
 
 package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.reactive.consumeEach
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import reactor.core.publisher.Flux
-import java.io.IOException
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
+import org.junit.*
+import org.junit.Assert.*
+import reactor.core.publisher.*
+import java.io.*
 
-/**
- * Test emitting multiple values with [flux].
- */
 class FluxMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             repeat(n) { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux<Int>(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -44,39 +38,39 @@ class FluxMultiTest : TestBase() {
         }
         checkMonoValue(flux.collectList()) { list ->
             assertEquals(n, list.size)
-            assertEquals((0..n - 1).toList(), list.sorted())
+            assertEquals((0 until n).toList(), list.sorted())
         }
     }
 
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(Unconfined) {
+        val flux = GlobalScope.flux(Dispatchers.Unconfined) {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
-            assertEquals((0..n - 1).toList(), list)
+            assertEquals((0 until n).toList(), list)
         }
     }
 
     @Test
     fun testSendAndCrash() {
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             send("O")
             throw IOException("K")
         }
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             var result = ""
             try {
                 flux.consumeEach { result += it }

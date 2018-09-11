@@ -12,7 +12,6 @@ import org.junit.*
 import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 
 class ListenableFutureTest : TestBase() {
     @Before
@@ -23,7 +22,7 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testSimpleAwait() {
         val service = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
-        val future = future {
+        val future = GlobalScope.future {
             service.submit(Callable<String> {
                 "O"
             }).await() + "K"
@@ -34,8 +33,8 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testAwaitWithContext() = runTest {
         val future = SettableFuture.create<Int>()
-        val deferred = async(coroutineContext) {
-            withContext(DefaultDispatcher) {
+        val deferred = async {
+            withContext(Dispatchers.Default) {
                 future.await()
             }
         }
@@ -47,8 +46,8 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testAwaitWithContextCancellation() = runTest(expected = {it is IOException}) {
         val future = SettableFuture.create<Int>()
-        val deferred = async(coroutineContext) {
-            withContext(DefaultDispatcher) {
+        val deferred = async {
+            withContext(Dispatchers.Default) {
                 future.await()
             }
         }
@@ -61,7 +60,7 @@ class ListenableFutureTest : TestBase() {
     fun testCompletedFuture() {
         val toAwait = SettableFuture.create<String>()
         toAwait.set("O")
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertThat(future.get(), IsEqual("OK"))
@@ -70,7 +69,7 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testWaitForFuture() {
         val toAwait = SettableFuture.create<String>()
-        val future = future {
+        val future = GlobalScope.future {
             toAwait.await() + "K"
         }
         assertFalse(future.isDone)
@@ -82,7 +81,7 @@ class ListenableFutureTest : TestBase() {
     fun testCompletedFutureExceptionally() {
         val toAwait = SettableFuture.create<String>()
         toAwait.setException(IllegalArgumentException("O"))
-        val future = future<String> {
+        val future = GlobalScope.future {
             try {
                 toAwait.await()
             } catch (e: RuntimeException) {
@@ -96,7 +95,7 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testWaitForFutureWithException() {
         val toAwait = SettableFuture.create<String>()
-        val future = future<String> {
+        val future = GlobalScope.future {
             try {
                 toAwait.await()
             } catch (e: RuntimeException) {
@@ -112,7 +111,7 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testExceptionInsideCoroutine() {
         val service = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
-        val future = future {
+        val future = GlobalScope.future {
             if (service.submit(Callable<Boolean> { true }).await()) {
                 throw IllegalStateException("OK")
             }
@@ -155,7 +154,7 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testAsListenableFutureThrowable() {
-        val deferred = async {
+        val deferred = GlobalScope.async {
             throw OutOfMemoryError()
         }
 

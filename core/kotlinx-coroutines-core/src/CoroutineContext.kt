@@ -10,22 +10,22 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Name of the property that controls coroutine debugging. See [newCoroutineContext].
+ * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
 /**
- * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_ON = "on"
 
 /**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext].
+ * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
@@ -56,37 +56,34 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
 }
 
 /**
- * The default [CoroutineDispatcher] that is used by all standard builders like
- * [launch], [async], etc if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
- *
- * It is currently equal to [CommonPool], but the value is subject to change in the future.
- * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")
- * to use an experimental coroutine dispatcher that shares threads with [IO] dispatcher and thus can switch to
- * [IO] context without performing an actual thread context switch.
+ * The default [CoroutineDispatcher] that is used by all standard builders.
+ * @suppress **Deprecated**: Use [Dispatchers.Default].
  */
 @Suppress("PropertyName")
-public actual val DefaultDispatcher: CoroutineDispatcher =
+@Deprecated(
+    message = "Use Dispatchers.Default",
+    replaceWith = ReplaceWith("Dispatchers.Default",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
+public actual val DefaultDispatcher: CoroutineDispatcher
+    get() = Dispatchers.Default
+
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     if (useCoroutinesScheduler) BackgroundDispatcher else CommonPool
 
 /**
- * Name of the property that defines the maximal number of threads that are used by [IO] coroutines dispatcher.
- */
-public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.parallelism"
-
-/**
  * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
- *
- * Additional threads in this pool are created and are shutdown on demand.
- * The number of threads used by this dispatcher is limited by the value of
- * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
- * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+ * @suppress **Deprecated**: Use [Dispatchers.IO].
  */
-public val IO: CoroutineDispatcher by lazy {
-    BackgroundDispatcher.blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
-}
+@Suppress("PropertyName")
+@Deprecated(
+    message = "Use Dispatchers.IO",
+    replaceWith = ReplaceWith("Dispatchers.IO",
+        imports = ["kotlinx.coroutines.experimental.*"]))
+public val IO: CoroutineDispatcher
+    get() = Dispatchers.IO
 
 /**
- * Creates context for the new coroutine. It installs [DefaultDispatcher] when no other dispatcher nor
+ * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
  * [ContinuationInterceptor] is specified, and adds optional support for debugging facilities (when turned on).
  *
  * **Debugging facilities:** In debug mode every coroutine is assigned a unique consecutive identifier.
@@ -105,14 +102,24 @@ public val IO: CoroutineDispatcher by lazy {
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
  */
+public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
+    val combined = coroutineContext + context
+    val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        debug + Dispatchers.Default else debug
+}
+
+/**
+ * @suppress **Deprecated**: Use extension on CoroutineScope.
+ */
 @JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext {
-    val debug = if (DEBUG) context + CoroutineId(COROUTINE_ID.incrementAndGet()) else context
-    val wp = if (parent == null) debug else debug + parent
-    return if (context !== DefaultDispatcher && context[ContinuationInterceptor] == null)
-        wp + DefaultDispatcher else wp
-}
+@Deprecated(
+    message = "Use extension on CoroutineScope",
+    replaceWith = ReplaceWith("GlobalScope.newCoroutineContext(context + parent)")
+)
+public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext =
+    GlobalScope.newCoroutineContext(context + (parent ?: EmptyCoroutineContext))
 
 /**
  * Executes a block using a given coroutine context.

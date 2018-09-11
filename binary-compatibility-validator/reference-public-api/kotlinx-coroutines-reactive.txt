@@ -10,8 +10,6 @@ public final class kotlinx/coroutines/experimental/reactive/AwaitKt {
 public final class kotlinx/coroutines/experimental/reactive/ChannelKt {
 	public static final fun consumeEach (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final synthetic fun consumeEach (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun iterator (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/ChannelIterator;
-	public static final fun open (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
 	public static final fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/experimental/channels/SubscriptionReceiveChannel;
@@ -22,14 +20,12 @@ public final class kotlinx/coroutines/experimental/reactive/ChannelKt {
 public final class kotlinx/coroutines/experimental/reactive/ConvertKt {
 	public static final fun asPublisher (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;)Lorg/reactivestreams/Publisher;
 	public static synthetic fun asPublisher$default (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
-	public static final fun toPublisher (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;)Lorg/reactivestreams/Publisher;
 }
 
 public final class kotlinx/coroutines/experimental/reactive/PublishKt {
-	public static final synthetic fun publish (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
 	public static final fun publish (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
-	public static final synthetic fun publish (Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
-	public static synthetic fun publish$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
+	public static final fun publish (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
 	public static synthetic fun publish$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
+	public static synthetic fun publish$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 }
 

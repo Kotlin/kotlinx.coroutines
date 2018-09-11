@@ -15,14 +15,14 @@ import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class IntegrationTest(
-    val ctx: Ctx,
-    val delay: Boolean
+    private val ctx: Ctx,
+    private val delay: Boolean
 ) : TestBase() {
 
     enum class Ctx {
-        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context },
-        COMMON_POOL { override fun invoke(context: CoroutineContext): CoroutineContext = DefaultDispatcher },
-        UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Unconfined };
+        MAIN       { override fun invoke(context: CoroutineContext): CoroutineContext = context },
+        DEFAULT    { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default },
+        UNCONFINED { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined };
 
         abstract operator fun invoke(context: CoroutineContext): CoroutineContext
     }
@@ -57,8 +57,8 @@ class IntegrationTest(
     }
 
     @Test
-    fun testSingle() = runBlocking<Unit> {
-        val observable = rxObservable<String>(ctx(coroutineContext)) {
+    fun testSingle() = runBlocking {
+        val observable = CoroutineScope(ctx(coroutineContext)).rxObservable {
             if (delay) delay(1)
             send("OK")
         }
@@ -77,7 +77,7 @@ class IntegrationTest(
     }
 
     @Test
-    fun testObservableWithNull() = runBlocking<Unit> {
+    fun testObservableWithNull() = runBlocking {
         val observable = rxObservable<String?>(ctx(coroutineContext)) {
             if (delay) delay(1)
             send(null)
@@ -99,7 +99,7 @@ class IntegrationTest(
     @Test
     fun testNumbers() = runBlocking<Unit> {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable<Int>(ctx(coroutineContext)) {
+        val observable = CoroutineScope(ctx(coroutineContext)).rxObservable {
             for (i in 1..n) {
                 send(i)
                 if (delay) delay(1)
@@ -119,8 +119,8 @@ class IntegrationTest(
 
     @Test
     fun testCancelWithoutValue() = runTest {
-        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
-            rxObservable<String>(coroutineContext) {
+        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+            rxObservable<String> {
                 yield()
                 expectUnreached()
             }.awaitFirst()
@@ -133,8 +133,8 @@ class IntegrationTest(
     @Test
     fun testEmptySingle() = runTest(unhandled = listOf({e -> e is NoSuchElementException})) {
         expect(1)
-        val job = launch(coroutineContext, parent = Job(), start = CoroutineStart.UNDISPATCHED) {
-            rxObservable<String>(coroutineContext) {
+        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+            rxObservable<String> {
                 yield()
                 expect(2)
                 // Nothing to emit
@@ -153,7 +153,7 @@ class IntegrationTest(
         assertThat(last, IsEqual(n))
     }
 
-    inline fun assertIAE(block: () -> Unit) {
+    private inline fun assertIAE(block: () -> Unit) {
         try {
             block()
             expectUnreached()
@@ -162,7 +162,7 @@ class IntegrationTest(
         }
     }
 
-    inline fun assertNSE(block: () -> Unit) {
+    private inline fun assertNSE(block: () -> Unit) {
         try {
             block()
             expectUnreached()

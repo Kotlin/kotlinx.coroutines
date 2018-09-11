@@ -25,7 +25,7 @@ class JavaFxTest : TestBase() {
 
         runBlocking {
             expect(1)
-            val job = launch(JavaFx) {
+            val job = launch(Dispatchers.JavaFx) {
                 check(Platform.isFxApplicationThread())
                 expect(2)
                 delay(100)
