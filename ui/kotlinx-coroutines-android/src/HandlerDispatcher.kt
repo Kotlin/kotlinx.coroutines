@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("unused")
+
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
@@ -34,23 +36,6 @@ public sealed class HandlerDispatcher : CoroutineDispatcher(), Delay {
  * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher].
  */
 public fun Handler.asCoroutineDispatcher(): HandlerDispatcher =
-    HandlerContext(this)
-
-/**
- * Dispatches execution onto Android main UI thread and provides native [delay][Delay.delay] support.
- * @suppress **Deprecated**: Use [Dispatchers.Main].
- */
-@Deprecated(
-    message = "Use Dispatchers.Main",
-    replaceWith = ReplaceWith("Dispatchers.Main",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.android.Main"])
-)
-val UI: HandlerContext
-    get() = mainDispatcher
-
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
-@JvmName("asCoroutineDispatcher")
-public fun Handler.asCoroutineDispatcher0(): HandlerContext =
     HandlerContext(this)
 
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
