@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.internal.*
 import kotlin.coroutines.experimental.*
 
 /**
@@ -45,7 +44,7 @@ interface ProducerJob<out E> : ReceiveChannel<E>, Job {
  * The running coroutine is cancelled when its receive channel is [cancelled][ReceiveChannel.cancel].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -61,7 +60,7 @@ interface ProducerJob<out E> : ReceiveChannel<E>, Job {
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
@@ -91,7 +90,7 @@ public fun <E> CoroutineScope.produce(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.produce"])
 )
 public fun <E> produce(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     onCompletion: CompletionHandler? = null,
     block: suspend ProducerScope<E>.() -> Unit
@@ -109,7 +108,7 @@ public fun <E> produce(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.produce"])
 )
 public fun <E> produce(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
@@ -120,7 +119,7 @@ public fun <E> produce(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> produce(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     parent: Job? = null,
     block: suspend ProducerScope<E>.() -> Unit
@@ -129,7 +128,7 @@ public fun <E> produce(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> produce(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     block: suspend ProducerScope<E>.() -> Unit
 ): ProducerJob<E> =

@@ -139,7 +139,6 @@ public final class kotlinx/coroutines/experimental/CoroutineContextKt {
 	public static final field DEBUG_PROPERTY_VALUE_AUTO Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_OFF Ljava/lang/String;
 	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
-	public static final field IO_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
 	public static final fun getDefaultDispatcher ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun getIO ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun newCoroutineContext (Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
@@ -295,6 +294,17 @@ public final class kotlinx/coroutines/experimental/DispatchedTask$DefaultImpls {
 	public static fun getResumeMode (Lkotlinx/coroutines/experimental/DispatchedTask;)I
 	public static fun getSuccessfulResult (Lkotlinx/coroutines/experimental/DispatchedTask;Ljava/lang/Object;)Ljava/lang/Object;
 	public static fun run (Lkotlinx/coroutines/experimental/DispatchedTask;)V
+}
+
+public final class kotlinx/coroutines/experimental/Dispatchers {
+	public static final field Default Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final field INSTANCE Lkotlinx/coroutines/experimental/Dispatchers;
+	public static final field Unconfined Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+}
+
+public final class kotlinx/coroutines/experimental/DispatchersKt {
+	public static final field IO_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
+	public static final fun getIO (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 }
 
 public abstract interface class kotlinx/coroutines/experimental/DisposableHandle {

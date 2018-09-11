@@ -64,7 +64,7 @@ class MutexTest : TestBase() {
         val mutex = Mutex(true)
         var done = 0
         repeat(waiters) {
-            GlobalScope.launch(Unconfined) {  // a lot of unconfined waiters
+            GlobalScope.launch(Dispatchers.Unconfined) {  // a lot of unconfined waiters
                 mutex.withLock {
                     done++
                 }

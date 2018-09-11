@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
@@ -45,7 +44,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * when the coroutine completes.
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -106,7 +105,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * "`for (msg in channel)`" and other cancellable suspending functions throw [CancellationException] and actor
  * completes without processing remaining messages.
  *
- * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
@@ -140,7 +139,7 @@ public fun <E> CoroutineScope.actor(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
 )
 public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
@@ -159,7 +158,7 @@ public fun <E> actor(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
 )
 public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
@@ -171,7 +170,7 @@ public fun <E> actor(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
@@ -182,7 +181,7 @@ public fun <E> actor(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> actor(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 0,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend ActorScope<E>.() -> Unit

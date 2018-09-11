@@ -482,7 +482,7 @@ example shows:
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val startTime = System.currentTimeMillis()
-    val job = launch(DefaultDispatcher) {
+    val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
         var i = 0
         while (i < 5) { // computation loop, just wastes CPU
@@ -526,7 +526,7 @@ Replace `while (i < 5)` in the previous example with `while (isActive)` and reru
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
     val startTime = System.currentTimeMillis()
-    val job = launch(DefaultDispatcher) {
+    val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
         var i = 0
         while (isActive) { // cancellable computation loop
@@ -1019,11 +1019,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(Unconfined) { // not confined -- will work with main thread
+    launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(DefaultDispatcher) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
-        println("DefaultDispatcher     : I'm working in thread ${Thread.currentThread().name}")
+    launch(Dispatchers.Default) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+        println("Default               : I'm working in thread ${Thread.currentThread().name}")
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
@@ -1037,7 +1037,7 @@ It produces the following output (maybe in different order):
 
 ```text
 Unconfined            : I'm working in thread main
-DefaultDispatcher     : I'm working in thread CommonPool-worker-1
+Default               : I'm working in thread CommonPool-worker-1
 newSingleThreadContext: I'm working in thread MyOwnThread
 main runBlocking      : I'm working in thread main
 ```
@@ -1048,12 +1048,12 @@ When `launch { ... }` is used without parameters, it inherits the context (and t
 from the [CoroutineScope] that it is being launched from. In this case, it inherits the
 context of the main `runBlocking` coroutine which runs in the `main` thread. 
 
-[Unconfined] is a special dispatcher that also appears to run in the `main` thread, but it is,
+[Dispatchers.Unconfined] is a special dispatcher that also appears to run in the `main` thread, but it is,
 in fact, a different mechanism that is explained later.
 
 The default dispatcher, that is used when coroutines are launched in [GlobalScope],
-is represented by [DefaultDispatcher] and uses shared background pool of threads,
-so `launch(DefaultDispatcher) { ... }` uses the same dispatcher as `GlobalScope.launch { ... }`.
+is represented by [Dispatchers.Default] and uses shared background pool of threads,
+so `launch(Dispatchers.Default) { ... }` uses the same dispatcher as `GlobalScope.launch { ... }`.
   
 [newSingleThreadContext] creates a new thread for the coroutine to run. 
 A dedicated thread is a very expensive resource. 
@@ -1062,7 +1062,7 @@ function, or stored in a top-level variable and reused throughout the applicatio
 
 ### Unconfined vs confined dispatcher
  
-The [Unconfined] coroutine dispatcher starts coroutine in the caller thread, but only until the
+The [Dispatchers.Unconfined] coroutine dispatcher starts coroutine in the caller thread, but only until the
 first suspension point. After suspension it resumes in the thread that is fully determined by the
 suspending function that was invoked. Unconfined dispatcher is appropriate when coroutine does not
 consume CPU time nor updates any shared data (like UI) that is confined to a specific thread. 
@@ -1078,7 +1078,7 @@ import kotlin.coroutines.experimental.*
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    launch(Unconfined) { // not confined -- will work with main thread
+    launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
         println("Unconfined      : After delay in thread ${Thread.currentThread().name}")
@@ -1108,10 +1108,10 @@ So, the coroutine that had inherited context of `runBlocking {...}` continues to
 in the `main` thread, while the unconfined one had resumed in the default executor thread that [delay]
 function is using.
 
-> [Unconfined] dispatcher is an advanced mechanism that can be helpful in certain corner cases where
+> Unconfined dispatcher is an advanced mechanism that can be helpful in certain corner cases where
 dispatching of coroutine for its execution later is not needed or produces undesirable side-effects,
 because some operation in a coroutine must be performed right away. 
-[Unconfined] dispatcher should not be used in general code.  
+Unconfined dispatcher should not be used in general code.  
 
 ### Debugging coroutines and threads
 
@@ -1380,7 +1380,7 @@ import kotlin.coroutines.experimental.*
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    launch(DefaultDispatcher + CoroutineName("test")) {
+    launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
 }
@@ -1428,12 +1428,12 @@ class Activity : CoroutineScope {
 
 We also implement [CoroutineScope] interface in this `Actvity` class. We only need to provide an override
 for its [CoroutineScope.coroutineContext] property to specify the context for coroutines launched in its
-scope. We combine the desired dispatcher (we used [DefaultDispatcher] in this example) and a job:
+scope. We combine the desired dispatcher (we used [Dispatchers.Default] in this example) and a job:
 
 ```kotlin
     // class Activity continues
     override val coroutineContext: CoroutineContext
-        get() = DefaultDispatcher + job
+        get() = Dispatchers.Default + job
     // to be continued ...
 ```
 
@@ -1509,7 +1509,7 @@ val threadLocal = ThreadLocal<String?>() // declare thread-local variable
 fun main(args: Array<String>) = runBlocking<Unit> {
     threadLocal.set("main")
     println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
-    val job = launch(DefaultDispatcher + threadLocal.asContextElement(value = "launch")) {
+    val job = launch(Dispatchers.Default + threadLocal.asContextElement(value = "launch")) {
        println("Launch start, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
         yield()
         println("After yield, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
@@ -1521,7 +1521,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 > You can get full code [here](core/kotlinx-coroutines-core/test/guide/example-context-11.kt)
 
-In this example we launch new coroutine in a background thread pool using [DefaultDispatcher], so
+In this example we launch new coroutine in a background thread pool using [Dispatchers.Default], so
 it works on a different threads from a thread pool, but it still has the value of thread local variable,
 that we've specified using `threadLocal.asContextElement(value = "launch")`,
 no matter on what thread the coroutine is executed.
@@ -2077,7 +2077,7 @@ coroutine builder from the standard library.
 Replace `produce` with `buildIterator`, `send` with `yield`, `receive` with `next`, 
 `ReceiveChannel` with `Iterator`, and get rid of the coroutine scope. You will not need `runBlocking` either.
 However, the benefit of a pipeline that uses channels as shown above is that it can actually use 
-multiple CPU cores if you run it in [DefaultDispatcher] context.
+multiple CPU cores if you run it in [Dispatchers.Default] context.
 
 Anyway, this is an extremely impractical way to find prime numbers. In practice, pipelines do involve some
 other suspending invocations (like asynchronous calls to remote services) and these pipelines cannot be
@@ -2358,7 +2358,7 @@ delay between elements.
 
 ## Shared mutable state and concurrency
 
-Coroutines can be executed concurrently using a multi-threaded dispatcher like the [DefaultDispatcher]. It presents
+Coroutines can be executed concurrently using a multi-threaded dispatcher like the [Dispatchers.Default]. It presents
 all the usual concurrency problems. The main problem being synchronization of access to **shared mutable state**. 
 Some solutions to this problem in the land of coroutines are similar to the solutions in the multi-threaded world, 
 but others are unique.
@@ -2404,7 +2404,7 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 <!--- INCLUDE .*/example-sync-([0-9a-z]+).kt -->
 
 We start with a very simple action that increments a shared mutable variable using 
-multi-threaded [DefaultDispatcher] that is used in [GlobalScope]. 
+multi-threaded [Dispatchers.Default] that is used in [GlobalScope]. 
 
 ```kotlin
 var counter = 0
@@ -2436,7 +2436,7 @@ val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define cont
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    CoroutineScope(mtContext).massiveRun { // use it instead of DefaultDispatcher in this sample and below 
+    CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
         counter++
     }
     println("Counter = $counter")
@@ -2535,7 +2535,7 @@ Counter = 100000
 -->
 
 This code works very slowly, because it does _fine-grained_ thread-confinement. Each individual increment switches 
-from multi-threaded [DefaultDispatcher] context to the single-threaded context using [withContext] block.
+from multi-threaded [Dispatchers.Default] context to the single-threaded context using [withContext] block.
 
 ### Thread confinement coarse-grained
 
@@ -3066,8 +3066,8 @@ Channel was closed
 [Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
 [Job.start]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/start.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
-[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
-[DefaultDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html
+[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
 [newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-single-thread-context.html
 [ThreadPoolDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-thread-pool-dispatcher/close.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html

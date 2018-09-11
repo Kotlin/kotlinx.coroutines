@@ -8,7 +8,7 @@ package kotlinx.coroutines.experimental.javafx.guide.$$1$$2
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -59,17 +59,17 @@ This guide assumes familiarity with basic coroutine concepts that are
 covered in [Guide to kotlinx.coroutines](../coroutines-guide.md) and gives specific 
 examples on how to use coroutines in UI applications. 
 
-All UI application libraries have one thing in common. They have the single thread where all state of the UI 
+All UI application libraries have one thing in common. They have the single main thread where all state of the UI 
 is confined, and all updates to the UI has to happen in this particular thread. With respect to coroutines, 
 it means that you need an appropriate _coroutine dispatcher context_ that confines the coroutine 
-execution to this UI thread. 
+execution to this main UI thread. 
 
 In particular, `kotlinx.coroutines` has three modules that provide coroutine context for 
 different UI application libraries:
  
-* [kotlinx-coroutines-android](kotlinx-coroutines-android) -- `UI` context for Android applications.
-* [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx) -- `JavaFx` context for JavaFX UI applications.
-* [kotlinx-coroutines-swing](kotlinx-coroutines-swing) -- `Swing` context for Swing UI applications.
+* [kotlinx-coroutines-android](kotlinx-coroutines-android) -- `Dispatchers.Main` context for Android applications.
+* [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx) -- `Dispatchers.JavaFx` context for JavaFX UI applications.
+* [kotlinx-coroutines-swing](kotlinx-coroutines-swing) -- `Dispatchers.Swing` context for Swing UI applications.
 
 This guide covers all UI libraries simultaneously, because each of these modules consists of just one
 object definition that is a couple of pages long. You can use any of them as an example to write the corresponding
@@ -182,19 +182,23 @@ This section shows basic usage of coroutines in UI applications.
 
 ### Launch UI coroutine
 
-The `kotlinx-coroutines-javafx` module contains [JavaFx] context that dispatches coroutine execution to
-the JavaFx application thread. We import it as `UI` to make all the presented examples 
+The `kotlinx-coroutines-javafx` module contains [Dispatchers.JavaFx] dispatcher that dispatches coroutine execution to
+the JavaFx application thread. We import it as `Main` to make all the presented examples 
 easily portable to Android:
+ 
+```kotlin
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
+```
  
 <!--- CLEAR -->
 
-Coroutines confined to the UI thread can freely update anything in UI and suspend without blocking the UI thread.
+Coroutines confined to the main UI thread can freely update anything in UI and suspend without blocking the main thread.
 For example, we can perform animations by coding them in imperative style. The following code updates the
 text with a 10 to 1 countdown twice a second, using [launch] coroutine builder:
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
-    GlobalScope.launch(UI) { // launch coroutine in UI context
+    GlobalScope.launch(Dispatchers.Main) { // launch coroutine in the main thread
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second
@@ -206,7 +210,7 @@ fun setup(hello: Text, fab: Circle) {
 
 > You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-basic-02.kt)
 
-So, what happens here? Because we are launching coroutine in UI context, we can freely update UI from 
+So, what happens here? Because we are launching coroutine in the main UI context, we can freely update UI from 
 inside this coroutine and invoke _suspending functions_ like [delay] at the same time. UI is not frozen
 while `delay` waits, because it does not block the UI thread -- it just suspends the coroutine.
 
@@ -220,7 +224,7 @@ coroutine when we want to stop it. Let us cancel the coroutine when pinkish circ
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
-    val job = GlobalScope.launch(UI) { // launch coroutine in UI context
+    val job = GlobalScope.launch(Dispatchers.Main) { // launch coroutine in the main thread
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second
@@ -276,7 +280,7 @@ passes the corresponding mouse event into the supplied action (just in case we n
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     onMouseClicked = EventHandler { event ->
-        GlobalScope.launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) { 
             action(event)
         }
     }
@@ -295,7 +299,7 @@ update the text. Try it. It does not look very good. We'll fix it later.
 ```kotlin
 fun View.onClick(action: suspend () -> Unit) {
     setOnClickListener { 
-        GlobalScope.launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             action()
         }
     }
@@ -315,7 +319,7 @@ not be performed concurrently. Let us change `onClick` extension implementation:
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
-    val eventActor = GlobalScope.actor<MouseEvent>(UI) {
+    val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main) {
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
@@ -342,7 +346,7 @@ the `receive` is active.
 ```kotlin
 fun View.onClick(action: suspend (View) -> Unit) {
     // launch one actor
-    val eventActor = GlobalScope.actor<View>(UI) {
+    val eventActor = GlobalScope.actor<View>(Dispatchers.Main) {
         for (event in channel) action(event)
     }
     // install a listener to activate this actor
@@ -368,7 +372,7 @@ change is only to the line that creates an actor:
 ```kotlin
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
-    val eventActor = GlobalScope.actor<MouseEvent>(UI, capacity = Channel.CONFLATED) { // <--- Changed here
+    val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
@@ -402,13 +406,13 @@ This section explains how to use UI coroutines with thread-blocking operations.
 It would have been great if all APIs out there were written as suspending functions that never blocks an 
 execution thread. However, it is quite often not the case. Sometimes you need to do a CPU-consuming computation
 or just need to invoke some 3rd party APIs for network access, for example, that blocks the invoker thread. 
-You cannot do that from the UI thread nor from the UI-confined coroutine directly, because that would
-block the UI thread and cause the freeze up of the UI.
+You cannot do that from the main UI thread nor from the UI-confined coroutine directly, because that would
+block the main UI thread and cause the freeze up of the UI.
 
 <!--- INCLUDE .*/example-ui-blocking-([0-9]+).kt
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
-    val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) {
+    val eventActor = actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
@@ -418,7 +422,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 -->
 
 The following example illustrates the problem. We are going to use `onClick` extension with UI-confined
-event-conflating actor from the last section to process the last click in the UI thread. 
+event-conflating actor from the last section to process the last click in the main UI thread. 
 For this example, we are going to 
 perform naive computation of [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number):
  
@@ -429,13 +433,13 @@ fun fib(x: Int): Int =
  
 We'll be computing larger and larger Fibonacci number each time the circle is clicked. 
 To make the UI freeze more obvious, there is also a fast counting animation that is always running 
-and is constantly updating the text in the UI context:
+and is constantly updating the text in the main UI dispatcher:
 
 ```kotlin
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    GlobalScope.launch(UI) {
+    GlobalScope.launch(Dispatchers.Main) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"
@@ -455,7 +459,7 @@ fun setup(hello: Text, fab: Circle) {
   You can just copy the `fib` function and the body of the `setup` function to your Android project.
 
 Try clicking on the circle in this example. After around 30-40th click our naive computation is going to become
-quite slow and you would immediately see how the UI thread freezes, because the animation stops running 
+quite slow and you would immediately see how the main UI thread freezes, because the animation stops running 
 during UI freeze.
 
 ### Structured concurrency, lifecycle and coroutine parent-child hierarchy
@@ -479,7 +483,7 @@ instance of a `Job` to an instance of an `Activity`:
 abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope {
     protected lateinit var job: Job
     override val coroutineContext: CoroutineContext 
-        get() = job + UI
+        get() = job + Dispatchers.Main
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -503,10 +507,10 @@ class MainActivity : ScopedAppActivity() {
     }
     
     suspend fun showIOData() {
-        val deferred = async(IO) {
+        val deferred = async(Dispatchers.IO) {
             // impl      
         }
-        withContext(UI) {
+        withContext(Dispatchers.Main) {
           val data = deferred.await()
           // Show data in UI
         }
@@ -549,10 +553,11 @@ when the parent job is cancelled. An example of that is shown in the
 
 ### Blocking operations
 
-The fix for the blocking operations on the UI thread is quite straightforward with coroutines. We'll 
+The fix for the blocking operations on the main UI thread is quite straightforward with coroutines. We'll 
 convert our "blocking" `fib` function to a non-blocking suspending function that runs the computation in 
-the background thread by using [withContext] function to change its execution context to [CommonPool] of background
-threads. Notice, that `fib` function is now marked with `suspend` modifier. It does not block the coroutine that
+the background thread by using [withContext] function to change its execution context to [Dispathers.Default] that is 
+backed by the background pool of threads. 
+Notice, that `fib` function is now marked with `suspend` modifier. It does not block the coroutine that
 it is invoked from anymore, but suspends its execution when the computation in the background thread is working:
 
 <!--- INCLUDE .*/example-ui-blocking-0[23].kt
@@ -560,7 +565,7 @@ it is invoked from anymore, but suspends its execution when the computation in t
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    GlobalScope.launch(UI) {
+    GlobalScope.launch(Dispatchers.Main) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"
@@ -577,7 +582,7 @@ fun setup(hello: Text, fab: Circle) {
 -->
 
 ```kotlin
-suspend fun fib(x: Int): Int = withContext(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(Dispatchers.Default) {
     if (x <= 1) x else fib(x - 1) + fib(x - 2)
 }
 ```
@@ -596,7 +601,7 @@ Still, this particular `fib` implementation can be made to run as fast as before
 the original `fib` function to `fibBlocking` and defining `fib` with `withContext` wrapper on top of `fibBlocking`:
 
 ```kotlin
-suspend fun fib(x: Int): Int = withContext(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(Dispatchers.Default) {
     fibBlocking(x)
 }
 
@@ -606,7 +611,8 @@ fun fibBlocking(x: Int): Int =
 
 > You can get full code [here](kotlinx-coroutines-javafx/test/guide/example-ui-blocking-03.kt).
 
-You can now enjoy full-speed naive Fibonacci computation without blocking the UI thread. All we need is `withContext(CommonPool)`.
+You can now enjoy full-speed naive Fibonacci computation without blocking the main UI thread. 
+All we need is `withContext(Dispatchers.Default)`.
 
 Note, that because the `fib` function is invoked from the single actor in our code, there is at most one concurrent 
 computation of it at any given time, so this code has a natural limit on the resource utilization. 
@@ -627,7 +633,7 @@ from the UI thread:
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        GlobalScope.launch(UI) { 
+        GlobalScope.launch(Dispatchers.Main) { 
             println("Inside coroutine")
             delay(100)
             println("After delay")
@@ -648,7 +654,7 @@ Inside coroutine
 After delay
 ```
 
-As you can see, execution immediately continues after [launch], while the coroutine gets posted onto UI thread
+As you can see, execution immediately continues after [launch], while the coroutine gets posted onto the main UI thread
 for execution later. All UI dispatchers in `kotlinx.coroutines` are implemented this way. Why so? 
 
 Basically, the choice here is between "JS-style" asynchronous approach (async actions
@@ -669,7 +675,7 @@ coroutine immediately until its first suspension point as the following example 
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        GlobalScope.launch(UI, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
+        GlobalScope.launch(Dispatchers.Main, CoroutineStart.UNDISPATCHED) { // <--- Notice this change
             println("Inside coroutine")
             delay(100)                            // <--- And this is where coroutine suspends      
             println("After delay")
@@ -699,7 +705,6 @@ After delay
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
 [currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
-[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
@@ -714,7 +719,6 @@ After delay
 [LinkedListChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html
 <!--- MODULE kotlinx-coroutines-javafx -->
 <!--- INDEX kotlinx.coroutines.experimental.javafx -->
-[JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/-java-fx/index.html
 <!--- MODULE kotlinx-coroutines-android -->
 <!--- INDEX kotlinx.coroutines.experimental.android -->
 <!--- END -->

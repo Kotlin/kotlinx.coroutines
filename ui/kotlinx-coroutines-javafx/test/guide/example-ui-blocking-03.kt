@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.javafx.guide.blocking03
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -51,7 +51,7 @@ class ExampleApp : Application() {
 }
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
-    val eventActor = actor<MouseEvent>(UI, capacity = Channel.CONFLATED) {
+    val eventActor = actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
@@ -62,7 +62,7 @@ fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
 fun setup(hello: Text, fab: Circle) {
     var result = "none" // the last result
     // counting animation 
-    GlobalScope.launch(UI) {
+    GlobalScope.launch(Dispatchers.Main) {
         var counter = 0
         while (true) {
             hello.text = "${++counter}: $result"
@@ -77,7 +77,7 @@ fun setup(hello: Text, fab: Circle) {
     }
 }
 
-suspend fun fib(x: Int): Int = withContext(CommonPool) {
+suspend fun fib(x: Int): Int = withContext(Dispatchers.Default) {
     fibBlocking(x)
 }
 

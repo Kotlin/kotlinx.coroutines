@@ -4,21 +4,37 @@
 
 package kotlinx.coroutines.experimental.swing
 
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Delay
-import kotlinx.coroutines.experimental.DisposableHandle
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.swing.Swing.delay
-import java.awt.event.ActionListener
-import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
-import javax.swing.Timer
-import kotlin.coroutines.experimental.CoroutineContext
+import java.awt.event.*
+import java.util.concurrent.*
+import javax.swing.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
-object Swing : CoroutineDispatcher(), Delay {
+public val Dispatchers.Swing : SwingDispatcher
+    get() = kotlinx.coroutines.experimental.swing.Swing
+
+/**
+ * Dispatcher for Swing event dispatching thread.
+ *
+ * This class provides type-safety and a point for future extensions.
+ */
+public sealed class SwingDispatcher : CoroutineDispatcher(), Delay
+
+/**
+ * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
+ * @suppress **Deprecated**: Use [Dispatchers.Swing].
+ */
+@Deprecated(
+    message = "Use Dispatchers.Swing",
+    replaceWith = ReplaceWith("Dispatchers.Swing",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.swing.Swing"])
+)
+// todo: it will become an internal implementation object
+object Swing : SwingDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {

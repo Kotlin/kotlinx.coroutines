@@ -220,7 +220,7 @@ class GuideTest {
     fun testKotlinxCoroutinesExperimentalGuideContext01() {
         test("KotlinxCoroutinesExperimentalGuideContext01") { kotlinx.coroutines.experimental.guide.context01.main(emptyArray()) }.verifyLinesStartUnordered(
             "Unconfined            : I'm working in thread main",
-            "DefaultDispatcher     : I'm working in thread CommonPool-worker-1",
+            "Default               : I'm working in thread CommonPool-worker-1",
             "newSingleThreadContext: I'm working in thread MyOwnThread",
             "main runBlocking      : I'm working in thread main"
         )

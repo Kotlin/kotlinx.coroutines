@@ -10,8 +10,19 @@ import kotlin.coroutines.experimental.*
 private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
 
-@Suppress("PropertyName", "UnsafeCastFromDynamic")
-public actual val DefaultDispatcher: CoroutineDispatcher = when {
+/**
+ * The default [CoroutineDispatcher] that is used by all standard builders.
+ * @suppress **Deprecated**: Use [Dispatchers.Default].
+ */
+@Suppress("PropertyName")
+@Deprecated(
+    message = "Use Dispatchers.Default",
+    replaceWith = ReplaceWith("Dispatchers.Default",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
+public actual val DefaultDispatcher: CoroutineDispatcher
+    get() = Dispatchers.Default
+
+internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
     // The problem is that ReactNative has a `window` object with `addEventListener`, but it does not  really work.
     // For details see https://github.com/Kotlin/kotlinx.coroutines/issues/236
@@ -25,12 +36,13 @@ public actual val DefaultDispatcher: CoroutineDispatcher = when {
     else -> NodeDispatcher()
 }
 
-internal actual val DefaultDelay: Delay = DefaultDispatcher as Delay
+internal actual val DefaultDelay: Delay
+    get() = Dispatchers.Default as Delay
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== DefaultDispatcher && combined[ContinuationInterceptor] == null)
-        combined + DefaultDispatcher else combined
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        combined + Dispatchers.Default else combined
 }
 
 // No debugging facilities on JS

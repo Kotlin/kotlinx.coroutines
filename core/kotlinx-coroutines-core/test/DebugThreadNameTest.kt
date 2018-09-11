@@ -49,7 +49,7 @@ class DebugThreadNameTest : TestBase() {
     @Test
     fun testWithContext() = runTest {
         assertName("coroutine#1")
-        withContext(DefaultDispatcher) {
+        withContext(Dispatchers.Default) {
             assertName("coroutine#1")
             yield()
             assertName("coroutine#1")

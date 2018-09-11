@@ -19,7 +19,7 @@ import kotlin.coroutines.experimental.intrinsics.*
  * The coroutine is cancelled when the resulting job is [cancelled][Job.cancel].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -35,10 +35,10 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
- * @param block the coroutine code which will be invoked in the context of the provided scope
+ * @param block the coroutine code which will be invoked in the context of the provided scope.
  **/
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -64,7 +64,7 @@ public fun CoroutineScope.launch(
     replaceWith = ReplaceWith("GlobalScope.launch(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
 )
 public fun launch(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> Unit
@@ -80,7 +80,7 @@ public fun launch(
     replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
 )
 public fun launch(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null, // nullable for binary compatibility
     onCompletion: CompletionHandler? = null,
@@ -91,7 +91,7 @@ public fun launch(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun launch(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> Unit
@@ -101,7 +101,7 @@ public fun launch(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun launch(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
 ): Job =

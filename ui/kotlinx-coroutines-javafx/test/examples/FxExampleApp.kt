@@ -52,7 +52,7 @@ class FxTestApp : Application(), CoroutineScope {
     var animationIndex = 0
     var job = Job()
     override val coroutineContext: CoroutineContext
-        get() = JavaFx + job
+        get() = Dispatchers.JavaFx + job
 
     private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
@@ -71,7 +71,7 @@ class FxTestApp : Application(), CoroutineScope {
             var vy = speed
             var counter = 0
             while (true) {
-                JavaFx.awaitPulse()
+                awaitPulse()
                 node.x += vx
                 node.y += vy
                 val xRange = 0.0 .. scene.width - node.width
@@ -108,7 +108,7 @@ class FxTestApp : Application(), CoroutineScope {
             var sx = random.nextDouble() * maxSpeed
             var sy = random.nextDouble() * maxSpeed
             while (true) {
-                JavaFx.awaitPulse()
+                awaitPulse()
                 val dx = root.width / 2 - node.translateX
                 val dy = root.height / 2 - node.translateY
                 val dn = Math.sqrt(dx * dx + dy * dy)

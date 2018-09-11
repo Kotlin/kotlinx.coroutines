@@ -9,7 +9,7 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    launch(DefaultDispatcher + CoroutineName("test")) {
+    launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
 }

@@ -18,7 +18,7 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 /**
  * Returns a channel to read all element of the [Iterable].
  */
-public fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Unconfined): ReceiveChannel<E> =
+public fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
     GlobalScope.produce(context) {
         for (element in this@asReceiveChannel)
             send(element)
@@ -27,7 +27,7 @@ public fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Unconfin
 /**
  * Returns a channel to read all element of the [Sequence].
  */
-public fun <E> Sequence<E>.asReceiveChannel(context: CoroutineContext = Unconfined): ReceiveChannel<E> =
+public fun <E> Sequence<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
     GlobalScope.produce(context) {
         for (element in this@asReceiveChannel)
             send(element)
@@ -498,7 +498,7 @@ public suspend inline fun <E> ReceiveChannel<E>.singleOrNull(predicate: (E) -> B
  * The operation is _intermediate_ and _stateless_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
-public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Unconfined): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         require(n >= 0) { "Requested element count $n is less than zero." }
         var remaining: Int = n
@@ -520,7 +520,7 @@ public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Unconf
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.dropWhile(context: CoroutineContext = Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.dropWhile(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         for (e in this@dropWhile) {
             if (!predicate(e)) {
@@ -540,7 +540,7 @@ public fun <E> ReceiveChannel<E>.dropWhile(context: CoroutineContext = Unconfine
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.filter(context: CoroutineContext = Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.filter(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         for (e in this@filter) {
             if (predicate(e)) send(e)
@@ -556,7 +556,7 @@ public fun <E> ReceiveChannel<E>.filter(context: CoroutineContext = Unconfined, 
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.filterIndexed(context: CoroutineContext = Unconfined, predicate: suspend (index: Int, E) -> Boolean): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.filterIndexed(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (index: Int, E) -> Boolean): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         var index = 0
         for (e in this@filterIndexed) {
@@ -601,7 +601,7 @@ public suspend inline fun <E, C : SendChannel<E>> ReceiveChannel<E>.filterIndexe
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.filterNot(context: CoroutineContext = Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.filterNot(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
     filter(context) { !predicate(it) }
 
 /**
@@ -704,7 +704,7 @@ public suspend inline fun <E, C : SendChannel<E>> ReceiveChannel<E>.filterTo(des
  * The operation is _intermediate_ and _stateless_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
-public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Unconfined): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         if (n == 0) return@produce
         require(n >= 0) { "Requested element count $n is less than zero." }
@@ -724,7 +724,7 @@ public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Unconf
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E> ReceiveChannel<E>.takeWhile(context: CoroutineContext = Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
+public fun <E> ReceiveChannel<E>.takeWhile(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         for (e in this@takeWhile) {
             if (!predicate(e)) return@produce
@@ -908,7 +908,7 @@ public suspend fun <E> ReceiveChannel<E>.toSet(): Set<E> =
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R> ReceiveChannel<E>.flatMap(context: CoroutineContext = Unconfined, transform: suspend (E) -> ReceiveChannel<R>): ReceiveChannel<R> =
+public fun <E, R> ReceiveChannel<E>.flatMap(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (E) -> ReceiveChannel<R>): ReceiveChannel<R> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         for (e in this@flatMap) {
             transform(e).toChannel(this)
@@ -985,7 +985,7 @@ public suspend inline fun <E, K, V, M : MutableMap<in K, MutableList<V>>> Receiv
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark transform with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R> ReceiveChannel<E>.map(context: CoroutineContext = Unconfined, transform: suspend (E) -> R): ReceiveChannel<R> =
+public fun <E, R> ReceiveChannel<E>.map(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (E) -> R): ReceiveChannel<R> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         consumeEach {
             send(transform(it))
@@ -1002,7 +1002,7 @@ public fun <E, R> ReceiveChannel<E>.map(context: CoroutineContext = Unconfined, 
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R> ReceiveChannel<E>.mapIndexed(context: CoroutineContext = Unconfined, transform: suspend (index: Int, E) -> R): ReceiveChannel<R> =
+public fun <E, R> ReceiveChannel<E>.mapIndexed(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (index: Int, E) -> R): ReceiveChannel<R> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         var index = 0
         for (e in this@mapIndexed) {
@@ -1020,7 +1020,7 @@ public fun <E, R> ReceiveChannel<E>.mapIndexed(context: CoroutineContext = Uncon
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R : Any> ReceiveChannel<E>.mapIndexedNotNull(context: CoroutineContext = Unconfined, transform: suspend (index: Int, E) -> R?): ReceiveChannel<R> =
+public fun <E, R : Any> ReceiveChannel<E>.mapIndexedNotNull(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (index: Int, E) -> R?): ReceiveChannel<R> =
     mapIndexed(context, transform).filterNotNull()
 
 /**
@@ -1097,7 +1097,7 @@ public suspend inline fun <E, R, C : SendChannel<R>> ReceiveChannel<E>.mapIndexe
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R : Any> ReceiveChannel<E>.mapNotNull(context: CoroutineContext = Unconfined, transform: suspend (E) -> R?): ReceiveChannel<R> =
+public fun <E, R : Any> ReceiveChannel<E>.mapNotNull(context: CoroutineContext = Dispatchers.Unconfined, transform: suspend (E) -> R?): ReceiveChannel<R> =
     map(context, transform).filterNotNull()
 
 /**
@@ -1162,7 +1162,7 @@ public suspend inline fun <E, R, C : SendChannel<R>> ReceiveChannel<E>.mapTo(des
  * The operation is _intermediate_ and _stateless_.
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
-public fun <E> ReceiveChannel<E>.withIndex(context: CoroutineContext = Unconfined): ReceiveChannel<IndexedValue<E>> =
+public fun <E> ReceiveChannel<E>.withIndex(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<IndexedValue<E>> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         var index = 0
         for (e in this@withIndex) {
@@ -1191,7 +1191,7 @@ public fun <E> ReceiveChannel<E>.distinct(): ReceiveChannel<E> =
  * This function [consumes][ReceiveChannel.consume] all elements of the original [ReceiveChannel].
  */
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, K> ReceiveChannel<E>.distinctBy(context: CoroutineContext = Unconfined, selector: suspend (E) -> K): ReceiveChannel<E> =
+public fun <E, K> ReceiveChannel<E>.distinctBy(context: CoroutineContext = Dispatchers.Unconfined, selector: suspend (E) -> K): ReceiveChannel<E> =
     GlobalScope.produce(context, onCompletion = consumes()) {
         val keys = HashSet<K>()
         for (e in this@distinctBy) {
@@ -1529,7 +1529,7 @@ public infix fun <E, R> ReceiveChannel<E>.zip(other: ReceiveChannel<R>): Receive
  * This function [consumes][consume] all elements of both the original [ReceiveChannel] and the `other` one.
  */
 // todo: mark transform with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
-public fun <E, R, V> ReceiveChannel<E>.zip(other: ReceiveChannel<R>, context: CoroutineContext = Unconfined, transform: (a: E, b: R) -> V): ReceiveChannel<V> =
+public fun <E, R, V> ReceiveChannel<E>.zip(other: ReceiveChannel<R>, context: CoroutineContext = Dispatchers.Unconfined, transform: (a: E, b: R) -> V): ReceiveChannel<V> =
     GlobalScope.produce(context, onCompletion = consumesAll(this, other)) {
         val otherIterator = other.iterator()
         this@zip.consumeEach { element1 ->

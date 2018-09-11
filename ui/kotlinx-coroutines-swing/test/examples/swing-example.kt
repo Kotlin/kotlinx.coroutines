@@ -4,12 +4,12 @@
 
 package examples
 
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.swing.Swing
-import java.text.SimpleDateFormat
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.swing.*
+import java.text.*
 import java.util.*
-import java.util.concurrent.ForkJoinPool
-import kotlin.coroutines.experimental.suspendCoroutine
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 fun log(msg: String) = println("${SimpleDateFormat("yyyyMMdd-HHmmss.sss").format(Date())} [${Thread.currentThread().name}] $msg")
 
@@ -26,7 +26,7 @@ fun display(result: String) {
     log("Displaying result '$result'")
 }
 
-fun main(args: Array<String>) = runBlocking(Swing) {
+fun main(args: Array<String>) = runBlocking(Dispatchers.Swing) {
     try {
         // suspend while asynchronously making request
         val result = makeRequest()

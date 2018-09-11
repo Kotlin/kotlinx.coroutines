@@ -111,7 +111,7 @@ public val CoroutineScope.isActive: Boolean
  *
  * Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
  * and are not cancelled prematurely.
- * Another use of the global scope is [Unconfined] operators, which don't have any job associated with them.
+ * Another use of the global scope is operators running in [Dispatchers.Unconfined], which don't have any job associated with them.
  *
  * Application code usually should use application-defined [CoroutineScope], using
  * [async][CoroutineScope.async] or [launch][CoroutineScope.launch]
@@ -120,7 +120,7 @@ public val CoroutineScope.isActive: Boolean
  * Usage of this interface may look like this:
  *
  * ```
- * fun ReceiveChannel<Int>.sqrt(): ReceiveChannel<Double> = GlobalScope.produce(Unconfined) {
+ * fun ReceiveChannel<Int>.sqrt(): ReceiveChannel<Double> = GlobalScope.produce(Dispatchers.Unconfined) {
  *     for (number in this) {
  *         send(Math.sqrt(number))
  *     }

@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.javafx.guide.actor03
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -62,7 +62,7 @@ fun setup(hello: Text, fab: Circle) {
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     // launch one actor to handle all events on this node
-    val eventActor = GlobalScope.actor<MouseEvent>(UI, capacity = Channel.CONFLATED) { // <--- Changed here
+    val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) { // <--- Changed here
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor

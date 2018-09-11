@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.javafx.guide.actor01
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -62,7 +62,7 @@ fun setup(hello: Text, fab: Circle) {
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
     onMouseClicked = EventHandler { event ->
-        GlobalScope.launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) { 
             action(event)
         }
     }

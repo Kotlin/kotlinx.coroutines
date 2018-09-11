@@ -9,7 +9,13 @@ import kotlin.coroutines.experimental.*
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
 @Suppress("PropertyName")
+@Deprecated(
+    message = "Use Dispatchers.Default",
+    replaceWith = ReplaceWith("Dispatchers.Default",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
 public expect val DefaultDispatcher: CoroutineDispatcher
+
+internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
 @Suppress("PropertyName")
 internal expect val DefaultDelay: Delay

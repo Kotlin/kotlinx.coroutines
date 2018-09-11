@@ -54,7 +54,7 @@ class MDCContextTest : TestBase() {
         withContext(MDCContext()) {
             MDC.put("myKey", "myValue2")
             // Scoped launch with inherited MDContext element
-            launch(DefaultDispatcher) {
+            launch(Dispatchers.Default) {
                 assertEquals("myValue", MDC.get("myKey"))
                 expect(2)
             }.join()
@@ -100,7 +100,7 @@ class MDCContextTest : TestBase() {
     fun testContextWithContext() = runTest {
         MDC.put("myKey", "myValue")
         val mainDispatcher = kotlin.coroutines.experimental.coroutineContext[ContinuationInterceptor]!!
-        withContext(DefaultDispatcher + MDCContext()) {
+        withContext(Dispatchers.Default + MDCContext()) {
             assertEquals("myValue", MDC.get("myKey"))
             withContext(mainDispatcher) {
                 assertEquals("myValue", MDC.get("myKey"))

@@ -19,8 +19,8 @@ import kotlin.coroutines.experimental.*
 fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY
-) : BroadcastChannel<E> =
-    GlobalScope.broadcast(Unconfined, capacity = capacity, start = start, onCompletion = consumes()) {
+): BroadcastChannel<E> =
+    GlobalScope.broadcast(Dispatchers.Unconfined, capacity = capacity, start = start, onCompletion = consumes()) {
         for (e in this@broadcast) {
             send(e)
         }
@@ -32,18 +32,20 @@ fun <E> ReceiveChannel<E>.broadcast(
  */
 @Deprecated(
     message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.broadcast(context + parent, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.broadcast"])
+    replaceWith = ReplaceWith(
+        "GlobalScope.broadcast(context + parent, capacity, start, onCompletion, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.broadcast"]
+    )
 )
 public fun <E> broadcast(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
     block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> =
-    GlobalScope.broadcast(context + (parent ?: DefaultDispatcher), capacity, start, onCompletion, block)
+    GlobalScope.broadcast(context + (parent ?: Dispatchers.Default), capacity, start, onCompletion, block)
 
 /**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel
@@ -56,7 +58,7 @@ public fun <E> broadcast(
  * when the coroutine completes.
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -75,7 +77,7 @@ public fun <E> broadcast(
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (1 by default).
  * @param start coroutine start option. The default value is [CoroutineStart.LAZY].
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).

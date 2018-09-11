@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.javafx.guide.advanced01
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -53,7 +53,7 @@ class ExampleApp : Application() {
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        GlobalScope.launch(UI) { 
+        GlobalScope.launch(Dispatchers.Main) {
             println("Inside coroutine")
             delay(100)
             println("After delay")

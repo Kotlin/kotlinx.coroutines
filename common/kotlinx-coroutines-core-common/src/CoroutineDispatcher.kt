@@ -9,16 +9,15 @@ import kotlin.coroutines.experimental.*
 /**
  * Base class that shall be extended by all coroutine dispatcher implementations.
  *
- * The following standard implementations are provided by `kotlinx.coroutines`:
+ * The following standard implementations are provided by `kotlinx.coroutines` as properties on
+ * [Dispatchers] objects:
  *
- * * [DefaultDispatcher] -- is used by all standard builder if no dispatcher nor any other [ContinuationInterceptor]
- *   is specified in their context. It is currently equal to [CommonPool] (subject to change in the future).
+ * * [Dispatchers.Default] -- is used by all standard builder if no dispatcher nor any other [ContinuationInterceptor]
+ *   is specified in their context. It uses a common pool of shared background threads.
  *   This is an appropriate choice for compute-intensive coroutines that consume CPU resources.
- * * [CommonPool] -- schedules coroutine execution to a common pool of shared background threads designed
- *   to be used for compute-intensive code.
- * * [IO] -- uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
+ * * [Dispatchers.IO] -- uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive _blocking_
  *   operations (like file I/O and blocking socket I/O).
- * * [Unconfined] -- starts coroutine execution in the current call-frame until the first suspension.
+ * * [Dispatchers.Unconfined] -- starts coroutine execution in the current call-frame until the first suspension.
  *   On first  suspension the coroutine builder function returns.
  *   The coroutine resumes in whatever thread that is used by the
  *   corresponding suspending function, without confining it to any specific thread or pool.

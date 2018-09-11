@@ -34,7 +34,7 @@ class ListenableFutureTest : TestBase() {
     fun testAwaitWithContext() = runTest {
         val future = SettableFuture.create<Int>()
         val deferred = async {
-            withContext(DefaultDispatcher) {
+            withContext(Dispatchers.Default) {
                 future.await()
             }
         }
@@ -47,7 +47,7 @@ class ListenableFutureTest : TestBase() {
     fun testAwaitWithContextCancellation() = runTest(expected = {it is IOException}) {
         val future = SettableFuture.create<Int>()
         val deferred = async {
-            withContext(DefaultDispatcher) {
+            withContext(Dispatchers.Default) {
                 future.await()
             }
         }

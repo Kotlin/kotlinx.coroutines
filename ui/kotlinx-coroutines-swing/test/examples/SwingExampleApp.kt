@@ -33,7 +33,7 @@ private fun createAndShowGUI() {
     frame.pack()
     frame.isVisible = true
 
-    GlobalScope.launch(Swing) {
+    GlobalScope.launch(Dispatchers.Swing) {
         for (i in 1..10) {
             // 'append' method and consequent 'jProgressBar.setValue' are called
             // within Swing event dispatch thread

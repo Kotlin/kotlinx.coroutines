@@ -5,8 +5,8 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package kotlinx.coroutines.experimental.rx2.guide.operators03
 
-import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.selects.*
 import org.reactivestreams.*

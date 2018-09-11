@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
@@ -128,7 +127,7 @@ public interface Deferred<out T> : Job {
  * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -138,7 +137,7 @@ public interface Deferred<out T> : Job {
  * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
  * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
  *
- * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
@@ -167,7 +166,7 @@ public fun <T> CoroutineScope.async(
     replaceWith = ReplaceWith("GlobalScope.async(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
 )
 public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
@@ -183,7 +182,7 @@ public fun <T> async(
     replaceWith = ReplaceWith("GlobalScope.async(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
 )
 public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
@@ -194,7 +193,7 @@ public fun <T> async(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> T
@@ -204,7 +203,7 @@ public fun <T> async(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> async(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): Deferred<T> =

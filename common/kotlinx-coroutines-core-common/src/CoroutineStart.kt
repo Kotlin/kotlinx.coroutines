@@ -26,8 +26,8 @@ public enum class CoroutineStart {
      * function as most dispatchers do, then the coroutine code is dispatched for execution later, while the code that
      * invoked the coroutine builder continues execution.
      *
-     * Note, that [Unconfined] dispatcher always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
-     * function, so starting coroutine with [Unconfined] dispatcher by [DEFAULT] is the same as using [UNDISPATCHED].
+     * Note, that [Dispatchers.Unconfined] always returns `false` from its [CoroutineDispatcher.isDispatchNeeded]
+     * function, so starting coroutine with [Dispatchers.Unconfined] by [DEFAULT] is the same as using [UNDISPATCHED].
      *
      * If coroutine [Job] is cancelled before it even had a chance to start executing, then it will not start its
      * execution at all, but will complete with an exception.
@@ -59,7 +59,7 @@ public enum class CoroutineStart {
 
     /**
      * Immediately executes coroutine until its first suspension point _in the current thread_ as if the
-     * coroutine was started using [Unconfined] dispatcher. However, when coroutine is resumed from suspension
+     * coroutine was started using [Dispatchers.Unconfined]. However, when coroutine is resumed from suspension
      * it is dispatched according to the [CoroutineDispatcher] in its context.
      *
      * This is similar to [ATOMIC] in the sense that coroutine starts executing even if it was already cancelled,
