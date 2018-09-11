@@ -9,9 +9,6 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 
-/**
- * Test emitting multiple values with [publish].
- */
 class PublisherMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() = runBlocking {

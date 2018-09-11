@@ -7,13 +7,12 @@ package kotlinx.coroutines.experimental.rx2
 import kotlinx.coroutines.experimental.*
 import org.hamcrest.core.*
 import org.junit.*
-import kotlin.coroutines.experimental.*
 
 class FlowableTest : TestBase() {
     @Test
-    fun testBasicSuccess() = runBlocking<Unit> {
+    fun testBasicSuccess() = runBlocking {
         expect(1)
-        val observable = rxFlowable(coroutineContext) {
+        val observable = rxFlowable {
             expect(4)
             send("OK")
         }
@@ -28,9 +27,9 @@ class FlowableTest : TestBase() {
     }
 
     @Test
-    fun testBasicFailure() = runBlocking<Unit> {
+    fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxFlowable<String>(coroutineContext) {
+        val observable = rxFlowable<String> {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -48,9 +47,9 @@ class FlowableTest : TestBase() {
     }
 
     @Test
-    fun testBasicUnsubscribe() = runBlocking<Unit> {
+    fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val observable = rxFlowable<String>(coroutineContext) {
+        val observable = rxFlowable<String> {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()

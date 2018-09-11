@@ -12,7 +12,6 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 
 class MaybeTest : TestBase() {
     @Before
@@ -21,9 +20,9 @@ class MaybeTest : TestBase() {
     }
 
     @Test
-    fun testBasicSuccess() = runBlocking<Unit> {
+    fun testBasicSuccess() = runBlocking {
         expect(1)
-        val maybe = rxMaybe(coroutineContext) {
+        val maybe = rxMaybe {
             expect(4)
             "OK"
         }
@@ -38,9 +37,9 @@ class MaybeTest : TestBase() {
     }
 
     @Test
-    fun testBasicEmpty() = runBlocking<Unit> {
+    fun testBasicEmpty() = runBlocking {
         expect(1)
-        val maybe = rxMaybe(coroutineContext) {
+        val maybe = rxMaybe {
             expect(4)
             null
         }
@@ -54,9 +53,9 @@ class MaybeTest : TestBase() {
     }
 
     @Test
-    fun testBasicFailure() = runBlocking<Unit> {
+    fun testBasicFailure() = runBlocking {
         expect(1)
-        val maybe = rxMaybe(coroutineContext) {
+        val maybe = rxMaybe {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -75,9 +74,9 @@ class MaybeTest : TestBase() {
 
 
     @Test
-    fun testBasicUnsubscribe() = runBlocking<Unit> {
+    fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val maybe = rxMaybe(coroutineContext) {
+        val maybe = rxMaybe {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -99,7 +98,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeNoWait() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             "OK"
         }
 
@@ -120,7 +119,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeEmitAndAwait() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             Maybe.just("O").await() + "K"
         }
 
@@ -131,7 +130,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeWithDelay() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             Observable.timer(50, TimeUnit.MILLISECONDS).map { "O" }.awaitSingle() + "K"
         }
 
@@ -142,7 +141,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testMaybeException() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             Observable.just("O", "K").awaitSingle() + "K"
         }
 
@@ -153,7 +152,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             Observable.just("O", "#").awaitFirst() + "K"
         }
 
@@ -164,7 +163,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             Observable.just("#", "O").awaitLast() + "K"
         }
 
@@ -175,7 +174,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromObservable() {
-        val maybe = rxMaybe(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe {
             try {
                 Observable.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -190,7 +189,7 @@ class MaybeTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val maybe = rxMaybe<String>(DefaultDispatcher) {
+        val maybe = GlobalScope.rxMaybe<String> {
             throw IllegalStateException(Observable.just("O").awaitSingle() + "K")
         }
 

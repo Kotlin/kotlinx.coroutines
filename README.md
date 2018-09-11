@@ -20,11 +20,13 @@ launch {
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `delay` and `yield` top-level suspending functions.
+  * `Channel` and `Mutex` communication and synchronization primitives;
+  * `produce` coroutine builder;
+  * `select` expression support and more.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `CommonPool` coroutine context (default on JVM);
-  * `Channel` and `Mutex` communication and synchronization primitives;
-  * `produce` and `actor` coroutine builders;
-  * `select` expression support and more.
+  * `actor` coroutine builder;
+  * `IO` dispatcher for blocking coroutines
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:

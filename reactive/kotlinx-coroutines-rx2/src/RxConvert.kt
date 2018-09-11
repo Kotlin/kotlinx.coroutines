@@ -4,14 +4,10 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Completable
-import io.reactivex.Maybe
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import io.reactivex.Observable
-import io.reactivex.Single
-import kotlin.coroutines.experimental.CoroutineContext
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
+import kotlin.coroutines.experimental.*
 
 /**
  * Converts this job to the hot reactive completable that signals
@@ -22,7 +18,7 @@ import kotlin.coroutines.experimental.CoroutineContext
  *
  * @param context -- the coroutine context from which the resulting completable is going to be signalled
  */
-public fun Job.asCompletable(context: CoroutineContext): Completable = rxCompletable(context) {
+public fun Job.asCompletable(context: CoroutineContext): Completable = GlobalScope.rxCompletable(context) {
     this@asCompletable.join()
 }
 
@@ -35,7 +31,7 @@ public fun Job.asCompletable(context: CoroutineContext): Completable = rxComplet
  *
  * @param context -- the coroutine context from which the resulting maybe is going to be signalled
  */
-public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMaybe<T>(context) {
+public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = GlobalScope.rxMaybe(context) {
     this@asMaybe.await()
 }
 
@@ -48,7 +44,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = rxMay
  *
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
-public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = rxSingle<T>(context) {
+public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
     this@asSingle.await()
 }
 
@@ -60,28 +56,7 @@ public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = rxSi
  *
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = rxObservable(context) {
+public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
     for (t in this@asObservable)
         send(t)
 }
-
-/**
- * @suppress **Deprecated**: Renamed to [asCompletable]
- */
-@Deprecated(message = "Renamed to `asCompletable`",
-    replaceWith = ReplaceWith("asCompletable(context)"))
-public fun Job.toCompletable(context: CoroutineContext): Completable = asCompletable(context)
-
-/**
- * @suppress **Deprecated**: Renamed to [asSingle]
- */
-@Deprecated(message = "Renamed to `asSingle`",
-    replaceWith = ReplaceWith("asSingle(context)"))
-public fun <T> Deferred<T>.toSingle(context: CoroutineContext): Single<T> = asSingle(context)
-
-/**
- * @suppress **Deprecated**: Renamed to [asObservable]
- */
-@Deprecated(message = "Renamed to `asObservable`",
-    replaceWith = ReplaceWith("asObservable(context)"))
-public fun <T> ReceiveChannel<T>.toObservable(context: CoroutineContext): Observable<T> = asObservable(context)

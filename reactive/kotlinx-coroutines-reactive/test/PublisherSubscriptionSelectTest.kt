@@ -10,10 +10,9 @@ import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
-import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
-class PublisherSubscriptionSelectTest(val request: Int) : TestBase() {
+class PublisherSubscriptionSelectTest(private val request: Int) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "request = {0}")
         @JvmStatic
@@ -24,7 +23,7 @@ class PublisherSubscriptionSelectTest(val request: Int) : TestBase() {
     fun testSelect() = runTest {
         // source with n ints
         val n = 1000 * stressTestMultiplier
-        val source = publish(coroutineContext) { repeat(n) { send(it) } }
+        val source = publish { repeat(n) { send(it) } }
         var a = 0
         var b = 0
         // open two subs

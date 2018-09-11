@@ -7,13 +7,12 @@ package kotlinx.coroutines.experimental.rx1
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import rx.*
-import kotlin.coroutines.experimental.*
 
 class ObservableBackpressureTest : TestBase() {
     @Test
-    fun testCancelWhileBPSuspended() = runBlocking<Unit> {
+    fun testCancelWhileBPSuspended() = runBlocking {
         expect(1)
-        val observable = rxObservable(coroutineContext) {
+        val observable = rxObservable {
             expect(5)
             send("A") // will not suspend, because an item was requested
             expect(7)

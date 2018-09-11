@@ -14,9 +14,9 @@ class ConvertTest : TestBase() {
     class TestException(s: String): RuntimeException(s)
 
     @Test
-    fun testToCompletableSuccess() = runBlocking<Unit> {
+    fun testToCompletableSuccess() = runBlocking {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
         }
         val completable = job.asCompletable(coroutineContext)
@@ -29,9 +29,9 @@ class ConvertTest : TestBase() {
     }
     
     @Test
-    fun testToCompletableFail() = runBlocking<Unit> {
+    fun testToCompletableFail() = runBlocking {
         expect(1)
-        val job = async(coroutineContext + NonCancellable) { // don't kill parent on exception
+        val job = async(NonCancellable) { // don't kill parent on exception
             expect(3)
             throw RuntimeException("OK")
         }
@@ -80,7 +80,7 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservable() {
-        val c = GlobalScope.produce(DefaultDispatcher) {
+        val c = GlobalScope.produce {
             delay(50)
             send("O")
             delay(50)
@@ -94,14 +94,14 @@ class ConvertTest : TestBase() {
 
     @Test
     fun testToObservableFail() {
-        val c = GlobalScope.produce(DefaultDispatcher) {
+        val c = GlobalScope.produce {
             delay(50)
             send("O")
             delay(50)
             throw TestException("K")
         }
         val observable = c.asObservable(Unconfined)
-        val single = rxSingle(Unconfined) {
+        val single = GlobalScope.rxSingle(Unconfined) {
             var result = ""
             try {
                 observable.consumeEach { result += it }

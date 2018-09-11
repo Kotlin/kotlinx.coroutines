@@ -19,37 +19,38 @@ import kotlin.coroutines.experimental.*
  * | Returns a null                        | `success`
  * | Failure with exception or unsubscribe | `error`
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
- *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
+ * @param context context of the coroutine..
  * @param block the coroutine code.
  */
-fun <T> mono(
-    context: CoroutineContext = DefaultDispatcher,
-    parent: Job? = null,
+fun <T> CoroutineScope.mono(
+    context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?
 ): Mono<T> = Mono.create { sink ->
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val coroutine = MonoCoroutine(newContext, sink)
     sink.onDispose(coroutine)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-@JvmOverloads // for binary compatibility with older code compiled before context had a default
+/**
+ * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
+ * @suppress **Deprecated** Use [CoroutineScope.mono] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.mono(context, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.mono"])
+)
 fun <T> mono(
     context: CoroutineContext = DefaultDispatcher,
+    parent: Job? = null,
     block: suspend CoroutineScope.() -> T?
-): Mono<T> =
-    mono(context, block = block)
+): Mono<T> = GlobalScope.mono(context + (parent ?: EmptyCoroutineContext), block)
 
 private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,

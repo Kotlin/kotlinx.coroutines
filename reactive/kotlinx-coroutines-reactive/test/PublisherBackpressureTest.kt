@@ -7,11 +7,10 @@ package kotlinx.coroutines.experimental.reactive
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
 
 class PublisherBackpressureTest : TestBase() {
     @Test
-    fun testCancelWhileBPSuspended() = runBlocking<Unit> {
+    fun testCancelWhileBPSuspended() = runBlocking {
         expect(1)
         val observable = publish(coroutineContext) {
             expect(5)

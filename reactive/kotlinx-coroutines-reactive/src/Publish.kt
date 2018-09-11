@@ -26,37 +26,38 @@ import kotlin.coroutines.experimental.*
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
- * The parent job may be also explicitly specified using [parent] parameter.
-
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
- * @param parent explicitly specifies the parent job, overrides job from the [context] (if any).
+ * @param context context of the coroutine.
  * @param block the coroutine code.
  */
-public fun <T> publish(
-    context: CoroutineContext = DefaultDispatcher,
-    parent: Job? = null,
+public fun <T> CoroutineScope.publish(
+    context: CoroutineContext = EmptyCoroutineContext,
     block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
-    val newContext = newCoroutineContext(context, parent)
+    val newContext = newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-@JvmOverloads // for binary compatibility with older code compiled before context had a default
+/**
+ * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
+ * @suppress **Deprecated** Use [CoroutineScope.publish] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.publish(context, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactive.publish"])
+)
 public fun <T> publish(
     context: CoroutineContext = DefaultDispatcher,
+    parent: Job? = null,
     block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> =
-    publish(context, block = block)
+): Publisher<T> = GlobalScope.publish(context + (parent ?: EmptyCoroutineContext), block)
 
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError

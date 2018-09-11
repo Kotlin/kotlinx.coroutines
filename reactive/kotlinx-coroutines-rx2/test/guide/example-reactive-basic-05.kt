@@ -8,11 +8,10 @@ package kotlinx.coroutines.experimental.rx2.guide.basic05
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.*
-import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
-    val source = rxFlowable(coroutineContext) {
+    val source = rxFlowable {
         for (x in 1..3) {
             send(x) // this is a suspending function
             println("Sent $x") // print after successfully sent item

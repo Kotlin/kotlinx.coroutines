@@ -7,11 +7,10 @@ package kotlinx.coroutines.experimental.rx2.guide.basic02
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
-    val source = publish<Int>(coroutineContext) {
+    val source = publish<Int> {
     //           ^^^^^^^  <---  Difference from the previous examples is here
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {

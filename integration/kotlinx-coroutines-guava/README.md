@@ -53,7 +53,7 @@ Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/L
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
 <!--- MODULE kotlinx-coroutines-guava -->
 <!--- INDEX kotlinx.coroutines.experimental.guava -->
-[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/future.html
+[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-coroutine-scope/future.html
 [com.google.common.util.concurrent.ListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/index.html
 [com.google.common.util.concurrent.ListenableFuture.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/await.html
 [kotlinx.coroutines.experimental.Deferred.asListenableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-guava/kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-deferred/as-listenable-future.html

@@ -4,18 +4,15 @@
 
 package kotlinx.coroutines.experimental.reactive
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.TestBase
-import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.withTimeout
-import org.junit.Test
+import kotlinx.coroutines.experimental.*
+import org.junit.*
 import java.util.*
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 class PublisherCompletionStressTest : TestBase() {
-    val N_REPEATS = 10_000 * stressTestMultiplier
+    private val N_REPEATS = 10_000 * stressTestMultiplier
 
-    fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
+    private fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = publish(context) {
         for (x in start until start + count) send(x)
     }
 
