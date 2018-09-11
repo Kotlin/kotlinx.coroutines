@@ -18,9 +18,9 @@ import kotlin.coroutines.experimental.*
  *
  * ```
  * class MyActivity : AppCompatActivity(), CoroutineScope {
- *
+ *     lateinit var job: Job
  *     override val coroutineContext: CoroutineContext
- *         get() = job + UI
+ *         get() = Dispatchers.Main + job
  *
  *     override fun onCreate(savedInstanceState: Bundle?) {
  *         super.onCreate(savedInstanceState)
@@ -34,17 +34,15 @@ import kotlin.coroutines.experimental.*
  *
  *     /*
  *      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
- *      * in this method throws an exception, then all nested coroutines will be cancelled.
+ *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
- *     fun loadDataFromUI() = launch { // <- extension on current activity, launched in CommonPool
- *        val ioData = async(IO) { // <- extension on launch scope, launched in IO dispatcher
- *          // long computation
+ *     fun loadDataFromUI() = launch { // <- extension on current activity, launched in the main thread
+ *        val ioData = async(Dispatchers.IO) { // <- extension on launch scope, launched in IO dispatcher
+ *            // blocking I/O operation
  *        }
- *
- *        withContext(UI) {
- *            val data = ioData.await()
- *            draw(data)
- *        }
+ *        // do something else concurrently with I/O
+ *        val data = ioData.await() // wait for result of I/O
+ *        draw(data) // can draw in the main thread
  *     }
  * }
  *

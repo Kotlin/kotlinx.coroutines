@@ -14,8 +14,8 @@ Coroutine dispatchers implementing [CoroutineDispatcher]:
  
 | **Name**                    | **Description**
 | --------------------------- | ---------------
-| [DefaultDispatcher]         | Posts execution to JS event loop
-| [Unconfined]                | Does not confine coroutine execution in any way
+| [Dispatchers.Default]       | Posts execution to JS event loop
+| [Dispatchers.Unconfined]    | Does not confine coroutine execution in any way
 
 More context elements:
 
@@ -45,7 +45,7 @@ Top-level suspending functions:
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
 helper function. [NonCancellable] job object is provided to suppress cancellation with 
-`run(NonCancellable) {...}` block of code.
+`withContext(NonCancellable) {...}` block of code.
 
 [Select][kotlinx.coroutines.experimental.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
@@ -67,7 +67,8 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html
-[DefaultDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
+[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
 [NonCancellable]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html
 [CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-exception-handler/index.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html

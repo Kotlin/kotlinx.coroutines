@@ -862,7 +862,7 @@ it is going to be executed in Rx computation thread pool. The output is going to
 
 ### Threads with coroutines
 
-In the world of coroutines `Schedulers.computation()` roughly corresponds to [CommonPool], 
+In the world of coroutines `Schedulers.computation()` roughly corresponds to [Dispatchers.Default], 
 so the previous example is similar to the following one:
 
 <!--- INCLUDE
@@ -881,7 +881,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) {
-    Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
+    Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
 }
@@ -901,8 +901,8 @@ The produced output is going to be similar to:
 
 Here we've used Rx 
 [subscribe](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html#subscribe(io.reactivex.functions.Consumer))
-operator that does not have its own scheduler and operates on the same thread that the publisher -- on a `CommonPool`
-in this example.
+operator that does not have its own scheduler and operates on the same thread that the publisher -- on a default
+shared pool of threads in this example.
 
 ### Rx observeOn 
 
@@ -931,7 +931,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) {
-    Flowable.fromPublisher(rangeWithInterval(CommonPool, 100, 1, 3))
+    Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
@@ -1058,6 +1058,7 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html

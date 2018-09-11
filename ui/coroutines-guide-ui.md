@@ -182,7 +182,9 @@ This section shows basic usage of coroutines in UI applications.
 
 ### Launch UI coroutine
 
-The `kotlinx-coroutines-javafx` module contains [Dispatchers.JavaFx] dispatcher that dispatches coroutine execution to
+The `kotlinx-coroutines-javafx` module contains 
+[Dispatchers.JavaFx][kotlinx.coroutines.experimental.Dispatchers.JavaFx] 
+dispatcher that dispatches coroutine execution to
 the JavaFx application thread. We import it as `Main` to make all the presented examples 
 easily portable to Android:
  
@@ -555,7 +557,7 @@ when the parent job is cancelled. An example of that is shown in the
 
 The fix for the blocking operations on the main UI thread is quite straightforward with coroutines. We'll 
 convert our "blocking" `fib` function to a non-blocking suspending function that runs the computation in 
-the background thread by using [withContext] function to change its execution context to [Dispathers.Default] that is 
+the background thread by using [withContext] function to change its execution context to [Dispatchers.Default] that is 
 backed by the background pool of threads. 
 Notice, that `fib` function is now marked with `suspend` modifier. It does not block the coroutine that
 it is invoked from anymore, but suspends its execution when the computation in the background thread is working:
@@ -633,7 +635,7 @@ from the UI thread:
 fun setup(hello: Text, fab: Circle) {
     fab.onMouseClicked = EventHandler {
         println("Before launch")
-        GlobalScope.launch(Dispatchers.Main) { 
+        GlobalScope.launch(Dispatchers.Main) {
             println("Inside coroutine")
             delay(100)
             println("After delay")
@@ -705,6 +707,7 @@ After delay
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
 [currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
 [CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
@@ -719,6 +722,7 @@ After delay
 [LinkedListChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html
 <!--- MODULE kotlinx-coroutines-javafx -->
 <!--- INDEX kotlinx.coroutines.experimental.javafx -->
+[kotlinx.coroutines.experimental.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/kotlinx.coroutines.experimental.-dispatchers/-java-fx.html
 <!--- MODULE kotlinx-coroutines-android -->
 <!--- INDEX kotlinx.coroutines.experimental.android -->
 <!--- END -->
