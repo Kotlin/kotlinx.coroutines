@@ -7,4 +7,4 @@ for tutorial on this module.
 
 # Package kotlinx.coroutines.experimental.swing
 
-Provides `Swing` context for Swing UI applications.
+Provides `Dispatchers.Swing` context for Swing UI applications.

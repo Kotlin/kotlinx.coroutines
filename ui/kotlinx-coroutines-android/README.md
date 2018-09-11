@@ -7,4 +7,4 @@ for tutorial on this module.
 
 # Package kotlinx.coroutines.experimental.android
 
-Provides `UI` context for Android applications.
+Provides `Dispatchers.Main` context for Android applications.

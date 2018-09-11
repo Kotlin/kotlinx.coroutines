@@ -22,7 +22,7 @@ class ThreadLocalTest : TestBase() {
     @Test
     fun testThreadLocal() = runTest {
         assertNull(stringThreadLocal.get())
-        val deferred = async(CommonPool + stringThreadLocal.asContextElement("value")) {
+        val deferred = async(Dispatchers.Default + stringThreadLocal.asContextElement("value")) {
             assertEquals("value", stringThreadLocal.get())
             withContext(executor) {
                 assertEquals("value", stringThreadLocal.get())
@@ -38,7 +38,7 @@ class ThreadLocalTest : TestBase() {
     @Test
     fun testThreadLocalInitialValue() = runTest {
         intThreadLocal.set(42)
-        val deferred = async(CommonPool + intThreadLocal.asContextElement(239)) {
+        val deferred = async(Dispatchers.Default + intThreadLocal.asContextElement(239)) {
             assertEquals(239, intThreadLocal.get())
             withContext(executor) {
                 assertEquals(239, intThreadLocal.get())
@@ -55,7 +55,7 @@ class ThreadLocalTest : TestBase() {
         stringThreadLocal.set("test")
         intThreadLocal.set(314)
 
-        val deferred = async(CommonPool
+        val deferred = async(Dispatchers.Default
                 + intThreadLocal.asContextElement(value = 239) + stringThreadLocal.asContextElement(value = "pew")) {
             assertEquals(239, intThreadLocal.get())
             assertEquals("pew", stringThreadLocal.get())
@@ -110,7 +110,7 @@ class ThreadLocalTest : TestBase() {
     fun testThreadLocalModification() = runTest {
         stringThreadLocal.set("main")
 
-        val deferred = async(CommonPool
+        val deferred = async(Dispatchers.Default
                 + stringThreadLocal.asContextElement("initial")) {
             assertEquals("initial", stringThreadLocal.get())
 
@@ -141,7 +141,7 @@ class ThreadLocalTest : TestBase() {
     fun testThreadLocalModificationMutableBox() = runTest {
         myCounterLocal.set(Counter(42))
 
-        val deferred = async(CommonPool
+        val deferred = async(Dispatchers.Default
                 + myCounterLocal.asContextElement(Counter(0))) {
             assertEquals(0, myCounterLocal.get().cnt)
 
@@ -171,7 +171,7 @@ class ThreadLocalTest : TestBase() {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = 42
-            GlobalScope.async(CommonPool + intThreadLocal.asContextElement(42)) {
+            GlobalScope.async(Dispatchers.Default + intThreadLocal.asContextElement(42)) {
 
                 assertSame(data, intThreadLocal.get())
                 expect(2)

@@ -60,7 +60,7 @@ class ThreadContextElementTest : TestBase() {
         expect(1)
         newSingleThreadContext("withContext").use {
             val data = MyData()
-            GlobalScope.async(CommonPool + MyElement(data)) {
+            GlobalScope.async(Dispatchers.Default + MyElement(data)) {
                 assertSame(data, myThreadLocal.get())
                 expect(2)
 

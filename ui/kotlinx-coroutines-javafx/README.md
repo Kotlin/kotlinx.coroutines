@@ -7,4 +7,4 @@ for tutorial on this module.
 
 # Package kotlinx.coroutines.experimental.javafx
 
-Provides `JavaFx` context for JavaFX UI applications.
+Provides `Dispatchers.JavaFx` context for JavaFX UI applications.
