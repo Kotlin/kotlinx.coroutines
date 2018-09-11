@@ -9,6 +9,7 @@ import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.experimental.CancellationException
 import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.ignoreLostThreads
@@ -19,7 +20,6 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlin.coroutines.experimental.coroutineContext
 
 class TaskTest : TestBase() {
     @Before
@@ -55,7 +55,7 @@ class TaskTest : TestBase() {
 
     @Test
     fun testTaskCancelled() {
-        val deferred = async {
+        val deferred = GlobalScope.async {
             throw CancellationException()
         }
 
@@ -70,7 +70,7 @@ class TaskTest : TestBase() {
 
     @Test
     fun testTaskThrowable() {
-        val deferred = async {
+        val deferred = GlobalScope.async {
             throw OutOfMemoryError()
         }
 

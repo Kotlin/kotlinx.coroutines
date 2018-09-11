@@ -1,10 +1,11 @@
 package android.os
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.GlobalScope
+import kotlinx.coroutines.experimental.launch
 
 class Handler(val looper: Looper) {
     fun post(r: Runnable): Boolean {
-        CommonPool.executor.execute(r)
+        GlobalScope.launch { r.run() }
         return true
     }
 }
