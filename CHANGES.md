@@ -1,5 +1,26 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.26.0
+* Major rework of `kotlinx.coroutines` concurrency model (see #410 for a full explanation of the rationale behind this change):
+  * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
+  * As a consequence, all nested coroutines launched via builders now automatically establish parent-child relationship and inherit `CoroutineDispatcher`.
+  * All coroutine builders use `Dispatchers.Default` by default if `CoroutineInterceptor` is not present in their context.
+  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
+  * `withContext` `block` argument has `CoroutineScope` as a receiver.
+  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
+  * `currentScope` and `coroutineScope` builders are introduced to extract and provide `CoroutineScope`.
+  * Factory methods to create `CoroutineScope` from `CoroutineContext` are introduced.
+  * `CoroutineScope.isActive` became an extension property.
+  * New sections about structured concurrency in core guide: ["Structured concurrency"](coroutines-guide.md#structured-concurrency), ["Scope builder"](coroutines-guide.md#scope-builder) and ["Structured concurrency with async"](coroutines-guide.md#structured-concurrency-with-async).
+  * New section in UI guide with Android example: ["Structured concurrency, lifecycle and coroutine parent-child hierarchy"](ui/coroutines-guide-ui.md#structured-concurrency,-lifecycle-and-coroutine-parent-child-hierarchy).
+  * Deprecated reactive API is removed.
+* Dispatchers are renamed and grouped in the Dispatchers object (see #41 and #533):
+  * Dispatcher names are consistent.
+  * Old dispatchers including `CommonPool` are deprecated.
+* Fixed bug with JS error in rare cases in `invokeOnCompletion(onCancelling = true)`.
+* Fixed loading of Android exception handler when `Thread.contextClassLoader` is mocked (see #530).
+* Fixed bug when `IO` dispatcher silently hung (see #524 and #525) .
+
 ## Version 0.25.3
 
 * Distribution no longer uses multi-version jar which is not supported on Android (see #510).
