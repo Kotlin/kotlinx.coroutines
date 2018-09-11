@@ -5,14 +5,14 @@
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
 package kotlinx.coroutines.experimental.rx2.guide.operators03
 
-import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.reactive.*
 import kotlinx.coroutines.experimental.selects.*
 import org.reactivestreams.*
 import kotlin.coroutines.experimental.*
 
-fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = publish<T>(context) {
+fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>) = GlobalScope.publish<T>(context) {
     this@takeUntil.openSubscription().consume { // explicitly open channel to Publisher<T>
         val current = this
         other.openSubscription().consume { // explicitly open channel to Publisher<U>
@@ -25,7 +25,7 @@ fun <T, U> Publisher<T>.takeUntil(context: CoroutineContext, other: Publisher<U>
     }
 }
 
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
@@ -33,7 +33,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val slowNums = rangeWithInterval(coroutineContext, 200, 1, 10)         // numbers with 200ms interval
-    val stop = rangeWithInterval(coroutineContext, 500, 1, 10)             // the first one after 500ms
+    val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
+    val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
     slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
 }

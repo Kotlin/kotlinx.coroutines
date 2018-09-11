@@ -112,7 +112,7 @@ class ConvertTest : TestBase() {
             throw TestException("K")
         }
         val flux = c.asFlux(Unconfined)
-        val mono = mono(Unconfined) {
+        val mono = GlobalScope.mono(Unconfined) {
             var result = ""
             try {
                 flux.consumeEach { result += it }

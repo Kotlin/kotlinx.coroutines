@@ -11,11 +11,7 @@ import org.junit.*
 import org.junit.Assert.*
 import reactor.core.publisher.*
 import java.time.Duration.*
-import kotlin.coroutines.experimental.*
 
-/**
- * Tests emitting single item with [mono].
- */
 class MonoTest : TestBase() {
     @Before
     fun setup() {
@@ -25,7 +21,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicSuccess() = runBlocking {
         expect(1)
-        val mono = mono(coroutineContext) {
+        val mono = mono {
             expect(4)
             "OK"
         }
@@ -42,7 +38,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val mono = mono(coroutineContext) {
+        val mono = mono {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -62,7 +58,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicEmpty() = runBlocking {
         expect(1)
-        val mono = mono(coroutineContext) {
+        val mono = mono {
             expect(4)
             null
         }
@@ -78,7 +74,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicUnsubscribe() = runBlocking {
         expect(1)
-        val mono = mono(coroutineContext) {
+        val mono = mono {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
@@ -100,7 +96,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoNoWait() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             "OK"
         }
 
@@ -116,7 +112,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoEmitAndAwait() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             Mono.just("O").awaitSingle() + "K"
         }
 
@@ -127,7 +123,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoWithDelay() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             Flux.just("O").delayElements(ofMillis(50)).awaitSingle() + "K"
         }
 
@@ -138,7 +134,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testMonoException() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             Flux.just("O", "K").awaitSingle() + "K"
         }
 
@@ -149,7 +145,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitFirst() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             Flux.just("O", "#").awaitFirst() + "K"
         }
 
@@ -160,7 +156,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testAwaitLast() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             Flux.just("#", "O").awaitLast() + "K"
         }
 
@@ -171,7 +167,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromFlux() {
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             try {
                 Flux.error<String>(RuntimeException("O")).awaitFirst()
             } catch (e: RuntimeException) {
@@ -186,7 +182,7 @@ class MonoTest : TestBase() {
 
     @Test
     fun testExceptionFromCoroutine() {
-        val mono = mono<String>(DefaultDispatcher) {
+        val mono = GlobalScope.mono<String> {
             throw IllegalStateException(Flux.just("O").awaitSingle() + "K")
         }
 

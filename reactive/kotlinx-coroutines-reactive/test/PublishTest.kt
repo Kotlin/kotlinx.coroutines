@@ -9,13 +9,12 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
 
 class PublishTest : TestBase() {
     @Test
-    fun testBasicEmpty() = runBlocking<Unit> {
+    fun testBasicEmpty() = runBlocking {
         expect(1)
-        val publisher = publish<Int>(coroutineContext) {
+        val publisher = publish<Int> {
             expect(5)
         }
         expect(2)
@@ -31,9 +30,9 @@ class PublishTest : TestBase() {
     }
 
     @Test
-    fun testBasicSingle() = runBlocking<Unit> {
+    fun testBasicSingle() = runBlocking {
         expect(1)
-        val publisher = publish<Int>(coroutineContext) {
+        val publisher = publish {
             expect(5)
             send(42)
             expect(7)

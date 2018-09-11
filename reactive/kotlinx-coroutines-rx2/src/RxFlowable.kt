@@ -4,13 +4,10 @@
 
 package kotlinx.coroutines.experimental.rx2
 
-import io.reactivex.Flowable
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.ProducerScope
-import kotlinx.coroutines.experimental.reactive.publish
+import io.reactivex.*
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.reactive.*
 import kotlin.coroutines.experimental.*
 
 /**
@@ -27,17 +24,30 @@ import kotlin.coroutines.experimental.*
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  *
- * The [context] for the new coroutine can be explicitly specified.
- * See [CoroutineDispatcher] for the standard context implementations that are provided by `kotlinx.coroutines`.
- * The [coroutineContext] of the parent coroutine may be used,
- * in which case the [Job] of the resulting coroutine is a child of the job of the parent coroutine.
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
  * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+public fun <T> CoroutineScope.rxFlowable(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
+): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
+
+/**
+ * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
+ * @suppress **Deprecated** Use [CoroutineScope.rxFlowable] instead.
+ */
+@Deprecated(
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith("GlobalScope.rxFlowable(context, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxFlowable"])
+)
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 public fun <T> rxFlowable(
     context: CoroutineContext = DefaultDispatcher,
     block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = Flowable.fromPublisher(publish(context, block = block))
+): Flowable<T> = GlobalScope.rxFlowable(context, block)

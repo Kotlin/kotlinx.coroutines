@@ -14,19 +14,19 @@ fun <T, R> Publisher<T>.fusedFilterMap(
     context: CoroutineContext,   // the context to execute this coroutine in
     predicate: (T) -> Boolean,   // the filter predicate
     mapper: (T) -> R             // the mapper function
-) = publish<R>(context) {
+) = GlobalScope.publish<R>(context) {
     consumeEach {                // consume the source stream 
         if (predicate(it))       // filter part
             send(mapper(it))     // map part
     }        
 }
 
-fun range(context: CoroutineContext, start: Int, count: Int) = publish<Int>(context) {
+fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) send(x)
 }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-   range(coroutineContext, 1, 5)
+   range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings
 }

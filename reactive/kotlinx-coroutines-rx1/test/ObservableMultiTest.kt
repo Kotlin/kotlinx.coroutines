@@ -17,7 +17,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             repeat(n) { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -28,7 +28,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -47,7 +47,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(Unconfined) {
+        val observable = GlobalScope.rxObservable(Unconfined) {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -58,7 +58,7 @@ class ObservableMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             Observable.range(0, n).consumeEach { send(it) }
         }
         checkSingleValue(observable.toList()) { list ->
@@ -68,11 +68,11 @@ class ObservableMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val observable = rxObservable(DefaultDispatcher) {
+        val observable = GlobalScope.rxObservable {
             send("O")
             throw IOException("K")
         }
-        val single = rxSingle(DefaultDispatcher) {
+        val single = GlobalScope.rxSingle {
             var result = ""
             try {
                 observable.consumeEach { result += it }

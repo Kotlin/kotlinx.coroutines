@@ -29,8 +29,8 @@ Conversion functions:
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 <!--- MODULE kotlinx-coroutines-reactor -->
 <!--- INDEX kotlinx.coroutines.experimental.reactor -->
-[mono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/mono.html
-[flux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/flux.html
+[mono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-coroutine-scope/mono.html
+[flux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-coroutine-scope/flux.html
 [kotlinx.coroutines.experimental.Job.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-job/as-mono.html
 [kotlinx.coroutines.experimental.Deferred.asMono]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.-deferred/as-mono.html
 [kotlinx.coroutines.experimental.channels.ReceiveChannel.asFlux]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-reactor/kotlinx.coroutines.experimental.reactor/kotlinx.coroutines.experimental.channels.-receive-channel/as-flux.html

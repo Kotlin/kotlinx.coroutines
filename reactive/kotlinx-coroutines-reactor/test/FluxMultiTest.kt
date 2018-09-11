@@ -11,14 +11,11 @@ import org.junit.Assert.*
 import reactor.core.publisher.*
 import java.io.*
 
-/**
- * Test emitting multiple values with [flux].
- */
 class FluxMultiTest : TestBase() {
     @Test
     fun testNumbers() {
         val n = 100 * stressTestMultiplier
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             repeat(n) { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -29,7 +26,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testConcurrentStress() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             // concurrent emitters (many coroutines)
             val jobs = List(n) {
                 // launch
@@ -48,7 +45,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testIteratorResendUnconfined() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(Unconfined) {
+        val flux = GlobalScope.flux(Unconfined) {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -59,7 +56,7 @@ class FluxMultiTest : TestBase() {
     @Test
     fun testIteratorResendPool() {
         val n = 10_000 * stressTestMultiplier
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             Flux.range(0, n).consumeEach { send(it) }
         }
         checkMonoValue(flux.collectList()) { list ->
@@ -69,11 +66,11 @@ class FluxMultiTest : TestBase() {
 
     @Test
     fun testSendAndCrash() {
-        val flux = flux(DefaultDispatcher) {
+        val flux = GlobalScope.flux {
             send("O")
             throw IOException("K")
         }
-        val mono = mono(DefaultDispatcher) {
+        val mono = GlobalScope.mono {
             var result = ""
             try {
                 flux.consumeEach { result += it }

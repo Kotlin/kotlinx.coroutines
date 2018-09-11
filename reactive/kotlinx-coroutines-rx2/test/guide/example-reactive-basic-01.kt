@@ -7,11 +7,10 @@ package kotlinx.coroutines.experimental.rx2.guide.basic01
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
-    val source = produce<Int>(coroutineContext) {
+    val source = produce<Int> {
         println("Begin") // mark the beginning of this coroutine in output
         for (x in 1..3) {
             delay(200) // wait for 200ms

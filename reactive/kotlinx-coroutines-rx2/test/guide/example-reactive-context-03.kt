@@ -6,12 +6,12 @@
 package kotlinx.coroutines.experimental.rx2.guide.context03
 
 import io.reactivex.*
+import io.reactivex.schedulers.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.reactive.*
-import io.reactivex.schedulers.Schedulers
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
-fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = publish<Int>(context) {
+fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: Int) = GlobalScope.publish<Int>(context) {
     for (x in start until start + count) { 
         delay(time) // wait before sending each number
         send(x)
