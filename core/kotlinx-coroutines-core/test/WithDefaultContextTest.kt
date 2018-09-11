@@ -10,7 +10,7 @@ class WithDefaultContextTest : TestBase() {
     @Test
     fun testNoSuspend() = runTest {
         expect(1)
-        val result = withContext(DefaultDispatcher) {
+        val result = withContext(Dispatchers.Default) {
             expect(2)
             "OK"
         }
@@ -21,7 +21,7 @@ class WithDefaultContextTest : TestBase() {
     @Test
     fun testWithSuspend() = runTest {
         expect(1)
-        val result = withContext(DefaultDispatcher) {
+        val result = withContext(Dispatchers.Default) {
             expect(2)
             delay(100)
             expect(3)

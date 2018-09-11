@@ -13,7 +13,7 @@ class IODispatcherTest : TestBase() {
         // just a very basic test that is dispatcher works and indeed uses background thread
         val mainThread = Thread.currentThread()
         expect(1)
-        withContext(IO) {
+        withContext(Dispatchers.IO) {
             expect(2)
             assertNotSame(mainThread, Thread.currentThread())
         }

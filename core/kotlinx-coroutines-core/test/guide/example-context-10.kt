@@ -22,7 +22,7 @@ class Activity : CoroutineScope {
 
     // class Activity continues
     override val coroutineContext: CoroutineContext
-        get() = DefaultDispatcher + job
+        get() = Dispatchers.Default + job
     // to be continued ...
 
     // class Activity continues

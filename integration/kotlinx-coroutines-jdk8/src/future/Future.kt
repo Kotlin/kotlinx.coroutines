@@ -11,11 +11,10 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
- *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -27,13 +26,13 @@ import kotlin.coroutines.experimental.*
  *
  * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine. The default value is [DefaultDispatcher].
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
 public fun <T> CoroutineScope.future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
@@ -59,7 +58,7 @@ public fun <T> CoroutineScope.future(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
 )
 public fun <T> future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
@@ -76,7 +75,7 @@ public fun <T> future(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
 )
 public fun <T> future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
@@ -87,16 +86,17 @@ public fun <T> future(
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> = future(context, start, parent, block = block)
+): CompletableFuture<T> =
+    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, block = block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <T> future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): CompletableFuture<T> =
@@ -171,7 +171,7 @@ public suspend fun <T> CompletableFuture<T>.await(): T =
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the completion stage and immediately resumes with [CancellationException].
+ * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
  *
  * Note, that `CompletionStage` implementation does not support prompt removal of installed listeners, so on cancellation of this wait
  * a few small objects will remain in the `CompletionStage` stack of completion actions until it completes itself.
@@ -231,7 +231,7 @@ public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompl
 @Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
 @Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
 public fun <T> future(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     block: suspend () -> T
 ): CompletableFuture<T> =
     GlobalScope.future(context = context, block = { block() })

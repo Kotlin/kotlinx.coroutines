@@ -14,7 +14,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print everything
-    GlobalScope.launch(Unconfined) { // launch coroutine in unconfined context
+    GlobalScope.launch(Dispatchers.Unconfined) { // launch coroutine in unconfined context
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")

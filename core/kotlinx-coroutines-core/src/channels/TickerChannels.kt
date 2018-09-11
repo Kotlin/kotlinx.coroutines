@@ -47,7 +47,7 @@ enum class TickerMode {
  *
  * This channel stops producing elements immediately after [ReceiveChannel.cancel] invocation.
  *
- * **Note** producer to this channel is dispatched via [Unconfined] dispatcher by default and started eagerly.
+ * **Note** producer to this channel is dispatched via [Dispatchers.Unconfined] by default and started eagerly.
  *
  * @param delay delay between each element.
  * @param unit unit of time that applies to [initialDelay] and [delay] (in milliseconds by default).
@@ -64,7 +64,7 @@ public fun ticker(
 ): ReceiveChannel<Unit> {
     require(delay >= 0) { "Expected non-negative delay, but has $delay" }
     require(initialDelay >= 0) { "Expected non-negative initial delay, but has $initialDelay" }
-    return GlobalScope.produce(Unconfined + context, capacity = 0) {
+    return GlobalScope.produce(Dispatchers.Unconfined + context, capacity = 0) {
         when (mode) {
             TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delay, unit, initialDelay, channel)
             TickerMode.FIXED_DELAY -> fixedDelayTicker(delay, unit, initialDelay, channel)

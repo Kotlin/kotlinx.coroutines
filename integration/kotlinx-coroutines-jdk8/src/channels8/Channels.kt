@@ -12,12 +12,12 @@ import java.util.function.Consumer
 import java.util.stream.Collector
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
  * Creates a [ProducerJob] to read all element of the [Stream].
  */
-public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = DefaultDispatcher): ReceiveChannel<E> =
+public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = EmptyCoroutineContext): ReceiveChannel<E> =
     GlobalScope.produce(context) {
         for (element in this@asReceiveChannel)
             send(element)

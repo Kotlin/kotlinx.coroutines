@@ -20,9 +20,9 @@ class IntegrationTest(
 ) : TestBase() {
 
     enum class Ctx {
-        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context },
-        COMMON_POOL { override fun invoke(context: CoroutineContext): CoroutineContext = DefaultDispatcher },
-        UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Unconfined };
+        MAIN       { override fun invoke(context: CoroutineContext): CoroutineContext = context },
+        DEFAULT    { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default },
+        UNCONFINED { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined };
 
         abstract operator fun invoke(context: CoroutineContext): CoroutineContext
     }

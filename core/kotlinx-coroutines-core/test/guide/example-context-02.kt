@@ -9,7 +9,7 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    launch(Unconfined) { // not confined -- will work with main thread
+    launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
         println("Unconfined      : After delay in thread ${Thread.currentThread().name}")

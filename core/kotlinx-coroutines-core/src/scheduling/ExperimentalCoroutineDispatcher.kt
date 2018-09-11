@@ -6,13 +6,16 @@ package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
  * Default instance of coroutine dispatcher for background coroutines (as opposed to UI coroutines).
  */
-internal object BackgroundDispatcher : ExperimentalCoroutineDispatcher()
+internal object BackgroundDispatcher : ExperimentalCoroutineDispatcher() {
+    val IO = blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+}
 
 /**
  * @suppress **This is unstable API and it is subject to change.**

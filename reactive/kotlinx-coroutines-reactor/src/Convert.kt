@@ -18,7 +18,7 @@ import kotlin.coroutines.experimental.*
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
-public fun Job.asMono(context: CoroutineContext = DefaultDispatcher): Mono<Unit> = GlobalScope.mono(context) { this@asMono.join() }
+public fun Job.asMono(context: CoroutineContext = EmptyCoroutineContext): Mono<Unit> = GlobalScope.mono(context) { this@asMono.join() }
 
 /**
  * Converts this deferred value to the hot reactive mono that signals
@@ -29,7 +29,7 @@ public fun Job.asMono(context: CoroutineContext = DefaultDispatcher): Mono<Unit>
  *
  * @param context -- the coroutine context from which the resulting mono is going to be signalled
  */
-public fun <T> Deferred<T?>.asMono(context: CoroutineContext = DefaultDispatcher): Mono<T> = GlobalScope.mono(context) { this@asMono.await() }
+public fun <T> Deferred<T?>.asMono(context: CoroutineContext = EmptyCoroutineContext): Mono<T> = GlobalScope.mono(context) { this@asMono.await() }
 
 /**
  * Converts a stream of elements received from the channel to the hot reactive flux.
@@ -39,7 +39,7 @@ public fun <T> Deferred<T?>.asMono(context: CoroutineContext = DefaultDispatcher
  *
  * @param context -- the coroutine context from which the resulting flux is going to be signalled
  */
-public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = DefaultDispatcher): Flux<T> = GlobalScope.flux(context) {
+public fun <T> ReceiveChannel<T>.asFlux(context: CoroutineContext = EmptyCoroutineContext): Flux<T> = GlobalScope.flux(context) {
     for (t in this@asFlux)
         send(t)
 }

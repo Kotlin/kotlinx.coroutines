@@ -27,7 +27,7 @@ val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define cont
 var counter = 0
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    CoroutineScope(mtContext).massiveRun { // use it instead of DefaultDispatcher in this sample and below 
+    CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
         counter++
     }
     println("Counter = $counter")

@@ -432,7 +432,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     subject.onNext("one")
     subject.onNext("two")
     // now launch a coroutine to print everything
-    GlobalScope.launch(Unconfined) { // launch coroutine in unconfined context
+    GlobalScope.launch(Dispatchers.Unconfined) { // launch coroutine in unconfined context
         subject.consumeEach { println(it) }
     }
     subject.onNext("three")
@@ -452,7 +452,7 @@ four
 
 <!--- TEST -->
 
-Here we use [Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
+Here we use [Dispatchers.Unconfined] coroutine context to launch consuming coroutine with the same behaviour as subscription in Rx. 
 It basically means that the launched coroutine is going to be immediately executed in the same thread that 
 is emitting elements. Contexts are covered in more details in a [separate section](#coroutine-context).
 
@@ -582,8 +582,8 @@ It is straightforward to use from a coroutine:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    // Range inherits parent job from runBlocking, but overrides dispatcher with DefaultDispatcher
-    range(DefaultDispatcher, 1, 5).consumeEach { println(it) }
+    // Range inherits parent job from runBlocking, but overrides dispatcher with Dispatchers.Default
+    range(Dispatchers.Default, 1, 5).consumeEach { println(it) }
 }
 ```
 
@@ -996,9 +996,9 @@ Most Rx operators do not have any specific thread (scheduler) associated with th
 in whatever thread that they happen to be invoked in. We've seen it on the example of `subscribe` operator 
 in the [threads with Rx](#threads-with-rx) section.
  
-In the world of coroutines, [Unconfined] context serves a similar role. Let us modify our previous example,
+In the world of coroutines, [Dispatchers.Unconfined] context serves a similar role. Let us modify our previous example,
 but instead of iterating over the source `Flowable` from the `runBlocking` coroutine that is confined 
-to the main thread, we launch a new coroutine in `Unconfined` context, while the main coroutine
+to the main thread, we launch a new coroutine in `Dispatchers.Unconfined` context, while the main coroutine
 simply waits its completion using [Job.join]:
 
 <!--- INCLUDE
@@ -1018,7 +1018,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         BiFunction { x, _ -> x })
 
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val job = launch(Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
+    val job = launch(Dispatchers.Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
         rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
             .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
     }
@@ -1039,12 +1039,12 @@ like our initial example using Rx `subscribe` operator.
 
 <!--- TEST LINES_START -->
 
-Note, that [Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
+Note, that [Dispatchers.Unconfined] context shall be used with care. It may improve the overall performance on certain tests,
 due to the increased stack-locality of operations and less scheduling overhead, but it also produces deeper stacks 
 and makes it harder to reason about asynchronicity of the code that is using it. 
 
 If a coroutine sends an element to a channel, then the thread that invoked the 
-[send][SendChannel.send] may start executing the code of a coroutine with [Unconfined] dispatcher.
+[send][SendChannel.send] may start executing the code of a coroutine with [Dispatchers.Unconfined] dispatcher.
 The original producer coroutine that invoked `send`  is paused until the unconfined consumer coroutine hits its next
 suspension point. This is very similar to a lock-step single-threaded `onNext` execution in Rx world in the absense
 of thread-shifting operators. It is a normal default for Rx, because operators are usually doing very small chunks
@@ -1055,10 +1055,9 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines.experimental -->
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html
+[Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html
 [yield]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/yield.html
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[CommonPool]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 <!--- INDEX kotlinx.coroutines.experimental.channels -->
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html

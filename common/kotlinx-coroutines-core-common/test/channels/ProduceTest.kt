@@ -84,7 +84,7 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelOnCompletionUnconfined() = runTest {
-        cancelOnCompletion(Unconfined)
+        cancelOnCompletion(Dispatchers.Unconfined)
     }
 
     @Test

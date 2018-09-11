@@ -50,11 +50,11 @@ class ConvertTest : TestBase() {
             delay(50)
             "OK"
         }
-        val single1 = d.asSingle(Unconfined)
+        val single1 = d.asSingle(Dispatchers.Unconfined)
         checkSingleValue(single1) {
             assertThat(it, IsEqual("OK"))
         }
-        val single2 = d.asSingle(Unconfined)
+        val single2 = d.asSingle(Dispatchers.Unconfined)
         checkSingleValue(single2) {
             assertThat(it, IsEqual("OK"))
         }
@@ -66,12 +66,12 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("OK")
         }
-        val single1 = d.asSingle(Unconfined)
+        val single1 = d.asSingle(Dispatchers.Unconfined)
         checkErroneous(single1) {
             assertThat(it, IsInstanceOf(TestException::class.java))
             assertThat(it.message, IsEqual("OK"))
         }
-        val single2 = d.asSingle(Unconfined)
+        val single2 = d.asSingle(Dispatchers.Unconfined)
         checkErroneous(single2) {
             assertThat(it, IsInstanceOf(TestException::class.java))
             assertThat(it.message, IsEqual("OK"))
@@ -86,7 +86,7 @@ class ConvertTest : TestBase() {
             delay(50)
             send("K")
         }
-        val observable = c.asObservable(Unconfined)
+        val observable = c.asObservable(Dispatchers.Unconfined)
         checkSingleValue(observable.reduce { t1, t2 -> t1 + t2 }) {
             assertThat(it, IsEqual("OK"))
         }
@@ -100,8 +100,8 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("K")
         }
-        val observable = c.asObservable(Unconfined)
-        val single = GlobalScope.rxSingle(Unconfined) {
+        val observable = c.asObservable(Dispatchers.Unconfined)
+        val single = GlobalScope.rxSingle(Dispatchers.Unconfined) {
             var result = ""
             try {
                 observable.consumeEach { result += it }

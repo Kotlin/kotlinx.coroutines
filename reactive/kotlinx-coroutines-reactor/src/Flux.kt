@@ -16,7 +16,7 @@ import kotlin.coroutines.experimental.*
  * Coroutine emits items with `send`. Unsubscribing cancels running coroutine.
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -30,9 +30,10 @@ import kotlin.coroutines.experimental.*
  * | Failure with exception or `close` with cause | `onError`
  */
 fun <T> CoroutineScope.flux(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> = Flux.from(publish(newCoroutineContext(context), block = block))
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend ProducerScope<T>.() -> Unit
+): Flux<T> =
+    Flux.from(publish(newCoroutineContext(context), block = block))
 
 
 /**
@@ -40,12 +41,15 @@ fun <T> CoroutineScope.flux(
  * @suppress **Deprecated** Use [CoroutineScope.mono] instead.
  */
 @Deprecated(
-        message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-        replaceWith = ReplaceWith("GlobalScope.flux(context, block)",
-                imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.flux"])
+    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
+    replaceWith = ReplaceWith(
+        "GlobalScope.flux(context, block)",
+        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.flux"]
+    )
 )
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> flux(
-        context: CoroutineContext = DefaultDispatcher,
-        block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> = GlobalScope.flux(context, block)
+    context: CoroutineContext = Dispatchers.Default,
+    block: suspend ProducerScope<T>.() -> Unit
+): Flux<T> =
+    GlobalScope.flux(context, block)

@@ -42,7 +42,7 @@ class ThreadContextElementTest : TestBase() {
         val data = MyData()
         val element = MyElement(data)
         val job = GlobalScope.launch(
-            context = DefaultDispatcher + exceptionHandler + element,
+            context = Dispatchers.Default + exceptionHandler + element,
             start = CoroutineStart.UNDISPATCHED
         ) {
             assertSame(data, myThreadLocal.get())

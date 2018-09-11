@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.javafx.guide.basic03
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+import kotlinx.coroutines.experimental.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -51,7 +51,7 @@ class ExampleApp : Application() {
 }
 
 fun setup(hello: Text, fab: Circle) {
-    val job = GlobalScope.launch(UI) { // launch coroutine in UI context
+    val job = GlobalScope.launch(Dispatchers.Main) { // launch coroutine in the main thread
         for (i in 10 downTo 1) { // countdown from 10 to 1 
             hello.text = "Countdown $i ..." // update text
             delay(500) // wait half a second

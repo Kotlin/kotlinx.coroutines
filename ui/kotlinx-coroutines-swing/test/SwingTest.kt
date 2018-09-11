@@ -5,9 +5,8 @@
 package kotlinx.coroutines.experimental.swing
 
 import kotlinx.coroutines.experimental.*
-import org.junit.Before
-import org.junit.Test
-import javax.swing.SwingUtilities
+import org.junit.*
+import javax.swing.*
 
 class SwingTest : TestBase() {
     @Before
@@ -19,7 +18,7 @@ class SwingTest : TestBase() {
     fun testDelay() = runBlocking {
         expect(1)
         SwingUtilities.invokeLater { expect(2) }
-        val job = launch(Swing) {
+        val job = launch(Dispatchers.Swing) {
             check(SwingUtilities.isEventDispatchThread())
             expect(3)
             SwingUtilities.invokeLater { expect(4) }

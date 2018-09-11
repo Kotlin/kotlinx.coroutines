@@ -28,7 +28,7 @@ import kotlin.coroutines.experimental.*
  * | Failure with exception or `close` with cause | `onError`
  *
  * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [DefaultDispatcher] is used.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
@@ -55,7 +55,7 @@ public fun <T> CoroutineScope.rxObservable(
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxObservable"])
 )
 public fun <T> rxObservable(
-    context: CoroutineContext = DefaultDispatcher,
+    context: CoroutineContext = Dispatchers.Default,
     parent: Job? = null,
     block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = GlobalScope.rxObservable(context + (parent ?: EmptyCoroutineContext), block)

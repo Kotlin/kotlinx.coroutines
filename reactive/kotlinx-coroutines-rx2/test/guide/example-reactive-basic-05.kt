@@ -8,6 +8,7 @@ package kotlinx.coroutines.experimental.rx2.guide.basic05
 import io.reactivex.schedulers.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.rx2.*
+import kotlin.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread

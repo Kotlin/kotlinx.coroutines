@@ -12,11 +12,11 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(Unconfined) { // not confined -- will work with main thread
+    launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(DefaultDispatcher) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
-        println("DefaultDispatcher     : I'm working in thread ${Thread.currentThread().name}")
+    launch(Dispatchers.Default) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+        println("Default               : I'm working in thread ${Thread.currentThread().name}")
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")

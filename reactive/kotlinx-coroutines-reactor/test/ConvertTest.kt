@@ -51,11 +51,11 @@ class ConvertTest : TestBase() {
             delay(50)
             "OK"
         }
-        val mono1 = d.asMono(Unconfined)
+        val mono1 = d.asMono(Dispatchers.Unconfined)
         checkMonoValue(mono1) {
             assertEquals("OK", it)
         }
-        val mono2 = d.asMono(Unconfined)
+        val mono2 = d.asMono(Dispatchers.Unconfined)
         checkMonoValue(mono2) {
             assertEquals("OK", it)
         }
@@ -67,9 +67,9 @@ class ConvertTest : TestBase() {
             delay(50)
             null
         }
-        val mono1 = d.asMono(Unconfined)
+        val mono1 = d.asMono(Dispatchers.Unconfined)
         checkMonoValue(mono1, ::assertNull)
-        val mono2 = d.asMono(Unconfined)
+        val mono2 = d.asMono(Dispatchers.Unconfined)
         checkMonoValue(mono2, ::assertNull)
     }
 
@@ -79,11 +79,11 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("OK")
         }
-        val mono1 = d.asMono(Unconfined)
+        val mono1 = d.asMono(Dispatchers.Unconfined)
         checkErroneous(mono1) {
             check(it is TestException && it.message == "OK") { "$it" }
         }
-        val mono2 = d.asMono(Unconfined)
+        val mono2 = d.asMono(Dispatchers.Unconfined)
         checkErroneous(mono2) {
             check(it is TestException && it.message == "OK") { "$it" }
         }
@@ -97,7 +97,7 @@ class ConvertTest : TestBase() {
             delay(50)
             send("K")
         }
-        val flux = c.asFlux(Unconfined)
+        val flux = c.asFlux(Dispatchers.Unconfined)
         checkMonoValue(flux.reduce { t1, t2 -> t1 + t2 }) {
             assertEquals("OK", it)
         }
@@ -111,8 +111,8 @@ class ConvertTest : TestBase() {
             delay(50)
             throw TestException("K")
         }
-        val flux = c.asFlux(Unconfined)
-        val mono = GlobalScope.mono(Unconfined) {
+        val flux = c.asFlux(Dispatchers.Unconfined)
+        val mono = GlobalScope.mono(Dispatchers.Unconfined) {
             var result = ""
             try {
                 flux.consumeEach { result += it }

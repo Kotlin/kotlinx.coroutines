@@ -9,7 +9,7 @@ import kotlinx.coroutines.experimental.*
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val startTime = timeSource.currentTimeMillis()
-    val job = launch(DefaultDispatcher) {
+    val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
         var i = 0
         while (i < 5) { // computation loop, just wastes CPU
