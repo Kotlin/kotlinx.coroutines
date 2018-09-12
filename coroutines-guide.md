@@ -1536,7 +1536,7 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-`ThreadLocal` has first-class support and can be used with any primitive `kotlinx.corotuines` provides.
+`ThreadLocal` has first-class support and can be used with any primitive `kotlinx.coroutines` provides.
 It has one key limitation: when thread-local is mutated, a new value is not propagated to the coroutine caller 
 (as context element cannot track all `ThreadLocal` object accesses) and updated value is lost on the next suspension.
 Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
