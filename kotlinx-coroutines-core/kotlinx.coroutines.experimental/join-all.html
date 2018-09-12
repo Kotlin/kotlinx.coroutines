@@ -33,7 +33,7 @@
 
 <h1 id="joinall">joinAll</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">joinAll</span><span class="symbol">(</span><span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.experimental$joinAll(kotlin.Array((kotlinx.coroutines.experimental.Job)))/jobs">jobs</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">joinAll</span><span class="symbol">(</span><span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.experimental$joinAll(kotlin.Array((kotlinx.coroutines.experimental.Job)))/jobs">jobs</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Await.kt#L47">(source)</a></div>
 
 <p>Suspends current coroutine until all given jobs are complete.
 This method is semantically equivalent to joining all given jobs one by one with <code>jobs.forEach { it.join() }</code>.</p>
