@@ -33,26 +33,32 @@
 
 <h1 id="io">IO</h1>
 
-<div class="signature"><code><span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
+<div class="overload-group" data-platform="JVM">
 
-<p><strong>Platform and version requirements:</strong> JVM</p>
+  <div class="signature"><code><span class="keyword">val </span><span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code></div>
 
-<p>The <a href="#">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
+  <p><strong>Platform and version requirements:</strong> JVM</p>
 
-<p>Additional threads in this pool are created and are shutdown on demand.
+  <p>The <a href="#">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
+
+  <p>Additional threads in this pool are created and are shutdown on demand.
 The number of threads used by this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
 
-<p><strong>Getter</strong></p>
+</div>
+<div class="overload-group">
 
-<p>The <a href="#">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
+  <div class="signature"><code><span class="keyword">val </span><a href="-dispatchers/index.html"><span class="identifier">Dispatchers</span></a><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code></div>
 
-<p>Additional threads in this pool are created and are shutdown on demand.
+  <p>The <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
+
+  <p>Additional threads in this pool are created and are shutdown on demand.
 The number of threads used by this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
 
+</div>
 
       </div>
     </main>

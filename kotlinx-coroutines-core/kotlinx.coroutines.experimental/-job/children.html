@@ -48,7 +48,8 @@ immediately cancels all its children.</li>
   <li>Parent cannot complete until all its children are complete. Parent waits for all its children to
 complete in <em>completing</em> or <em>cancelling</em> state.</li>
   <li>Uncaught exception in a child, by default, cancels parent. In particular, this applies to
-children created with <a href="../launch.html">launch</a> coroutine builder. Note, that <a href="../async.html">async</a> and other future-like
+children created with <a href="../launch.html">launch</a> coroutine builder. Note, that
+<a href="../async.html">async</a> and other future-like
 coroutine builders do not have uncaught exceptions by definition, since all their exceptions are
 caught and are encapsulated in their result.</li>
 </ul>

@@ -44,19 +44,19 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-completable.html">rxCompletable</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.-coroutine-scope/rx-completable.html">rxCompletable</a></td>
       <td><code>Completable</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
       <td>Cold completable that starts coroutine on subscribe</td>
     </tr>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-single.html">rxSingle</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.-coroutine-scope/rx-single.html">rxSingle</a></td>
       <td><code>Single</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html">CoroutineScope</a></td>
       <td>Cold single that starts coroutine on subscribe</td>
     </tr>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx-observable.html">rxObservable</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/kotlinx.coroutines.experimental.-coroutine-scope/rx-observable.html">rxObservable</a></td>
       <td><code>Observable</code></td>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-producer-scope/index.html">ProducerScope</a></td>
       <td>Cold observable that starts coroutine on subscribe</td>
@@ -66,58 +66,19 @@
 
 <p>Suspending extension functions and suspending iteration:</p>
 
-<table>
-  <thead>
-    <tr>
-      <th><strong>Name</strong></th>
-      <th><strong>Description</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-completable/await-completed.html">Completable.awaitCompleted</a></td>
-      <td>Awaits for completion of the completable value</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-single/await.html">Single.await</a></td>
-      <td>Awaits for completion of the single value and returns it</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html">Observable.awaitFirst</a></td>
-      <td>Returns the first value from the given observable</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-default.html">Observable.awaitFirstOrDefault</a></td>
-      <td>Returns the first value from the given observable or default</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-else.html">Observable.awaitFirstOrElse</a></td>
-      <td>Returns the first value from the given observable or default from a function</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-null.html">Observable.awaitFirstOrNull</a></td>
-      <td>Returns the first value from the given observable or null</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html">Observable.awaitLast</a></td>
-      <td>Returns the last value from the given observable</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-single.html">Observable.awaitSingle</a></td>
-      <td>Returns the single value from the given observable</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/open-subscription.html">Observable.openSubscription</a></td>
-      <td>Subscribes to observable and returns <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a></td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/iterator.html">Observable.iterator</a></td>
-      <td>Subscribes to observable and returns <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel-iterator/index.html">ChannelIterator</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Conversion functions:</p>
+<p>| <strong>Name</strong> | <strong>Description</strong>
+| ——– | —————
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-completable/await-completed.html">Completable.awaitCompleted</a> | Awaits for completion of the completable value 
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-single/await.html">Single.await</a> | Awaits for completion of the single value and returns it 
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html">Observable.awaitFirst</a> | Returns the first value from the given observable
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-default.html">Observable.awaitFirstOrDefault</a> | Returns the first value from the given observable or default
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-else.html">Observable.awaitFirstOrElse</a> | Returns the first value from the given observable or default from a function
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first-or-null.html">Observable.awaitFirstOrNull</a> | Returns the first value from the given observable or null
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-first.html">Observable.awaitLast</a> | Returns the last value from the given observable
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/await-single.html">Observable.awaitSingle</a> | Returns the single value from the given observable
+| <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-rx1/kotlinx.coroutines.experimental.rx1/rx.-observable/open-subscription.html">Observable.openSubscription</a> | Subscribes to observable and returns <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a> 
+./gradlew knit
+Conversion functions:</p>
 
 <table>
   <thead>

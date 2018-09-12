@@ -33,7 +33,7 @@
 
 <h2 id="package-kotlinxcoroutinesexperimentalswing">Package kotlinx.coroutines.experimental.swing</h2>
 
-<p>Provides <code>Swing</code> context for Swing UI applications.</p>
+<p>Provides <code>Dispatchers.Swing</code> context for Swing UI applications.</p>
 
 <h3 id="types">Types</h3>
 
@@ -42,13 +42,30 @@
 <tr>
 <td>
 
-        <p><a href="-swing/index.html">Swing</a></p>
+        <p><a href="-swing-dispatcher.html">SwingDispatcher</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">Swing</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
+        <div class="signature"><code><span class="keyword">sealed</span> <span class="keyword">class </span><span class="identifier">SwingDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
 
-        <p>Dispatches execution onto Swing event dispatching thread and provides native <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/delay.html">delay</a> support.</p>
+        <p>Dispatcher for Swing event dispatching thread.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extensions-for-external-classes">Extensions for External Classes</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.experimental.-dispatchers/index.html">kotlinx.coroutines.experimental.Dispatchers</a></p>
+
+      </td>
+<td>
 
       </td>
 </tr>

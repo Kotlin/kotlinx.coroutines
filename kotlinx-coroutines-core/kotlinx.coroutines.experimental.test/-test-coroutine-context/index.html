@@ -40,7 +40,8 @@
 <p>This <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html">CoroutineContext</a> dispatcher can be used to simulate virtual time to speed up
 code, especially tests, that deal with delays and timeouts in Coroutines.</p>
 
-<p>Provide an instance of this TestCoroutineContext when calling the <em>non-blocking</em> <a href="#">launch</a> or <a href="#">async</a>
+<p>Provide an instance of this TestCoroutineContext when calling the <em>non-blocking</em>
+<a href="#">launch</a> or <a href="#">async</a>
 and then advance time or trigger the actions to make the co-routines execute as soon as possible.</p>
 
 <p>This works much like the <em>TestScheduler</em> in RxJava2, which allows to speed up tests that deal

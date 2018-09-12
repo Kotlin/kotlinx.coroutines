@@ -46,7 +46,7 @@ By default <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLoc
 <pre>val myThreadLocal = ThreadLocal&lt;String?&gt;()
 ...
 println(myThreadLocal.get()) // Prints "null"
-launch(CommonPool + myThreadLocal.asContextElement(initialValue = "foo")) {
+launch(Dispatchers.Default + myThreadLocal.asContextElement(value = "foo")) {
   println(myThreadLocal.get()) // Prints "foo"
   withContext(UI) {
     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread

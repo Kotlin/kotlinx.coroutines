@@ -37,17 +37,16 @@
 
 <p>Base class that shall be extended by all coroutine dispatcher implementations.</p>
 
-<p>The following standard implementations are provided by <code>kotlinx.coroutines</code>:</p>
+<p>The following standard implementations are provided by <code>kotlinx.coroutines</code> as properties on
+<a href="../-dispatchers/index.html">Dispatchers</a> objects:</p>
 
 <ul>
-  <li><a href="../-default-dispatcher.html">DefaultDispatcher</a> – is used by all standard builder if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html">ContinuationInterceptor</a>
-is specified in their context. It is currently equal to <a href="../-common-pool/index.html">CommonPool</a> (subject to change in the future).
+  <li><a href="../-dispatchers/-default.html">Dispatchers.Default</a> – is used by all standard builder if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html">ContinuationInterceptor</a>
+is specified in their context. It uses a common pool of shared background threads.
 This is an appropriate choice for compute-intensive coroutines that consume CPU resources.</li>
-  <li><a href="../-common-pool/index.html">CommonPool</a> – schedules coroutine execution to a common pool of shared background threads designed
-to be used for compute-intensive code.</li>
-  <li><a href="../-i-o.html">IO</a> – uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive <em>blocking</em>
+  <li><a href="../-i-o.html">Dispatchers.IO</a> – uses a shared pool of on-demand created threads and is designed for offloading of IO-intensive <em>blocking</em>
 operations (like file I/O and blocking socket I/O).</li>
-  <li><a href="../-unconfined/index.html">Unconfined</a> – starts coroutine execution in the current call-frame until the first suspension.
+  <li><a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> – starts coroutine execution in the current call-frame until the first suspension.
 On first  suspension the coroutine builder function returns.
 The coroutine resumes in whatever thread that is used by the
 corresponding suspending function, without confining it to any specific thread or pool.
@@ -203,29 +202,6 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
         <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
 It does not do anything if there is no job in the context or it has no children.
 See <a href="#">Job.cancelChildren</a> for details.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-unconfined/index.html">Unconfined</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">Unconfined</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">CoroutineDispatcher</span></a></code></div>
-
-        <p>A coroutine dispatcher that is not confined to any specific thread.
-It executes initial continuation of the coroutine <em>right here</em> in the current call-frame
-and let the coroutine resume in whatever thread that is used by the corresponding suspending function, without
-mandating any specific threading policy.</p>
 
       </td>
 </tr>

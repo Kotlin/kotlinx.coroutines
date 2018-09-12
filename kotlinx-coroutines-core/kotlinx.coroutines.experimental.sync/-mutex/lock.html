@@ -47,7 +47,7 @@ continue to execute even after it was cancelled from the same thread in the case
 was already resumed and the continuation was posted for execution to the thread’s queue.</p>
 
 <p>Note, that this function does not check for cancellation when it is not suspended.
-Use <a href="../../kotlinx.coroutines.experimental/yield.html">yield</a> or <a href="../../kotlinx.coroutines.experimental/-coroutine-scope/is-active.html">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
+Use <a href="../../kotlinx.coroutines.experimental/yield.html">yield</a> or <a href="#">CoroutineScope.isActive</a> to periodically check for cancellation in tight loops if needed.</p>
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="on-lock.html">onLock</a> clause.
 Use <a href="try-lock.html">tryLock</a> to try acquire lock without waiting.</p>

@@ -87,12 +87,12 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-default-dispatcher.html">DefaultDispatcher</a></td>
-      <td>Is equal to <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html">CommonPool</a></td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html">Dispatchers.Default</a></td>
+      <td>Confines coroutine execution to a shared pool of background threads</td>
     </tr>
     <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-common-pool/index.html">CommonPool</a></td>
-      <td>Confines coroutine execution to a shared pool of threads</td>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a></td>
+      <td>Does not confine coroutine execution in any way</td>
     </tr>
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-single-thread-context.html">newSingleThreadContext</a></td>
@@ -105,10 +105,6 @@
     <tr>
       <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/java.util.concurrent.-executor/as-coroutine-dispatcher.html">Executor.asCoroutineDispatcher</a></td>
       <td>Extension to convert any executor</td>
-    </tr>
-    <tr>
-      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-unconfined/index.html">Unconfined</a></td>
-      <td>Does not confine coroutine execution in any way</td>
     </tr>
   </tbody>
 </table>
@@ -201,7 +197,7 @@
 
 <p>Cancellation support for user-defined suspending functions is available with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a>
 helper function. <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-non-cancellable/index.html">NonCancellable</a> job object is provided to suppress cancellation with 
-<code>run(NonCancellable) {...}</code> block of code.</p>
+<code>withContext(NonCancellable) {...}</code> block of code.</p>
 
 <p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html">Select</a> expression waits for the result of multiple suspending functions simultaneously:</p>
 

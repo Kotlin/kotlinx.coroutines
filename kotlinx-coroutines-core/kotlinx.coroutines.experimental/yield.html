@@ -36,7 +36,7 @@
 <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">yield</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
 <p>Yields a thread (or thread pool) of the current coroutine dispatcher to other coroutines to run.
-If the coroutine dispatcher does not have its own thread pool (like <a href="-unconfined/index.html">Unconfined</a> dispatcher) then this
+If the coroutine dispatcher does not have its own thread pool (like <a href="-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>) then this
 function does nothing, but checks if the coroutine <a href="-job/index.html">Job</a> was completed.
 This suspending function is cancellable.
 If the <a href="-job/index.html">Job</a> of the current coroutine is cancelled or completed when this suspending function is invoked or while

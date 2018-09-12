@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GlobalScope - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="./index.html">GlobalScope</a></div>
+
+<h1 id="globalscope">GlobalScope</h1>
+
+<div class="signature"><code><span class="keyword">object </span><span class="identifier">GlobalScope</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
+
+<p>A global <a href="../-coroutine-scope/index.html">CoroutineScope</a> not bound to any job.</p>
+
+<p>Global scope is used to launch top-level coroutines which are operating on the whole application lifetime
+and are not cancelled prematurely.
+Another use of the global scope is operators running in <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>, which don’t have any job associated with them.</p>
+
+<p>Application code usually should use application-defined <a href="../-coroutine-scope/index.html">CoroutineScope</a>, using
+<a href="../async.html">async</a> or <a href="../launch.html">launch</a>
+on the instance of <a href="./index.md">GlobalScope</a> is highly discouraged.</p>
+
+<p>Usage of this interface may look like this:</p>
+
+<pre>fun ReceiveChannel&lt;Int&gt;.sqrt(): ReceiveChannel&lt;Double&gt; = GlobalScope.produce(Dispatchers.Unconfined) {
+    for (number in this) {
+        send(Math.sqrt(number))
+    }
+}
+
+</pre>
+
+<h3 id="properties">Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="coroutine-context.html">coroutineContext</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">coroutineContext</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code></div>
+
+        <p>Returns <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-empty-coroutine-context/index.html">EmptyCoroutineContext</a>.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-properties">Extension Properties</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../is-active.html">isActive</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">val </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">isActive</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Returns <code>true</code> when current <a href="../-job/index.html">Job</a> is still active (has not completed and was not cancelled yet).</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="extension-functions">Extension Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental.channels/actor.html">actor</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$actor(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ActorScope((kotlinx.coroutines.experimental.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.experimental.channels/-actor-scope/index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.channels/-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Launches new coroutine that is receiving messages from its mailbox channel
+and returns a reference to its mailbox channel as a <a href="../../kotlinx.coroutines.experimental.channels/-send-channel/index.html">SendChannel</a>. The resulting
+object can be used to <a href="../../kotlinx.coroutines.experimental.channels/-send-channel/send.html">send</a> messages to this coroutine.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../async.html">async</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">async</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$async(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.async.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../async.html#T"><span class="identifier">T</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-deferred/index.html"><span class="identifier">Deferred</span></a><span class="symbol">&lt;</span><a href="../async.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Creates new coroutine and returns its future result as an implementation of <a href="../-deferred/index.html">Deferred</a>.
+The running coroutine is cancelled when the resulting deferred is <a href="../-job/cancel.html">cancelled</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental.channels/broadcast.html">broadcast</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">broadcast</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$broadcast(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.broadcast.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$broadcast(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.broadcast.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;1<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$broadcast(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.broadcast.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.LAZY<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$broadcast(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.broadcast.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$broadcast(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.broadcast.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.experimental.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/broadcast.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/broadcast.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Launches new coroutine to produce a stream of values by sending them to a broadcast channel
+and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html">BroadcastChannel</a>. The resulting
+object can be used to <a href="../../kotlinx.coroutines.experimental.channels/-broadcast-channel/open-subscription.html">subscribe</a> to elements produced by this coroutine.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../launch.html">launch</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">launch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$launch(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-job/index.html"><span class="identifier">Job</span></a></code></div>
+
+        <p>Launches new coroutine without blocking current thread and returns a reference to the coroutine as a <a href="../-job/index.html">Job</a>.
+The coroutine is cancelled when the resulting job is <a href="../-job/cancel.html">cancelled</a>.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../plus.html">plus</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">plus</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$plus(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a></code></div>
+
+        <p>Adds the specified coroutine context to this scope, overriding existing elements in the current
+scope’s context with the corresponding keys.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="../../kotlinx.coroutines.experimental.channels/produce.html">produce</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">produce</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$produce(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlin.Int, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.experimental.channels.ProducerScope((kotlinx.coroutines.experimental.channels.produce.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="../../kotlinx.coroutines.experimental.channels/-producer-scope/index.html"><span class="identifier">ProducerScope</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/produce.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../../kotlinx.coroutines.experimental.channels/produce.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
+
+        <p>Launches new coroutine to produce a stream of values by sending them to a channel
+and returns a reference to the coroutine as a <a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/index.html">ReceiveChannel</a>. This resulting
+object can be used to <a href="../../kotlinx.coroutines.experimental.channels/-receive-channel/receive.html">receive</a> elements produced by this coroutine.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

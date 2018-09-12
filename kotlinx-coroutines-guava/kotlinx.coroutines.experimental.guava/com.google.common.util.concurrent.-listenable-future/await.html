@@ -39,7 +39,7 @@
 
 <p>This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-stops waiting for the future and immediately resumes with <a href="#">CancellationException</a>.</p>
+stops waiting for the future and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>.</p>
 
 <p>Note, that <code>ListenableFuture</code> does not support removal of installed listeners, so on cancellation of this wait
 a few small objects will remain in the <code>ListenableFuture</code> list of listeners until the future completes. However, the

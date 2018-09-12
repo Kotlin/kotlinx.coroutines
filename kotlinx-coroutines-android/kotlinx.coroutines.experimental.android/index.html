@@ -33,7 +33,7 @@
 
 <h2 id="package-kotlinxcoroutinesexperimentalandroid">Package kotlinx.coroutines.experimental.android</h2>
 
-<p>Provides <code>UI</code> context for Android applications.</p>
+<p>Provides <code>Dispatchers.Main</code> context for Android applications.</p>
 
 <h3 id="types">Types</h3>
 
@@ -42,13 +42,13 @@
 <tr>
 <td>
 
-        <p><a href="-handler-context/index.html">HandlerContext</a></p>
+        <p><a href="-handler-dispatcher/index.html">HandlerDispatcher</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">HandlerContext</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
+        <div class="signature"><code><span class="keyword">sealed</span> <span class="keyword">class </span><span class="identifier">HandlerDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a><span class="symbol">, </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/index.html"><span class="identifier">Delay</span></a></code></div>
 
-        <p>Implements <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> on top of an arbitrary Android <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a>.</p>
+        <p>Dispatches execution onto Android <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a>.</p>
 
       </td>
 </tr>
@@ -69,23 +69,33 @@
 
       </td>
 </tr>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.experimental.-dispatchers/index.html">kotlinx.coroutines.experimental.Dispatchers</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
 </tbody>
 </table>
 
-<h3 id="properties">Properties</h3>
+<h3 id="functions">Functions</h3>
 
 <table class="api-docs-table">
 <tbody>
 <tr>
 <td>
 
-        <p><a href="-u-i.html">UI</a></p>
+        <p><a href="await-frame.html">awaitFrame</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">UI</span><span class="symbol">: </span><a href="-handler-context/index.html"><span class="identifier">HandlerContext</span></a></code></div>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">awaitFrame</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
 
-        <p>Dispatches execution onto Android main UI thread and provides native <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-delay/delay.html">delay</a> support.</p>
+        <p>Awaits the next animation frame and returns frame time in nanoseconds.</p>
 
       </td>
 </tr>

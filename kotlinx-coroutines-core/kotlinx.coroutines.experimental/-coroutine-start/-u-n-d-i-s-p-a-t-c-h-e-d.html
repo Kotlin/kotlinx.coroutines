@@ -36,7 +36,7 @@
 <div class="signature"><code><span class="identifier">UNDISPATCHED</span></code></div>
 
 <p>Immediately executes coroutine until its first suspension point <em>in the current thread</em> as if the
-coroutine was started using <a href="../-unconfined/index.html">Unconfined</a> dispatcher. However, when coroutine is resumed from suspension
+coroutine was started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when coroutine is resumed from suspension
 it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
 
 <p>This is similar to <a href="-a-t-o-m-i-c.html">ATOMIC</a> in the sense that coroutine starts executing even if it was already cancelled,
