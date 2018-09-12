@@ -911,7 +911,7 @@ concurrency, as shown in the section below.
 ### Structured concurrency with async 
 
 Let us take [Concurrent using async](#concurrent-using-async) example and extract a function that 
-concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulOne` and returns the sum of their results.
+concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulTwo` and returns the sum of their results.
 Because [async] coroutines builder is defined as extension on [CoroutineScope] we need to have it in the 
 scope and that is what [coroutineScope] function provides:
 
