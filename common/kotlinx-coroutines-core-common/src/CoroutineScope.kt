@@ -191,7 +191,7 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
 
 /**
  * Provides [CoroutineScope] that is already present in the current [coroutineContext] to the given [block].
- * Note, this method doesn't wait for all launched children to complete (as opposed to [coroutineContext]).
+ * Note, this method doesn't wait for all launched children to complete (as opposed to [coroutineScope]).
  */
 public suspend inline fun <R> currentScope(block: CoroutineScope.() -> R): R =
     CoroutineScope(coroutineContext).block()
