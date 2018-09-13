@@ -10,7 +10,7 @@ def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 def makeLinkMapping(dokka, projectDir) {
     dokka.linkMapping {
         def relPath = rootProject.projectDir.toPath().relativize(projectDir.toPath())
-        dir = "$projectDir/src/main/kotlin"
+        dir = "$projectDir/src"
         url = "http://github.com/kotlin/kotlinx.coroutines/tree/master/$relPath/src"
         suffix = "#L"
     }

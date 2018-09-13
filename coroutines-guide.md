@@ -911,7 +911,7 @@ concurrency, as shown in the section below.
 ### Structured concurrency with async 
 
 Let us take [Concurrent using async](#concurrent-using-async) example and extract a function that 
-concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulOne` and returns the sum of their results.
+concurrently performs `doSomethingUsefulOne` and `doSomethingUsefulTwo` and returns the sum of their results.
 Because [async] coroutines builder is defined as extension on [CoroutineScope] we need to have it in the 
 scope and that is what [coroutineScope] function provides:
 
@@ -1536,7 +1536,7 @@ Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value:
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-`ThreadLocal` has first-class support and can be used with any primitive `kotlinx.corotuines` provides.
+`ThreadLocal` has first-class support and can be used with any primitive `kotlinx.coroutines` provides.
 It has one key limitation: when thread-local is mutated, a new value is not propagated to the coroutine caller 
 (as context element cannot track all `ThreadLocal` object accesses) and updated value is lost on the next suspension.
 Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
