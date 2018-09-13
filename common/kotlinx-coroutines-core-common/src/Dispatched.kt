@@ -27,7 +27,7 @@ internal class DispatchedContinuation<in T>(
     override val delegate: Continuation<T>
         get() = this
 
-    override fun resumeWith(result: SuccessOrFailure<T>) {
+    override fun resumeWith(result: Result<T>) {
         val context = continuation.context
         if (dispatcher.isDispatchNeeded(context)) {
             _state = result.toState()
@@ -60,7 +60,7 @@ internal class DispatchedContinuation<in T>(
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
-    inline fun resumeUndispatchedWith(result: SuccessOrFailure<T>) {
+    inline fun resumeUndispatchedWith(result: Result<T>) {
         withCoroutineContext(context) {
             continuation.resumeWith(result)
         }

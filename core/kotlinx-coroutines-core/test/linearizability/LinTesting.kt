@@ -45,7 +45,7 @@ class LinTesting {
                 override val context: CoroutineContext
                     get() = EmptyCoroutineContext
 
-                override fun resumeWith(result: SuccessOrFailure<Any?>) {
+                override fun resumeWith(result: kotlin.Result<Any?>) {
                     val value = if (result.isSuccess) result.getOrNull() else result.exceptionOrNull()
                     resumed.get() += OpResult(name, repr(value))
                 }

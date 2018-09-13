@@ -47,7 +47,7 @@ private class CoroutineAsync<T>(
     override val context: CoroutineContext =
         GlobalScope.newCoroutineContext(Fiber.currentFiber().scheduler.executor.asCoroutineDispatcher())
 
-    override fun resumeWith(result: SuccessOrFailure<T>) {
+    override fun resumeWith(result: Result<T>) {
         result
             .onSuccess { asyncCompleted(it) }
             .onFailure { asyncFailed(it) }

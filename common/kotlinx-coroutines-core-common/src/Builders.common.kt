@@ -236,7 +236,7 @@ private class RunContinuationUnintercepted<in T>(
     override val context: CoroutineContext,
     private val continuation: Continuation<T>
 ): Continuation<T> {
-    override fun resumeWith(result: SuccessOrFailure<T>) {
+    override fun resumeWith(result: Result<T>) {
         withCoroutineContext(continuation.context) {
             continuation.resumeWith(result)
         }

@@ -14,7 +14,7 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resumeWith(result: SuccessOrFailure<String>) {
+            override fun resumeWith(result: Result<String>) {
                 check(result.getOrNull() == "OK")
                 resumed = true
             }
@@ -39,7 +39,7 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resumeWith(result: SuccessOrFailure<String>) {
+            override fun resumeWith(result: Result<String>) {
                 check(result.getOrNull() == "OK")
                 resumed = true
             }
@@ -64,7 +64,7 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resumeWith(result: SuccessOrFailure<String>) {
+            override fun resumeWith(result: Result<String>) {
                 check(result.exceptionOrNull() is TestException)
                 resumed = true
             }
@@ -94,7 +94,7 @@ class SelectBuilderImplTest {
         var resumed = false
         val delegate = object : Continuation<String> {
             override val context: CoroutineContext get() = EmptyCoroutineContext
-            override fun resumeWith(result: SuccessOrFailure<String>) {
+            override fun resumeWith(result: Result<String>) {
                 check(result.exceptionOrNull() is TestException)
                 resumed = true
             }

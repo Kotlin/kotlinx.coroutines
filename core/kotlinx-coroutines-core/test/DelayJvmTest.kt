@@ -66,7 +66,7 @@ class DelayJvmTest : TestBase() {
         override val context: CoroutineContext
             get() = cont.context
 
-        override fun resumeWith(result: SuccessOrFailure<T>) {
+        override fun resumeWith(result: Result<T>) {
             pool.execute { cont.resumeWith(result) }
         }
     }
