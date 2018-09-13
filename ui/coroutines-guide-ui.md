@@ -91,7 +91,7 @@ context object for your favourite UI library, even if it is not included out of 
   * [Event conflation](#event-conflation)
 * [Blocking operations](#blocking-operations)
   * [The problem of UI freezes](#the-problem-of-ui-freezes)
-  * [Structured concurrency, lifecycle and coroutine parent-child hierarchy](#structured-concurrency,-lifecycle-and-coroutine-parent-child-hierarchy)
+  * [Structured concurrency, lifecycle and coroutine parent-child hierarchy](#structured-concurrency-lifecycle-and-coroutine-parent-child-hierarchy)
   * [Blocking operations](#blocking-operations)
 * [Advanced topics](#advanced-topics)
   * [Starting coroutine in UI event handlers without dispatch](#starting-coroutine-in-ui-event-handlers-without-dispatch)
