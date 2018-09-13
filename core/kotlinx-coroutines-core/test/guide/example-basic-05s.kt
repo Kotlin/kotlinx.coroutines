@@ -14,7 +14,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 // this is your first suspending function
 suspend fun launchDoWorld() = currentScope {
-        launch {
+    launch {
         println("World!")
     }
 }
