@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CoroutineScopeTest : TestBase() {
@@ -191,4 +192,18 @@ class CoroutineScopeTest : TestBase() {
             finish(4)
         }
     }
+    
+    @Test
+    fun testScopePlusContext() {
+        assertSame(EmptyCoroutineContext, scopePlusContext(EmptyCoroutineContext, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, scopePlusContext(EmptyCoroutineContext, Dispatchers.Default))
+        assertSame(Dispatchers.Default, scopePlusContext(Dispatchers.Default, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, scopePlusContext(Dispatchers.Default, Dispatchers.Default))
+        assertSame(Dispatchers.Default, scopePlusContext(Dispatchers.Unconfined, Dispatchers.Default))
+        assertSame(Dispatchers.Unconfined, scopePlusContext(Dispatchers.Default, Dispatchers.Unconfined))
+        assertSame(Dispatchers.Unconfined, scopePlusContext(Dispatchers.Unconfined, Dispatchers.Unconfined))
+    }
+
+    private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
+        (CoroutineScope(c1) + c2).coroutineContext
 }
