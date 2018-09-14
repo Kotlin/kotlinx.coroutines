@@ -174,8 +174,8 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
             result === OFFER_SUCCESS -> true
             // We should check for closed token on offer as well, otherwise offer won't be linearizable
             // in the face of concurrent close()
-            result === OFFER_FAILED ->  throw closedForSend?.sendException ?: return false
-            result is Closed<*> -> throw result.sendException
+            result === OFFER_FAILED ->  throw closedForSend?.sendException?.also { recoverStackTrace(it) } ?: return false
+            result is Closed<*> -> throw recoverStackTrace(result.sendException)
             else -> error("offerInternal returned $result")
         }
     }
@@ -192,7 +192,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                 }
                 is Closed<*> -> {
                     helpClose(enqueueResult)
-                    cont.resumeWithException(enqueueResult.sendException)
+                    cont.resumeWithStackTrace(enqueueResult.sendException)
                     return@sc
                 }
             }
@@ -206,7 +206,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                 offerResult === OFFER_FAILED -> continue@loop
                 offerResult is Closed<*> -> {
                     helpClose(offerResult)
-                    cont.resumeWithException(offerResult.sendException)
+                    cont.resumeWithStackTrace(offerResult.sendException)
                     return@sc
                 }
                 else -> error("offerInternal returned $offerResult")
@@ -405,7 +405,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                 when {
                     enqueueResult === ALREADY_SELECTED -> return
                     enqueueResult === ENQUEUE_FAILED -> {} // retry
-                    enqueueResult is Closed<*> -> throw enqueueResult.sendException
+                    enqueueResult is Closed<*> -> throw recoverStackTrace(enqueueResult.sendException)
                     else -> error("performAtomicIfNotSelected(TryEnqueueSendDesc) returned $enqueueResult")
                 }
             } else {
@@ -417,7 +417,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
                         block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                         return
                     }
-                    offerResult is Closed<*> -> throw offerResult.sendException
+                    offerResult is Closed<*> -> throw recoverStackTrace(offerResult.sendException)
                     else -> error("offerSelectInternal returned $offerResult")
                 }
             }
@@ -571,7 +571,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
     @Suppress("UNCHECKED_CAST")
     private fun receiveResult(result: Any?): E {
-        if (result is Closed<*>) throw result.receiveException
+        if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
         return result as E
     }
 
@@ -587,7 +587,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
             // hm... something is not right. try to poll
             val result = pollInternal()
             if (result is Closed<*>) {
-                cont.resumeWithException(result.receiveException)
+                cont.resumeWithStackTrace(result.receiveException)
                 return@sc
             }
             if (result !== POLL_FAILED) {
@@ -617,7 +617,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
     @Suppress("UNCHECKED_CAST")
     private fun receiveOrNullResult(result: Any?): E? {
         if (result is Closed<*>) {
-            if (result.closeCause != null) throw result.closeCause
+            if (result.closeCause != null) throw recoverStackTrace(result.closeCause)
             return null
         }
         return result as E
@@ -638,7 +638,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                 if (result.closeCause == null)
                     cont.resume(null)
                 else
-                    cont.resumeWithException(result.closeCause)
+                    cont.resumeWithStackTrace(result.closeCause)
                 return@sc
             }
             if (result !== POLL_FAILED) {
@@ -751,7 +751,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                 when {
                     pollResult === ALREADY_SELECTED -> return
                     pollResult === POLL_FAILED -> {} // retry
-                    pollResult is Closed<*> -> throw pollResult.receiveException
+                    pollResult is Closed<*> -> throw recoverStackTrace(pollResult.receiveException)
                     else -> {
                         block.startCoroutineUnintercepted(pollResult as E, select.completion)
                         return
@@ -791,7 +791,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                                 block.startCoroutineUnintercepted(null, select.completion)
                             return
                         } else
-                            throw pollResult.closeCause
+                            throw recoverStackTrace(pollResult.closeCause)
                     }
                     else -> {
                         // selected successfully
@@ -850,7 +850,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
 
         private fun hasNextResult(result: Any?): Boolean {
             if (result is Closed<*>) {
-                if (result.closeCause != null) throw result.receiveException
+                if (result.closeCause != null) recoverStackTrace(throw result.receiveException)
                 return false
             }
             return true
@@ -871,7 +871,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
                     if (result.closeCause == null)
                         cont.resume(false)
                     else
-                        cont.resumeWithException(result.receiveException)
+                        cont.resumeWithStackTrace(result.receiveException)
                     return@sc
                 }
                 if (result !== POLL_FAILED) {
@@ -884,7 +884,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         @Suppress("UNCHECKED_CAST")
         override suspend fun next(): E {
             val result = this.result
-            if (result is Closed<*>) throw result.receiveException
+            if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
             if (result !== POLL_FAILED) {
                 this.result = POLL_FAILED
                 return result as E
@@ -904,7 +904,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
             if (closed.closeCause == null && nullOnClose)
                 cont.resume(null)
             else
-                cont.resumeWithException(closed.receiveException)
+                cont.resumeWithStackTrace(closed.receiveException)
         }
         override fun toString(): String = "ReceiveElement[$cont,nullOnClose=$nullOnClose]"
     }
@@ -939,7 +939,7 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
             val token = if (closed.closeCause == null)
                 cont.tryResume(false)
             else
-                cont.tryResumeWithException(closed.receiveException)
+                cont.tryResumeWithException(recoverStackTrace(closed.receiveException, cont))
             if (token != null) {
                 iterator.result = closed
                 cont.completeResume(token)
@@ -1052,7 +1052,7 @@ public class SendElement(
 ) : LockFreeLinkedListNode(), Send {
     override fun tryResumeSend(idempotent: Any?): Any? = cont.tryResume(Unit, idempotent)
     override fun completeResumeSend(token: Any) = cont.completeResume(token)
-    override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithException(closed.sendException)
+    override fun resumeSendClosed(closed: Closed<*>) = cont.resumeWithStackTrace(closed.sendException)
     override fun toString(): String = "SendElement($pollResult)[$cont]"
 }
 

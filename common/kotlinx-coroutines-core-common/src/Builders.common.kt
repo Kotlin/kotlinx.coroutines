@@ -248,7 +248,8 @@ private class RunCompletion<in T>(
     override val context: CoroutineContext,
     delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode) {
-
+) : AbstractContinuation<T>(delegate, resumeMode) , CoroutineStackFrame {
+    override val callerFrame: CoroutineStackFrame? = delegate as CoroutineStackFrame?
+    override fun getStackTraceElement(): StackTraceElement? = null
     override val useCancellingState: Boolean get() = true
 }

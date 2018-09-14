@@ -20,3 +20,6 @@ public expect open class TestBase constructor() {
         block: suspend CoroutineScope.() -> Unit
     )
 }
+
+// Specific exception which stacktrace cannot be recovered by our machinery
+class TestException(message: String) : Exception(message)

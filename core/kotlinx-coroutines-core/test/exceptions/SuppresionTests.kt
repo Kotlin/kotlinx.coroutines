@@ -24,11 +24,11 @@ class SuppresionTests : TestBase() {
         }
 
         expect(1)
-        deferred.cancel(IOException())
+        deferred.cancel(TestException("Message"))
 
         try {
             deferred.await()
-        } catch (e: IOException) {
+        } catch (e: TestException) {
             checkException<ArithmeticException>(e.suppressed()[0])
             finish(3)
         }

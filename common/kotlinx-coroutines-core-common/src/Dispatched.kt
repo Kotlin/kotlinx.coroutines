@@ -13,9 +13,11 @@ private val UNDEFINED = Symbol("UNDEFINED")
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : Continuation<T> by continuation, DispatchedTask<T> {
+) : Continuation<T> by continuation, DispatchedTask<T>, CoroutineStackFrame {
     private var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0
+    override val callerFrame: CoroutineStackFrame? = continuation as? CoroutineStackFrame
+    override fun getStackTraceElement(): StackTraceElement? = null
 
     override fun takeState(): Any? {
         val state = _state
@@ -44,8 +46,9 @@ internal class DispatchedContinuation<in T>(
             _state = value
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
-        } else
+        } else {
             resumeUndispatched(value)
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack

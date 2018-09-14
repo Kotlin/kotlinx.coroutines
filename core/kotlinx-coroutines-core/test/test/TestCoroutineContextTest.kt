@@ -274,7 +274,7 @@ class TestCoroutineContextTest {
     @Test
     fun testExceptionHandlingWithLaunchingChildCoroutines() = withTestContext(injectedContext) {
         val delay = 1000L
-        val expectedError = IllegalAccessError("hello")
+        val expectedError = TestException("hello")
         val expectedValue = 12
 
         launch {
@@ -304,7 +304,7 @@ class TestCoroutineContextTest {
     @Test
     fun testExceptionHandlingWithAsyncAndWaitForException() = withTestContext(injectedContext) {
         val delay = 1000L
-        val expectedError = IllegalAccessError("hello")
+        val expectedError = TestException("hello")
         val expectedValue = 12
 
         val result = async {
@@ -335,7 +335,7 @@ class TestCoroutineContextTest {
     @Test
     fun testExceptionHandlingWithRunBlockingAndWaitForException() = withTestContext(injectedContext) {
         val delay = 1000L
-        val expectedError = IllegalAccessError("hello")
+        val expectedError = TestException("hello")
         val expectedValue = 12
 
         try {
