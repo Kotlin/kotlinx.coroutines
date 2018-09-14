@@ -23,6 +23,7 @@ module('binary-compatibility-validator')
 module('common/kotlinx-coroutines-core-common')
 
 module('core/kotlinx-coroutines-core')
+module('core/kotlinx-coroutines-debug')
 
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
@@ -45,3 +46,4 @@ module('js/js-stub')
 module('js/example-frontend-js')
 
 module('native/kotlinx-coroutines-core-native')
+

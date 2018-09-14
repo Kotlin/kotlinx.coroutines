@@ -1,0 +1,8 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+dependencies {
+    compile "net.bytebuddy:byte-buddy:$byte_buddy_version"
+    compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+}
