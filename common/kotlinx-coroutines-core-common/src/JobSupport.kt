@@ -640,7 +640,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun tryMakeCancelling(expect: Incomplete, list: NodeList, cause: Throwable?): Boolean {
         val cancelled = Cancelled(this, cause)
         if (!_state.compareAndSet(expect, Finishing(list, cancelled, false))) return false
-        onFinishingInternal(cancelled)
         onCancellationInternal(cancelled)
         // Materialize cause
         notifyCancellation(list, cancelled.cause)
@@ -679,10 +678,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             if (state is Finishing && state.completing)
                 return COMPLETING_ALREADY_COMPLETING
             val child: ChildJob? = firstChild(state) ?: // or else complete immediately w/o children
-            when {
-                state !is Finishing && hasOnFinishingHandler(proposedUpdate) -> null // unless it has onFinishing handler
-                tryFinalizeState(state, proposedUpdate, mode) -> return COMPLETING_COMPLETED
-                else -> return@loopOnState
+            if (tryFinalizeState(state, proposedUpdate, mode)) {
+                return COMPLETING_COMPLETED
+            } else {
+                return@loopOnState // retry
             }
             val list = state.list ?: // must promote to list to correctly operate on child lists
             when (state) {
@@ -704,7 +703,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             val completing = Finishing(list, cancelled, true)
             if (_state.compareAndSet(state, completing)) {
                 (state as? Finishing)?.transferExceptions(completing)
-                if (state !is Finishing) onFinishingInternal(proposedUpdate)
                 if (child != null && tryWaitForChild(child, proposedUpdate))
                     return COMPLETING_WAITING_CHILDREN
                 if (tryFinalizeState(completing, proposedUpdate, mode = MODE_ATOMIC_DEFAULT))
@@ -799,17 +797,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     internal open fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
         // TODO rename to "onCancelling"
     }
-
-    /**
-     * Whether job has [onFinishingInternal] handler for given [update]
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    internal open fun hasOnFinishingHandler(update: Any?) = false
-
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    internal open fun onFinishingInternal(update: Any?) {}
 
     /**
      * Method which is invoked once Job becomes [Cancelled] or [CompletedExceptionally].
