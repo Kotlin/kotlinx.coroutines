@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class FutureExceptionsTest : TestBase() {
@@ -76,7 +75,7 @@ class FutureExceptionsTest : TestBase() {
             val future = CompletableFuture<Int>()
             val chained = transformer(future)
 
-            launch(coroutineContext) {
+            launch {
                 future.completeExceptionally(exception)
             }
 

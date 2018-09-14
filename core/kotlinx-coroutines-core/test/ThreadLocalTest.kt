@@ -87,7 +87,7 @@ class ThreadLocalTest : TestBase() {
 
             assertEquals(1, intThreadLocal.get())
 
-            val deferred = GlobalScope.async(coroutineContext + intThreadLocal.asContextElement(53)) {
+            val deferred = async(intThreadLocal.asContextElement(53)) {
                 assertEquals(53, intThreadLocal.get())
             }
 
@@ -120,7 +120,7 @@ class ThreadLocalTest : TestBase() {
                 assertEquals("ctx", stringThreadLocal.get())
             }
 
-            val deferred = async(coroutineContext + stringThreadLocal.asContextElement("async")) {
+            val deferred = async(stringThreadLocal.asContextElement("async")) {
                 assertEquals("async", stringThreadLocal.get())
             }
 
@@ -153,7 +153,7 @@ class ThreadLocalTest : TestBase() {
                 ++myCounterLocal.get().cnt
             }
 
-            val deferred = async(coroutineContext + myCounterLocal.asContextElement(Counter(31))) {
+            val deferred = async(myCounterLocal.asContextElement(Counter(31))) {
                 assertEquals(31, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
             }

@@ -5,14 +5,13 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectJobTest : TestBase() {
     @Test
     fun testSelectCompleted() = runTest {
         expect(1)
-        launch(coroutineContext) { // makes sure we don't yield to it earlier
+        launch { // makes sure we don't yield to it earlier
             finish(4) // after main exits
         }
         val job = Job()
@@ -30,7 +29,7 @@ class SelectJobTest : TestBase() {
     fun testSelectIncomplete() = runTest {
         expect(1)
         val job = Job()
-        launch(coroutineContext) { // makes sure we don't yield to it earlier
+        launch { // makes sure we don't yield to it earlier
             expect(3)
             val res = select<String> {
                 job.onJoin {
@@ -53,7 +52,7 @@ class SelectJobTest : TestBase() {
     @Test
     fun testSelectLazy() = runTest {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.LAZY) {
+        val job = launch(start = CoroutineStart.LAZY) {
             expect(2)
         }
         val res = select<String> {

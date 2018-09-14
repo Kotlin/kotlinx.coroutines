@@ -7,7 +7,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class WithTimeoutTest : TestBase() {
@@ -47,7 +46,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testDispatch() = runTest {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             yield() // back to main
             expect(7)
@@ -90,7 +89,7 @@ class WithTimeoutTest : TestBase() {
         withTimeout(100) {
             expect(2)
             // launch child with timeout
-            launch(coroutineContext) {
+            launch {
                 expect(4)
             }
             expect(3)

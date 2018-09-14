@@ -12,7 +12,7 @@ class CancellableContinuationTest : TestBase() {
     @Test
     fun testResumeWithExceptionAndResumeWithException() = runTest {
         var continuation: Continuation<Unit>? = null
-        val job = launch(coroutineContext) {
+        val job = launch {
             try {
                 expect(2)
                 suspendCancellableCoroutine<Unit> { c ->
@@ -34,7 +34,7 @@ class CancellableContinuationTest : TestBase() {
     @Test
     fun testResumeAndResumeWithException() = runTest {
         var continuation: Continuation<Unit>? = null
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(2)
             suspendCancellableCoroutine<Unit> { c ->
                 continuation = c
@@ -52,7 +52,7 @@ class CancellableContinuationTest : TestBase() {
     @Test
     fun testResumeAndResume() = runTest {
         var continuation: Continuation<Unit>? = null
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(2)
             suspendCancellableCoroutine<Unit> { c ->
                 continuation = c
@@ -74,7 +74,7 @@ class CancellableContinuationTest : TestBase() {
     @Test
     fun testCancelAndResumeWithException() = runTest(unhandled = listOf({e -> e is TestException})) {
         var continuation: Continuation<Unit>? = null
-        val job = launch(coroutineContext) {
+        val job = launch {
             try {
                 expect(2)
                 suspendCancellableCoroutine<Unit> { c ->
@@ -99,7 +99,7 @@ class CancellableContinuationTest : TestBase() {
     @Test
     fun testCancelAndResume() = runTest {
         var continuation: Continuation<Unit>? = null
-        val job = launch(coroutineContext) {
+        val job = launch {
             try {
                 expect(2)
                 suspendCancellableCoroutine<Unit> { c ->

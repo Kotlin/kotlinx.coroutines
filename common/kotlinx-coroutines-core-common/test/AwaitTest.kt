@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.coroutineContext
 import kotlin.test.*
 
 class AwaitTest : TestBase() {
@@ -12,12 +11,12 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAll() = runTest {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             expect(3)
             "OK"
         }
 
-        val d2 = async(coroutineContext) {
+        val d2 = async {
             yield()
             expect(4)
             1L
@@ -37,23 +36,23 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllLazy() = runTest {
         expect(1)
-        val d = async(
-            coroutineContext,
-            start = CoroutineStart.LAZY
-        ) { expect(2); 1 }
-        val d2 = async(
-            coroutineContext,
-            start = CoroutineStart.LAZY
-        ) { expect(3); 2 }
+        val d = async(start = CoroutineStart.LAZY) { 
+            expect(2); 
+            1 
+        }
+        val d2 = async(start = CoroutineStart.LAZY) { 
+            expect(3); 
+            2 
+        }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
         finish(4)
     }
 
     @Test
     fun testAwaitAllTyped() = runTest {
-        val d1 = async(coroutineContext) { 1L }
-        val d2 = async(coroutineContext) { "" }
-        val d3 = async(coroutineContext) { }
+        val d1 = async { 1L }
+        val d2 = async { "" }
+        val d3 = async { }
 
         assertEquals(listOf(1L, ""), listOf(d1, d2).awaitAll())
         assertEquals(listOf(1L, Unit), listOf(d1, d3).awaitAll())
@@ -63,17 +62,17 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllExceptionally() = runTest {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             expect(3)
             "OK"
         }
 
-        val d2 = async(coroutineContext) {
+        val d2 = async {
             yield()
             throw TestException()
         }
 
-        val d3 = async(coroutineContext) {
+        val d3 = async {
             expect(4)
             delay(Long.MAX_VALUE)
             1
@@ -94,17 +93,17 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
-        val d = async(coroutineContext) {
+        val d = async {
             expect(2)
             throw TestException()
         }
 
-        val d2 = async(coroutineContext) {
+        val d2 = async {
             yield()
             throw TestException()
         }
 
-        val d3 = async(coroutineContext) {
+        val d3 = async {
             yield()
         }
 
@@ -120,10 +119,10 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllCancellation() = runTest {
-        val outer = async(coroutineContext) {
+        val outer = async {
 
             expect(1)
-            val inner = async(coroutineContext) {
+            val inner = async {
                 expect(4)
                 delay(Long.MAX_VALUE)
             }
@@ -144,9 +143,9 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompleted() = runTest {
-        val d1 = async(coroutineContext) { expect(1); 1 }
+        val d1 = async { expect(1); 1 }
         d1.await()
-        val d2 = async(coroutineContext) { expect(3); 2 }
+        val d2 = async { expect(3); 2 }
         expect(2)
         assertEquals(listOf(1, 2), awaitAll(d1, d2))
         require(d1.isCompleted && d2.isCompleted)
@@ -155,7 +154,7 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompletedExceptionally() = runTest {
-        val d1 = async(coroutineContext) {
+        val d1 = async {
             expect(1)
             throw TestException()
         }
@@ -163,7 +162,7 @@ class AwaitTest : TestBase() {
         yield()
 
         // This job is called after exception propagation
-        val d2 = async(coroutineContext) { expect(4) }
+        val d2 = async { expect(4) }
 
         expect(2)
         try {
@@ -183,7 +182,7 @@ class AwaitTest : TestBase() {
     fun testAwaitAllFullyCompleted() = runTest {
         val d1 = CompletableDeferred(Unit)
         val d2 = CompletableDeferred(Unit)
-        val job = async(coroutineContext) { expect(3) }
+        val job = async { expect(3) }
         expect(1)
         awaitAll(d1, d2)
         expect(2)
@@ -195,7 +194,7 @@ class AwaitTest : TestBase() {
     fun testAwaitOnSet() = runTest {
         val d1 = CompletableDeferred(Unit)
         val d2 = CompletableDeferred(Unit)
-        val job = async(coroutineContext) { expect(2) }
+        val job = async { expect(2) }
         expect(1)
         listOf(d1, d2, job).awaitAll()
         finish(3)
@@ -207,7 +206,7 @@ class AwaitTest : TestBase() {
             .apply { completeExceptionally(TestException()) }
         val d2 = CompletableDeferred<Unit>(parent = null)
             .apply { completeExceptionally(TestException()) }
-        val job = async(coroutineContext) { expect(3) }
+        val job = async { expect(3) }
         expect(1)
         try {
             awaitAll(d1, d2)
@@ -221,7 +220,7 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllSameJobMultipleTimes() = runTest {
-        val d = async(coroutineContext) { "OK" }
+        val d = async { "OK" }
         // Duplicates are allowed though kdoc doesn't guarantee that
         assertEquals(listOf("OK", "OK", "OK"), awaitAll(d, d, d))
     }
@@ -229,8 +228,8 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllSameThrowingJobMultipleTimes() = runTest {
         val d1 =
-            async(coroutineContext) { throw TestException() }
-        val d2 = async(coroutineContext) { } // do nothing
+            async { throw TestException() }
+        val d2 = async { } // do nothing
 
         try {
             expect(1)
@@ -254,12 +253,12 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAll() = runTest {
-        val d1 = launch(coroutineContext) { expect(2) }
-        val d2 = async(coroutineContext) {
+        val d1 = launch { expect(2) }
+        val d2 = async {
             expect(3)
             "OK"
         }
-        val d3 = launch(coroutineContext) { expect(4) }
+        val d3 = launch { expect(4) }
 
         expect(1)
         joinAll(d1, d2, d3)
@@ -269,28 +268,26 @@ class AwaitTest : TestBase() {
     @Test
     fun testJoinAllLazy() = runTest {
         expect(1)
-        val d = async(
-            coroutineContext,
-            start = CoroutineStart.LAZY
-        ) { expect(2) }
-        val d2 = launch(
-            coroutineContext,
-            start = CoroutineStart.LAZY
-        ) { expect(3) }
+        val d = async(start = CoroutineStart.LAZY) {
+            expect(2)
+        }
+        val d2 = launch(start = CoroutineStart.LAZY) {
+            expect(3)
+        }
         joinAll(d, d2)
         finish(4)
     }
 
     @Test
     fun testJoinAllExceptionally() = runTest {
-        val d1 = launch(coroutineContext) {
+        val d1 = launch {
             expect(2)
         }
-        val d2 = async(coroutineContext) {
+        val d2 = async {
             expect(3)
             throw TestException()
         }
-        val d3 = async(coroutineContext) {
+        val d3 = async {
             expect(4)
         }
 
@@ -301,9 +298,9 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllCancellation() = runTest {
-        val outer = launch(coroutineContext) {
+        val outer = launch {
             expect(2)
-            val inner = launch(coroutineContext) {
+            val inner = launch {
                 expect(3)
                 delay(Long.MAX_VALUE)
             }
@@ -323,7 +320,7 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllAlreadyCompleted() = runTest {
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(1)
         }
 
@@ -344,14 +341,14 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllSameJob() = runTest {
-        val job = launch(coroutineContext) { }
+        val job = launch { }
         joinAll(job, job, job)
     }
 
     @Test
     fun testJoinAllSameJobExceptionally() = runTest {
         val job =
-            async(coroutineContext) { throw TestException() }
+            async { throw TestException() }
         joinAll(job, job, job)
     }
 

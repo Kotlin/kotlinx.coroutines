@@ -112,7 +112,7 @@ class CoroutineScopeTest : TestBase() {
         }
 
 
-        val outerJob = launch(coroutineContext.minusKey(Job)) {
+        val outerJob = launch(NonCancellable) {
             expect(1)
             try {
                 callJobScoped()
@@ -183,7 +183,6 @@ class CoroutineScopeTest : TestBase() {
                 expectUnreached()
             }
         }
-
 
         try {
             loadData()

@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class DebugThreadNameTest : TestBase() {
@@ -16,7 +15,7 @@ class DebugThreadNameTest : TestBase() {
     @Test
     fun testLaunchId() = runTest {
         assertName("coroutine#1")
-        launch(coroutineContext) {
+        launch {
             assertName("coroutine#2")
             yield()
             assertName("coroutine#2")
@@ -27,7 +26,7 @@ class DebugThreadNameTest : TestBase() {
     @Test
     fun testLaunchIdUndispatched() = runTest {
         assertName("coroutine#1")
-        launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             assertName("coroutine#2")
             yield()
             assertName("coroutine#2")
@@ -38,7 +37,7 @@ class DebugThreadNameTest : TestBase() {
     @Test
     fun testLaunchName() = runTest {
         assertName("coroutine#1")
-        launch(coroutineContext + CoroutineName("TEST")) {
+        launch(CoroutineName("TEST")) {
             assertName("TEST#2")
             yield()
             assertName("TEST#2")

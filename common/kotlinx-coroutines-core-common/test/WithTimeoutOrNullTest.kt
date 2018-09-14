@@ -8,7 +8,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {
@@ -48,7 +47,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testDispatch() = runTest {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             yield() // back to main
             expect(7)

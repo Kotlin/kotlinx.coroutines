@@ -110,7 +110,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testCancelEnclosingJob() = runTest {
         val job = async {
-            actor<Int>(coroutineContext, capacity) {
+            actor<Int>(capacity = capacity) {
                 expect(1)
                 channel.receiveOrNull()
                 expectUnreached()
@@ -154,7 +154,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
     fun testChildJob() = runTest {
         val parent = Job()
         actor<Int>(parent) {
-            launch(coroutineContext) {
+            launch {
                 try {
                     delay(Long.MAX_VALUE)
                 } finally {

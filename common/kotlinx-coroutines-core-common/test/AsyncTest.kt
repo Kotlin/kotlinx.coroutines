@@ -13,7 +13,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             expect(3)
             42
         }
@@ -29,7 +29,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testUndispatched() = runTest {
         expect(1)
-        val d = async(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val d = async(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             42
         }
@@ -42,7 +42,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testSimpleException() = runTest(expected = { it is TestException }) {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             finish(3)
             throw TestException()
         }
@@ -53,7 +53,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testCancellationWithCause() = runTest(expected = { it is AssertionError }) {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.ATOMIC) {
+        val d = async(start = CoroutineStart.ATOMIC) {
             finish(3)
             yield()
         }
@@ -97,8 +97,8 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testParallelDecompositionCaughtExceptionWithInheritedParent() = runTest {
-        val deferred = async(coroutineContext) {
-            val decomposed = async(coroutineContext) {
+        val deferred = async {
+            val decomposed = async {
                 throw AssertionError()
                 1
             }
@@ -115,8 +115,8 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testParallelDecompositionUncaughtExceptionWithInheritedParent() = runTest(expected = { it is AssertionError }) {
-        val deferred = async(coroutineContext) {
-            val decomposed = async(coroutineContext) {
+        val deferred = async {
+            val decomposed = async {
                 throw AssertionError()
                 1
             }
@@ -163,7 +163,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferAndYieldException() = runTest(expected = { it is TestException }) {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             expect(3)
             yield() // no effect, parent waiting
             finish(4)
@@ -176,20 +176,20 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferWithTwoWaiters() = runTest {
         expect(1)
-        val d = async(coroutineContext) {
+        val d = async {
             expect(5)
             yield()
             expect(9)
             42
         }
         expect(2)
-        launch(coroutineContext) {
+        launch {
             expect(6)
             assertEquals(d.await(), 42)
             expect(11)
         }
         expect(3)
-        launch(coroutineContext) {
+        launch {
             expect(7)
             assertEquals(d.await(), 42)
             expect(12)
@@ -212,7 +212,7 @@ class AsyncTest : TestBase() {
     @Test
     fun testDeferBadClass() = runTest {
         val bad = BadClass()
-        val d = async(coroutineContext) {
+        val d = async {
             expect(1)
             bad
         }

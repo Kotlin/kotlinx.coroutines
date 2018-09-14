@@ -9,7 +9,6 @@ import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
-import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class ProduceConsumeJvmTest(
@@ -30,7 +29,7 @@ class ProduceConsumeJvmTest(
     @Test
     fun testProducer() = runTest {
         var sentAll = false
-        val producer = produce(coroutineContext, capacity = capacity) {
+        val producer = produce(capacity = capacity) {
             for (i in 1..number) {
                 send(i)
             }
@@ -47,7 +46,7 @@ class ProduceConsumeJvmTest(
     @Test
     fun testActor() = runTest {
         val received = CompletableDeferred<Int>()
-        val actor = actor<Int>(coroutineContext, capacity = capacity) {
+        val actor = actor<Int>(capacity = capacity) {
             var n = 0
             for(i in channel) {
                 n++

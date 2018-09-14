@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ConflatedBroadcastChannelTest : TestBase() {
@@ -40,7 +39,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         assertTrue(exceptionFromNotInline { broadcast.value } is IllegalStateException)
         assertNull(broadcast.valueOrNull)
 
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
             assertNull(sub.poll())
@@ -60,7 +59,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         expect(5)
         yield() // to receiver
         expect(7)
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(8)
             val sub = broadcast.openSubscription()
             assertEquals("one", sub.receive()) // does not suspend
@@ -103,7 +102,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         val broadcast = ConflatedBroadcastChannel(1)
         assertEquals(1, broadcast.value)
         assertEquals(1, broadcast.valueOrNull)
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val sub = broadcast.openSubscription()
             assertEquals(1, sub.receive())

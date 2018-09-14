@@ -11,7 +11,6 @@ import org.junit.*
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
 
 /**
  * Tests delivery of events to multiple broadcast channel subscribers.
@@ -46,9 +45,8 @@ class BroadcastChannelMultiReceiveStressTest(
     @Test
     fun testStress() = runBlocking {
         println("--- BroadcastChannelMultiReceiveStressTest $kind with nReceivers=$nReceivers")
-        val ctx = pool + coroutineContext[Job]!!
         val sender =
-            launch(context = ctx + CoroutineName("Sender")) {
+            launch(pool + CoroutineName("Sender")) {
                 var i = 0L
                 while (isActive) {
                     broadcast.send(++i)
@@ -65,7 +63,7 @@ class BroadcastChannelMultiReceiveStressTest(
             val receiverIndex = receivers.size
             val name = "Receiver$receiverIndex"
             println("Launching $name")
-            receivers += launch(ctx + CoroutineName(name)) {
+            receivers += launch(pool + CoroutineName(name)) {
                 val channel = broadcast.openSubscription()
                     when (receiverIndex % 5) {
                         0 -> doReceive(channel, receiverIndex)

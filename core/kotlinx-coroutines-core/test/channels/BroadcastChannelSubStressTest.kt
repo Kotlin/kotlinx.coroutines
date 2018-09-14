@@ -10,7 +10,6 @@ import org.junit.*
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
 
 /**
  * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it,
@@ -37,15 +36,14 @@ class BroadcastChannelSubStressTest(
     @Test
     fun testStress() = runBlocking {
         println("--- BroadcastChannelSubStressTest $kind")
-        val ctx = coroutineContext + Dispatchers.Default
         val sender =
-            launch(context = ctx + CoroutineName("Sender")) {
+            launch(context = Dispatchers.Default + CoroutineName("Sender")) {
                 while (isActive) {
                     broadcast.send(sentTotal.incrementAndGet())
                 }
             }
         val receiver =
-            launch(context = ctx + CoroutineName("Receiver")) {
+            launch(context = Dispatchers.Default + CoroutineName("Receiver")) {
                 var last = -1L
                 while (isActive) {
                     val channel = broadcast.openSubscription()

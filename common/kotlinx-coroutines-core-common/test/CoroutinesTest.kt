@@ -26,7 +26,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testLaunchAndYieldJoin() = runTest {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
             yield()
             expect(4)
@@ -41,7 +41,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testLaunchUndispatched() = runTest {
         expect(1)
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             yield()
             expect(4)
@@ -56,9 +56,9 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testNested() = runTest {
         expect(1)
-        val j1 = launch(coroutineContext) {
+        val j1 = launch {
             expect(3)
-            val j2 = launch(coroutineContext) {
+            val j2 = launch {
                 expect(5)
             }
             expect(4)
@@ -73,7 +73,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testWaitChild() = runTest {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
             yield() // to parent
             finish(5)
@@ -87,7 +87,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelChildExplicit() = runTest {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
             yield()
             expectUnreached()
@@ -102,7 +102,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelChildWithFinally() = runTest {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
             try {
                 yield()
@@ -121,9 +121,9 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testWaitNestedChild() = runTest {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
-            launch(coroutineContext) {
+            launch {
                 expect(6)
                 yield() // to parent
                 expect(9)
@@ -153,7 +153,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelParentOnChildException() = runTest(expected = { it is TestException }) {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             finish(3)
             throwTestException() // does not propagate exception to launch, but cancels parent (!)
             expectUnreached()
@@ -166,9 +166,9 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelParentOnNestedException() = runTest(expected = { it is TestException }) {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
-            launch(coroutineContext) {
+            launch {
                 finish(6)
                 throwTestException() // unhandled exception kills all parents
                 expectUnreached()
@@ -187,7 +187,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testJoinWithFinally() = runTest {
         expect(1)
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(3)
             try {
                 yield() // to main, will cancel us
@@ -213,7 +213,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelAndJoin() = runTest {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 expect(2)
                 yield()
@@ -230,7 +230,7 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelAndJoinChildCrash() = runTest(expected = { it is TestException }) {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             throwTestException()
             expectUnreached()
@@ -290,11 +290,11 @@ class CoroutinesTest : TestBase() {
         unhandled = listOf({ it -> it is TestException })
     ) {
         expect(1)
-        val parent = launch(coroutineContext + Job()) {
+        val parent = launch(Job()) {
             expect(4)
             throw TestException("Crashed")
         }
-        launch(coroutineContext + parent, CoroutineStart.UNDISPATCHED) {
+        launch(parent, CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // to test
@@ -316,7 +316,7 @@ class CoroutinesTest : TestBase() {
     fun testNotCancellableChildWithExceptionCancelled() = runTest(expected = { it is IllegalArgumentException }) {
         expect(1)
         // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
-        val d = async(coroutineContext, start = CoroutineStart.ATOMIC) {
+        val d = async(start = CoroutineStart.ATOMIC) {
             finish(4)
             throwTestException() // will throw
             expectUnreached()

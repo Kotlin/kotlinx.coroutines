@@ -11,7 +11,6 @@ import org.junit.Assert.*
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
@@ -70,7 +69,7 @@ class ChannelSendReceiveStressTest(
             }
         }
         // print progress
-        val progressJob = launch(coroutineContext) {
+        val progressJob = launch {
             var seconds = 0
             while (true) {
                 delay(1000)

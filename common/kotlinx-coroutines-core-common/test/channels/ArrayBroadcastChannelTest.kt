@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ArrayBroadcastChannelTest : TestBase() {
@@ -39,7 +38,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val broadcast = ArrayBroadcastChannel<Int>(1)
         assertFalse(broadcast.isClosedForSend)
         val first = broadcast.openSubscription()
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertEquals(1, first.receive()) // suspends
             assertFalse(first.isClosedForReceive)
@@ -58,7 +57,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(6)
 
         val second = broadcast.openSubscription()
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(7)
             assertEquals(2, second.receive()) // suspends
             assertFalse(second.isClosedForReceive)
@@ -84,7 +83,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         expect(1)
         val broadcast = ArrayBroadcastChannel<Int>(1)
         val first = broadcast.openSubscription()
-        launch(coroutineContext) {
+        launch {
             expect(4)
             assertEquals(1, first.receive())
             expect(5)
@@ -105,7 +104,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         val sub = broadcast.openSubscription()
         // launch 3 concurrent senders (one goes buffer, two other suspend)
         for (x in 1..3) {
-            launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
                 expect(x + 1)
                 broadcast.send(x)
             }
@@ -133,7 +132,7 @@ class ArrayBroadcastChannelTest : TestBase() {
         broadcast.send(3)
         expect(2) // should not suspend anywhere above
         val sub = broadcast.openSubscription()
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(3)
             assertEquals(4, sub.receive()) // suspends
             expect(5)
@@ -162,7 +161,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     fun testCloseSubDuringIteration() = runTest {
         val channel = BroadcastChannel<Int>(1)
         // launch generator (for later) in this context
-        launch(coroutineContext) {
+        launch {
             for (x in 1..5) channel.send(x)
             channel.close()
         }

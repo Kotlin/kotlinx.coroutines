@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.sync.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectMutexTest : TestBase() {
@@ -14,7 +13,7 @@ class SelectMutexTest : TestBase() {
     fun testSelectLock() = runTest {
         val mutex = Mutex()
         expect(1)
-        launch(coroutineContext) { // ensure that it is not scheduled earlier than needed
+        launch { // ensure that it is not scheduled earlier than needed
             finish(4) // after main exits
         }
         val res = select<String> {
@@ -33,7 +32,7 @@ class SelectMutexTest : TestBase() {
     fun testSelectLockWait() = runTest {
         val mutex = Mutex(true) // locked
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
             val res = select<String> {
                 // will suspended

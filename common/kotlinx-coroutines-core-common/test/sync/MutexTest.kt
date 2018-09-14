@@ -12,7 +12,7 @@ class MutexTest : TestBase() {
     fun testSimple() = runTest {
         val mutex = Mutex()
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             mutex.lock() // suspends
             expect(7) // now got lock
@@ -86,7 +86,7 @@ class MutexTest : TestBase() {
 
         // owner firstOwner
         mutex.lock(firstOwner)
-        val secondLockJob = launch(coroutineContext) {
+        val secondLockJob = launch {
             mutex.lock(secondOwner)
         }
 

@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.exceptions
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 /*
@@ -19,9 +18,9 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testJobCancelChild() = runTest {
-        val parent = launch(coroutineContext) {
+        val parent = launch {
             expect(1)
-            val child = launch(coroutineContext) {
+            val child = launch {
                 expect(2)
             }
 
@@ -38,9 +37,9 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testJobCancelChildAtomic() = runTest {
-        val parent = launch(coroutineContext) {
+        val parent = launch {
             expect(1)
-            val child = launch(coroutineContext, CoroutineStart.ATOMIC) {
+            val child = launch(start = CoroutineStart.ATOMIC) {
                 expect(3)
             }
 
@@ -59,9 +58,9 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testAsyncCancelChild() = runTest {
-        val parent = async(coroutineContext) {
+        val parent = async {
             expect(1)
-            val child = async(coroutineContext) {
+            val child = async {
                 expect(2)
             }
 
@@ -78,9 +77,9 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testAsyncCancelChildAtomic() = runTest {
-        val parent = async(coroutineContext) {
+        val parent = async {
             expect(1)
-            val child = async(coroutineContext, CoroutineStart.ATOMIC) {
+            val child = async(start = CoroutineStart.ATOMIC) {
                 expect(3)
             }
 
@@ -96,8 +95,8 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testNestedAsyncFailure() = runTest {
-        val deferred = async(coroutineContext) {
-            val nested = async(coroutineContext) {
+        val deferred = async {
+            val nested = async {
                 expect(3)
                 throw IOException()
             }
@@ -118,7 +117,7 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testCancelJobImpl() = runTest {
-        val parent = launch(coroutineContext) {
+        val parent = launch {
             expect(1)
             val child = Job(coroutineContext[Job])
             expect(2)
@@ -134,7 +133,7 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun cancelCompletableDeferred() = runTest {
-        val parent = launch(coroutineContext) {
+        val parent = launch {
             expect(1)
             val child = CompletableDeferred<Unit>(coroutineContext[Job])
             expect(2)
