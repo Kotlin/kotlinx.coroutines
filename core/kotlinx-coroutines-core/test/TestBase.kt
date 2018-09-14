@@ -4,9 +4,12 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import org.junit.*
 import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
+
+private val VERBOSE = systemProp("test.verbose", false)
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -74,6 +77,7 @@ public actual open class TestBase actual constructor() {
      */
     public actual fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
+        if (VERBOSE) println("expect($index), wasIndex=$wasIndex")
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
 
