@@ -89,7 +89,7 @@ internal abstract class AbstractContinuation<in T>(
             return
         }
         parent.start() // make sure the parent is started
-        val handle = parent.invokeOnCompletion(onCancelling = true,
+        val handle = parent.invokeOnCompletion(onFailing = true,
             handler = ChildContinuation(parent, this).asHandler)
 
         parentHandle = handle

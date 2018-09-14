@@ -128,7 +128,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
             job.await()
             expectUnreached()
         } catch (e: JobCancellationException) {
-            assertTrue(e.message?.contains("Job was cancelled normally") ?: false)
+            assertTrue(e.message?.contains("Job was cancelled") ?: false)
         }
 
         finish(3)

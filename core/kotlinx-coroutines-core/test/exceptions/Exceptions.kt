@@ -34,17 +34,22 @@ internal fun checkCycles(t: Throwable) {
 }
 
 class CapturingHandler : AbstractCoroutineContextElement(CoroutineExceptionHandler),
-    CoroutineExceptionHandler {
-    val unhandled: MutableList<Throwable> = Collections.synchronizedList(ArrayList<Throwable>())!!
+    CoroutineExceptionHandler
+{
+    private var unhandled: ArrayList<Throwable>? = ArrayList()
 
-    override fun handleException(context: CoroutineContext, exception: Throwable) {
-        unhandled.add(exception)
+    override fun handleException(context: CoroutineContext, exception: Throwable) = synchronized<Unit>(this) {
+        unhandled!!.add(exception)
     }
 
-    fun getException(): Throwable {
-        val size = unhandled.size
+    fun getExceptions(): List<Throwable> = synchronized(this) {
+        return unhandled!!.also { unhandled = null }
+    }
+
+    fun getException(): Throwable = synchronized(this) {
+        val size = unhandled!!.size
         assert(size == 1) { "Expected one unhandled exception, but have $size: $unhandled" }
-        return unhandled[0]
+        return unhandled!![0].also { unhandled = null }
     }
 }
 
@@ -63,5 +68,5 @@ internal fun runBlockForMultipleExceptions(
 ): List<Throwable> {
     val handler = CapturingHandler()
     runBlocking(context + handler, block = block)
-    return handler.unhandled
+    return handler.getExceptions()
 }

@@ -62,8 +62,7 @@ class ProduceTest : TestBase() {
                 send(2) // will get cancelled
             } catch (e: Exception) {
                 finish(6)
-                check(e is JobCancellationException && e.job == coroutineContext[Job])
-                check(e.cause is TestException)
+                check(e is TestException)
                 throw e
             }
             expectUnreached()

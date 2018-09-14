@@ -7,20 +7,13 @@ package kotlinx.coroutines.experimental.internal
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
-internal class ScopeOwnerCoroutine<R>(
+/**
+ * This is a coroutine instance that is created by [coroutineScope] builder.
+ * It is just a vanilla instance of [AbstractCoroutine].
+ */
+internal class ScopeCoroutine<R>(
     parentContext: CoroutineContext
-) : AbstractCoroutine<R>(parentContext, true), CoroutineScope {
-
-    override val coroutineContext: CoroutineContext = parentContext + this
-
-    /*
-     * Always return true, so final exception is in the scope before its completion.
-     */
-    override fun cancel(cause: Throwable?): Boolean {
-        super.cancel(cause)
-        return true
-    }
-}
+) : AbstractCoroutine<R>(parentContext, true)
 
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context

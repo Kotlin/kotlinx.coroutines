@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.CoroutineStart.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
@@ -30,7 +31,11 @@ import kotlin.coroutines.experimental.*
  */
 @Suppress("EXPOSED_SUPER_CLASS")
 public abstract class AbstractCoroutine<in T>(
-    private val parentContext: CoroutineContext,
+    /**
+     * Context of the parent coroutine.
+     */
+    @JvmField
+    protected val parentContext: CoroutineContext,
     active: Boolean = true
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
     @Suppress("LeakingThis")
@@ -63,19 +68,25 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when this coroutine is cancelled or is completed,
-     * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
+     * @suppress **Deprecated**: Override [onFailing].
+     */
+    @Deprecated("Override onFailing")
+    protected open fun onCancellation(cause: Throwable?) {}
+
+    /**
+     * This function is invoked once when this coroutine is failing or is completed,
+     * similarly to [invokeOnCompletion] with `onFailing` set to `true`.
      *
      * The meaning of [cause] parameter:
      * * Cause is `null` when job has completed normally.
      * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * * Otherwise, the job had _failed_.
+     *
+     * @suppress **Deprecated**: Override [onFailing].
      */
-    protected open fun onCancellation(cause: Throwable?) {}
-
-    internal override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
-        onCancellation(exceptionally?.cause)
+    override fun onFailing(cause: Throwable?) {
+        onCancellation(cause)
     }
 
     /**
@@ -89,7 +100,7 @@ public abstract class AbstractCoroutine<in T>(
     protected open fun onCompletedExceptionally(exception: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         if (state is CompletedExceptionally)
             onCompletedExceptionally(state.cause)
         else
@@ -110,6 +121,13 @@ public abstract class AbstractCoroutine<in T>(
      */
     public final override fun resumeWithException(exception: Throwable) {
         makeCompletingOnce(CompletedExceptionally(exception), defaultResumeMode)
+    }
+
+    // todo: make it for all kinds of coroutines, now only launch & actor override and handleExceptionViaJob
+    internal fun failParentImpl(exception: Throwable): Boolean {
+        if (exception is CancellationException) return true
+        val parentJob = parentContext[Job]
+        return parentJob !== null && parentJob.childFailed(exception)
     }
 
     internal final override fun handleOnCompletionException(exception: Throwable) {

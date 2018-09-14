@@ -59,7 +59,9 @@ public actual open class TestBase actual constructor() {
         error.compareAndSet(null, cause)
         println("$message: $cause")
         cause.printStackTrace(System.out)
-    } 
+        println("--- Detected at ---")
+        Throwable().printStackTrace(System.out)
+    }
 
     /**
      * Throws [IllegalStateException] when `value` is false like `check` in stdlib, but also ensures that the

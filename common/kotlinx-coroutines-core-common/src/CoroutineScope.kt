@@ -175,7 +175,7 @@ object GlobalScope : CoroutineScope {
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     // todo: optimize implementation to a single allocated object
-    val owner = ScopeOwnerCoroutine<R>(coroutineContext)
+    val owner = ScopeCoroutine<R>(coroutineContext)
     owner.start(CoroutineStart.UNDISPATCHED, owner, block)
     owner.join()
     if (owner.isCancelled) {

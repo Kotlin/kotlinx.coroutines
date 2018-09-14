@@ -1,4 +1,5 @@
 public abstract class kotlinx/coroutines/experimental/AbstractCoroutine : kotlin/coroutines/experimental/Continuation, kotlinx/coroutines/experimental/CoroutineScope, kotlinx/coroutines/experimental/Job {
+	protected final field parentContext Lkotlin/coroutines/experimental/CoroutineContext;
 	public fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/experimental/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getContext ()Lkotlin/coroutines/experimental/CoroutineContext;
@@ -369,7 +370,9 @@ public abstract interface class kotlinx/coroutines/experimental/Job : kotlin/cor
 	public static final field Key Lkotlinx/coroutines/experimental/Job$Key;
 	public abstract fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
+	public abstract fun cancelChild (Lkotlinx/coroutines/experimental/Job;)V
 	public abstract synthetic fun cancelChildren (Ljava/lang/Throwable;)V
+	public abstract fun childFailed (Ljava/lang/Throwable;)Z
 	public abstract fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public abstract fun getChildren ()Lkotlin/sequences/Sequence;
 	public abstract fun getCompletionException ()Ljava/lang/Throwable;
@@ -381,6 +384,7 @@ public abstract interface class kotlinx/coroutines/experimental/Job : kotlin/cor
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
+	public abstract fun isFailed ()Z
 	public abstract fun join (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public abstract fun plus (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
 	public abstract fun start ()Z
@@ -440,7 +444,9 @@ public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/corou
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/NonCancellable;
 	public fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public fun cancel (Ljava/lang/Throwable;)Z
+	public fun cancelChild (Lkotlinx/coroutines/experimental/Job;)V
 	public synthetic fun cancelChildren (Ljava/lang/Throwable;)V
+	public fun childFailed (Ljava/lang/Throwable;)Z
 	public fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public fun getChildren ()Lkotlin/sequences/Sequence;
 	public fun getCompletionException ()Ljava/lang/Throwable;
@@ -452,6 +458,7 @@ public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/corou
 	public fun isActive ()Z
 	public fun isCancelled ()Z
 	public fun isCompleted ()Z
+	public fun isFailed ()Z
 	public fun join (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun plus (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
 	public fun start ()Z

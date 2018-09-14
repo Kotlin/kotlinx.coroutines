@@ -164,7 +164,7 @@ class JobTest : TestBase() {
             delay(Long.MAX_VALUE)
         }
 
-        job.invokeOnCompletion(onCancelling = true) {
+        job.invokeOnCompletion(onFailing = true) {
             assertNotNull(it)
             expect(3)
         }

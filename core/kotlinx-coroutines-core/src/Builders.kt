@@ -56,7 +56,7 @@ private class BlockingCoroutine<T>(
         if (privateEventLoop) require(eventLoop is BlockingEventLoop)
     }
 
-    override fun onCompletionInternal(state: Any?, mode: Int) {
+    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
             LockSupport.unpark(blockedThread)

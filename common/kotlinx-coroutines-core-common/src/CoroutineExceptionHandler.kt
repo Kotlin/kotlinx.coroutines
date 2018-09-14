@@ -20,22 +20,27 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
  * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used.
  * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
+ *
+ * todo: Deprecate/hide this function.
  */
 @JvmOverloads // binary compatibility
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
-    // if exception handling fails, make sure the original exception is not lost
+    if (!handleExceptionViaJob(context, exception, caller)) {
+        handleExceptionViaHandler(context, exception)
+    }
+}
+
+private fun handleExceptionViaJob(context: CoroutineContext, exception: Throwable, caller: Job?): Boolean {
+    // Ignore CancellationException (they are normal ways to terminate a coroutine)
+    if (exception is CancellationException) return true
+    // If job is successfully cancelled, we're done
+    val job = context[Job]
+    return job !== null && job !== caller && job.cancel(exception)
+}
+
+internal fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
     try {
-        // Ignore CancellationException (they are normal ways to terminate a coroutine)
-        if (exception is CancellationException) {
-            return
-        }
-        // If parent is successfully cancelled, we're done, it is now its responsibility to handle the exception
-        val parent = context[Job]
-        // E.g. actor registers itself in the context, in that case we should invoke handler
-        if (parent !== null && parent !== caller && parent.cancel(exception)) {
-            return
-        }
-        // If not, invoke exception handler from the context
+        // Invoke exception handler from the context if present
         context[CoroutineExceptionHandler]?.let {
             it.handleException(context, exception)
             return

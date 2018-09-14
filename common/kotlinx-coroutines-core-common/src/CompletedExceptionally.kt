@@ -11,10 +11,8 @@ import kotlin.coroutines.experimental.*
  * Class for an internal state of a job that had completed exceptionally, including cancellation.
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
- * **Note: cannot be internal until we get rid of MutableDelegateContinuation in IO**
+ * **Note: cannot be internal and renamed until we get rid of MutableDelegateContinuation in IO**
  *
- * @param cause the exceptional completion cause. It's either original exceptional cause
- *        or artificial JobCancellationException if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
 open class CompletedExceptionally(
@@ -28,14 +26,9 @@ open class CompletedExceptionally(
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
  *
- * @param job the job that was cancelled.
- * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException] is created.
  * @suppress **This is unstable API and it is subject to change.**
  */
-internal class Cancelled(
-    job: Job,
-    cause: Throwable?
-) : CompletedExceptionally(cause ?: JobCancellationException("Job was cancelled normally", null, job))
+internal class Cancelled(cause: Throwable) : CompletedExceptionally(cause)
 
 /**
  * A specific subclass of [CompletedExceptionally] for cancelled [AbstractContinuation].

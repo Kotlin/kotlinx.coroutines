@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AbstractCoroutineTest : TestBase() {
@@ -33,7 +32,7 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onCancelling = true) {
+        coroutine.invokeOnCompletion(onFailing = true) {
             assertTrue(it == null)
             expect(6)
         }
@@ -73,7 +72,7 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onCancelling = true) {
+        coroutine.invokeOnCompletion(onFailing = true) {
             assertTrue(it is TestException0)
             expect(6)
         }

@@ -68,22 +68,19 @@ class JobNestedExceptionsTest : TestBase() {
     fun testNestedAtomicThrow() {
         val exception = runBlock {
             expect(1)
-            val job = launch(NonCancellable, start = CoroutineStart.ATOMIC) {
+            val job = launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
                 expect(2)
-
-                launch(start = CoroutineStart.ATOMIC) {
-                    expect(3)
+                launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
+                    expect(4)
                     throw IOException()
                 }
-
+                expect(3)
                 throw ArithmeticException()
             }
-
             job.join()
-            finish(4)
+            finish(5)
         }
-
-        assertTrue(exception is ArithmeticException)
+        assertTrue(exception is ArithmeticException, "Found $exception")
         checkException<IOException>(exception.suppressed()[0])
     }
 
@@ -91,31 +88,33 @@ class JobNestedExceptionsTest : TestBase() {
     fun testChildThrowsDuringCompletion() {
         val exceptions = runBlockForMultipleExceptions {
             expect(1)
-            val job = launch(NonCancellable, start = CoroutineStart.ATOMIC) {
+            val job = launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
                 expect(2)
-                launch(start = CoroutineStart.ATOMIC) {
-                    expect(3)
-                    launch(start = CoroutineStart.ATOMIC) {
+                launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
+                    expect(4)
+                    launch(CoroutineName("nested2"), start = CoroutineStart.ATOMIC) {
                         // This child attaches to the parent and throws after parent completion
-                        expect(4)
+                        expect(6)
                         throw NullPointerException()
                     }
-
+                    expect(5)
                     throw IOException()
                 }
-
+                expect(3)
                 throw ArithmeticException()
             }
 
             job.join()
-            finish(5)
+            finish(7)
         }
 
-        assertEquals(1, exceptions.size)
+        assertEquals(1, exceptions.size, "Found $exceptions")
         val exception = exceptions[0]
+        assertTrue(exception is ArithmeticException, "Exception is $exception")
         val suppressed = exception.suppressed()
-        checkException<IOException>(suppressed[0])
-        checkException<NullPointerException>(suppressed[1])
+        // the order of suppressed exceptions here is a bit hacky, may change in the future
+        checkException<NullPointerException>(suppressed[0])
+        checkException<IOException>(suppressed[1])
         checkCycles(exception)
     }
 }
