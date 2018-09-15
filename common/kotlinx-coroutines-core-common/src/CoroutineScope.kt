@@ -83,7 +83,7 @@ public interface CoroutineScope {
  * This is a shorthand for `CoroutineScope(thisScope + context)`.
  */
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
-    CoroutineScope(context + context)
+    CoroutineScope(coroutineContext + context)
 
 /**
  * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
