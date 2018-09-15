@@ -40,7 +40,7 @@ GlobalScope.launch {
    * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
    * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
 * Guides and manuals: 
-  * [Guide to kotlinx.coroutines by example](coroutines-guide.md) (**read it first**)
+  * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)

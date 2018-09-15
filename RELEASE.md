@@ -13,7 +13,7 @@ To release new `<version>` of `kotlinx-coroutines`:
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
    * [`README.md`](README.md)
-   * [`coroutines-guide.md`](coroutines-guide.md)
+   * [`coroutines-guide.md`](docs/coroutines-guide.md)
    * [`gradle.properties`](gradle.properties)
    * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
    * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
