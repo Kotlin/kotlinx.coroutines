@@ -18,7 +18,7 @@
   * `currentScope` and `coroutineScope` builders are introduced to extract and provide `CoroutineScope`.
   * Factory methods to create `CoroutineScope` from `CoroutineContext` are introduced.
   * `CoroutineScope.isActive` became an extension property.
-  * New sections about structured concurrency in core guide: ["Structured concurrency"](coroutines-guide.md#structured-concurrency), ["Scope builder"](coroutines-guide.md#scope-builder) and ["Structured concurrency with async"](coroutines-guide.md#structured-concurrency-with-async).
+  * New sections about structured concurrency in core guide: ["Structured concurrency"](docs/coroutines-guide.md#structured-concurrency), ["Scope builder"](docs/coroutines-guide.md#scope-builder) and ["Structured concurrency with async"](docs/coroutines-guide.md#structured-concurrency-with-async).
   * New section in UI guide with Android example: ["Structured concurrency, lifecycle and coroutine parent-child hierarchy"](ui/coroutines-guide-ui.md#structured-concurrency,-lifecycle-and-coroutine-parent-child-hierarchy).
   * Deprecated reactive API is removed.
 * Dispatchers are renamed and grouped in the Dispatchers object (see #41 and #533):
@@ -38,7 +38,7 @@
 ## Version 0.25.0
 
 * Major rework on exception-handling and cancellation in coroutines (see #333, #452 and #451):
-  * New ["Exception Handling" section in the guide](coroutines-guide.md#exception-handling) explains exceptions in coroutines. 
+  * New ["Exception Handling" section in the guide](docs/coroutines-guide.md#exception-handling) explains exceptions in coroutines. 
   * Semantics of `Job.cancel` resulting `Boolean` value changed &mdash; `true` means exception was handled by the job, caller shall handle otherwise.
   * Exceptions are properly propagated from children to parents.
   * Installed `CoroutineExceptionHandler` for a family of coroutines receives one aggregated exception in case of failure.
@@ -47,7 +47,7 @@
 * Introduced support for thread-local elements in coroutines context (see #119):
   * `ThreadContextElement` API for custom thread-context sensitive context elements.
   * `ThreadLocal.asContextElement()` extension function to convert an arbitrary thread-local into coroutine context element.
-  * New ["Thread-local data" subsection in the guide](coroutines-guide.md#thread-local-data) with examples.
+  * New ["Thread-local data" subsection in the guide](docs/coroutines-guide.md#thread-local-data) with examples.
   * SLF4J Mapped Diagnostic Context (MDC) integration is provided via `MDCContext` element defined in [`kotlinx-coroutines-slf4j`](integration/kotlinx-coroutines-slf4j/README.md) integration module.
 * Introduced IO dispatcher to offload blocking I/O-intensive tasks (see #79).
 * Introduced `ExecutorCoroutineDispatcher` instead of `CloseableCoroutineDispatcher` (see #385). 
@@ -280,7 +280,7 @@
 * Fixed `actor` and `produce` so that a cancellation of a Job cancels the underlying channel (closes and removes all the pending messages).  
 * Fixed sporadic failure of `example-context-06` (see #160)
 * Fixed hang of `Job.start` on lazy coroutine with attached `invokeOnCompletion` handler.
-* A more gradual introduction to `runBlocking` and coroutines in the [guide](coroutines-guide.md) (see #166).
+* A more gradual introduction to `runBlocking` and coroutines in the [guide](docs/coroutines-guide.md) (see #166).
 
 ## Version 0.19.3
 
@@ -331,7 +331,7 @@
   * When a context is explicitly specified, `newCoroutineContext` function checks if there is any
     interceptor/dispatcher defined in the context and uses `DefaultDispatcher` if there is none.  
   * `DefaultDispatcher` is currently defined to be equal to `CommonPool`.     
-  * Examples in the [guide](coroutines-guide.md) now start with `launch { ... }` code and explanation on the nature
+  * Examples in the [guide](docs/coroutines-guide.md) now start with `launch { ... }` code and explanation on the nature
     and the need for coroutine context starts in "Coroutine context and dispatchers" section.  
 * Parent coroutines now wait for their children (see #125):
   * Job _completing_ state is introduced in documentation as a state in which parent coroutine waits for its children.
@@ -391,7 +391,7 @@
 ## Version 0.17
 
 * `CompletableDeferred` is introduced as a set-once event-like communication primitive (see #70).
-  * [Coroutines guide](coroutines-guide.md) uses it in a section on actors.
+  * [Coroutines guide](docs/coroutines-guide.md) uses it in a section on actors.
   * `CompletableDeferred` is an interface with private impl (courtesy of @fvasco, see #86).
   * It extends `Deferred` interface with `complete` and `completeExceptionally` functions.
 * `Job.join` and `Deferred.await` wait until a cancelled coroutine stops execution (see #64). 
@@ -537,7 +537,7 @@
 * `actor` coroutine builder.
 * Couple more examples for "Shared mutable state and concurrency" section and 
   "Channels are fair" section with ping-pong table example 
-  in [coroutines guide](coroutines-guide.md).
+  in [coroutines guide](docs/coroutines-guide.md).
 
 ## Version 0.11-rc
 
@@ -545,7 +545,7 @@
 * `Mutex` is moved to `kotlinx.coroutines.experimental.sync` package.
 * `ClosedSendChannelException` is a subclass of `CancellationException` now.
 * New sections on "Shared mutable state and concurrency" and "Select expression" 
-  in [coroutines guide](coroutines-guide.md).
+  in [coroutines guide](docs/coroutines-guide.md).
 
 ## Version 0.10-rc
 
@@ -573,7 +573,7 @@
   So, lazy coroutines do not need a separate state variable to track their started/not-started (new/active) status.
 * Exception transparency in `Job.cancel` (original cause is rethrown).
 * Clarified possible states for `Job`/`CancellableContinuation`/`Deferred` in docs.
-* Example on async-style functions and links to API reference site from [coroutines guide](coroutines-guide.md).
+* Example on async-style functions and links to API reference site from [coroutines guide](docs/coroutines-guide.md).
 
 ## Version 0.7-beta
 
@@ -581,12 +581,12 @@
   `RendezvousChannel` and `ArrayChannel` implementations, `Channel()` factory function and `buildChannel{}`
   coroutines builder.
 * `Here` context is renamed to `Unconfined` (the old name is deprecated).
-* A [guide on coroutines](coroutines-guide.md) is expanded: sections on contexts and channels.  
+* A [guide on coroutines](docs/coroutines-guide.md) is expanded: sections on contexts and channels.  
  
 ## Version 0.6-beta
 
 * Switched to Kotlin version 1.1.0-beta-37.
-* A [guide on coroutines](coroutines-guide.md) is expanded.  
+* A [guide on coroutines](docs/coroutines-guide.md) is expanded.  
 
 ## Version 0.5-beta
 
@@ -599,7 +599,7 @@
   has a default implementation that returns `true`.
 * `NonCancellable` context is introduced.  
 * Performance optimizations for cancellable continuations (fewer objects created).
-* A [guide on coroutines](coroutines-guide.md) is added.  
+* A [guide on coroutines](docs/coroutines-guide.md) is added.  
 
 ## Version 0.4-beta
 

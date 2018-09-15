@@ -22,7 +22,7 @@ class GuideReactiveTest : ReactiveTestBase() {
 
 This guide explains key differences between Kotlin coroutines and reactive streams and shows 
 how they can be used together for greater good. Prior familiarity with basic coroutine concepts
-that are covered in [Guide to kotlinx.coroutines](../coroutines-guide.md) is not required, 
+that are covered in [Guide to kotlinx.coroutines](../docs/coroutines-guide.md) is not required, 
 but is a big plus. If you are familiar with reactive streams, you may find this guide
 a better introduction into the world of coroutines.
 
@@ -759,7 +759,7 @@ Notice, the use of
 [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
 in the invocation of [launch] coroutine builder. It is used to refer
 to the context of the enclosing `publish` coroutine. This way, all the coroutines that are
-being launched here are [children](../coroutines-guide.md#children-of-a-coroutine) of the `publish`
+being launched here are [children](../docs/coroutines-guide.md#children-of-a-coroutine) of the `publish`
 coroutine and will get cancelled when the `publish` coroutine is cancelled or is otherwise completed. 
 Moreover, since parent coroutine waits until all children are complete, this implementation fully
 merges all the received streams.
