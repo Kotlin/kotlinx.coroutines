@@ -80,10 +80,10 @@ public interface CoroutineScope {
  * Adds the specified coroutine context to this scope, overriding existing elements in the current
  * scope's context with the corresponding keys.
  *
- * This is a shorthand for `CoroutineScope(thisScope + context)`.
+ * This is a shorthand for `CoroutineScope(coroutineContext + context)`.
  */
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
-    CoroutineScope(context + context)
+    CoroutineScope(coroutineContext + context)
 
 /**
  * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
