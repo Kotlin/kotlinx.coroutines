@@ -707,7 +707,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 if (state !is Finishing) onFinishingInternal(proposedUpdate)
                 if (child != null && tryWaitForChild(child, proposedUpdate))
                     return COMPLETING_WAITING_CHILDREN
-                if (tryFinalizeState(completing, proposedUpdate, mode = MODE_ATOMIC_DEFAULT))
+                if (tryFinalizeState(completing, proposedUpdate, mode))
                     return COMPLETING_COMPLETED
             }
         }
