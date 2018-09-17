@@ -87,7 +87,6 @@ class WithTimeoutOrNullTest : TestBase() {
         val value = withTimeoutOrNull(1) {
             channel.receive()
         }
-
         assertNull(value)
     }
 
@@ -99,11 +98,11 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testInnerTimeoutTest() = runTest(
+    fun testInnerTimeout() = runTest(
         expected = { it is CancellationException }
     ) {
-        withTimeoutOrNull(200) {
-            withTimeout(100) {
+        withTimeoutOrNull(1000) {
+            withTimeout(10) {
                 while (true) {
                     yield()
                 }
@@ -127,7 +126,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testOuterTimeoutTest() = runTest {
+    fun testOuterTimeout() = runTest {
         var counter = 0
         val result = withTimeoutOrNull(250) {
             while (true) {
