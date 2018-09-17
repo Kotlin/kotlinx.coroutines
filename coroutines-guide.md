@@ -1129,7 +1129,7 @@ import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+fun log(msg: String) = Thread.currentThread().run { println("[$name @coroutine#$id] $msg") }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val a = async {
@@ -1170,7 +1170,7 @@ You can read more about debugging facilities in the documentation for [newCorout
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option (see [debug](#debugging-coroutines-and-threads)):
 
 ```kotlin
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+fun log(msg: String) = Thread.currentThread().run { println("[$name @coroutine#$id] $msg") }
 
 fun main(args: Array<String>) {
     newSingleThreadContext("Ctx1").use { ctx1 ->
@@ -1336,7 +1336,7 @@ is executing this coroutine when [debugging mode](#debugging-coroutines-and-thre
 The following example demonstrates this concept:
 
 ```kotlin
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+fun log(msg: String) = Thread.currentThread().run { println("[$name @coroutine#$id] $msg") }
 
 fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
     log("Started main coroutine")
