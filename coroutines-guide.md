@@ -1129,7 +1129,7 @@ import kotlin.coroutines.experimental.*
 -->
 
 ```kotlin
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+fun log(msg: String) = Thread.currentThread().run { println("[$name @coroutine#$id] $msg") }
 
 fun main(args: Array<String>) = runBlocking<Unit> {
     val a = async {
