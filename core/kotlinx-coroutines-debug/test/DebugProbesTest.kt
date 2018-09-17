@@ -95,25 +95,24 @@ class DebugProbesTest : TestBase() {
         return sw.toString()
     }
 
-
-    private fun String.trimStackTrace(): String {
-        return applyBackspace(trimIndent().replace(Regex(":[0-9]+"), ""))
-    }
-
-    private fun applyBackspace(line: String): String {
-        val array = line.toCharArray()
-        val stack = CharArray(array.size)
-        var stackSize = -1
-        for (c in array) {
-            if (c != '\b') {
-                stack[++stackSize] = c
-            } else {
-                --stackSize
-            }
-        }
-
-        return String(stack, 0, stackSize)
-    }
-
     private fun String.count(substring: String): Int = split(substring).size - 1
+}
+
+public fun String.trimStackTrace(): String {
+    return trimIndent().replace(Regex(":[0-9]+"), "").applyBackspace()
+}
+
+public fun String.applyBackspace(): String {
+    val array = toCharArray()
+    val stack = CharArray(array.size)
+    var stackSize = -1
+    for (c in array) {
+        if (c != '\b') {
+            stack[++stackSize] = c
+        } else {
+            --stackSize
+        }
+    }
+
+    return String(stack, 0, stackSize)
 }
