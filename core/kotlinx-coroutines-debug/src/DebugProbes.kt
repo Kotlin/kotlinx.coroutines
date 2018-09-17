@@ -39,6 +39,7 @@ import kotlin.coroutines.*
  */
 public object DebugProbes {
 
+    private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
     private val capturedCoroutines = WeakHashMap<ArtificialStackFrame<*>, CoroutineState>()
     private var installed: Boolean = false
@@ -117,18 +118,17 @@ public object DebugProbes {
     public fun dumpCoroutines(out: PrintStream = System.out): Unit {
         // Avoid inference with other out/err invocations
         val resultingString = buildString {
-            append("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}:\n")
+            append("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
 
             capturedCoroutines.forEach { key, value ->
                 val state = if (value.state == State.RUNNING)
                     "${value.state} (Last suspension stacktrace, not an actual stacktrace)"
                 else value.state.toString()
 
-                append("\nCoroutine $key, state: $state")
+                append("\n\nCoroutine $key, state: $state")
                 if (value.lastObservedFrame == null) {
-                    append("\n\tat ${artificialFrame("Coroutine creation callsite")}")
+                    append("\n\tat ${artificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
                     printStackTrace(value.creationStackTrace)
-
                 } else {
                     printStackTrace(value.suspensionStackTrace())
                 }
@@ -233,7 +233,7 @@ public object DebugProbes {
         val startIndex = lastIntrinsic + 1
         return Array(size - lastIntrinsic) {
             if (it == 0) {
-                artificialFrame("Coroutine creation callsite")
+                artificialFrame(ARTIFICIAL_FRAME_MESSAGE)
             } else {
                 stackTrace[startIndex + it - 1]
             }

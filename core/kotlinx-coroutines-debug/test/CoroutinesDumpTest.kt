@@ -37,7 +37,7 @@ class CoroutinesDumpTest {
                 "\tat kotlinx/coroutines/CoroutinesDumpTest.sleepingNestedMethod(CoroutinesDumpTest.kt:95)\n" +
                 "\tat kotlinx/coroutines/CoroutinesDumpTest.sleepingOuterMethod(CoroutinesDumpTest.kt:88)\n" +
                 "\tat kotlinx/coroutines/CoroutinesDumpTest\$testSuspendedCoroutine\$1\$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:29)\n" +
-            "\t(Coroutine creation callsite)\n" +
+            "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                 "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
@@ -55,7 +55,7 @@ class CoroutinesDumpTest {
         verifyDump(
             "Coroutine \"coroutine#1\":DeferredCoroutine{Active}@1e4a7dd4, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
                     "\tat kotlinx/coroutines/CoroutinesDumpTest\$testRunningCoroutine\$1\$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:49)\n" +
-             "\t(Coroutine creation callsite)\n" +
+             "\t(Coroutine creation stacktrace)\n" +
                     "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                     "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                     "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
@@ -79,7 +79,7 @@ class CoroutinesDumpTest {
                    "\tat kotlinx/coroutines/CoroutinesDumpTest.nestedActiveMethod(CoroutinesDumpTest.kt:111)\n" +
                    "\tat kotlinx/coroutines/CoroutinesDumpTest.activeMethod(CoroutinesDumpTest.kt:106)\n" +
                    "\tat kotlinx/coroutines/CoroutinesDumpTest\$testRunningCoroutineWihSuspensionPoint\$1\$deferred\$1.invokeSuspend(CoroutinesDumpTest.kt:71)\n" +
-           "\t(Coroutine creation callsite)\n" +
+           "\t(Coroutine creation stacktrace)\n" +
                    "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                    "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                    "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
@@ -142,15 +142,14 @@ class CoroutinesDumpTest {
         DebugProbes.dumpCoroutines(PrintStream(baos))
         val trace = baos.toString().split("\n\n")
         if (traces.isEmpty()) {
-            assertEquals(2, trace.size)
+            assertEquals(1, trace.size)
             assertTrue(trace[0].startsWith("Coroutines dump"))
-            assertTrue(trace[1].isBlank())
             return
         }
 
         trace.withIndex().drop(1).forEach { (index, value) ->
-            val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation callsite)\n", limit = 2)
-            val actual = value.applyBackspace().split("\n\t(Coroutine creation callsite)\n", limit = 2)
+            val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
+            val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
             assertEquals(expected.size, actual.size)
 
             expected.withIndex().forEach { (index, trace) ->

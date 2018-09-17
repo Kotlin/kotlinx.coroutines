@@ -44,7 +44,7 @@ class DebugProbesTest : TestBase() {
                         "\tat kotlinx/coroutines/DebugProbesTest.oneMoreNestedMethod(DebugProbesTest.kt:71)\n" +
                         "\tat kotlinx/coroutines/DebugProbesTest.nestedMethod(DebugProbesTest.kt:66)\n" +
                         "\tat kotlinx/coroutines/DebugProbesTest\$testAsyncWithProbes\$1\$1.invokeSuspend(DebugProbesTest.kt:43)\n" +
-                        "\t(Coroutine creation callsite)\n" +
+                        "\t(Coroutine creation stacktrace)\n" +
                         "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                         "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
                         "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n" +
