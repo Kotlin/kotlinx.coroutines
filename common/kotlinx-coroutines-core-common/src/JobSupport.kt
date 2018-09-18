@@ -373,10 +373,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 onStartInternal()
                 return TRUE
             }
-            is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                return state.tryMakeActive().also { result ->
-                    if (result == TRUE) onStartInternal()
-                }
+            is InactiveNodeList -> { // LIST state -- inactive with a list of completion handlers
+                if (!_state.compareAndSet(state, state.list)) return RETRY
+                onStartInternal()
+                return TRUE
             }
             else -> return FALSE // not a new state
         }
@@ -486,13 +486,15 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         list.addLastIf(node) { this.state === expect }
 
     private fun promoteEmptyToNodeList(state: Empty) {
-        // try to promote it to list in new state
-        _state.compareAndSet(state, NodeList(state.isActive))
+        // try to promote it to LIST state with the corresponding state
+        val list = NodeList()
+        val update = if (state.isActive) list else InactiveNodeList(list)
+        _state.compareAndSet(state, update)
     }
 
     private fun promoteSingleToNodeList(state: JobNode<*>) {
         // try to promote it to list (SINGLE+ state)
-        state.addOneIfEmpty(NodeList(active = true))
+        state.addOneIfEmpty(NodeList())
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
         val list = state.nextNode // either our NodeList or somebody else won the race, updated state
         // just attempt converting it to list if state is still the same, then we'll continue lock-free loop
@@ -597,14 +599,13 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 is JobNode<*> -> { // SINGLE/SINGLE+ state -- one completion handler
                     promoteSingleToNodeList(state)
                 }
-                is NodeList -> { // LIST -- a list of completion handlers (either new or active)
-                    if (state.isActive) {
-                        if (tryMakeCancelling(state, state.list, cause)) return true
-                    } else {
-                        // cancelling a non-started coroutine makes it immediately cancelled
-                        if (updateStateCancelled(state, cause))
-                            return true
-                    }
+                is NodeList -> { // LIST -- active list of completion handlers
+                    if (tryMakeCancelling(state, state.list, cause)) return true
+                }
+                is InactiveNodeList -> { // LIST -- inactive list of completion handlers
+                    // cancelling a non-started coroutine makes it immediately cancelled
+                    if (updateStateCancelled(state, cause))
+                        return true
                 }
                 is Finishing -> { // Completing/Cancelling the job, may cancel
                     if (state.cancelled != null) {
@@ -1079,24 +1080,14 @@ internal abstract class JobNode<out J : Job>(
     override fun dispose() = (job as JobSupport).removeNode(this)
 }
 
-internal class NodeList(
-    active: Boolean
-) : LockFreeLinkedListHead(), Incomplete {
-    private val _active = atomic(if (active) 1 else 0)
-
-    override val isActive: Boolean get() = _active.value != 0
+internal class NodeList : LockFreeLinkedListHead(), Incomplete {
+    override val isActive: Boolean get() = true
     override val list: NodeList get() = this
 
-    fun tryMakeActive(): Int {
-        if (_active.value != 0) return FALSE
-        if (_active.compareAndSet(0, 1)) return TRUE
-        return RETRY
-    }
-
-    override fun toString(): String = buildString {
-        append("List")
-        append(if (isActive) "{Active}" else "{New}")
-        append("[")
+    fun getString(state: String) = buildString {
+        append("List{")
+        append(state)
+        append("}[")
         var first = true
         this@NodeList.forEach<JobNode<*>> { node ->
             if (first) first = false else append(", ")
@@ -1104,6 +1095,15 @@ internal class NodeList(
         }
         append("]")
     }
+
+    override fun toString(): String = getString("Active")
+}
+
+internal class InactiveNodeList(
+    override val list: NodeList
+) : Incomplete {
+    override val isActive: Boolean get() = false
+    override fun toString(): String = list.getString("New")
 }
 
 private class InvokeOnCompletion(
