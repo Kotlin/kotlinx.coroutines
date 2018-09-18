@@ -34,12 +34,12 @@ import kotlin.coroutines.experimental.*
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
- *        
+ *
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
-public fun <T> CoroutineScope.rxObservable(
+public fun <T : Any> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = Observable.create { subscriber ->
@@ -58,7 +58,7 @@ public fun <T> CoroutineScope.rxObservable(
     replaceWith = ReplaceWith("GlobalScope.rxObservable(context, block)",
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxObservable"])
 )
-public fun <T> rxObservable(
+public fun <T : Any> rxObservable(
     context: CoroutineContext = Dispatchers.Default,
     parent: Job? = null,
     block: suspend ProducerScope<T>.() -> Unit

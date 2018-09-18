@@ -56,7 +56,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = Globa
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
 @ExperimentalCoroutinesApi
-public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
+public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
     this@asSingle.await()
 }
 
@@ -72,7 +72,7 @@ public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = Glob
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
 @ObsoleteCoroutinesApi
-public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
+public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
     for (t in this@asObservable)
         send(t)
 }
