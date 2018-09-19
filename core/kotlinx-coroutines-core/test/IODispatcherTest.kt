@@ -17,6 +17,7 @@ class IODispatcherTest : TestBase() {
             expect(2)
             assertNotSame(mainThread, Thread.currentThread())
         }
+
         expect(3)
         assertSame(mainThread, Thread.currentThread())
         finish(4)

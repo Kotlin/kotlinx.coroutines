@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
@@ -9,6 +11,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
@@ -29,9 +32,10 @@ import kotlin.coroutines.*
  * | Normal completion or `close` without cause   | `onComplete`
  * | Failure with exception or `close` with cause | `onError`
  */
+@BuilderInference
 fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     Flux.from(publish(newCoroutineContext(context), block = block))
 
@@ -50,6 +54,6 @@ fun <T> CoroutineScope.flux(
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 fun <T> flux(
     context: CoroutineContext = Dispatchers.Default,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     GlobalScope.flux(context, block)

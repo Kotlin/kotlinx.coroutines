@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -9,6 +11,7 @@ import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Broadcasts all elements of the channel.
@@ -43,7 +46,7 @@ public fun <E> broadcast(
     start: CoroutineStart = CoroutineStart.LAZY,
     parent: Job? = null,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> =
     GlobalScope.broadcast(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
 
@@ -83,12 +86,13 @@ public fun <E> broadcast(
  * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): BroadcastChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)

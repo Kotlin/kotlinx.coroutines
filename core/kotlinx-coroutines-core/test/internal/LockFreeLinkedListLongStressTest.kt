@@ -61,7 +61,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         // verification
         println("Verify result")
         list.validate()
-        val expected = buildIterator {
+        val expected = iterator {
             for (i in 0 until nAdded)
                 if (!shallRemove(i))
                     yield(i)

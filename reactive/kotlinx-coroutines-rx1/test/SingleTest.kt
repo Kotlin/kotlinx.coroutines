@@ -63,6 +63,7 @@ class SingleTest : TestBase() {
             expect(4)
             yield() // back to main, will get cancelled
             expectUnreached()
+
         }
         expect(2)
         val sub = single.subscribe({

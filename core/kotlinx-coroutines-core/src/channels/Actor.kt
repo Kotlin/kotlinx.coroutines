@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -9,6 +11,7 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
@@ -111,6 +114,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <E> CoroutineScope.actor(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,

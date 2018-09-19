@@ -761,7 +761,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    public final override val children: Sequence<Job> get() = buildSequence {
+    public final override val children: Sequence<Job> get() = sequence {
         val state = this@JobSupport.state
         when (state) {
             is ChildJob -> yield(state.childJob)

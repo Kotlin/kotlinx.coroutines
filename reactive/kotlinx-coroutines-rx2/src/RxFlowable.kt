@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
@@ -9,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
@@ -32,9 +35,10 @@ import kotlin.coroutines.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
 
 /**
@@ -49,5 +53,5 @@ public fun <T> CoroutineScope.rxFlowable(
 @JvmOverloads // for binary compatibility with older code compiled before context had a default
 public fun <T> rxFlowable(
     context: CoroutineContext = Dispatchers.Default,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = GlobalScope.rxFlowable(context, block)

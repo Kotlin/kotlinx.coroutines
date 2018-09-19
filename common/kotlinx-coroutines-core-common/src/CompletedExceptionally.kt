@@ -10,7 +10,7 @@ import kotlin.coroutines.*
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
-public fun <T> SuccessOrFailure<T>.toState(): Any? =
+public fun <T> Result<T>.toState(): Any? =
     if (isSuccess) getOrThrow() else CompletedExceptionally(exceptionOrNull()!!) // todo: need to do it better
 
 /**

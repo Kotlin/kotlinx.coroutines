@@ -2,11 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.rx1
 
 import kotlinx.coroutines.*
 import rx.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [Completable] that runs a given [block] in a coroutine.
@@ -26,6 +29,7 @@ import kotlin.coroutines.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun CoroutineScope.rxCompletable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> Unit

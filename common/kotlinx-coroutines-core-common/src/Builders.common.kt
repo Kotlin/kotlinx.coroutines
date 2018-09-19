@@ -4,6 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
+@file:UseExperimental(ExperimentalTypeInference::class)
 
 package kotlinx.coroutines
 
@@ -11,6 +12,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.experimental.*
 
 // --------------- basic coroutine builders ---------------
 
@@ -40,6 +42,7 @@ import kotlin.coroutines.intrinsics.*
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code which will be invoked in the context of the provided scope.
  **/
+@BuilderInference
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -236,7 +239,7 @@ private class RunContinuationUnintercepted<in T>(
     override val context: CoroutineContext,
     private val continuation: Continuation<T>
 ): Continuation<T> {
-    override fun resumeWith(result: SuccessOrFailure<T>) {
+    override fun resumeWith(result: Result<T>) {
         withCoroutineContext(continuation.context) {
             continuation.resumeWith(result)
         }

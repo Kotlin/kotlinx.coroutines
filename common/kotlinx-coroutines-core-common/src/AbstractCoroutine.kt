@@ -101,7 +101,7 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * Completes execution of this with coroutine with the specified result.
      */
-    public final override fun resumeWith(result: SuccessOrFailure<T>) {
+    public final override fun resumeWith(result: Result<T>) {
         makeCompletingOnce(result.toState(), defaultResumeMode)
     }
 

@@ -1,12 +1,16 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
 import reactor.core.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
@@ -27,6 +31,7 @@ import kotlin.coroutines.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 fun <T> CoroutineScope.mono(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T?

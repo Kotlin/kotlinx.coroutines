@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
@@ -11,6 +13,7 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -34,9 +37,10 @@ import kotlin.coroutines.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
@@ -56,7 +60,7 @@ public fun <T> CoroutineScope.publish(
 public fun <T> publish(
     context: CoroutineContext = Dispatchers.Default,
     parent: Job? = null,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = GlobalScope.publish(context + (parent ?: EmptyCoroutineContext), block)
 
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet

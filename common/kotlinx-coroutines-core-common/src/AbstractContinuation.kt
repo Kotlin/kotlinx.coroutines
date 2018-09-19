@@ -139,7 +139,7 @@ internal abstract class AbstractContinuation<in T>(
         return getSuccessfulResult(state)
     }
 
-    override fun resumeWith(result: SuccessOrFailure<T>) =
+    override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(), resumeMode)
 
     public fun invokeOnCancellation(handler: CompletionHandler) {

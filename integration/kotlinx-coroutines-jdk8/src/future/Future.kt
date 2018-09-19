@@ -2,12 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.*
 import java.util.concurrent.*
 import java.util.function.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
@@ -31,6 +34,7 @@ import kotlin.coroutines.*
  * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -107,7 +111,7 @@ private class CompletableFutureCoroutine<T>(
 ) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
     override val coroutineContext: CoroutineContext get() = context
     override val isActive: Boolean get() = context[Job]!!.isActive
-    override fun resumeWith(result: SuccessOrFailure<T>) {
+    override fun resumeWith(result: Result<T>) {
         result
             .onSuccess { complete(it) }
             .onFailure { completeExceptionally(it) }

@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:UseExperimental(ExperimentalTypeInference::class)
+
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
@@ -12,6 +14,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
+import kotlin.experimental.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
@@ -35,9 +38,10 @@ import kotlin.coroutines.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
@@ -57,7 +61,7 @@ public fun <T> CoroutineScope.rxObservable(
 public fun <T> rxObservable(
     context: CoroutineContext = Dispatchers.Default,
     parent: Job? = null,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = GlobalScope.rxObservable(context + (parent ?: EmptyCoroutineContext), block)
 
 private const val OPEN = 0        // open channel, still working
