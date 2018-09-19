@@ -12,6 +12,7 @@ import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.TestBase
 import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.ignoreLostThreads
 import kotlinx.coroutines.experimental.runBlocking
 import org.hamcrest.core.IsEqual
@@ -28,7 +29,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testCompletedDeferredAsTask() = runBlocking {
+    fun `Completed deferred as task`() = runBlocking {
         expect(1)
         val deferred = async(coroutineContext, CoroutineStart.UNDISPATCHED) {
             expect(2) // Completed immediately
@@ -41,7 +42,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testWaitForDeferredAsTask() = runBlocking {
+    fun `Deferred as task`() = runBlocking {
         expect(1)
         val deferred = async(coroutineContext) {
             expect(3) // Completed later
@@ -54,10 +55,26 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testTaskCancelled() {
+    fun `Threw cancellation exeception as task`() {
         val deferred = GlobalScope.async {
             throw CancellationException()
         }
+
+        val task = deferred.asTask()
+        try {
+            runBlocking { task.await() }
+        } catch (e: Exception) {
+            Assert.assertTrue(e is CancellationException)
+            Assert.assertFalse(task.isSuccessful)
+            Assert.assertFalse(task.isCanceled)
+        }
+    }
+
+    @Test
+    fun `Cancelled as task`() {
+        val deferred = GlobalScope.async {
+            delay(100)
+        }.apply { cancel() }
 
         val task = deferred.asTask()
         try {
@@ -69,7 +86,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testTaskThrowable() {
+    fun `Threw as task`() {
         val deferred = GlobalScope.async {
             throw OutOfMemoryError()
         }
@@ -84,7 +101,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testTaskStageAsDeferred() = runBlocking {
+    fun `Task stages as task`() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
         val deferred: Deferred<Int> = Tasks.call {
@@ -99,13 +116,13 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testTaskAsDeferred() = runBlocking {
+    fun `Task as deferred`() = runBlocking {
         val deferred = Tasks.forResult(42).asDeferred()
         Assert.assertEquals(42, deferred.await())
     }
 
     @Test
-    fun testCancelledTaskAsDeferred() = runBlocking {
+    fun `Cancelled task as deferred`() = runBlocking {
         val deferred = Tasks.forCanceled<Int>().asDeferred()
 
         Assert.assertTrue(deferred.isCancelled)
@@ -118,7 +135,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testFailedTaskAsDeferred() = runBlocking {
+    fun `Failed task as deferred`() = runBlocking {
         val deferred = Tasks.forException<Int>(TestException("something went wrong")).asDeferred()
 
         Assert.assertTrue(deferred.isCompletedExceptionally)
@@ -136,7 +153,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testTaskWithExceptionAsDeferred() = runBlocking {
+    fun `Failed task stages as deferred`() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
         val deferred: Deferred<Int> = Tasks.call {

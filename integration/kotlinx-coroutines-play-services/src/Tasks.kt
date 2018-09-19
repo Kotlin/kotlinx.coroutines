@@ -7,7 +7,6 @@
 package kotlinx.coroutines.experimental.tasks
 
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
@@ -16,7 +15,6 @@ import kotlinx.coroutines.experimental.CompletableDeferred
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.suspendCancellableCoroutine
-import java.util.concurrent.Executor
 
 /**
  * Converts this deferred value to the instance of [Task].
@@ -25,12 +23,17 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
     val cancellation = CancellationTokenSource()
     val source = TaskCompletionSource<T>(cancellation.token)
 
-    invokeOnCompletion {
+    invokeOnCompletion callback@{
+        if (isCancelled) {
+            cancellation.cancel()
+            return@callback
+        }
+
         val t = getCompletionExceptionOrNull()
-        when (t) {
-            null -> source.setResult(getCompleted())
-            is CancellationException -> cancellation.cancel()
-            else -> source.setException(t as? Exception ?: RuntimeExecutionException(t))
+        if (t == null) {
+            source.setResult(getCompleted())
+        } else {
+            source.setException(t as? Exception ?: RuntimeExecutionException(t))
         }
     }
 
@@ -40,7 +43,7 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
 /**
  * Converts this task to an instance of [Deferred].
  */
-public fun <T> Task<T>.asDeferred(executor: Executor? = null): Deferred<T> {
+public fun <T> Task<T>.asDeferred(): Deferred<T> {
     if (isComplete) {
         val e = exception
         return if (e == null) {
@@ -51,19 +54,14 @@ public fun <T> Task<T>.asDeferred(executor: Executor? = null): Deferred<T> {
     }
 
     val result = CompletableDeferred<T>()
-    val listener = OnCompleteListener<T> {
+
+    addOnCompleteListener {
         val e = it.exception
         if (e == null) {
             if (isCanceled) result.cancel() else result.complete(it.result)
         } else {
             result.completeExceptionally(e)
         }
-    }
-
-    if (executor == null) {
-        addOnCompleteListener(listener)
-    } else {
-        addOnCompleteListener(executor, listener)
     }
 
     return result
@@ -76,7 +74,7 @@ public fun <T> Task<T>.asDeferred(executor: Executor? = null): Deferred<T> {
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
  */
-public suspend fun <T> Task<T>.await(executor: Executor? = null): T {
+public suspend fun <T> Task<T>.await(): T {
     if (isComplete) {
         val e = exception
         return if (e == null) {
@@ -91,19 +89,13 @@ public suspend fun <T> Task<T>.await(executor: Executor? = null): T {
     }
 
     return suspendCancellableCoroutine { cont ->
-        val listener = OnCompleteListener<T> {
+        addOnCompleteListener {
             val e = exception
             if (e == null) {
                 if (isCanceled) cont.cancel() else cont.resume(result)
             } else {
                 cont.resumeWithException(e)
             }
-        }
-
-        if (executor == null) {
-            addOnCompleteListener(listener)
-        } else {
-            addOnCompleteListener(executor, listener)
         }
     }
 }
