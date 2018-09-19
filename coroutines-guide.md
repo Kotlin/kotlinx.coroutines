@@ -360,7 +360,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 
 // this is your first suspending function
 suspend fun launchDoWorld() = currentScope {
-        launch {
+    launch {
         println("World!")
     }
 }
@@ -1394,7 +1394,7 @@ The output of this code  with `-Dkotlinx.coroutines.debug` JVM option is:
 I'm working in thread CommonPool-worker-1 @test#2
 ```
 
-<!--- TEST -->
+<!--- TEST FLEXIBLE_THREAD -->
 
 ### Cancellation via explicit job
 
