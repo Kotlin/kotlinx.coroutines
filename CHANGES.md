@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.26.1
+* Android `Main` dispatcher is `async` by default which may significantly improve UI performance. Contributed by @JakeWharton (see #427).
+* Fixed bug when lazily-started coroutine with registered cancellation handler was concurrently started and cancelled. 
+* Improved termination sequence in IO dispatcher.
+* Fixed bug with `CoroutineScope.plus` operator (see #559).
+* Various fixes in the documentation. Thanks to @SUPERCILEX, @yorlov, @dualscyther and @soudmaijer!
+
 ## Version 0.26.0
 * Major rework of `kotlinx.coroutines` concurrency model (see #410 for a full explanation of the rationale behind this change):
   * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
