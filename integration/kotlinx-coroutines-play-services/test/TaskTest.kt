@@ -55,7 +55,7 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun `Threw cancellation exeception as task`() {
+    fun `Threw cancellation exception as task`() {
         val deferred = GlobalScope.async {
             throw CancellationException()
         }
