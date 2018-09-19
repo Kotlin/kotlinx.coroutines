@@ -98,7 +98,7 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            publish<String>(coroutineContext) {
+            publish<String> {
                 yield()
                 expectUnreached()
             }.awaitFirst()

@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 /**
@@ -15,7 +14,7 @@ class ChannelsConsumeTest {
     private val sourceList = (1..10).toList()
 
     // test source with numbers 1..10
-    private fun testSource(context: CoroutineContext) = CoroutineScope(context).produce {
+    private fun CoroutineScope.testSource() = produce {
         for (i in sourceList) {
             send(i)
         }
@@ -239,29 +238,29 @@ class ChannelsConsumeTest {
 
     @Test
     fun testDrop() {
-        checkTransform(sourceList.drop(3)) { ctx ->
-            drop(3, ctx)
+        checkTransform(sourceList.drop(3)) {
+            drop(3)
         }
     }
 
     @Test
     fun testDropWhile() {
-        checkTransform(sourceList.dropWhile { it < 4}) { ctx ->
-            dropWhile(ctx) { it < 4 }
+        checkTransform(sourceList.dropWhile { it < 4}) {
+            dropWhile { it < 4 }
         }
     }
 
     @Test
     fun testFilter() {
-        checkTransform(sourceList.filter { it % 2 == 0 }) { ctx ->
-            filter(ctx) { it % 2 == 0 }
+        checkTransform(sourceList.filter { it % 2 == 0 }) {
+            filter { it % 2 == 0 }
         }
     }
 
     @Test
     fun testFilterIndexed() {
-        checkTransform(sourceList.filterIndexed { index, _ -> index % 2 == 0 }) { ctx ->
-            filterIndexed(ctx) { index, _ -> index % 2 == 0 }
+        checkTransform(sourceList.filterIndexed { index, _ -> index % 2 == 0 }) {
+            filterIndexed { index, _ -> index % 2 == 0 }
         }
     }
 
@@ -287,8 +286,8 @@ class ChannelsConsumeTest {
 
     @Test
     fun testFilterNot() {
-        checkTransform(sourceList.filterNot { it % 2 == 0 }) { ctx ->
-            filterNot(ctx) { it % 2 == 0 }
+        checkTransform(sourceList.filterNot { it % 2 == 0 }) {
+            filterNot { it % 2 == 0 }
         }
     }
 
@@ -354,15 +353,15 @@ class ChannelsConsumeTest {
 
     @Test
     fun testTake() {
-        checkTransform(sourceList.take(3)) { ctx ->
-            take(3, ctx)
+        checkTransform(sourceList.take(3)) {
+            take(3)
         }
     }
 
     @Test
     fun testTakeWhile() {
-        checkTransform(sourceList.takeWhile { it < 4 }) { ctx ->
-            takeWhile(ctx) { it < 4 }
+        checkTransform(sourceList.takeWhile { it < 4 }) {
+            takeWhile { it < 4 }
         }
     }
 
@@ -477,8 +476,8 @@ class ChannelsConsumeTest {
 
     @Test
     fun testFlatMap() {
-        checkTransform(sourceList.flatMap { listOf("A$it", "B$it") }) { ctx ->
-            flatMap(ctx) {
+        checkTransform(sourceList.flatMap { listOf("A$it", "B$it") }) {
+            flatMap {
                 GlobalScope.produce {
                     send("A$it")
                     send("B$it")
@@ -523,22 +522,22 @@ class ChannelsConsumeTest {
 
     @Test
     fun testMap() {
-        checkTransform(sourceList.map { it.toString() }) { ctx ->
-            map(ctx) { it.toString() }
+        checkTransform(sourceList.map { it.toString() }) {
+            map { it.toString() }
         }
     }
 
     @Test
     fun testMapIndexed() {
-        checkTransform(sourceList.mapIndexed { index, v -> "$index$v" }) { ctx ->
-            mapIndexed(ctx) { index, v -> "$index$v" }
+        checkTransform(sourceList.mapIndexed { index, v -> "$index$v" }) {
+            mapIndexed { index, v -> "$index$v" }
         }
     }
 
     @Test
     fun testMapIndexedNotNull() {
-        checkTransform(sourceList.mapIndexedNotNull { index, v -> "$index$v".takeIf { v % 2 == 0 } }) { ctx ->
-            mapIndexedNotNull(ctx) { index, v -> "$index$v".takeIf { v % 2 == 0 } }
+        checkTransform(sourceList.mapIndexedNotNull { index, v -> "$index$v".takeIf { v % 2 == 0 } }) {
+            mapIndexedNotNull { index, v -> "$index$v".takeIf { v % 2 == 0 } }
         }
     }
 
@@ -584,8 +583,8 @@ class ChannelsConsumeTest {
 
     @Test
     fun testMapNotNull() {
-        checkTransform(sourceList.mapNotNull { (it + 3).takeIf { it % 2 == 0 } }) { ctx ->
-            mapNotNull(ctx) { (it + 3).takeIf { it % 2 == 0 } }
+        checkTransform(sourceList.mapNotNull { (it + 3).takeIf { it % 2 == 0 } }) {
+            mapNotNull { (it + 3).takeIf { it % 2 == 0 } }
         }
     }
 
@@ -631,15 +630,15 @@ class ChannelsConsumeTest {
 
     @Test
     fun testWithIndex() {
-        checkTransform(sourceList.withIndex().toList()) { ctx ->
-            withIndex(ctx)
+        checkTransform(sourceList.withIndex().toList()) {
+            withIndex()
         }
     }
 
     @Test
     fun testDistinctBy() {
-        checkTransform(sourceList.distinctBy { it / 2 }) { ctx ->
-            distinctBy(ctx) { it / 2 }
+        checkTransform(sourceList.distinctBy { it / 2 }) {
+            distinctBy { it / 2 }
         }
     }
 
@@ -798,11 +797,15 @@ class ChannelsConsumeTest {
     @Test
     fun testZip() {
         val expect = sourceList.zip(sourceList) { a, b -> a + 2 * b }
-        checkTransform(expect) { ctx ->
-            zip(testSource(ctx), ctx) { a, b -> a + 2*b }
+        checkTransform(expect) {
+            currentScope {
+                zip(testSource()) { a, b -> a + 2*b }
+            }
         }
-        checkTransform(expect) { ctx ->
-            testSource(ctx).zip(this, ctx) { a, b -> a + 2*b }
+        checkTransform(expect) {
+            currentScope {
+                testSource().zip(this@checkTransform) { a, b -> a + 2*b }
+            }
         }
     }
 
@@ -821,7 +824,7 @@ class ChannelsConsumeTest {
         terminal: suspend ReceiveChannel<Int>.() -> Unit
     ) {
         val src = runBlocking {
-            val src = testSource(coroutineContext)
+            val src = testSource()
             try {
                 // terminal operation
                 terminal(src)
@@ -841,9 +844,9 @@ class ChannelsConsumeTest {
         terminal: suspend ReceiveChannel<Int>.() -> Unit
     ) {
         val src = runBlocking {
-            val src = testSource(coroutineContext)
+            val src = testSource()
             // terminal operation in a separate async context started until the first suspension
-            val d = async(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+            val d = async(start = CoroutineStart.UNDISPATCHED) {
                 terminal(src)
             }
             // then cancel it
@@ -866,7 +869,7 @@ class ChannelsConsumeTest {
 
     private fun <R> checkTransform(
         expect: List<R>,
-        transform: ReceiveChannel<Int>.(CoroutineContext) -> ReceiveChannel<R>
+        transform: suspend ReceiveChannel<Int>.() -> ReceiveChannel<R>
     ) {
         // check for varying number of received elements from the channel
         for (nReceive in 0..expect.size) {
@@ -877,12 +880,12 @@ class ChannelsConsumeTest {
     private fun <R> checkTransform(
         nReceive: Int,
         expect: List<R>,
-        transform: ReceiveChannel<Int>.(CoroutineContext) -> ReceiveChannel<R>
+        transform: suspend ReceiveChannel<Int>.() -> ReceiveChannel<R>
     ) {
         val src = runBlocking {
-            val src = testSource(coroutineContext)
+            val src = testSource()
             // transform
-            val res = transform(src, coroutineContext)
+            val res = transform(src)
             // receive nReceive elements from the result
             repeat(nReceive) { i ->
                 assertEquals(expect[i], res.receive())

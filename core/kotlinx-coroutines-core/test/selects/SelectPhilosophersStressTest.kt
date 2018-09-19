@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.sync.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
 
 class SelectPhilosophersStressTest : TestBase() {
     val TEST_DURATION = 3000L * stressTestMultiplier
@@ -52,7 +51,7 @@ class SelectPhilosophersStressTest : TestBase() {
                 eatsCount
             }
         }
-        val debugJob = launch(coroutineContext) {
+        val debugJob = launch {
             delay(3 * TEST_DURATION)
             println("Test is failing. Lock states are:")
             forks.withIndex().forEach { (id, mutex) -> println("$id: $mutex") }

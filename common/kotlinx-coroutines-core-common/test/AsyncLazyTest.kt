@@ -6,7 +6,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AsyncLazyTest : TestBase() {
@@ -14,7 +13,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testSimple() = runTest {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(3)
             42
         }
@@ -30,7 +29,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testLazyDeferAndYield() = runTest {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             expect(4)
@@ -48,13 +47,13 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testLazyDeferAndYield2() = runTest {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(7)
             42
         }
         expect(2)
         assertTrue(!d.isActive && !d.isCompleted)
-        launch(coroutineContext) { // see how it looks from another coroutine
+        launch { // see how it looks from another coroutine
             expect(4)
             assertTrue(!d.isActive && !d.isCompleted)
             yield() // yield back to main
@@ -77,7 +76,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             finish(3)
             throw TestException()
         }
@@ -91,7 +90,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is TestException }
     ) {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(3)
             yield() // this has not effect, because parent coroutine is waiting
             finish(4)
@@ -105,7 +104,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testCatchException() = runTest {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(3)
             throw TestException()
         }
@@ -123,7 +122,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testStart() = runTest {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(4)
             42
         }
@@ -145,7 +144,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is JobCancellationException }
     ) {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expectUnreached()
             42
         }
@@ -165,7 +164,7 @@ class AsyncLazyTest : TestBase() {
         expected = { it is CancellationException }
     ) {
         expect(1)
-        val d = async(coroutineContext, CoroutineStart.LAZY) {
+        val d = async(start = CoroutineStart.LAZY) {
             expect(4)
             yield() // yield to main, that is going to cancel us
             expectUnreached()

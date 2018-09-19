@@ -7,14 +7,13 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectDeferredTest : TestBase() {
     @Test
     fun testSimpleReturnsImmediately() = runTest {
         expect(1)
-        val d1 = async(coroutineContext) {
+        val d1 = async {
             expect(3)
             42
         }
@@ -34,11 +33,11 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSimpleWithYield() = runTest {
         expect(1)
-        val d1 = async(coroutineContext) {
+        val d1 = async {
             expect(3)
             42
         }
-        launch(coroutineContext) {
+        launch {
             expect(4)
             yield() // back to main
             expect(6)
@@ -60,11 +59,11 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteLazy() = runTest {
         expect(1)
-        val d1 = async(coroutineContext, CoroutineStart.LAZY) {
+        val d1 = async(start = CoroutineStart.LAZY) {
             expect(5)
             42
         }
-        launch(coroutineContext) {
+        launch {
             expect(3)
             val res = select<String> {
                 d1.onAwait { v ->
@@ -88,7 +87,7 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectTwo() = runTest {
         expect(1)
-        val d1 = async(coroutineContext) {
+        val d1 = async {
             expect(3)
             yield() // to the other deffered
             expect(5)
@@ -96,7 +95,7 @@ class SelectDeferredTest : TestBase() {
             expect(7)
             "d1"
         }
-        val d2 = async(coroutineContext) {
+        val d2 = async {
             expect(4)
             "d2" // returns result
         }
@@ -124,7 +123,7 @@ class SelectDeferredTest : TestBase() {
     ) {
         expect(1)
         val d = CompletableDeferred<String>()
-        launch (coroutineContext) {
+        launch {
             finish(3)
             d.cancel() // will cancel after select starts
         }

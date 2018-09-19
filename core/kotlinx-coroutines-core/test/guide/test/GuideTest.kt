@@ -294,7 +294,7 @@ class GuideTest {
 
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext09() {
-        test("KotlinxCoroutinesExperimentalGuideContext09") { kotlinx.coroutines.experimental.guide.context09.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesExperimentalGuideContext09") { kotlinx.coroutines.experimental.guide.context09.main(emptyArray()) }.verifyLinesFlexibleThread(
             "I'm working in thread CommonPool-worker-1 @test#2"
         )
     }

@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class NonCancellableTest : TestBase() {
@@ -12,7 +11,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellable() = runTest {
         expect(1)
-        val job = async(coroutineContext) {
+        val job = async {
             withContext(NonCancellable) {
                 expect(2)
                 yield()
@@ -40,7 +39,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableWithException() = runTest {
         expect(1)
-        val deferred = async(coroutineContext) {
+        val deferred = async {
             withContext(NonCancellable) {
                 expect(2)
                 yield()
@@ -67,7 +66,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableFinally() = runTest {
         expect(1)
-        val job = async(coroutineContext) {
+        val job = async {
             try {
                 expect(2)
                 yield()
@@ -99,7 +98,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableTwice() = runTest {
         expect(1)
-        val job = async(coroutineContext) {
+        val job = async {
             withContext(NonCancellable) {
                 expect(2)
                 yield()

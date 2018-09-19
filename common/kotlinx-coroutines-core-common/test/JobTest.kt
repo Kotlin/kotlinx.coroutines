@@ -159,7 +159,7 @@ class JobTest : TestBase() {
 
     @Test
     fun testOnCancellingHandler() = runTest {
-        val job = launch(coroutineContext) {
+        val job = launch {
             expect(2)
             delay(Long.MAX_VALUE)
         }

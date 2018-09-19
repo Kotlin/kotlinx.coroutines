@@ -30,26 +30,21 @@ class JobExceptionsStressTest : TestBase() {
         repeat(1000 * stressTestMultiplier) {
             val exception = runBlock(executor) {
                 val barrier = CyclicBarrier(4)
-                val job = GlobalScope.launch(coroutineContext.minusKey(Job)) {
-
-                    launch(coroutineContext) {
+                val job = launch(NonCancellable) {
+                    launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
                         throw ArithmeticException()
                     }
-
-                    launch(coroutineContext) {
+                    launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
                         throw IOException()
                     }
-
-                    launch(coroutineContext) {
+                    launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
                         throw IllegalArgumentException()
                     }
-
                     delay(Long.MAX_VALUE)
                 }
-
                 barrier.await()
                 job.join()
             }

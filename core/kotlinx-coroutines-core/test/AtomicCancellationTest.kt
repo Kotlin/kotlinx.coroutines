@@ -6,8 +6,6 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.sync.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {
@@ -15,7 +13,7 @@ class AtomicCancellationTest : TestBase() {
     fun testSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             channel.send(42) // suspends
             expect(4) // should execute despite cancellation
@@ -31,7 +29,7 @@ class AtomicCancellationTest : TestBase() {
     fun testSelectSendAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val result = select<String> { // suspends
                 channel.onSend(42) {
@@ -53,7 +51,7 @@ class AtomicCancellationTest : TestBase() {
     fun testReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertEquals(42, channel.receive()) // suspends
             expect(4) // should execute despite cancellation
@@ -69,7 +67,7 @@ class AtomicCancellationTest : TestBase() {
     fun testSelectReceiveAtomicCancel() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
-        val job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             val result = select<String> { // suspends
                 channel.onReceive {
@@ -91,18 +89,18 @@ class AtomicCancellationTest : TestBase() {
     @Test
     fun testSelectDeferredAwaitCancellable() = runBlocking {
         expect(1)
-        val deferred = async(coroutineContext) { // deferred, not yet complete
+        val deferred = async { // deferred, not yet complete
             expect(4)
             "OK"
         }
         assertEquals(false, deferred.isCompleted)
         var job: Job? = null
-        launch(coroutineContext) { // will cancel job as soon as deferred completes
+        launch { // will cancel job as soon as deferred completes
             expect(5)
             assertEquals(true, deferred.isCompleted)
             job!!.cancel()
         }
-        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 select<Unit> { // suspends
@@ -121,17 +119,17 @@ class AtomicCancellationTest : TestBase() {
     @Test
     fun testSelectJobJoinCancellable() = runBlocking {
         expect(1)
-        val jobToJoin = launch(coroutineContext) { // not yet complete
+        val jobToJoin = launch { // not yet complete
             expect(4)
         }
         assertEquals(false, jobToJoin.isCompleted)
         var job: Job? = null
-        launch(coroutineContext) { // will cancel job as soon as jobToJoin completes
+        launch { // will cancel job as soon as jobToJoin completes
             expect(5)
             assertEquals(true, jobToJoin.isCompleted)
             job!!.cancel()
         }
-        job = launch(coroutineContext, start = CoroutineStart.UNDISPATCHED) {
+        job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 select<Unit> { // suspends

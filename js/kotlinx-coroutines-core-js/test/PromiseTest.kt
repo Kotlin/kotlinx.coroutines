@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.js.*
 import kotlin.test.*
 
@@ -38,7 +37,7 @@ class PromiseTest : TestBase() {
 
     @Test
     fun testCompletedDeferredAsPromise() = GlobalScope.promise {
-        val deferred = async(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        val deferred = async(start = CoroutineStart.UNDISPATCHED) {
             // completed right away
             "OK"
         }
@@ -48,7 +47,7 @@ class PromiseTest : TestBase() {
 
     @Test
     fun testWaitForDeferredAsPromise() = GlobalScope.promise {
-        val deferred = async(coroutineContext) {
+        val deferred = async {
             // will complete later
             "OK"
         }
@@ -60,7 +59,7 @@ class PromiseTest : TestBase() {
     fun testCancellableAwaitPromise() = GlobalScope.promise {
         lateinit var r: (String) -> Unit
         val toAwait = Promise<String> { resolve, _ -> r = resolve }
-        val job = launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
             toAwait.await() // suspends
         }
         job.cancel() // cancel the job

@@ -34,7 +34,7 @@ class DelayTest : TestBase() {
 
     @Test
     fun testRegularDelay() = runTest {
-        val deferred = async(coroutineContext) {
+        val deferred = async {
             expect(2)
             delay(1)
             expect(3)

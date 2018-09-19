@@ -8,7 +8,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {
@@ -48,7 +47,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testDispatch() = runTest {
         expect(1)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             yield() // back to main
             expect(7)
@@ -88,7 +87,6 @@ class WithTimeoutOrNullTest : TestBase() {
         val value = withTimeoutOrNull(1) {
             channel.receive()
         }
-
         assertNull(value)
     }
 
@@ -100,11 +98,11 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testInnerTimeoutTest() = runTest(
+    fun testInnerTimeout() = runTest(
         expected = { it is CancellationException }
     ) {
-        withTimeoutOrNull(200) {
-            withTimeout(100) {
+        withTimeoutOrNull(1000) {
+            withTimeout(10) {
                 while (true) {
                     yield()
                 }
@@ -128,7 +126,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testOuterTimeoutTest() = runTest {
+    fun testOuterTimeout() = runTest {
         var counter = 0
         val result = withTimeoutOrNull(250) {
             while (true) {

@@ -8,7 +8,6 @@ import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class CoroutineDispatcherTest : SchedulerTestBase() {
@@ -24,7 +23,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         withContext(dispatcher) {
             require(Thread.currentThread() is CoroutineScheduler.Worker)
             expect(2)
-            val job = async(coroutineContext) {
+            val job = async {
                 expect(3)
                 delay(10)
                 expect(4)

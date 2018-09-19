@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.selects
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectBiasTest : TestBase() {
@@ -13,8 +12,8 @@ class SelectBiasTest : TestBase() {
 
     @Test
     fun testBiased() = runTest {
-        val d0 = async(coroutineContext) { 0 }
-        val d1 = async(coroutineContext) { 1 }
+        val d0 = async { 0 }
+        val d1 = async { 1 }
         val counter = IntArray(2)
         repeat(n) {
             val selected = select<Int> {
@@ -29,8 +28,8 @@ class SelectBiasTest : TestBase() {
 
     @Test
     fun testUnbiased() = runTest {
-        val d0 = async(coroutineContext) { 0 }
-        val d1 = async(coroutineContext) { 1 }
+        val d0 = async { 0 }
+        val d1 = async { 1 }
         val counter = IntArray(2)
         repeat(n) {
             val selected = selectUnbiased<Int> {

@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.selects
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SelectArrayChannelTest : TestBase() {
@@ -16,7 +15,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendSuccess() = runTest {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(coroutineContext) {
+        launch {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -35,7 +34,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendSuccessWithDefault() = runTest {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(coroutineContext) {
+        launch {
             expect(2)
             assertEquals("OK", channel.receive())
             finish(6)
@@ -76,7 +75,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectSendWait() = runTest {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             assertEquals("BUF", channel.receive())
             expect(5)
@@ -143,7 +142,7 @@ class SelectArrayChannelTest : TestBase() {
         channel.send("BUF")
         expect(4)
         // make sure second send blocks (select above is over)
-        launch(coroutineContext) {
+        launch {
             expect(6)
             channel.send("CHK")
             finish(10)
@@ -161,7 +160,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectReceiveWait() = runTest {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
             channel.send("OK")
             expect(4)
@@ -194,7 +193,7 @@ class SelectArrayChannelTest : TestBase() {
     fun testSelectReceiveWaitClosed() = runTest({it is ClosedReceiveChannelException}) {
         expect(1)
         val channel = ArrayChannel<String>(1)
-        launch(coroutineContext) {
+        launch {
             expect(3)
             channel.close()
             finish(4)
@@ -243,7 +242,7 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         channel.send(42)
         expect(2)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             select<Unit> {
                 channel.onReceive { v ->
@@ -265,7 +264,7 @@ class SelectArrayChannelTest : TestBase() {
         expect(1)
         channel.send(42)
         expect(2)
-        launch(coroutineContext) {
+        launch {
             expect(4)
             select<Unit> {
                 channel.onReceive { v ->

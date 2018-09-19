@@ -9,7 +9,6 @@ import org.hamcrest.MatcherAssert.*
 import org.hamcrest.core.*
 import org.junit.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
 
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     val nSenders = 2
@@ -55,7 +54,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
             }
         }
         // print progress
-        val progressJob = launch(coroutineContext) {
+        val progressJob = launch {
             var seconds = 0
             while (true) {
                 delay(1000)

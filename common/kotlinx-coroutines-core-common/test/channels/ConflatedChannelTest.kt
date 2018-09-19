@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ConflatedChannelTest : TestBase() {
@@ -40,7 +39,7 @@ class ConflatedChannelTest : TestBase() {
     fun testConflationSendReceive() = runTest {
         val q = ConflatedChannel<Int>()
         expect(1)
-        launch(coroutineContext) { // receiver coroutine
+        launch { // receiver coroutine
             expect(4)
             assertEquals(2, q.receive())
             expect(5)

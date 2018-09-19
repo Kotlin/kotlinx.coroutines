@@ -58,7 +58,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runBlocking<Unit> {
         expect(1)
-        val publisher = publish<Int>(coroutineContext) {
+        val publisher = publish<Int> {
             expect(5)
             throw RuntimeException("OK")
         }

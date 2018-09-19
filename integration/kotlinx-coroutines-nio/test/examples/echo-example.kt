@@ -9,7 +9,6 @@ import kotlinx.coroutines.experimental.nio.*
 import java.net.*
 import java.nio.*
 import java.nio.channels.*
-import kotlin.coroutines.experimental.*
 
 val PORT = 12345
 val CLIENT_READ_TIMEOUT = 5000L // 5 sec
@@ -34,7 +33,7 @@ fun main(args: Array<String>) = runBlocking {
         }
         log("Accepted client connection from $address")
         // just start a new coroutine for each client connection
-        launch(coroutineContext) {
+        launch {
             try {
                 handleClient(client)
                 log("Client connection from $address has terminated normally")

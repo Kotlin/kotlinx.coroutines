@@ -68,10 +68,10 @@ class JobNestedExceptionsTest : TestBase() {
     fun testNestedAtomicThrow() {
         val exception = runBlock {
             expect(1)
-            val job = GlobalScope.launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
+            val job = launch(NonCancellable, start = CoroutineStart.ATOMIC) {
                 expect(2)
 
-                GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
+                launch(start = CoroutineStart.ATOMIC) {
                     expect(3)
                     throw IOException()
                 }
@@ -91,12 +91,11 @@ class JobNestedExceptionsTest : TestBase() {
     fun testChildThrowsDuringCompletion() {
         val exceptions = runBlockForMultipleExceptions {
             expect(1)
-            val job = GlobalScope.launch(coroutineContext.minusKey(Job), CoroutineStart.ATOMIC) {
+            val job = launch(NonCancellable, start = CoroutineStart.ATOMIC) {
                 expect(2)
-
-                GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
+                launch(start = CoroutineStart.ATOMIC) {
                     expect(3)
-                    GlobalScope.launch(coroutineContext, CoroutineStart.ATOMIC) {
+                    launch(start = CoroutineStart.ATOMIC) {
                         // This child attaches to the parent and throws after parent completion
                         expect(4)
                         throw NullPointerException()

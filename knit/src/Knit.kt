@@ -324,7 +324,11 @@ private fun requireSingleLine(directive: Directive) {
     require(directive.singleLine) { "${directive.name} directive must end on the same line with '$DIRECTIVE_END'" }
 }
 
-fun makeSectionRef(name: String): String = name.replace(' ', '-').replace(".", "").toLowerCase()
+fun makeSectionRef(name: String): String = name
+    .replace(' ', '-')
+    .replace(".", "")
+    .replace(",", "")
+    .toLowerCase()
 
 class Include(val regex: Regex, val lines: MutableList<String> = arrayListOf())
 

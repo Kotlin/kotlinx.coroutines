@@ -4,11 +4,10 @@
 
 package kotlinx.coroutines.experimental
 
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.core.IsEqual
-import org.junit.Test
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
+import org.hamcrest.MatcherAssert.*
+import org.hamcrest.core.*
+import org.junit.*
+import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 class DelayJvmTest : TestBase() {
@@ -45,7 +44,7 @@ class DelayJvmTest : TestBase() {
     @Test
     fun testNegativeDelay() = runBlocking {
         expect(1)
-        val job = async(coroutineContext) {
+        val job = async {
             expect(3)
             delay(0)
             expect(4)

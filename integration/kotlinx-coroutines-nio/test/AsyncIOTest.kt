@@ -13,7 +13,6 @@ import java.net.*
 import java.nio.*
 import java.nio.channels.*
 import java.nio.file.*
-import kotlin.coroutines.experimental.*
 
 class AsyncIOTest {
     @Rule
@@ -68,7 +67,7 @@ class AsyncIOTest {
 
         val serverPort = (serverChannel.localAddress as InetSocketAddress).port
 
-        val c1 = launch(coroutineContext) {
+        val c1 = launch {
             val client = serverChannel.aAccept()
             val buffer = ByteBuffer.allocate(2)
             client.aRead(buffer)
@@ -79,7 +78,7 @@ class AsyncIOTest {
             client.close()
         }
 
-        val c2 = launch(coroutineContext) {
+        val c2 = launch {
             val connection =
                     AsynchronousSocketChannel.open()
             // async calls

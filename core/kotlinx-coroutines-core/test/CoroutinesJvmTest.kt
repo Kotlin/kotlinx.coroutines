@@ -23,11 +23,11 @@ class CoroutinesJvmTest : TestBase() {
 
     @Test
     fun testCancelManyCompletedAttachedChildren() = runTest {
-        val parent = launch(coroutineContext) { /* do nothing */ }
+        val parent = launch { /* do nothing */ }
         val n = 10_000 * stressTestMultiplier
         repeat(n) {
             // create a child that already completed
-            val child = launch(coroutineContext, CoroutineStart.UNDISPATCHED) { /* do nothing */ }
+            val child = launch(start = CoroutineStart.UNDISPATCHED) { /* do nothing */ }
             // attach it manually
             parent.attachChild(child)
         }

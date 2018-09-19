@@ -9,6 +9,9 @@ repositories {
 dependencies {
     compileOnly 'com.google.android:android:4.1.1.4'
     compileOnly 'com.android.support:support-annotations:26.1.0'
+
+    testImplementation 'com.google.android:android:4.1.1.4'
+    testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
 }
 
 tasks.withType(dokka.getClass()) {

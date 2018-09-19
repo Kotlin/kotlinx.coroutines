@@ -4,14 +4,13 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class LaunchLazyTest : TestBase() {
     @Test
     fun testLaunchAndYieldJoin() = runTest {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.LAZY) {
+        val job = launch(start = CoroutineStart.LAZY) {
             expect(4)
             yield() // does nothing -- main waits
             expect(5)
@@ -28,7 +27,7 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testStart() = runTest {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.LAZY) {
+        val job = launch(start = CoroutineStart.LAZY) {
             expect(5)
             yield() // yields back to main
             expect(7)
@@ -55,7 +54,7 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testInvokeOnCompletionAndStart() = runTest {
         expect(1)
-        val job = launch(coroutineContext, CoroutineStart.LAZY) {
+        val job = launch(start = CoroutineStart.LAZY) {
             expect(5)
         }
         yield() // no started yet!

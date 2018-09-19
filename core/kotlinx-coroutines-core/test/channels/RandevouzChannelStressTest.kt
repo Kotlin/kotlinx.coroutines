@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import org.junit.*
-import kotlin.coroutines.experimental.*
 
 class RandevouzChannelStressTest : TestBase() {
 
@@ -14,11 +13,11 @@ class RandevouzChannelStressTest : TestBase() {
     fun testStress() = runTest {
         val n = 100_000 * stressTestMultiplier
         val q = RendezvousChannel<Int>()
-        val sender = launch(coroutineContext) {
+        val sender = launch {
             for (i in 1..n) q.send(i)
             expect(2)
         }
-        val receiver = launch(coroutineContext) {
+        val receiver = launch {
             for (i in 1..n) check(q.receive() == i)
             expect(3)
         }

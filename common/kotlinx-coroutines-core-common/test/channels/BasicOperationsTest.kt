@@ -12,7 +12,7 @@ class BasicOperationsTest : TestBase() {
     @Test
     fun testSimpleSendReceive() = runTest {
         // Parametrized common test :(
-        TestChannelKind.values().forEach { kind -> testSendReceive(kind, 100) }
+        TestChannelKind.values().forEach { kind -> testSendReceive(kind, 20) }
     }
 
     @Test

@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental.channels
 import kotlinx.coroutines.experimental.*
 import org.junit.runner.*
 import org.junit.runners.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
@@ -28,13 +27,13 @@ class SendReceiveJvmStressTest(private val channel: Channel<Int>) : TestBase() {
     @Test
     fun testStress() = runTest {
         val n = 100_000 * stressTestMultiplier
-        val sender = launch(coroutineContext) {
+        val sender = launch {
             for (i in 1..n) {
                 channel.send(i)
             }
             expect(2)
         }
-        val receiver = launch(coroutineContext) {
+        val receiver = launch {
             for (i in 1..n) {
                 val next = channel.receive()
                 check(next == i)

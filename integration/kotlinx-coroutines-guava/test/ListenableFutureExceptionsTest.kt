@@ -9,7 +9,6 @@ import kotlinx.coroutines.experimental.*
 import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ListenableFutureExceptionsTest : TestBase() {
@@ -71,7 +70,7 @@ class ListenableFutureExceptionsTest : TestBase() {
         runTest {
             val future = SettableFuture.create<Int>()
             val chained = if (transformer == null) future else Futures.transform(future, transformer)
-            launch(coroutineContext) {
+            launch {
                 future.setException(exception)
             }
 

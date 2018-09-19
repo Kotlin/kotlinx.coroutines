@@ -10,7 +10,6 @@ import co.paralleluniverse.strands.dataflow.*
 import kotlinx.coroutines.experimental.*
 import org.junit.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
 
 class QuasarTest : TestBase() {
     @Before
@@ -26,7 +25,7 @@ class QuasarTest : TestBase() {
         expect(1)
         val started = CompletableDeferred<Unit>() // Kotlin's event
         val x = Val<String>() // Quasar's data flow
-        launch(coroutineContext) {
+        launch {
             started.await() // await Quasar's scheduler
             expect(3) // will get scheduled when runSuspendable suspends
             x.set("OK")

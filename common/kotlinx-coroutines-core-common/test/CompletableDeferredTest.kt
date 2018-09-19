@@ -148,7 +148,7 @@ class CompletableDeferredTest : TestBase() {
     fun testAwait() = runTest {
         expect(1)
         val c = CompletableDeferred<String>()
-        launch(coroutineContext, CoroutineStart.UNDISPATCHED) {
+        launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             assertEquals("OK", c.await()) // suspends
             expect(5)
