@@ -7,13 +7,15 @@
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
+import android.support.annotation.VisibleForTesting
 import android.view.*
 import kotlinx.coroutines.experimental.*
+import java.lang.reflect.Constructor
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Dispatches execution onto Android main UI thread and provides native [delay][Delay.delay] support.
+ * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
  */
 public val Dispatchers.Main: HandlerDispatcher
     get() = mainDispatcher
@@ -40,7 +42,32 @@ public fun Handler.asCoroutineDispatcher(): HandlerDispatcher =
 
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
 
-private val mainHandler = Handler(Looper.getMainLooper())
+private val mainHandler = Looper.getMainLooper().asHandler(async = true)
+
+@VisibleForTesting
+internal fun Looper.asHandler(async: Boolean): Handler {
+    // Async support was added in API 16.
+    if (!async || Build.VERSION.SDK_INT < 16) {
+        return Handler(this)
+    }
+
+    if (Build.VERSION.SDK_INT >= 28) {
+        // TODO compile against API 28 so this can be invoked without reflection.
+        val factoryMethod = Handler::class.java.getDeclaredMethod("createAsync", Looper::class.java)
+        return factoryMethod.invoke(null, this) as Handler
+    }
+
+    val constructor: Constructor<Handler>
+    try {
+        constructor = Handler::class.java.getDeclaredConstructor(Looper::class.java,
+            Handler.Callback::class.java, Boolean::class.javaPrimitiveType)
+    } catch (ignored: NoSuchMethodException) {
+        // Hidden constructor absent. Fall back to non-async constructor.
+        return Handler(this)
+    }
+    return constructor.newInstance(this, null, true)
+}
+
 private val mainDispatcher = HandlerContext(mainHandler, "Main")
 
 /**
