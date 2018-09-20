@@ -255,7 +255,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     // fast-path method to finalize normally completed coroutines without children
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?, mode: Int): Boolean {
-        check(state !is Finishing) // only for non-finishing state
+        check(state is Empty || state is JobNode<*>) // only simple state without lists where children can concurrently add
         check(update !is CompletedExceptionally) // only for normal completion
         if (!_state.compareAndSet(state, update)) return false
         completeStateFinalization(state, update, mode, false)
@@ -735,9 +735,9 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             return COMPLETING_ALREADY_COMPLETING
         // find first child
         val child = firstChild(state)
-        // FAST PATH -- no children to wait for && not finishing && not failing => can complete immediately
+        // FAST PATH -- no children to wait for && simple state (no list) && not failing => can complete immediately
         // Failures always have to go through Finishing state to serialize exception handling
-        if (child == null && state !is Finishing && proposedUpdate !is CompletedExceptionally) {
+        if (child == null && (state is Empty || state is JobNode<*>) && proposedUpdate !is CompletedExceptionally) {
             if (!tryFinalizeSimpleState(state, proposedUpdate, mode)) return COMPLETING_RETRY
             return COMPLETING_COMPLETED
         }
