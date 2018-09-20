@@ -4,8 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.*
 
 /**
  * User-specified name of coroutine. This name is used in debugging mode.
