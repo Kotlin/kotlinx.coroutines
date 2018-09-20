@@ -733,11 +733,9 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun tryMakeCompleting(state: Any?, proposedUpdate: Any?, mode: Int): Int {
         if (state !is Incomplete)
             return COMPLETING_ALREADY_COMPLETING
-        // find first child
-        val child = firstChild(state)
         // FAST PATH -- no children to wait for && simple state (no list) && not failing => can complete immediately
         // Failures always have to go through Finishing state to serialize exception handling
-        if (child == null && (state is Empty || state is JobNode<*>) && proposedUpdate !is CompletedExceptionally) {
+        if ((state is Empty || state is JobNode<*>) && state !is ChildJob && proposedUpdate !is CompletedExceptionally) {
             if (!tryFinalizeSimpleState(state, proposedUpdate, mode)) return COMPLETING_RETRY
             return COMPLETING_COMPLETED
         }
@@ -771,6 +769,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         // process failing notification here -- it cancels all the children _before_ we start to to wait them (sic!!!)
         notifyRootCause?.let { notifyFailing(list, it) }
         // now wait for children
+        val child = firstChild(state)
         if (child != null && tryWaitForChild(finishing, child, proposedUpdate))
             return COMPLETING_WAITING_CHILDREN
         // otherwise -- we have not children left (all were already cancelled?)
