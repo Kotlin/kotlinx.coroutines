@@ -20,60 +20,127 @@ import kotlin.coroutines.experimental.*
  * ```
  */
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
-    /** Always returns `true`. */
+    /**
+     * Always returns `true`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override val isActive: Boolean  get() = true
 
-    /** Always returns `false`. */
+    /**
+     * Always returns `false`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override val isCompleted: Boolean get() = false
 
-    /** Always returns `false`. */
+    /**
+     * Always returns `false`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override val isCancelled: Boolean get() = false
 
-    /** Always returns `false`. */
+    /**
+     * Always returns `false`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override fun start(): Boolean = false
 
-    /** Always throws [UnsupportedOperationException]. */
+    /**
+     * Always throws [UnsupportedOperationException].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override suspend fun join() {
         throw UnsupportedOperationException("This job is always active")
     }
 
+    /**
+     * Always throws [UnsupportedOperationException].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     override val onJoin: SelectClause0
         get() = throw UnsupportedOperationException("This job is always active")
 
-    /** Always throws [IllegalStateException]. */
+    /**
+     * Always throws [IllegalStateException].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override fun getCancellationException(): CancellationException = throw IllegalStateException("This job is always active")
 
-    /** Always returns [NonDisposableHandle]. */
+    /**
+     * Always returns [NonDisposableHandle].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     @Suppress("OverridingDeprecatedMember")
+    @InternalCoroutinesApi
     override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
         NonDisposableHandle
 
-    /** Always returns [NonDisposableHandle]. */
+    /**
+     * Always returns [NonDisposableHandle].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     @Suppress("OverridingDeprecatedMember")
+    @InternalCoroutinesApi
     override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
         NonDisposableHandle
 
-    /** Always returns [NonDisposableHandle]. */
+    /**
+     * Always returns [NonDisposableHandle].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     @Suppress("OverridingDeprecatedMember")
+    @InternalCoroutinesApi
     override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
         NonDisposableHandle
 
-    /** Always returns [NonDisposableHandle]. */
+    /**
+     * Always returns [NonDisposableHandle].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
         NonDisposableHandle
 
-    /** Always returns `false`. */
+    /**
+     * Always returns `false`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
+    override fun cancel(): Boolean = false
+
+    /**
+     * Always returns `false`.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override fun cancel(cause: Throwable?): Boolean = false
 
-    /** Always returns [emptySequence]. */
+    /**
+     * Always returns [emptySequence].
+     * @suppress **This an internal API and should not be used from general code.**
+     */
+    @InternalCoroutinesApi
     override val children: Sequence<Job>
         get() = emptySequence()
 
-    /** Always returns [NonDisposableHandle] and does not do anything. */
+    /**
+     * Always returns [NonDisposableHandle] and does not do anything.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     @Suppress("OverridingDeprecatedMember")
+    @InternalCoroutinesApi
     override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
 
-    /** Does not do anything. */
+    /**
+     * Does not do anything.
+     * @suppress **This an internal API and should not be used from general code.**
+     */
     @Suppress("OverridingDeprecatedMember")
+    @InternalCoroutinesApi
     override fun cancelChildren(cause: Throwable?) {}
 }

@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
+
 /**
  * Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
  * to receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
@@ -12,8 +14,16 @@ package kotlinx.coroutines.experimental.channels
  * Use `Channel()` factory function to conveniently create an instance of rendezvous channel.
  *
  * This implementation is fully lock-free.
+ * 
+ * @suppress **This an internal API and should not be used from general code.**
  */
-public open class RendezvousChannel<E> : AbstractChannel<E>() {
+@InternalCoroutinesApi // todo: review KDoc usage
+public open class RendezvousChannel<E>
+@Deprecated(
+    "Replace with Channel factory function",
+    replaceWith = ReplaceWith("Channel()")
+)
+constructor() : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = true

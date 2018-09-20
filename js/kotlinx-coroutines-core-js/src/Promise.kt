@@ -20,16 +20,26 @@ import kotlin.js.*
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+public fun <T> CoroutineScope.promise(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): Promise<T> =
+    async(context, start, block).asPromise()
+
+/**
+ * @suppress **Deprecated**: onCompletion parameter is deprecated.
+ */
+@Deprecated("onCompletion parameter is deprecated")
 public fun <T> CoroutineScope.promise(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
 ): Promise<T> =
-    async(context, start, onCompletion, block = block).asPromise()
+    async(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }.asPromise()
 
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].

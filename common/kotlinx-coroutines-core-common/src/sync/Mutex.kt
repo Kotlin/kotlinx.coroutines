@@ -76,8 +76,9 @@ public interface Mutex {
      */
     public fun holdsLock(owner: Any): Boolean
 
-        /**
-     * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked.
+    /**
+     * Unlocks this mutex. Throws [IllegalStateException] if invoked on a mutex that is not locked or
+     * was locked with a different owner token (by identity).
      *
      * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
      *        was locked with the different token (by identity), this function throws [IllegalStateException].

@@ -17,6 +17,7 @@ import kotlin.coroutines.experimental.*
 /**
  * Creates a [ProducerJob] to read all element of the [Stream].
  */
+@Deprecated("No replacement")
 public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = EmptyCoroutineContext): ReceiveChannel<E> =
     GlobalScope.produce(context) {
         for (element in this@asReceiveChannel)
@@ -26,6 +27,7 @@ public fun <E> Stream<E>.asReceiveChannel(context: CoroutineContext = EmptyCorou
 /**
  * Creates a [Stream] of elements in this [ReceiveChannel].
  */
+@Deprecated(message = "Use toList().stream()", replaceWith = ReplaceWith("toList().stream()"))
 public fun <E : Any> ReceiveChannel<E>.asStream(): Stream<E> = StreamSupport.stream<E>(SpliteratorAdapter(this), false)
 
 /**

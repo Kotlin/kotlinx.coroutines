@@ -4,6 +4,11 @@
 
 package kotlinx.coroutines.experimental.timeunit
 
+/*
+ * @suppress **Deprecated** No replacement
+ */
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+@Deprecated(message = "No replacement")
 public expect enum class TimeUnit {
     MILLISECONDS,
     SECONDS;

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
@@ -23,7 +24,10 @@ import kotlinx.coroutines.experimental.selects.*
  * This implementation is fully lock-free. In this implementation
  * [opening][openSubscription] and [closing][ReceiveChannel.cancel] subscription takes O(N) time, where N is the
  * number of subscribers.
+ *
+ * **Note: This API is experimental.** It may be changed in the future updates.
  */
+@ExperimentalCoroutinesApi
 public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     /**
      * Creates an instance of this class that already holds a value.

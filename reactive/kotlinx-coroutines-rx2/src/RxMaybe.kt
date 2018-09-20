@@ -34,7 +34,7 @@ public fun <T> CoroutineScope.rxMaybe(
 ): Maybe<T> = Maybe.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxMaybeCoroutine(newContext, subscriber)
-    subscriber.setCancellable(coroutine)
+    subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
@@ -56,7 +56,7 @@ public fun <T> rxMaybe(
 private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true), Cancellable {
+) : AbstractCoroutine<T>(parentContext, true) {
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) {
             if (value == null) subscriber.onComplete() else subscriber.onSuccess(value)
@@ -66,7 +66,4 @@ private class RxMaybeCoroutine<T>(
     override fun onCompletedExceptionally(exception: Throwable) {
         if (!subscriber.isDisposed) subscriber.onError(exception)
     }
-
-    // Cancellable impl
-    override fun cancel() { cancel(cause = null) }
 }

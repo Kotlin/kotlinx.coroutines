@@ -69,12 +69,16 @@ public final class kotlinx/coroutines/experimental/rx2/RxSingleKt {
 
 public final class kotlinx/coroutines/experimental/rx2/SchedulerCoroutineDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
 	public fun <init> (Lio/reactivex/Scheduler;)V
-	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getScheduler ()Lio/reactivex/Scheduler;
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 

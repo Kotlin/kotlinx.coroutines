@@ -50,12 +50,14 @@ public class MDCContext(
      */
     companion object Key : CoroutineContext.Key<MDCContext>
 
+    /** @suppress */
     override fun updateThreadContext(context: CoroutineContext): MDCContextMap {
         val oldState = MDC.getCopyOfContextMap()
         setCurrent(contextMap)
         return oldState
     }
 
+    /** @suppress */
     override fun restoreThreadContext(context: CoroutineContext, oldState: MDCContextMap) {
         setCurrent(oldState)
     }

@@ -33,7 +33,7 @@ public fun CoroutineScope.rxCompletable(
 ): Completable = Completable.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxCompletableCoroutine(newContext, subscriber)
-    subscriber.setCancellable(coroutine)
+    subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
@@ -55,7 +55,7 @@ public fun rxCompletable(
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter
-) : AbstractCoroutine<Unit>(parentContext, true), Cancellable {
+) : AbstractCoroutine<Unit>(parentContext, true) {
     override fun onCompleted(value: Unit) {
         if (!subscriber.isDisposed) subscriber.onComplete()
     }
@@ -63,7 +63,4 @@ private class RxCompletableCoroutine(
     override fun onCompletedExceptionally(exception: Throwable) {
         if (!subscriber.isDisposed) subscriber.onError(exception)
     }
-
-    // Cancellable impl
-    override fun cancel() { cancel(cause = null) }
 }

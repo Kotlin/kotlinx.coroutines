@@ -9,7 +9,6 @@ import javafx.application.*
 import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.javafx.JavaFx.delay
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
@@ -24,8 +23,7 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay {
-}
+public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
@@ -37,7 +35,7 @@ public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay {
         imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
 )
 // todo: it will become an internal implementation object
-object JavaFx : JavaFxDispatcher(), Delay {
+object JavaFx : JavaFxDispatcher() {
     init {
         // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
         initPlatform()
@@ -59,15 +57,15 @@ object JavaFx : JavaFxDispatcher(), Delay {
     suspend fun awaitPulse(): Long =
         kotlinx.coroutines.experimental.javafx.awaitPulse()
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timeline = schedule(time, unit, EventHandler {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             with(continuation) { resumeUndispatched(Unit) }
         })
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val timeline = schedule(time, unit, EventHandler {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             block.run()
         })
         return object : DisposableHandle {
@@ -90,7 +88,7 @@ private val pulseTimer by lazy {
 /**
  * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
  * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
- * immediately resumes with [CancellationException] .
+ * immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
  */
 public suspend fun awaitPulse(): Long = suspendCancellableCoroutine { cont ->
     pulseTimer.onNext(cont)

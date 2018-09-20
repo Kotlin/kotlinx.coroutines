@@ -28,9 +28,26 @@ import kotlin.coroutines.experimental.*
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+public fun <T> CoroutineScope.future(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): ListenableFuture<T> {
+    require(!start.isLazy) { "$start start is not supported" }
+    val newContext = newCoroutineContext(context)
+    val job = Job(newContext[Job])
+    val future = ListenableFutureCoroutine<T>(newContext + job)
+    job.cancelFutureOnCompletion(future)
+    start(block, receiver=future, completion=future) // use the specified start strategy
+    return future
+}
+
+/**
+ * @suppress **Deprecated**: onCompletion parameter is deprecated.
+ */
+@Deprecated("onCompletion parameter is deprecated")
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,

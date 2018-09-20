@@ -16,8 +16,12 @@ import kotlin.coroutines.experimental.*
  * Every subscriber gets the signal at the same time.
  * Unsubscribing from the resulting completable **does not** affect the original job in any way.
  *
+ * **Note: This is an experimental api.** Conversion of coroutines primitives to reactive entities may change
+ *    in the future to account for the concept of structured concurrency.
+ *
  * @param context -- the coroutine context from which the resulting completable is going to be signalled
  */
+@ExperimentalCoroutinesApi
 public fun Job.asCompletable(context: CoroutineContext): Completable = GlobalScope.rxCompletable(context) {
     this@asCompletable.join()
 }
@@ -29,8 +33,12 @@ public fun Job.asCompletable(context: CoroutineContext): Completable = GlobalSco
  * Every subscriber gets the same completion value.
  * Unsubscribing from the resulting maybe **does not** affect the original deferred value in any way.
  *
+ * **Note: This is an experimental api.** Conversion of coroutines primitives to reactive entities may change
+ *    in the future to account for the concept of structured concurrency.
+ *
  * @param context -- the coroutine context from which the resulting maybe is going to be signalled
  */
+@ExperimentalCoroutinesApi
 public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = GlobalScope.rxMaybe(context) {
     this@asMaybe.await()
 }
@@ -42,8 +50,12 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = Globa
  * Every subscriber gets the same completion value.
  * Unsubscribing from the resulting single **does not** affect the original deferred value in any way.
  *
+ * **Note: This is an experimental api.** Conversion of coroutines primitives to reactive entities may change
+ *    in the future to account for the concept of structured concurrency.
+ *
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
+@ExperimentalCoroutinesApi
 public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
     this@asSingle.await()
 }
@@ -54,8 +66,12 @@ public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = Glob
  * Every subscriber receives values from this channel in **fan-out** fashion. If the are multiple subscribers,
  * they'll receive values in round-robin way.
  *
+ * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
+ *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
+ *
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
+@ObsoleteCoroutinesApi
 public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
     for (t in this@asObservable)
         send(t)

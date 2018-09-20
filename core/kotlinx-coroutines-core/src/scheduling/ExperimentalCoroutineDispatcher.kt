@@ -25,7 +25,7 @@ open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,
     private val idleWorkerKeepAliveNs: Long
-) : ExecutorCoroutineDispatcher(), Delay {
+) : ExecutorCoroutineDispatcher() {
     constructor(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE
@@ -46,9 +46,6 @@ open class ExperimentalCoroutineDispatcher(
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
         coroutineScheduler.dispatch(block, fair = true)
-
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>): Unit =
-            DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
 
     // TODO throw error when this API becomes public and close it in tests via another method
     override fun close() = coroutineScheduler.close()
@@ -101,7 +98,7 @@ private class LimitingDispatcher(
     val dispatcher: ExperimentalCoroutineDispatcher,
     val parallelism: Int,
     override val taskMode: TaskMode
-) : ExecutorCoroutineDispatcher(), Delay, TaskContext, Executor {
+) : ExecutorCoroutineDispatcher(), TaskContext, Executor {
 
     private val queue = ConcurrentLinkedQueue<Runnable>()
     private val inFlightTasks = atomic(0)
@@ -193,7 +190,4 @@ private class LimitingDispatcher(
         next = queue.poll() ?: return
         dispatch(next, true)
     }
-
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
-        dispatcher.scheduleResumeAfterDelay(time, unit, continuation)
 }

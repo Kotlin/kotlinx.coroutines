@@ -73,6 +73,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun tryResume(value: T, idempotent: Any? = null): Any?
 
     /**
@@ -82,6 +83,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun tryResumeWithException(exception: Throwable): Any?
 
     /**
@@ -89,12 +91,14 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun completeResume(token: Any)
 
     /**
      * Makes this continuation cancellable. Use it with `holdCancellability` optional parameter to
      * [suspendCancellableCoroutine] function. It throws [IllegalStateException] if invoked more than once.
      */
+    @InternalCoroutinesApi
     public fun initCancellability()
 
     /**
@@ -146,7 +150,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
+     *
+     * **Note: This function is experimental.** Its signature general code may be changed in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun CoroutineDispatcher.resumeUndispatched(value: T)
 
     /**
@@ -154,29 +161,36 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * [dispatch][CoroutineDispatcher.dispatch] function of the [CoroutineDispatcher] in the [context].
      * This function is designed to be used only by the [CoroutineDispatcher] implementations themselves.
      * **It should not be used in general code**.
+     *
+     * **Note: This function is experimental.** Its signature general code may be changed in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
 }
 
 /**
  * Suspends coroutine similar to [suspendCoroutine], but provide an implementation of [CancellableContinuation] to
  * the [block]. This function throws [CancellationException] if the coroutine is cancelled or completed while suspended.
- *
- * If [holdCancellability] optional parameter is `true`, then the coroutine is suspended, but it is not
- * cancellable until [CancellableContinuation.initCancellability] is invoked.
- *
- * See [suspendAtomicCancellableCoroutine] for suspending functions that need *atomic cancellation*.
  */
 public suspend inline fun <T> suspendCancellableCoroutine(
-    holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineUninterceptedOrReturn { uCont ->
         val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_CANCELLABLE)
-        if (!holdCancellability) cancellable.initCancellability()
+        cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
     }
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "holdCancellability is no longer supported, no replacement"
+)
+public suspend inline fun <T> suspendCancellableCoroutine(
+    holdCancellability: Boolean = false,
+    crossinline block: (CancellableContinuation<T>) -> Unit
+): T = error("holdCancellability is no longer supported, no replacement")
 
 /**
  * Suspends coroutine similar to [suspendCancellableCoroutine], but with *atomic cancellation*.
@@ -185,7 +199,10 @@ public suspend inline fun <T> suspendCancellableCoroutine(
  * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
  * continue to execute even after it was cancelled from the same thread in the case when the continuation
  * was already resumed and was posted for execution to the thread's queue.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public suspend inline fun <T> suspendAtomicCancellableCoroutine(
     holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
@@ -241,7 +258,10 @@ public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHand
  * ```
  * invokeOnCancellation { handle.dispose() }
  * ```
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun CancellableContinuation<*>.disposeOnCancellation(handle: DisposableHandle) =
     invokeOnCancellation(handler = DisposeOnCancel(handle).asHandler)
 

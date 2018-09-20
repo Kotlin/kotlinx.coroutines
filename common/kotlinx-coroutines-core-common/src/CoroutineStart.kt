@@ -54,7 +54,10 @@ public enum class CoroutineStart {
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     ATOMIC,
 
     /**
@@ -67,7 +70,10 @@ public enum class CoroutineStart {
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
+     *
+     * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this mode is used.
      */
+    @ExperimentalCoroutinesApi
     UNDISPATCHED;
 
     /**
@@ -77,7 +83,10 @@ public enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public operator fun <T> invoke(block: suspend () -> T, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(completion)
@@ -93,7 +102,10 @@ public enum class CoroutineStart {
      * * [ATOMIC] uses [startCoroutine].
      * * [UNDISPATCHED] uses [startCoroutineUndispatched].
      * * [LAZY] does nothing.
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>) =
         when (this) {
             CoroutineStart.DEFAULT -> block.startCoroutineCancellable(receiver, completion)
@@ -104,6 +116,9 @@ public enum class CoroutineStart {
 
     /**
      * Returns `true` when [LAZY].
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public val isLazy: Boolean get() = this === LAZY
 }

@@ -12,7 +12,10 @@ import kotlin.coroutines.experimental.intrinsics.*
  * Use this function to restart coroutine directly from inside of [suspendCoroutine],
  * when the code is already in the context of this coroutine.
  * It does not use [ContinuationInterceptor] and does not update context of the current thread.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
     startDirect(completion) {
         startCoroutineUninterceptedOrReturn(completion)
@@ -23,7 +26,10 @@ public fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continu
  * Use this function to restart coroutine directly from inside of [suspendCoroutine],
  * when the code is already in the context of this coroutine.
  * It does not use [ContinuationInterceptor] and does not update context of the current thread.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, completion: Continuation<T>) {
     startDirect(completion) {
         startCoroutineUninterceptedOrReturn(receiver, completion)
@@ -34,7 +40,10 @@ public fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, co
  * Use this function to start new coroutine in [CoroutineStart.UNDISPATCHED] mode &mdash;
  * immediately execute coroutine in the current thread until next suspension.
  * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
     startDirect(completion) {
         withCoroutineContext(completion.context) {
@@ -47,7 +56,10 @@ public fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continua
  * Use this function to start new coroutine in [CoroutineStart.UNDISPATCHED] mode &mdash;
  * immediately execute coroutine in the current thread until next suspension.
  * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     startDirect(completion) {
         withCoroutineContext(completion.context) {
@@ -76,7 +88,10 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: () -> Any
  *
  * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <T> AbstractCoroutine<T>.startUndispatchedOrReturn(block: suspend () -> T): Any? {
     initParentJob()
     return undispatchedResult { block.startCoroutineUninterceptedOrReturn(this) }
@@ -89,7 +104,10 @@ public fun <T> AbstractCoroutine<T>.startUndispatchedOrReturn(block: suspend () 
  *
  * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
     return undispatchedResult { block.startCoroutineUninterceptedOrReturn(receiver, this) }

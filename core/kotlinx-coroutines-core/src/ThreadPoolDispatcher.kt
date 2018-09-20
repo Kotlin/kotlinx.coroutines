@@ -9,14 +9,22 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.experimental.*
 
 /**
- * Creates a new coroutine execution context using a single thread with built-in [yield] and [delay] support.
- * **NOTE: The resulting [ThreadPoolDispatcher] owns native resources (its thread).
- * Resources are reclaimed by [ThreadPoolDispatcher.close].**
+ * Creates a new coroutine execution context using a single thread with built-in [yield] support.
+ * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its thread).
+ * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
  * @param name the base name of the created thread.
  */
-fun newSingleThreadContext(name: String): ThreadPoolDispatcher =
+fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
+
+/**
+ * @suppress binary compatibility
+ */
+@JvmName("newSingleThreadContext")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+fun newSingleThreadContext0(name: String): ThreadPoolDispatcher =
+    newSingleThreadContext(name) as ThreadPoolDispatcher
 
 /**
  * @suppress **Deprecated**: Parent job is no longer supported.
@@ -27,17 +35,25 @@ fun newSingleThreadContext(name: String, parent: Job? = null): CoroutineContext 
     newFixedThreadPoolContext(1, name)
 
 /**
- * Creates new coroutine execution context with the fixed-size thread-pool and built-in [yield] and [delay] support.
- * **NOTE: The resulting [ThreadPoolDispatcher] owns native resources (its threads).
- * Resources are reclaimed by [ThreadPoolDispatcher.close].**
+ * Creates new coroutine execution context with the fixed-size thread-pool and built-in [yield] support.
+ * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its threads).
+ * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
  * @param nThreads the number of threads.
  * @param name the base name of the created threads.
  */
-fun newFixedThreadPoolContext(nThreads: Int, name: String): ThreadPoolDispatcher {
+fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     return ThreadPoolDispatcher(nThreads, name)
 }
+
+/**
+ * @suppress binary compatibility
+ */
+@JvmName("newFixedThreadPoolContext")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+fun newFixedThreadPoolContext0(nThreads: Int, name: String): ThreadPoolDispatcher =
+    newFixedThreadPoolContext(nThreads, name) as ThreadPoolDispatcher
 
 /**
  * @suppress **Deprecated**: Parent job is no longer supported.
@@ -57,7 +73,11 @@ internal class PoolThread(
 /**
  * Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
  * created with [newSingleThreadContext] and [newFixedThreadPoolContext].
+ * 
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
+@Deprecated("Replace with ExecutorCoroutineDispatcher", replaceWith = ReplaceWith("ExecutorCoroutineDispatcher"))
 public class ThreadPoolDispatcher internal constructor(
     private val nThreads: Int,
     private val name: String

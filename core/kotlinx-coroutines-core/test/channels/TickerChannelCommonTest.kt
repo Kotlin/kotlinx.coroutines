@@ -23,12 +23,12 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
     enum class Channel {
         FIXED_PERIOD {
             override fun invoke(delay: Long, initialDelay: Long) =
-                ticker(delay, initialDelay = initialDelay, mode = TickerMode.FIXED_PERIOD)
+                ticker(delay, initialDelayMillis = initialDelay, mode = TickerMode.FIXED_PERIOD)
         },
 
         FIXED_DELAY {
             override fun invoke(delay: Long, initialDelay: Long) =
-                ticker(delay, initialDelay = initialDelay, mode = TickerMode.FIXED_DELAY)
+                ticker(delay, initialDelayMillis = initialDelay, mode = TickerMode.FIXED_DELAY)
         };
 
         abstract operator fun invoke(delay: Long, initialDelay: Long = 0): ReceiveChannel<Unit>

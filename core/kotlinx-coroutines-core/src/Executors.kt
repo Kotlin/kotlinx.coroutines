@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
@@ -17,6 +16,12 @@ import kotlin.coroutines.experimental.*
  * asynchronous API which requires instance of the [Executor].
  */
 public abstract class ExecutorCoroutineDispatcher: CloseableCoroutineDispatcher(), Closeable {
+    /**
+     * Closes this coroutine dispatcher and shuts down its executor.
+     * 
+     * It may throw an exception if this dispatcher is global and cannot be closed.
+     */
+    public abstract override fun close()
 
     /**
      * Underlying executor of current [CoroutineDispatcher].
@@ -42,6 +47,7 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
  */
+@JvmName("from") // this is for a nice Java API, see issue #255
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcherImpl(this)
 
@@ -68,6 +74,7 @@ private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) :
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
@@ -77,26 +84,26 @@ public abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatc
             DefaultExecutor.execute(block)
         }
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timeout =
             try { (executor as? ScheduledExecutorService)
-                ?.schedule(ResumeUndispatchedRunnable(this, continuation), time, unit) }
+                ?.schedule(ResumeUndispatchedRunnable(this, continuation), timeMillis, TimeUnit.MILLISECONDS) }
             catch (e: RejectedExecutionException) { null }
         if (timeout != null)
             continuation.cancelFutureOnCancellation(timeout)
         else
-            DefaultExecutor.scheduleResumeAfterDelay(time, unit, continuation)
+            DefaultExecutor.scheduleResumeAfterDelay(timeMillis, continuation)
     }
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val timeout =
             try { (executor as? ScheduledExecutorService)
-                ?.schedule(block, time, unit) }
+                ?.schedule(block, timeMillis, TimeUnit.MILLISECONDS) }
             catch (e: RejectedExecutionException) { null }
         return if (timeout != null)
             DisposableFutureHandle(timeout)
         else
-            DefaultExecutor.invokeOnTimeout(time, unit, block)
+            DefaultExecutor.invokeOnTimeout(timeMillis, block)
     }
 
     override fun close() {

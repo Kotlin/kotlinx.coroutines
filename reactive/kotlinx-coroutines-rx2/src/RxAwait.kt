@@ -5,11 +5,8 @@
 package kotlinx.coroutines.experimental.rx2
 
 import io.reactivex.*
-import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.experimental.CancellableContinuation
-import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import io.reactivex.disposables.*
+import kotlinx.coroutines.experimental.*
 
 // ------------------------ CompletableSource ------------------------
 

@@ -22,22 +22,27 @@ public final class kotlinx/coroutines/experimental/AwaitKt {
 }
 
 public final class kotlinx/coroutines/experimental/BuildersKt {
+	public static final fun async (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Deferred;
+	public static synthetic fun async$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Deferred;
 	public static final fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final synthetic fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final synthetic fun launch (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final fun launch (Lkotlin/coroutines/experimental/CoroutineContext;ZLkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static final fun launch (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
+	public static final fun launch (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun launch$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun launch$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun launch$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun launch$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun launch$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
+	public static synthetic fun launch$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
 	public static final synthetic fun run (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun run (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun run$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runBlocking (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static synthetic fun runBlocking$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun withContext (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final synthetic fun withContext (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun withContext (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun withContext$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
@@ -135,10 +140,6 @@ public final class kotlinx/coroutines/experimental/CompletionHandlerException : 
 }
 
 public final class kotlinx/coroutines/experimental/CoroutineContextKt {
-	public static final field DEBUG_PROPERTY_NAME Ljava/lang/String;
-	public static final field DEBUG_PROPERTY_VALUE_AUTO Ljava/lang/String;
-	public static final field DEBUG_PROPERTY_VALUE_OFF Ljava/lang/String;
-	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
 	public static final fun getDefaultDispatcher ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun getIO ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun newCoroutineContext (Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
@@ -151,7 +152,7 @@ public abstract class kotlinx/coroutines/experimental/CoroutineDispatcher : kotl
 	public fun <init> ()V
 	public abstract fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun dispatchYield (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun interceptContinuation (Lkotlin/coroutines/experimental/Continuation;)Lkotlin/coroutines/experimental/Continuation;
+	public final fun interceptContinuation (Lkotlin/coroutines/experimental/Continuation;)Lkotlin/coroutines/experimental/Continuation;
 	public fun isDispatchNeeded (Lkotlin/coroutines/experimental/CoroutineContext;)Z
 	public final fun plus (Lkotlinx/coroutines/experimental/CoroutineDispatcher;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public fun toString ()Ljava/lang/String;
@@ -223,6 +224,13 @@ public final class kotlinx/coroutines/experimental/CoroutineStart : java/lang/En
 	public static fun values ()[Lkotlinx/coroutines/experimental/CoroutineStart;
 }
 
+public final class kotlinx/coroutines/experimental/DebugKt {
+	public static final field DEBUG_PROPERTY_NAME Ljava/lang/String;
+	public static final field DEBUG_PROPERTY_VALUE_AUTO Ljava/lang/String;
+	public static final field DEBUG_PROPERTY_VALUE_OFF Ljava/lang/String;
+	public static final field DEBUG_PROPERTY_VALUE_ON Ljava/lang/String;
+}
+
 public abstract interface class kotlinx/coroutines/experimental/Deferred : kotlinx/coroutines/experimental/Job {
 	public abstract fun await (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public abstract fun getCompleted ()Ljava/lang/Object;
@@ -258,20 +266,27 @@ public final class kotlinx/coroutines/experimental/DeferredKt {
 }
 
 public abstract interface class kotlinx/coroutines/experimental/Delay {
-	public abstract fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public abstract fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public abstract fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public abstract synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public abstract fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public abstract synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public abstract synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public abstract fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/experimental/Delay$DefaultImpls {
-	public static fun delay (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static synthetic fun delay (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static fun delay (Lkotlinx/coroutines/experimental/Delay;JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun delay$default (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static fun invokeOnTimeout (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static fun invokeOnTimeout (Lkotlinx/coroutines/experimental/Delay;JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static synthetic fun invokeOnTimeout (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public static synthetic fun scheduleResumeAfterDelay (Lkotlinx/coroutines/experimental/Delay;JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/experimental/DelayKt {
-	public static final fun delay (ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun delay (ILkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun delay$default (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
@@ -337,26 +352,33 @@ public final class kotlinx/coroutines/experimental/EventLoopKt {
 
 public abstract class kotlinx/coroutines/experimental/ExecutorCoroutineDispatcher : kotlinx/coroutines/experimental/CloseableCoroutineDispatcher, java/io/Closeable {
 	public fun <init> ()V
+	public abstract fun close ()V
 	public abstract fun getExecutor ()Ljava/util/concurrent/Executor;
 }
 
 public abstract class kotlinx/coroutines/experimental/ExecutorCoroutineDispatcherBase : kotlinx/coroutines/experimental/ExecutorCoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
 	public fun <init> ()V
 	public fun close ()V
-	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class kotlinx/coroutines/experimental/ExecutorsKt {
-	public static final fun asCoroutineDispatcher (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final synthetic fun asCoroutineDispatcher (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/experimental/CloseableCoroutineDispatcher;
 	public static final fun asCoroutineDispatcher (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/experimental/ExecutorCoroutineDispatcher;
+	public static final fun from (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final fun toCoroutineDispatcher (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+}
+
+public abstract interface annotation class kotlinx/coroutines/experimental/ExperimentalCoroutinesApi : java/lang/annotation/Annotation {
 }
 
 public final class kotlinx/coroutines/experimental/GlobalScope : kotlinx/coroutines/experimental/CoroutineScope {
@@ -365,9 +387,13 @@ public final class kotlinx/coroutines/experimental/GlobalScope : kotlinx/corouti
 	public synthetic fun isActive ()Z
 }
 
+public abstract interface annotation class kotlinx/coroutines/experimental/InternalCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public abstract interface class kotlinx/coroutines/experimental/Job : kotlin/coroutines/experimental/CoroutineContext$Element {
 	public static final field Key Lkotlinx/coroutines/experimental/Job$Key;
 	public abstract fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public abstract fun cancel ()Z
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract synthetic fun cancelChildren (Ljava/lang/Throwable;)V
 	public abstract fun getCancellationException ()Ljava/util/concurrent/CancellationException;
@@ -413,11 +439,14 @@ public final class kotlinx/coroutines/experimental/JobCancellationException : ja
 }
 
 public final class kotlinx/coroutines/experimental/JobKt {
+	public static final fun DisposableHandle (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/experimental/DisposableHandle;
 	public static final fun Job (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
 	public static synthetic fun Job$default (Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
+	public static final fun cancel (Lkotlin/coroutines/experimental/CoroutineContext;)Z
 	public static final fun cancel (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;)Z
 	public static synthetic fun cancel$default (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static final fun cancelAndJoin (Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun cancelChildren (Lkotlin/coroutines/experimental/CoroutineContext;)V
 	public static final fun cancelChildren (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;)V
 	public static final fun cancelChildren (Lkotlinx/coroutines/experimental/Job;Ljava/lang/Throwable;)V
 	public static synthetic fun cancelChildren$default (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)V
@@ -439,6 +468,7 @@ public final class kotlinx/coroutines/experimental/LazyDeferredKt {
 public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlinx/coroutines/experimental/Job {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/NonCancellable;
 	public fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun cancel ()Z
 	public fun cancel (Ljava/lang/Throwable;)Z
 	public synthetic fun cancelChildren (Ljava/lang/Throwable;)V
 	public fun getCancellationException ()Ljava/util/concurrent/CancellationException;
@@ -463,15 +493,18 @@ public final class kotlinx/coroutines/experimental/NonDisposableHandle : kotlinx
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface annotation class kotlinx/coroutines/experimental/ObsoleteCoroutinesApi : java/lang/annotation/Annotation {
+}
+
 public final class kotlinx/coroutines/experimental/RunnableKt {
 	public static final fun Runnable (Lkotlin/jvm/functions/Function0;)Ljava/lang/Runnable;
 }
 
 public final class kotlinx/coroutines/experimental/ScheduledKt {
-	public static final fun withTimeout (ILkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun withTimeout (ILkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeout (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun withTimeout$default (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun withTimeoutOrNull (ILkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final synthetic fun withTimeoutOrNull (ILkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutOrNull (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static synthetic fun withTimeoutOrNull$default (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
@@ -500,16 +533,23 @@ public final class kotlinx/coroutines/experimental/ThreadPoolDispatcher : kotlin
 }
 
 public final class kotlinx/coroutines/experimental/ThreadPoolDispatcherKt {
-	public static final fun newFixedThreadPoolContext (ILjava/lang/String;)Lkotlinx/coroutines/experimental/ThreadPoolDispatcher;
+	public static final fun newFixedThreadPoolContext (ILjava/lang/String;)Lkotlinx/coroutines/experimental/ExecutorCoroutineDispatcher;
+	public static final synthetic fun newFixedThreadPoolContext (ILjava/lang/String;)Lkotlinx/coroutines/experimental/ThreadPoolDispatcher;
 	public static final fun newFixedThreadPoolContext (ILjava/lang/String;Lkotlinx/coroutines/experimental/Job;)Lkotlin/coroutines/experimental/CoroutineContext;
 	public static synthetic fun newFixedThreadPoolContext$default (ILjava/lang/String;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlin/coroutines/experimental/CoroutineContext;
-	public static final fun newSingleThreadContext (Ljava/lang/String;)Lkotlinx/coroutines/experimental/ThreadPoolDispatcher;
+	public static final fun newSingleThreadContext (Ljava/lang/String;)Lkotlinx/coroutines/experimental/ExecutorCoroutineDispatcher;
+	public static final synthetic fun newSingleThreadContext (Ljava/lang/String;)Lkotlinx/coroutines/experimental/ThreadPoolDispatcher;
 	public static final fun newSingleThreadContext (Ljava/lang/String;Lkotlinx/coroutines/experimental/Job;)Lkotlin/coroutines/experimental/CoroutineContext;
 	public static synthetic fun newSingleThreadContext$default (Ljava/lang/String;Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlin/coroutines/experimental/CoroutineContext;
 }
 
 public final class kotlinx/coroutines/experimental/TimeoutCancellationException : java/util/concurrent/CancellationException {
 	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class kotlinx/coroutines/experimental/TimeoutKt {
+	public static final fun withTimeout (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeoutOrNull (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 }
 
 public final class kotlinx/coroutines/experimental/Unconfined : kotlinx/coroutines/experimental/CoroutineDispatcher {
@@ -525,6 +565,7 @@ public final class kotlinx/coroutines/experimental/YieldKt {
 
 public abstract class kotlinx/coroutines/experimental/channels/AbstractChannel : kotlinx/coroutines/experimental/channels/AbstractSendChannel, kotlinx/coroutines/experimental/channels/Channel {
 	public fun <init> ()V
+	public fun cancel ()Z
 	public fun cancel (Ljava/lang/Throwable;)Z
 	protected fun cleanupSendQueueOnCancel ()V
 	protected final fun describeTryPoll ()Lkotlinx/coroutines/experimental/channels/AbstractChannel$TryPollDesc;
@@ -691,8 +732,9 @@ public abstract interface class kotlinx/coroutines/experimental/channels/Channel
 }
 
 public final class kotlinx/coroutines/experimental/channels/ChannelKt {
-	public static final fun Channel ()Lkotlinx/coroutines/experimental/channels/Channel;
+	public static final synthetic fun Channel ()Lkotlinx/coroutines/experimental/channels/Channel;
 	public static final fun Channel (I)Lkotlinx/coroutines/experimental/channels/Channel;
+	public static synthetic fun Channel$default (IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/Channel;
 }
 
 public final class kotlinx/coroutines/experimental/channels/ChannelsKt {
@@ -897,11 +939,13 @@ public final class kotlinx/coroutines/experimental/channels/ProduceKt {
 	public static final fun produce (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static final synthetic fun produce (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static final fun produce (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static final fun produce (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun produce$default (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun produce$default (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ProducerJob;
 	public static synthetic fun produce$default (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun produce$default (Lkotlin/coroutines/experimental/CoroutineContext;ILkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun produce$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun produce$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 }
 
 public abstract interface class kotlinx/coroutines/experimental/channels/ProducerJob : kotlinx/coroutines/experimental/Job, kotlinx/coroutines/experimental/channels/ReceiveChannel {
@@ -926,6 +970,7 @@ public final class kotlinx/coroutines/experimental/channels/ProducerScope$Defaul
 }
 
 public abstract interface class kotlinx/coroutines/experimental/channels/ReceiveChannel {
+	public abstract fun cancel ()Z
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun getOnReceive ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
 	public abstract fun getOnReceiveOrNull ()Lkotlinx/coroutines/experimental/selects/SelectClause1;
@@ -995,7 +1040,9 @@ public final class kotlinx/coroutines/experimental/channels/SubscriptionReceiveC
 }
 
 public final class kotlinx/coroutines/experimental/channels/TickerChannelsKt {
+	public static final fun ticker (JJLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static final fun ticker (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
+	public static synthetic fun ticker$default (JJLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 	public static synthetic fun ticker$default (JLjava/util/concurrent/TimeUnit;JLkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/channels/TickerMode;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/ReceiveChannel;
 }
 
@@ -1026,10 +1073,12 @@ public abstract interface class kotlinx/coroutines/experimental/selects/SelectBu
 	public abstract fun invoke (Lkotlinx/coroutines/experimental/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun invoke (Lkotlinx/coroutines/experimental/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun onTimeout (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 }
 
 public final class kotlinx/coroutines/experimental/selects/SelectBuilder$DefaultImpls {
 	public static fun invoke (Lkotlinx/coroutines/experimental/selects/SelectBuilder;Lkotlinx/coroutines/experimental/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
+	public static fun onTimeout (Lkotlinx/coroutines/experimental/selects/SelectBuilder;JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun onTimeout$default (Lkotlinx/coroutines/experimental/selects/SelectBuilder;JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
@@ -1046,6 +1095,7 @@ public final class kotlinx/coroutines/experimental/selects/SelectBuilderImpl : k
 	public fun invoke (Lkotlinx/coroutines/experimental/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
 	public fun isSelected ()Z
 	public fun onTimeout (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function1;)V
+	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 	public fun performAtomicIfNotSelected (Lkotlinx/coroutines/experimental/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun performAtomicTrySelect (Lkotlinx/coroutines/experimental/internal/AtomicDesc;)Ljava/lang/Object;
 	public fun resume (Ljava/lang/Object;)V
@@ -1087,10 +1137,7 @@ public final class kotlinx/coroutines/experimental/selects/UnbiasedSelectBuilder
 	public fun invoke (Lkotlinx/coroutines/experimental/selects/SelectClause2;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)V
 	public fun invoke (Lkotlinx/coroutines/experimental/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
 	public fun onTimeout (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function1;)V
-}
-
-public final class kotlinx/coroutines/experimental/selects/WhileSelectKt {
-	public static final fun whileSelect (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun onTimeout (JLkotlin/jvm/functions/Function1;)V
 }
 
 public abstract interface class kotlinx/coroutines/experimental/sync/Mutex {

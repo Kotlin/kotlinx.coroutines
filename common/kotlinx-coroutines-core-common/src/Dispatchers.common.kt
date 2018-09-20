@@ -37,8 +37,12 @@ public object Dispatchers {
      * an optional [CoroutineStart] parameter in coroutine builders like
      * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to the
      * the value of [CoroutineStart.UNDISPATCHED].
+     *
+     * **Note: This is an experimental api.**
+     * Semantics, order of execution, and particular implementation details of this dispatcher may change in the future.
      */
     @JvmField
+    @ExperimentalCoroutinesApi
     public val Unconfined: CoroutineDispatcher =
         kotlinx.coroutines.experimental.Unconfined
 }

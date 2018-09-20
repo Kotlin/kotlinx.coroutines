@@ -32,16 +32,20 @@ import kotlin.coroutines.experimental.*
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
+ * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
+ *        to cancellation and error handling may change in the future.
+ *        
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@ExperimentalCoroutinesApi
 public fun <T> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
-    subscriber.setCancellable(coroutine) // do it first (before starting coroutine), to await unnecessary suspensions
+    subscriber.setCancellable(RxCancellable(coroutine)) // do it first (before starting coroutine), to await unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
@@ -67,7 +71,7 @@ private const val SIGNALLED = -2  // already signalled subscriber onCompleted/on
 private class RxObservableCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: ObservableEmitter<T>
-) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, Cancellable, SelectClause2<T, SendChannel<T>> {
+) : AbstractCoroutine<Unit>(parentContext, true), ProducerScope<T>, SelectClause2<T, SendChannel<T>> {
     override val channel: SendChannel<T> get() = this
 
     // Mutex is locked when while subscriber.onXXX is being invoked
@@ -167,7 +171,4 @@ private class RxObservableCoroutine<T>(
         if (mutex.tryLock()) // if we can acquire the lock
             doLockedSignalCompleted()
     }
-
-    // Cancellable impl
-    override fun cancel() { cancel(cause = null) }
 }

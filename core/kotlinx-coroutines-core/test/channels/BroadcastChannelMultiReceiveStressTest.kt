@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.timeunit.*
 import org.junit.*
 import org.junit.runner.*
 import org.junit.runners.*
@@ -87,7 +86,7 @@ class BroadcastChannelMultiReceiveStressTest(
         println("      Sent $total events, waiting for receivers")
         stopOnReceive.set(total)
         try {
-            withTimeout(5, TimeUnit.SECONDS) {
+            withTimeout(5000) {
                 receivers.forEachIndexed { index, receiver ->
                     if (lastReceived[index].get() == total)
                         receiver.cancel()

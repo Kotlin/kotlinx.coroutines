@@ -531,7 +531,9 @@ four
 
 <!--- TEST -->
 
-Another implementation of [BroadcastChannel] is [ArrayBroadcastChannel]. It delivers every event to every
+Another implementation of [BroadcastChannel] is `ArrayBroadcastChannel` with an array-based buffer of
+a specified `capacity`. It can be created with `BroadcastChannel(capacity)`. 
+It delivers every event to every
 subscriber since the moment the corresponding subscription is open. It corresponds to 
 [PublishSubject](http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/subjects/PublishSubject.html) in Rx.
 The capacity of the buffer in the constructor of `ArrayBroadcastChannel` controls the numbers of elements
@@ -1069,7 +1071,6 @@ coroutines for complex pipelines with fan-in and fan-out between multiple worker
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/send.html
 [BroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-broadcast-channel/index.html
 [ConflatedBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/index.html
-[ArrayBroadcastChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-array-broadcast-channel/index.html
 <!--- INDEX kotlinx.coroutines.experimental.selects -->
 [select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/select.html
 [whileSelect]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.selects/while-select.html

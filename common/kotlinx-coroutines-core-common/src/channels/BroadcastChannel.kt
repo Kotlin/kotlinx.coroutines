@@ -16,12 +16,16 @@ import kotlinx.coroutines.experimental.internal.*
  *
  * See `BroadcastChannel()` factory function for the description of available
  * broadcast channel implementations.
+ *
+ * **Note: This is an experimental api.** It may be changed in the future updates.
  */
+@ExperimentalCoroutinesApi
 public interface BroadcastChannel<E> : SendChannel<E> {
     /**
      * Factory for broadcast channels.
      * @suppress **Deprecated**
      */
+    @Deprecated(message = "No replacement")
     public companion object Factory {
         /**
          * Creates a broadcast channel with the specified buffer capacity.
@@ -73,7 +77,10 @@ public interface BroadcastChannel<E> : SendChannel<E> {
  *   **Note:** this channel looses all items that are send to it until the first subscriber appears;
  * * when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
  * * otherwise -- throws [IllegalArgumentException].
+ *
+ * **Note: This is an experimental api.** It may be changed in the future updates.
  */
+@ExperimentalCoroutinesApi
 public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     when (capacity) {
         0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")

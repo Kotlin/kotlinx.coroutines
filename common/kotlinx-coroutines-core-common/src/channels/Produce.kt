@@ -10,7 +10,11 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Scope for [produce][CoroutineScope.produce] coroutine builder.
+ *
+ * **Note: This is an experimental api.** Behaviour of producers that work as children in a parent scope with respect
+ *        to cancellation and error handling may change in the future.
  */
+@ExperimentalCoroutinesApi
 public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
     /**
      * A reference to the channel that this coroutine [sends][send] elements to.
@@ -60,11 +64,31 @@ interface ProducerJob<out E> : ReceiveChannel<E>, Job {
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
+ * **Note: This is an experimental api.** Behaviour of producers that work as children in a parent scope with respect
+ *        to cancellation and error handling may change in the future.
+ *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
- * @param onCompletion optional completion handler for the producer coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@ExperimentalCoroutinesApi
+public fun <E> CoroutineScope.produce(
+    context: CoroutineContext = EmptyCoroutineContext,
+    capacity: Int = 0,
+    block: suspend ProducerScope<E>.() -> Unit
+): ReceiveChannel<E> {
+    val channel = Channel<E>(capacity)
+    val newContext = newCoroutineContext(context)
+    val coroutine = ProducerCoroutine(newContext, channel)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    return coroutine
+}
+
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ *           onCompletion parameter will be redesigned.
+ */
+@InternalCoroutinesApi
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,

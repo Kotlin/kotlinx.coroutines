@@ -9,35 +9,6 @@ import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 
-/**
- * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
- */
-public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
-
-/**
- * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
- */
-public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
-
-/**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
- */
-public const val DEBUG_PROPERTY_VALUE_ON = "on"
-
-/**
- * Debug turned on value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
- */
-public const val DEBUG_PROPERTY_VALUE_OFF = "off"
-
-internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
-    when (value) {
-        DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
-        DEBUG_PROPERTY_VALUE_ON, "" -> true
-        DEBUG_PROPERTY_VALUE_OFF -> false
-        else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
-    }
-}
-
 private val COROUTINE_ID = AtomicLong()
 
 // for tests only
@@ -101,7 +72,11 @@ public val IO: CoroutineDispatcher
  *
  * Coroutine name can be explicitly assigned using [CoroutineName] context element.
  * The string "coroutine" is used as a default name.
+ *
+ * **Note: This is an experimental api.**
+ *   Behavior of this function may change in the future with respect to its support for debugging facilities.
  */
+@ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
