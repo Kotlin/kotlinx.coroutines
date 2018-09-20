@@ -111,6 +111,7 @@ private open class BroadcastCoroutine<E>(
     override val channel: SendChannel<E>
         get() = this
 
+    override fun cancel(): Boolean = super.cancel()
     public override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
 
     override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {

@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.*
-import kotlinx.coroutines.experimental.timeunit.*
 
 internal val currentEventLoop = ArrayList<BlockingEventLoop>()
 
@@ -15,10 +14,10 @@ private fun takeEventLoop(): BlockingEventLoop =
 internal object DefaultExecutor : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         takeEventLoop().dispatch(context, block)
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
-        takeEventLoop().scheduleResumeAfterDelay(time, unit, continuation)
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        takeEventLoop().invokeOnTimeout(time, unit, block)
+    override fun scheduleResumeAfterDelay(time: Long, continuation: CancellableContinuation<Unit>) =
+        takeEventLoop().scheduleResumeAfterDelay(time, continuation)
+    override fun invokeOnTimeout(time: Long, block: Runnable): DisposableHandle =
+        takeEventLoop().invokeOnTimeout(time, block)
 
     fun execute(task: Runnable) {
         error("Cannot execute task because event loop was shut down")

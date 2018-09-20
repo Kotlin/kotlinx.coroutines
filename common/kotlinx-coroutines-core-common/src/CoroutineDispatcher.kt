@@ -59,7 +59,10 @@ public abstract class CoroutineDispatcher :
      * However, coroutine builders like [launch][CoroutineScope.launch] and [async][CoroutineScope.async] accept an optional [CoroutineStart]
      * parameter that allows one to optionally choose C#-style [CoroutineStart.UNDISPATCHED] behaviour
      * whenever it is needed for efficiency.
+     *
+     * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this function returns `false`.
      */
+    @ExperimentalCoroutinesApi
     public open fun isDispatchNeeded(context: CoroutineContext): Boolean = true
 
     /**
@@ -74,13 +77,16 @@ public abstract class CoroutineDispatcher :
      *
      * **Implementation note** though yield marker may be passed as a part of [context], this
      * is a separate method for performance reasons
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public open fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatch(context, block)
 
     /**
      * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
      */
-    public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+    public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
     /**

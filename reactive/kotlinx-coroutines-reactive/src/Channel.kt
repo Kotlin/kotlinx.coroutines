@@ -5,14 +5,20 @@
 package kotlinx.coroutines.experimental.reactive
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import org.reactivestreams.*
 
 /**
  * Subscribes to this [Publisher] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this publisher.
+ *
+ * **Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.**
+ *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
+ *
  * @param request how many items to request from publisher in advance (optional, on-demand request by default).
  */
+@ObsoleteCoroutinesApi
 @Suppress("CONFLICTING_OVERLOADS")
 public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)

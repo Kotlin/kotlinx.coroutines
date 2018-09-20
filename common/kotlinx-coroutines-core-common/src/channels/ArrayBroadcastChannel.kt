@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.selects.*
 
@@ -20,8 +21,16 @@ import kotlinx.coroutines.experimental.selects.*
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
  * The lists of suspended senders or receivers are lock-free.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
-class ArrayBroadcastChannel<E>(
+@InternalCoroutinesApi // todo: review KDoc refs
+public class ArrayBroadcastChannel<E>
+@Deprecated(
+    "Replace with BroadcastChannel factory function",
+    replaceWith = ReplaceWith("BroadcastChannel(capacity)")
+)
+constructor(
     /**
      * Buffer capacity.
      */

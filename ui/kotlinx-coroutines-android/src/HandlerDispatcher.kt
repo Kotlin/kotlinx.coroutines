@@ -11,14 +11,13 @@ import android.support.annotation.VisibleForTesting
 import android.view.*
 import kotlinx.coroutines.experimental.*
 import java.lang.reflect.Constructor
-import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
  */
 public val Dispatchers.Main: HandlerDispatcher
-    get() = mainDispatcher
+    get() = kotlinx.coroutines.experimental.android.Main
 
 /**
  * Dispatches execution onto Android [Handler].
@@ -30,19 +29,23 @@ public sealed class HandlerDispatcher : CoroutineDispatcher(), Delay {
      * Returns dispatcher that executes coroutines immediately when it is already in the right handler context
      * (current looper is the same as this handler's looper). See [isDispatchNeeded] documentation on
      * why this should not be done by default.
+     *
+     * **Note: This is an experimental api.** Semantics of this dispatcher may change in the future.
      */
+    @ExperimentalCoroutinesApi
     public abstract val immediate: HandlerDispatcher
 }
 
 /**
  * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher].
  */
+@JvmName("from") // this is for a nice Java API, see issue #255
 public fun Handler.asCoroutineDispatcher(): HandlerDispatcher =
     HandlerContext(this)
 
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
 
-private val mainHandler = Looper.getMainLooper().asHandler(async = true)
+internal val mainHandler = Looper.getMainLooper().asHandler(async = true)
 
 @VisibleForTesting
 internal fun Looper.asHandler(async: Boolean): Handler {
@@ -68,7 +71,8 @@ internal fun Looper.asHandler(async: Boolean): Handler {
     return constructor.newInstance(this, null, true)
 }
 
-private val mainDispatcher = HandlerContext(mainHandler, "Main")
+@JvmField // this is for a nice Java API, see issue #255
+internal val Main: HandlerDispatcher = HandlerContext(mainHandler, "Main")
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
@@ -109,14 +113,14 @@ public class HandlerContext private constructor(
         handler.post(block)
     }
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         handler.postDelayed({
             with(continuation) { resumeUndispatched(Unit) }
-        }, unit.toMillis(time).coerceAtMost(MAX_DELAY))
+        }, timeMillis.coerceAtMost(MAX_DELAY))
     }
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        handler.postDelayed(block, unit.toMillis(time).coerceAtMost(MAX_DELAY))
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
         return object : DisposableHandle {
             override fun dispose() {
                 handler.removeCallbacks(block)
@@ -171,6 +175,6 @@ private fun updateChoreographerAndPostFrameCallback(cont: CancellableContinuatio
 
 private fun postFrameCallback(choreographer: Choreographer, cont: CancellableContinuation<Long>) {
     choreographer.postFrameCallback { nanos ->
-        with(cont) { mainDispatcher.resumeUndispatched(nanos) }
+        with(cont) { Main.resumeUndispatched(nanos) }
     }
 }

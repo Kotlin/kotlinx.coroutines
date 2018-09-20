@@ -25,7 +25,8 @@ private val getter =
  * @suppress This is an internal impl class.
  */
 @Keep
-class AndroidExceptionPreHandler :
+@InternalCoroutinesApi
+internal class AndroidExceptionPreHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {
     override fun handleException(context: CoroutineContext, exception: Throwable) {

@@ -1,15 +1,18 @@
-public final class kotlinx/coroutines/experimental/javafx/JavaFx : kotlinx/coroutines/experimental/javafx/JavaFxDispatcher, kotlinx/coroutines/experimental/Delay {
+public final class kotlinx/coroutines/experimental/javafx/JavaFx : kotlinx/coroutines/experimental/javafx/JavaFxDispatcher {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/javafx/JavaFx;
 	public final fun awaitPulse (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 
 public abstract class kotlinx/coroutines/experimental/javafx/JavaFxDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
-	public fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/experimental/javafx/JavaFxDispatcherKt {

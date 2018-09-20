@@ -572,6 +572,8 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      */
     internal open val onCancelMode: Int get() = ON_CANCEL_MAKE_CANCELLING
 
+    public override fun cancel(): Boolean = cancel(null)
+
     public override fun cancel(cause: Throwable?): Boolean = when (onCancelMode) {
         ON_CANCEL_MAKE_CANCELLING -> makeCancelling(cause)
         ON_CANCEL_MAKE_COMPLETING -> makeCompleting(Cancelled(this, cause))

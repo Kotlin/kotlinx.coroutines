@@ -22,6 +22,7 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
 @JvmOverloads // binary compatibility
+@InternalCoroutinesApi // todo: review KDoc use
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
     // if exception handling fails, make sure the original exception is not lost
     try {

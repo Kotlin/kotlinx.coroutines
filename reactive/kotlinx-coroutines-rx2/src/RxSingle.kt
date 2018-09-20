@@ -33,7 +33,7 @@ public fun <T> CoroutineScope.rxSingle(
 ): Single<T> = Single.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxSingleCoroutine(newContext, subscriber)
-    subscriber.setCancellable(coroutine)
+    subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
@@ -55,7 +55,7 @@ public fun <T> rxSingle(
 private class RxSingleCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
-) : AbstractCoroutine<T>(parentContext, true), Cancellable {
+) : AbstractCoroutine<T>(parentContext, true) {
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) subscriber.onSuccess(value)
     }
@@ -63,7 +63,4 @@ private class RxSingleCoroutine<T>(
     override fun onCompletedExceptionally(exception: Throwable) {
         if (!subscriber.isDisposed) subscriber.onError(exception)
     }
-
-    // Cancellable impl
-    override fun cancel() { cancel(cause = null) }
 }

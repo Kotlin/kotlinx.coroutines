@@ -6,7 +6,10 @@ package kotlinx.coroutines.experimental
 
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public actual class CompletionHandlerException actual constructor(
     message: String,
     cause: Throwable
@@ -24,7 +27,11 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
+ * 
+ * @suppress **Deprecated**: Replace with [CancellationException].
  */
+@InternalCoroutinesApi // todo: review usage from docs and examples
+@Deprecated(message = "Replace with CancellationException", replaceWith = ReplaceWith("CancellationException"))
 public actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,

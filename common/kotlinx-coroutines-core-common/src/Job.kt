@@ -129,7 +129,10 @@ public interface Job : CoroutineContext.Element {
      *
      * This function throws [IllegalStateException] when invoked on a job that has not
      * [completed][isCompleted] nor [cancelled][isCancelled] yet.
+     *
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public fun getCancellationException(): CancellationException
 
     /**
@@ -149,6 +152,14 @@ public interface Job : CoroutineContext.Element {
     public fun start(): Boolean
 
     /**
+     * Cancels this job.
+     * The result is `true` if this job was either cancelled as a result of this invocation
+     * or was already being cancelled.
+     * If job is already completed, method returns `false`.
+     */
+    public fun cancel(): Boolean
+
+    /**
      * Cancels this job with an optional cancellation [cause].
      * The result is `true` if this job was either cancelled as a result of this invocation
      * or it's being cancelled and given [cause] was successfully received by the job and will be properly handled, `false` otherwise.
@@ -159,7 +170,10 @@ public interface Job : CoroutineContext.Element {
      * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
      * at the corresponding original cancellation site and passed into this method to aid in debugging by providing
      * both the context of cancellation and text description of the reason.
+     *
+     * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun cancel(cause: Throwable? = null): Boolean
 
     // ------------ parent-child ------------
@@ -203,7 +217,7 @@ public interface Job : CoroutineContext.Element {
      *
      * @suppress This is an internal API. This method is too error prone for public API.
      */
-    @Deprecated(message = "Start child coroutine with 'parent' parameter", level = DeprecationLevel.WARNING)
+    @InternalCoroutinesApi
     public fun attachChild(child: Job): DisposableHandle
 
     /**
@@ -322,7 +336,10 @@ public interface Job : CoroutineContext.Element {
      *        then the [handler] is immediately and synchronously invoked and [NonDisposableHandle] is returned;
      *        when `false` then [NonDisposableHandle] is returned, but the [handler] is not invoked.
      * @param handler the handler.
+     * 
+     * @suppress **This an internal API and should not be used from general code.**
      */
+    @InternalCoroutinesApi
     public fun invokeOnCompletion(
         onCancelling: Boolean = false,
         invokeImmediately: Boolean = true,
@@ -361,6 +378,18 @@ public interface DisposableHandle {
     public fun dispose()
 }
 
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@Suppress("FunctionName")
+@InternalCoroutinesApi
+public inline fun DisposableHandle(crossinline block: () -> Unit) =
+    object : DisposableHandle {
+        override fun dispose() {
+            block()
+        }
+    }
+
 // -------------------- Job extensions --------------------
 
 /**
@@ -384,7 +413,10 @@ public fun Job.unregisterOnCompletion(registration: DisposableHandle): Disposabl
  * ```
  * invokeOnCompletion { handle.dispose() }
  * ```
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
     invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
 
@@ -420,7 +452,10 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
  * Suspends coroutine until all [children][Job.children] of this job are complete using
  * [Job.join] for all of them. Unlike [Job.join] on this job as a whole, it does not wait until
  * this job is complete.
+ *
+ * @suppress **Deprecated**: No replacement. Group child in a `coroutineScope { }` block to wait for them
  */
+@Deprecated("No replacement. Group child in a coroutineScope { } block to wait for them")
 public suspend fun Job.joinChildren() {
     children.forEach { it.join() }
 }
@@ -447,20 +482,42 @@ public val CoroutineContext.isActive: Boolean
     get() = this[Job]?.isActive == true
 
 /**
+ * Cancels [Job] of this context. The result is `true` if the job was
+ * cancelled as a result of this invocation or was already being cancelled and
+ * `false` if there is no job in the context or if it was already completed. See [Job.cancel] for details.
+ */
+public fun CoroutineContext.cancel(): Boolean =
+    this[Job]?.cancel() ?: false
+
+/**
  * Cancels [Job] of this context with an optional cancellation [cause]. The result is `true` if the job was
  * cancelled as a result of this invocation and `false` if there is no job in the context or if it was already
  * cancelled or completed. See [Job.cancel] for details.
+ *
+ * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
  */
+@ExperimentalCoroutinesApi
 public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
     this[Job]?.cancel(cause) ?: false
 
 /**
- * Cancels all children of the [Job] in this context with an optional cancellation [cause].
+ * Cancels all children of the [Job] in this context, without touching the the state of this job itself.
  * It does not do anything if there is no job in the context or it has no children.
- * See [Job.cancelChildren] for details.
  */
+public fun CoroutineContext.cancelChildren() {
+    this[Job]?.children?.forEach { it.cancel() }
+}
+
+/**
+ * Cancels all children of the [Job] in this context with an optional cancellation [cause],
+ * without touching the the state of this job itself.
+ * It does not do anything if there is no job in the context or it has no children.
+ *
+ * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
+ */
+@ExperimentalCoroutinesApi
 public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
-    this[Job]?.cancelChildren(cause)
+    this[Job]?.children?.forEach { it.cancel(cause) }
 }
 
 /**
@@ -472,7 +529,9 @@ public suspend fun Job.join() = this.join()
 
 /**
  * No-op implementation of [DisposableHandle].
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi // todo: review references from KDocs
 public object NonDisposableHandle : DisposableHandle {
     /** Does not do anything. */
     override fun dispose() {}

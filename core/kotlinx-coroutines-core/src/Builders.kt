@@ -15,14 +15,13 @@ import kotlin.coroutines.experimental.*
  * This function should not be used from coroutine. It is designed to bridge regular blocking code
  * to libraries that are written in suspending style, to be used in `main` functions and in tests.
  *
- * The default [CoroutineDispatcher] for this builder in an implementation of [EventLoop] that processes continuations
+ * The default [CoroutineDispatcher] for this builder in an internal implementation of event loop that processes continuations
  * in this blocked thread until the completion of this coroutine.
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
  *
  * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
- * the specified dispatcher while the current thread is blocked. If the specified dispatcher implements [EventLoop]
- * interface and this `runBlocking` invocation is performed from inside of the this event loop's thread, then
- * this event loop is processed using its [processNextEvent][EventLoop.processNextEvent] method until coroutine completes.
+ * the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another `runBlocking`,
+ * the this invocation uses an outer event loop.
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
