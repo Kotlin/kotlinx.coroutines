@@ -82,4 +82,18 @@ class RunBlockingTest : TestBase() {
             job.cancelAndJoin()
         }
     }
+
+    @Test
+    fun testCancelWithDelay() {
+        // see https://github.com/Kotlin/kotlinx.coroutines/issues/586
+        try {
+            runBlocking {
+                coroutineContext.cancel()
+                delay(1)
+            }
+            error("should not be reached")
+        } catch (e: JobCancellationException) {
+            // expected
+        }
+    }
 }

@@ -106,7 +106,13 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     private val nextTime: Long
         get() {
-            if (!isQueueEmpty) return 0
+            val queue = _queue.value
+            when {
+                queue === null -> {} // empty queue -- proceed
+                queue is Queue<*> -> if (!queue.isEmpty) return 0 // non-empty queue
+                queue === CLOSED_EMPTY -> return Long.MAX_VALUE // no more events -- closed
+                else -> return 0 // non-empty queue
+            }
             val delayed = _delayed.value ?: return Long.MAX_VALUE
             val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
             return (nextDelayedTask.nanoTime - timeSource.nanoTime()).coerceAtLeast(0)
