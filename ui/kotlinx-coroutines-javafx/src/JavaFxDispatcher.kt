@@ -32,7 +32,7 @@ public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay {
  * @suppress **Deprecated**: Use [Dispatchers.JavaFx].
  */
 @Deprecated(
-    message = "Use Dispatchers.Main",
+    message = "Use Dispatchers.JavaFx",
     replaceWith = ReplaceWith("Dispatchers.JavaFx",
         imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
 )
