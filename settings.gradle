@@ -32,7 +32,6 @@ module('integration/kotlinx-coroutines-slf4j')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
-module('reactive/kotlinx-coroutines-rx1')
 module('reactive/kotlinx-coroutines-rx2')
 module('reactive/kotlinx-coroutines-rx-example')
 
