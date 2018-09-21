@@ -16,7 +16,6 @@ dependencies {
 
     testArtifacts project(':kotlinx-coroutines-reactive')
     testArtifacts project(':kotlinx-coroutines-reactor')
-    testArtifacts project(':kotlinx-coroutines-rx1')
     testArtifacts project(':kotlinx-coroutines-rx2')
 
     testArtifacts project(':kotlinx-coroutines-guava')

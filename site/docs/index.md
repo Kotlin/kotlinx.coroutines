@@ -15,7 +15,6 @@ Library support for Kotlin coroutines. This reference is a companion to
 | [kotlinx-coroutines-core](kotlinx-coroutines-core)         | Core primitives to work with coroutines          |
 | [kotlinx-coroutines-reactive](kotlinx-coroutines-reactive) | Utilities for [Reactive Streams](http://www.reactive-streams.org) |
 | [kotlinx-coroutines-reactor](kotlinx-coroutines-reactor)   | Utilities for [Reactor](https://projectreactor.io) |
-| [kotlinx-coroutines-rx1](kotlinx-coroutines-rx1)           | Utilities for [RxJava 1.x](https://github.com/ReactiveX/RxJava/tree/1.x) |
 | [kotlinx-coroutines-rx2](kotlinx-coroutines-rx2)           | Utilities for [RxJava 2.x](https://github.com/ReactiveX/RxJava) |
 | [kotlinx-coroutines-android](kotlinx-coroutines-android)   | `UI` context for Android applications |
 | [kotlinx-coroutines-javafx](kotlinx-coroutines-javafx)     | `JavaFx` context for JavaFX UI applications |
