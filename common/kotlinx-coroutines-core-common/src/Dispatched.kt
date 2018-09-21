@@ -10,12 +10,47 @@ import kotlin.coroutines.*
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")
 
-internal class DispatchedContinuation<in T>(
+internal class DispatchedContinuation<T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
 ) : Continuation<T> by continuation, DispatchedTask<T> {
+    /*
+     * Dispatched continuation is 'intercepted' version of a regular continuation which is cached into continuation
+     * and reused between different suspension points. Usually, this continuation is then wrapped into
+     * CancellableContinuationImpl (which is NOT reusable by default) and not used directly by our primitives.
+     * Main entry point is DispatchedTask<T>.dispatch.
+     *
+     * Its lifecycle (TBC):
+     *
+     * 1) Created. _state == UNDEFINED, resume mode == 0 while CCI controls its own cancellability-related state
+     * 2) On creation it's resumed via on of the Continuation<T>.resume* methods, on such resumption value
+     *    is stored into current state and resume mode is saved as "current mode", DispatchedContinuation itself
+     *    is submitted to thread pool to execute DispatchedTask.run()
+     * 3) run "takes" current state and then invokes continuation modulo cancellation
+     * 4) TODO
+     */
     private var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0
+    private var _reusableCancellableContinuation: Any? = null
+
+    /**
+     * Holder for a reusable instance of cancellable continuation.
+     * See [suspendAtomicCancellableCoroutineReusable]
+     */
+    @Suppress("UNCHECKED_CAST")
+    internal var reusableCancellableContinuation: CancellableContinuationImpl<T>?
+        get() = _reusableCancellableContinuation as? CancellableContinuationImpl<T>
+        set(value) {
+            require(_reusableCancellableContinuation !== UNDEFINED)
+            _reusableCancellableContinuation = value
+        }
+
+
+    internal fun sealCancellationReusing() {
+        _reusableCancellableContinuation = UNDEFINED
+    }
+
+    internal fun canReuseCancellation(): Boolean = _reusableCancellableContinuation !== UNDEFINED
 
     override fun takeState(): Any? {
         val state = _state

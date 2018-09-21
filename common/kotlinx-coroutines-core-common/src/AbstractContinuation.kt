@@ -83,6 +83,17 @@ internal abstract class AbstractContinuation<in T>(
     protected open val useCancellingState: Boolean get() = false
 
     internal fun initParentJobInternal(parent: Job?) {
+        // Do not re-attach child is this instance is reusable
+        if (isReusable()) {
+            // avoid two volatile vreads
+            val handle = parentHandle
+            if (handle !== null) {
+                // Do not allocate on hot-path with lambda
+                require((handle as ChildContinuation).job === parent)
+                return
+            }
+        }
+
         check(parentHandle == null)
         if (parent == null) {
             parentHandle = NonDisposableHandle
@@ -98,6 +109,36 @@ internal abstract class AbstractContinuation<in T>(
             handle.dispose()
             parentHandle = NonDisposableHandle // release it just in case, to aid GC
         }
+    }
+
+    private fun isReusable(): Boolean = delegate is DispatchedContinuation<*> && delegate.reusableCancellableContinuation === this
+
+    /**
+     * Resets cancellability state in order to [suspendAtomicCancellableCoroutineReusable] to work.
+     * Invariant: used only from [suspendAtomicCancellableCoroutineReusable] iff [isReusable] is `true`
+     */
+    internal fun resetState() {
+        require(parentHandle !== null)
+        _state.value = ACTIVE
+        _decision.value = UNDECIDED
+    }
+
+    /**
+     * Detaches from the parent.
+     * Invariant: used used from [CoroutineDispatcher.releaseInterceptedContinuation] iff [isReusable] is `true`
+     */
+    internal fun detachChild() {
+        val handle = parentHandle
+        handle?.dispose()
+        parentHandle = NonDisposableHandle
+    }
+
+    /**
+     * Mark this continuation (and its DC owner) as no longer reusable.
+     * Invariant: used from [CancellableContinuationImpl] tryResume* family
+     */
+    internal fun invalidateReusability() {
+        (delegate as? DispatchedContinuation<*>)?.sealCancellationReusing()
     }
 
     override fun takeState(): Any? = state
@@ -319,6 +360,11 @@ internal abstract class AbstractContinuation<in T>(
     protected fun tryUpdateStateToFinal(expect: NotCompleted, update: Any?): Boolean {
         require(update !is NotCompleted) // only NotCompleted -> completed transition is allowed
         if (!_state.compareAndSet(expect, update)) return false
+        // If instance is reusable, do not detach on every reuse, #releaseInterceptedContinuation
+        // will do it for us in the end
+        if (isReusable()) {
+            return true
+        }
         // Unregister from parent job
         parentHandle?.let {
             it.dispose() // volatile read parentHandle _after_ state was updated

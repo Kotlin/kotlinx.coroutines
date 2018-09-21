@@ -83,6 +83,12 @@ public abstract class CoroutineDispatcher :
     public override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
 
+    /** @suppress */
+    public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
+        // Cancellation reusability support
+        (continuation as? DispatchedContinuation<*>)?.reusableCancellableContinuation?.detachChild()
+    }
+
     /**
      * @suppress **Error**: Operator '+' on two CoroutineDispatcher objects is meaningless.
      * CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts.

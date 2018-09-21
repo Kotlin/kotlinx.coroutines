@@ -198,6 +198,45 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
     }
 
 /**
+ *  Suspends coroutine similar to [suspendAtomicCancellableCoroutine], but an instance of [CancellableContinuationImpl] is reused if possible.
+ *
+ *  How it works:
+ *  1) In a tight tail-call loop, raw continuation instance is reused (e.g. see channel benchmarks).
+ *  2) All our dispatchers intercept this continuation and wrap it into [DispatchedContinuation],
+ *     so [Runnable] object is reused for the same continuation among different suspension points.
+ *  3) `suspendAtomicCancellableCoroutineReusable` checks that [DispatchedContinuation.reusableCancellableContinuation] is
+ *      either `null` ("not initialized") or already cached value.
+ *      If it is not null and [DispatchedContinuation.canReuseCancellation],
+ *      then it is reused, but its state is reset. Note that it is not generally safe operation,
+ *      if any reference to the instance of cached cancellable continuation was saved
+ *      in a user land, then **any** race (e.g. resume+cancel) results undefined behaviour.
+ *
+ * To avoid memory leaks with parent-child relationship, [ContinuationInterceptor.releaseInterceptedContinuation] detaches cancellable continuation from the parent when it completes.
+ */
+internal suspend inline fun <T> suspendAtomicCancellableCoroutineReusable(
+    crossinline block: (CancellableContinuation<T>) -> Unit
+): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
+    val intercepted = uCont.intercepted()
+    // Non-capturing lambda on purpose
+    // require(intercepted is DispatchedContinuation<T>) { "Intercepted continuation should be instance of 'DispatchedContinuation'" }
+    intercepted as DispatchedContinuation<T> // Yay Native contracts
+
+    var cancellable = intercepted.reusableCancellableContinuation
+    if (cancellable != null) {
+        cancellable.resetState()
+    } else {
+        cancellable = CancellableContinuationImpl(intercepted, resumeMode = MODE_ATOMIC_DEFAULT)
+        if (intercepted.canReuseCancellation()) {
+            intercepted.reusableCancellableContinuation = cancellable
+        }
+    }
+
+    cancellable.initCancellability()
+    block(cancellable)
+    cancellable.getResult()
+}
+
+/**
  * Removes a given node on cancellation.
  * @suppress **This is unstable API and it is subject to change.**
  */
@@ -276,6 +315,7 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
+        invalidateReusability()
         loopOnState { state ->
             when (state) {
                 is NotCompleted -> {
@@ -296,6 +336,7 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResumeWithException(exception: Throwable): Any? {
+        invalidateReusability()
         loopOnState { state ->
         when (state) {
                 is NotCompleted -> {
