@@ -42,7 +42,7 @@ class RunBlockingTest : TestBase() {
             runBlocking(coroutineContext) {
                 expect(3)
                 // still same event loop
-                assertTrue(coroutineContext[ContinuationInterceptor] === outerEventLoop)
+                assertSame(coroutineContext[ContinuationInterceptor], outerEventLoop)
                 yield() // still works
                 expect(4)
             }
@@ -58,7 +58,7 @@ class RunBlockingTest : TestBase() {
         val thread = newSingleThreadContext(name)
         runBlocking(thread) {
             expect(2)
-            assertTrue(coroutineContext[ContinuationInterceptor] === thread)
+            assertSame(coroutineContext[ContinuationInterceptor], thread)
             assertTrue(Thread.currentThread().name.contains(name))
             yield() // should work
             expect(3)
@@ -88,12 +88,19 @@ class RunBlockingTest : TestBase() {
         // see https://github.com/Kotlin/kotlinx.coroutines/issues/586
         try {
             runBlocking {
+                expect(1)
                 coroutineContext.cancel()
-                delay(1)
+                expect(2)
+                try {
+                    delay(1)
+                    expectUnreached()
+                } finally {
+                    expect(3)
+                }
             }
-            error("should not be reached")
+            expectUnreached()
         } catch (e: JobCancellationException) {
-            // expected
+            finish(4)
         }
     }
 }
