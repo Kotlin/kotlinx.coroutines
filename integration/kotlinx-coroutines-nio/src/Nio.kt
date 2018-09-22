@@ -25,6 +25,11 @@ suspend fun AsynchronousFileChannel.aLock() = suspendCancellableCoroutine<FileLo
 }
 
 /**
+ * Wrapper around [aLock] that unlocks after a block is executed.
+ */
+suspend fun <T> AsynchronousFileChannel.aWithLock(block: suspend () -> T): T = this.aLock().use(block)
+
+/**
  * Performs [AsynchronousFileChannel.lock] without blocking a thread and resumes when asynchronous operation completes.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -40,6 +45,16 @@ suspend fun AsynchronousFileChannel.aLock(
 }
 
 /**
+ * Wrapper around [aLock] that unlocks after a block is executed.
+ */
+suspend fun <T> AsynchronousFileChannel.aWithLock(
+    position: Long,
+    size: Long,
+    shared: Boolean,
+    block: suspend () -> T
+): T = this.aLock(position, size, shared).use(block)
+
+/**
  * Performs [AsynchronousFileChannel.read] without blocking a thread and resumes when asynchronous operation completes.
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -52,6 +67,37 @@ suspend fun AsynchronousFileChannel.aRead(
     read(buf, position, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
+
+/**
+ * Wrapper around [aRead] that reads all of the contents from an [AsynchronousFileChannel].
+ */
+suspend fun AsynchronousFileChannel.aReadBytes(): ByteArray {
+    val bytes = ByteArrayOutputStream()
+    val buf = ByteBuffer.allocate(this.size())
+    var pos = 0L
+    while (true) {
+        val bufPos = buf.arrayOffset() + buf.position()
+        val read = this.aRead(buf, pos)
+        if (read < 0) {
+            return bytes.toByteArray()
+        } else {
+            pos += read
+            bytes.write(buf.array().sliceArray(bufPos until (bufPos + read)))
+            buf.clear()
+        }
+    }
+
+    // NOTE: required due to a compiler bug
+    @Suppress("UNREACHABLE_CODE")
+    return ByteArray(0)
+}
+
+/**
+ * Wrapper around [aRead] that reads all of the contents from an [AsynchronousFileChannel] as a [String].
+ */
+suspend fun AsynchronousFileChannel.aReadText(
+    charset: Charset = Charsets.UTF_8
+): ByteArray = this.aReadBytes().toString(charset)
 
 /**
  * Performs [AsynchronousFileChannel.write] without blocking a thread and resumes when asynchronous operation completes.
