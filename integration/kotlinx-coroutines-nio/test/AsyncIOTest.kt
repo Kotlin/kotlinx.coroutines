@@ -59,11 +59,11 @@ class AsyncIOTest {
     }
 
     @Test
-    fun testNetworkChannels() = runBlocking {
+    fun testByteChannels() = runBlocking {
         val serverChannel =
-                AsynchronousServerSocketChannel
-                        .open()
-                        .bind(InetSocketAddress(0))
+          AsynchronousServerSocketChannel
+            .open()
+            .bind(InetSocketAddress(0))
 
         val serverPort = (serverChannel.localAddress as InetSocketAddress).port
 
@@ -80,7 +80,7 @@ class AsyncIOTest {
 
         val c2 = launch {
             val connection =
-                    AsynchronousSocketChannel.open()
+              AsynchronousSocketChannel.open()
             // async calls
             connection.aConnect(InetSocketAddress("127.0.0.1", serverPort))
             connection.aWrite(Charsets.UTF_8.encode("OK"))
@@ -89,6 +89,45 @@ class AsyncIOTest {
 
             // async call
             connection.aRead(buffer)
+            buffer.flip()
+            assertEquals("123", Charsets.UTF_8.decode(buffer).toString())
+        }
+
+        c1.join()
+        c2.join()
+    }
+
+    @Test
+    fun testNetworkChannels() = runBlocking {
+        val serverChannel =
+          AsynchronousServerSocketChannel
+            .open()
+            .bind(InetSocketAddress(0))
+
+        val serverPort = (serverChannel.localAddress as InetSocketAddress).port
+
+        val c1 = launch {
+            val client = serverChannel.aAccept()
+            val buffer = ByteBuffer.allocate(2)
+            client.aRead(buffer, 250)
+            buffer.flip()
+            assertEquals("OK", Charsets.UTF_8.decode(buffer).toString())
+
+            client.aWrite(Charsets.UTF_8.encode("123"), 250)
+            client.close()
+        }
+
+        val c2 = launch {
+            val connection =
+              AsynchronousSocketChannel.open()
+            // async calls
+            connection.aConnect(InetSocketAddress("127.0.0.1", serverPort))
+            connection.aWrite(Charsets.UTF_8.encode("OK"), 250)
+
+            val buffer = ByteBuffer.allocate(3)
+
+            // async call
+            connection.aRead(buffer, 250)
             buffer.flip()
             assertEquals("123", Charsets.UTF_8.decode(buffer).toString())
         }
