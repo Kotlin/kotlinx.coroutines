@@ -125,7 +125,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private val _state = atomic<Any?>(if (active) EMPTY_ACTIVE else EMPTY_NEW)
 
     @Volatile
-    private var parentHandle: DisposableHandle? = null
+    private var parentHandle: ChildHandle? = null
 
     // ------------ initialization ------------
 
@@ -222,7 +222,9 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
         // Now handle exception
         if (finalException != null) {
-            if (!failParent(finalException)) handleJobException(finalException)
+            if (!failParent(finalException)) {
+                handleJobException(finalException)
+            }
         }
         // Then CAS to completed state -> it must succeed
         require(_state.compareAndSet(state, finalState)) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
@@ -614,7 +616,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         fail(cause, cancel = true) && handlesException
 
     // child is reporting failure to the parent
-    public override fun childFailed(cause: Throwable) =
+    internal fun childFailed(cause: Throwable) =
         fail(cause, cancel = false) && handlesException
 
     // parent is cancelling child
@@ -869,14 +871,14 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     }
 
     @Suppress("OverridingDeprecatedMember")
-    public final override fun attachChild(child: Job): DisposableHandle {
+    public final override fun attachChild(child: Job): ChildHandle {
         /*
          * Note: This function attaches a special ChildNode object. This node object
          * is handled in a special way on completion on the coroutine (we wait for all of them) and
          * is handled specially by invokeOnCompletion itself -- it adds this node to the list even
          * if the job is already failing.
          */
-        return invokeOnCompletion(onFailing = true, handler = ChildJob(this, child).asHandler)
+        return invokeOnCompletion(onFailing = true, handler = ChildJob(this, child).asHandler) as ChildHandle
     }
 
     @Suppress("OverridingDeprecatedMember")
@@ -901,8 +903,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      */
     internal open fun onFailing(cause: Throwable?) {}
 
-    // todo: make it for all kinds of coroutines, now only launch & actor override and handleExceptionViaJob
-    internal open fun failParent(exception: Throwable): Boolean = false
+    /**
+     * When this function returns `true` the parent fails on the failure of this job.
+     *
+     * @suppress **This is unstable API and it is subject to change.*
+     */
+    protected open val failsParent: Boolean get() = false
 
     /**
      * Returns `true` for jobs that handle their exceptions via [handleJobException] or integrate them
@@ -920,6 +926,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      * @suppress **This is unstable API and it is subject to change.*
      */
     protected open fun handleJobException(exception: Throwable) {}
+
+    private fun failParent(cause: Throwable): Boolean {
+        if (cause is CancellationException) return true
+        if (!failsParent) return false
+        return parentHandle?.childFailed(cause) == true
+    }
 
     /**
      * Override for post-completion actions that need to do something with the state.
@@ -1280,8 +1292,9 @@ private class InvokeOnFailing(
 internal class ChildJob(
     parent: JobSupport,
     @JvmField val childJob: Job
-) : JobFailingNode<JobSupport>(parent) {
+) : JobFailingNode<JobSupport>(parent), ChildHandle {
     override fun invoke(cause: Throwable?) = childJob.cancelChild(job)
+    override fun childFailed(cause: Throwable): Boolean = job.childFailed(cause)
     override fun toString(): String = "ChildJob[$childJob]"
 }
 

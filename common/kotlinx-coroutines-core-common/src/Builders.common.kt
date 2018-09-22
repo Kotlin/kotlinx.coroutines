@@ -210,7 +210,7 @@ private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active) {
-    override fun failParent(exception: Throwable) = failParentImpl(exception)
+    override val failsParent: Boolean get() = true
     override fun handleJobException(exception: Throwable) = handleExceptionViaHandler(parentContext, exception)
 }
 

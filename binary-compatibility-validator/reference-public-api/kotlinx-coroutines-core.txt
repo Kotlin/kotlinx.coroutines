@@ -90,6 +90,10 @@ public final class kotlinx/coroutines/experimental/CancelledContinuation : kotli
 	public fun <init> (Lkotlin/coroutines/experimental/Continuation;Ljava/lang/Throwable;)V
 }
 
+public abstract interface class kotlinx/coroutines/experimental/ChildHandle : kotlinx/coroutines/experimental/DisposableHandle {
+	public abstract fun childFailed (Ljava/lang/Throwable;)Z
+}
+
 public abstract class kotlinx/coroutines/experimental/CloseableCoroutineDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, java/io/Closeable {
 	public fun <init> ()V
 }
@@ -368,11 +372,10 @@ public final class kotlinx/coroutines/experimental/GlobalScope : kotlinx/corouti
 
 public abstract interface class kotlinx/coroutines/experimental/Job : kotlin/coroutines/experimental/CoroutineContext$Element {
 	public static final field Key Lkotlinx/coroutines/experimental/Job$Key;
-	public abstract fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public abstract fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/ChildHandle;
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun cancelChild (Lkotlinx/coroutines/experimental/Job;)V
 	public abstract synthetic fun cancelChildren (Ljava/lang/Throwable;)V
-	public abstract fun childFailed (Ljava/lang/Throwable;)Z
 	public abstract fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public abstract fun getChildren ()Lkotlin/sequences/Sequence;
 	public abstract fun getCompletionException ()Ljava/lang/Throwable;
@@ -442,11 +445,10 @@ public final class kotlinx/coroutines/experimental/LazyDeferredKt {
 
 public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlinx/coroutines/experimental/Job {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/NonCancellable;
-	public fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	public fun attachChild (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/ChildHandle;
 	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun cancelChild (Lkotlinx/coroutines/experimental/Job;)V
 	public synthetic fun cancelChildren (Ljava/lang/Throwable;)V
-	public fun childFailed (Ljava/lang/Throwable;)Z
 	public fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public fun getChildren ()Lkotlin/sequences/Sequence;
 	public fun getCompletionException ()Ljava/lang/Throwable;
@@ -464,8 +466,9 @@ public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/corou
 	public fun start ()Z
 }
 
-public final class kotlinx/coroutines/experimental/NonDisposableHandle : kotlinx/coroutines/experimental/DisposableHandle {
+public final class kotlinx/coroutines/experimental/NonDisposableHandle : kotlinx/coroutines/experimental/ChildHandle, kotlinx/coroutines/experimental/DisposableHandle {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/NonDisposableHandle;
+	public fun childFailed (Ljava/lang/Throwable;)Z
 	public fun dispose ()V
 	public fun toString ()Ljava/lang/String;
 }

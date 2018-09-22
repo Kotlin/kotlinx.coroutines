@@ -69,9 +69,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     override fun cancel(cause: Throwable?): Boolean = false // never handles exceptions
 
     /** @suppress */
-    override fun childFailed(cause: Throwable): Boolean = false // never handles exceptions
-
-    /** @suppress */
     override fun cancelChild(parentJob: Job): Unit = error("Cannot be invoked, does not have a parent")
 
     /** Always returns [emptySequence]. */
@@ -80,7 +77,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
 
     /** Always returns [NonDisposableHandle] and does not do anything. */
     @Suppress("OverridingDeprecatedMember")
-    override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
+    override fun attachChild(child: Job): ChildHandle = NonDisposableHandle
 
     /** Does not do anything. */
     @Suppress("OverridingDeprecatedMember")

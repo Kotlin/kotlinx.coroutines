@@ -123,13 +123,6 @@ public abstract class AbstractCoroutine<in T>(
         makeCompletingOnce(CompletedExceptionally(exception), defaultResumeMode)
     }
 
-    // todo: make it for all kinds of coroutines, now only launch & actor override and handleExceptionViaJob
-    internal fun failParentImpl(exception: Throwable): Boolean {
-        if (exception is CancellationException) return true
-        val parentJob = parentContext[Job]
-        return parentJob !== null && parentJob.childFailed(exception)
-    }
-
     internal final override fun handleOnCompletionException(exception: Throwable) {
         handleCoroutineException(parentContext, exception, this)
     }

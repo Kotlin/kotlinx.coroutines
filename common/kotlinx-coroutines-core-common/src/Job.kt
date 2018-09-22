@@ -182,16 +182,6 @@ public interface Job : CoroutineContext.Element {
     // ------------ parent-child ------------
     
     /**
-     * Child is reporting failure to the parent by invoking this method.
-     * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
-     * so that all its siblings and the parent can start finishing their work asap on failure. The second time
-     * child invokes this method when it had aggregated and determined its final termination cause.
-     *
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    public fun childFailed(cause: Throwable): Boolean
-
-    /**
      * Cancels child job. This method is invoked by [parentJob] to cancel this child job.
      * Child finds the cancellation cause using [getCancellationException] of the [parentJob].
      * This method does nothing is the child is already being cancelled.
@@ -240,7 +230,7 @@ public interface Job : CoroutineContext.Element {
      * @suppress **This is unstable API and it is subject to change.**
      *           This is an internal API. This method is too error prone for public API.
      */
-    public fun attachChild(child: Job): DisposableHandle
+    public fun attachChild(child: Job): ChildHandle
 
     /**
      * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
@@ -396,6 +386,21 @@ public interface DisposableHandle {
     public fun dispose()
 }
 
+/**
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+public interface ChildHandle : DisposableHandle {
+    /**
+     * Child is reporting failure to the parent by invoking this method.
+     * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
+     * so that all its siblings and the parent can start finishing their work asap on failure. The second time
+     * child invokes this method when it had aggregated and determined its final termination cause.
+     *
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun childFailed(cause: Throwable): Boolean
+}
+
 // -------------------- Job extensions --------------------
 
 /**
@@ -508,10 +513,22 @@ public suspend fun Job.join() = this.join()
 /**
  * No-op implementation of [DisposableHandle].
  */
-public object NonDisposableHandle : DisposableHandle {
-    /** Does not do anything. */
+public object NonDisposableHandle : DisposableHandle, ChildHandle {
+    /**
+     * Does not do anything.
+     * @suppress
+     */
     override fun dispose() {}
 
-    /** Returns "NonDisposableHandle" string. */
+    /**
+     * Returns `false`.
+     * @suppress
+     */
+    override fun childFailed(cause: Throwable): Boolean = false
+
+    /**
+     * Returns "NonDisposableHandle" string.
+     * @suppress
+     */
     override fun toString(): String = "NonDisposableHandle"
 }
