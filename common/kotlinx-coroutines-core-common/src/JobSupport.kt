@@ -80,6 +80,45 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
        state without going to COMPLETING state)
 
        Note, that the actual `_state` variable can also be a reference to atomic operation descriptor `OpDescriptor`
+
+       ---------- TIMELINE of state changes and notification in Job lifecycle ----------
+
+       | The longest possible chain of events in shown, shorter versions cut-through intermediate states,
+       |  while still performing all the notifications in this order.
+
+       + Job object is created
+       ## NEW: state == EMPTY_ACTIVE | is InactiveNodeList
+       + initParentJob / initParentJobInternal (invokes attachChild on its parent, initializes parentHandle)
+       ~ waits for start
+       >> start / join / await invoked
+       ## ACTIVE: state == EMPTY_ACTIVE | is JobNode | is NodeList
+       + onStartInternal / onStart (lazy coroutine is started)
+       ~ active coroutine is working
+       >> childFailed / fail invoked
+       ## FAILING: state is Finishing, state.rootCause != null
+       ------ failing listeners are not admitted anymore, invokeOnCompletion(onFailing=true) returns NonDisposableHandle
+       ------ new children get immediately cancelled, but are still admitted to the list
+       + onFailing
+       + notifyFailing (invoke all failing listeners -- cancel all children, suspended functions resume with exception)
+       + failParent (rootCause of failure is communicated to the parent, parent starts failing, too)
+       ~ waits for completion of coroutine body
+       >> makeCompleting / makeCompletingOnce invoked
+       ## COMPLETING: state is Finishing, state.isCompleting == true
+       ------ new children are not admitted anymore, attachChild returns NonDisposableHandle
+       ~ waits for children
+       >> last child completes
+       - computes the final exception
+       ## SEALED: state is Finishing, state.isSealed == true
+       ------ cancel/childFailed returns false (cannot handle exceptions anymore)
+       + failParent (final exception is communicated to the parent, parent incorporates it)
+       + handleJobException ("launch" StandaloneCoroutine invokes CoroutineExceptionHandler)
+       ## COMPLETE: state !is Incomplete (CompletedExceptionally | Cancelled)
+       ------ completion listeners are not admitted anymore, invokeOnCompletion returns NonDisposableHandle
+       + parentHandle.dispose
+       + notifyCompletion (invoke all completion listeners)
+       + onCompletionInternal / onCompleted / onCompletedExceptionally
+
+       ---------------------------------------------------------------------------------
      */
 
     // Note: use shared objects while we have no listeners
