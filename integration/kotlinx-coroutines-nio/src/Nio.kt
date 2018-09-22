@@ -99,7 +99,7 @@ suspend fun AsynchronousSocketChannel.aConnect(
  */
 suspend fun AsynchronousSocketChannel.aRead(
     buf: ByteBuffer,
-    timeout: Long = 0L,
+    timeout: Long,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
 ) = suspendCancellableCoroutine<Int> { cont ->
     read(buf, timeout, timeUnit, cont, asyncIOHandler())
@@ -114,10 +114,36 @@ suspend fun AsynchronousSocketChannel.aRead(
  */
 suspend fun AsynchronousSocketChannel.aWrite(
     buf: ByteBuffer,
-    timeout: Long = 0L,
+    timeout: Long,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
 ) = suspendCancellableCoroutine<Int> { cont ->
     write(buf, timeout, timeUnit, cont, asyncIOHandler())
+    closeOnCancel(cont)
+}
+
+/**
+ * Performs [AsynchronousByteChannel.read] without blocking a thread and resumes when asynchronous operation completes.
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * *closes the underlying channel* and immediately resumes with [CancellationException].
+ */
+suspend fun AsynchronousByteChannel.aRead(
+  buf: ByteBuffer
+) = suspendCancellableCoroutine<Int> { cont ->
+    read(buf, cont, asyncIOHandler())
+    closeOnCancel(cont)
+}
+
+/**
+ * Performs [AsynchronousByteChannel.write] without blocking a thread and resumes when asynchronous operation completes.
+ * This suspending function is cancellable.
+ * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * *closes the underlying channel* and immediately resumes with [CancellationException].
+ */
+suspend fun AsynchronousByteChannel.aWrite(
+  buf: ByteBuffer
+) = suspendCancellableCoroutine<Int> { cont ->
+    write(buf, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
 
