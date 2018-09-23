@@ -16,9 +16,10 @@ import kotlinx.coroutines.experimental.selects.*
  *
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lists of suspended senders or receivers are lock-free.
+ * 
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc refs
+@InternalCoroutinesApi
 public open class ArrayChannel<E>
 @Deprecated(
     "Replace with Channel factory function",

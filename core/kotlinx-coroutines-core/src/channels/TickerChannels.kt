@@ -43,7 +43,7 @@ enum class TickerMode {
  * Creates a channel that produces the first item after the given initial delay and subsequent items with the
  * given delay between them.
  *
- * The resulting channel is a [rendezvous channel][RendezvousChannel]. When receiver from this channel does not keep
+ * The resulting channel is a _rendezvous channel_. When receiver from this channel does not keep
  * up with receiving the elements from this channel, they are not being sent due to backpressure. The actual
  * timing behavior of ticker in this case is controlled by [mode] parameter which
  * is set to [TickerMode.FIXED_PERIOD] by default. See [TickerMode] for other details.

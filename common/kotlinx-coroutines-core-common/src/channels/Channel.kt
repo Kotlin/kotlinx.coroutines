@@ -321,7 +321,28 @@ public interface ChannelIterator<out E> {
  * Conceptually, a channel is similar to [BlockingQueue][java.util.concurrent.BlockingQueue],
  * but it has suspending operations instead of blocking ones and it can be closed.
  *
- * See `Channel(capacity)` factory function for the description of available channel implementations.
+ * `Channel(capacity)` factory function is used to create channels of different kind depending on
+ * the value of `capacity` integer:
+ *
+ * * When `capacity` is 0 -- it creates `RendezvousChannel`.
+ *   This channel does not have any buffer at all. An element is transferred from sender
+ *   to receiver only when [send] and [receive] invocations meet in time (rendezvous), so [send] suspends
+ *   until another coroutine invokes [receive] and [receive] suspends until another coroutine invokes [send].
+ *
+ * * When `capacity` is [Channel.UNLIMITED] -- it creates `LinkedListChannel`.
+ *   This is a channel with linked-list buffer of a unlimited capacity (limited only by available memory).
+ *   Sender to this channel never suspends and [offer] always returns `true`.
+ *
+ * * When `capacity` is [Channel.CONFLATED] -- it creates `ConflatedChannel`.
+ *   This channel buffers at most one element and conflates all subsequent `send` and `offer` invocations,
+ *   so that the receiver always gets the most recently sent element.
+ *   Back-to-send sent elements are _conflated_ -- only the the most recently sent element is received,
+ *   while previously sent elements **are lost**.
+ *   Sender to this channel never suspends and [offer] always returns `true`.
+ *
+ * * When `capacity` is positive, but less than [UNLIMITED] -- it creates [ArrayChannel].
+ *   This channel has an array buffer of a fixed `capacity`.
+ *   Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
@@ -357,15 +378,10 @@ public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
 
 /**
  * Creates a channel with the specified buffer capacity (or without a buffer by default).
- *
- * The resulting channel type depends on the specified [capacity] parameter:
- * * when `capacity` is 0 -- creates [RendezvousChannel] without a buffer;
- * * when `capacity` is [Channel.UNLIMITED] -- creates [LinkedListChannel] with buffer of unlimited size;
- * * when `capacity` is [Channel.CONFLATED] -- creates [ConflatedChannel] that conflates back-to-back sends;
- * * when `capacity` is positive, but less than [UNLIMITED] -- creates [ArrayChannel] with a buffer of the specified `capacity`;
- * * otherwise -- throws [IllegalArgumentException].
+ * See [Channel] interface documentation for details.
+ * 
+ * @throws IllegalArgumentException when [capacity] < -1
  */
-// todo: docs
 public fun <E> Channel(capacity: Int = 0): Channel<E> =
     when (capacity) {
         0 -> RendezvousChannel()
