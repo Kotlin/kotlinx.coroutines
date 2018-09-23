@@ -17,7 +17,7 @@ import kotlinx.coroutines.experimental.selects.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc usage
+@InternalCoroutinesApi
 public open class LinkedListChannel<E>
 @Deprecated(
     "Replace with Channel factory function",

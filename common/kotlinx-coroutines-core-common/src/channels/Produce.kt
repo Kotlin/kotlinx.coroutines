@@ -55,12 +55,8 @@ interface ProducerJob<out E> : ReceiveChannel<E>, Job {
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
  *
- * The kind of the resulting channel depends on the specified [capacity] parameter:
- * * when `capacity` is 0 (default) -- uses [RendezvousChannel] without a buffer;
- * * when `capacity` is [Channel.UNLIMITED] -- uses [LinkedListChannel] with buffer of unlimited size;
- * * when `capacity` is [Channel.CONFLATED] -- uses [ConflatedChannel] that conflates back-to-back sends;
- * * when `capacity` is positive, but less than [UNLIMITED] -- uses [ArrayChannel] with a buffer of the specified `capacity`;
- * * otherwise -- throws [IllegalArgumentException].
+ * The kind of the resulting channel depends on the specified [capacity] parameter.
+ * See [Channel] interface documentation for details.
  *
  * See [newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *

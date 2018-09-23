@@ -17,7 +17,7 @@ import kotlinx.coroutines.experimental.*
  * 
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc usage
+@InternalCoroutinesApi
 public open class RendezvousChannel<E>
 @Deprecated(
     "Replace with Channel factory function",
