@@ -125,7 +125,6 @@ class JobBasicCancellationTest : TestBase() {
             child.join()
             expect(3)
         }
-
         parent.join()
         finish(4)
     }

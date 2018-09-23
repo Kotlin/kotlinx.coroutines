@@ -68,7 +68,11 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
     }
 
 /**
- * An optional element on the coroutine context to handle uncaught exceptions.
+ * An optional element in the coroutine context to handle uncaught exceptions.
+ *
+ * Normally, uncaught exceptions can only result from coroutines created using [launch][CoroutineScope.launch] builder.
+ * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
+ * in the resulting [Deferred] object.
  *
  * By default, when no handler is installed, uncaught exception are handled in the following way:
  * * If exception is [CancellationException] then it is ignored

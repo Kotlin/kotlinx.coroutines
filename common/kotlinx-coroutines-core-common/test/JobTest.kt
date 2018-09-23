@@ -188,4 +188,24 @@ class JobTest : TestBase() {
         deferred.join()
         finish(3)
     }
+
+    @Test
+    fun testJobWithParentCancelNormally() {
+        val parent = Job()
+        val job = Job(parent)
+        job.cancel()
+        assertTrue(job.isCancelled)
+        assertFalse(parent.isCancelled)
+    }
+
+    @Test
+    fun testJobWithParentCancelException() {
+        val parent = Job()
+        val job = Job(parent)
+        job.cancel(TestException())
+        assertTrue(job.isCancelled)
+        assertTrue(parent.isCancelled)
+    }
+
+    private class TestException : Exception()
 }
