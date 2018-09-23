@@ -513,6 +513,12 @@ public final class kotlinx/coroutines/experimental/ScheduledKt {
 	public static synthetic fun withTimeoutOrNull$default (JLjava/util/concurrent/TimeUnit;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/experimental/SupervisorKt {
+	public static final fun SupervisorJob (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
+	public static synthetic fun SupervisorJob$default (Lkotlinx/coroutines/experimental/Job;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/Job;
+	public static final fun supervisorScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
 public abstract interface class kotlinx/coroutines/experimental/ThreadContextElement : kotlin/coroutines/experimental/CoroutineContext$Element {
 	public abstract fun restoreThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Object;)V
 	public abstract fun updateThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;)Ljava/lang/Object;

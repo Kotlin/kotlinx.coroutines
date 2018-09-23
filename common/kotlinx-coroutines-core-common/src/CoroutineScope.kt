@@ -155,7 +155,9 @@ object GlobalScope : CoroutineScope {
  * The provided scope inherits its [coroutineContext][CoroutineScope.coroutineContext] from the outer scope, but overrides
  * context's [Job].
  *
- * This methods returns as soon as given block and all launched from within the scope children coroutines are completed.
+ * This function is designed for a _parallel decomposition_ of work. When any child coroutine in this scope fails,
+ * this scope fails and all the rest of the children are cancelled (for a different behavior see [supervisorScope]).
+ * This function returns as soon as given block and all its children coroutines are completed.
  * Example of the scope usages looks like this:
  *
  * ```
