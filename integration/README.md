@@ -7,7 +7,6 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 
 * [kotlinx-coroutines-jdk8](kotlinx-coroutines-jdk8/README.md) -- integration with JDK8 `CompletableFuture` (Android API level 24).
 * [kotlinx-coroutines-guava](kotlinx-coroutines-guava/README.md) -- integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained).
-* [kotlinx-coroutines-quasar](kotlinx-coroutines-quasar/README.md) -- integration with [Quasar](http://docs.paralleluniverse.co/quasar/).
 * [kotlinx-coroutines-slf4j](kotlinx-coroutines-slf4j/README.md) -- integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html).
 
 ## Contributing
