@@ -146,7 +146,6 @@ public actual open class TestBase actual constructor() {
                     !unhandled[exCount - 1](e) ->
                         printError("Unhandled exception was unexpected: $e", e)
                 }
-                context[Job]?.cancel(e)
             })
         } catch (e: Throwable) {
             ex = e
