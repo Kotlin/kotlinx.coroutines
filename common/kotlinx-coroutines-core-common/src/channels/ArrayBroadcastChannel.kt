@@ -24,7 +24,7 @@ import kotlinx.coroutines.experimental.selects.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc refs
+@InternalCoroutinesApi
 public class ArrayBroadcastChannel<E>
 @Deprecated(
     "Replace with BroadcastChannel factory function",

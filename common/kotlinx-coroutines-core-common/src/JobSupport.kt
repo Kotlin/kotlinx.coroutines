@@ -406,7 +406,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
-     * [cancel] cause, [JobCancellationException] or **`null` if this job had completed normally**.
+     * [cancel] cause, [CancellationException] or **`null` if this job had completed normally**.
      * This function throws [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
      * [isCancelled] yet.
      */

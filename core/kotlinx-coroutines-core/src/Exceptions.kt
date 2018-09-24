@@ -19,7 +19,7 @@ public actual class CompletionHandlerException actual constructor(
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
  * It indicates _normal_ cancellation of a coroutine.
  * **It is not printed to console/log by default uncaught exception handler**.
- * (see [handleCoroutineException]).
+ * See [CoroutineExceptionHandler]
 */
 public actual typealias CancellationException = java.util.concurrent.CancellationException
 
@@ -30,7 +30,7 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
  * 
  * @suppress **Deprecated**: Replace with [CancellationException].
  */
-@InternalCoroutinesApi // todo: review usage from docs and examples
+@InternalCoroutinesApi
 @Deprecated(message = "Replace with CancellationException", replaceWith = ReplaceWith("CancellationException"))
 public actual class JobCancellationException public actual constructor(
     message: String,

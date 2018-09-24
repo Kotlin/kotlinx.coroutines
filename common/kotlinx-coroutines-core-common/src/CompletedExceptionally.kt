@@ -14,7 +14,7 @@ import kotlin.coroutines.experimental.*
  * **Note: cannot be internal until we get rid of MutableDelegateContinuation in IO**
  *
  * @param cause the exceptional completion cause. It's either original exceptional cause
- *        or artificial JobCancellationException if no cause was provided
+ *        or artificial [CancellationException] if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
 open class CompletedExceptionally(
@@ -29,7 +29,7 @@ open class CompletedExceptionally(
  * **Note: This class cannot be used outside of internal coroutines framework**.
  *
  * @param job the job that was cancelled.
- * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException] is created.
+ * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException] is created.
  * @suppress **This is unstable API and it is subject to change.**
  */
 internal class Cancelled(
@@ -43,8 +43,8 @@ internal class Cancelled(
  * **Note: This class cannot be used outside of internal coroutines framework**.
  *
  * @param continuation the continuation that was cancelled.
- * @param cause the exceptional completion cause. If `cause` is null, then a [JobCancellationException]
- *        if created on first get from [exception] property.
+ * @param cause the exceptional completion cause. If `cause` is null, then a [CancellationException]
+ *        if created on first access to [exception] property.
  * @suppress **This is unstable API and it is subject to change.**
  */
 public class CancelledContinuation(

@@ -123,8 +123,8 @@ public interface Job : CoroutineContext.Element {
      *
      * This function returns the original [cancel] cause of this job if that `cause` was an instance of
      * [CancellationException]. Otherwise (if this job was cancelled with a cause of a different type, or
-     * was cancelled without a cause, or had completed normally), an instance of [JobCancellationException] is
-     * returned. The [JobCancellationException.cause] of the resulting [JobCancellationException] references
+     * was cancelled without a cause, or had completed normally), an instance of [CancellationException] is
+     * returned. The [CancellationException.cause] of the resulting [CancellationException] references
      * the original cancellation cause that was passed to [cancel] function.
      *
      * This function throws [IllegalStateException] when invoked on a job that has not
@@ -333,8 +333,8 @@ public interface Job : CoroutineContext.Element {
      * @param onCancelling when `true`, then the [handler] is invoked as soon as this job transitions to _cancelling_ state;
      *        when `false` then the [handler] is invoked only when it transitions to _completed_ state.
      * @param invokeImmediately when `true` and this job is already in the desired state (depending on [onCancelling]),
-     *        then the [handler] is immediately and synchronously invoked and [NonDisposableHandle] is returned;
-     *        when `false` then [NonDisposableHandle] is returned, but the [handler] is not invoked.
+     *        then the [handler] is immediately and synchronously invoked and no-op [DisposableHandle] is returned;
+     *        when `false` then no-op [DisposableHandle] is returned, but the [handler] is not invoked.
      * @param handler the handler.
      * 
      * @suppress **This an internal API and should not be used from general code.**
@@ -531,7 +531,7 @@ public suspend fun Job.join() = this.join()
  * No-op implementation of [DisposableHandle].
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review references from KDocs
+@InternalCoroutinesApi
 public object NonDisposableHandle : DisposableHandle {
     /** Does not do anything. */
     override fun dispose() {}

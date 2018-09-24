@@ -73,7 +73,7 @@ public interface BroadcastChannel<E> : SendChannel<E> {
  * Creates a broadcast channel with the specified buffer capacity.
  *
  * The resulting channel type depends on the specified [capacity] parameter:
- * * when `capacity` positive, but less than [UNLIMITED] -- creates [ArrayBroadcastChannel]
+ * * when `capacity` positive, but less than [UNLIMITED] -- creates `ArrayBroadcastChannel` with a buffer of given capacity.
  *   **Note:** this channel looses all items that are send to it until the first subscriber appears;
  * * when `capacity` is [CONFLATED] -- creates [ConflatedBroadcastChannel] that conflates back-to-back sends;
  * * otherwise -- throws [IllegalArgumentException].

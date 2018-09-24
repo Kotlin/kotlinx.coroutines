@@ -5,7 +5,7 @@
 package kotlinx.coroutines.experimental.internal
 
 /**
- * Special kind of list intended to be used as collection of subscribers in [ArrayBroadcastChannel]
+ * Special kind of list intended to be used as collection of subscribers in `ArrayBroadcastChannel`
  * On JVM it's CopyOnWriteList and on JS it's MutableList.
  *
  * Note that this alias is intentionally not named as CopyOnWriteList to avoid accidental misusage outside of ArrayBroadcastChannel

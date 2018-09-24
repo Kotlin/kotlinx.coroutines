@@ -169,7 +169,7 @@ object GlobalScope : CoroutineScope {
  * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `loadDataForUI` rethrows that exception.
  * 3) If outer scope of `loadDataForUI` is cancelled, both started `async` and `withContext` are cancelled.
  *
- * Method may throw [JobCancellationException] if the current job was cancelled externally
+ * Method may throw [CancellationException] if the current job was cancelled externally
  * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
  * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
