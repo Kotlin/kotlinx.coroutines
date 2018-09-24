@@ -28,8 +28,8 @@ class CoroutinesJvmTest : TestBase() {
         repeat(n) {
             // create a child that already completed
             val child = launch(start = CoroutineStart.UNDISPATCHED) { /* do nothing */ }
-            // attach it manually
-            parent.attachChild(child)
+            // attach it manually via internal API
+            parent.attachChild(child as ChildJob)
         }
         parent.cancelAndJoin() // cancel parent, make sure no stack overflow
     }

@@ -16,7 +16,7 @@ import kotlin.coroutines.experimental.*
 /**
  * A background job. Conceptually, a job is a cancellable thing with a life-cycle that
  * culminates in its completion. Jobs can be arranged into parent-child hierarchies where failure or cancellation
- * of parent immediately cancels all its [children].
+ * of parent lead to an immediate failure of all its [children].
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
  * `Job()` factory function.
@@ -69,7 +69,7 @@ import kotlin.coroutines.experimental.*
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
  * represents the coroutine itself.
  *
- * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled or is failing.
+ * A job can have a _parent_ job. A job with a parent is failing when its parent is cancelled or is failing.
  * Parent job waits in _completing_, _failing_, or _cancelling_ state for all its children to complete before finishing.
  * Note, that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
  * active, while internally it is waiting for its children.
@@ -182,15 +182,6 @@ public interface Job : CoroutineContext.Element {
     // ------------ parent-child ------------
     
     /**
-     * Cancels child job. This method is invoked by [parentJob] to cancel this child job.
-     * Child finds the cancellation cause using [getCancellationException] of the [parentJob].
-     * This method does nothing is the child is already being cancelled.
-     *
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    public fun cancelChild(parentJob: Job)
-
-    /**
      * Returns a sequence of this job's children.
      *
      * A job becomes a child of this job when it is constructed with this job in its
@@ -216,21 +207,23 @@ public interface Job : CoroutineContext.Element {
      *
      * A parent-child relation has the following effect:
      * * Cancellation of parent with [cancel] or its exceptional completion (failure)
-     *   immediately cancels all its children.
+     *   immediately fails all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
-     *   complete in _completing_ or _cancelling_ state.
+     *   complete in _completing_, _failing_, or _cancelling_ states.
      *
-     * **A child must store the resulting [DisposableHandle] and [dispose][DisposableHandle.dispose] the attachment
+     * **A child must store the resulting [ChildHandle] and [dispose][DisposableHandle.dispose] the attachment
      * to its parent on its own completion.**
      *
      * Coroutine builders and job factory functions that accept `parent` [CoroutineContext] parameter
      * lookup a [Job] instance in the parent context and use this function to attach themselves as a child.
-     * They also store a reference to the resulting [DisposableHandle] and dispose a handle when they complete.
+     * They also store a reference to the resulting [ChildHandle] and dispose a handle when they complete.
      *
      * @suppress **This is unstable API and it is subject to change.**
      *           This is an internal API. This method is too error prone for public API.
      */
-    public fun attachChild(child: Job): ChildHandle
+    // ChildJob and ChildHandle are made internal on purpose to further deter 3rd-party impl of Job
+    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
+    public fun attachChild(child: ChildJob): ChildHandle
 
     /**
      * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
@@ -387,9 +380,27 @@ public interface DisposableHandle {
 }
 
 /**
+ * A reference that parent receives from its child so that it can report its failure.
+ *
  * @suppress **This is unstable API and it is subject to change.**
  */
-public interface ChildHandle : DisposableHandle {
+internal interface ChildJob : Job {
+    /**
+     * Parent is reporting failure to the child by invoking this method.
+     * Child finds the failure cause using [getCancellationException] of the [parentJob].
+     * This method does nothing is the child is already failing.
+     *
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    public fun parentFailed(parentJob: Job)
+}
+
+/**
+ * A handle that child keep onto its parent so that it is able to report its failure.
+ * 
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+internal interface ChildHandle : DisposableHandle {
     /**
      * Child is reporting failure to the parent by invoking this method.
      * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
