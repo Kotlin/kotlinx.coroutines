@@ -15,12 +15,12 @@ import kotlin.coroutines.experimental.*
  * This class implements completion [Continuation], [Job], and [CoroutineScope] interfaces.
  * It stores the result of continuation in the state of the job.
  * This coroutine waits for children coroutines to finish before completing and
- * is cancelled through an intermediate _cancelling_ state.
+ * fails through an intermediate _failing_ state.
  *
  * The following methods are available for override:
  *
  * * [onStart] is invoked when coroutine is create in not active state and is [started][Job.start].
- * * [onCancellation] is invoked as soon as coroutine is [cancelled][cancel] (becomes _cancelling_)
+ * * [onFailing] is invoked as soon as coroutine is _failing_, or is cancelled,
  *   or when it completes for any reason.
  * * [onCompleted] is invoked when coroutine completes with a value.
  * * [onCompletedExceptionally] in invoked when coroutines completes with exception.
@@ -82,10 +82,8 @@ public abstract class AbstractCoroutine<in T>(
      * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
      * * Otherwise, the job had _failed_.
-     *
-     * @suppress **Deprecated**: Override [onFailing].
      */
-    override fun onFailing(cause: Throwable?) {
+    protected override fun onFailing(cause: Throwable?) {
         onCancellation(cause)
     }
 

@@ -905,7 +905,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
      *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    internal open fun onFailing(cause: Throwable?) {}
+    protected open fun onFailing(cause: Throwable?) {}
 
     /**
      * When this function returns `true` the parent fails on the failure of this job.
