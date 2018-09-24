@@ -877,7 +877,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
          * Note: This function attaches a special ChildNode object. This node object
          * is handled in a special way on completion on the coroutine (we wait for all of them) and
          * is handled specially by invokeOnCompletion itself -- it adds this node to the list even
-         * if the job is already failing.
+         * if the job is already failing.  For "failing" state child is attached under state lock.
+         * It's required to properly wait all children before completion and provide linearizable hierarchy view:
+         * If child is attached when job is failing, such child will receive immediate cancellation exception,
+         * but parent *will* wait for that child before completion and will handle its exception.
          */
         return invokeOnCompletion(onFailing = true, handler = ChildJob(this, child).asHandler) as ChildHandle
     }

@@ -18,9 +18,8 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  *
  * If there is a [Job] in the context and it's not a [caller], then [Job.cancel] is invoked.
  * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
- * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used.
- * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
- *
+ * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
+ * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  * todo: Deprecate/hide this function.
  */
 @JvmOverloads // binary compatibility
@@ -39,21 +38,25 @@ private fun handleExceptionViaJob(context: CoroutineContext, exception: Throwabl
 }
 
 internal fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
+    // Invoke exception handler from the context if present
     try {
-        // Invoke exception handler from the context if present
         context[CoroutineExceptionHandler]?.let {
             it.handleException(context, exception)
             return
         }
-        // If handler is not present in the context, fallback to the global handler
-        handleCoroutineExceptionImpl(context, exception)
-    } catch (handlerException: Throwable) {
-        // simply rethrow if handler threw the original exception
-        if (handlerException === exception) throw exception
-        // handler itself crashed for some other reason -- that is bad -- keep both
-        throw RuntimeException("Exception while trying to handle coroutine exception", exception).apply {
-            addSuppressedThrowable(handlerException)
-        }
+    } catch (t: Throwable) {
+        handleCoroutineExceptionImpl(context, handlerException(exception, t))
+        return
+    }
+
+    // If handler is not present in the context or exception was thrown, fallback to the global handler
+    handleCoroutineExceptionImpl(context, exception)
+}
+
+internal fun handlerException(originalException: Throwable, thrownException: Throwable): Throwable {
+    if (originalException === thrownException) return originalException
+    return RuntimeException("Exception while trying to handle coroutine exception", thrownException).apply {
+        addSuppressedThrowable(originalException)
     }
 }
 
