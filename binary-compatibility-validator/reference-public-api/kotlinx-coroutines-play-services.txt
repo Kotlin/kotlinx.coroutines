@@ -1,0 +1,6 @@
+public final class kotlinx/coroutines/experimental/tasks/TasksKt {
+	public static final fun asDeferred (Lcom/google/android/gms/tasks/Task;)Lkotlinx/coroutines/experimental/Deferred;
+	public static final fun asTask (Lkotlinx/coroutines/experimental/Deferred;)Lcom/google/android/gms/tasks/Task;
+	public static final fun await (Lcom/google/android/gms/tasks/Task;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
+}
+
