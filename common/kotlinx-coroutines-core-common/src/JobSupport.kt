@@ -800,6 +800,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             if (finishing.isCompleting) return COMPLETING_ALREADY_COMPLETING
             // mark as completing
             finishing.isCompleting = true
+            // if we need to promote to finishing then atomically do it here.
+            // We do it as early is possible while still holding the lock. This ensures that we fail asap
+            // (if somebody else is faster) and we synchronize all the threads on this finishing lock asap.
+            if (finishing !== state) {
+                if (!_state.compareAndSet(state, finishing)) return COMPLETING_RETRY
+            }
             // ## IMPORTANT INVARIANT: Only one thread (that had set isCompleting) can go past this point
             require(!finishing.isSealed) // cannot be sealed
             // mark as cancelling is the proposed update is to cancel
@@ -809,10 +815,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             (proposedUpdate as? CompletedExceptionally)?.let { finishing.addExceptionLocked(it.cause) }
             // If it just becomes failing --> must process failing notifications
             notifyRootCause = finishing.rootCause.takeIf { !wasFailing }
-        }
-        // if we need to promote to finishing then atomically do it here
-        if (finishing !== state) {
-            if (!_state.compareAndSet(state, finishing)) return COMPLETING_RETRY
         }
         // process failing notification here -- it cancels all the children _before_ we start to to wait them (sic!!!)
         notifyRootCause?.let { notifyFailing(list, it) }
