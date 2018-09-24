@@ -11,7 +11,7 @@ import java.util.concurrent.*
 // this function returns a CompletableFuture using Kotlin coroutines
 fun supplyTheAnswerAsync(): CompletableFuture<Int> = GlobalScope.future {
     println("We might be doing some asynchronous IO here or something else...")
-    delay(1, TimeUnit.SECONDS) // just do a non-blocking delay
+    delay(1000) // just do a non-blocking delay
     42 // The answer!
 }
 

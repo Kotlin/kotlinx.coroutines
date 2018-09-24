@@ -72,7 +72,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     override fun getCancellationException(): CancellationException = throw IllegalStateException("This job is always active")
 
     /**
-     * Always returns [NonDisposableHandle].
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Suppress("OverridingDeprecatedMember")
@@ -81,7 +80,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * Always returns [NonDisposableHandle].
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Suppress("OverridingDeprecatedMember")
@@ -90,7 +88,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * Always returns [NonDisposableHandle].
+     * Always returns no-op handle.
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Suppress("OverridingDeprecatedMember")
@@ -99,7 +97,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * Always returns [NonDisposableHandle].
+     * Always returns no-op handle.
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
@@ -129,7 +127,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         get() = emptySequence()
 
     /**
-     * Always returns [NonDisposableHandle] and does not do anything.
+     * Always returns no-op handle and does not do anything.
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Suppress("OverridingDeprecatedMember")

@@ -31,7 +31,6 @@ public suspend fun <T> withTimeout(time: Int, block: suspend CoroutineScope.() -
  *
  * @suppress **Deprecated**: Replace with `withTimeout(unit.toMillis(time), block)`
  */
-// todo: review usage in Guides and samples
 @Deprecated(
     message = "Replace with withTimeout(unit.toMillis(time), block)",
     replaceWith = ReplaceWith("withTimeout(unit.toMillis(time), block)")
@@ -62,7 +61,6 @@ public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScop
  * @param unit timeout unit (milliseconds by default)
  * @suppress **Deprecated**: Replace with `withTimeoutOrNull(unit.toMillis(time), block)`
  */
-// todo: review usage in Guides and samples
 @Deprecated(
     message = "Replace with withTimeoutOrNull(unit.toMillis(time), block)",
     replaceWith = ReplaceWith("withTimeoutOrNull(unit.toMillis(time), block)")

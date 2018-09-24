@@ -109,7 +109,6 @@ public suspend fun delay(timeMillis: Long) {
  *
  * @suppress **Deprecated**: Replace with `delay(unit.toMillis(time))`
  */
-// todo: review usage in Guides and samples
 @Deprecated(
     message = "Replace with delay(unit.toMillis(time))",
     replaceWith = ReplaceWith("delay(unit.toMillis(time))")

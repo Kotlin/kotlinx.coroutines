@@ -66,7 +66,7 @@ public fun <E> broadcast(
  * the resulting channel becomes _failed_, so that any attempt to receive from such a channel throws exception.
  *
  * The kind of the resulting channel depends on the specified [capacity] parameter:
- * * when `capacity` positive (1 by default), but less than [UNLIMITED] -- uses [ArrayBroadcastChannel]
+ * * when `capacity` positive (1 by default), but less than [UNLIMITED] -- uses `ArrayBroadcastChannel` with a buffer of given capacity,
  * * when `capacity` is [CONFLATED] -- uses [ConflatedBroadcastChannel] that conflates back-to-back sends;
  * * otherwise -- throws [IllegalArgumentException].
  *

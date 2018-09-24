@@ -238,7 +238,7 @@ class CoroutinesTest : TestBase() {
         // now we have a failed job with TestException
         finish(3)
         try {
-            job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into JobCancellationException
+            job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into CancellationException
         } catch (e: Throwable) {
             e as CancellationException // type assertion
             assertTrue(e.cause is TestException)

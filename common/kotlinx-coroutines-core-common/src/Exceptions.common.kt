@@ -12,7 +12,7 @@ public expect open class CancellationException(message: String?) : IllegalStateE
 /**
  * @suppress **Deprecated**: Replace with [CancellationException].
  */
-@InternalCoroutinesApi // todo: review usage from docs and examples
+@InternalCoroutinesApi
 @Deprecated(message = "Replace with CancellationException", replaceWith = ReplaceWith("CancellationException"))
 public expect class JobCancellationException(
     message: String,

@@ -28,7 +28,7 @@ import kotlin.coroutines.experimental.*
  *
  * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
- * @param context context of the coroutine. The default value is an implementation of [EventLoop].
+ * @param context context of the coroutine. The default value is an event loop on current thread.
  * @param block the coroutine code.
  */
 @Throws(InterruptedException::class)
