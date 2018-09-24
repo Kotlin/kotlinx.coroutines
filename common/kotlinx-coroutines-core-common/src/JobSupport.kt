@@ -690,11 +690,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                 }
                 is Incomplete -> {
                     // Not yet finishing -- try to make it failing
-                    val list = tryPromoteToList(state) ?: return@loopOnState
                     val causeException = causeExceptionCache ?: createCauseException(cause).also { causeExceptionCache = it }
                     if (state.isActive) {
                         // active state becomes failing
-                        if (tryMakeFailing(state, list, causeException, cancel)) return true
+                        if (tryMakeFailing(state, causeException, cancel)) return true
                     } else {
                         // non active state starts completing
                         when (tryMakeCompleting(state, createFailure(causeException, cancel), mode = MODE_ATOMIC_DEFAULT)) {
@@ -710,19 +709,26 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         }
     }
 
-    // Performs promotion of incomplete coroutine state to NodeList, returns null when need to retry
-    private fun tryPromoteToList(state: Incomplete): NodeList? = state.list ?: null.also {
+    // Performs promotion of incomplete coroutine state to NodeList for the purpose of
+    // converting coroutine state to Failing, returns null when need to retry
+    private fun getOrPromoteFailingList(state: Incomplete): NodeList? = state.list ?: 
         when (state) {
-            is Empty -> promoteEmptyToNodeList(state)
-            is JobNode<*> -> promoteSingleToNodeList(state)
+            is Empty -> NodeList() // we can allocate new empty list that'll get integrated into Failing state
+            is JobNode<*> -> {
+                // SINGLE/SINGLE+ must be promoted to NodeList first, because otherwise we cannot
+                // correctly capture a reference to it
+                promoteSingleToNodeList(state)
+                null // retry
+            }
             else -> error("State should have list: $state")
         }
-    }
 
     // try make new failing state on the condition that we're still in the expected state
-    private fun tryMakeFailing(state: Incomplete, list: NodeList, rootCause: Throwable, cancel: Boolean): Boolean {
+    private fun tryMakeFailing(state: Incomplete, rootCause: Throwable, cancel: Boolean): Boolean {
         check(state !is Finishing) // only for non-finishing states
         check(state.isActive) // only for active states
+        // get state's list or else promote to list to correctly operate on child lists
+        val list = getOrPromoteFailingList(state) ?: return false
         // Create failing state (with rootCause!)
         val failing = Finishing(list, cancel, false, rootCause)
         if (!_state.compareAndSet(state, failing)) return false
@@ -782,7 +788,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             return COMPLETING_COMPLETED
         }
         // get state's list or else promote to list to correctly operate on child lists
-        val list = tryPromoteToList(state) ?: return COMPLETING_RETRY
+        val list = getOrPromoteFailingList(state) ?: return COMPLETING_RETRY
         // promote to Finishing state if we are not in it yet
         // This promotion has to be atomic w.r.t to state change, so that a coroutine that is not active yet
         // atomically transition to finishing & completing state
