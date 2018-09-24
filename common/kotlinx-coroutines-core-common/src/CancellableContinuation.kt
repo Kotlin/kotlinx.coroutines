@@ -217,17 +217,19 @@ internal suspend inline fun <T> suspendAtomicCancellableCoroutineReusable(
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
     val intercepted = uCont.intercepted()
-    // Non-capturing lambda on purpose
-    // require(intercepted is DispatchedContinuation<T>) { "Intercepted continuation should be instance of 'DispatchedContinuation'" }
-    intercepted as DispatchedContinuation<T> // Yay Native contracts
-
-    var cancellable = intercepted.reusableCancellableContinuation
-    if (cancellable != null) {
-        cancellable.resetState()
-    } else {
+    var cancellable: CancellableContinuationImpl<T>?
+    // In case when channel is used outside of coroutine dispatcher
+    if (intercepted !is DispatchedContinuation<T>) {
         cancellable = CancellableContinuationImpl(intercepted, resumeMode = MODE_ATOMIC_DEFAULT)
-        if (intercepted.canReuseCancellation()) {
-            intercepted.reusableCancellableContinuation = cancellable
+    } else {
+        cancellable = intercepted.reusableCancellableContinuation
+        if (cancellable != null) {
+            cancellable.resetState()
+        } else {
+            cancellable = CancellableContinuationImpl(intercepted, resumeMode = MODE_ATOMIC_DEFAULT)
+            if (intercepted.canReuseCancellation()) {
+                intercepted.reusableCancellableContinuation = cancellable
+            }
         }
     }
 
