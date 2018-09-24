@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "465822880002",
+    "firebase_url": "https://coroutines-testing.firebaseio.com",
+    "project_id": "coroutines-testing",
+    "storage_bucket": "coroutines-testing.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465822880002:android:dd6fdaf5c3e6d2c3",
+        "android_client_info": {
+          "package_name": "kotlinx.coroutines.experimental.firebase.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "465822880002-ifc7uv2lgn4tvguooq4mfdtkb32cncr9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4GMGTb7dGkIJyQtpJBGNTvZoGUtwT0hs"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
