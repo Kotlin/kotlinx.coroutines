@@ -38,9 +38,15 @@ public abstract class AbstractCoroutine<in T>(
     protected val parentContext: CoroutineContext,
     active: Boolean = true
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
+    /**
+     * Context of this coroutine that includes this coroutine as a [Job].
+     */
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
-    @Deprecated("Replaced with context", replaceWith = ReplaceWith("context"))
+
+    /**
+     * Context of this scope which is the same as the [context] of this coroutine.
+     */
     public override val coroutineContext: CoroutineContext get() = context
 
     override val isActive: Boolean get() = super<JobSupport>.isActive

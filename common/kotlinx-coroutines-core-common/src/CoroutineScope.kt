@@ -71,7 +71,7 @@ public interface CoroutineScope {
         get() = coroutineContext[Job]?.isActive ?: true
 
     /**
-     * Returns the context of this scope.
+     * Context of this scope.
      */
     public val coroutineContext: CoroutineContext
 }
