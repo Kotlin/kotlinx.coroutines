@@ -24,17 +24,13 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  */
 @JvmOverloads // binary compatibility
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
-    if (!handleExceptionViaJob(context, exception, caller)) {
-        handleExceptionViaHandler(context, exception)
-    }
-}
-
-private fun handleExceptionViaJob(context: CoroutineContext, exception: Throwable, caller: Job?): Boolean {
     // Ignore CancellationException (they are normal ways to terminate a coroutine)
-    if (exception is CancellationException) return true
-    // If job is successfully cancelled, we're done
+    if (exception is CancellationException) return // nothing to do
+    // Try propagate exception to parent
     val job = context[Job]
-    return job !== null && job !== caller && job.cancel(exception)
+    if (job !== null && job !== caller && job.cancel(exception)) return // handle by parent
+    // otherwise -- use exception handlers
+    handleExceptionViaHandler(context, exception)
 }
 
 internal fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
