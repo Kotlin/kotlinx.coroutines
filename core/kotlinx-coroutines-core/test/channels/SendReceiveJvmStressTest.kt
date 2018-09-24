@@ -16,11 +16,11 @@ class SendReceiveJvmStressTest(private val channel: Channel<Int>) : TestBase() {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> = listOf(
-            ArrayChannel<Int>(1),
-            ArrayChannel<Int>(10),
-            ArrayChannel<Int>(1_000_000),
-            LinkedListChannel<Int>(),
-            RendezvousChannel<Int>()
+            Channel<Int>(1),
+            Channel (10),
+            Channel(1_000_000),
+            Channel(Channel.UNLIMITED),
+            Channel(Channel.RENDEZVOUS)
         ).map { arrayOf<Any>(it) }
     }
 

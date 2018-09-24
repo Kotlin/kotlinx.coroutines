@@ -11,7 +11,7 @@ import kotlin.coroutines.experimental.*
 
 data class Ball(var hits: Int)
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val table = Channel<Ball>() // a shared table
     launch { player("ping", table) }
     launch { player("pong", table) }

@@ -52,7 +52,7 @@ class ExceptionsGuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideExceptions06() {
         test("KotlinxCoroutinesExperimentalGuideExceptions06") { kotlinx.coroutines.experimental.guide.exceptions06.main(emptyArray()) }.verifyLines(
-            "Rethrowing JobCancellationException with original cause",
+            "Rethrowing CancellationException with original cause",
             "Caught original java.io.IOException"
         )
     }

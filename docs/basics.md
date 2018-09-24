@@ -115,7 +115,7 @@ This example can be also rewritten in a more idiomatic way, using `runBlocking` 
 the execution of the main function:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
+fun main(args: Array<String>) = runBlocking { // start main coroutine
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
@@ -154,7 +154,7 @@ Delaying for a time while another coroutine is working is not a good approach. L
 wait (in a non-blocking way) until the background [Job] that we have launched is complete:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val job = GlobalScope.launch { // launch new coroutine and keep a reference to its Job
         delay(1000L)
         println("World!")
@@ -194,7 +194,7 @@ an outer coroutine (`runBlocking` in our example) does not complete until all th
 in its scope complete. Thus, we can make our example simpler:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { // this: CoroutineScope
+fun main(args: Array<String>) = runBlocking { // this: CoroutineScope
     launch { // launch new coroutine in the scope of runBlocking
         delay(1000L)
         println("World!")
@@ -217,7 +217,7 @@ complete. The main difference between [runBlocking] and [coroutineScope] is that
 while waiting for all children to complete.
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { // this: CoroutineScope
+fun main(args: Array<String>) = runBlocking { // this: CoroutineScope
     launch { 
         delay(200L)
         println("Task from runBlocking")
@@ -255,7 +255,7 @@ just like regular functions, but their additional feature is that they can, in t
 use other suspending functions, like `delay` in this example, to _suspend_ execution of a coroutine.
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     launch { doWorld() }
     println("Hello,")
 }
@@ -281,7 +281,7 @@ method on `CoroutineScope` is one of the solutions, but it may not always be app
 [currentScope] builder comes to help: it inherits current [CoroutineScope] from the coroutine context it is invoked.
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     launchDoWorld()
     println("Hello,")
 }
@@ -306,7 +306,7 @@ World!
 Run the following code:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     repeat(100_000) { // launch a lot of coroutines
         launch {
             delay(1000L)
@@ -329,7 +329,7 @@ The following code launches a long-running coroutine in [GlobalScope] that print
 returns from the main function after some delay:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     GlobalScope.launch {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")

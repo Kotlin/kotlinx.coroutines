@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.*
 
 @RunWith(Parameterized::class)
 class ChannelSendReceiveStressTest(
-    val kind: TestChannelKind,
-    val nSenders: Int,
-    val nReceivers: Int
+    private val kind: TestChannelKind,
+    private val nSenders: Int,
+    private val nReceivers: Int
 ) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}, nSenders={1}, nReceivers={2}")
@@ -24,24 +24,24 @@ class ChannelSendReceiveStressTest(
         fun params(): Collection<Array<Any>> =
                 listOf(1, 2, 10).flatMap { nSenders ->
                     listOf(1, 10).flatMap { nReceivers ->
-                        TestChannelKind.values().map { arrayOf<Any>(it, nSenders, nReceivers) }
+                        TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
                     }
                 }
     }
 
-    val timeLimit = 30_000L * stressTestMultiplier // 30 sec
-    val nEvents = 200_000 * stressTestMultiplier
+    private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
+    private val nEvents = 200_000 * stressTestMultiplier
 
-    val maxBuffer = 10_000 // artificial limit for LinkedListChannel
+    private val maxBuffer = 10_000 // artificial limit for LinkedListChannel
 
     val channel = kind.create()
-    val sendersCompleted = AtomicInteger()
-    val receiversCompleted = AtomicInteger()
-    val dupes = AtomicInteger()
-    val sentTotal = AtomicInteger()
+    private val sendersCompleted = AtomicInteger()
+    private val receiversCompleted = AtomicInteger()
+    private val dupes = AtomicInteger()
+    private val sentTotal = AtomicInteger()
     val received = AtomicIntegerArray(nEvents)
-    val receivedTotal = AtomicInteger()
-    val receivedBy = IntArray(nReceivers)
+    private val receivedTotal = AtomicInteger()
+    private val receivedBy = IntArray(nReceivers)
 
     @Test
     fun testSendReceiveStress() = runBlocking {

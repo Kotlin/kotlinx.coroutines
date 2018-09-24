@@ -29,7 +29,7 @@ class BlockingIOTerminationStressTest : TestBase() {
         while (System.currentTimeMillis() < deadline) {
             Thread.sleep(rnd.nextInt(30).toLong())
             repeat(rnd.nextInt(5) + 1) {
-                launch(ioDispatcher) {
+                GlobalScope.launch(ioDispatcher) {
                     Thread.sleep(rnd.nextInt(5).toLong())
                 }
             }

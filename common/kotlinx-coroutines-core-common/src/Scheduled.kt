@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.selects.*
 import kotlinx.coroutines.experimental.timeunit.*
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
 public suspend fun <T> withTimeout(time: Int, block: suspend CoroutineScope.() -> T): T =
     withTimeout(time.toLong(), block)
 
@@ -39,7 +39,7 @@ public suspend fun <T> withTimeout(time: Int, block: suspend CoroutineScope.() -
 public suspend fun <T> withTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend CoroutineScope.() -> T): T =
     withTimeout(time.convertToMillis(unit), block)
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
 public suspend fun <T> withTimeoutOrNull(time: Int, block: suspend CoroutineScope.() -> T): T? =
     withTimeoutOrNull(time.toLong(), TimeUnit.MILLISECONDS, block)
 

@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.guide.cancel03
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val startTime = timeSource.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime

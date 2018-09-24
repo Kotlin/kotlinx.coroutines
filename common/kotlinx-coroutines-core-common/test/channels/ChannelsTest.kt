@@ -170,7 +170,7 @@ class ChannelsTest: TestBase() {
         val channel = Channel<Nothing>()
         channel.close()
 
-        assertTrue(emptyList<Nothing>().asReceiveChannel().count() == 0)
+        assertEquals(emptyList<Nothing>().asReceiveChannel().count(), 0)
     }
 
     @Test
@@ -364,7 +364,8 @@ class ChannelsTest: TestBase() {
     @Test
     fun testFilterNotNull() = runTest {
         repeat(3) { mod ->
-            assertEquals(testList.map { it.takeIf { it % 2 == mod } }.filterNotNull(),
+            assertEquals(
+                testList.mapNotNull { it.takeIf { it % 2 == mod } },
                 testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNull().toList())
         }
     }
@@ -374,7 +375,7 @@ class ChannelsTest: TestBase() {
         repeat(3) { mod ->
             val c = mutableListOf<Int>()
             testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNullTo(c)
-            assertEquals(testList.map { it.takeIf { it % 2 == mod } }.filterNotNull(), c)
+            assertEquals(testList.mapNotNull { it.takeIf { it % 2 == mod } }, c)
         }
     }
 
@@ -384,7 +385,7 @@ class ChannelsTest: TestBase() {
             val c = produce<Int> {
                 testList.asReceiveChannel().map { it.takeIf { it % 2 == mod } }.filterNotNullTo(channel)
             }
-            assertEquals(testList.map { it.takeIf { it % 2 == mod } }.filterNotNull(), c.toList())
+            assertEquals(testList.mapNotNull { it.takeIf { it % 2 == mod } }, c.toList())
         }
     }
 

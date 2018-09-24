@@ -630,7 +630,7 @@ class ChannelsConsumeTest {
 
     @Test
     fun testWithIndex() {
-        checkTransform(sourceList.withIndex().toList()) {
+        checkTransform(sourceList.asSequence().withIndex().toList()) {
             withIndex()
         }
     }

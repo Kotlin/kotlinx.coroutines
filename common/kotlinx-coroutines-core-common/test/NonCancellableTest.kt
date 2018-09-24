@@ -30,7 +30,7 @@ class NonCancellableTest : TestBase() {
         try {
             job.await()
             expectUnreached()
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             assertNull(e.cause)
             finish(6)
         }
@@ -90,7 +90,7 @@ class NonCancellableTest : TestBase() {
         try {
             job.await()
             expectUnreached()
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             finish(6)
         }
     }
@@ -119,7 +119,7 @@ class NonCancellableTest : TestBase() {
         try {
             job.await()
             expectUnreached()
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             assertNull(e.cause)
             finish(7)
         }

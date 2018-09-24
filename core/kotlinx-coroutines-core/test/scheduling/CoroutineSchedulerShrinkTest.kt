@@ -35,7 +35,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         val blockingTasks = launchBlocking()
         checkBlockingTasks(blockingTasks)
 
-        delay(2, TimeUnit.SECONDS)
+        delay(2000)
         // Pool should shrink to core size +- eps
         checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
     }
@@ -61,7 +61,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         // Check blocking tasks succeeded properly
         checkBlockingTasks(blockingTasks)
 
-        delay(2, TimeUnit.SECONDS)
+        delay(2000)
         // Pool should shrink to core size
         checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
     }
@@ -99,7 +99,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
 
         checkBlockingTasks(blockingTasks)
 
-        delay(2, TimeUnit.SECONDS)
+        delay(2000)
         // Pool should shrink almost to core size (+/- eps)
         checkPoolThreadsExist(CORES_COUNT..CORES_COUNT + 3)
 

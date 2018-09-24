@@ -111,7 +111,7 @@ class WithContextExceptionHandlingTest : TestBase() {
             assertEquals(1, thrown.suppressed().size)
 
             val suppressed = thrown.suppressed()[0]
-            assertTrue(suppressed is JobCancellationException)
+            assertTrue(suppressed is CancellationException)
             assertTrue(suppressed.cause is IllegalStateException)
         }
     }
@@ -130,7 +130,7 @@ class WithContextExceptionHandlingTest : TestBase() {
             assertEquals(1, thrown.suppressed().size)
 
             val suppressed = thrown.suppressed()[0]
-            assertTrue(suppressed is JobCancellationException)
+            assertTrue(suppressed is CancellationException)
             assertTrue(suppressed.cause is IllegalStateException)
 
         }

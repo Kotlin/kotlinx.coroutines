@@ -119,7 +119,7 @@ class SelectDeferredTest : TestBase() {
 
     @Test
     fun testSelectCancel() = runTest(
-        expected = { it is JobCancellationException }
+        expected = { it is CancellationException }
     ) {
         expect(1)
         val d = CompletableDeferred<String>()

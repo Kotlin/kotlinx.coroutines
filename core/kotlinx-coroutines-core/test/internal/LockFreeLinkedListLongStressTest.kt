@@ -21,13 +21,13 @@ class LockFreeLinkedListLongStressTest : TestBase() {
     val list = LockFreeLinkedListHead()
 
     val threads = mutableListOf<Thread>()
-    val nAdded = 10_000_000 // should not stress more, because that'll run out of memory
-    val nAddThreads = 4 // must be power of 2 (!!!)
-    val nRemoveThreads = 6
-    val removeProbability = 0.2
-    val workingAdders = AtomicInteger(nAddThreads)
+    private val nAdded = 10_000_000 // should not stress more, because that'll run out of memory
+    private val nAddThreads = 4 // must be power of 2 (!!!)
+    private val nRemoveThreads = 6
+    private val removeProbability = 0.2
+    private val workingAdders = AtomicInteger(nAddThreads)
 
-    fun shallRemove(i: Int) = i and 63 != 42
+    private fun shallRemove(i: Int) = i and 63 != 42
 
     @Test
     fun testStress() {

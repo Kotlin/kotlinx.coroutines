@@ -5,8 +5,6 @@
 package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.exceptions.*
-import kotlinx.coroutines.experimental.selects.*
 import java.io.*
 import kotlin.test.*
 

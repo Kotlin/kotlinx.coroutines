@@ -18,7 +18,7 @@ fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<In
     for (x in numbers) if (x % prime != 0) send(x)
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     var cur = numbersFrom(2)
     for (i in 1..10) {
         val prime = cur.receive()

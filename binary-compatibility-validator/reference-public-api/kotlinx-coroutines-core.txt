@@ -716,11 +716,13 @@ public final class kotlinx/coroutines/experimental/channels/BroadcastKt {
 public abstract interface class kotlinx/coroutines/experimental/channels/Channel : kotlinx/coroutines/experimental/channels/ReceiveChannel, kotlinx/coroutines/experimental/channels/SendChannel {
 	public static final field CONFLATED I
 	public static final field Factory Lkotlinx/coroutines/experimental/channels/Channel$Factory;
+	public static final field RENDEZVOUS I
 	public static final field UNLIMITED I
 }
 
 public final class kotlinx/coroutines/experimental/channels/Channel$Factory {
 	public static final field CONFLATED I
+	public static final field RENDEZVOUS I
 	public static final field UNLIMITED I
 	public final synthetic fun invoke (I)Lkotlinx/coroutines/experimental/channels/Channel;
 	public static synthetic fun invoke$default (Lkotlinx/coroutines/experimental/channels/Channel$Factory;IILjava/lang/Object;)Lkotlinx/coroutines/experimental/channels/Channel;

@@ -10,7 +10,7 @@ import kotlin.test.*
 class ArrayChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
-        val q = ArrayChannel<Int>(1)
+        val q = Channel<Int>(1)
         check(q.isEmpty && !q.isFull)
         expect(1)
         val sender = launch {
@@ -39,7 +39,7 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testClosedBufferedReceiveOrNull() = runTest {
-        val q = ArrayChannel<Int>(1)
+        val q = Channel<Int>(1)
         check(q.isEmpty && !q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
@@ -64,7 +64,7 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testClosedExceptions() = runTest {
-        val q = ArrayChannel<Int>(1)
+        val q = Channel<Int>(1)
         expect(1)
         launch {
             expect(4)
@@ -87,7 +87,7 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testOfferAndPool() = runTest {
-        val q = ArrayChannel<Int>(1)
+        val q = Channel<Int>(1)
         assertTrue(q.offer(1))
         expect(1)
         launch {
@@ -117,7 +117,7 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testConsumeAll() = runTest {
-        val q = ArrayChannel<Int>(5)
+        val q = Channel<Int>(5)
         for (i in 1..10) {
             if (i <= 5) {
                 expect(i)
@@ -140,7 +140,7 @@ class ArrayChannelTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest({ it is TestException }) {
-        val channel = ArrayChannel<Int>(5)
+        val channel = Channel<Int>(5)
         channel.cancel(TestException())
         channel.receiveOrNull()
     }

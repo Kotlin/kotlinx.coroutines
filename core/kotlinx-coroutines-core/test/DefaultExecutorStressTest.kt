@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental
 
 import org.junit.*
-import java.util.concurrent.*
 
 class DefaultExecutorStressTest : TestBase() {
     @Test
@@ -19,7 +18,7 @@ class DefaultExecutorStressTest : TestBase() {
                 val deferred = async {
                     expect(++expected)
                     val largeArray = IntArray(10_000) { it }
-                    delay(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+                    delay(Long.MAX_VALUE)
                     println(largeArray) // consume to avoid DCE, actually unreachable
                 }
 
@@ -28,7 +27,7 @@ class DefaultExecutorStressTest : TestBase() {
                 deferred.cancel()
                 try {
                     deferred.await()
-                } catch (e: JobCancellationException) {
+                } catch (e: CancellationException) {
                     expect(++expected)
                 }
             }
