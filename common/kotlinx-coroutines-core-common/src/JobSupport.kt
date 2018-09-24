@@ -88,35 +88,35 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
        + Job object is created
        ## NEW: state == EMPTY_ACTIVE | is InactiveNodeList
-       + initParentJob / initParentJobInternal (invokes attachChild on its parent, initializes parentHandle)
-       ~ waits for start
-       >> start / join / await invoked
+        + initParentJob / initParentJobInternal (invokes attachChild on its parent, initializes parentHandle)
+        ~ waits for start
+        >> start / join / await invoked
        ## ACTIVE: state == EMPTY_ACTIVE | is JobNode | is NodeList
-       + onStartInternal / onStart (lazy coroutine is started)
-       ~ active coroutine is working
-       >> childFailed / fail invoked
+        + onStartInternal / onStart (lazy coroutine is started)
+        ~ active coroutine is working (or scheduled to execution)
+        >> childFailed / fail invoked
        ## FAILING: state is Finishing, state.rootCause != null
-       ------ failing listeners are not admitted anymore, invokeOnCompletion(onFailing=true) returns NonDisposableHandle
-       ------ new children get immediately cancelled, but are still admitted to the list
-       + onFailing
-       + notifyFailing (invoke all failing listeners -- cancel all children, suspended functions resume with exception)
-       + failParent (rootCause of failure is communicated to the parent, parent starts failing, too)
-       ~ waits for completion of coroutine body
-       >> makeCompleting / makeCompletingOnce invoked
+         ------ failing listeners are not admitted anymore, invokeOnCompletion(onFailing=true) returns NonDisposableHandle
+         ------ new children get immediately cancelled, but are still admitted to the list
+         + onFailing
+         + notifyFailing (invoke all failing listeners -- cancel all children, suspended functions resume with exception)
+         + failParent (rootCause of failure is communicated to the parent, parent starts failing, too)
+         ~ waits for completion of coroutine body
+         >> makeCompleting / makeCompletingOnce invoked
        ## COMPLETING: state is Finishing, state.isCompleting == true
-       ------ new children are not admitted anymore, attachChild returns NonDisposableHandle
-       ~ waits for children
-       >> last child completes
-       - computes the final exception
+        ------ new children are not admitted anymore, attachChild returns NonDisposableHandle
+        ~ waits for children
+        >> last child completes
+        - computes the final exception
        ## SEALED: state is Finishing, state.isSealed == true
-       ------ cancel/childFailed returns false (cannot handle exceptions anymore)
-       + failParent (final exception is communicated to the parent, parent incorporates it)
-       + handleJobException ("launch" StandaloneCoroutine invokes CoroutineExceptionHandler)
-       ## COMPLETE: state !is Incomplete (CompletedExceptionally | Cancelled)
-       ------ completion listeners are not admitted anymore, invokeOnCompletion returns NonDisposableHandle
-       + parentHandle.dispose
-       + notifyCompletion (invoke all completion listeners)
-       + onCompletionInternal / onCompleted / onCompletedExceptionally
+         ------ cancel/childFailed returns false (cannot handle exceptions anymore)
+         + failParent (final exception is communicated to the parent, parent incorporates it)
+         + handleJobException ("launch" StandaloneCoroutine invokes CoroutineExceptionHandler)
+         ## COMPLETE: state !is Incomplete (CompletedExceptionally | Cancelled)
+         ------ completion listeners are not admitted anymore, invokeOnCompletion returns NonDisposableHandle
+         + parentHandle.dispose
+         + notifyCompletion (invoke all completion listeners)
+         + onCompletionInternal / onCompleted / onCompletedExceptionally
 
        ---------------------------------------------------------------------------------
      */
@@ -220,11 +220,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
             // failed job final state
             else -> CompletedExceptionally(finalException)
         }
-        // Now handle exception
-        if (finalException != null) {
-            if (!failParent(finalException)) {
-                handleJobException(finalException)
-            }
+
+        // Now handle exception if parent can't handle it
+        if (finalException != null && !failParent(finalException)) {
+            handleJobException(finalException)
         }
         // Then CAS to completed state -> it must succeed
         require(_state.compareAndSet(state, finalState)) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
@@ -271,8 +270,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
 
     private fun suppressExceptions(rootCause: Throwable, exceptions: List<Throwable>): Boolean {
         if (exceptions.size <= 1) return false // nothing more to do here
-        // TODO it should be identity set and optimized for small footprints
-        val seenExceptions = HashSet<Throwable>(exceptions.size)
+        val seenExceptions = identitySet<Throwable>(exceptions.size)
         var suppressed = false
         for (i in 1 until exceptions.size) {
             val unwrapped = unwrap(exceptions[i])
@@ -673,8 +671,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
         loopOnState { state ->
             when (state) {
                 is Finishing -> { // already finishing -- collect exceptions
-                    var notifyRootCause: Throwable? = null
-                    synchronized(state) {
+                    val notifyRootCause = synchronized(state) {
                         if (state.isSealed) return false // too late, already sealed -- cannot add exception nor mark cancelled
                         // add exception, do nothing is parent is cancelling child that is already failing
                         val wasFailing = state.isFailing // will notify if was not failing
@@ -686,7 +683,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
                         // mark as cancelling if cancel was requested
                         if (cancel) state.isCancelling = true
                         // take cause for notification is was not failing before
-                        notifyRootCause = state.rootCause.takeIf { !wasFailing }
+                        state.rootCause.takeIf { !wasFailing }
                     }
                     notifyRootCause?.let { notifyFailing(state.list, it) }
                     return true
@@ -774,8 +771,12 @@ internal open class JobSupport constructor(active: Boolean) : Job, SelectClause0
     private fun tryMakeCompleting(state: Any?, proposedUpdate: Any?, mode: Int): Int {
         if (state !is Incomplete)
             return COMPLETING_ALREADY_COMPLETING
-        // FAST PATH -- no children to wait for && simple state (no list) && not failing => can complete immediately
-        // Failures always have to go through Finishing state to serialize exception handling
+        /*
+         * FAST PATH -- no children to wait for && simple state (no list) && not failing => can complete immediately
+         * Failures always have to go through Finishing state to serialize exception handling.
+         * Otherwise, there can be a race between (completed state -> handled exception and newly attached child/join)
+         * which may miss unhandled exception.
+         */
         if ((state is Empty || state is JobNode<*>) && state !is ChildJob && proposedUpdate !is CompletedExceptionally) {
             if (!tryFinalizeSimpleState(state, proposedUpdate, mode)) return COMPLETING_RETRY
             return COMPLETING_COMPLETED
