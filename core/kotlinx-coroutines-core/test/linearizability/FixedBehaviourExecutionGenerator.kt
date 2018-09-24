@@ -68,6 +68,7 @@ class FixedBehaviourInjectorExecutionGenerator(testConfiguration: CTestConfigura
 }
 
 // Ad-hoc fixed execution injection for lin-checker
+@Suppress("unused")
 class FixedBehaviourExecutionGenerator(testConfiguration: CTestConfiguration, testStructure: CTestStructure)
     : ExecutionGenerator(testConfiguration, testStructure) {
 

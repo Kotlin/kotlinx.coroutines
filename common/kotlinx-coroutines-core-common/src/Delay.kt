@@ -19,7 +19,7 @@ import kotlin.coroutines.experimental.*
  */
 @InternalCoroutinesApi // todo: Remove references from other docs
 public interface Delay {
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
     suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) = delay(time.convertToMillis(unit))
 
     /**
@@ -33,7 +33,7 @@ public interface Delay {
         return suspendCancellableCoroutine { scheduleResumeAfterDelay(time, it) }
     }
 
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
     fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
         scheduleResumeAfterDelay(time.convertToMillis(unit), continuation)
 
@@ -54,7 +54,7 @@ public interface Delay {
      */
     fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>)
 
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
     fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
         DefaultDelay.invokeOnTimeout(time.convertToMillis(unit), block)
 
@@ -69,7 +69,7 @@ public interface Delay {
         DefaultDelay.invokeOnTimeout(timeMillis, block)
 }
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
 public suspend fun delay(timeMillis: Int) =
     delay(timeMillis.toLong(), TimeUnit.MILLISECONDS)
 

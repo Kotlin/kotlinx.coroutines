@@ -80,7 +80,7 @@ class CancellableContinuationTest : TestBase() {
                 suspendCancellableCoroutine<Unit> { c ->
                     continuation = c
                 }
-            } catch (e: JobCancellationException) {
+            } catch (e: CancellationException) {
                 expect(3)
             }
         }
@@ -105,7 +105,7 @@ class CancellableContinuationTest : TestBase() {
                 suspendCancellableCoroutine<Unit> { c ->
                     continuation = c
                 }
-            } catch (e: JobCancellationException) {
+            } catch (e: CancellationException) {
                 expect(3)
             }
         }

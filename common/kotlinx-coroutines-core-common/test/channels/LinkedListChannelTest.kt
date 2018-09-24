@@ -10,7 +10,7 @@ import kotlin.test.*
 class LinkedListChannelTest : TestBase() {
     @Test
     fun testBasic() = runTest {
-        val c = LinkedListChannel<Int>()
+        val c = Channel<Int>(Channel.UNLIMITED)
         c.send(1)
         check(c.offer(2))
         c.send(3)
@@ -24,7 +24,7 @@ class LinkedListChannelTest : TestBase() {
 
     @Test
     fun testConsumeAll() = runTest {
-        val q = LinkedListChannel<Int>()
+        val q = Channel<Int>(Channel.UNLIMITED)
         for (i in 1..10) {
             q.send(i) // buffers
         }
@@ -36,7 +36,7 @@ class LinkedListChannelTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest({ it is TestException }) {
-        val channel = LinkedListChannel<Int>()
+        val channel = Channel<Int>(Channel.UNLIMITED)
         channel.cancel(TestException())
         channel.receiveOrNull()
     }

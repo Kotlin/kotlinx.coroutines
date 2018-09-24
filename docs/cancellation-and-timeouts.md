@@ -43,7 +43,7 @@ is no longer needed and its operation can be cancelled.
 The [launch] function returns a [Job] that can be used to cancel running coroutine:
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val job = launch {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -85,7 +85,7 @@ a computation and does not check for cancellation, then it cannot be cancelled, 
 example shows:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
@@ -129,7 +129,7 @@ The other one is to explicitly check the cancellation status. Let us try the lat
 Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
@@ -169,7 +169,7 @@ a usual way. For example, `try {...} finally {...}` expression and Kotlin `use` 
 finalization actions normally when coroutine is cancelled:
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -213,7 +213,7 @@ rare case when you need to suspend in the cancelled coroutine you can wrap the c
 `withContext(NonCancellable) {...}` using [withContext] function and [NonCancellable] context as the following example shows:
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -256,7 +256,7 @@ the tracked one after delay, there is a ready to use [withTimeout] function that
 Look at the following example:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     withTimeout(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -290,7 +290,7 @@ you need to do some additional action specifically on any kind of timeout or use
 that is similar to [withTimeout], but returns `null` on timeout instead of throwing an exception:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val result = withTimeoutOrNull(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")

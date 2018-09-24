@@ -16,7 +16,7 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val channel = Channel<String>()
     launch { sendString(channel, "foo", 200L) }
     launch { sendString(channel, "BAR!", 500L) }

@@ -118,7 +118,7 @@ class CoroutineScopeTest : TestBase() {
             try {
                 callJobScoped()
                 expectUnreached()
-            } catch (e: JobCancellationException) {
+            } catch (e: CancellationException) {
                 expect(5)
                 assertNull(e.cause)
             }

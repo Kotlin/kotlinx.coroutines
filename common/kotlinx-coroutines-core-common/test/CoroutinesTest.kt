@@ -240,9 +240,8 @@ class CoroutinesTest : TestBase() {
         try {
             job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into JobCancellationException
         } catch (e: Throwable) {
-            e as JobCancellationException // type assertion
+            e as CancellationException // type assertion
             assertTrue(e.cause is TestException)
-            assertTrue(e.job === coroutineContext[Job])
             throw e
         }
         expectUnreached()
@@ -280,7 +279,7 @@ class CoroutinesTest : TestBase() {
         expect(3)
         parent.cancelChildren()
         expect(4)
-        parent.joinChildren() // will yield to child
+        parent.children.forEach { it.join() } // will yield to child
         assertTrue(parent.isActive) // make sure it did not cancel parent
         finish(6)
     }

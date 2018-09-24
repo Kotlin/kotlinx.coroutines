@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.*
  */
 @RunWith(Parameterized::class)
 class BroadcastChannelMultiReceiveStressTest(
-    val kind: TestBroadcastChannelKind
+    private val kind: TestBroadcastChannelKind
 ) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")

@@ -24,6 +24,7 @@ private inline fun <T> outputException(name: String, block: () -> T): T =
 private const val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
 private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 
+@Suppress("DEPRECATION")
 fun test(name: String, block: () -> Unit): List<String> = outputException(name) {
     val sout = System.out
     val oldOut = if (OUT_ENABLED) System.out else NullOut

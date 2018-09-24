@@ -56,7 +56,7 @@ instead of a blocking `put` operation it has a suspending [send][SendChannel.sen
 a blocking `take` operation it has a suspending [receive][ReceiveChannel.receive].
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val channel = Channel<Int>()
     launch {
         // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
@@ -94,7 +94,7 @@ The iteration stops as soon as this close token is received, so there is a guara
 that all previously sent elements before the close are received:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val channel = Channel<Int>()
     launch {
         for (x in 1..5) channel.send(x * x)
@@ -128,11 +128,11 @@ There is a convenience coroutine builder named [produce] that makes it easy to d
 and an extension function [consumeEach], that replaces a `for` loop on the consumer side:
 
 ```kotlin
-fun CoroutineScope.produceSquares() = produce<Int> {
+fun CoroutineScope.produceSquares(): ReceiveChannel<Int> = produce {
     for (x in 1..5) send(x * x)
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val squares = produceSquares()
     squares.consumeEach { println(it) }
     println("Done!")
@@ -165,7 +165,7 @@ And another coroutine or coroutines are consuming that stream, doing some proces
 In the below example the numbers are just squared:
 
 ```kotlin
-fun CoroutineScope.square(numbers: ReceiveChannel<Int>) = produce<Int> {
+fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce {
     for (x in numbers) send(x * x)
 }
 ```
@@ -173,7 +173,7 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>) = produce<Int> {
 The main code starts and connects the whole pipeline:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val numbers = produceNumbers() // produces integers from 1 and on
     val squares = square(numbers) // squares integers
     for (i in 1..5) println(squares.receive()) // print first five
@@ -238,7 +238,7 @@ extension function to cancel all the children coroutines after we have printed
 the first ten prime numbers. 
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     var cur = numbersFrom(2)
     for (i in 1..10) {
         val prime = cur.receive()
@@ -370,7 +370,7 @@ Now, let us see what happens if we launch a couple of coroutines sending strings
 (in this example we launch them in the context of the main thread as main coroutine's children):
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val channel = Channel<String>()
     launch { sendString(channel, "foo", 200L) }
     launch { sendString(channel, "BAR!", 500L) }
@@ -457,7 +457,7 @@ import kotlin.coroutines.experimental.*
 ```kotlin
 data class Ball(var hits: Int)
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val table = Channel<Ball>() // a shared table
     launch { player("ping", table) }
     launch { player("pong", table) }
@@ -508,7 +508,7 @@ Now let's see how it works in practice:
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking<Unit> {
-    val tickerChannel = ticker(delay = 100, initialDelay = 0) // create ticker channel
+    val tickerChannel = ticker(delayMillis = 100, initialDelayMillis = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
     println("Initial element is available immediately: $nextElement") // initial delay hasn't passed yet
 

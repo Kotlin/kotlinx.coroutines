@@ -20,17 +20,17 @@ class LockFreeLinkedListShortStressTest : TestBase() {
     data class IntNode(val i: Int) : LockFreeLinkedListNode()
     val list = LockFreeLinkedListHead()
 
-    val TEST_DURATION = 5000L * stressTestMultiplier
+    private val TEST_DURATION = 5000L * stressTestMultiplier
 
     val threads = mutableListOf<Thread>()
-    val nAdderThreads = 6
-    val nRemoverThreads = 4
-    val completedAdder = AtomicInteger()
-    val completedRemover = AtomicInteger()
+    private val nAdderThreads = 6
+    private val nRemoverThreads = 4
+    private val completedAdder = AtomicInteger()
+    private val completedRemover = AtomicInteger()
 
-    val undone = AtomicInteger()
-    val missed = AtomicInteger()
-    val removed = AtomicInteger()
+    private val undone = AtomicInteger()
+    private val missed = AtomicInteger()
+    private val removed = AtomicInteger()
 
     @Test
     fun testStress() {

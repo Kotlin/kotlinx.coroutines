@@ -11,7 +11,7 @@ class ArrayBroadcastChannelTest : TestBase() {
 
     @Test
     fun testConcurrentModification() = runTest {
-        val channel = ArrayBroadcastChannel<Int>(1)
+        val channel = BroadcastChannel<Int>(1)
         val s1 = channel.openSubscription()
         val s2 = channel.openSubscription()
 
@@ -35,7 +35,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     @Test
     fun testBasic() = runTest {
         expect(1)
-        val broadcast = ArrayBroadcastChannel<Int>(1)
+        val broadcast = BroadcastChannel<Int>(1)
         assertFalse(broadcast.isClosedForSend)
         val first = broadcast.openSubscription()
         launch(start = CoroutineStart.UNDISPATCHED) {
@@ -81,7 +81,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     @Test
     fun testSendSuspend() = runTest {
         expect(1)
-        val broadcast = ArrayBroadcastChannel<Int>(1)
+        val broadcast = BroadcastChannel<Int>(1)
         val first = broadcast.openSubscription()
         launch {
             expect(4)
@@ -100,7 +100,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     @Test
     fun testConcurrentSendCompletion() = runTest {
         expect(1)
-        val broadcast = ArrayBroadcastChannel<Int>(1)
+        val broadcast = BroadcastChannel<Int>(1)
         val sub = broadcast.openSubscription()
         // launch 3 concurrent senders (one goes buffer, two other suspend)
         for (x in 1..3) {
@@ -126,7 +126,7 @@ class ArrayBroadcastChannelTest : TestBase() {
     @Test
     fun testForgetUnsubscribed() = runTest {
         expect(1)
-        val broadcast = ArrayBroadcastChannel<Int>(1)
+        val broadcast = BroadcastChannel<Int>(1)
         broadcast.send(1)
         broadcast.send(2)
         broadcast.send(3)

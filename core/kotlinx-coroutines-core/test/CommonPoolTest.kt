@@ -9,6 +9,7 @@ import org.junit.Assert.*
 import java.lang.reflect.*
 import java.util.concurrent.*
 
+@Suppress("DEPRECATION")
 class CommonPoolTest {
     private inline fun <T> Try(block: () -> T) = try { block() } catch (e: Throwable) { null }
 
@@ -40,7 +41,7 @@ class CommonPoolTest {
         println("CommonPool.isGoodCommonPool test passed")
     }
 
-    fun createFJP(
+    private fun createFJP(
         parallelism: Int,
         fjpCtor: Constructor<out Any>,
         dwtfCtor: Constructor<out Any>

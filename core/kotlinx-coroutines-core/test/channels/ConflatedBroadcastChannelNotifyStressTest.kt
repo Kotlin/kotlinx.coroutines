@@ -11,20 +11,20 @@ import org.junit.*
 import java.util.concurrent.atomic.*
 
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
-    val nSenders = 2
-    val nReceivers = 3
-    val nEvents = 500_000 * stressTestMultiplier
-    val timeLimit = 30_000L * stressTestMultiplier // 30 sec
+    private val nSenders = 2
+    private val nReceivers = 3
+    private val nEvents = 500_000 * stressTestMultiplier
+    private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
 
-    val broadcast = ConflatedBroadcastChannel<Int>()
+    private val broadcast = ConflatedBroadcastChannel<Int>()
 
-    val sendersCompleted = AtomicInteger()
-    val receiversCompleted = AtomicInteger()
-    val sentTotal = AtomicInteger()
-    val receivedTotal = AtomicInteger()
+    private val sendersCompleted = AtomicInteger()
+    private val receiversCompleted = AtomicInteger()
+    private val sentTotal = AtomicInteger()
+    private val receivedTotal = AtomicInteger()
 
     @Test
-    fun testStressNotify()= runBlocking<Unit> {
+    fun testStressNotify()= runBlocking {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
         val senders = List(nSenders) { senderId ->
             launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
@@ -81,7 +81,7 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
         assertThat(sentTotal.get(), IsEqual(nEvents))
     }
 
-    suspend fun waitForEvent(): Int =
+    private suspend fun waitForEvent(): Int =
         with(broadcast.openSubscription()) {
             val value = receive()
             cancel()

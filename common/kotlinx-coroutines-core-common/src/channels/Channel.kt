@@ -2,12 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("FunctionName")
+
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.experimental.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.selects.*
 
 /**
@@ -350,14 +352,17 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
      */
     public companion object Factory {
         /**
-         * Requests channel with unlimited capacity buffer in `Channel(...)` factory function --
-         * the [LinkedListChannel] gets created.
+         * Requests channel with unlimited capacity buffer in `Channel(...)` factory function
          */
         public const val UNLIMITED = Int.MAX_VALUE
 
         /**
-         * Requests conflated channel in `Channel(...)` factory function --
-         * the [ConflatedChannel] gets created.
+         * Requests rendezvous channel in `Channel(...)` factory function -- the `RendezvousChannel` gets created.
+         */
+        public const val RENDEZVOUS = 0
+
+        /**
+         * Requests conflated channel in `Channel(...)` factory function -- the `ConflatedChannel` gets created.
          */
         public const val CONFLATED = -1
 
@@ -373,7 +378,7 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
 /**
  * Creates a channel without a buffer -- [RendezvousChannel].
  */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compat")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
 public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
 
 /**
@@ -384,7 +389,7 @@ public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
  */
 public fun <E> Channel(capacity: Int = 0): Channel<E> =
     when (capacity) {
-        0 -> RendezvousChannel()
+        RENDEZVOUS -> RendezvousChannel()
         UNLIMITED -> LinkedListChannel()
         CONFLATED -> ConflatedChannel()
         else -> ArrayChannel(capacity)

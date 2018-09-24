@@ -21,7 +21,7 @@ class ArrayChannelStressTest(private val capacity: Int) : TestBase() {
     @Test
     fun testStress() = runTest {
         val n = 100_000 * stressTestMultiplier
-        val q = ArrayChannel<Int>(capacity)
+        val q = Channel<Int>(capacity)
         val sender = launch(kotlin.coroutines.experimental.coroutineContext) {
             for (i in 1..n) {
                 q.send(i)

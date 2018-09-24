@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.timeunit.*
 import org.junit.*
 import org.junit.runner.*
 import org.junit.runners.*
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.*
  */
 @RunWith(Parameterized::class)
 class BroadcastChannelSubStressTest(
-    val kind: TestBroadcastChannelKind
+    private val kind: TestBroadcastChannelKind
 ) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
@@ -63,7 +62,7 @@ class BroadcastChannelSubStressTest(
             check(curSent > prevSent) { "Send stalled at $curSent events" }
             prevSent = curSent
         }
-        withTimeout(5, TimeUnit.SECONDS) {
+        withTimeout(5000) {
             sender.cancelAndJoin()
             receiver.cancelAndJoin()
         }

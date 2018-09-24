@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.guide.basic05
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     launch { doWorld() }
     println("Hello,")
 }

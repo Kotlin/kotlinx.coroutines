@@ -36,6 +36,7 @@ class CoroutineSchedulerStressTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun testExternalTasksSubmission() {
         stressTest(CommonPool)
     }

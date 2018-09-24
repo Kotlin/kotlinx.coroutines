@@ -15,7 +15,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectSendSuccess() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -34,7 +34,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectSendSuccessWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -56,7 +56,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectSendWaitWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         select<Unit> {
             channel.onSend("OK") {
                 expectUnreached()
@@ -82,7 +82,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectSendWait() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(3)
             assertEquals("OK", channel.receive())
@@ -100,7 +100,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveSuccess() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(2)
             channel.send("OK")
@@ -120,7 +120,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveSuccessWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(2)
             channel.send("OK")
@@ -143,7 +143,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWaitWithDefault() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         select<Unit> {
             channel.onReceive {
                 expectUnreached()
@@ -169,7 +169,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWait() = runTest {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(3)
             channel.send("OK")
@@ -188,7 +188,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveClosed() = runTest(expected = { it is ClosedReceiveChannelException }) {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         channel.close()
         finish(2)
         select<Unit> {
@@ -202,7 +202,7 @@ class SelectRendezvousChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWaitClosed() = runTest(expected = {it is ClosedReceiveChannelException}) {
         expect(1)
-        val channel = RendezvousChannel<String>()
+        val channel = Channel<String>(Channel.RENDEZVOUS)
         launch {
             expect(3)
             channel.close()
@@ -219,7 +219,7 @@ class SelectRendezvousChannelTest : TestBase() {
 
     @Test
     fun testSelectSendResourceCleanup() = runTest {
-        val channel = RendezvousChannel<Int>()
+        val channel = Channel<Int>(Channel.RENDEZVOUS)
         val n = 1_000
         expect(1)
         repeat(n) { i ->
@@ -233,7 +233,7 @@ class SelectRendezvousChannelTest : TestBase() {
 
     @Test
     fun testSelectReceiveResourceCleanup() = runTest {
-        val channel = RendezvousChannel<Int>()
+        val channel = Channel<Int>(Channel.RENDEZVOUS)
         val n = 1_000
         expect(1)
         repeat(n) { i ->
@@ -247,8 +247,8 @@ class SelectRendezvousChannelTest : TestBase() {
 
     @Test
     fun testSelectAtomicFailure() = runTest {
-        val c1 = RendezvousChannel<Int>()
-        val c2 = RendezvousChannel<Int>()
+        val c1 = Channel<Int>(Channel.RENDEZVOUS)
+        val c2 = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -278,7 +278,7 @@ class SelectRendezvousChannelTest : TestBase() {
 
     @Test
     fun testSelectWaitDispatch() = runTest {
-        val c = RendezvousChannel<Int>()
+        val c = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)

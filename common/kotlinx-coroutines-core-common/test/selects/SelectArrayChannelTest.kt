@@ -14,7 +14,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectSendSuccess() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         launch {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -33,7 +33,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectSendSuccessWithDefault() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         launch {
             expect(2)
             assertEquals("OK", channel.receive())
@@ -55,7 +55,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectSendReceiveBuf() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         select<Unit> {
             channel.onSend("OK") {
                 expect(2)
@@ -74,7 +74,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectSendWait() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         launch {
             expect(4)
             assertEquals("BUF", channel.receive())
@@ -96,7 +96,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveSuccess() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         channel.send("OK")
         expect(2)
         select<Unit> {
@@ -111,7 +111,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveSuccessWithDefault() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         channel.send("OK")
         expect(2)
         select<Unit> {
@@ -129,7 +129,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWaitWithDefault() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         select<Unit> {
             channel.onReceive {
                 expectUnreached()
@@ -159,7 +159,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWait() = runTest {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         launch {
             expect(3)
             channel.send("OK")
@@ -178,7 +178,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveClosed() = runTest({it is ClosedReceiveChannelException}) {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         channel.close()
         finish(2)
         select<Unit> {
@@ -192,7 +192,7 @@ class SelectArrayChannelTest : TestBase() {
     @Test
     fun testSelectReceiveWaitClosed() = runTest({it is ClosedReceiveChannelException}) {
         expect(1)
-        val channel = ArrayChannel<String>(1)
+        val channel = Channel<String>(1)
         launch {
             expect(3)
             channel.close()
@@ -209,7 +209,7 @@ class SelectArrayChannelTest : TestBase() {
 
     @Test
     fun testSelectSendResourceCleanup() = runTest {
-        val channel = ArrayChannel<Int>(1)
+        val channel = Channel<Int>(1)
         val n = 1000
         expect(1)
         channel.send(-1) // fill the buffer, so all subsequent sends cannot proceed
@@ -224,7 +224,7 @@ class SelectArrayChannelTest : TestBase() {
 
     @Test
     fun testSelectReceiveResourceCleanup() = runTest {
-        val channel = ArrayChannel<Int>(1)
+        val channel = Channel<Int>(1)
         val n = 1000
         expect(1)
         repeat(n) { i ->
@@ -238,7 +238,7 @@ class SelectArrayChannelTest : TestBase() {
 
     @Test
     fun testSelectReceiveDispatchNonSuspending() = runTest {
-        val channel = ArrayChannel<Int>(1)
+        val channel = Channel<Int>(1)
         expect(1)
         channel.send(42)
         expect(2)
@@ -260,7 +260,7 @@ class SelectArrayChannelTest : TestBase() {
 
     @Test
     fun testSelectReceiveDispatchNonSuspending2() = runTest {
-        val channel = ArrayChannel<Int>(1)
+        val channel = Channel<Int>(1)
         expect(1)
         channel.send(42)
         expect(2)

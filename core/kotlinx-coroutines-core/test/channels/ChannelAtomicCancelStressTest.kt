@@ -17,27 +17,27 @@ import java.util.concurrent.atomic.*
  * Tests cancel atomicity for channel send & receive operations, including their select versions.
  */
 @RunWith(Parameterized::class)
-class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
+class ChannelAtomicCancelStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
         fun params(): Collection<Array<Any>> = TestChannelKind.values().map { arrayOf<Any>(it) }
     }
 
-    val TEST_DURATION = 3000L * stressTestMultiplier
+    private val TEST_DURATION = 3000L * stressTestMultiplier
 
     val channel = kind.create()
-    val senderDone = ArrayChannel<Boolean>(1)
-    val receiverDone = ArrayChannel<Boolean>(1)
+    private val senderDone = Channel<Boolean>(1)
+    private val receiverDone = Channel<Boolean>(1)
 
-    var lastSent = 0
-    var lastReceived = 0
+    private var lastSent = 0
+    private var lastReceived = 0
 
-    var stoppedSender = 0
-    var stoppedReceiver = 0
+    private var stoppedSender = 0
+    private var stoppedReceiver = 0
 
-    var missedCnt = 0
-    var dupCnt = 0
+    private var missedCnt = 0
+    private var dupCnt = 0
 
     val failed = AtomicReference<Throwable>()
 
@@ -46,7 +46,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
 
     fun fail(e: Throwable) = failed.compareAndSet(null, e)
 
-    inline fun cancellable(done: ArrayChannel<Boolean>, block: () -> Unit) {
+    private inline fun cancellable(done: Channel<Boolean>, block: () -> Unit) {
         try {
             block()
         } catch (e: Throwable) {
@@ -59,7 +59,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
     }
 
     @Test
-    fun testAtomicCancelStress() = runBlocking<Unit> {
+    fun testAtomicCancelStress() = runBlocking {
         println("--- ChannelAtomicCancelStressTest $kind")
         val deadline = System.currentTimeMillis() + TEST_DURATION
         launchSender()
@@ -94,7 +94,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         }
     }
 
-    fun launchSender() {
+    private fun launchSender() {
         sender = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(senderDone) {
@@ -113,13 +113,13 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         }
     }
 
-    suspend fun stopSender() {
+    private suspend fun stopSender() {
         stoppedSender++
         sender.cancel()
         senderDone.receive()
     }
 
-    fun launchReceiver() {
+    private fun launchReceiver() {
         receiver = GlobalScope.launch(start = CoroutineStart.ATOMIC) {
             val rnd = Random()
             cancellable(receiverDone) {
@@ -140,7 +140,7 @@ class ChannelAtomicCancelStressTest(val kind: TestChannelKind) : TestBase() {
         }
     }
 
-    suspend fun stopReceiver() {
+    private suspend fun stopReceiver() {
         stoppedReceiver++
         receiver.cancel()
         receiverDone.receive()

@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("unused")
+
 package kotlinx.coroutines.experimental.internal
 
 import com.devexperts.dxlab.lincheck.*
@@ -15,7 +17,7 @@ import kotlin.test.*
 class LockFreeListLinearizabilityTest : TestBase() {
     class Node(val value: Int): LockFreeLinkedListNode()
 
-    lateinit var q: LockFreeLinkedListHead
+    private lateinit var q: LockFreeLinkedListHead
 
     @Reset
     fun resetList() {
@@ -44,7 +46,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
         return node.value
     }
 
-    fun Any.isSame(value: Int) = this is Node && this.value == value
+    private fun Any.isSame(value: Int) = this is Node && this.value == value
 
     @Test
     fun testAddRemoveLinearizability() {

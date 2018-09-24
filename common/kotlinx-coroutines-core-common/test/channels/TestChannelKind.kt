@@ -8,32 +8,32 @@ import kotlinx.coroutines.experimental.selects.*
 
 enum class TestChannelKind {
     RENDEZVOUS {
-        override fun create(): Channel<Int> = RendezvousChannel()
+        override fun create(): Channel<Int> = Channel(Channel.RENDEZVOUS)
         override fun toString(): String = "RendezvousChannel"
     },
     ARRAY_1 {
-        override fun create(): Channel<Int> = ArrayChannel(1)
+        override fun create(): Channel<Int> = Channel(1)
         override fun toString(): String = "ArrayChannel(1)"
     },
     ARRAY_10 {
-        override fun create(): Channel<Int> = ArrayChannel(10)
+        override fun create(): Channel<Int> = Channel(10)
         override fun toString(): String = "ArrayChannel(10)"
     },
     LINKED_LIST {
-        override fun create(): Channel<Int> = LinkedListChannel()
+        override fun create(): Channel<Int> = Channel(Channel.UNLIMITED)
         override fun toString(): String = "LinkedListChannel"
     },
     CONFLATED {
-        override fun create(): Channel<Int> = ConflatedChannel()
+        override fun create(): Channel<Int> = Channel(Channel.CONFLATED)
         override fun toString(): String = "ConflatedChannel"
         override val isConflated: Boolean get() = true
     },
     ARRAY_BROADCAST_1 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(1))
+        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(1))
         override fun toString(): String = "ArrayBroadcastChannel(1)"
     },
     ARRAY_BROADCAST_10 {
-        override fun create(): Channel<Int> = ChannelViaBroadcast(ArrayBroadcastChannel<Int>(10))
+        override fun create(): Channel<Int> = ChannelViaBroadcast(BroadcastChannel(10))
         override fun toString(): String = "ArrayBroadcastChannel(10)"
     },
     CONFLATED_BROADCAST {

@@ -30,6 +30,7 @@ private val VERBOSE = systemProp("test.verbose", false)
  * }
  * ```
  */
+@Suppress("DEPRECATION")
 public actual open class TestBase actual constructor() {
     /**
      * Is `true` when nightly stress test is done.
@@ -68,7 +69,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] when `value` is false like `check` in stdlib, but also ensures that the
      * test will not complete successfully even if this exception is consumed somewhere in the test.
      */
-    public inline fun check(value: Boolean, lazyMessage: () -> Any): Unit {
+    public inline fun check(value: Boolean, lazyMessage: () -> Any) {
         if (!value) error(lazyMessage())
     }
 

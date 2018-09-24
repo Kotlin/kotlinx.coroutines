@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.*
 public open class RendezvousChannel<E>
 @Deprecated(
     "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel()")
+    replaceWith = ReplaceWith("Channel(Channel.RENDEZVOUS)")
 )
 constructor() : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true

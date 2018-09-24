@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("DeferredResultUnused")
+
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.*
@@ -109,7 +111,7 @@ class BlockingCoroutineDispatcherStressTest : SchedulerTestBase() {
 
         repeat(iterations) {
             // Overwhelm global queue with external CPU tasks
-            val cpuTasks = (1..CORES_COUNT).map { async(dispatcher) { while (true) delay(1, TimeUnit.NANOSECONDS) } }
+            val cpuTasks = (1..CORES_COUNT).map { async(dispatcher) { while (true) delay(1) } }
 
             val barrier = CyclicBarrier(blockingLimit + 1)
             // Should eat all limit * 3 cpu without any starvation

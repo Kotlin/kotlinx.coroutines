@@ -23,8 +23,8 @@ fun main(args: Array<String>) = runBlocking {
         }
         try {
             inner.join()
-        } catch (e: JobCancellationException) {
-            println("Rethrowing JobCancellationException with original cause")
+        } catch (e: CancellationException) {
+            println("Rethrowing CancellationException with original cause")
             throw e
         }
     }

@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.guide.cancel05
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main(args: Array<String>) = runBlocking {
     val job = launch {
         try {
             repeat(1000) { i ->

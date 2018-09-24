@@ -61,7 +61,7 @@ class DelayJvmTest : TestBase() {
             Wrapper(pool, continuation)
     }
 
-    class Wrapper<T>(val pool: Executor, val cont: Continuation<T>) : Continuation<T> {
+    class Wrapper<T>(val pool: Executor, private val cont: Continuation<T>) : Continuation<T> {
         override val context: CoroutineContext
             get() = cont.context
 

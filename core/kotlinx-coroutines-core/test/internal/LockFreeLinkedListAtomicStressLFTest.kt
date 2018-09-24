@@ -23,15 +23,15 @@ class LockFreeLinkedListAtomicStressLFTest : TestBase() {
 
     private val TEST_DURATION_SEC = 5 * stressTestMultiplier
 
-    val nLists = 4
-    val nAdderThreads = 4
-    val nRemoverThreads = 4
+    private val nLists = 4
+    private val nAdderThreads = 4
+    private val nRemoverThreads = 4
 
-    val lists = Array(nLists) { LockFreeLinkedListHead() }
+    private val lists = Array(nLists) { LockFreeLinkedListHead() }
 
-    val undone = AtomicLong()
-    val missed = AtomicLong()
-    val removed = AtomicLong()
+    private val undone = AtomicLong()
+    private val missed = AtomicLong()
+    private val removed = AtomicLong()
     val error = AtomicReference<Throwable>()
 
     @Test

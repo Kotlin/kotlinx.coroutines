@@ -15,10 +15,9 @@ package kotlinx.coroutines.experimental
 // todo: Experimental WARNING
 public annotation class ExperimentalCoroutinesApi
 
-
 /**
  * Marks declarations that are **obsolete** in coroutines API, which means that the design of the corresponding
- * declarations has serious known flaws and they must be redesigned in the future.
+ * declarations has serious known flaws and they will be redesigned in the future.
  * Roughly speaking, these declarations will be deprecated in the future but there is no replacement for them yet,
  * so they cannot be deprecated right away.
  */

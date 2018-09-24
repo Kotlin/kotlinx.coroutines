@@ -128,7 +128,7 @@ class WithContextTest : TestBase() {
 
     @Test
     fun testRunCancellableDefault() = runTest(
-        expected = { it is JobCancellationException }
+        expected = { it is CancellationException }
     ) {
         val job = Job()
         job.cancel() // cancel before it has a chance to run
@@ -150,7 +150,7 @@ class WithContextTest : TestBase() {
                 yield() // but will cancel here
                 expectUnreached()
             }
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             // This block should be invoked *after* context body
             finish(3)
         }
@@ -158,7 +158,7 @@ class WithContextTest : TestBase() {
 
     @Test
     fun testRunUndispatchedTryCancel() = runTest(
-        expected = { it is JobCancellationException }
+        expected = { it is CancellationException }
     ) {
         expect(1)
         val job = Job()
@@ -218,7 +218,7 @@ class WithContextTest : TestBase() {
             } catch (e: Throwable) {
                 expect(7)
                 // make sure JCE is thrown
-                assertTrue(e is JobCancellationException, "Caught $e")
+                assertTrue(e is CancellationException, "Caught $e")
             }
         }
 

@@ -99,7 +99,7 @@ class RunBlockingTest : TestBase() {
                 }
             }
             expectUnreached()
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             finish(4)
         }
     }

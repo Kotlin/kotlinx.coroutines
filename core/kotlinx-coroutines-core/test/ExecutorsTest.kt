@@ -8,7 +8,7 @@ import org.junit.Test
 import java.util.concurrent.Executors
 
 class ExecutorsTest : TestBase() {
-    fun checkThreadName(prefix: String) {
+    private fun checkThreadName(prefix: String) {
         val name = Thread.currentThread().name
         check(name.startsWith(prefix)) { "Expected thread name to start with '$prefix', found: '$name'" }
     }

@@ -300,8 +300,8 @@ fun main(args: Array<String>) = runBlocking {
         }
         try {
             inner.join()
-        } catch (e: JobCancellationException) {
-            println("Rethrowing JobCancellationException with original cause")
+        } catch (e: CancellationException) {
+            println("Rethrowing CancellationException with original cause")
             throw e
         }
     }
@@ -314,7 +314,7 @@ fun main(args: Array<String>) = runBlocking {
 The output of this code is:
 
 ```text
-Rethrowing JobCancellationException with original cause
+Rethrowing CancellationException with original cause
 Caught original java.io.IOException
 ```
 <!--- TEST-->
