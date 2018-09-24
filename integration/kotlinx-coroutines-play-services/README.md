@@ -14,7 +14,7 @@ Extension functions:
 Using Firebase APIs becomes simple:
 
 ```kotlin
-scope.async {
+scope.launch {
     FirebaseAuth.getInstance().signInAnonymously().await()
     val snapshot = try {
         FirebaseFirestore.getInstance().document("users/$id").get().await()
