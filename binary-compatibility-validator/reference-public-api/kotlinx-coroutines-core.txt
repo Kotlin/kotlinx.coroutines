@@ -8,6 +8,7 @@ public abstract class kotlinx/coroutines/experimental/AbstractCoroutine : kotlin
 	protected fun onCancellation (Ljava/lang/Throwable;)V
 	protected fun onCompleted (Ljava/lang/Object;)V
 	protected fun onCompletedExceptionally (Ljava/lang/Throwable;)V
+	protected fun onFailing (Ljava/lang/Throwable;)V
 	protected fun onStart ()V
 	public final fun resume (Ljava/lang/Object;)V
 	public final fun resumeWithException (Ljava/lang/Throwable;)V
