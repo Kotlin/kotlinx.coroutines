@@ -26,7 +26,7 @@ module('core/kotlinx-coroutines-core')
 
 module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
-\module('integration/kotlinx-coroutines-slf4j')
+module('integration/kotlinx-coroutines-slf4j')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
