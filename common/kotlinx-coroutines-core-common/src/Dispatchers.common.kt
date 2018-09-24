@@ -19,7 +19,7 @@ public object Dispatchers {
      * It is backed by a shared pool of threads on JVM.
      * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")
      * to use an experimental coroutine dispatcher that shares threads with [Dispatchers.IO] and thus can switch to
-     * to context without performing an actual thread context switch.
+     * context without performing an actual thread context switch.
      */
     @JvmField
     public val Default: CoroutineDispatcher =

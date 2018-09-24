@@ -11,8 +11,12 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.android.Main
+import kotlinx.coroutines.experimental.android.awaitFrame
+import kotlinx.coroutines.experimental.cancelChildren
 import kotlinx.coroutines.experimental.launch
 import java.util.*
 
@@ -58,9 +62,11 @@ class AnimationView(
 
 private val rnd = Random()
 
-class AnimationModel : ViewModel() {
+class AnimationModel : ViewModel(), CoroutineScope {
+
+    override val coroutineContext = Job() + Dispatchers.Main
+
     private val shapes = MutableLiveData<Set<AnimatedShape>>()
-    private val jobs = arrayListOf<Job>()
 
     fun observe(owner: LifecycleOwner, observer: Observer<Set<AnimatedShape>>) =
         shapes.observe(owner, observer)
@@ -71,13 +77,13 @@ class AnimationModel : ViewModel() {
     }
 
     fun addAnimation() {
-        jobs += launch(UI) {
+        launch {
             animateShape(if (rnd.nextBoolean()) AnimatedCircle() else AnimatedSquare())
         }
     }
 
     fun clearAnimations() {
-        jobs.forEach { it.cancel() }
+        coroutineContext.cancelChildren()
         shapes.value = NO_SHAPES
     }
 }
@@ -101,7 +107,7 @@ suspend fun AnimationModel.animateShape(shape: AnimatedShape) {
     var time = System.nanoTime() // nanos
     var checkTime = time
     while (true) {
-        val dt = time.let { old -> UI.awaitFrame().also { time = it } - old }
+        val dt = time.let { old -> awaitFrame().also { time = it } - old }
         if (dt > 0.5e9) continue // don't animate through over a half second lapses
         val dx = shape.x - 0.5f
         val dy = shape.y - 0.5f
@@ -121,7 +127,7 @@ suspend fun AnimationModel.animateShape(shape: AnimatedShape) {
             when (rnd.nextInt(20)) { // roll d20
                 0 -> {
                     animateColor(shape) // wait a second & animate color
-                    time = UI.awaitFrame() // and sync with next frame
+                    time = awaitFrame() // and sync with next frame
                 }
                 1 -> { // random speed change
                     sx = rnd.nextSpeed()
@@ -138,7 +144,7 @@ suspend fun AnimationModel.animateColor(shape: AnimatedShape) {
     val aColor = shape.color
     val bColor = rnd.nextColor()
     while (true) {
-        val time = UI.awaitFrame()
+        val time = awaitFrame()
         val b = (time - startTime) / duration
         if (b >= 1.0f) break
         val a = 1 - b

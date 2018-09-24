@@ -16,12 +16,12 @@ jmhJar {
     baseName 'benchmarks'
     classifier = null
     version = null
+    destinationDir = file("$rootDir")
 }
 
 dependencies {
     compile 'com.typesafe.akka:akka-actor_2.12:2.5.0'
     compile project(':kotlinx-coroutines-core-common')
     compile project(':kotlinx-coroutines-core')
-    compile project(':kotlinx-coroutines-core').sourceSets.test.output
     compile "org.openjdk.jmh:jmh-core:1.21"
 }

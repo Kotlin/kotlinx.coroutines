@@ -251,7 +251,7 @@ internal class CoroutineScheduler(
     companion object {
         private const val MAX_SPINS = 1000
         private const val MAX_YIELDS = MAX_SPINS + 500
-        
+
         @JvmStatic // Note, that is fits into Int (it is equal to 10^9)
         private val MAX_PARK_TIME_NS = TimeUnit.SECONDS.toNanos(1).toInt()
 
@@ -374,7 +374,7 @@ internal class CoroutineScheduler(
             // If we've created the first cpu worker and corePoolSize > 1 then create
             // one more (second) cpu worker, so that stealing between them is operational
             if (newCpuWorkers == 1 && corePoolSize > 1) createNewWorker()
-            if (newCpuWorkers > 0) return                
+            if (newCpuWorkers > 0) return
         }
         // Try unpark again in case there was race between permit release and parking
         tryUnpark()
@@ -621,7 +621,7 @@ internal class CoroutineScheduler(
          * This attempt may fail either because worker terminated itself or because someone else
          * claimed this worker (though this case is rare, because require very bad timings)
          */
-        fun tryForbidTermination(): Boolean  {
+        fun tryForbidTermination(): Boolean {
             val state = terminationState.value
             return when (state) {
                 TERMINATED -> false // already terminated
@@ -672,7 +672,7 @@ internal class CoroutineScheduler(
 
         // Note: it is concurrently reset by idleResetBeforeUnpark
         private var parkTimeNs = MIN_PARK_TIME_NS
-        
+
         private var rngState = random.nextInt()
         private var lastStealIndex = 0 // try in order repeated, reset when unparked
 
@@ -699,7 +699,7 @@ internal class CoroutineScheduler(
                         afterTask(task)
                     }
                 }
-            } catch(e: ShutdownException) {
+            } catch (e: ShutdownException) {
                 // race with shutdown -- ignore exception and don't print it on the console
             } finally {
                 tryReleaseCpu(WorkerState.TERMINATED)
