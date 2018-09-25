@@ -247,7 +247,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
          * Note that it's only happening when both parent and child throw exception simultaneously.
          */
         var rootCause = exceptions[0]
-        if (rootCause is JobCancellationException) {
+        if (rootCause is CancellationException) {
             val cause = unwrap(rootCause)
             rootCause = if (cause !== null) {
                 cause
@@ -275,7 +275,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
     }
 
     private tailrec fun unwrap(exception: Throwable): Throwable? =
-        if (exception is JobCancellationException) {
+        if (exception is CancellationException) {
             val cause = exception.cause
             if (cause !== null) unwrap(cause) else null
         } else {

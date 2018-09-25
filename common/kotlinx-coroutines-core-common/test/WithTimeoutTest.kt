@@ -147,21 +147,24 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest(expected = { it is TimeoutCancellationException }) {
+    fun testSuppressExceptionWithAnotherException() = runTest{
         expect(1)
-        withTimeout(100) {
-            expect(2)
-            try {
-                delay(1000)
-            } catch (e: CancellationException) {
-                finish(3)
-                throw TestException()
+        try {
+            withTimeout(100) {
+                expect(2)
+                try {
+                    delay(1000)
+                } catch (e: CancellationException) {
+                    expect(3)
+                    throw TestException()
+                }
+                expectUnreached()
+                "OK"
             }
             expectUnreached()
-            "OK"
+        } catch (e: TestException) {
+            finish(4)
         }
-
-        expectUnreached()
     }
 
     private class TestException : Exception()

@@ -190,19 +190,24 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
-        val value = withTimeoutOrNull(100) {
-            expect(2)
-            try {
-                delay(1000)
-            } catch (e: CancellationException) {
-                finish(3)
-                throw TestException()
+        try {
+            withTimeoutOrNull(100) {
+                expect(2)
+                try {
+                    delay(1000)
+                } catch (e: CancellationException) {
+                    expect(3)
+                    throw TestException()
+                }
+                expectUnreached()
+                "OK"
             }
             expectUnreached()
-            "OK"
-        }
+        } catch (e: TestException) {
+            // catches TestException
+            finish(4)
 
-        assertNull(value)
+        }
     }
 
     private class TestException : Exception()

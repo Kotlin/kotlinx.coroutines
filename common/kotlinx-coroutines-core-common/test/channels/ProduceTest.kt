@@ -38,7 +38,7 @@ class ProduceTest : TestBase() {
                 send(2) // will get cancelled
             } catch (e: Throwable) {
                 finish(7)
-                check(e is JobCancellationException && e.job == coroutineContext[Job])
+                check(e is ClosedSendChannelException)
                 throw e
             }
             expectUnreached()

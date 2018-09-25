@@ -16,8 +16,6 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [TimeoutCancellationException].
- * Even if the code in the block suppresses [TimeoutCancellationException], it
- * is still thrown by `withTimeout` invocation.
  *
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
@@ -40,8 +38,6 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  *
  * The code that is executing inside the [block] is cancelled on timeout and the active or next invocation of
  * cancellable suspending function inside the block throws [TimeoutCancellationException].
- * **NB**: this method is exception-unsafe. Even if the code in the block suppresses [TimeoutCancellationException], this
- * invocation of `withTimeoutOrNull` still returns `null` and thrown exception will be ignored.
  *
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
