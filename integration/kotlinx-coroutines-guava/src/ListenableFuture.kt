@@ -150,16 +150,45 @@ private class DeferredListenableFuture<T>(
 }
 
 /**
+ * Converts this listenable future to an instance of [Deferred].
+ * It is cancelled when the resulting deferred is cancelled.
+ */
+public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
+    // Fast path if already completed
+    if (isDone) {
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            CompletableDeferred(get() as T)
+        } catch (e: Throwable) {
+            // unwrap original cause from ExecutionException
+            val original = (e as? ExecutionException)?.cause ?: e
+            CompletableDeferred<T>().also { it.completeExceptionally(original) }
+        }
+    }
+    val deferred = CompletableDeferred<T>()
+    Futures.addCallback(this, object : FutureCallback<T> {
+        override fun onSuccess(result: T?) {
+            deferred.complete(result!!)
+        }
+
+        override fun onFailure(t: Throwable) {
+            deferred.completeExceptionally(t)
+        }
+    }, MoreExecutors.directExecutor())
+
+    deferred.invokeOnCompletion { cancel(false) }
+    return deferred
+}
+
+/**
  * Awaits for completion of the future without blocking a thread.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
  *
- * Note, that `ListenableFuture` does not support removal of installed listeners, so on cancellation of this wait
- * a few small objects will remain in the `ListenableFuture` list of listeners until the future completes. However, the
- * care is taken to clear the reference to the waiting coroutine itself, so that its memory can be released even if
- * the future never completes.
+ * This method is intended to be used with one-shot futures, so on coroutine cancellation future is cancelled as well.
+ * If cancelling given future is undesired, `future.asDeferred().await()` should be used instead.
  */
 public suspend fun <T> ListenableFuture<T>.await(): T {
     try {
@@ -172,6 +201,7 @@ public suspend fun <T> ListenableFuture<T>.await(): T {
         val callback = ContinuationCallback(cont)
         Futures.addCallback(this, callback, MoreExecutors.directExecutor())
         cont.invokeOnCancellation {
+            cancel(false)
             callback.cont = null // clear the reference to continuation from the future's callback
         }
     }

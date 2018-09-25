@@ -190,11 +190,8 @@ public suspend fun <T> CompletableFuture<T>.await(): T =
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
- *
- * Note, that `CompletionStage` implementation does not support prompt removal of installed listeners, so on cancellation of this wait
- * a few small objects will remain in the `CompletionStage` stack of completion actions until it completes itself.
- * However, the care is taken to clear the reference to the waiting coroutine itself, so that its memory can be
- * released even if the completion stage never completes.
+ * This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of [CompletableFuture].
+ * If cancelling given stage is undesired, `stage.asDeferred().await()` should be used instead.
  */
 public suspend fun <T> CompletionStage<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
@@ -211,7 +208,9 @@ public suspend fun <T> CompletionStage<T>.await(): T {
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
         cont.invokeOnCancellation {
-            consumer.cont = null // shall clear reference to continuation
+            // mayInterruptIfRunning is not used
+            (this as? CompletableFuture<T>)?.cancel(false)
+            consumer.cont = null // shall clear reference to continuation to aid GC
         }
     }
 }
