@@ -83,7 +83,7 @@ public interface CoroutineScope {
  * This is a shorthand for `CoroutineScope(thisScope + context)`.
  */
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
-    CoroutineScope(coroutineContext + context)
+    ContextScope(coroutineContext + context)
 
 /**
  * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
@@ -198,7 +198,12 @@ public suspend inline fun <R> currentScope(block: CoroutineScope.() -> R): R =
     CoroutineScope(coroutineContext).block()
 
 /**
- * Creates [CoroutineScope] that wraps the given [coroutineContext].
+ * Creates [CoroutineScope] that wraps the given coroutine [context].
+ *
+ * If the given [context] does not contain a [Job] element, then a default `Job()` is created.
+ * This way, cancellation or failure or any child coroutine in this scope cancels all the other children,
+ * just like inside [coroutineScope] block.
  */
 @Suppress("FunctionName")
-public fun CoroutineScope(context: CoroutineContext): CoroutineScope = ContextScope(context)
+public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
+    ContextScope(if (context[Job] != null) context else context + Job())

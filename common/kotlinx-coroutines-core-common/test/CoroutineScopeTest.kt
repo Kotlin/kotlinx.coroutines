@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
@@ -205,5 +206,5 @@ class CoroutineScopeTest : TestBase() {
     }
 
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
-        (CoroutineScope(c1) + c2).coroutineContext
+        (ContextScope(c1) + c2).coroutineContext
 }
