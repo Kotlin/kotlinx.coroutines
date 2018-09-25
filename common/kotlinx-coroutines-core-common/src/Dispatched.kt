@@ -10,6 +10,9 @@ import kotlin.coroutines.*
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")
 
+@Suppress("PrivatePropertyName")
+private val NON_REUSABLE = Symbol("NON_REUSABLE")
+
 internal class DispatchedContinuation<T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
@@ -31,7 +34,7 @@ internal class DispatchedContinuation<T>(
      */
     private var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0
-    private var _reusableCancellableContinuation: Any? = null
+    private var _reusableCancellableContinuation: Any? = null // null | CancellableContinuationImpl | NON_REUSABLE
 
     /**
      * Holder for a reusable instance of cancellable continuation.
@@ -41,13 +44,12 @@ internal class DispatchedContinuation<T>(
     internal var reusableCancellableContinuation: CancellableContinuationImpl<T>?
         get() = _reusableCancellableContinuation as? CancellableContinuationImpl<T>
         set(value) {
-            require(_reusableCancellableContinuation !== UNDEFINED)
+            require(_reusableCancellableContinuation !== NON_REUSABLE)
             _reusableCancellableContinuation = value
         }
 
-
-    internal fun sealCancellationReusing() {
-        _reusableCancellableContinuation = UNDEFINED
+    internal fun makeNonReusableContinuation() {
+        _reusableCancellableContinuation = NON_REUSABLE
     }
 
     internal fun canReuseCancellation(): Boolean = _reusableCancellableContinuation !== UNDEFINED

@@ -215,27 +215,29 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
  */
 internal suspend inline fun <T> suspendAtomicCancellableCoroutineReusable(
     crossinline block: (CancellableContinuation<T>) -> Unit
-): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
-    val intercepted = uCont.intercepted()
-    var cancellable: CancellableContinuationImpl<T>?
-    // In case when channel is used outside of coroutine dispatcher
-    if (intercepted !is DispatchedContinuation<T>) {
-        cancellable = CancellableContinuationImpl(intercepted, resumeMode = MODE_ATOMIC_DEFAULT)
-    } else {
-        cancellable = intercepted.reusableCancellableContinuation
-        if (cancellable != null) {
-            cancellable.resetState()
-        } else {
-            cancellable = CancellableContinuationImpl(intercepted, resumeMode = MODE_ATOMIC_DEFAULT)
-            if (intercepted.canReuseCancellation()) {
-                intercepted.reusableCancellableContinuation = cancellable
-            }
-        }
+): T =
+    suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
+        val cancellable = getOrCreateCancellableContinuation(uCont.intercepted())
+        cancellable.initCancellability()
+        block(cancellable)
+        cancellable.getResult()
     }
 
-    cancellable.initCancellability()
-    block(cancellable)
-    cancellable.getResult()
+@PublishedApi
+internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
+    // In case when channel is used outside of coroutine dispatcher
+    if (delegate !is DispatchedContinuation<T>) {
+        return CancellableContinuationImpl(delegate, resumeMode = MODE_ATOMIC_DEFAULT)
+    }
+    // Try return reusable instance
+    val reusable = delegate.reusableCancellableContinuation
+    if (reusable != null) {
+        reusable.resetState()
+        return reusable
+    }
+    val cancellable = CancellableContinuationImpl(delegate, resumeMode = MODE_ATOMIC_DEFAULT)
+    if (delegate.canReuseCancellation()) delegate.reusableCancellableContinuation = cancellable
+    return cancellable
 }
 
 /**
@@ -317,7 +319,10 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {
-        invalidateReusability()
+        // Important invariant: if idempotent tryResume is used, then regular resume cannot be used, since the
+        // thread that invokes this tryResume install its descriptor into the pointer to the corresponding node first,
+        // so no other thread can find it and invoke resume.
+        if (idempotent != null) invalidateReusability()
         loopOnState { state ->
             when (state) {
                 is NotCompleted -> {
@@ -338,7 +343,6 @@ internal class CancellableContinuationImpl<in T>(
     }
 
     override fun tryResumeWithException(exception: Throwable): Any? {
-        invalidateReusability()
         loopOnState { state ->
         when (state) {
                 is NotCompleted -> {

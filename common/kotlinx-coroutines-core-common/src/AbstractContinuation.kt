@@ -135,10 +135,10 @@ internal abstract class AbstractContinuation<in T>(
 
     /**
      * Mark this continuation (and its DC owner) as no longer reusable.
-     * Invariant: used from [CancellableContinuationImpl] tryResume* family
+     * Invariant: used from [CancellableContinuationImpl] idempotent tryResume.
      */
     internal fun invalidateReusability() {
-        (delegate as? DispatchedContinuation<*>)?.sealCancellationReusing()
+        (delegate as? DispatchedContinuation<*>)?.makeNonReusableContinuation()
     }
 
     override fun takeState(): Any? = state

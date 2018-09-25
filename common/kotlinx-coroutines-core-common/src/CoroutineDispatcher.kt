@@ -86,7 +86,8 @@ public abstract class CoroutineDispatcher :
     /** @suppress */
     public final override fun releaseInterceptedContinuation(continuation: Continuation<*>) {
         // Cancellation reusability support
-        (continuation as? DispatchedContinuation<*>)?.reusableCancellableContinuation?.detachChild()
+        // Note: we have a gurantee that continuation is the same one we've returned from interceptContinuation
+        (continuation as DispatchedContinuation<*>).reusableCancellableContinuation?.detachChild()
     }
 
     /**
