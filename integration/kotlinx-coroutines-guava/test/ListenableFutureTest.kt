@@ -10,8 +10,10 @@ import kotlinx.coroutines.experimental.CancellationException
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
+import kotlin.test.assertFailsWith
 
 class ListenableFutureTest : TestBase() {
     @Before
@@ -187,4 +189,90 @@ class ListenableFutureTest : TestBase() {
         yield() // yield main thread to job
         finish(6)
     }
+
+    @Test
+    fun testFutureCancellation() = runTest {
+        val future = awaitFutureWithCancel(true)
+        assertTrue(future.isCancelled)
+        assertFailsWith<CancellationException> { future.get() }
+        finish(4)
+    }
+
+    @Test
+    fun testNoFutureCancellation() = runTest {
+        val future = awaitFutureWithCancel(false)
+        assertFalse(future.isCancelled)
+        assertEquals(42, future.get())
+        finish(4)
+    }
+
+    @Test
+    fun testCompletedFutureAsDeferred() = runTest {
+        val future = SettableFuture.create<Int>()
+        val task = async {
+            expect(2)
+            assertEquals(42, future.asDeferred().await())
+            expect(4)
+        }
+
+        expect(1)
+        yield()
+        expect(3)
+        future.set(42)
+        task.join()
+        finish(5)
+    }
+
+    @Test
+    fun testFailedFutureAsDeferred() = runTest {
+        val future = SettableFuture.create<Int>().apply {
+            setException(TestException())
+        }
+        val deferred = future.asDeferred()
+        assertTrue(deferred.isCompletedExceptionally)
+        val completionException = deferred.getCompletionExceptionOrNull()!!
+        assertTrue(completionException is TestException)
+
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: Exception) {
+            assertTrue(e is TestException)
+        }
+    }
+
+    @Test
+    fun testThrowingFutureAsDeferred() = runTest {
+        val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
+        val future = executor.submit(Callable { throw TestException() })
+        val deferred = async {
+            future.asDeferred().await()
+        }
+
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: Exception) {
+            assertTrue(e is TestException)
+        }
+    }
+
+    private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): ListenableFuture<Int> {
+        val latch = CountDownLatch(1)
+        val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
+        val future = executor.submit(Callable { latch.await(); 42 })
+        val deferred = async {
+            expect(2)
+            if (cancellable) future.await()
+            else future.asDeferred().await()
+        }
+        expect(1)
+        yield()
+        deferred.cancel()
+        expect(3)
+        latch.countDown()
+        return future
+    }
+
+    private class TestException : Exception()
 }

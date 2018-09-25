@@ -9,12 +9,14 @@ import kotlinx.coroutines.experimental.CancellationException
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
+import org.junit.Test
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
 import java.util.function.*
 import kotlin.concurrent.*
 import kotlin.coroutines.experimental.*
+import kotlin.test.assertFailsWith
 
 class FutureTest : TestBase() {
     @Before
@@ -330,6 +332,42 @@ class FutureTest : TestBase() {
         }
 
         assertEquals("value", result)
+    }
+
+    @Test
+    fun testFutureCancellation() = runTest {
+        val future = awaitFutureWithCancel(true)
+        assertTrue(future.isCompletedExceptionally)
+        assertFailsWith<CancellationException> { future.get() }
+        finish(4)
+    }
+
+    @Test
+    fun testNoFutureCancellation() = runTest {
+        val future = awaitFutureWithCancel(false)
+        assertFalse(future.isCompletedExceptionally)
+        assertEquals(239, future.get())
+        finish(4)
+    }
+
+    private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): CompletableFuture<Int> {
+        val latch = CountDownLatch(1)
+        val future = CompletableFuture.supplyAsync({
+            latch.await()
+            239
+        })
+
+        val deferred = async {
+            expect(2)
+            if (cancellable) future.await()
+            else future.asDeferred().await()
+        }
+        expect(1)
+        yield()
+        deferred.cancel()
+        expect(3)
+        latch.countDown()
+        return future
     }
 
     class TestException(message: String) : Exception(message)

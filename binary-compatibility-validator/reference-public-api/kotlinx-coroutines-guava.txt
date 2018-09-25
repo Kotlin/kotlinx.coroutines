@@ -1,4 +1,5 @@
 public final class kotlinx/coroutines/experimental/guava/ListenableFutureKt {
+	public static final fun asDeferred (Lcom/google/common/util/concurrent/ListenableFuture;)Lkotlinx/coroutines/experimental/Deferred;
 	public static final fun asListenableFuture (Lkotlinx/coroutines/experimental/Deferred;)Lcom/google/common/util/concurrent/ListenableFuture;
 	public static final fun await (Lcom/google/common/util/concurrent/ListenableFuture;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun future (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/CoroutineStart;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lcom/google/common/util/concurrent/ListenableFuture;
