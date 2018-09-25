@@ -27,7 +27,7 @@ import kotlin.coroutines.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
-public fun <T> CoroutineScope.rxSingle(
+public fun <T : Any> CoroutineScope.rxSingle(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend CoroutineScope.() -> T
 ): Single<T> = Single.create { subscriber ->
@@ -46,7 +46,7 @@ public fun <T> CoroutineScope.rxSingle(
     replaceWith = ReplaceWith("GlobalScope.rxSingle(context, block)",
         imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxSingle"])
 )
-public fun <T> rxSingle(
+public fun <T : Any> rxSingle(
     context: CoroutineContext = Dispatchers.Default,
     parent: Job? = null,
     block: suspend CoroutineScope.() -> T

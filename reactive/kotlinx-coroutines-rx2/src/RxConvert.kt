@@ -5,9 +5,11 @@
 package kotlinx.coroutines.experimental.rx2
 
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.experimental.GlobalScope
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Converts this job to the hot reactive completable that signals
@@ -44,7 +46,7 @@ public fun <T> Deferred<T?>.asMaybe(context: CoroutineContext): Maybe<T> = Globa
  *
  * @param context -- the coroutine context from which the resulting single is going to be signalled
  */
-public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
+public fun <T : Any> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = GlobalScope.rxSingle(context) {
     this@asSingle.await()
 }
 
@@ -56,7 +58,7 @@ public fun <T> Deferred<T>.asSingle(context: CoroutineContext): Single<T> = Glob
  *
  * @param context -- the coroutine context from which the resulting observable is going to be signalled
  */
-public fun <T> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
+public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): Observable<T> = GlobalScope.rxObservable(context) {
     for (t in this@asObservable)
         send(t)
 }
