@@ -4,9 +4,12 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
 import org.junit.*
 import kotlinx.coroutines.experimental.scheduling.*
 import java.util.concurrent.atomic.*
+
+private val VERBOSE = systemProp("test.verbose", false)
 
 /**
  * Base class for tests, so that tests for predictable scheduling of actions in multiple coroutines sharing a single
@@ -27,6 +30,7 @@ import java.util.concurrent.atomic.*
  * }
  * ```
  */
+@Suppress("DEPRECATION")
 public actual open class TestBase actual constructor() {
     /**
      * Is `true` when nightly stress test is done.
@@ -67,7 +71,7 @@ public actual open class TestBase actual constructor() {
      * Throws [IllegalStateException] when `value` is false like `check` in stdlib, but also ensures that the
      * test will not complete successfully even if this exception is consumed somewhere in the test.
      */
-    public inline fun check(value: Boolean, lazyMessage: () -> Any): Unit {
+    public inline fun check(value: Boolean, lazyMessage: () -> Any) {
         if (!value) error(lazyMessage())
     }
 
@@ -76,6 +80,7 @@ public actual open class TestBase actual constructor() {
      */
     public actual fun expect(index: Int) {
         val wasIndex = actionIndex.incrementAndGet()
+        if (VERBOSE) println("expect($index), wasIndex=$wasIndex")
         check(index == wasIndex) { "Expecting action index $index but it is actually $wasIndex" }
     }
 

@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.channels
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.selects.*
 
 /**
@@ -13,8 +14,16 @@ import kotlinx.coroutines.experimental.selects.*
  * This channel is created by `Channel(Channel.UNLIMITED)` factory function invocation.
  *
  * This implementation is fully lock-free.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
-public open class LinkedListChannel<E> : AbstractChannel<E>() {
+@InternalCoroutinesApi
+public open class LinkedListChannel<E>
+@Deprecated(
+    "Replace with Channel factory function",
+    replaceWith = ReplaceWith("Channel(Channel.UNLIMITED)")
+)
+constructor() : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false

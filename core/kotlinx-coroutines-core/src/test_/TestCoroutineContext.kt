@@ -25,8 +25,12 @@ import kotlin.coroutines.experimental.*
  * This dispatcher's virtual time will be automatically advanced based based on the delayed actions
  * within the Coroutine(s).
  *
+ * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
+ *           See [issue #541](https://github.com/Kotlin/kotlinx.coroutines/issues/541).
+ *
  * @param name A user-readable name for debugging purposes.
  */
+@ObsoleteCoroutinesApi
 class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
     private val uncaughtExceptions = mutableListOf<Throwable>()
 
@@ -209,14 +213,14 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     private inner class Dispatcher : CoroutineDispatcher(), Delay, EventLoop {
         override fun dispatch(context: CoroutineContext, block: Runnable) = post(block)
 
-        override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
+        override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
             postDelayed(Runnable {
                 with(continuation) { resumeUndispatched(Unit) }
-            }, unit.toMillis(time))
+            }, timeMillis)
         }
 
-        override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-            val node = postDelayed(block, unit.toMillis(time))
+        override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+            val node = postDelayed(block, timeMillis)
             return object : DisposableHandle {
                 override fun dispose() {
                     queue.remove(node)
@@ -260,10 +264,14 @@ private class TimedRunnable(
  * [TestCoroutineContext.assertExceptions], the list of unhandled exceptions will have been cleared and this method will
  * not throw an [AssertionError].
  *
+ * **Note: This API will become obsolete in future updates due to integration with structured concurrency.**
+ *           See [issue #541](https://github.com/Kotlin/kotlinx.coroutines/issues/541).
+ *
  * @param testContext The provided [TestCoroutineContext]. If not specified, a default [TestCoroutineContext] will be
  * provided instead.
  * @param testBody The code of the unit-test.
  */
+@ObsoleteCoroutinesApi
 public fun withTestContext(testContext: TestCoroutineContext = TestCoroutineContext(), testBody: TestCoroutineContext.() -> Unit) {
     with (testContext) {
         testBody()

@@ -23,6 +23,7 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * todo: Deprecate/hide this function.
  */
 @JvmOverloads // binary compatibility
+@InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
     // Ignore CancellationException (they are normal ways to terminate a coroutine)
     if (exception is CancellationException) return // nothing to do
@@ -75,11 +76,9 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *   (because that is the supposed mechanism to cancel the running coroutine)
  * * Otherwise:
  *     * if there is a [Job] in the context, then [Job.cancel] is invoked;
- *     * all instances of [CoroutineExceptionHandler] found via [ServiceLoader] are invoked;
- *     * and current thread's [Thread.uncaughtExceptionHandler] is invoked.
- *
- * See [handleCoroutineException].
- */
+ *     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
+ *     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
+ **/
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Key for [CoroutineExceptionHandler] instance in the coroutine context.
@@ -88,7 +87,7 @@ public interface CoroutineExceptionHandler : CoroutineContext.Element {
 
     /**
      * Handles uncaught [exception] in the given [context]. It is invoked
-     * if coroutine has an uncaught exception. See [handleCoroutineException].
+     * if coroutine has an uncaught exception.
      */
     public fun handleException(context: CoroutineContext, exception: Throwable)
 }

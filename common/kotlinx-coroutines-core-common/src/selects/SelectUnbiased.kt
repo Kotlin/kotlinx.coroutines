@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental.selects
 
-import kotlinx.coroutines.experimental.timeunit.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
@@ -64,7 +63,7 @@ internal class UnbiasedSelectBuilderImpl<in R>(uCont: Continuation<R>) :
         clauses += { registerSelectClause2(instance, param, block) }
     }
 
-    override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {
-        clauses += { instance.onTimeout(time, unit, block) }
+    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
+        clauses += { instance.onTimeout(timeMillis, block) }
     }
 }

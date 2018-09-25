@@ -141,7 +141,7 @@ class AsyncLazyTest : TestBase() {
 
     @Test
     fun testCancelBeforeStart() = runTest(
-        expected = { it is JobCancellationException }
+        expected = { it is CancellationException }
     ) {
         expect(1)
         val d = async(start = CoroutineStart.LAZY) {

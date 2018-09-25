@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.timeunit.*
+import java.util.concurrent.*
 
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
@@ -22,6 +22,7 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
             DEFAULT_KEEP_ALIVE
         })
 
+    @Suppress("ObjectPropertyName")
     @Volatile
     private var _thread: Thread? = null
 
@@ -47,8 +48,8 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
      * Livelock is possible only if `runBlocking` is called on internal default executed (which is used by default [delay]),
      * but it's not exposed as public API.
      */
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle =
-        DelayedRunnableTask(time, unit, block).also { schedule(it) }
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle =
+        DelayedRunnableTask(timeMillis, block).also { schedule(it) }
 
     override fun run() {
         timeSource.registerTimeLoopThread()

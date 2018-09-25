@@ -232,7 +232,7 @@ class AsyncTest : TestBase() {
         try {
             expect(1)
             deferred.await()
-        } catch (e: JobCancellationException) {
+        } catch (e: CancellationException) {
             finish(3)
         }
     }

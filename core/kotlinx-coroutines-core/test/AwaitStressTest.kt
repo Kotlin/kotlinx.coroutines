@@ -97,7 +97,7 @@ class AwaitStressTest : TestBase() {
             barrier.await()
             try {
                 awaitAll(d1, d2)
-            } catch (e: JobCancellationException) {
+            } catch (e: CancellationException) {
                 cancelledOnce = true
             }
         }

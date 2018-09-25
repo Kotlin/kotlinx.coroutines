@@ -408,7 +408,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
-     * [cancel] cause, [JobCancellationException] or **`null` if this job had completed normally**.
+     * [cancel] cause, [CancellationException] or **`null` if this job had completed normally**.
      * This function throws [IllegalStateException] when invoked for an job that has not [completed][isCompleted] nor
      * failing yet.
      *
@@ -599,6 +599,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
      */
     internal open val onCancelComplete: Boolean get() = false
 
+    // external cancel without cause, never invoked implicitly from internal machinery
+    public override fun cancel(): Boolean =
+        cancel(null) // must delegate here, because some classes override cancel(x)
+
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
     public override fun cancel(cause: Throwable?): Boolean =
         cancelImpl(cause) && handlesException
@@ -693,7 +697,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
 
     // Performs promotion of incomplete coroutine state to NodeList for the purpose of
     // converting coroutine state to Failing, returns null when need to retry
-    private fun getOrPromoteFailingList(state: Incomplete): NodeList? = state.list ?: 
+    private fun getOrPromoteFailingList(state: Incomplete): NodeList? = state.list ?:
         when (state) {
             is Empty -> NodeList() // we can allocate new empty list that'll get integrated into Failing state
             is JobNode<*> -> {

@@ -3,7 +3,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION") // KT-21913
 
 package kotlinx.coroutines.experimental
 
@@ -13,22 +13,22 @@ import kotlin.test.*
 class DelayTest : TestBase() {
 
     @Test
-    fun testCancellation() = runTest(expected = {it is JobCancellationException}) {
+    fun testCancellation() = runTest(expected = {it is CancellationException }) {
         runAndCancel(3600, TimeUnit.SECONDS)
     }
 
     @Test
-    fun testMaxLongValue()= runTest(expected = {it is JobCancellationException}) {
+    fun testMaxLongValue()= runTest(expected = {it is CancellationException }) {
         runAndCancel(Long.MAX_VALUE)
     }
 
     @Test
-    fun testMaxIntValue()= runTest(expected = {it is JobCancellationException}) {
+    fun testMaxIntValue()= runTest(expected = {it is CancellationException }) {
         runAndCancel(Int.MAX_VALUE.toLong())
     }
 
     @Test
-    fun testOverflowOnUnitConversion()= runTest(expected = {it is JobCancellationException}) {
+    fun testOverflowOnUnitConversion()= runTest(expected = {it is CancellationException }) {
         runAndCancel(Long.MAX_VALUE, TimeUnit.SECONDS)
     }
 

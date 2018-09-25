@@ -339,7 +339,7 @@ if it is possible, or discards an element otherwise. An `offer` actually returns
 
 Try clicking repeatedly on a circle in this version of the code. The clicks are just ignored while the countdown 
 animation is running. This happens because the actor is busy with an animation and does not receive from its channel.
-By default, an actor's mailbox is backed by [RendezvousChannel], whose `offer` operation succeeds only when 
+By default, an actor's mailbox is backed by `RendezvousChannel`, whose `offer` operation succeeds only when 
 the `receive` is active. 
 
 > On Android, there is `View` sent in OnClickListener, so we send the `View` to the actor as a signal. 
@@ -368,7 +368,7 @@ processing the previous one.  The [actor] coroutine builder accepts an optional 
 controls the implementation of the channel that this actor is using for its mailbox. The description of all 
 the available choices is given in documentation of the [`Channel()`][Channel] factory function.
 
-Let us change the code to use [ConflatedChannel] by passing [Channel.CONFLATED] capacity value. The 
+Let us change the code to use `ConflatedChannel` by passing [Channel.CONFLATED] capacity value. The 
 change is only to the line that creates an actor:
 
 ```kotlin
@@ -393,10 +393,10 @@ processed.
 
 This is also a desired behaviour for UI applications that have to react to incoming high-frequency
 event streams by updating their UI based on the most recently received update. A coroutine that is using
-[ConflatedChannel] avoids delays that are usually introduced by buffering of events.
+`ConflatedChannel` avoids delays that are usually introduced by buffering of events.
 
 You can experiment with `capacity` parameter in the above line to see how it affects the behaviour of the code.
-Setting `capacity = Channel.UNLIMITED` creates a coroutine with [LinkedListChannel] mailbox that buffers all 
+Setting `capacity = Channel.UNLIMITED` creates a coroutine with `LinkedListChannel` mailbox that buffers all 
 events. In this case, the animation runs as many times as the circle is clicked.
 
 ## Blocking operations
@@ -715,11 +715,8 @@ After delay
 [actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
 [SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/offer.html
 [SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/index.html
-[RendezvousChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-rendezvous-channel/index.html
 [Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[ConflatedChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-conflated-channel/index.html
 [Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/-c-o-n-f-l-a-t-e-d.html
-[LinkedListChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html
 <!--- MODULE kotlinx-coroutines-javafx -->
 <!--- INDEX kotlinx.coroutines.experimental.javafx -->
 [kotlinx.coroutines.experimental.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/kotlinx.coroutines.experimental.-dispatchers/-java-fx.html

@@ -11,7 +11,7 @@ class TickerChannelTest : TestBase() {
     @Test
     fun testFixedDelayChannelBackpressure() = withVirtualTimeSource {
         runTest {
-            val delayChannel = ticker(delay = 1000, initialDelay = 0, mode = TickerMode.FIXED_DELAY)
+            val delayChannel = ticker(delayMillis = 1000, initialDelayMillis = 0, mode = TickerMode.FIXED_DELAY)
             delayChannel.checkNotEmpty()
             delayChannel.checkEmpty()
 
@@ -28,7 +28,7 @@ class TickerChannelTest : TestBase() {
     @Test
     fun testDelayChannelBackpressure() = withVirtualTimeSource {
         runTest {
-            val delayChannel = ticker(delay = 1000, initialDelay = 0)
+            val delayChannel = ticker(delayMillis = 1000, initialDelayMillis = 0)
             delayChannel.checkNotEmpty()
             delayChannel.checkEmpty()
 
@@ -47,7 +47,7 @@ class TickerChannelTest : TestBase() {
     @Test
     fun testDelayChannelBackpressure2() = withVirtualTimeSource {
         runTest {
-            val delayChannel = ticker(delay = 1000, initialDelay = 0)
+            val delayChannel = ticker(delayMillis = 1000, initialDelayMillis = 0)
             delayChannel.checkNotEmpty()
             delayChannel.checkEmpty()
 

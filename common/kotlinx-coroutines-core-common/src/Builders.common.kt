@@ -9,10 +9,11 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.experimental.selects.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
-// --------------- basic coroutine builders ---------------
+// --------------- launch ---------------
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
@@ -37,23 +38,32 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code which will be invoked in the context of the provided scope.
  **/
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> Unit
 ): Job {
     val newContext = newCoroutineContext(context)
     val coroutine = if (start.isLazy)
         LazyStandaloneCoroutine(newContext, block) else
         StandaloneCoroutine(newContext, active = true)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
     coroutine.start(start, coroutine, block)
     return coroutine
 }
+
+/**
+ * @suppress **Deprecated**: onCompletion parameter is deprecated.
+ */
+@Deprecated("onCompletion parameter is deprecated")
+public fun CoroutineScope.launch(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    onCompletion: CompletionHandler? = null,
+    block: suspend CoroutineScope.() -> Unit
+): Job =
+    launch(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }
 
 /**
  * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
@@ -107,6 +117,63 @@ public fun launch(
 ): Job =
     GlobalScope.launch(context, start, block = block)
 
+// --------------- async ---------------
+
+/**
+ * Creates new coroutine and returns its future result as an implementation of [Deferred].
+ * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
+ *
+ * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
+ * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
+ * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
+ * with corresponding [coroutineContext] element.
+ *
+ * By default, the coroutine is immediately scheduled for execution.
+ * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
+ * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,,
+ * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
+ * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
+ *
+ * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
+ * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
+ * @param block the coroutine code.
+ */
+public fun <T> CoroutineScope.async(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+): Deferred<T> {
+    val newContext = newCoroutineContext(context)
+    val coroutine = if (start.isLazy)
+        LazyDeferredCoroutine(newContext, block) else
+        DeferredCoroutine<T>(newContext, active = true)
+    coroutine.start(start, coroutine, block)
+    return coroutine
+}
+
+@Suppress("UNCHECKED_CAST")
+private open class DeferredCoroutine<T>(
+    parentContext: CoroutineContext,
+    active: Boolean
+) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
+    override fun getCompleted(): T = getCompletedInternal() as T
+    override suspend fun await(): T = awaitInternal() as T
+    override val onAwait: SelectClause1<T> get() = this
+    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
+        registerSelectClause1Internal(select, block)
+}
+
+private class LazyDeferredCoroutine<T>(
+    parentContext: CoroutineContext,
+    private val block: suspend CoroutineScope.() -> T
+) : DeferredCoroutine<T>(parentContext, active = false) {
+    override fun onStart() {
+        block.startCoroutineCancellable(this, this)
+    }
+}
+
+// --------------- withContext ---------------
+
 /**
  * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
  */
@@ -122,15 +189,22 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
  * This function immediately applies dispatcher from the new context, shifting execution of the block into the
  * different thread inside the block, and back when it completes.
  * The specified [context] is added onto the current coroutine context for the execution of the block.
- *
- * An optional `start` parameter is used only if the specified `context` uses a different [CoroutineDispatcher] than
- * a current one, otherwise it is ignored.
- * By default, the coroutine is immediately scheduled for execution and can be cancelled
- * while it is waiting to be executed and it can be cancelled while the result is scheduled
- * to be processed by the invoker context.
- * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
- * A value of [CoroutineStart.LAZY] is not supported and produces [IllegalArgumentException].
  */
+public suspend fun <T> withContext(
+    context: CoroutineContext,
+    block: suspend CoroutineScope.() -> T
+): T =
+    // todo: optimize fast-path to work without allocation (when there is a already a coroutine implementing scope)
+    withContextImpl(context, start = CoroutineStart.DEFAULT) {
+        currentScope {
+            block()
+        }
+    }
+
+/**
+ * @suppress **Deprecated**: start parameter is deprecated, no replacement.
+ */
+@Deprecated("start parameter is deprecated, no replacement")
 public suspend fun <T> withContext(
     context: CoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,

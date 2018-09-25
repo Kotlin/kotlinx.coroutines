@@ -105,7 +105,7 @@ so `launch(Dispatchers.Default) { ... }` uses the same dispatcher as `GlobalScop
   
 [newSingleThreadContext] creates a new thread for the coroutine to run. 
 A dedicated thread is a very expensive resource. 
-In a real application it must be either released, when no longer needed, using [close][ThreadPoolDispatcher.close] 
+In a real application it must be either released, when no longer needed, using [close][ExecutorCoroutineDispatcher.close] 
 function, or stored in a top-level variable and reused throughout the application.  
 
 ### Unconfined vs confined dispatcher
@@ -608,7 +608,7 @@ that should be implemented.
 [GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/index.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
 [newSingleThreadContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-single-thread-context.html
-[ThreadPoolDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-thread-pool-dispatcher/close.html
+[ExecutorCoroutineDispatcher.close]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-executor-coroutine-dispatcher/close.html
 [runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
 [delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
 [newCoroutineContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/new-coroutine-context.html

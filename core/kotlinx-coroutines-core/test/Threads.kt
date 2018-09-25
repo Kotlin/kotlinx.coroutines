@@ -37,7 +37,7 @@ fun List<Thread>.dumpThreads(header: String) {
     println("===")
 }
 
-fun ThreadPoolDispatcher.dumpThreads(header: String) =
+fun ExecutorCoroutineDispatcher.dumpThreads(header: String) =
     currentThreads().filter { it is PoolThread && it.dispatcher == this@dumpThreads }.dumpThreads(header)
 
 fun checkTestThreads(threadsBefore: Set<Thread>) {

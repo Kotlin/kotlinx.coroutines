@@ -6,6 +6,9 @@ package kotlinx.coroutines.experimental.timeunit
 
 /**
  * Time unit type alias for writing multiplatform code.
+ *
+ * @suppress **Deprecated** No replacement
  */
 @Suppress("ACTUAL_WITHOUT_EXPECT")
+@Deprecated(message = "No replacement")
 public actual typealias TimeUnit = java.util.concurrent.TimeUnit

@@ -28,15 +28,33 @@ import kotlin.coroutines.experimental.*
  *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+public fun <T> CoroutineScope.future(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+) : CompletableFuture<T> {
+    require(!start.isLazy) { "$start start is not supported" }
+    val newContext = this.newCoroutineContext(context)
+    val job = Job(newContext[Job])
+    val future = CompletableFutureCoroutine<T>(newContext + job)
+    job.cancelFutureOnCompletion(future)
+    future.whenComplete { _, exception -> job.cancel(exception) }
+    start(block, receiver = future, completion = future) // use the specified start strategy
+    return future
+}
+
+/**
+ * @suppress **Deprecated**: onCompletion parameter is deprecated.
+ */
+@Deprecated("onCompletion parameter is deprecated")
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = Dispatchers.Default,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> {
+) : CompletableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
     val newContext = this.newCoroutineContext(context)
     val job = Job(newContext[Job])

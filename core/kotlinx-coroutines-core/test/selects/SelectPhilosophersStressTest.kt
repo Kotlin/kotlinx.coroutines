@@ -10,12 +10,12 @@ import org.junit.*
 import org.junit.Assert.*
 
 class SelectPhilosophersStressTest : TestBase() {
-    val TEST_DURATION = 3000L * stressTestMultiplier
+    private val TEST_DURATION = 3000L * stressTestMultiplier
 
     val n = 10 // number of philosophers
-    val forks = Array<Mutex>(n) { Mutex() }
+    private val forks = Array(n) { Mutex() }
 
-    suspend fun eat(id: Int, desc: String) {
+    private suspend fun eat(id: Int, desc: String) {
         val left = forks[id]
         val right = forks[(id + 1) % n]
         while (true) {

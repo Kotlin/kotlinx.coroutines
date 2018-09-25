@@ -28,8 +28,11 @@ import kotlin.coroutines.experimental.*
  * @param parentContext context of the parent coroutine.
  * @param active when `true` (by default) coroutine is created in _active_ state, when `false` in _new_ state.
  *               See [Job] for details.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
 @Suppress("EXPOSED_SUPER_CLASS")
+@InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
     /**
      * Context of the parent coroutine.

@@ -12,7 +12,11 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
+ *
+ * **Note: This API will become obsolete in future updates with introduction of complex actors.**
+ *           See [issue #87](https://github.com/Kotlin/kotlinx.coroutines/issues/87).
  */
+@ObsoleteCoroutinesApi
 public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
     /**
      * A reference to the mailbox channel that this coroutine [receives][receive] messages from.
@@ -57,12 +61,8 @@ interface ActorJob<in E> : SendChannel<E> {
  * Uncaught exceptions in this coroutine close the channel with this exception as a cause and
  * the resulting channel becomes _failed_, so that any attempt to send to such a channel throws exception.
  *
- * The kind of the resulting channel depends on the specified [capacity] parameter:
- * * when `capacity` is 0 (default) -- uses [RendezvousChannel] without a buffer;
- * * when `capacity` is [Channel.UNLIMITED] -- uses [LinkedListChannel] with buffer of unlimited size;
- * * when `capacity` is [Channel.CONFLATED] -- uses [ConflatedChannel] that conflates back-to-back sends;
- * * when `capacity` is positive, but less than [UNLIMITED] -- uses [ArrayChannel] with a buffer of the specified `capacity`;
- * * otherwise -- throws [IllegalArgumentException].
+ * The kind of the resulting channel depends on the specified [capacity] parameter.
+ * See [Channel] interface documentation for details.
  *
  * See [newCoroutineContext][CoroutineScope.newCoroutineContext] for a description of debugging facilities that are available for newly created coroutine.
  *
@@ -105,12 +105,16 @@ interface ActorJob<in E> : SendChannel<E> {
  * "`for (msg in channel)`" and other cancellable suspending functions throw [CancellationException] and actor
  * completes without processing remaining messages.
  *
+ * **Note: This API will become obsolete in future updates with introduction of complex actors.**
+ *           See [issue #87](https://github.com/Kotlin/kotlinx.coroutines/issues/87).
+ *
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
  * @param block the coroutine code.
  */
+@ObsoleteCoroutinesApi
 public fun <E> CoroutineScope.actor(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,

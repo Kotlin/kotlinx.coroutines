@@ -5,20 +5,17 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import org.junit.After
-import org.junit.Test
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.experimental.*
+import org.junit.*
+import java.util.concurrent.atomic.*
 
 class ConflatedChannelCloseStressTest : TestBase() {
 
-    val nSenders = 2
-    val testSeconds = 3 * stressTestMultiplier
+    private val nSenders = 2
+    private val testSeconds = 3 * stressTestMultiplier
 
-    val curChannel = AtomicReference<ConflatedChannel<Int>>(ConflatedChannel())
-    val sent = AtomicInteger()
-    val closed = AtomicInteger()
+    private val curChannel = AtomicReference<Channel<Int>>(Channel(Channel.CONFLATED))
+    private val sent = AtomicInteger()
+    private val closed = AtomicInteger()
     val received = AtomicInteger()
 
     val pool = newFixedThreadPoolContext(nSenders + 2, "TestStressClose")
@@ -29,7 +26,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
     }
 
     @Test
-    fun testStressClose() = runBlocking<Unit> {
+    fun testStressClose() = runBlocking {
         println("--- ConflatedChannelCloseStressTest with nSenders=$nSenders")
         val senderJobs = List(nSenders) { Job() }
         val senders = List(nSenders) { senderId ->
@@ -100,7 +97,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
 
     private fun flipChannel() {
         val oldChannel = curChannel.get()
-        val newChannel = ConflatedChannel<Int>()
+        val newChannel = Channel<Int>(Channel.CONFLATED)
         curChannel.set(newChannel)
         check(oldChannel.close())
     }

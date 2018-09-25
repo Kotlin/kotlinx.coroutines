@@ -10,7 +10,10 @@ import kotlin.coroutines.experimental.*
 
 /**
  * Mode for [ticker] function.
+ *
+ * **Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.**
  */
+@ObsoleteCoroutinesApi
 enum class TickerMode {
     /**
      * Adjust delay to maintain fixed period if consumer cannot keep up or is otherwise slow.
@@ -40,7 +43,7 @@ enum class TickerMode {
  * Creates a channel that produces the first item after the given initial delay and subsequent items with the
  * given delay between them.
  *
- * The resulting channel is a [rendezvous channel][RendezvousChannel]. When receiver from this channel does not keep
+ * The resulting channel is a _rendezvous channel_. When receiver from this channel does not keep
  * up with receiving the elements from this channel, they are not being sent due to backpressure. The actual
  * timing behavior of ticker in this case is controlled by [mode] parameter which
  * is set to [TickerMode.FIXED_PERIOD] by default. See [TickerMode] for other details.
@@ -49,38 +52,52 @@ enum class TickerMode {
  *
  * **Note** producer to this channel is dispatched via [Dispatchers.Unconfined] by default and started eagerly.
  *
- * @param delay delay between each element.
- * @param unit unit of time that applies to [initialDelay] and [delay] (in milliseconds by default).
- * @param initialDelay delay after which the first element will be produced (it is equal to [delay] by default).
+ * **Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.**
+ *           
+ * @param delayMillis delay between each element in milliseconds.
+ * @param initialDelayMillis delay after which the first element will be produced (it is equal to [delayMillis] by default) in milliseconds.
  * @param context context of the producing coroutine.
  * @param mode specifies behavior when elements are not received ([FIXED_PERIOD][TickerMode.FIXED_PERIOD] by default).
  */
+@ObsoleteCoroutinesApi
 public fun ticker(
-    delay: Long,
-    unit: TimeUnit = TimeUnit.MILLISECONDS,
-    initialDelay: Long = delay,
+    delayMillis: Long,
+    initialDelayMillis: Long = delayMillis,
     context: CoroutineContext = EmptyCoroutineContext,
     mode: TickerMode = TickerMode.FIXED_PERIOD
 ): ReceiveChannel<Unit> {
-    require(delay >= 0) { "Expected non-negative delay, but has $delay" }
-    require(initialDelay >= 0) { "Expected non-negative initial delay, but has $initialDelay" }
+    require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
+    require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
     return GlobalScope.produce(Dispatchers.Unconfined + context, capacity = 0) {
         when (mode) {
-            TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delay, unit, initialDelay, channel)
-            TickerMode.FIXED_DELAY -> fixedDelayTicker(delay, unit, initialDelay, channel)
+            TickerMode.FIXED_PERIOD -> fixedPeriodTicker(delayMillis, initialDelayMillis, channel)
+            TickerMode.FIXED_DELAY -> fixedDelayTicker(delayMillis, initialDelayMillis, channel)
         }
     }
 }
 
-private suspend fun fixedPeriodTicker(
+/** @suppress **Deprecated**: TimeUnit is not longer supported */
+@Deprecated(
+    message = "TimeUnit is no longer supported",
+    replaceWith = ReplaceWith("ticker(unit.toMillis(delay), unit.toMillis(initialDelay), context, mode)")
+)
+public fun ticker(
     delay: Long,
-    unit: TimeUnit,
-    initialDelay: Long,
+    unit: TimeUnit = TimeUnit.MILLISECONDS, // todo: remove
+    initialDelay: Long = delay,
+    context: CoroutineContext = EmptyCoroutineContext,
+    mode: TickerMode = TickerMode.FIXED_PERIOD
+): ReceiveChannel<Unit> =
+    ticker(unit.toMillis(delay), unit.toMillis(initialDelay), context, mode)
+
+private suspend fun fixedPeriodTicker(
+    delayMillis: Long,
+    initialDelayMillis: Long,
     channel: SendChannel<Unit>
 ) {
-    var deadline = timeSource.nanoTime() + unit.toNanos(initialDelay)
-    delay(initialDelay, unit)
-    val delayNs = unit.toNanos(delay)
+    var deadline = timeSource.nanoTime() + delayToNanos(initialDelayMillis)
+    delay(initialDelayMillis)
+    val delayNs = delayToNanos(delayMillis)
     while (true) {
         deadline += delayNs
         channel.send(Unit)
@@ -89,22 +106,21 @@ private suspend fun fixedPeriodTicker(
         if (nextDelay == 0L && delayNs != 0L) {
             val adjustedDelay = delayNs - (now - deadline) % delayNs
             deadline = now + adjustedDelay
-            delay(adjustedDelay, java.util.concurrent.TimeUnit.NANOSECONDS)
+            delay(delayNanosToMillis(adjustedDelay))
         } else {
-            delay(nextDelay, java.util.concurrent.TimeUnit.NANOSECONDS)
+            delay(delayNanosToMillis(nextDelay))
         }
     }
 }
 
 private suspend fun fixedDelayTicker(
-    delay: Long,
-    unit: TimeUnit,
-    initialDelay: Long,
+    delayMillis: Long,
+    initialDelayMillis: Long,
     channel: SendChannel<Unit>
 ) {
-    delay(initialDelay, unit)
+    delay(initialDelayMillis)
     while (true) {
         channel.send(Unit)
-        delay(delay, unit)
+        delay(delayMillis)
     }
 }

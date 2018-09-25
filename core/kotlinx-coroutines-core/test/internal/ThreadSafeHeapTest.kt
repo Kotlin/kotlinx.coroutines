@@ -87,7 +87,7 @@ class ThreadSafeHeapTest : TestBase() {
             assertTrue(h.remove(rndNode))
             // remove head and validate
             val headNode = h.removeFirstOrNull()!! // must not be null!!!
-            assertTrue(headNode === set.first(), "Expected ${set.first()}, but found $headNode, remaining size ${h.size}")
+            assertSame(headNode, set.first(), "Expected ${set.first()}, but found $headNode, remaining size ${h.size}")
             assertTrue(set.remove(headNode))
             assertEquals(set.size, h.size)
         }

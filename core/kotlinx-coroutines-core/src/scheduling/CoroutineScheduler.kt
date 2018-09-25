@@ -300,6 +300,14 @@ internal class CoroutineScheduler(
     fun shutdown(timeout: Long) {
         // atomically set termination flag which is checked when workers are added or removed
         if (!isTerminated.compareAndSet(false, true)) return
+
+        /*
+         * Shutdown current thread. Note that shutdown is testing utility,
+         * so we don't do anything special to properly verify that no tasks are submitted after close()
+         */
+        val thread = Thread.currentThread()
+        (thread as? Worker)?.tryReleaseCpu(WorkerState.TERMINATED)
+
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
         val created = synchronized(workers) { createdWorkers }
         for (i in 1..created) {
@@ -653,7 +661,7 @@ internal class CoroutineScheduler(
          * Releases CPU token if worker has any and changes state to [newState]
          * @return whether worker had CPU token
          */
-        private fun tryReleaseCpu(newState: WorkerState): Boolean {
+        internal fun tryReleaseCpu(newState: WorkerState): Boolean {
             val previousState = state
             val hadCpu = previousState == WorkerState.CPU_ACQUIRED
             if (hadCpu) cpuPermits.release()

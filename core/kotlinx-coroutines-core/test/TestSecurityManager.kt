@@ -6,6 +6,7 @@ package kotlinx.coroutines.experimental
 
 import java.security.Permission
 
+@Suppress("unused")
 class TestSecurityManager : SecurityManager() {
     override fun checkPropertyAccess(key: String?) {
         if (key?.startsWith("kotlinx.") == true)

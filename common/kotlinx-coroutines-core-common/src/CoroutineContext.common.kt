@@ -8,6 +8,10 @@ import kotlin.coroutines.experimental.*
 
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
+/**
+ * The default [CoroutineDispatcher] that is used by all standard builders.
+ * @suppress **Deprecated**: Use [Dispatchers.Default].
+ */
 @Suppress("PropertyName")
 @Deprecated(
     message = "Use Dispatchers.Default",

@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class SendReceiveStressTest : TestBase() {
@@ -14,17 +13,17 @@ class SendReceiveStressTest : TestBase() {
 
     @Test
     fun testArrayChannel() = runTest {
-        testStress(ArrayChannel(2))
+        testStress(Channel(2))
     }
 
     @Test
     fun testLinkedListChannel() = runTest {
-        testStress(LinkedListChannel())
+        testStress(Channel(Channel.UNLIMITED))
     }
 
     @Test
     fun testRendezvousChannel() = runTest {
-        testStress(RendezvousChannel())
+        testStress(Channel(Channel.RENDEZVOUS))
     }
 
     private suspend fun testStress(channel: Channel<Int>) = coroutineScope {

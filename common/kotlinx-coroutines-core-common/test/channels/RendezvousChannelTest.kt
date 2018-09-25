@@ -10,7 +10,7 @@ import kotlin.test.*
 class RendezvousChannelTest : TestBase() {
     @Test
     fun testSimple() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         check(q.isEmpty && q.isFull)
         expect(1)
         val sender = launch {
@@ -37,7 +37,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testClosedReceiveOrNull() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         check(q.isEmpty && q.isFull && !q.isClosedForSend && !q.isClosedForReceive)
         expect(1)
         launch {
@@ -59,7 +59,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testClosedExceptions() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(4)
@@ -81,7 +81,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testOfferAndPool() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         assertFalse(q.offer(1))
         expect(1)
         launch {
@@ -109,7 +109,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testIteratorClosed() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -125,7 +125,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testIteratorOne() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -144,7 +144,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testIteratorOneWithYield() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -165,7 +165,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testIteratorTwo() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -189,7 +189,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testIteratorTwoWithYield() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(3)
@@ -215,7 +215,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testSuspendSendOnClosedChannel() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         expect(1)
         launch {
             expect(4)
@@ -260,7 +260,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testConsumeAll() = runTest {
-        val q = RendezvousChannel<Int>()
+        val q = Channel<Int>(Channel.RENDEZVOUS)
         for (i in 1..10) {
             launch(start = CoroutineStart.UNDISPATCHED) {
                 expect(i)
@@ -278,7 +278,7 @@ class RendezvousChannelTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest({ it is TestException }) {
-        val channel = RendezvousChannel<Int>()
+        val channel = Channel<Int>(Channel.RENDEZVOUS)
         channel.cancel(TestException())
         channel.receiveOrNull()
     }

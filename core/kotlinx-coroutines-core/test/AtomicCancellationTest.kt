@@ -9,6 +9,7 @@ import kotlinx.coroutines.experimental.selects.*
 import kotlin.test.*
 
 class AtomicCancellationTest : TestBase() {
+
     @Test
     fun testSendAtomicCancel() = runBlocking {
         expect(1)

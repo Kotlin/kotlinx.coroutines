@@ -31,9 +31,13 @@ import kotlin.coroutines.experimental.*
  * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
  * with corresponding [coroutineContext] element.
  *
+ * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
+ *        to cancellation and error handling may change in the future.
+ *
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
+@ExperimentalCoroutinesApi
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend ProducerScope<T>.() -> Unit
@@ -62,6 +66,7 @@ public fun <T> publish(
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 
+@Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
 private class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
     private val subscriber: Subscriber<T>
@@ -216,7 +221,7 @@ private class PublisherCoroutine<in T>(
     }
 
     // Subscription impl
-    override fun cancel() {
-        cancel(cause = null)
-    }
+    @JvmName("cancel")
+    @Suppress("NOTHING_TO_OVERRIDE", "ACCIDENTAL_OVERRIDE")
+    override fun cancelSubscription() = super.cancel(null)
 }

@@ -106,7 +106,7 @@ class JobExceptionHandlingTest : TestBase() {
                     expect(3) // <- child's child is launched successfully
                     try {
                         yield()
-                    } catch (e: JobCancellationException) {
+                    } catch (e: CancellationException) {
                         throw ArithmeticException()
                     }
                 }
@@ -169,7 +169,7 @@ class JobExceptionHandlingTest : TestBase() {
                     expect(3) // <- child's child is launched successfully
                     try {
                         yield()
-                    } catch (e: JobCancellationException) {
+                    } catch (e: CancellationException) {
                         throw ArithmeticException()
                     }
                 }

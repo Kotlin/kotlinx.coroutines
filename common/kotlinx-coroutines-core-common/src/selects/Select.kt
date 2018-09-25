@@ -42,10 +42,22 @@ public interface SelectBuilder<in R> {
      * Clause that selects the given [block] after a specified timeout passes.
      * If timeout is negative or zero, [block] is selected immediately.
      *
-     * @param time timeout time
-     * @param unit timeout unit (milliseconds by default)
+     * **Note: This is an experimental api.** It may be replaced with light-weight timer/timeout channels in the future.
+     *
+     * @param timeMillis timeout time in milliseconds.
      */
-    public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R)
+    @ExperimentalCoroutinesApi
+    public fun onTimeout(timeMillis: Long, block: suspend () -> R)
+
+    /**
+     * @suppress **Deprecated**: onTimeout(unit.toMillis(time), block)`
+     */
+    @Deprecated(
+        message = "Replace with onTimeout(unit.toMillis(time), block)",
+        replaceWith = ReplaceWith("onTimeout(unit.toMillis(time), block)")
+    )
+    public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R) =
+        onTimeout(time.convertToMillis(unit), block)
 }
 
 /**
@@ -56,6 +68,7 @@ public interface SelectClause0 {
      * Registers this clause with the specified [select] instance and [block] of code.
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun <R> registerSelectClause0(select: SelectInstance<R>, block: suspend () -> R)
 }
 
@@ -67,6 +80,7 @@ public interface SelectClause1<out Q> {
      * Registers this clause with the specified [select] instance and [block] of code.
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (Q) -> R)
 }
 
@@ -78,6 +92,7 @@ public interface SelectClause2<in P, out Q> {
      * Registers this clause with the specified [select] instance and [block] of code.
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun <R> registerSelectClause2(select: SelectInstance<R>, param: P, block: suspend (Q) -> R)
 }
 
@@ -87,6 +102,7 @@ public interface SelectClause2<in P, out Q> {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public interface SelectInstance<in R> {
     /**
      * Returns `true` when this [select] statement had already picked a clause to execute.
@@ -404,8 +420,8 @@ internal class SelectBuilderImpl<in R>(
         registerSelectClause2(this@SelectBuilderImpl, param, block)
     }
 
-    override fun onTimeout(time: Long, unit: TimeUnit, block: suspend () -> R) {
-        if (time <= 0L) {
+    override fun onTimeout(timeMillis: Long, block: suspend () -> R) {
+        if (timeMillis <= 0L) {
             if (trySelect(null))
                 block.startCoroutineUnintercepted(completion)
             return
@@ -416,7 +432,7 @@ internal class SelectBuilderImpl<in R>(
             if (trySelect(null))
                 block.startCoroutineCancellable(completion) // shall be cancellable while waits for dispatch
         }
-        disposeOnSelect(context.delay.invokeOnTimeout(time, unit, action))
+        disposeOnSelect(context.delay.invokeOnTimeout(timeMillis, action))
     }
 
     private class DisposeNode(

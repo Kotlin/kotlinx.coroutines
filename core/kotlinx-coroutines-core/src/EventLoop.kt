@@ -6,7 +6,6 @@ package kotlinx.coroutines.experimental
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.timeunit.*
 import java.util.concurrent.locks.*
 import kotlin.coroutines.experimental.*
 
@@ -16,7 +15,10 @@ import kotlin.coroutines.experimental.*
  *
  * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi // todo: review KDoc references to this interface
 public interface EventLoop: ContinuationInterceptor {
     /**
      * Processes next event in this event loop.
@@ -52,8 +54,11 @@ public interface EventLoop: ContinuationInterceptor {
  *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
  * }
  * ```
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
 @Suppress("FunctionName")
+@InternalCoroutinesApi
 public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): EventLoop =
     EventLoopImpl(thread).apply {
         if (parentJob != null) initParentJob(parentJob)
@@ -70,6 +75,18 @@ public fun EventLoop_Deprecated(thread: Thread = Thread.currentThread(), parentJ
 private const val DELAYED = 0
 private const val REMOVED = 1
 private const val RESCHEDULED = 2
+
+private const val MS_TO_NS = 1_000_000L
+private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
+
+internal fun delayToNanos(timeMillis: Long): Long = when {
+    timeMillis <= 0 -> 0L
+    timeMillis >= MAX_MS -> Long.MAX_VALUE
+    else -> timeMillis * MS_TO_NS
+}
+
+internal fun delayNanosToMillis(timeNanos: Long): Long =
+    timeNanos / MS_TO_NS
 
 @Suppress("PrivatePropertyName")
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
@@ -121,8 +138,8 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     override fun dispatch(context: CoroutineContext, block: Runnable) =
         execute(block)
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) =
-        schedule(DelayedResumeTask(time, unit, continuation))
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
+        schedule(DelayedResumeTask(timeMillis, continuation))
 
     override fun processNextEvent(): Long {
         if (!isCorrectThread()) return Long.MAX_VALUE
@@ -260,11 +277,11 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     internal abstract inner class DelayedTask(
-        time: Long, timeUnit: TimeUnit
+        timeMillis: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         override var index: Int = -1
-        var state = DELAYED // Guarded by by lock on this task for reschedule/dispose purposes
-        @JvmField val nanoTime: Long = timeSource.nanoTime() + timeUnit.toNanos(time)
+        @JvmField var state = DELAYED // Guarded by by lock on this task for reschedule/dispose purposes
+        @JvmField val nanoTime: Long = timeSource.nanoTime() + delayToNanos(timeMillis)
 
         override fun compareTo(other: DelayedTask): Int {
             val dTime = nanoTime - other.nanoTime
@@ -302,10 +319,9 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     private inner class DelayedResumeTask(
-        time: Long, timeUnit: TimeUnit,
+        timeMillis: Long,
         private val cont: CancellableContinuation<Unit>
-    ) : DelayedTask(time, timeUnit) {
-
+    ) : DelayedTask(timeMillis) {
         init {
             // Note that this operation isn't lock-free, but very short
             cont.disposeOnCancellation(this)
@@ -318,9 +334,9 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     // Cannot be moved to DefaultExecutor due to BE bug
     internal inner class DelayedRunnableTask(
-        time: Long, timeUnit: TimeUnit,
+        time: Long,
         private val block: Runnable
-    ) : DelayedTask(time, timeUnit) {
+    ) : DelayedTask(time) {
         override fun run() { block.run() }
         override fun toString(): String = super.toString() + block.toString()
     }

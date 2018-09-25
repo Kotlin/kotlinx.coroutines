@@ -5,7 +5,6 @@
 package kotlinx.coroutines.experimental.swing
 
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.swing.Swing.delay
 import java.awt.event.*
 import java.util.concurrent.*
 import javax.swing.*
@@ -34,18 +33,18 @@ public sealed class SwingDispatcher : CoroutineDispatcher(), Delay
         imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.swing.Swing"])
 )
 // todo: it will become an internal implementation object
-object Swing : SwingDispatcher(), Delay {
+object Swing : SwingDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
-    override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val timer = schedule(time, unit, ActionListener {
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             with(continuation) { resumeUndispatched(Unit) }
         })
         continuation.invokeOnCancellation { timer.stop() }
     }
 
-    override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val timer = schedule(time, unit, ActionListener {
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             block.run()
         })
         return object : DisposableHandle {

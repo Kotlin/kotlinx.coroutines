@@ -65,9 +65,10 @@ class LinVerifier(
 ) : Verifier(actorsPerThread, testInstance, resetMethod) {
     private val possibleResultsSet: Set<List<List<Result>>> =
         generateAllLinearizableExecutions(actorsPerThread)
+            .asSequence()
             .map { linEx: List<Actor> ->
                 val res: List<Result> = executeActors(testInstance, linEx)
-                val actorIds = linEx.withIndex().associateBy({ it.value}, { it.index })
+                val actorIds = linEx.asSequence().withIndex().associateBy({ it.value}, { it.index })
                 actorsPerThread.map { actors -> actors.map { actor -> res[actorIds[actor]!!] } }
             }.toSet()
 

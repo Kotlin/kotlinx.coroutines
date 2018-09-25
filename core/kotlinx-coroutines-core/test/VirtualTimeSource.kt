@@ -24,7 +24,7 @@ internal inline fun withVirtualTimeSource(log: PrintStream = System.`out`, block
     }
 }
 
-private val NOT_PARKED = -1L
+private const val NOT_PARKED = -1L
 
 private class ThreadStatus {
     @Volatile @JvmField
@@ -34,9 +34,9 @@ private class ThreadStatus {
     override fun toString(): String = "parkedTill = ${TimeUnit.NANOSECONDS.toMillis(parkedTill)} ms, permit = $permit"
 }
 
-private val MAX_WAIT_NANOS = 10_000_000_000L // 10s
-private val REAL_TIME_STEP_NANOS = 200_000_000L // 200 ms
-private val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to better track real-time
+private const val MAX_WAIT_NANOS = 10_000_000_000L // 10s
+private const val REAL_TIME_STEP_NANOS = 200_000_000L // 200 ms
+private const val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to better track real-time
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 internal class VirtualTimeSource(

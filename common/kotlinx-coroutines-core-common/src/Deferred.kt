@@ -70,7 +70,10 @@ public interface Deferred<out T> : Job {
      *
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete. See also [getCompletionExceptionOrNull].
+     *
+     * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun getCompleted(): T
 
     /**
@@ -80,7 +83,10 @@ public interface Deferred<out T> : Job {
      *
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete. See also [getCompleted].
+     *
+     * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */
+    @ExperimentalCoroutinesApi
     public fun getCompletionExceptionOrNull(): Throwable?
 
     /**
@@ -91,39 +97,16 @@ public interface Deferred<out T> : Job {
 }
 
 /**
- * Creates new coroutine and returns its future result as an implementation of [Deferred].
- * The running coroutine is cancelled when the resulting deferred is [cancelled][Job.cancel].
- *
- * Coroutine context is inherited from a [CoroutineScope], additional context elements can be specified with [context] argument.
- * If the context does not have any dispatcher nor any other [ContinuationInterceptor], then [Dispatchers.Default] is used.
- * The parent job is inherited from a [CoroutineScope] as well, but it can also be overridden
- * with corresponding [coroutineContext] element.
- *
- * By default, the coroutine is immediately scheduled for execution.
- * Other options can be specified via `start` parameter. See [CoroutineStart] for details.
- * An optional [start] parameter can be set to [CoroutineStart.LAZY] to start coroutine _lazily_. In this case,,
- * the resulting [Deferred] is created in _new_ state. It can be explicitly started with [start][Job.start]
- * function and will be started implicitly on the first invocation of [join][Job.join], [await][Deferred.await] or [awaitAll].
- *
- * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
- * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the coroutine (see [Job.invokeOnCompletion]).
- * @param block the coroutine code.
+ * @suppress **Deprecated**: onCompletion parameter is deprecated.
  */
+@Deprecated("onCompletion parameter is deprecated")
 public fun <T> CoroutineScope.async(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     onCompletion: CompletionHandler? = null,
     block: suspend CoroutineScope.() -> T
-): Deferred<T> {
-    val newContext = newCoroutineContext(context)
-    val coroutine = if (start.isLazy)
-        LazyDeferredCoroutine(newContext, block) else
-        DeferredCoroutine<T>(newContext, active = true)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
-    coroutine.start(start, coroutine, block)
-    return coroutine
-}
+): Deferred<T> =
+    async(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }
 
 /**
  * Creates new coroutine and returns its future result as an implementation of [Deferred].
@@ -193,23 +176,3 @@ public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend C
 public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T): Deferred<T> =
     GlobalScope.async(context, block = block)
 
-@Suppress("UNCHECKED_CAST")
-private open class DeferredCoroutine<T>(
-    parentContext: CoroutineContext,
-    active: Boolean
-) : AbstractCoroutine<T>(parentContext, active), Deferred<T>, SelectClause1<T> {
-    override fun getCompleted(): T = getCompletedInternal() as T
-    override suspend fun await(): T = awaitInternal() as T
-    override val onAwait: SelectClause1<T> get() = this
-    override fun <R> registerSelectClause1(select: SelectInstance<R>, block: suspend (T) -> R) =
-        registerSelectClause1Internal(select, block)
-}
-
-private class LazyDeferredCoroutine<T>(
-    parentContext: CoroutineContext,
-    private val block: suspend CoroutineScope.() -> T
-) : DeferredCoroutine<T>(parentContext, active = false) {
-    override fun onStart() {
-        block.startCoroutineCancellable(this, this)
-    }
-}

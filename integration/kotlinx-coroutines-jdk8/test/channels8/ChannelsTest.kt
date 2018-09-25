@@ -27,6 +27,7 @@ class ChannelsTest : TestBase() {
 
     @Test
     fun testReceiveChannelAsStream() {
-        assertEquals(testList, testList.asReceiveChannel().asStream().collect(Collectors.toList()))
+        testList.asReceiveChannel()
+        assertEquals(testList, testList.toList().stream().collect(Collectors.toList()))
     }
 }

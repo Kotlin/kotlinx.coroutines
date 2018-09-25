@@ -12,7 +12,7 @@ fun main(args: Array<String>)  {
     log("Started")
     val deferred = GlobalScope.async {
         log("Busy...")
-        delay(1, TimeUnit.SECONDS)
+        delay(1000)
         log("Done...")
         42
     }
