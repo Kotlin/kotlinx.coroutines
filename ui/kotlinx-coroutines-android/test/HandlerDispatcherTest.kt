@@ -118,6 +118,15 @@ class HandlerDispatcherTest : TestBase() {
         job.join(mainLooper)
     }
 
+    @Test
+    fun testToString() {
+        ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", 28)
+        val main = Looper.getMainLooper().asHandler(async = true).asCoroutineDispatcher("testName")
+        assertEquals("testName", main.toString())
+        assertEquals("testName [immediate]", main.immediate.toString())
+        assertEquals("testName [immediate]", main.immediate.immediate.toString())
+    }
+
     private suspend fun Job.join(mainLooper: ShadowLooper) {
         expect(1)
         mainLooper.unPause()

@@ -30,6 +30,8 @@ public abstract class kotlinx/coroutines/experimental/android/HandlerDispatcher 
 public final class kotlinx/coroutines/experimental/android/HandlerDispatcherKt {
 	public static final fun awaitFrame (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public static final fun from (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
+	public static final fun from (Landroid/os/Handler;Ljava/lang/String;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
+	public static synthetic fun from$default (Landroid/os/Handler;Ljava/lang/String;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
 	public static final fun getMain (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
 }
 

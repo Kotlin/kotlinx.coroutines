@@ -37,11 +37,13 @@ public sealed class HandlerDispatcher : CoroutineDispatcher(), Delay {
 }
 
 /**
- * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher].
+ * Represents an arbitrary [Handler] as a implementation of [CoroutineDispatcher]
+ * with an optional [name] for nicer debugging
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
-public fun Handler.asCoroutineDispatcher(): HandlerDispatcher =
-    HandlerContext(this)
+@JvmOverloads
+public fun Handler.asCoroutineDispatcher(name: String? = null): HandlerDispatcher =
+    HandlerContext(this, name)
 
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
 
@@ -139,7 +141,12 @@ public class HandlerContext private constructor(
     public suspend fun awaitFrame(): Long =
         kotlinx.coroutines.experimental.android.awaitFrame()
 
-    override fun toString() = name ?: handler.toString()
+    override fun toString(): String =
+        if (name != null) {
+            if (invokeImmediately) "$name [immediate]" else name
+        } else {
+            handler.toString()
+        }
 
     override fun equals(other: Any?): Boolean = other is HandlerContext && other.handler === handler
     override fun hashCode(): Int = System.identityHashCode(handler)
