@@ -5,8 +5,10 @@
 package kotlinx.coroutines.experimental.scheduling
 
 import kotlinx.coroutines.experimental.TestBase
-import org.junit.Test
-import java.util.concurrent.CountDownLatch
+import org.junit.*
+import java.lang.Runnable
+import java.util.concurrent.*
+import kotlin.coroutines.experimental.*
 
 class CoroutineSchedulerTest : TestBase() {
 
@@ -113,6 +115,16 @@ class CoroutineSchedulerTest : TestBase() {
     @Test(expected = IllegalArgumentException::class)
     fun testCorePoolSizeGreaterThanMaxPoolSize() {
         ExperimentalCoroutineDispatcher(4, 1)
+    }
+
+    @Test
+    fun testSelfClose() {
+        val dispatcher = ExperimentalCoroutineDispatcher(1, 1)
+        val latch = CountDownLatch(1)
+        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+            dispatcher.close(); latch.countDown()
+        })
+        latch.await()
     }
 
     private fun testUniformDistribution(worker: CoroutineScheduler.Worker, bound: Int) {
