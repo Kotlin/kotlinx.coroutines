@@ -102,14 +102,16 @@ class WithContextTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithJobWithSuspend() = runTest {
+    fun testCancelWithJobWithSuspend() = runTest(
+        expected = { it is CancellationException }
+    ) {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch to here
             expect(4)
         }
         expect(2)
         val job = Job()
-        val result = withContext(coroutineContext + job) { // same context + new job
+        withContext(coroutineContext + job) { // same context + new job
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
@@ -118,12 +120,12 @@ class WithContextTest : TestBase() {
                 yield() // shall throw CancellationException
                 expectUnreached()
             } catch (e: CancellationException) {
-                expect(6)
+                finish(6)
             }
             "OK"
         }
-        assertEquals("OK", result)
-        finish(7)
+        // still fails, because parent job was cancelled
+        expectUnreached()
     }
 
     @Test
@@ -134,40 +136,6 @@ class WithContextTest : TestBase() {
         job.cancel() // cancel before it has a chance to run
         withContext(job + wrapperDispatcher(coroutineContext)) {
             expectUnreached() // will get cancelled
-        }
-    }
-
-    @Test
-    fun testRunAtomicTryCancel() = runTest {
-        expect(1)
-        val job = Job()
-        job.cancel() // try to cancel before it has a chance to run
-
-        try {
-            withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.ATOMIC) {
-                require(!isActive) // but it had still started, because atomically
-                expect(2)
-                yield() // but will cancel here
-                expectUnreached()
-            }
-        } catch (e: CancellationException) {
-            // This block should be invoked *after* context body
-            finish(3)
-        }
-    }
-
-    @Test
-    fun testRunUndispatchedTryCancel() = runTest(
-        expected = { it is CancellationException }
-    ) {
-        expect(1)
-        val job = Job()
-        job.cancel() // try to cancel before it has a chance to run
-        withContext(job + wrapperDispatcher(coroutineContext), CoroutineStart.UNDISPATCHED) { // but start atomically
-            require(!isActive) // but it had still started, because undispatched
-            finish(2)
-            yield() // but will cancel here
-            expectUnreached()
         }
     }
 
@@ -229,6 +197,54 @@ class WithContextTest : TestBase() {
         expect(6)
         yield() // again to exception handler
         finish(8)
+    }
+
+    @Test
+    fun testWithContextScopeFailure() = runTest {
+        expect(1)
+        try {
+            withContext(wrapperDispatcher(coroutineContext)) {
+                expect(2)
+                // launch a child that fails
+                launch {
+                    expect(4)
+                    throw TestException()
+                }
+                expect(3)
+            }
+        } catch (e: TestException) {
+            // ensure that we can catch exception outside of the scope
+            expect(5)
+        }
+        finish(6)
+    }
+
+    @Test
+    fun testWithContextChildWaitSameContext() = runTest {
+        expect(1)
+        withContext(coroutineContext) {
+            expect(2)
+            launch {
+                // ^^^ schedules to main thread
+                expect(4) // waits before return
+            }
+            expect(3)
+        }
+        finish(5)
+    }
+
+    @Test
+    fun testWithContextChildWaitWrappedContext() = runTest {
+        expect(1)
+        withContext(wrapperDispatcher(coroutineContext)) {
+            expect(2)
+            launch {
+                // ^^^ schedules to main thread
+                expect(4) // waits before return
+            }
+            expect(3)
+        }
+        finish(5)
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
