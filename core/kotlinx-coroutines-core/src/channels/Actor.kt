@@ -201,9 +201,8 @@ private open class ActorCoroutine<E>(
         _channel.cancel(cause)
     }
 
-    override fun handleJobException(exception: Throwable) {
-        handleCoroutineException(context, exception, this)
-    }
+    override val cancelsParent: Boolean get() = true
+    override fun handleJobException(exception: Throwable) = handleExceptionViaHandler(parentContext, exception)
 }
 
 private class LazyActorCoroutine<E>(

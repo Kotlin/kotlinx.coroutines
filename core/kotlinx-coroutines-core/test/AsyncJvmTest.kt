@@ -27,11 +27,11 @@ class AsyncJvmTest : TestBase() {
         expect(2)
         yield() // to async
         expect(4)
-        check(d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
+        check(d.isActive && !d.isCompleted && !d.isCancelled)
         check(d.cancel())
-        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
-        check(d.cancel()) // second attempt returns false
-        check(!d.isActive && !d.isCompleted && !d.isCompletedExceptionally)
+        check(!d.isActive && !d.isCompleted && d.isCancelled)
+        check(d.cancel()) // second attempt still returns true (still cancelling)
+        check(!d.isActive && !d.isCompleted && d.isCancelled)
         expect(5)
         try {
             d.await() // awaits
@@ -40,7 +40,9 @@ class AsyncJvmTest : TestBase() {
             expect(7)
             check(e is CancellationException)
         }
-        check(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
+        check(!d.isActive && d.isCompleted && d.isCancelled)
+        check(!d.cancel()) // now cancel return false -- already cancelled
+        check(!d.isActive && d.isCompleted && d.isCancelled)
         finish(8)
     }
 }

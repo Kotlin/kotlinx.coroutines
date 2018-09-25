@@ -293,7 +293,7 @@ class CoroutinesTest : TestBase() {
             expect(4)
             throw TestException("Crashed")
         }
-        launch(parent, CoroutineStart.UNDISPATCHED) {
+        val child = launch(parent, CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
                 yield() // to test
@@ -309,6 +309,8 @@ class CoroutinesTest : TestBase() {
         expect(6)
         parent.join() // make sure crashed parent still waits for its child
         finish(8)
+        // make sure is cancelled
+        assertTrue(child.isCancelled)
     }
 
     @Test

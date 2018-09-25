@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import java.util.*
 import java.util.concurrent.*
 import kotlin.concurrent.withLock as withLockJvm
 
@@ -13,3 +14,5 @@ internal actual fun <E> subscriberList(): SubscribersList<E> = CopyOnWriteArrayL
 internal actual typealias ReentrantLock = java.util.concurrent.locks.ReentrantLock
 
 internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = this.withLockJvm(action)
+
+internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = Collections.newSetFromMap(IdentityHashMap(expectedSize))

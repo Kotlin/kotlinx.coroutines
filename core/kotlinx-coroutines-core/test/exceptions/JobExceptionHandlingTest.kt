@@ -270,4 +270,36 @@ class JobExceptionHandlingTest : TestBase() {
         assertTrue(suppressed[0] is IOException)
         assertTrue(suppressed[1] is IllegalArgumentException)
     }
+
+    @Test
+    fun testBadException() = runTest(unhandled = listOf({e -> e is BadException})) {
+        val job = launch(Job()) {
+            expect(2)
+            launch {
+                expect(3)
+                throw BadException()
+            }
+
+            launch(start = CoroutineStart.ATOMIC) {
+                expect(4)
+                throw BadException()
+            }
+
+            yield()
+            BadException()
+        }
+
+        expect(1)
+        yield()
+        yield()
+        expect(5)
+        job.join()
+        finish(6)
+    }
+
+    private class BadException : Exception() {
+        override fun hashCode(): Int {
+            throw AssertionError()
+        }
+    }
 }

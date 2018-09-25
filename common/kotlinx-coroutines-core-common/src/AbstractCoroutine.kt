@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.CoroutineStart.*
+import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
 
@@ -14,12 +15,12 @@ import kotlin.coroutines.experimental.*
  * This class implements completion [Continuation], [Job], and [CoroutineScope] interfaces.
  * It stores the result of continuation in the state of the job.
  * This coroutine waits for children coroutines to finish before completing and
- * is cancelled through an intermediate _cancelling_ state.
+ * fails through an intermediate _failing_ state.
  *
  * The following methods are available for override:
  *
  * * [onStart] is invoked when coroutine is create in not active state and is [started][Job.start].
- * * [onCancellation] is invoked as soon as coroutine is [cancelled][cancel] (becomes _cancelling_)
+ * * [onCancellation] is invoked as soon as coroutine is _failing_, or is cancelled,
  *   or when it completes for any reason.
  * * [onCompleted] is invoked when coroutine completes with a value.
  * * [onCompletedExceptionally] in invoked when coroutines completes with exception.
@@ -33,12 +34,22 @@ import kotlin.coroutines.experimental.*
 @Suppress("EXPOSED_SUPER_CLASS")
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
-    private val parentContext: CoroutineContext,
+    /**
+     * Context of the parent coroutine.
+     */
+    @JvmField
+    protected val parentContext: CoroutineContext,
     active: Boolean = true
 ) : JobSupport(active), Job, Continuation<T>, CoroutineScope {
+    /**
+     * Context of this coroutine that includes this coroutine as a [Job].
+     */
     @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
-    @Deprecated("Replaced with context", replaceWith = ReplaceWith("context"))
+
+    /**
+     * Context of this scope which is the same as the [context] of this coroutine.
+     */
     public override val coroutineContext: CoroutineContext get() = context
 
     override val isActive: Boolean get() = super<JobSupport>.isActive
@@ -66,20 +77,16 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when this coroutine is cancelled or is completed,
+     * This function is invoked once when this coroutine is cancelled
      * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
      *
      * The meaning of [cause] parameter:
      * * Cause is `null` when job has completed normally.
      * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had _failed_.
+     * * Otherwise, the job had been cancelled or failed with exception.
      */
-    protected open fun onCancellation(cause: Throwable?) {}
-
-    internal override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
-        onCancellation(exceptionally?.cause)
-    }
+    protected override fun onCancellation(cause: Throwable?) {}
 
     /**
      * This function is invoked once when job is completed normally with the specified [value].
@@ -89,10 +96,11 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * This function is invoked once when job is completed exceptionally with the specified [exception].
      */
+    // todo: rename to onCancelled
     protected open fun onCompletedExceptionally(exception: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int) {
+    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         if (state is CompletedExceptionally)
             onCompletedExceptionally(state.cause)
         else

@@ -25,7 +25,7 @@ public fun <T> Deferred<T>.asTask(): Task<T> {
     val source = TaskCompletionSource<T>(cancellation.token)
 
     invokeOnCompletion callback@{
-        if (isCancelled) {
+        if (it is CancellationException) {
             cancellation.cancel()
             return@callback
         }

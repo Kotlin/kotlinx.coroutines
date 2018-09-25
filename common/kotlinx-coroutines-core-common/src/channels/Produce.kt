@@ -168,18 +168,12 @@ public fun <E> buildChannel(
 private class ProducerCoroutine<E>(
     parentContext: CoroutineContext, channel: Channel<E>
 ) : ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E> {
-
     override val isActive: Boolean
         get() = super<ChannelCoroutine>.isActive
 
-    override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
-        val cause = exceptionally?.cause
-        val processed = when (exceptionally) {
-            // producer coroutine was cancelled -- cancel channel, but without cause if it was closed without cause
-            is Cancelled -> _channel.cancel(if (cause is CancellationException) null else cause)
-            else -> _channel.close(cause) // producer coroutine has completed -- close channel
-        }
-        if (!processed && cause != null)
-            handleCoroutineException(context, cause, this)
+    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+        val cause = (state as? CompletedExceptionally)?.cause
+        val processed = _channel.close(cause)
+        if (cause != null && !processed && suppressed) handleExceptionViaHandler(context, cause)
     }
 }

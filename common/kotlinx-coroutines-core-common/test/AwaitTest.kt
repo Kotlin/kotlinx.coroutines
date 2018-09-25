@@ -86,7 +86,7 @@ class AwaitTest : TestBase() {
         }
 
         yield()
-        require(d.isCompleted && d2.isCompletedExceptionally && d3.isActive)
+        require(d.isCompleted && d2.isCancelled && d3.isActive)
         d3.cancel()
         finish(6)
     }
@@ -203,9 +203,9 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllFullyCompletedExceptionally() = runTest {
         val d1 = CompletableDeferred<Unit>(parent = null)
-            .apply { completeExceptionally(TestException()) }
+            .apply { cancel(TestException()) }
         val d2 = CompletableDeferred<Unit>(parent = null)
-            .apply { completeExceptionally(TestException()) }
+            .apply { cancel(TestException()) }
         val job = async { expect(3) }
         expect(1)
         try {

@@ -116,7 +116,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    override fun cancel(cause: Throwable?): Boolean = false
+    override fun cancel(cause: Throwable?): Boolean = false // never handles exceptions
 
     /**
      * Always returns [emptySequence].
@@ -127,12 +127,12 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         get() = emptySequence()
 
     /**
-     * Always returns no-op handle and does not do anything.
+     * Always returns [NonDisposableHandle] and does not do anything.
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @Suppress("OverridingDeprecatedMember")
+    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     @InternalCoroutinesApi
-    override fun attachChild(child: Job): DisposableHandle = NonDisposableHandle
+    override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
 
     /**
      * Does not do anything.

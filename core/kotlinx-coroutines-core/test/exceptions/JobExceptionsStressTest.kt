@@ -33,36 +33,39 @@ class JobExceptionsStressTest : TestBase() {
                 val job = launch(NonCancellable) {
                     launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
-                        throw ArithmeticException()
+                        throw TestException1()
                     }
                     launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
-                        throw IOException()
+                        throw TestException2()
                     }
                     launch(start = CoroutineStart.ATOMIC) {
                         barrier.await()
-                        throw IllegalArgumentException()
+                        throw TestException3()
                     }
-                    delay(Long.MAX_VALUE)
+                    delay(1000) // to avoid OutOfMemory errors....
                 }
                 barrier.await()
                 job.join()
             }
-
             val classes = mutableSetOf(
-                IllegalArgumentException::class,
-                IOException::class, ArithmeticException::class)
-
+                TestException1::class,
+                TestException2::class,
+                TestException3::class
+            )
             val suppressedExceptions = exception.suppressed().toSet()
             assertTrue(classes.remove(exception::class),
-                "Failed to remove ${exception::class} from $suppressedExceptions")
-
+                "Failed to remove ${exception::class} from $suppressedExceptions"
+            )
             for (throwable in suppressedExceptions.toSet()) { // defensive copy
                 assertTrue(classes.remove(throwable::class),
                     "Failed to remove ${throwable::class} from $suppressedExceptions")
             }
-
             assertTrue(classes.isEmpty(), "Expected all exception to be present, but following exceptions are missing: $classes")
         }
     }
+
+    private class TestException1 : Exception()
+    private class TestException2 : Exception()
+    private class TestException3 : Exception()
 }

@@ -14,6 +14,11 @@ internal open class ChannelCoroutine<E>(
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
     val channel: Channel<E> get() = this
 
-    override fun cancel(): Boolean = super.cancel()
-    override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
+    override fun cancel() = cancel(null)
+
+    override fun cancel(cause: Throwable?): Boolean {
+        val wasCancelled = _channel.cancel(cause)
+        if (wasCancelled) super.cancel(cause) // cancel the job
+        return wasCancelled
+    }
 }

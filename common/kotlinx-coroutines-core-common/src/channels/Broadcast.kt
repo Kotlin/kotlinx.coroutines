@@ -111,17 +111,16 @@ private open class BroadcastCoroutine<E>(
     override val channel: SendChannel<E>
         get() = this
 
-    override fun cancel(): Boolean = super.cancel()
-    public override fun cancel(cause: Throwable?): Boolean = super.cancel(cause)
+    override fun cancel(cause: Throwable?): Boolean {
+        val wasCancelled = _channel.cancel(cause)
+        if (wasCancelled) super.cancel(cause) // cancel the job
+        return wasCancelled
+    }
 
-    override fun onCancellationInternal(exceptionally: CompletedExceptionally?) {
-        val cause = exceptionally?.cause
-        val processed = when (exceptionally) {
-            is Cancelled -> _channel.cancel(cause) // producer coroutine was cancelled -- cancel channel
-            else -> _channel.close(cause) // producer coroutine has completed -- close channel
-        }
-        if (!processed && cause != null)
-            handleCoroutineException(context, cause, this)
+    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+        val cause = (state as? CompletedExceptionally)?.cause
+        val processed = _channel.close(cause)
+        if (cause != null && !processed && suppressed) handleExceptionViaHandler(context, cause)
     }
 }
 

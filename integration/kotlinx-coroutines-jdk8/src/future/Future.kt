@@ -160,7 +160,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
         } catch (e: Throwable) {
             // unwrap original cause from ExecutionException
             val original = (e as? ExecutionException)?.cause ?: e
-            CompletableDeferred<T>().also { it.completeExceptionally(original) }
+            CompletableDeferred<T>().also { it.cancel(original) }
         }
     }
     val result = CompletableDeferred<T>()
@@ -168,7 +168,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
         if (exception == null) {
             result.complete(value)
         } else {
-            result.completeExceptionally(exception)
+            result.cancel(exception)
         }
     }
     if (this is Future<*>) result.cancelFutureOnCompletion(this)

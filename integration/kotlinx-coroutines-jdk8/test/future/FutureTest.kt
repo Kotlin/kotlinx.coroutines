@@ -277,7 +277,7 @@ class FutureTest : TestBase() {
         }
         val deferred = future.asDeferred()
 
-        assertTrue(deferred.isCompletedExceptionally)
+        assertTrue(deferred.isCancelled)
         val completionException = deferred.getCompletionExceptionOrNull()!!
         assertTrue(completionException is TestException)
         assertEquals("something went wrong", completionException.message)
@@ -306,7 +306,7 @@ class FutureTest : TestBase() {
             deferred.await()
             fail("deferred.await() should throw an exception")
         } catch (e: Exception) {
-            assertTrue(deferred.isCompletedExceptionally)
+            assertTrue(deferred.isCancelled)
             assertTrue(e is CompletionException) // that's how supplyAsync wraps it
             val cause = e.cause!!
             assertTrue(cause is TestException)

@@ -18,38 +18,41 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  *
  * If there is a [Job] in the context and it's not a [caller], then [Job.cancel] is invoked.
  * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
- * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used.
- * Otherwise all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
+ * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
+ * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
 @JvmOverloads // binary compatibility
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
-    // if exception handling fails, make sure the original exception is not lost
+    // Ignore CancellationException (they are normal ways to terminate a coroutine)
+    if (exception is CancellationException) return // nothing to do
+    // Try propagate exception to parent
+    val job = context[Job]
+    if (job !== null && job !== caller && job.cancel(exception)) return // handle by parent
+    // otherwise -- use exception handlers
+    handleExceptionViaHandler(context, exception)
+}
+
+internal fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
+    // Invoke exception handler from the context if present
     try {
-        // Ignore CancellationException (they are normal ways to terminate a coroutine)
-        if (exception is CancellationException) {
-            return
-        }
-        // If parent is successfully cancelled, we're done, it is now its responsibility to handle the exception
-        val parent = context[Job]
-        // E.g. actor registers itself in the context, in that case we should invoke handler
-        if (parent !== null && parent !== caller && parent.cancel(exception)) {
-            return
-        }
-        // If not, invoke exception handler from the context
         context[CoroutineExceptionHandler]?.let {
             it.handleException(context, exception)
             return
         }
-        // If handler is not present in the context, fallback to the global handler
-        handleCoroutineExceptionImpl(context, exception)
-    } catch (handlerException: Throwable) {
-        // simply rethrow if handler threw the original exception
-        if (handlerException === exception) throw exception
-        // handler itself crashed for some other reason -- that is bad -- keep both
-        throw RuntimeException("Exception while trying to handle coroutine exception", exception).apply {
-            addSuppressedThrowable(handlerException)
-        }
+    } catch (t: Throwable) {
+        handleCoroutineExceptionImpl(context, handlerException(exception, t))
+        return
+    }
+
+    // If handler is not present in the context or exception was thrown, fallback to the global handler
+    handleCoroutineExceptionImpl(context, exception)
+}
+
+internal fun handlerException(originalException: Throwable, thrownException: Throwable): Throwable {
+    if (originalException === thrownException) return originalException
+    return RuntimeException("Exception while trying to handle coroutine exception", thrownException).apply {
+        addSuppressedThrowable(originalException)
     }
 }
 

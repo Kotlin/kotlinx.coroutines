@@ -14,3 +14,5 @@ internal class NoOpLock {
 }
 
 internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
+
+internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
