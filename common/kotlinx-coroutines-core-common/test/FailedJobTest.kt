@@ -38,7 +38,7 @@ class FailedJobTest : TestBase() {
         finish(4)
         assertTrue(job.isCompleted)
         assertTrue(!job.isActive)
-        assertTrue(!job.isCancelled)
+        assertTrue(job.isCancelled)
     }
 
     @Test
@@ -57,7 +57,7 @@ class FailedJobTest : TestBase() {
         finish(4)
         assertTrue(job.isCompleted)
         assertTrue(!job.isActive)
-        assertTrue(!job.isCancelled)
+        assertTrue(job.isCancelled)
     }
 
     private class TestException : Exception()

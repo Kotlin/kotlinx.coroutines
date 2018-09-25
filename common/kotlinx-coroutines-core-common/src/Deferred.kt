@@ -18,7 +18,7 @@ import kotlin.coroutines.experimental.*
  * successful or failed result of the computation that was carried out. The result of the deferred is
  * available when it is [completed][isCompleted] and can be retrieved by [await] method, which throws
  * exception if the deferred had failed.
- * A _failed_ deferred is considered to be [completed exceptionally][isCompletedExceptionally].
+ * Note, that a _cancelled_ deferred is also considered to be completed.
  * The corresponding exception can be retrieved via [getCompletionExceptionOrNull] from a completed instance of deferred.
  *
  * Usually, a deferred value is created in _active_ state (it is created and started).
@@ -36,14 +36,17 @@ import kotlin.coroutines.experimental.*
 public interface Deferred<out T> : Job {
     /**
      * Returns `true` if computation of this deferred value has _completed exceptionally_.
-     * It is `true` when both [isCompleted] and [isFailed] are true.
+     * It is `true` when both [isCompleted] and [isCancelled] are true.
      * It implies that [isActive] is `false`.
+     *
+     * @suppress **Deprecated**: Use [isCancelled] && [isCompleted]
      */
+    @Deprecated("Use isCancelled && isCompleted", ReplaceWith("this.isCancelled && this.isCompleted"))
     public val isCompletedExceptionally: Boolean
 
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
-     * returning the resulting value or throwing the corresponding exception if the deferred had completed exceptionally or was cancelled.
+     * returning the resulting value or throwing the corresponding exception if the deferred was cancelled.
      *
      * This suspending function is cancellable.
      * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
@@ -63,8 +66,7 @@ public interface Deferred<out T> : Job {
 
     /**
      * Returns *completed* result or throws [IllegalStateException] if this deferred value has not
-     * [completed][isCompleted] yet. It throws the corresponding exception if this deferred has
-     * [completed exceptionally][isCompletedExceptionally].
+     * [completed][isCompleted] yet. It throws the corresponding exception if this deferred was [cancelled][isCancelled].
      *
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that
      * the value is already complete. See also [getCompletionExceptionOrNull].
@@ -72,8 +74,8 @@ public interface Deferred<out T> : Job {
     public fun getCompleted(): T
 
     /**
-     * Returns *completion exception* result if this deferred [completed exceptionally][isCompletedExceptionally],
-     * `null` if it is completed normally, or throws [IllegalStateException] if this deferred value has not
+     * Returns *completion exception* result if this deferred was [cancelled][isCancelled] and has [completed][isCompleted],
+     * `null` if it had completed normally, or throws [IllegalStateException] if this deferred value has not
      * [completed][isCompleted] yet.
      *
      * This function is designed to be used from [invokeOnCompletion] handlers, when there is an absolute certainty that

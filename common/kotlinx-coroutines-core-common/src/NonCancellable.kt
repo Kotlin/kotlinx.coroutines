@@ -24,9 +24,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     override val isActive: Boolean  get() = true
 
     /** Always returns `false`. */
-    override val isFailed: Boolean get() = false
-
-    /** Always returns `false`. */
     override val isCompleted: Boolean get() = false
 
     /** Always returns `false`. */
@@ -62,7 +59,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /** Always returns [NonDisposableHandle]. */
-    override fun invokeOnCompletion(onFailing: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
+    override fun invokeOnCompletion(onCancelling: Boolean, invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle =
         NonDisposableHandle
 
     /** Always returns `false`. */

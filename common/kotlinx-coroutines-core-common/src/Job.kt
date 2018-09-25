@@ -15,8 +15,8 @@ import kotlin.coroutines.experimental.*
 
 /**
  * A background job. Conceptually, a job is a cancellable thing with a life-cycle that
- * culminates in its completion. Jobs can be arranged into parent-child hierarchies where failure or cancellation
- * of parent lead to an immediate failure of all its [children].
+ * culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
+ * of parent lead to an immediate cancellation of all its [children] and vice versa.
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
  * `Job()` factory function.
@@ -25,23 +25,21 @@ import kotlin.coroutines.experimental.*
  *
  * A job has the following states:
  *
- * | **State**                        | [isActive] | [isCompleted] | [isFailed] | [isCancelled] |
- * | -------------------------------- | ---------- | ------------- | ---------- | ------------- |
- * | _New_ (optional initial state)   | `false`    | `false`       | `false`    | `false`       |
- * | _Active_ (default initial state) | `true`     | `false`       | `false`    | `false`       |
- * | _Completing_ (transient state)   | `true`     | `false`       | `false`    | `false`       |
- * | _Failing_ (transient state)      | `false`    | `false`       | `true`     | `false`       |
- * | _Cancelling_ (transient state)   | `false`    | `false`       | `true`     | `true`        |
- * | _Completed_ (final state)        | `false`    | `true`        | `false`    | `false`       |
- * | _Failed (final state)            | `false`    | `true`        | `true`     | `false`       |
- * | _Cancelled_ (final state)        | `false`    | `true`        | `true`     | `true`        |
+ * | **State**                        | [isActive] | [isCompleted] | [isCancelled] |
+ * | -------------------------------- | ---------- | ------------- | ------------- |
+ * | _New_ (optional initial state)   | `false`    | `false`       | `false`       |
+ * | _Active_ (default initial state) | `true`     | `false`       | `false`       |
+ * | _Completing_ (transient state)   | `true`     | `false`       | `false`       |
+ * | _Cancelling_ (transient state)   | `false`    | `false`       | `true`        |
+ * | _Cancelled_ (final state)        | `false`    | `true`        | `true`        |
+ * | _Completed_ (final state)        | `false`    | `true`        | `false`       |
  *
  * Usually, a job is created in _active_ state (it is created and started). However, coroutine builders
  * that provide an optional `start` parameter create a coroutine in _new_ state when this parameter is set to
  * [CoroutineStart.LAZY]. Such a job can be made _active_ by invoking [start] or [join].
  *
- * A job is _active_ while the coroutine is working. Failure of the job makes it _failing_.
- * A job can be forced to fail by cancelling it at any time with [cancel] function that forces it to transition to
+ * A job is _active_ while the coroutine is working. Failure of the job makes it _cancelling_.
+ * A job can be cancelled it at any time with [cancel] function that forces it to transition to
  * _cancelling_ state immediately. The job becomes _cancelled_  when it finishes executing it work.
  *
  * ```
@@ -49,15 +47,8 @@ import kotlin.coroutines.experimental.*
  * +-----+ start  +--------+ complete   +-------------+  finish  +-----------+
  * | New | -----> | Active | ---------> | Completing  | -------> | Completed |
  * +-----+        +--------+            +-------------+          +-----------+
- *                  | failure detected     |  |
- *                  |     +----------------+  |
- *                  |     |                   |
- *                  V     V                   |
- *              +------------+                |          finish  +----------+
- *              |  Failing   | -------------- | ---------------> | Failed   |
- *              +------------+                |                  +----------+
- *                  | cancel invoked          |
- *                  |     +-------------------+
+ *                  |        cancel        |
+ *                  |     +----------------+
  *                  |     |
  *                  V     V
  *              +------------+                           finish  +-----------+
@@ -69,8 +60,8 @@ import kotlin.coroutines.experimental.*
  * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
  * represents the coroutine itself.
  *
- * A job can have a _parent_ job. A job with a parent is failing when its parent is cancelled or is failing.
- * Parent job waits in _completing_, _failing_, or _cancelling_ state for all its children to complete before finishing.
+ * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.
+ * Parent job waits in _completing_ or _cancelling_ state for all its children to complete before finishing.
  * Note, that _completing_ state is purely internal to the job. For an outside observer a _completing_ job is still
  * active, while internally it is waiting for its children.
  *
@@ -117,18 +108,11 @@ public interface Job : CoroutineContext.Element {
     public val isCompleted: Boolean
 
     /**
-     * Returns `true` if the failure was detected while running this job and it cannot complete normally.
+     * Returns `true` if this job was cancelled for any reason, either by explicit invocation of [cancel] or
+     * because it had failed or its children or parent was cancelled.
      * In the general case, it does not imply that the
      * job has already [completed][isCompleted], because it may still be finishing whatever it was doing and
      * waiting for its [children] to complete.
-     */
-    public val isFailed: Boolean
-
-    /**
-     * Returns `true` if this job was [cancelled][cancel]. It implies that [isFailed] returns `true`, too.
-     * In the general case, it does not imply that the
-     * job has already [completed][isCompleted], because it may still be finishing whatever it was doing and
-     * failing for its [children] to complete.
      */
     public val isCancelled: Boolean
 
@@ -209,7 +193,7 @@ public interface Job : CoroutineContext.Element {
      * * Cancellation of parent with [cancel] or its exceptional completion (failure)
      *   immediately fails all its children.
      * * Parent cannot complete until all its children are complete. Parent waits for all its children to
-     *   complete in _completing_, _failing_, or _cancelling_ states.
+     *   complete in _completing_ or _cancelling_ states.
      *
      * **A child must store the resulting [ChildHandle] and [dispose][DisposableHandle.dispose] the attachment
      * to its parent on its own completion.**
@@ -273,10 +257,10 @@ public interface Job : CoroutineContext.Element {
     public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
 
     /**
-     * @suppress **Deprecated**: Use with named `onCancelling` and `handler` parameters.
+     * @suppress **Deprecated**: Use with named `onCancellation` and `handler` parameters.
      */
-    @Deprecated(message = "Use with named `onCancelling` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancelling = onCancelling_, handler = handler)"))
+    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
     public fun invokeOnCompletion(onCancelling_: Boolean = false, handler: CompletionHandler): DisposableHandle
 
     /**
@@ -316,8 +300,8 @@ public interface Job : CoroutineContext.Element {
      * * Otherwise, the job had _failed_.
      *
      * Invocation of this handler on a transition to a _failing_ state
-     * is controlled by [onFailing] boolean parameter.
-     * The handler is invoked when the job is failing when [onFailing] parameter is set to `true`.
+     * is controlled by [onCancelling] boolean parameter.
+     * The handler is invoked when the job is failing when [onCancelling] parameter is set to `true`.
      *
      * The resulting [DisposableHandle] can be used to [dispose][DisposableHandle.dispose] the
      * registration of this handler and release its memory if its invocation is no longer needed.
@@ -332,9 +316,9 @@ public interface Job : CoroutineContext.Element {
      * This function should not be used in general application code.
      * Implementations of `CompletionHandler` must be fast and _lock-free_.
      *
-     * @param onFailing when `true`, then the [handler] is invoked as soon as this job transitions to _failing_ state;
+     * @param onCancelling when `true`, then the [handler] is invoked as soon as this job transitions to _failing_ state;
      *        when `false` then the [handler] is invoked only when it transitions to _completed_ state.
-     * @param invokeImmediately when `true` and this job is already in the desired state (depending on [onFailing]),
+     * @param invokeImmediately when `true` and this job is already in the desired state (depending on [onCancelling]),
      *        then the [handler] is immediately and synchronously invoked and [NonDisposableHandle] is returned;
      *        when `false` then [NonDisposableHandle] is returned, but the [handler] is not invoked.
      * @param handler the handler.
@@ -342,7 +326,7 @@ public interface Job : CoroutineContext.Element {
      * @suppress **This is unstable API and it is subject to change.**
      */
     public fun invokeOnCompletion(
-        onFailing: Boolean = false,
+        onCancelling: Boolean = false,
         invokeImmediately: Boolean = true,
         handler: CompletionHandler): DisposableHandle
 
@@ -392,7 +376,7 @@ internal interface ChildJob : Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    public fun parentFailed(parentJob: Job)
+    public fun parentCancelled(parentJob: Job)
 }
 
 /**
@@ -409,7 +393,7 @@ internal interface ChildHandle : DisposableHandle {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    public fun childFailed(cause: Throwable): Boolean
+    public fun childCancelled(cause: Throwable): Boolean
 }
 
 // -------------------- Job extensions --------------------
@@ -535,7 +519,7 @@ public object NonDisposableHandle : DisposableHandle, ChildHandle {
      * Returns `false`.
      * @suppress
      */
-    override fun childFailed(cause: Throwable): Boolean = false
+    override fun childCancelled(cause: Throwable): Boolean = false
 
     /**
      * Returns "NonDisposableHandle" string.

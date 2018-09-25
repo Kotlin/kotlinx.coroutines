@@ -153,12 +153,7 @@ private class ProducerCoroutine<E>(
 
     override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         val cause = (state as? CompletedExceptionally)?.cause
-        val processed = when (state) {
-            // producer coroutine was cancelled -- cancel channel, but without cause if it was closed without cause
-            is Cancelled -> _channel.cancel(state.cause)
-            // producer coroutine completed normally or exceptionally -- close channel with cause
-            else -> _channel.close(cause)
-        }
+        val processed = _channel.close(cause)
         if (cause != null && !processed && suppressed) handleExceptionViaHandler(context, cause)
     }
 }

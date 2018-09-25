@@ -57,7 +57,7 @@ class SuppresionTests : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onFailing = true) {
+        coroutine.invokeOnCompletion(onCancelling = true) {
             assertTrue(it is ArithmeticException)
             assertTrue(it!!.suppressed().isEmpty())
             expect(6)

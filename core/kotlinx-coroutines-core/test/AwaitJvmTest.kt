@@ -12,7 +12,7 @@ class AwaitJvmTest : TestBase() {
         // This test is to make sure that handlers installed on the second deferred do not leak
         val d1 = CompletableDeferred<Int>()
         val d2 = CompletableDeferred<Int>()
-        d1.completeExceptionally(TestException()) // first is crashed
+        d1.cancel(TestException()) // first is crashed
         val iterations = 3_000_000 * stressTestMultiplier
         for (iter in 1..iterations) {
             try {

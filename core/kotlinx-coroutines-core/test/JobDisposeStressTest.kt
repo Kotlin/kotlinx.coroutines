@@ -39,7 +39,7 @@ class JobDisposeStressTest: TestBase() {
         threads += testThread("creator") {
             while (!done) {
                 val job = TestJob()
-                val handle = job.invokeOnCompletion(onFailing = true) { /* nothing */ }
+                val handle = job.invokeOnCompletion(onCancelling = true) { /* nothing */ }
                 this.job = job // post job to cancelling thread
                 this.handle = handle // post handle to concurrent disposer thread
                 handle.dispose() // dispose of handle from this thread (concurrently with other disposer)

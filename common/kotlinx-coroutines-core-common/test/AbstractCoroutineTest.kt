@@ -32,7 +32,7 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onFailing = true) {
+        coroutine.invokeOnCompletion(onCancelling = true) {
             assertTrue(it == null)
             expect(6)
         }
@@ -72,7 +72,7 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onFailing = true) {
+        coroutine.invokeOnCompletion(onCancelling = true) {
             assertTrue(it is TestException0)
             expect(6)
         }

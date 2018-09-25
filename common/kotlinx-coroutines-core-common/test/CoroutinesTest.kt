@@ -286,7 +286,7 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testParentCrashFailsChildren() = runTest(
+    fun testParentCrashCancelsChildren() = runTest(
         unhandled = listOf({ it -> it is TestException })
     ) {
         expect(1)
@@ -310,9 +310,8 @@ class CoroutinesTest : TestBase() {
         expect(6)
         parent.join() // make sure crashed parent still waits for its child
         finish(8)
-        // make sure child fails but it is not cancelled
-        assertTrue(child.isFailed)
-        assertFalse(child.isCancelled)
+        // make sure is cancelled
+        assertTrue(child.isCancelled)
     }
 
     @Test

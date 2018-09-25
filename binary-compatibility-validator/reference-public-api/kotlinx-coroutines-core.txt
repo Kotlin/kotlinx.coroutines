@@ -8,7 +8,6 @@ public abstract class kotlinx/coroutines/experimental/AbstractCoroutine : kotlin
 	protected fun onCancellation (Ljava/lang/Throwable;)V
 	protected fun onCompleted (Ljava/lang/Object;)V
 	protected fun onCompletedExceptionally (Ljava/lang/Throwable;)V
-	protected fun onFailing (Ljava/lang/Throwable;)V
 	protected fun onStart ()V
 	public final fun resume (Ljava/lang/Object;)V
 	public final fun resumeWithException (Ljava/lang/Throwable;)V
@@ -383,7 +382,6 @@ public abstract interface class kotlinx/coroutines/experimental/Job : kotlin/cor
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
 	public abstract fun isCompleted ()Z
-	public abstract fun isFailed ()Z
 	public abstract fun join (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public abstract fun plus (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
 	public abstract fun start ()Z
@@ -455,7 +453,6 @@ public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/corou
 	public fun isActive ()Z
 	public fun isCancelled ()Z
 	public fun isCompleted ()Z
-	public fun isFailed ()Z
 	public fun join (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
 	public fun plus (Lkotlinx/coroutines/experimental/Job;)Lkotlinx/coroutines/experimental/Job;
 	public fun start ()Z
@@ -463,7 +460,7 @@ public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/corou
 
 public final class kotlinx/coroutines/experimental/NonDisposableHandle : kotlinx/coroutines/experimental/ChildHandle, kotlinx/coroutines/experimental/DisposableHandle {
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/NonDisposableHandle;
-	public fun childFailed (Ljava/lang/Throwable;)Z
+	public fun childCancelled (Ljava/lang/Throwable;)Z
 	public fun dispose ()V
 	public fun toString ()Ljava/lang/String;
 }

@@ -150,8 +150,8 @@ class JobBasicCancellationTest : TestBase() {
     @Test
     fun testConsecutiveCancellation() {
         val deferred = CompletableDeferred<Int>()
-        assertTrue(deferred.completeExceptionally(IndexOutOfBoundsException()))
-        assertFalse(deferred.completeExceptionally(AssertionError()))
+        assertTrue(deferred.cancel(IndexOutOfBoundsException()))
+        assertFalse(deferred.cancel(AssertionError())) // second cancelled is too late
         val cause = deferred.getCancellationException().cause!!
         assertTrue(cause is IndexOutOfBoundsException)
         assertNull(cause.cause)

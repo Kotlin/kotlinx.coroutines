@@ -27,27 +27,23 @@ class JobStatesTest : TestBase() {
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // New -> Active
         job.start()
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // Active -> Completing
         yield() // scheduled & starts child
         expect(3)
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // Completing -> Completed
         yield()
         finish(5)
         assertFalse(job.isActive)
         assertTrue(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
     }
 
@@ -68,32 +64,28 @@ class JobStatesTest : TestBase() {
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // New -> Active
         job.start()
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // Active -> Completing
         yield() // scheduled & starts child
         expect(3)
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
-        // Completing -> Failed
+        // Completing -> Cancelled
         yield()
         finish(5)
         assertFalse(job.isActive)
         assertTrue(job.isCompleted)
-        assertTrue(job.isFailed)
-        assertFalse(job.isCancelled)
+        assertTrue(job.isCancelled)
     }
 
     @Test
-    public fun testFailing() = runTest(
+    public fun testFailed() = runTest(
         unhandled = listOf({ it -> it is TestException })
     ) {
         expect(1)
@@ -109,28 +101,24 @@ class JobStatesTest : TestBase() {
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // New -> Active
         job.start()
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
-        // Active -> Failing
+        // Active -> Cancelling
         yield() // scheduled & starts child
         expect(3)
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertTrue(job.isFailed)
-        assertFalse(job.isCancelled)
-        // Failing -> Failed
+        assertTrue(job.isCancelled)
+        // Cancelling -> Cancelled
         yield()
         finish(5)
         assertFalse(job.isActive)
         assertTrue(job.isCompleted)
-        assertTrue(job.isFailed)
-        assertFalse(job.isCancelled)
+        assertTrue(job.isCancelled)
     }
 
     @Test
@@ -147,33 +135,28 @@ class JobStatesTest : TestBase() {
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // New -> Active
         job.start()
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // Active -> Completing
         yield() // scheduled & starts child
         expect(3)
         assertTrue(job.isActive)
         assertFalse(job.isCompleted)
-        assertFalse(job.isFailed)
         assertFalse(job.isCancelled)
         // Completing -> Cancelling
         job.cancel()
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
-        assertTrue(job.isFailed)
         assertTrue(job.isCancelled)
         // Cancelling -> Cancelled
         yield()
         finish(5)
         assertFalse(job.isActive)
         assertTrue(job.isCompleted)
-        assertTrue(job.isFailed)
         assertTrue(job.isCancelled)
     }
 

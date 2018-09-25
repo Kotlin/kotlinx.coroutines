@@ -20,7 +20,7 @@ import kotlin.coroutines.experimental.*
  * The following methods are available for override:
  *
  * * [onStart] is invoked when coroutine is create in not active state and is [started][Job.start].
- * * [onFailing] is invoked as soon as coroutine is _failing_, or is cancelled,
+ * * [onCancellation] is invoked as soon as coroutine is _failing_, or is cancelled,
  *   or when it completes for any reason.
  * * [onCompleted] is invoked when coroutine completes with a value.
  * * [onCompletedExceptionally] in invoked when coroutines completes with exception.
@@ -74,24 +74,16 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * @suppress **Deprecated**: Override [onFailing].
-     */
-    @Deprecated("Override onFailing")
-    protected open fun onCancellation(cause: Throwable?) {}
-
-    /**
-     * This function is invoked once when this coroutine is failing or is completed,
-     * similarly to [invokeOnCompletion] with `onFailing` set to `true`.
+     * This function is invoked once when this coroutine is cancelled
+     * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
      *
      * The meaning of [cause] parameter:
      * * Cause is `null` when job has completed normally.
      * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
      *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had _failed_.
+     * * Otherwise, the job had been cancelled or failed with exception.
      */
-    protected override fun onFailing(cause: Throwable?) {
-        onCancellation(cause)
-    }
+    protected override fun onCancellation(cause: Throwable?) {}
 
     /**
      * This function is invoked once when job is completed normally with the specified [value].
@@ -101,6 +93,7 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * This function is invoked once when job is completed exceptionally with the specified [exception].
      */
+    // todo: rename to onCancelled
     protected open fun onCompletedExceptionally(exception: Throwable) {}
 
     @Suppress("UNCHECKED_CAST")

@@ -20,7 +20,7 @@ class AsyncLazyTest : TestBase() {
         expect(2)
         assertTrue(!d.isActive && !d.isCompleted)
         assertEquals(d.await(), 42)
-        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && d.isCompleted && !d.isCancelled)
         expect(4)
         assertEquals(d.await(), 42) // second await -- same result
         finish(5)
@@ -38,7 +38,7 @@ class AsyncLazyTest : TestBase() {
         expect(2)
         assertTrue(!d.isActive && !d.isCompleted)
         assertEquals(d.await(), 42)
-        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && d.isCompleted && !d.isCancelled)
         expect(5)
         assertEquals(d.await(), 42) // second await -- same result
         finish(6)
@@ -67,7 +67,7 @@ class AsyncLazyTest : TestBase() {
         expect(5)
         assertTrue(!d.isActive && !d.isCompleted)
         assertEquals(d.await(), 42) // starts computing
-        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally)
+        assertTrue(!d.isActive && d.isCompleted && !d.isCancelled)
         finish(8)
     }
 
@@ -113,7 +113,7 @@ class AsyncLazyTest : TestBase() {
         try {
             d.await() // will throw IOException
         } catch (e: TestException) {
-            assertTrue(!d.isActive && d.isCompleted && d.isCompletedExceptionally && !d.isCancelled)
+            assertTrue(!d.isActive && d.isCompleted && d.isCancelled)
             expect(4)
         }
         finish(5)
@@ -133,7 +133,7 @@ class AsyncLazyTest : TestBase() {
         expect(3)
         assertTrue(!d.start())
         yield() // yield to started coroutine
-        assertTrue(!d.isActive && d.isCompleted && !d.isCompletedExceptionally) // and it finishes
+        assertTrue(!d.isActive && d.isCompleted && !d.isCancelled) // and it finishes
         expect(5)
         assertEquals(d.await(), 42) // await sees result
         finish(6)
@@ -151,7 +151,7 @@ class AsyncLazyTest : TestBase() {
         expect(2)
         assertTrue(!d.isActive && !d.isCompleted)
         assertTrue(d.cancel())
-        assertTrue(!d.isActive && d.isCompleted && d.isCompletedExceptionally && d.isCancelled)
+        assertTrue(!d.isActive && d.isCompleted && d.isCancelled)
         assertTrue(!d.cancel())
         assertTrue(!d.start())
         finish(3)
@@ -179,9 +179,9 @@ class AsyncLazyTest : TestBase() {
         expect(5)
         assertTrue(d.isActive && !d.isCompleted && !d.isCancelled)
         assertTrue(d.cancel())
-        assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // cancelling !
+        assertTrue(!d.isActive && d.isCancelled) // cancelling !
         assertTrue(d.cancel())
-        assertTrue(!d.isActive && !d.isCompletedExceptionally && d.isCancelled) // still cancelling
+        assertTrue(!d.isActive && d.isCancelled) // still cancelling
         finish(6)
         assertEquals(d.await(), 42) // await shall throw CancellationException
         expectUnreached()

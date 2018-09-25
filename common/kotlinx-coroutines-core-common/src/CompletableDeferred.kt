@@ -7,10 +7,11 @@ package kotlinx.coroutines.experimental
 import kotlinx.coroutines.experimental.selects.*
 
 /**
- * A [Deferred] that can be completed via public functions
- * [complete], [completeExceptionally], and [cancel].
+ * A [Deferred] that can be completed via public functions [complete] or [cancel][Job.cancel].
  *
- * Completion functions return `false` when this deferred value is already complete or completing.
+ * Note, that [complete] functions returns `false` when this deferred value is already complete or completing,
+ * while [cancel][Job.cancel] returns `true` as long the deferred is still _cancelling_ and the corresponding
+ * exception is incorporated into the final [completion exception][getCompletionExceptionOrNull].
  *
  * An instance of completable deferred can be created by `CompletableDeferred()` function in _active_ state.
  *
@@ -32,6 +33,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
+    @Deprecated(message = "Use cancel", replaceWith = ReplaceWith("cancel(exception)"))
     public fun completeExceptionally(exception: Throwable): Boolean
 }
 
@@ -61,7 +63,7 @@ private class CompletableDeferredImpl<T>(
     parent: Job?
 ) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
     init { initParentJobInternal(parent) }
-    override val onFailComplete get() = true
+    override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T
     override val onAwait: SelectClause1<T> get() = this

@@ -24,7 +24,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
         job.join()
         finish(4)
         assertTrue(coroutineException is TestException)
-        assertTrue(parent.isFailed)
+        assertTrue(parent.isCancelled)
     }
 
     // Parent CompletableDeferred() "handles" exception --> handler is NOT invoked on child crash
@@ -41,7 +41,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
         expect(2)
         job.join()
         finish(3)
-        assertTrue(parent.isFailed)
+        assertTrue(parent.isCancelled)
         assertTrue(parent.getCompletionExceptionOrNull() is TestException)
     }
 

@@ -8,27 +8,19 @@ import kotlinx.coroutines.experimental.internal.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Class for an internal state of a job that had completed exceptionally, including cancellation.
+ * Class for an internal state of a job that was cancelled (completed exceptionally).
  *
  * **Note: This class cannot be used outside of internal coroutines framework**.
  * **Note: cannot be internal and renamed until we get rid of MutableDelegateContinuation in IO**
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+// todo: rename to Cancelled
 open class CompletedExceptionally(
     @JvmField public val cause: Throwable
 ) {
     override fun toString(): String = "$classSimpleName[$cause]"
 }
-
-/**
- * A specific subclass of [CompletedExceptionally] for cancelled jobs.
- *
- * **Note: This class cannot be used outside of internal coroutines framework**.
- *
- * @suppress **This is unstable API and it is subject to change.**
- */
-internal class Cancelled(cause: Throwable) : CompletedExceptionally(cause)
 
 /**
  * A specific subclass of [CompletedExceptionally] for cancelled [AbstractContinuation].
