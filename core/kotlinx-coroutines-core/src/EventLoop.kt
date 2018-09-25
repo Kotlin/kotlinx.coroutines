@@ -72,9 +72,9 @@ public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = 
 public fun EventLoop_Deprecated(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
     EventLoop(thread, parentJob) as CoroutineDispatcher
 
-private const val DELAYED = 0
-private const val REMOVED = 1
-private const val RESCHEDULED = 2
+internal const val DELAYED = 0
+internal const val REMOVED = 1
+internal const val RESCHEDULED = 2
 
 private const val MS_TO_NS = 1_000_000L
 private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
@@ -243,10 +243,10 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
 
     internal fun schedule(delayedTask: DelayedTask) {
         if (scheduleImpl(delayedTask)) {
-            // todo: we should unpark only when this delayed task became first in the queue
             unpark()
-        } else
+        } else {
             DefaultExecutor.schedule(delayedTask)
+        }
     }
 
     private fun scheduleImpl(delayedTask: DelayedTask): Boolean {

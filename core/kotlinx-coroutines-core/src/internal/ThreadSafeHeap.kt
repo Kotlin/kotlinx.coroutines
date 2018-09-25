@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.experimental.internal
 
+import kotlinx.coroutines.experimental.*
 import java.util.*
 
 /**
@@ -26,42 +27,48 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
 
     public val isEmpty: Boolean get() = size == 0
 
-    public fun clear() = synchronized(this) {
+    @Synchronized
+    public fun clear() {
         Arrays.fill(a, 0, size, null)
         size = 0
     }
 
-    public fun peek(): T? = synchronized(this) { firstImpl() }
+    @Synchronized
+    public fun peek(): T? = firstImpl()
 
-    public fun removeFirstOrNull(): T? = synchronized(this) {
+    @Synchronized
+    public fun removeFirstOrNull(): T? =
         if (size > 0) {
             removeAtImpl(0)
-        } else
+        } else {
             null
-    }
+        }
 
-    public inline fun removeFirstIf(predicate: (T) -> Boolean): T? = synchronized(this) {
-        val first = firstImpl() ?: return@synchronized null
-        if (predicate(first)) {
+    @Synchronized
+    public inline fun removeFirstIf(predicate: (T) -> Boolean): T?  {
+        val first = firstImpl() ?: return null
+        return if (predicate(first)) {
             removeAtImpl(0)
-        } else
+        } else {
             null
+        }
     }
 
-    public fun addLast(node: T) = synchronized(this) {
-        addImpl(node)
-    }
+    @Synchronized
+    public fun addLast(node: T) = addImpl(node)
 
-    public fun addLastIf(node: T, cond: () -> Boolean): Boolean = synchronized(this) {
+    @Synchronized
+    public fun addLastIf(node: T, cond: () -> Boolean): Boolean =
         if (cond()) {
             addImpl(node)
             true
-        } else
+        } else {
             false
-    }
+        }
 
-    public fun remove(node: T): Boolean = synchronized(this) {
-        if (node.index < 0) {
+    @Synchronized
+    public fun remove(node: T): Boolean {
+        return if (node.index < 0) {
             false
         } else {
             removeAtImpl(node.index)
@@ -95,6 +102,11 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
 
     @PublishedApi
     internal fun addImpl(node: T) {
+        // TODO remove this after #541 when ThreadSafeHeapNode is gone
+        if (node is EventLoopBase.DelayedTask && node.state == REMOVED) {
+            return
+        }
+
         val a = realloc()
         val i = size++
         a[i] = node
