@@ -7,6 +7,7 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.internal.*
 import kotlinx.coroutines.experimental.intrinsics.*
 import kotlinx.coroutines.experimental.selects.*
@@ -193,13 +194,30 @@ public fun launch(context: CoroutineContext, start: Boolean, block: suspend Coro
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T
-): T =
-    // todo: optimize fast-path to work without allocation (when there is a already a coroutine implementing scope)
-    withContextImpl(context, start = CoroutineStart.DEFAULT) {
-        currentScope {
-            block()
+): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
+    // compute new context
+    val oldContext = uCont.context
+    val newContext = oldContext + context
+    // FAST PATH #1 -- new context is the same as the old one
+    if (newContext === oldContext) {
+        val coroutine = ScopeCoroutine(newContext, uCont) // MODE_DIRECT
+        return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
+    }
+    // FAST PATH #2 -- the new dispatcher is the same as the old one (something else changed)
+    // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
+    if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
+        val coroutine = UndispatchedCoroutine(newContext, uCont) // MODE_UNDISPATCHED
+        // There are changes in the context, so this thread needs to be updated
+        withCoroutineContext(newContext) {
+            return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
     }
+    // SLOW PATH -- use new dispatcher
+    val coroutine = DispatchedCoroutine(newContext, uCont) // MODE_DISPATCHED
+    coroutine.initParentJob()
+    block.startCoroutineCancellable(coroutine, coroutine)
+    coroutine.getResult()
+}
 
 /**
  * @suppress **Deprecated**: start parameter is deprecated, no replacement.
@@ -210,48 +228,7 @@ public suspend fun <T> withContext(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
 ): T =
-    // todo: optimize fast-path to work without allocation (when there is a already a coroutine implementing scope)
-    withContextImpl(context, start) {
-        currentScope {
-            block()
-        }
-    }
-
-// todo: optimize it to reduce allocations
-private suspend fun <T> withContextImpl(
-    context: CoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend () -> T
-): T = suspendCoroutineUninterceptedOrReturn sc@ { uCont ->
-    val oldContext = uCont.context
-    // fast path #1 if there is no change in the actual context:
-    if (context === oldContext || context is CoroutineContext.Element && oldContext[context.key] === context)
-        return@sc block.startCoroutineUninterceptedOrReturn(uCont)
-    // compute new context
-    val newContext = oldContext + context
-    // fast path #2 if the result is actually the same
-    if (newContext === oldContext)
-        return@sc block.startCoroutineUninterceptedOrReturn(uCont)
-    // fast path #3 if the new dispatcher is the same as the old one.
-    // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
-    if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
-        val newContinuation = RunContinuationUnintercepted(newContext, uCont)
-        // There are some other changes in the context, so this thread needs to be updated
-        withCoroutineContext(newContext) {
-            return@sc block.startCoroutineUninterceptedOrReturn(newContinuation)
-        }
-    }
-    // slowest path otherwise -- use new interceptor, sync to its result via a full-blown instance of RunCompletion
-    require(!start.isLazy) { "$start start is not supported" }
-    val completion = RunCompletion(
-        context = newContext,
-        delegate = uCont.intercepted(), // delegate to continuation intercepted with old dispatcher on completion
-        resumeMode = if (start == CoroutineStart.ATOMIC) MODE_ATOMIC_DEFAULT else MODE_CANCELLABLE
-    )
-    completion.initParentJobInternal(newContext[Job]) // attach to job
-    start(block, completion)
-    completion.getResult()
-}
+    withContext(context, block)
 
 /** @suppress **Deprecated**: Binary compatibility */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
@@ -261,7 +238,7 @@ public suspend fun <T> withContext0(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
 ): T =
-    withContextImpl(context, start, block)
+    withContext(context) { block() }
 
 /** @suppress **Deprecated**: Renamed to [withContext]. */
 @Deprecated(message = "Renamed to `withContext`", level=DeprecationLevel.WARNING,
@@ -271,12 +248,12 @@ public suspend fun <T> run(
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend () -> T
 ): T =
-    withContextImpl(context, start, block)
+    withContext(context) { block() }
 
 /** @suppress **Deprecated** */
 @Deprecated(message = "It is here for binary compatibility only", level=DeprecationLevel.HIDDEN)
 public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
-    withContextImpl(context, start = CoroutineStart.ATOMIC, block = block)
+    withContext(context) { block() }
 
 // --------------- implementation ---------------
 
@@ -297,29 +274,61 @@ private class LazyStandaloneCoroutine(
     }
 }
 
-private class RunContinuationUnintercepted<in T>(
-    override val context: CoroutineContext,
-    private val continuation: Continuation<T>
-): Continuation<T> {
-    override fun resume(value: T) {
-        withCoroutineContext(continuation.context) {
-            continuation.resume(value)
-        }
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        withCoroutineContext(continuation.context) {
-            continuation.resumeWithException(exception)
-        }
-    }
+// Used by withContext when context changes, but dispatcher stays the same
+private class UndispatchedCoroutine<in T>(
+    context: CoroutineContext,
+    uCont: Continuation<T>
+) : ScopeCoroutine<T>(context, uCont) {
+    override val defaultResumeMode: Int get() = MODE_UNDISPATCHED
 }
 
-@Suppress("UNCHECKED_CAST")
-private class RunCompletion<in T>(
-    override val context: CoroutineContext,
-    delegate: Continuation<T>,
-    resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode) {
+private const val UNDECIDED = 0
+private const val SUSPENDED = 1
+private const val RESUMED = 2
 
-    override val useCancellingState: Boolean get() = true
+// Used by withContext when context dispatcher changes
+private class DispatchedCoroutine<in T>(
+    context: CoroutineContext,
+    uCont: Continuation<T>
+) : ScopeCoroutine<T>(context, uCont) {
+    override val defaultResumeMode: Int get() = MODE_CANCELLABLE
+
+    // this is copy-and-paste of a decision state machine inside AbstractionContinuation
+    // todo: we may some-how abstract it via inline class
+    private val _decision = atomic(UNDECIDED)
+
+    private fun trySuspend(): Boolean {
+        _decision.loop { decision ->
+            when (decision) {
+                UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, SUSPENDED)) return true
+                RESUMED -> return false
+                else -> error("Already suspended")
+            }
+        }
+    }
+
+    private fun tryResume(): Boolean {
+        _decision.loop { decision ->
+            when (decision) {
+                UNDECIDED -> if (this._decision.compareAndSet(UNDECIDED, RESUMED)) return true
+                SUSPENDED -> return false
+                else -> error("Already resumed")
+            }
+        }
+    }
+
+    override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+        if (tryResume()) return // completed before getResult invocation -- bail out
+        // otherwise, getResult has already commenced, i.e. completed later or in other thread
+        super.onCompletionInternal(state, mode, suppressed)
+    }
+
+    fun getResult(): Any? {
+        if (trySuspend()) return COROUTINE_SUSPENDED
+        // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
+        val state = this.state
+        if (state is CompletedExceptionally) throw state.cause
+        @Suppress("UNCHECKED_CAST")
+        return state as T
+    }
 }

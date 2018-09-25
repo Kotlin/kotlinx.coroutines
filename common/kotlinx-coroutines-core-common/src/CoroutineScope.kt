@@ -5,12 +5,20 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
  * is an extension on [CoroutineScope] and inherits its [coroutineContext][CoroutineScope.coroutineContext]
  * to automatically propagate both context elements and cancellation.
+ *
+ * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
+ * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
+ * into the inner block of code it runs. By convention, they all wait for all the coroutines inside
+ * their block to complete before completing themselves, thus enforcing the
+ * discipline of **structured concurrency**.
  *
  * [CoroutineScope] should be implemented on entities with well-defined lifecycle that are responsible
  * for launching children coroutines. Example of such entity on Android is Activity.
@@ -173,21 +181,11 @@ object GlobalScope : CoroutineScope {
  * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
  * (for example, from a crashed coroutine that was started with [launch][CoroutineScope.launch] in this scope).
  */
-public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
-    // todo: optimize implementation to a single allocated object
-    val owner = ScopeCoroutine<R>(coroutineContext)
-    owner.start(CoroutineStart.UNDISPATCHED, owner, block)
-    owner.join()
-    if (owner.isCancelled) {
-        throw owner.getCancellationException().let { it.cause ?: it }
+public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val coroutine = ScopeCoroutine<R>(uCont.context, uCont)
+        coroutine.startUndispatchedOrReturn(coroutine, block)
     }
-    val state = owner.state
-    if (state is CompletedExceptionally) {
-        throw state.cause
-    }
-    @Suppress("UNCHECKED_CAST")
-    return state as R
-}
 
 /**
  * Provides [CoroutineScope] that is already present in the current [coroutineContext] to the given [block].

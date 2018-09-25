@@ -9,11 +9,23 @@ import kotlin.coroutines.experimental.*
 
 /**
  * This is a coroutine instance that is created by [coroutineScope] builder.
- * It is just a vanilla instance of [AbstractCoroutine].
  */
-internal class ScopeCoroutine<R>(
-    parentContext: CoroutineContext
-) : AbstractCoroutine<R>(parentContext, true)
+internal open class ScopeCoroutine<in T>(
+    context: CoroutineContext,
+    @JvmField val uCont: Continuation<T> // unintercepted continuation
+) : AbstractCoroutine<T>(context, true) {
+    override val handlesException: Boolean get() = true // rethrows to invoker
+
+    override val defaultResumeMode: Int get() = MODE_DIRECT
+
+    @Suppress("UNCHECKED_CAST")
+    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+        if (state is CompletedExceptionally)
+            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
+        else
+            uCont.resumeUninterceptedMode(state as T, mode)
+    }
+}
 
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
