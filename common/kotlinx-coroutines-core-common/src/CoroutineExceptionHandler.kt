@@ -20,7 +20,6 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * If invocation returned `true`, method terminates: now [Job] is responsible for handling an exception.
  * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
  * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
- * todo: Deprecate/hide this function.
  */
 @JvmOverloads // binary compatibility
 @InternalCoroutinesApi

@@ -197,9 +197,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         var suppressed = false
         val finalException = synchronized(state) {
             val exceptions = state.sealLocked(proposedException)
-            val rootCause = getFinalRootCause(state, exceptions)
-            if (rootCause != null) suppressed = suppressExceptions(rootCause, exceptions)
-            rootCause
+            val finalCause = getFinalRootCause(state, exceptions)
+            // Report suppressed exceptions if initial cause doesn't match final cause (due to JCE unwrapping)
+            if (finalCause != null) suppressed = suppressExceptions(finalCause, exceptions) || finalCause !== state.rootCause
+            finalCause
         }
         // Create the final state object
         val finalState = when {
