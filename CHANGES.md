@@ -1,5 +1,33 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.27.0 
+
+* **[Major]** Public API revision. All public API was reviewed and marked as preparation to `1.0` release:
+   1. `@Deprecated` API. All API marked as deprecated will be removed in 1.0 release without replacement.
+   2. `@ExperimentalCoroutinesApi` API. This API is experimental and may change in the future, but migration mechanisms will be provided. Signature, binary compatibility and semantics can be changed.
+   3. `@InternalCoroutinesApi`. This API is intended to be used **only** from within `kotlinx.coroutines`. It can and will be changed, broken 
+       and removed in the future releases without any warnings and migration aids. If you find yourself using this API, it is better to report
+       your use-case to Github issues, so decent, stable and well-tested alternative can be provided.
+   4. `@ObsoleteCoroutinesApi`. This API has serious known flaws and will be replaced with a better alternative in the nearest releases.
+   5. Regular public API. This API is proven to be stable and is not going to be changed. If at some point it will be discovered that such API
+      has unfixable design flaws, it will be gradually deprecated with proper replacement and migration aid, but won't be removed for at least a year.
+* **[Major]** Job state machine is reworked. It includes various performance improvements, fixes in 
+data-races which could appear in a rare circumstances and consolidation of cancellation and exception handling.
+Visible consequences of include more robust exception handling for large coroutines hierarchies and for different kinds of `CancellationException`, transparent parallel decomposition and consistent view of coroutines hierarchy in terms of its state (see #220 and #585).
+* NIO, Quasar and Rx1 integration modules are removed with no replacement (see #595, #601, #603).
+* `withContext` is now aligned with structured concurrency and awaits for all launched tasks, its performance is significantly improved (see #553 and #617).
+* Added integration module with Play Services Task API. Thanks @SUPERCILEX and @lucasvalenteds for the contribution!
+* Integration with Rx2 now respects nullability in type constraints (see #347). Thanks @Dmitry-Borodin for the contribution!
+* `CompletableFuture.await` and `ListenableFuture.await` now propagate cancellation the the future (see #611).
+* Cancellation of `runBlocking` machinery is improved (see #589).
+* Coroutine guide is restructured and split to multiple files for the sake of simplicity.
+* `CoroutineScope` factory methods add `Job` if it is missing from the context to enforce structured concurrency (see #610).
+* `Handler.asCoroutineDispatcher` has a `name` parameter for better debugging (see #615).
+* Fixed bug when `CoroutineSchedule` was closed from one of its threads (see #612).
+* Exceptions from `CoroutineExceptionHandler` are reported by default exception handler (see #562).
+* `CoroutineName` is now available from common modules (see #570).
+* Update to Kotlin 1.2.70.
+
 ## Version 0.26.1
 * Android `Main` dispatcher is `async` by default which may significantly improve UI performance. Contributed by @JakeWharton (see #427).
 * Fixed bug when lazily-started coroutine with registered cancellation handler was concurrently started and cancelled. 

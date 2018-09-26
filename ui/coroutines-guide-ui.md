@@ -161,7 +161,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.26.1"
+compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.27.0"
 ```
 
 Coroutines are experimental feature in Kotlin.
