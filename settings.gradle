@@ -28,6 +28,7 @@ module('integration/kotlinx-coroutines-guava')
 module('integration/kotlinx-coroutines-jdk8')
 module('integration/kotlinx-coroutines-slf4j')
 module('integration/kotlinx-coroutines-play-services')
+module('integration/kotlinx-coroutines-metrics')
 
 module('reactive/kotlinx-coroutines-reactive')
 module('reactive/kotlinx-coroutines-reactor')
