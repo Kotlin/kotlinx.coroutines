@@ -14,8 +14,6 @@ internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
 ) : AbstractCoroutine<T>(context, true) {
-    override val handlesException: Boolean get() = true // rethrows to invoker
-
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
     @Suppress("UNCHECKED_CAST")
