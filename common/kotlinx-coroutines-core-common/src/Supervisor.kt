@@ -4,7 +4,10 @@
 
 package kotlinx.coroutines.experimental
 
+import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.intrinsics.*
 import kotlin.coroutines.experimental.*
+import kotlin.coroutines.experimental.intrinsics.*
 
 /**
  * Creates a new _supervisor_ job object in an active state.
@@ -35,23 +38,11 @@ public fun SupervisorJob(parent: Job? = null) : Job = SupervisorJobImpl(parent)
  * A failure of the scope itself (exception thrown in the [block] or cancellation) fails the scope with all its children,
  * but does not cancel parent job.
  */
-public suspend fun <R>  supervisorScope(block: suspend CoroutineScope.() -> R): R {
-    // todo: optimize implementation to a single allocated object
-    // todo: fix copy-and-paste with coroutineScope
-    val owner = SupervisorCoroutine<R>(coroutineContext)
-    owner.start(CoroutineStart.UNDISPATCHED, owner, block)
-    owner.join()
-    if (owner.isCancelled) {
-        throw owner.getCancellationException().let { it.cause ?: it }
+public suspend fun <R>  supervisorScope(block: suspend CoroutineScope.() -> R): R =
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        val coroutine = SupervisorCoroutine(uCont.context, uCont)
+        coroutine.startUndispatchedOrReturn(coroutine, block)
     }
-    val state = owner.state
-    if (state is CompletedExceptionally) {
-        throw state.cause
-    }
-    @Suppress("UNCHECKED_CAST")
-    return state as R
-
-}
 
 private class SupervisorJobImpl(parent: Job?) : JobSupport(true) {
     init { initParentJobInternal(parent) }
@@ -62,8 +53,17 @@ private class SupervisorJobImpl(parent: Job?) : JobSupport(true) {
 }
 
 private class SupervisorCoroutine<R>(
-    parentContext: CoroutineContext
+    parentContext: CoroutineContext,
+    @JvmField val uCont: Continuation<R>
 ) : AbstractCoroutine<R>(parentContext, true) {
-    override val cancelsParent: Boolean get() = false
+    override val defaultResumeMode: Int get() = MODE_DIRECT
     override fun childCancelled(cause: Throwable): Boolean = false
+
+    @Suppress("UNCHECKED_CAST")
+    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
+        if (state is CompletedExceptionally)
+            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
+        else
+            uCont.resumeUninterceptedMode(state as R, mode)
+    }
 }
