@@ -107,6 +107,26 @@ class SupervisorTest : TestBase() {
     }
 
     @Test
+    fun testSupervisorFlaw() = runTest {
+        try {
+            supervisorScope {
+                expect(1)
+                launch {
+                    // Test exception from supervisor is handled by launch though it clearly will be rethtown by supervisorScope{}
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                }
+
+                yield()
+                expect(3)
+                throw TestException1()
+            }
+        } catch (e: TestException1) {
+            finish(4)
+        }
+    }
+
+    @Test
     fun testSupervisorWithParentCancelNormally() {
         val parent = Job()
         val supervisor = SupervisorJob(parent)
