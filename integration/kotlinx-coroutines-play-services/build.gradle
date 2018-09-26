@@ -38,6 +38,10 @@ dependencies {
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("https://developers.google.com/android/reference/")
+        /*
+         * This is workaround for missing package list in Google API
+         */
+        packageListUrl = rootDir.toPath().resolve("integration/kotlinx-coroutines-play-services/resources/package.list").toUri().toURL()
     }
 }
 
