@@ -1,0 +1,9 @@
+dependencies {
+    compile 'io.dropwizard.metrics:metrics-core:4.0.3'
+}
+
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        url = new URL("https://www.javadoc.io/doc/io.dropwizard.metrics/metrics-core/4.0.1")
+    }
+}
