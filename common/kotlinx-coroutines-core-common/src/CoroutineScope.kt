@@ -16,7 +16,8 @@ import kotlin.coroutines.experimental.intrinsics.*
  *
  * Every coroutine builder (like [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc)
  * and every scoping function (like [coroutineScope], [withContext], etc) provides _its own_ scope
- * into the inner block of code it runs. By convention, they all wait for all the coroutines inside
+ * with its own [Job] instance into the inner block of code it runs.
+ * By convention, they all wait for all the coroutines inside
  * their block to complete before completing themselves, thus enforcing the
  * discipline of **structured concurrency**.
  *
