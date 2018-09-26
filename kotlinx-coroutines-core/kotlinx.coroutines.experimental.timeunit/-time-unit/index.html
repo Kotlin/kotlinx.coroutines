@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>kotlinx.coroutines.experimental.timeunit.TimeUnit - kotlinx-coroutines-core</title>
+  <title>TimeUnit - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
   <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.timeunit/-time-unit/">
@@ -33,79 +33,74 @@
 
 <h1 id="timeunit">TimeUnit</h1>
 
-<div class="overload-group" data-platform="JVM">
+<div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><s><span class="identifier">TimeUnit</span></s></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/timeunit/TimeUnit.kt#L12">(source)</a></div>
 
-  <div class="signature"><code><span class="keyword">typealias </span><span class="identifier">TimeUnit</span>&nbsp;<span class="symbol">=</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/timeunit/TimeUnit.kt#L11">(source)</a></div>
+<p><strong>Deprecated:</strong> Using this TimeUnit enum in JS code is not recommended, use functions without it</p>
 
-  <p><strong>Platform and version requirements:</strong> JVM</p>
+<p><strong>Platform and version requirements:</strong> JS, Native</p>
 
-  <p>Time unit type alias for writing multiplatform code.</p>
-
-</div>
-<div class="overload-group" data-platform="JS">
-
-  <div class="signature"><code><span class="keyword">enum</span> <span class="keyword">class </span><s><span class="identifier">TimeUnit</span></s></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/timeunit/TimeUnit.kt#L12">(source)</a></div>
-
-  <p><strong>Deprecated:</strong> Using this TimeUnit enum in JS code is not recommended, use functions without it</p>
-
-  <p><strong>Platform and version requirements:</strong> JS</p>
-
-  <p>Time unit. This class is provided for better JVM interoperability.
+<p>Time unit. This class is provided for better JVM interoperability.
 <strong>It is available for common code, but its use in common code is not recommended.</strong></p>
 
-  <h3 id="enum-values">Enum Values</h3>
+<h3 id="enum-values">Enum Values</h3>
 
-  <table class="api-docs-table">
+<table class="api-docs-table">
 <tbody>
-<tr data-platform="JS, Native"><td>
-
-          <p><a href="-time-unit/-m-i-l-l-i-s-e-c-o-n-d-s.html">MILLISECONDS</a></p>
-
-        </td>
+<tr>
 <td>
 
-          <p>Milliseconds.</p>
+        <p><a href="-m-i-l-l-i-s-e-c-o-n-d-s.html">MILLISECONDS</a></p>
 
-        </td>
-</tr><tr data-platform="JS, Native"><td>
-
-          <p><a href="-time-unit/-s-e-c-o-n-d-s.html">SECONDS</a></p>
-
-        </td>
+      </td>
 <td>
 
-          <p>Seconds.</p>
+        <p>Milliseconds.</p>
 
-        </td>
-</tr></tbody>
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-s-e-c-o-n-d-s.html">SECONDS</a></p>
+
+      </td>
+<td>
+
+        <p>Seconds.</p>
+
+      </td>
+</tr>
+</tbody>
 </table>
 
-  <h3 id="functions">Functions</h3>
+<h3 id="functions">Functions</h3>
 
-  <table class="api-docs-table">
+<table class="api-docs-table">
 <tbody>
-<tr data-platform="JS, Native"><td>
-
-          <p><a href="-time-unit/to-millis.html">toMillis</a></p>
-
-        </td>
+<tr>
 <td>
-          <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toMillis</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.timeunit.TimeUnit$toMillis(kotlin.Long)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
 
-          <p>Converts time in this time unit to milliseconds.</p>
+        <p><a href="to-millis.html">toMillis</a></p>
 
-        </td>
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toMillis</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.timeunit.TimeUnit$toMillis(kotlin.Long)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+
+        <p>Converts time in this time unit to milliseconds.</p>
+
+      </td>
+</tr>
+<tr data-platform="Native"><td>
+
+        <p><a href="to-nanos.html">toNanos</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toNanos</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.timeunit.TimeUnit$toNanos(kotlin.Long)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
+
+      </td>
 </tr></tbody>
 </table>
-
-</div>
-<div class="overload-group" data-platform="Native">
-
-  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toNanos</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.timeunit.TimeUnit$toNanos(kotlin.Long)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></div>
-
-  <p><strong>Platform and version requirements:</strong> Native</p>
-
-</div>
 
       </div>
     </main>

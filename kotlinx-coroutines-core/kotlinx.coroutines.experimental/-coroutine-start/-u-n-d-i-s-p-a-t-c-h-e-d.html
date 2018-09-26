@@ -33,61 +33,20 @@
 
 <h1 id="undispatched">UNDISPATCHED</h1>
 
-<div class="signature"><code><span class="identifier">UNDISPATCHED</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineStart.kt#L71">(source)</a></div>
+<div class="signature"><code><span class="identifier">UNDISPATCHED</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineStart.kt#L77">(source)</a></div>
 
 <p>Immediately executes coroutine until its first suspension point <em>in the current thread</em> as if the
 coroutine was started using <a href="../-dispatchers/-unconfined.html">Dispatchers.Unconfined</a>. However, when coroutine is resumed from suspension
 it is dispatched according to the <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> in its context.</p>
 
-<p>This is similar to <a href="-a-t-o-m-i-c.html">ATOMIC</a> in the sense that coroutine starts executing even if it was already cancelled,
+<p>This is similar to <a href="#">ATOMIC</a> in the sense that coroutine starts executing even if it was already cancelled,
 but the difference is that it starts executing in the same thread.</p>
 
 <p>Cancellability of coroutine at suspension points depends on the particular implementation details of
 suspending functions as in <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>.</p>
 
-<h3 id="inherited-properties">Inherited Properties</h3>
+<p><strong>Note: This is an experimental api.</strong> Execution semantics of coroutines may change in the future when this mode is used.</p>
 
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="is-lazy.html">isLazy</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">val </span><span class="identifier">isLazy</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-        <p>Returns <code>true</code> when <a href="-l-a-z-y.html">LAZY</a>.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inherited-functions">Inherited Functions</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="invoke.html">invoke</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction0((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="invoke.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction0((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/completion">completion</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="invoke.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Starts the corresponding block as a coroutine with this coroutine start strategy.</p>
-
-        <div class="signature"><code><span class="keyword">operator</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">invoke</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="invoke.html#R"><span class="identifier">R</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="invoke.html#T"><span class="identifier">T</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/receiver">receiver</span><span class="symbol">:</span>&nbsp;<a href="invoke.html#R"><span class="identifier">R</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineStart$invoke(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlinx.coroutines.experimental.CoroutineStart.invoke.T)), kotlinx.coroutines.experimental.CoroutineStart.invoke.R, kotlin.coroutines.experimental.Continuation((kotlinx.coroutines.experimental.CoroutineStart.invoke.T)))/completion">completion</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="invoke.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
 
       </div>
     </main>

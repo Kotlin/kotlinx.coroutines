@@ -33,7 +33,7 @@
 
 <h1 id="whileselect">whileSelect</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">whileSelect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.selects$whileSelect(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlin.Boolean)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/selects/WhileSelect.kt#L25">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">inline</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">whileSelect</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">crossinline</span> <span class="parameterName" id="kotlinx.coroutines.experimental.selects$whileSelect(kotlin.Function1((kotlinx.coroutines.experimental.selects.SelectBuilder((kotlin.Boolean)), kotlin.Unit)))/builder">builder</span><span class="symbol">:</span>&nbsp;<a href="-select-builder/index.html"><span class="identifier">SelectBuilder</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/selects/WhileSelect.kt#L30">(source)</a></div>
 
 <p>Loops while <a href="select.html">select</a> expression returns <code>true</code>.</p>
 
@@ -48,7 +48,9 @@
 
 <pre>while(select&lt;Boolean&gt; {
    /*body*/
-}) {}</pre>
+}) {}
+
+**Note: This is an experimental api.** It may be replaced with a higher-performance DSL for selection from loops.</pre>
 
       </div>
     </main>

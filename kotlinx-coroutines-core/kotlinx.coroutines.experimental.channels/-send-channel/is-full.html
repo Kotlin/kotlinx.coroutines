@@ -33,10 +33,12 @@
 
 <h1 id="isfull">isFull</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L26">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isFull</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L35">(source)</a></div>
 
 <p>Returns <code>true</code> if the channel is full (out of capacity) and the <a href="send.html">send</a> attempt will suspend.
 This function returns <code>false</code> for <a href="is-closed-for-send.html">isClosedForSend</a> channel.</p>
+
+<p><strong>Note: This is an experimental api.</strong> This property may change its semantics and/or name in the future.</p>
 
 
       </div>

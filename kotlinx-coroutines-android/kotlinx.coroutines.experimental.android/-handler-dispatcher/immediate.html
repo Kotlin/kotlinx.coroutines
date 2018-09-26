@@ -33,11 +33,13 @@
 
 <h1 id="immediate">immediate</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">HandlerDispatcher</span></a></code></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">immediate</span><span class="symbol">: </span><a href="index.html"><span class="identifier">HandlerDispatcher</span></a></code></div>
 
 <p>Returns dispatcher that executes coroutines immediately when it is already in the right handler context
 (current looper is the same as this handler’s looper). See <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/is-dispatch-needed.html">isDispatchNeeded</a> documentation on
 why this should not be done by default.</p>
+
+<p><strong>Note: This is an experimental api.</strong> Semantics of this dispatcher may change in the future.</p>
 
 
       </div>

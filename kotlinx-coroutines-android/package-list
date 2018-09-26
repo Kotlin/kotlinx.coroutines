@@ -1,6 +1,6 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
 $dokka.location:kotlinx.coroutines.experimental.android$Main#kotlinx.coroutines.experimental.Dispatcherskotlinx.coroutines.experimental.android/kotlinx.coroutines.experimental.-dispatchers/-main.html
-$dokka.location:kotlinx.coroutines.experimental.android$asCoroutineDispatcher(android.os.Handler)kotlinx.coroutines.experimental.android/android.os.-handler/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines.experimental.android$asCoroutineDispatcher(android.os.Handler, kotlin.String)kotlinx.coroutines.experimental.android/android.os.-handler/as-coroutine-dispatcher.html
 $dokka.location:kotlinx.coroutines.experimental.android$asCoroutineDispatcher0(android.os.Handler)kotlinx.coroutines.experimental.android/android.os.-handler/as-coroutine-dispatcher0.html
 kotlinx.coroutines.experimental.android

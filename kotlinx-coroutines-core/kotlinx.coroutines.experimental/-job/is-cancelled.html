@@ -33,10 +33,15 @@
 
 <h1 id="iscancelled">isCancelled</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L117">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">val </span><span class="identifier">isCancelled</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L133">(source)</a></div>
 
-<p>Returns <code>true</code> if this job was <a href="cancel.html">cancelled</a>. In the general case, it does not imply that the
-job has already <a href="is-completed.html">completed</a> (it may still be cancelling whatever it was doing).</p>
+<p>Returns <code>true</code> if this job was cancelled for any reason, either by explicit invocation of <a href="cancel.html">cancel</a> or
+because it had failed or its child or parent was cancelled.
+In the general case, it does not imply that the
+job has already <a href="is-completed.html">completed</a>, because it may still be finishing whatever it was doing and
+waiting for its <a href="children.html">children</a> to complete.</p>
+
+<p>See <a href="index.html">Job</a> documentation for more details on cancellation and failures.</p>
 
 
       </div>

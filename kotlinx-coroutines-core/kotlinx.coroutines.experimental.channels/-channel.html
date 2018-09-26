@@ -35,26 +35,23 @@
 
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L316">(source)</a></div>
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <s><span class="identifier">Channel</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L382">(source)</a></div>
 
-  <p>Creates a channel without a buffer – <a href="-rendezvous-channel/index.html">RendezvousChannel</a>.</p>
+  <p><strong>Deprecated:</strong> DeprecationLevel.HIDDEN</p>
+
+  <p>Creates a channel without a buffer – <a href="#">RendezvousChannel</a>.</p>
 
 </div>
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L328">(source)</a></div>
+  <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <span class="identifier">Channel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels$Channel(kotlin.Int)/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">)</span><span class="symbol">: </span><a href="-channel/index.html"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="-channel.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L390">(source)</a></div>
 
-  <p>Creates a channel with the specified buffer capacity (or without a buffer by default).</p>
+  <p>Creates a channel with the specified buffer capacity (or without a buffer by default).
+See <a href="-channel/index.html">Channel</a> interface documentation for details.</p>
 
-  <p>The resulting channel type depends on the specified <a href="-channel.html#kotlinx.coroutines.experimental.channels$Channel(kotlin.Int)/capacity">capacity</a> parameter:</p>
+  <h3 id="exceptions">Exceptions</h3>
 
-  <ul>
-    <li>when <code>capacity</code> is 0 – creates <a href="-rendezvous-channel/index.html">RendezvousChannel</a> without a buffer;</li>
-    <li>when <code>capacity</code> is <a href="-channel/-u-n-l-i-m-i-t-e-d.html">Channel.UNLIMITED</a> – creates <a href="-linked-list-channel/index.html">LinkedListChannel</a> with buffer of unlimited size;</li>
-    <li>when <code>capacity</code> is <a href="-channel/-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> – creates <a href="-conflated-channel/index.html">ConflatedChannel</a> that conflates back-to-back sends;</li>
-    <li>when <code>capacity</code> is positive, but less than <a href="-channel/-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> – creates <a href="-array-channel/index.html">ArrayChannel</a> with a buffer of the specified <code>capacity</code>;</li>
-    <li>otherwise – throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html">IllegalArgumentException</a>.</li>
-  </ul>
+  <p><code>IllegalArgumentException</code> - when <a href="-channel.html#kotlinx.coroutines.experimental.channels$Channel(kotlin.Int)/capacity">capacity</a> &lt; -1</p>
 
 </div>
 

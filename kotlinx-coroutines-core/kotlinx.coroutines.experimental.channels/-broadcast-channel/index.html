@@ -33,7 +33,7 @@
 
 <h1 id="broadcastchannel">BroadcastChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/BroadcastChannel.kt#L20">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">interface </span><span class="identifier">BroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/BroadcastChannel.kt#L23">(source)</a></div>
 
 <p>Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
 that subscribe for the elements using <a href="open-subscription.html">openSubscription</a> function and unsubscribe using <a href="../-receive-channel/cancel.html">ReceiveChannel.cancel</a>
@@ -41,6 +41,8 @@ function.</p>
 
 <p>See <code>BroadcastChannel()</code> factory function for the description of available
 broadcast channel implementations.</p>
+
+<p><strong>Note: This is an experimental api.</strong> It may be changed in the future updates.</p>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 
@@ -143,7 +145,7 @@ broadcast channel.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Closes this channel with an optional exceptional <a href="../-send-channel/close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
+        <p>Closes this channel.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
@@ -250,21 +252,6 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-
-        <p><a href="../-array-broadcast-channel/index.html">ArrayBroadcastChannel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">class </span><span class="identifier">ArrayBroadcastChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="../-array-broadcast-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">BroadcastChannel</span></a><span class="symbol">&lt;</span><a href="../-array-broadcast-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Broadcast channel with array buffer of a fixed <a href="../-array-broadcast-channel/capacity.html">capacity</a>.
-Sender suspends only when buffer is full due to one of the receives being slow to consume and
-receiver suspends only when buffer is empty.</p>
-
-      </td>
-</tr>
 <tr>
 <td>
 

@@ -1,0 +1,6 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.experimental.tasks$asDeferred(com.google.android.gms.tasks.Task((kotlinx.coroutines.experimental.tasks.asDeferred.T)))kotlinx.coroutines.experimental.tasks/com.google.android.gms.tasks.-task/as-deferred.html
+$dokka.location:kotlinx.coroutines.experimental.tasks$asTask(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.tasks.asTask.T)))kotlinx.coroutines.experimental.tasks/kotlinx.coroutines.experimental.-deferred/as-task.html
+$dokka.location:kotlinx.coroutines.experimental.tasks$await(com.google.android.gms.tasks.Task((kotlinx.coroutines.experimental.tasks.await.T)))kotlinx.coroutines.experimental.tasks/com.google.android.gms.tasks.-task/await.html
+kotlinx.coroutines.experimental.tasks

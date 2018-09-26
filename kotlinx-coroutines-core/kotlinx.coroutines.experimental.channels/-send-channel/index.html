@@ -33,7 +33,7 @@
 
 <h1 id="sendchannel">SendChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L15">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">SendChannel</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L18">(source)</a></div>
 
 <p>Sender’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -100,7 +100,7 @@ is passed into the corresponding block.</p>
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Closes this channel with an optional exceptional <a href="close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
+        <p>Closes this channel.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
@@ -180,19 +180,6 @@ or throws exception if the channel <a href="is-closed-for-send.html">Channel.isC
 
 <table class="api-docs-table">
 <tbody>
-<tr>
-<td>
-
-        <p><a href="../-abstract-send-channel/index.html">AbstractSendChannel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractSendChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="../-abstract-send-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Abstract send channel. It is a base class for all send channel implementations.</p>
-
-      </td>
-</tr>
 <tr>
 <td>
 

@@ -33,13 +33,30 @@
 
 <h1 id="cancel">cancel</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L228">(source)</a></div>
+<div class="overload-group">
 
-<p>Cancels reception of remaining elements from this channel. This function closes the channel with
+  <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L250">(source)</a></div>
+
+  <p>Cancels reception of remaining elements from this channel. This function closes the channel
+and removes all buffered sent elements from it.
+This function returns <code>true</code> if the channel was not closed previously, or <code>false</code> otherwise.</p>
+
+  <p>Immediately after invocation of this function <a href="is-closed-for-receive.html">isClosedForReceive</a> and
+<a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a>
+on the side of <a href="../-send-channel/index.html">SendChannel</a> start returning <code>true</code>, so all attempts to send to this channel
+afterwards will throw <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>, while attempts to receive will throw
+<a href="../-closed-receive-channel-exception/index.html">ClosedReceiveChannelException</a>.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L269">(source)</a></div>
+
+  <p>Cancels reception of remaining elements from this channel. This function closes the channel with
 the specified cause (unless it was already closed) and removes all buffered sent elements from it.
 This function returns <code>true</code> if the channel was not closed previously, or <code>false</code> otherwise.</p>
 
-<p>Immediately after invocation of this function <a href="is-closed-for-receive.html">isClosedForReceive</a> and
+  <p>Immediately after invocation of this function <a href="is-closed-for-receive.html">isClosedForReceive</a> and
 <a href="../-send-channel/is-closed-for-send.html">isClosedForSend</a>
 on the side of <a href="../-send-channel/index.html">SendChannel</a> start returning <code>true</code>, so all attempts to send to this channel
 afterwards will throw <a href="../-closed-send-channel-exception/index.html">ClosedSendChannelException</a>, while attempts to receive will throw
@@ -47,6 +64,10 @@ afterwards will throw <a href="../-closed-send-channel-exception/index.html">Clo
 A channel that was cancelled with non-null <a href="cancel.html#kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</a> is called a <em>failed</em> channel. Attempts to send or
 receive on a failed channel throw the specified <a href="cancel.html#kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</a> exception.</p>
 
+  <p><strong>Note: This is an experimental api.</strong> Semantics of <em>cancelling</em> a channel with exception may
+    change in the future or this feature may be completely removed.</p>
+
+</div>
 
       </div>
     </main>

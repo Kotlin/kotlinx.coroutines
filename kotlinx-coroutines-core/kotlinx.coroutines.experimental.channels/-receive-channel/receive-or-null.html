@@ -33,7 +33,7 @@
 
 <h1 id="receiveornull">receiveOrNull</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L191">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L212">(source)</a></div>
 
 <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/is-empty.html">isEmpty</a>
 or returns <code>null</code> if the channel is <a href="is-closed-for-receive.html">closed</a> without cause
@@ -53,6 +53,8 @@ Use <a href="../../kotlinx.coroutines.experimental/yield.html">yield</a> or <a h
 
 <p>This function can be used in <a href="../../kotlinx.coroutines.experimental.selects/select.html">select</a> invocation with <a href="on-receive-or-null.html">onReceiveOrNull</a> clause.
 Use <a href="poll.html">poll</a> to try receiving from this channel without waiting.</p>
+
+<p><strong>Note: This is an experimental api.</strong> This function may be replaced with a better on in the future.</p>
 
 
       </div>

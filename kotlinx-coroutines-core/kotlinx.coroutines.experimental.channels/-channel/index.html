@@ -33,13 +33,41 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L287">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L349">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
 but it has suspending operations instead of blocking ones and it can be closed.</p>
 
-<p>See <code>Channel(capacity)</code> factory function for the description of available channel implementations.</p>
+<p><code>Channel(capacity)</code> factory function is used to create channels of different kind depending on
+the value of <code>capacity</code> integer:</p>
+
+<ul>
+  <li>
+    <p>When <code>capacity</code> is 0 – it creates <code>RendezvousChannel</code>.
+This channel does not have any buffer at all. An element is transferred from sender
+to receiver only when <a href="../-send-channel/send.html">send</a> and <a href="../-receive-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="../-send-channel/send.html">send</a> suspends
+until another coroutine invokes <a href="../-receive-channel/receive.html">receive</a> and <a href="../-receive-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="../-send-channel/send.html">send</a>.</p>
+  </li>
+  <li>
+    <p>When <code>capacity</code> is <a href="-u-n-l-i-m-i-t-e-d.html">Channel.UNLIMITED</a> – it creates <code>LinkedListChannel</code>.
+This is a channel with linked-list buffer of a unlimited capacity (limited only by available memory).
+Sender to this channel never suspends and <a href="../-send-channel/offer.html">offer</a> always returns <code>true</code>.</p>
+  </li>
+  <li>
+    <p>When <code>capacity</code> is <a href="-c-o-n-f-l-a-t-e-d.html">Channel.CONFLATED</a> – it creates <code>ConflatedChannel</code>.
+This channel buffers at most one element and conflates all subsequent <code>send</code> and <code>offer</code> invocations,
+so that the receiver always gets the most recently sent element.
+Back-to-send sent elements are <em>conflated</em> – only the the most recently sent element is received,
+while previously sent elements <strong>are lost</strong>.
+Sender to this channel never suspends and <a href="../-send-channel/offer.html">offer</a> always returns <code>true</code>.</p>
+  </li>
+  <li>
+    <p>When <code>capacity</code> is positive, but less than <a href="-u-n-l-i-m-i-t-e-d.html">UNLIMITED</a> – it creates <a href="#">ArrayChannel</a>.
+This channel has an array buffer of a fixed <code>capacity</code>.
+Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
+  </li>
+</ul>
 
 <h3 id="inherited-properties">Inherited Properties</h3>
 
@@ -165,6 +193,12 @@ is passed into the corresponding block.</p>
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels reception of remaining elements from this channel. This function closes the channel
+and removes all buffered sent elements from it.
+This function returns <code>true</code> if the channel was not closed previously, or <code>false</code> otherwise.</p>
+
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancels reception of remaining elements from this channel. This function closes the channel with
@@ -182,7 +216,7 @@ This function returns <code>true</code> if the channel was not closed previously
 <td>
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
-        <p>Closes this channel with an optional exceptional <a href="../-send-channel/close.html#kotlinx.coroutines.experimental.channels.SendChannel$close(kotlin.Throwable)/cause">cause</a>.
+        <p>Closes this channel.
 This is an idempotent operation – repeated invocations of this function have no effect and return <code>false</code>.
 Conceptually, its sends a special “close token” over this channel.</p>
 
@@ -311,8 +345,20 @@ or throws exception if the channel <a href="../-send-channel/is-closed-for-send.
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">CONFLATED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests conflated channel in <code>Channel(...)</code> factory function –
-the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created.</p>
+        <p>Requests conflated channel in <code>Channel(...)</code> factory function – the <code>ConflatedChannel</code> gets created.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-r-e-n-d-e-z-v-o-u-s.html">RENDEZVOUS</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">RENDEZVOUS</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
+
+        <p>Requests rendezvous channel in <code>Channel(...)</code> factory function – the <code>RendezvousChannel</code> gets created.</p>
 
       </td>
 </tr>
@@ -325,8 +371,7 @@ the <a href="../-conflated-channel/index.html">ConflatedChannel</a> gets created
 <td>
         <div class="signature"><code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">UNLIMITED</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
 
-        <p>Requests channel with unlimited capacity buffer in <code>Channel(...)</code> factory function –
-the <a href="../-linked-list-channel/index.html">LinkedListChannel</a> gets created.</p>
+        <p>Requests channel with unlimited capacity buffer in <code>Channel(...)</code> factory function</p>
 
       </td>
 </tr>
@@ -1383,26 +1428,6 @@ Resulting channel has length of shortest input channel.</p>
         <div class="signature"><code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">, </span><span class="identifier">R</span><span class="symbol">, </span><span class="identifier">V</span><span class="symbol">&gt;</span> <a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../zip.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">zip</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/other">other</span><span class="symbol">:</span>&nbsp;<a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../zip.html#R"><span class="identifier">R</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;Dispatchers.Unconfined<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/transform">transform</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="parameterName">a</span><span class="symbol">:</span>&nbsp;<a href="../zip.html#E"><span class="identifier">E</span></a><span class="symbol">,</span>&nbsp;<span class="parameterName">b</span><span class="symbol">:</span>&nbsp;<a href="../zip.html#R"><span class="identifier">R</span></a><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="../zip.html#V"><span class="identifier">V</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="../zip.html#V"><span class="identifier">V</span></a><span class="symbol">&gt;</span></code></div>
 
         <p>Returns a channel of values built from elements of both collections with same indexes using provided <a href="../zip.html#kotlinx.coroutines.experimental.channels$zip(kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.E)), kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlinx.coroutines.experimental.channels.zip.R)), kotlin.coroutines.experimental.CoroutineContext, kotlin.Function2((kotlinx.coroutines.experimental.channels.zip.E, kotlinx.coroutines.experimental.channels.zip.R, kotlinx.coroutines.experimental.channels.zip.V)))/transform">transform</a>. Resulting channel has length of shortest input channels.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-abstract-channel/index.html">AbstractChannel</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">AbstractChannel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="../-abstract-send-channel/index.html"><span class="identifier">AbstractSendChannel</span></a><span class="symbol">&lt;</span><a href="../-abstract-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="./index.md"><span class="identifier">Channel</span></a><span class="symbol">&lt;</span><a href="../-abstract-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code></div>
-
-        <p>Abstract send/receive channel. It is a base class for all channel implementations.</p>
 
       </td>
 </tr>

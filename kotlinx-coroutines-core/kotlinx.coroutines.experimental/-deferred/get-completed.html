@@ -33,14 +33,15 @@
 
 <h1 id="getcompleted">getCompleted</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Deferred.kt#L106">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">getCompleted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#T"><span class="identifier">T</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Deferred.kt#L77">(source)</a></div>
 
 <p>Returns <em>completed</em> result or throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if this deferred value has not
-<a href="../-job/is-completed.html">completed</a> yet. It throws the corresponding exception if this deferred has
-<a href="is-completed-exceptionally.html">completed exceptionally</a>.</p>
+<a href="../-job/is-completed.html">completed</a> yet. It throws the corresponding exception if this deferred was <a href="../-job/is-cancelled.html">cancelled</a>.</p>
 
 <p>This function is designed to be used from <a href="#">invokeOnCompletion</a> handlers, when there is an absolute certainty that
 the value is already complete. See also <a href="get-completion-exception-or-null.html">getCompletionExceptionOrNull</a>.</p>
+
+<p><strong>Note: This is an experimental api.</strong> This function may be removed or renamed in the future.</p>
 
 
       </div>

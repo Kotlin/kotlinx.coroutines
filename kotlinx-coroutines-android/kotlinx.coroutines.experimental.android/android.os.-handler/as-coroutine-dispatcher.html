@@ -33,9 +33,10 @@
 
 <h1 id="ascoroutinedispatcher">asCoroutineDispatcher</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><a href="https://developer.android.com/reference/android/os/Handler.html"><span class="identifier">Handler</span></a><span class="symbol">.</span><span class="identifier">asCoroutineDispatcher</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-handler-dispatcher/index.html"><span class="identifier">HandlerDispatcher</span></a></code></div>
+<div class="signature"><code><span class="identifier">@JvmName</span><span class="symbol">(</span>"from"<span class="symbol">)</span> <span class="identifier">@JvmOverloads</span> <span class="keyword">fun </span><a href="https://developer.android.com/reference/android/os/Handler.html"><span class="identifier">Handler</span></a><span class="symbol">.</span><span class="identifier">asCoroutineDispatcher</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.android$asCoroutineDispatcher(android.os.Handler, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="../-handler-dispatcher/index.html"><span class="identifier">HandlerDispatcher</span></a></code></div>
 
-<p>Represents an arbitrary <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a> as a implementation of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
+<p>Represents an arbitrary <a href="https://developer.android.com/reference/android/os/Handler.html">Handler</a> as a implementation of <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>
+with an optional <a href="as-coroutine-dispatcher.html#kotlinx.coroutines.experimental.android$asCoroutineDispatcher(android.os.Handler, kotlin.String)/name">name</a> for nicer debugging</p>
 
 
       </div>

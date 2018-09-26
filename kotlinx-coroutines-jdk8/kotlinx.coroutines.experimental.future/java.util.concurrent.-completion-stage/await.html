@@ -39,12 +39,9 @@
 
 <p>This suspending function is cancellable.
 If the <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html">Job</a> of the current coroutine is cancelled or completed while this suspending function is waiting, this function
-stops waiting for the completion stage and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>.</p>
-
-<p>Note, that <code>CompletionStage</code> implementation does not support prompt removal of installed listeners, so on cancellation of this wait
-a few small objects will remain in the <code>CompletionStage</code> stack of completion actions until it completes itself.
-However, the care is taken to clear the reference to the waiting coroutine itself, so that its memory can be
-released even if the completion stage never completes.</p>
+stops waiting for the completion stage and immediately resumes with <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception/index.html">CancellationException</a>.
+This method is intended to be used with one-shot futures, so on coroutine cancellation completion stage is cancelled as well if it is instance of <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html">CompletableFuture</a>.
+If cancelling given stage is undesired, <code>stage.asDeferred().await()</code> should be used instead.</p>
 
 
       </div>

@@ -35,7 +35,7 @@
 
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newCoroutineContext(, kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/CoroutineContext.kt#L105">(source)</a></div>
+  <div class="signature"><code><span class="keyword">fun </span><span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">.</span><span class="identifier">newCoroutineContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newCoroutineContext(, kotlin.coroutines.experimental.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/CoroutineContext.kt#L80">(source)</a></div>
 
   <p>Creates context for the new coroutine. It installs <a href="#">Dispatchers.Default</a> when no other dispatcher nor
 <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified, and adds optional support for debugging facilities (when turned on).</p>
@@ -56,8 +56,11 @@ the whole stack of coroutine descriptions that are being executed on this thread
     <li>“<code>off</code>” (<a href="-d-e-b-u-g_-p-r-o-p-e-r-t-y_-v-a-l-u-e_-o-f-f.html">DEBUG_PROPERTY_VALUE_OFF</a>) – disabled.</li>
   </ul>
 
-  <p>Coroutine name can be explicitly assigned using <a href="-coroutine-name/index.html">CoroutineName</a> context element.
+  <p>Coroutine name can be explicitly assigned using <a href="#">CoroutineName</a> context element.
 The string “coroutine” is used as a default name.</p>
+
+  <p><strong>Note: This is an experimental api.</strong>
+Behavior of this function may change in the future with respect to its support for debugging facilities.</p>
 
 </div>
 <div class="overload-group">

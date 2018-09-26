@@ -33,12 +33,12 @@
 
 <h1 id="newsinglethreadcontext">newSingleThreadContext</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-thread-pool-dispatcher/index.html"><span class="identifier">ThreadPoolDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadPoolDispatcher.kt#L18">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">newSingleThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$newSingleThreadContext(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-executor-coroutine-dispatcher/index.html"><span class="identifier">ExecutorCoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadPoolDispatcher.kt#L18">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
-<p>Creates a new coroutine execution context using a single thread with built-in <a href="#">yield</a> and <a href="#">delay</a> support.
-<strong>NOTE: The resulting <a href="-thread-pool-dispatcher/index.html">ThreadPoolDispatcher</a> owns native resources (its thread).Resources are reclaimed by <a href="-thread-pool-dispatcher/close.html">ThreadPoolDispatcher.close</a>.</strong></p>
+<p>Creates a new coroutine execution context using a single thread with built-in <a href="#">yield</a> support.
+<strong>NOTE: The resulting <a href="-executor-coroutine-dispatcher/index.html">ExecutorCoroutineDispatcher</a> owns native resources (its thread).Resources are reclaimed by <a href="-executor-coroutine-dispatcher/close.html">ExecutorCoroutineDispatcher.close</a>.</strong></p>
 
 <h3 id="parameters">Parameters</h3>
 

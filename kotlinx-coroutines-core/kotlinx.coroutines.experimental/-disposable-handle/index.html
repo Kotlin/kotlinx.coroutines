@@ -33,7 +33,7 @@
 
 <h1 id="disposablehandle">DisposableHandle</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L356">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">DisposableHandle</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L387">(source)</a></div>
 
 <p>A handle to an allocated object that can be disposed to make it eligible for garbage collection.</p>
 
@@ -52,26 +52,6 @@
 
         <p>Disposes the corresponding object, making it eligible for garbage collection.
 Repeated invocation of this function has no effect.</p>
-
-      </td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="inheritors">Inheritors</h3>
-
-<table class="api-docs-table">
-<tbody>
-<tr>
-<td>
-
-        <p><a href="../-non-disposable-handle/index.html">NonDisposableHandle</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">object </span><span class="identifier">NonDisposableHandle</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.md"><span class="identifier">DisposableHandle</span></a></code></div>
-
-        <p>No-op implementation of <a href="./index.md">DisposableHandle</a>.</p>
 
       </td>
 </tr>

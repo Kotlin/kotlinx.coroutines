@@ -33,7 +33,9 @@
 
 <h1 id="jobcancellationexception">JobCancellationException</h1>
 
-<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Exceptions.kt#L28">(source)</a></div>
+<div class="signature"><code><span class="keyword">class </span><span class="identifier">JobCancellationException</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-cancellation-exception/index.html"><span class="identifier">CancellationException</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/Exceptions.kt#L28">(source)</a></div>
+
+<p><strong>Platform and version requirements:</strong> JS, Native</p>
 
 <p>Thrown by cancellable suspending functions if the <a href="#">Job</a> of the coroutine is cancelled or completed
 without cause, or with a cause or exception that is not <a href="../-cancellation-exception/index.html">CancellationException</a>
@@ -56,8 +58,6 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
 without cause, or with a cause or exception that is not <a href="../-cancellation-exception/index.html">CancellationException</a>
 (see <a href="#">Job.getCancellationException</a>).</p>
 
-        <div class="signature"><code><span class="identifier">JobCancellationException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$&lt;init&gt;(kotlin.String, kotlin.Throwable, kotlinx.coroutines.experimental.Job)/job">job</span><span class="symbol">:</span>&nbsp;<a href="../-job/index.html"><span class="identifier">Job</span></a><span class="symbol">)</span></code></div>
-
       </td>
 </tr>
 </tbody>
@@ -67,7 +67,8 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
 
 <table class="api-docs-table">
 <tbody>
-<tr data-platform="JS, Native"><td>
+<tr>
+<td>
 
         <p><a href="cause.html">cause</a></p>
 
@@ -76,7 +77,8 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
         <div class="signature"><code><span class="keyword">val </span><span class="identifier">cause</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span></code></div>
 
       </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table>
 
 <h3 id="functions">Functions</h3>
@@ -91,17 +93,6 @@ without cause, or with a cause or exception that is not <a href="../-cancellatio
       </td>
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.JobCancellationException$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="fill-in-stack-trace.html">fillInStackTrace</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">fillInStackTrace</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a></code></div>
 
       </td>
 </tr>

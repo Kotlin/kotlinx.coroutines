@@ -37,64 +37,11 @@
 <tbody>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractChannel</a></p>
-      </td>
-<td>
-
-        <p>Abstract send/receive channel. It is a base class for all channel implementations.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/-abstract-coroutine/index.html">kotlinx.coroutines.experimental.AbstractCoroutine</a></p>
-      </td>
-<td>
-
-        <p>Abstract base class for implementation of coroutines in coroutine builders.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-abstract-send-channel/index.html">kotlinx.coroutines.experimental.channels.AbstractSendChannel</a></p>
-      </td>
-<td>
-
-        <p>Abstract send channel. It is a base class for all send channel implementations.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-actor-scope/index.html">kotlinx.coroutines.experimental.channels.ActorScope</a></p>
       </td>
 <td>
 
         <p>Scope for <a href="#">actor</a> coroutine builder.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-array-broadcast-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayBroadcastChannel</a></p>
-      </td>
-<td>
-
-        <p>Broadcast channel with array buffer of a fixed <a href="../kotlinx.coroutines.experimental.channels/-array-broadcast-channel/capacity.html">capacity</a>.
-Sender suspends only when buffer is full due to one of the receives being slow to consume and
-receiver suspends only when buffer is empty.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-array-channel/index.html">kotlinx.coroutines.experimental.channels.ArrayChannel</a></p>
-      </td>
-<td>
-
-        <p>Channel with array buffer of a fixed <a href="../kotlinx.coroutines.experimental.channels/-array-channel/capacity.html">capacity</a>.
-Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.</p>
 
       </td>
 </tr>
@@ -183,8 +130,7 @@ exception on send attempts.</p>
       </td>
 <td>
 
-        <p>A <a href="../kotlinx.coroutines.experimental/-deferred/index.html">Deferred</a> that can be completed via public functions
-<a href="../kotlinx.coroutines.experimental/-completable-deferred/complete.html">complete</a>, <a href="../kotlinx.coroutines.experimental/-completable-deferred/complete-exceptionally.html">completeExceptionally</a>, and <a href="#">cancel</a>.</p>
+        <p>A <a href="../kotlinx.coroutines.experimental/-deferred/index.html">Deferred</a> that can be completed via public functions <a href="../kotlinx.coroutines.experimental/-completable-deferred/complete.html">complete</a> or <a href="../kotlinx.coroutines.experimental/-job/cancel.html">cancel</a>.</p>
 
       </td>
 </tr>
@@ -215,20 +161,6 @@ exception on send attempts.</p>
 <td>
 
         <p>Broadcasts the most recently sent element (aka <a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/value.html">value</a>) to all <a href="../kotlinx.coroutines.experimental.channels/-conflated-broadcast-channel/open-subscription.html">openSubscription</a> subscribers.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-conflated-channel/index.html">kotlinx.coroutines.experimental.channels.ConflatedChannel</a></p>
-      </td>
-<td>
-
-        <p>Channel that buffers at most one element and conflates all subsequent <code>send</code> and <code>offer</code> invocations,
-so that the receiver always gets the most recently sent element.
-Back-to-send sent elements are <em>conflated</em> – only the the most recently sent element is received,
-while previously sent elements <strong>are lost</strong>.
-Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
 
       </td>
 </tr>
@@ -267,7 +199,7 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
 <td>
 
         <p>User-specified name of coroutine. This name is used in debugging mode.
-See <a href="#">newCoroutineContext</a> for the description of coroutine debugging facilities.</p>
+See <a href="../kotlinx.coroutines.experimental/new-coroutine-context.html">newCoroutineContext</a> for the description of coroutine debugging facilities.</p>
 
       </td>
 </tr>
@@ -300,18 +232,7 @@ It is used in <code>start</code> parameter of <a href="../kotlinx.coroutines.exp
       </td>
 <td>
 
-        <p>Deferred value is a non-blocking cancellable future.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental/-delay/index.html">kotlinx.coroutines.experimental.Delay</a></p>
-      </td>
-<td>
-
-        <p>This dispatcher <em>feature</em> is implemented by <a href="../kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementations that natively support
-scheduled execution of tasks.</p>
+        <p>Deferred value is a non-blocking cancellable future — it is a <a href="../kotlinx.coroutines.experimental/-job/index.html">Job</a> that has a result.</p>
 
       </td>
 </tr>
@@ -375,6 +296,19 @@ Instances of <a href="../kotlinx.coroutines.experimental/-executor-coroutine-dis
 </tr>
 <tr>
 <td>
+        <p><a href="../kotlinx.coroutines.experimental/-experimental-coroutines-api/index.html">kotlinx.coroutines.experimental.ExperimentalCoroutinesApi</a></p>
+      </td>
+<td>
+
+        <p>Marks declarations that are still <strong>experimental</strong> in coroutines API, which means that the design of the
+corresponding declarations has open issues which may (or may not) lead to their changes in the future.
+Roughly speaking, there is a chance that those declarations will be deprecated in the near future or
+the semantics of their behavior may change in some way that may break some code.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
         <p><a href="../kotlinx.coroutines.experimental/-global-scope/index.html">kotlinx.coroutines.experimental.GlobalScope</a></p>
       </td>
 <td>
@@ -397,9 +331,8 @@ Instances of <a href="../kotlinx.coroutines.experimental/-executor-coroutine-dis
       </td>
 <td>
 
-        <p>A background job. Conceptually, a job is a cancellable thing with a simple life-cycle that
-culminates in its completion. Jobs can be arranged into parent-child hierarchies where cancellation
-or completion of parent immediately cancels all its <a href="../kotlinx.coroutines.experimental/-job/children.html">children</a>.</p>
+        <p>A background job. Conceptually, a job is a cancellable thing with a life-cycle that
+culminates in its completion.</p>
 
       </td>
 </tr>
@@ -417,17 +350,6 @@ without cause, or with a cause or exception that is not <a href="../kotlinx.coro
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-linked-list-channel/index.html">kotlinx.coroutines.experimental.channels.LinkedListChannel</a></p>
-      </td>
-<td>
-
-        <p>Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
-Sender to this channel never suspends and <a href="#">offer</a> always returns <code>true</code>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.sync/-mutex/index.html">kotlinx.coroutines.experimental.sync.Mutex</a></p>
       </td>
 <td>
@@ -438,22 +360,25 @@ Sender to this channel never suspends and <a href="#">offer</a> always returns <
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-non-cancellable/index.html">kotlinx.coroutines.experimental.NonCancellable</a></p>
+        <p><a href="../kotlinx.coroutines.experimental/-non-cancellable.html">kotlinx.coroutines.experimental.NonCancellable</a></p>
       </td>
 <td>
 
-        <p>A non-cancelable job that is always <a href="../kotlinx.coroutines.experimental/-non-cancellable/is-active.html">active</a>. It is designed for <a href="../kotlinx.coroutines.experimental/with-context.html">withContext</a> function
+        <p>A non-cancelable job that is always <a href="#">active</a>. It is designed for <a href="../kotlinx.coroutines.experimental/with-context.html">withContext</a> function
 to prevent cancellation of code blocks that need to be executed without cancellation.</p>
 
       </td>
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-non-disposable-handle/index.html">kotlinx.coroutines.experimental.NonDisposableHandle</a></p>
+        <p><a href="../kotlinx.coroutines.experimental/-obsolete-coroutines-api/index.html">kotlinx.coroutines.experimental.ObsoleteCoroutinesApi</a></p>
       </td>
 <td>
 
-        <p>No-op implementation of <a href="../kotlinx.coroutines.experimental/-disposable-handle/index.html">DisposableHandle</a>.</p>
+        <p>Marks declarations that are <strong>obsolete</strong> in coroutines API, which means that the design of the corresponding
+declarations has serious known flaws and they will be redesigned in the future.
+Roughly speaking, these declarations will be deprecated in the future but there is no replacement for them yet,
+so they cannot be deprecated right away.</p>
 
       </td>
 </tr>
@@ -482,18 +407,6 @@ to prevent cancellation of code blocks that need to be executed without cancella
 <td>
 
         <p>Receiver’s interface to <a href="../kotlinx.coroutines.experimental.channels/-channel/index.html">Channel</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.channels/-rendezvous-channel/index.html">kotlinx.coroutines.experimental.channels.RendezvousChannel</a></p>
-      </td>
-<td>
-
-        <p>Rendezvous channel. This channel does not have any buffer at all. An element is transferred from sender
-to receiver only when <a href="#">send</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> invocations meet in time (rendezvous), so <a href="#">send</a> suspends
-until another coroutine invokes <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> and <a href="../kotlinx.coroutines.experimental.channels/-abstract-channel/receive.html">receive</a> suspends until another coroutine invokes <a href="#">send</a>.</p>
 
       </td>
 </tr>
@@ -568,22 +481,6 @@ open subscription and to <a href="../kotlinx.coroutines.experimental.channels/-s
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental.intrinsics/kotlin.-suspend-function0/index.html">kotlin.SuspendFunction0</a> (extensions in package kotlinx.coroutines.experimental.intrinsics)</p>
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
-        <p><a href="../kotlinx.coroutines.experimental.intrinsics/kotlin.-suspend-function1/index.html">kotlin.SuspendFunction1</a> (extensions in package kotlinx.coroutines.experimental.intrinsics)</p>
-      </td>
-<td>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.test/-test-coroutine-context/index.html">kotlinx.coroutines.experimental.test.TestCoroutineContext</a></p>
       </td>
 <td>
@@ -614,17 +511,6 @@ every time the coroutine with this element in the context is resumed on a thread
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-thread-pool-dispatcher/index.html">kotlinx.coroutines.experimental.ThreadPoolDispatcher</a></p>
-      </td>
-<td>
-
-        <p>Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
-created with <a href="../kotlinx.coroutines.experimental/new-single-thread-context.html">newSingleThreadContext</a> and <a href="../kotlinx.coroutines.experimental/new-fixed-thread-pool-context.html">newFixedThreadPoolContext</a>.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
         <p><a href="../kotlinx.coroutines.experimental.channels/-ticker-mode/index.html">kotlinx.coroutines.experimental.channels.TickerMode</a></p>
       </td>
 <td>
@@ -635,7 +521,18 @@ created with <a href="../kotlinx.coroutines.experimental/new-single-thread-conte
 </tr>
 <tr>
 <td>
-        <p><a href="../kotlinx.coroutines.experimental/-timeout-cancellation-exception/index.html">kotlinx.coroutines.experimental.TimeoutCancellationException</a></p>
+        <p><a href="../kotlinx.coroutines.experimental.timeunit/-time-unit/index.html">kotlinx.coroutines.experimental.timeunit.TimeUnit</a></p>
+      </td>
+<td>
+
+        <p>Time unit. This class is provided for better JVM interoperability.
+<strong>It is available for common code, but its use in common code is not recommended.</strong></p>
+
+      </td>
+</tr>
+<tr>
+<td>
+        <p><a href="../kotlinx.coroutines.experimental/-timeout-cancellation-exception.html">kotlinx.coroutines.experimental.TimeoutCancellationException</a></p>
       </td>
 <td>
 

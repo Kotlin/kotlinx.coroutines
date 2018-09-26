@@ -33,12 +33,25 @@
 
 <h1 id="cancelchildren">cancelChildren</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L462">(source)</a></div>
+<div class="overload-group">
 
-<p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
-It does not do anything if there is no job in the context or it has no children.
-See <a href="#">Job.cancelChildren</a> for details.</p>
+  <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L556">(source)</a></div>
 
+  <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context, without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
+
+</div>
+<div class="overload-group">
+
+  <div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L568">(source)</a></div>
+
+  <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>,
+without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
+
+  <p><strong>Note: This is an experimental api.</strong> Cancellation of a job with exception may change its semantics in the future.</p>
+
+</div>
 
       </div>
     </main>

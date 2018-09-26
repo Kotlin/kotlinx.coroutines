@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx-coroutines-play-services</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Integration with Google Play Services <a href="https://developers.google.com/android/guides/tasks">Tasks API</a>.</p>
+
+<p>Extension functions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>Name</strong></th>
+      <th><strong>Description</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.experimental.tasks/com.google.android.gms.tasks.-task/await.html">Task.await</a></td>
+      <td>Awaits for completion of the Task (cancellable)</td>
+    </tr>
+    <tr>
+      <td><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-play-services/kotlinx.coroutines.experimental.tasks/kotlinx.coroutines.experimental.-deferred/as-task.html">Deferred.asTask</a></td>
+      <td>Converts a deferred value to a Task</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="example">Example</h2>
+
+<p>Using Firebase APIs becomes simple:</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="n">FirebaseAuth</span><span class="p">.</span><span class="n">getInstance</span><span class="p">().</span><span class="n">signInAnonymously</span><span class="p">().</span><span class="n">await</span><span class="p">()</span>
+<span class="kd">val</span> <span class="py">snapshot</span> <span class="p">=</span> <span class="k">try</span> <span class="p">{</span>
+    <span class="n">FirebaseFirestore</span><span class="p">.</span><span class="n">getInstance</span><span class="p">().</span><span class="n">document</span><span class="p">(</span><span class="s">"users/$id"</span><span class="p">).</span><span class="k">get</span><span class="p">().</span><span class="n">await</span><span class="p">()</span> <span class="c1">// Cancellable await
+</span><span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">FirebaseFirestoreException</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Handle exception
+</span>    <span class="k">return</span><span class="n">@async</span>
+<span class="p">}</span>
+
+<span class="c1">// Do stuff
+</span></code></pre>
+</div>
+
+<h3 id="packages">Packages</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.experimental.tasks/index.html">kotlinx.coroutines.experimental.tasks</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="index">Index</h3>
+
+<p><a href="alltypes/index.html">All Types</a></p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

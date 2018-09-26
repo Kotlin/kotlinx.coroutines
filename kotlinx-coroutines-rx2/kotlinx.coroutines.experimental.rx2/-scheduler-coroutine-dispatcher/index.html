@@ -61,73 +61,20 @@
 </tbody>
 </table>
 
-<h3 id="functions">Functions</h3>
+<h3 id="properties">Properties</h3>
 
 <table class="api-docs-table">
 <tbody>
 <tr>
 <td>
 
-        <p><a href="dispatch.html">dispatch</a></p>
+        <p><a href="scheduler.html">scheduler</a></p>
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$dispatch(kotlin.coroutines.experimental.CoroutineContext, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+        <div class="signature"><code><span class="keyword">val </span><span class="identifier">scheduler</span><span class="symbol">: </span><a href="http://reactivex.io/RxJava/javadoc/io/reactivex/Scheduler.html"><span class="identifier">Scheduler</span></a></code></div>
 
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="equals.html">equals</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="hash-code.html">hashCode</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">hashCode</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="invoke-on-timeout.html">invokeOnTimeout</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">invokeOnTimeout</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$invokeOnTimeout(kotlin.Long, java.util.concurrent.TimeUnit, java.lang.Runnable)/block">block</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-disposable-handle/index.html"><span class="identifier">DisposableHandle</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="schedule-resume-after-delay.html">scheduleResumeAfterDelay</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">scheduleResumeAfterDelay</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/time">time</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.rx2.SchedulerCoroutineDispatcher$scheduleResumeAfterDelay(kotlin.Long, java.util.concurrent.TimeUnit, kotlinx.coroutines.experimental.CancellableContinuation((kotlin.Unit)))/continuation">continuation</span><span class="symbol">:</span>&nbsp;<a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellable-continuation/index.html"><span class="identifier">CancellableContinuation</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="to-string.html">toString</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></div>
+        <p>Underlying scheduler of current <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-dispatcher/index.html">CoroutineDispatcher</a>.</p>
 
       </td>
 </tr>

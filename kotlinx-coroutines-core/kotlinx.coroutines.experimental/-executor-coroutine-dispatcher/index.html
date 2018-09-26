@@ -33,7 +33,7 @@
 
 <h1 id="executorcoroutinedispatcher">ExecutorCoroutineDispatcher</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">ExecutorCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">CloseableCoroutineDispatcher</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Executors.kt#L19">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">ExecutorCoroutineDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="identifier">CloseableCoroutineDispatcher</span><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Executors.kt#L18">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -84,6 +84,26 @@ Instances of <a href="./index.md">ExecutorCoroutineDispatcher</a> should be clos
 </tbody>
 </table>
 
+<h3 id="functions">Functions</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="close.html">close</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Closes this coroutine dispatcher and shuts down its executor.</p>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="extension-properties">Extension Properties</h3>
 
 <table class="api-docs-table">
@@ -116,6 +136,12 @@ Instances of <a href="./index.md">ExecutorCoroutineDispatcher</a> should be clos
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels <a href="../-job/index.html">Job</a> of this context. The result is <code>true</code> if the job was
+cancelled as a result of this invocation or was already being cancelled and
+<code>false</code> if there is no job in the context or if it was already completed. See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
+
         <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancels <a href="../-job/index.html">Job</a> of this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html#kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if the job was
@@ -131,11 +157,16 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context, without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
+
         <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
-It does not do anything if there is no job in the context or it has no children.
-See <a href="#">Job.cancelChildren</a> for details.</p>
+        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>,
+without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
 
       </td>
 </tr>

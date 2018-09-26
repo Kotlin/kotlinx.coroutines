@@ -33,7 +33,7 @@
 
 <h1 id="receivechannel">ReceiveChannel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L124">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">ReceiveChannel</span><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<span class="identifier">E</span><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L136">(source)</a></div>
 
 <p>Receiver’s interface to <a href="../-channel/index.html">Channel</a>.</p>
 
@@ -118,6 +118,12 @@ the original <a href="../-send-channel/close.html">close</a> cause exception if 
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels reception of remaining elements from this channel. This function closes the channel
+and removes all buffered sent elements from it.
+This function returns <code>true</code> if the channel was not closed previously, or <code>false</code> otherwise.</p>
+
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">cancel</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental.channels.ReceiveChannel$cancel(kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancels reception of remaining elements from this channel. This function closes the channel with

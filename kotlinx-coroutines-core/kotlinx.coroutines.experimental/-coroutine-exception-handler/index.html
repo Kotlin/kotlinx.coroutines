@@ -33,7 +33,7 @@
 
 <h1 id="coroutineexceptionhandler">CoroutineExceptionHandler</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineExceptionHandler.kt#L79">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineExceptionHandler.kt#L81">(source)</a></div>
 
 <p>An optional element on the coroutine context to handle uncaught exceptions.</p>
 
@@ -45,13 +45,11 @@
   <li>Otherwise:
     <ul>
       <li>if there is a <a href="../-job/index.html">Job</a> in the context, then <a href="../-job/cancel.html">Job.cancel</a> is invoked;</li>
-      <li>all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="#">ServiceLoader</a> are invoked;</li>
-      <li>and current thread’s <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#uncaughtExceptionHandler">Thread.uncaughtExceptionHandler</a> is invoked.</li>
+      <li>Otherwise, all instances of <a href="./index.md">CoroutineExceptionHandler</a> found via <a href="#">ServiceLoader</a></li>
+      <li>and current thread’s <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#uncaughtExceptionHandler">Thread.uncaughtExceptionHandler</a> are invoked.</li>
     </ul>
   </li>
 </ul>
-
-<p>See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
 
 <h3 id="types">Types</h3>
 
@@ -87,7 +85,7 @@
         <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">handleException</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
         <p>Handles uncaught <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/exception">exception</a> in the given <a href="handle-exception.html#kotlinx.coroutines.experimental.CoroutineExceptionHandler$handleException(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/context">context</a>. It is invoked
-if coroutine has an uncaught exception. See <a href="../handle-coroutine-exception.html">handleCoroutineException</a>.</p>
+if coroutine has an uncaught exception.</p>
 
       </td>
 </tr>
@@ -126,6 +124,12 @@ if coroutine has an uncaught exception. See <a href="../handle-coroutine-excepti
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
+
+        <p>Cancels <a href="../-job/index.html">Job</a> of this context. The result is <code>true</code> if the job was
+cancelled as a result of this invocation or was already being cancelled and
+<code>false</code> if there is no job in the context or if it was already completed. See <a href="../-job/cancel.html">Job.cancel</a> for details.</p>
+
         <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancel</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></div>
 
         <p>Cancels <a href="../-job/index.html">Job</a> of this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel.html#kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if the job was
@@ -141,11 +145,16 @@ cancelled or completed. See <a href="../-job/cancel.html">Job.cancel</a> for det
 
       </td>
 <td>
+        <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
+
+        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context, without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
+
         <div class="signature"><code><span class="keyword">fun </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">.</span><span class="identifier">cancelChildren</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
 
-        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>.
-It does not do anything if there is no job in the context or it has no children.
-See <a href="#">Job.cancelChildren</a> for details.</p>
+        <p>Cancels all children of the <a href="../-job/index.html">Job</a> in this context with an optional cancellation <a href="../kotlin.coroutines.experimental.-coroutine-context/cancel-children.html#kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)/cause">cause</a>,
+without touching the the state of this job itself.
+It does not do anything if there is no job in the context or it has no children.</p>
 
       </td>
 </tr>

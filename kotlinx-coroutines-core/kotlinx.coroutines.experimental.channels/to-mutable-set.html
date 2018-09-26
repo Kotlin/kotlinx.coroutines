@@ -33,7 +33,7 @@
 
 <h1 id="tomutableset">toMutableSet</h1>
 
-<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="to-mutable-set.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toMutableSet</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-set/index.html"><span class="identifier">MutableSet</span></a><span class="symbol">&lt;</span><a href="to-mutable-set.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channels.common.kt#L1214">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="to-mutable-set.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="identifier">toMutableSet</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-set/index.html"><span class="identifier">MutableSet</span></a><span class="symbol">&lt;</span><a href="to-mutable-set.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channels.common.kt#L1520">(source)</a></div>
 
 <p>Returns a mutable set containing all distinct elements from the given channel.</p>
 
@@ -41,6 +41,9 @@
 
 <p>The operation is <em>terminal</em>.
 This function <a href="consume.html">consumes</a> all elements of the original <a href="-receive-channel/index.html">ReceiveChannel</a>.</p>
+
+<p><strong>Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.</strong>
+    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/254">issue #254</a>.</p>
 
 
       </div>

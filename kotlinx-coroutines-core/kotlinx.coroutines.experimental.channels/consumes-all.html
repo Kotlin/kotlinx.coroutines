@@ -33,11 +33,14 @@
 
 <h1 id="consumesall">consumesAll</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">consumesAll</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumesAll(kotlin.Array((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlin.Any)))))/channels">channels</span><span class="symbol">:</span>&nbsp;<a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channels.common.kt#L86">(source)</a></div>
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="identifier">consumesAll</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">vararg</span> <span class="parameterName" id="kotlinx.coroutines.experimental.channels$consumesAll(kotlin.Array((kotlinx.coroutines.experimental.channels.ReceiveChannel((kotlin.Any)))))/channels">channels</span><span class="symbol">:</span>&nbsp;<a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><span class="identifier">*</span><span class="symbol">&gt;</span><br /><span class="symbol">)</span><span class="symbol">: </span><a href="../kotlinx.coroutines.experimental/-completion-handler.html"><span class="identifier">CompletionHandler</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channels.common.kt#L104">(source)</a></div>
 
 <p>Returns a <a href="../kotlinx.coroutines.experimental/-completion-handler.html">CompletionHandler</a> that invokes <a href="-receive-channel/cancel.html">cancel</a> on all the
 specified <a href="-receive-channel/index.html">ReceiveChannel</a> instances with the corresponding cause.
 See also <a href="consumes.html">ReceiveChannel.consumes</a> for a version on one channel.</p>
+
+<p><strong>Note: This API will become obsolete in future updates with introduction of lazy asynchronous streams.</strong>
+    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/254">issue #254</a>.</p>
 
 
       </div>
