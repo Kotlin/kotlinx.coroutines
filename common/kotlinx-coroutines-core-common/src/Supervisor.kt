@@ -32,8 +32,10 @@ public fun SupervisorJob(parent: Job? = null) : Job = SupervisorJobImpl(parent)
  *
  * A failure of a child does not cause this scope to fail and does not affect its other children,
  * so a custom policy for handling failures of its children can be implemented. See [SupervisorJob] for details.
+ * A failure of the scope itself (exception thrown in the [block] or cancellation) fails the scope with all its children,
+ * but does not cancel parent job.
  */
-public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
+public suspend fun <R>  supervisorScope(block: suspend CoroutineScope.() -> R): R {
     // todo: optimize implementation to a single allocated object
     // todo: fix copy-and-paste with coroutineScope
     val owner = SupervisorCoroutine<R>(coroutineContext)
@@ -62,6 +64,6 @@ private class SupervisorJobImpl(parent: Job?) : JobSupport(true) {
 private class SupervisorCoroutine<R>(
     parentContext: CoroutineContext
 ) : AbstractCoroutine<R>(parentContext, true) {
-    override val cancelsParent: Boolean get() = true
+    override val cancelsParent: Boolean get() = false
     override fun childCancelled(cause: Throwable): Boolean = false
 }
