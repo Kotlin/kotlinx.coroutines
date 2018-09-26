@@ -18,7 +18,7 @@ Visible consequences of include more robust exception handling for large corouti
 * `withContext` is now aligned with structured concurrency and awaits for all launched tasks, its performance is significantly improved (see #553 and #617).
 * Added integration module with Play Services Task API. Thanks @SUPERCILEX and @lucasvalenteds for the contribution!
 * Integration with Rx2 now respects nullability in type constraints (see #347). Thanks @Dmitry-Borodin for the contribution!
-* `CompletableFuture.await` and `ListenableFuture.await` now propagate cancellation the the future (see #611).
+* `CompletableFuture.await` and `ListenableFuture.await` now propagate cancellation to the future (see #611).
 * Cancellation of `runBlocking` machinery is improved (see #589).
 * Coroutine guide is restructured and split to multiple files for the sake of simplicity.
 * `CoroutineScope` factory methods add `Job` if it is missing from the context to enforce structured concurrency (see #610).
