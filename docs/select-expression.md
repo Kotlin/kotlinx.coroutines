@@ -25,7 +25,7 @@ class SelectGuideTest {
 
 <!--- TOC -->
 
-* [Select expression (experimental)](#select-expression-(experimental))
+* [Select expression (experimental)](#select-expression-experimental)
   * [Selecting from channels](#selecting-from-channels)
   * [Selecting on close](#selecting-on-close)
   * [Selecting to send](#selecting-to-send)

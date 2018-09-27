@@ -22,7 +22,7 @@ class ChannelsGuideTest {
 
 <!--- TOC -->
 
-* [Channels (experimental)](#channels-(experimental))
+* [Channels (experimental)](#channels-experimental)
   * [Channel basics](#channel-basics)
   * [Closing and iteration over channels](#closing-and-iteration-over-channels)
   * [Building channel producers](#building-channel-producers)
