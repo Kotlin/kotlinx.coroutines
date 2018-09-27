@@ -104,14 +104,15 @@ class CompletableDeferredTest : TestBase() {
     }
 
     @Test
-    fun testParentActiveOnChildException() {
+    fun testParentCancelledOnChildException() {
         val parent = Job()
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
         assertEquals(true, parent.isActive)
         assertEquals(true, c.cancel(TestException()))
         checkCancelWithException(c)
-        assertEquals(true, parent.isActive)
+        assertEquals(false, parent.isActive)
+        assertEquals(true, parent.isCancelled)
     }
 
     @Test

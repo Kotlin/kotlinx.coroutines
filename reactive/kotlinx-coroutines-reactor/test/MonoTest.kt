@@ -38,7 +38,7 @@ class MonoTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val mono = mono {
+        val mono = mono(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -190,5 +190,18 @@ class MonoTest : TestBase() {
             assert(it is IllegalStateException)
             assertEquals("OK", it.message)
         }
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        mono<Unit> {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

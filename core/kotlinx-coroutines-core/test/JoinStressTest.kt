@@ -30,7 +30,7 @@ class JoinStressTest : TestBase() {
 
         repeat(iterations) {
             val barrier = CyclicBarrier(3)
-            val exceptionalJob = async(pool) {
+            val exceptionalJob = async(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
             }
@@ -65,7 +65,7 @@ class JoinStressTest : TestBase() {
 
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
-            val exceptionalJob = async(pool) {
+            val exceptionalJob = async(pool + NonCancellable) {
                 barrier.await()
                 throw TestException()
             }
@@ -81,7 +81,7 @@ class JoinStressTest : TestBase() {
                 }
             }
 
-            val canceller = async(pool) {
+            val canceller = async(pool + NonCancellable) {
                 barrier.await()
                 exceptionalJob.cancel(IOException())
             }

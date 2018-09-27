@@ -29,7 +29,7 @@ class FluxTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val flux = flux<String> {
+        val flux = flux<String>(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -66,5 +66,18 @@ class FluxTest : TestBase() {
         sub.dispose() // will cancel coroutine
         yield()
         finish(6)
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        flux<Unit> {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

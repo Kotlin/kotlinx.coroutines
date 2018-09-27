@@ -95,8 +95,8 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testNestedAsyncFailure() = runTest {
-        val deferred = async {
-            val nested = async {
+        val deferred = async(NonCancellable) {
+            val nested = async(NonCancellable) {
                 expect(3)
                 throw IOException()
             }
@@ -121,9 +121,8 @@ class JobBasicCancellationTest : TestBase() {
             expect(1)
             val child = Job(coroutineContext[Job])
             expect(2)
-            assertFalse(child.cancel(IOException()))
+            assertFalse(child.cancel()) // cancel without cause -- should not cancel us (parent)
             child.join()
-            assertTrue(child.getCancellationException().cause is IOException)
             expect(3)
         }
 
@@ -137,9 +136,8 @@ class JobBasicCancellationTest : TestBase() {
             expect(1)
             val child = CompletableDeferred<Unit>(coroutineContext[Job])
             expect(2)
-            assertTrue(child.cancel(IOException()))
+            assertTrue(child.cancel()) // cancel without cause -- should not cancel us (parent)
             child.join()
-            assertTrue(child.getCancellationException().cause is IOException)
             expect(3)
         }
 

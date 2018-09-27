@@ -29,7 +29,7 @@ class ObservableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxObservable<String> {
+        val observable = rxObservable<String>(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -66,5 +66,18 @@ class ObservableTest : TestBase() {
         sub.dispose() // will cancel coroutine
         yield()
         finish(6)
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        rxObservable<Unit> {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

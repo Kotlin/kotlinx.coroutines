@@ -12,6 +12,8 @@ internal open class ChannelCoroutine<E>(
     protected val _channel: Channel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), Channel<E> by _channel {
+    override val cancelsParent: Boolean get() = true
+
     val channel: Channel<E> get() = this
 
     override fun cancel() = cancel(null)

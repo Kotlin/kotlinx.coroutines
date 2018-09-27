@@ -317,7 +317,7 @@ class CoroutinesTest : TestBase() {
     fun testNotCancellableChildWithExceptionCancelled() = runTest(expected = { it is IllegalArgumentException }) {
         expect(1)
         // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
-        val d = async(start = CoroutineStart.ATOMIC) {
+        val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
             finish(4)
             throwTestException() // will throw
             expectUnreached()

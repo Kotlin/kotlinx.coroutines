@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.rx2
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
 
@@ -29,7 +30,7 @@ class FlowableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val observable = rxFlowable<String> {
+        val observable = rxFlowable<String>(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -66,5 +67,18 @@ class FlowableTest : TestBase() {
         sub.dispose() // will cancel coroutine
         yield()
         finish(6)
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        rxFlowable<Unit> {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

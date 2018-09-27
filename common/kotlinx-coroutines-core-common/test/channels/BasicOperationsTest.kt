@@ -71,7 +71,7 @@ class BasicOperationsTest : TestBase() {
 
     private suspend fun testReceiveOrNull(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async {
+        val d = async(NonCancellable) {
             channel.receive()
         }
 
@@ -88,24 +88,24 @@ class BasicOperationsTest : TestBase() {
 
     private suspend fun testReceiveOrNullException(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
-        val d = async {
+        val d = async(NonCancellable) {
             channel.receive()
         }
 
         yield()
-        channel.close(IndexOutOfBoundsException())
+        channel.close(TestException())
         assertTrue(channel.isClosedForReceive)
 
-        assertFailsWith<IndexOutOfBoundsException> { channel.poll() }
+        assertFailsWith<TestException> { channel.poll() }
         try {
             channel.receiveOrNull()
             fail()
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (e: TestException) {
             // Expected
         }
 
         d.join()
-        assertTrue(d.getCancellationException().cause is IndexOutOfBoundsException)
+        assertTrue(d.getCancellationException().cause is TestException)
     }
 
 
@@ -147,4 +147,6 @@ class BasicOperationsTest : TestBase() {
             assertEquals(iterations, expected)
         }
     }
+
+    private class TestException : Exception()
 }

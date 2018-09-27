@@ -55,7 +55,7 @@ class MaybeTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val maybe = rxMaybe {
+        val maybe = rxMaybe(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -197,5 +197,18 @@ class MaybeTest : TestBase() {
             assert(it is IllegalStateException)
             assertEquals("OK", it.message)
         }
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        rxMaybe<Unit> {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

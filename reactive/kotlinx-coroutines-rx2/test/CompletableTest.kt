@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.rx2
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
@@ -28,7 +29,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testBasicFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable {
+        val completable = rxCompletable(NonCancellable) {
             expect(4)
             throw RuntimeException("OK")
         }
@@ -82,7 +83,7 @@ class CompletableTest : TestBase() {
     @Test
     fun testAwaitFailure() = runBlocking {
         expect(1)
-        val completable = rxCompletable {
+        val completable = rxCompletable(NonCancellable) {
             expect(3)
             throw RuntimeException("OK")
         }
@@ -94,5 +95,18 @@ class CompletableTest : TestBase() {
             finish(4)
             assertThat(e.message, IsEqual("OK"))
         }
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        rxCompletable {
+            throw RuntimeException("OK")
+        }.subscribe(
+            { expectUnreached() },
+            { assert(it is RuntimeException) }
+        )
     }
 }

@@ -15,7 +15,7 @@ class SuppresionTests : TestBase() {
 
     @Test
     fun testCancellationTransparency() = runTest {
-        val deferred = async(kotlin.coroutines.experimental.coroutineContext, CoroutineStart.ATOMIC) {
+        val deferred = async(NonCancellable, start = CoroutineStart.ATOMIC) {
             expect(2)
             throw ArithmeticException()
         }

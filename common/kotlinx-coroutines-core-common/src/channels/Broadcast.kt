@@ -105,7 +105,7 @@ private open class BroadcastCoroutine<E>(
     protected val _channel: BroadcastChannel<E>,
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
-
+    override val cancelsParent: Boolean get() = true
     override val isActive: Boolean get() = super<AbstractCoroutine>.isActive
 
     override val channel: SendChannel<E>

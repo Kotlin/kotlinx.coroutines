@@ -9,7 +9,6 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 class ProduceTest : TestBase() {
-
     @Test
     fun testBasic() = runTest {
         val c = produce {
@@ -30,14 +29,15 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithoutCause() = runTest {
-        val c = produce {
+        val c = produce(NonCancellable) {
             expect(2)
             send(1)
             expect(3)
             try {
                 send(2) // will get cancelled
+                expectUnreached()
             } catch (e: Throwable) {
-                finish(7)
+                expect(7)
                 check(e is ClosedSendChannelException)
                 throw e
             }
@@ -50,35 +50,38 @@ class ProduceTest : TestBase() {
         expect(5)
         assertNull(c.receiveOrNull())
         expect(6)
+        yield() // to produce
+        finish(8)
     }
 
     @Test
     fun testCancelWithCause() = runTest {
-        val c = produce {
+        val c = produce(NonCancellable) {
             expect(2)
             send(1)
             expect(3)
             try {
                 send(2) // will get cancelled
-            } catch (e: Exception) {
-                finish(6)
+                expectUnreached()
+            } catch (e: Throwable) {
+                expect(6)
                 check(e is TestException)
                 throw e
             }
             expectUnreached()
         }
-
         expect(1)
         check(c.receive() == 1)
         expect(4)
         c.cancel(TestException())
-
         try {
             assertNull(c.receiveOrNull())
             expectUnreached()
         } catch (e: TestException) {
             expect(5)
         }
+        yield() // to produce
+        finish(7)
     }
 
     @Test

@@ -28,7 +28,7 @@ class JobActivationStressTest : TestBase() {
         val scope = CoroutineScope(pool)
         repeat(N_ITERATIONS) {
             var wasStarted = false
-            val d = scope.async(start = CoroutineStart.LAZY) {
+            val d = scope.async(NonCancellable, start = CoroutineStart.LAZY) {
                 wasStarted = true
                 throw TestException()
             }

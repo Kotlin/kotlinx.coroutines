@@ -58,7 +58,7 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runBlocking<Unit> {
         expect(1)
-        val publisher = publish<Int> {
+        val publisher = publish<Int>(NonCancellable) {
             expect(5)
             throw RuntimeException("OK")
         }
@@ -79,5 +79,15 @@ class PublishTest : TestBase() {
         expect(4)
         yield() // to publish coroutine
         finish(7)
+    }
+
+    @Test
+    fun testCancelsParentOnFailure() = runTest(
+        expected = { it is RuntimeException && it.message == "OK" }
+    ) {
+        // has parent, so should cancel it on failure
+        publish<Unit> {
+            throw RuntimeException("OK")
+        }.openSubscription()
     }
 }
