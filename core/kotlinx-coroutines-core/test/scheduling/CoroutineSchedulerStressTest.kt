@@ -96,8 +96,8 @@ class CoroutineSchedulerStressTest : TestBase() {
 
         finishLatch.await()
         val observed = observedThreads.size
-        val slowMachineDelta = if (AVAILABLE_PROCESSORS > 2) 0 else 1
-        assertTrue(AVAILABLE_PROCESSORS in (observed - 1)..observed + slowMachineDelta, "Observed $observed threads with $AVAILABLE_PROCESSORS available processors")
+        // on slow machines not all threads can be observed
+        assertTrue(observed in (AVAILABLE_PROCESSORS - 1)..(AVAILABLE_PROCESSORS + 1), "Observed $observed threads with $AVAILABLE_PROCESSORS available processors")
         validateResults()
     }
 
