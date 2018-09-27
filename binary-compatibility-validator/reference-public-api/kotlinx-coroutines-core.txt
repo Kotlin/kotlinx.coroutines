@@ -373,6 +373,7 @@ public abstract class kotlinx/coroutines/experimental/ExecutorCoroutineDispatche
 }
 
 public final class kotlinx/coroutines/experimental/ExecutorsKt {
+	public static final synthetic fun asCoroutineDispatcher (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final synthetic fun asCoroutineDispatcher (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/experimental/CloseableCoroutineDispatcher;
 	public static final fun asCoroutineDispatcher (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/experimental/ExecutorCoroutineDispatcher;
 	public static final fun from (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;

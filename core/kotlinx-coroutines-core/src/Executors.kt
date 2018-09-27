@@ -51,6 +51,11 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcherImpl(this)
 
+/** @suppress */
+@JvmName("asCoroutineDispatcher")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
+public fun Executor.asCoroutineDispatcher0(): CoroutineDispatcher = asCoroutineDispatcher()
+
 /**
  * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
  * @suppress **Deprecated**: Return type changed to [ExecutorCoroutineDispatcher].
