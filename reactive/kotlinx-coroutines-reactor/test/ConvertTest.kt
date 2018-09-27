@@ -35,7 +35,7 @@ class ConvertTest : TestBase() {
             expect(3)
             throw RuntimeException("OK")
         }
-        val mono = job.asMono(coroutineContext)
+        val mono = job.asMono(coroutineContext + NonCancellable)
         mono.subscribe(
                 { fail("no item should be emitted") },
                 { expect(4) }

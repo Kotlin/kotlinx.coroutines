@@ -67,7 +67,7 @@ class AwaitTest : TestBase() {
             "OK"
         }
 
-        val d2 = async {
+        val d2 = async(NonCancellable) {
             yield()
             throw TestException()
         }
@@ -93,12 +93,12 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
-        val d = async {
+        val d = async(NonCancellable) {
             expect(2)
             throw TestException()
         }
 
-        val d2 = async {
+        val d2 = async(NonCancellable) {
             yield()
             throw TestException()
         }
@@ -154,7 +154,7 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompletedExceptionally() = runTest {
-        val d1 = async {
+        val d1 = async(NonCancellable) {
             expect(1)
             throw TestException()
         }
@@ -228,7 +228,7 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllSameThrowingJobMultipleTimes() = runTest {
         val d1 =
-            async { throw TestException() }
+            async(NonCancellable) { throw TestException() }
         val d2 = async { } // do nothing
 
         try {
@@ -283,7 +283,7 @@ class AwaitTest : TestBase() {
         val d1 = launch {
             expect(2)
         }
-        val d2 = async {
+        val d2 = async(NonCancellable) {
             expect(3)
             throw TestException()
         }
@@ -348,7 +348,7 @@ class AwaitTest : TestBase() {
     @Test
     fun testJoinAllSameJobExceptionally() = runTest {
         val job =
-            async { throw TestException() }
+            async(NonCancellable) { throw TestException() }
         joinAll(job, job, job)
     }
 

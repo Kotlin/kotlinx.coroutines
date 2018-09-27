@@ -59,7 +59,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 closerJob.cancel()
             }
         }
-        val receiver = async(pool) {
+        val receiver = async(pool + NonCancellable) {
             while (isActive) {
                 curChannel.get().receiveOrNull()
                 received.incrementAndGet()

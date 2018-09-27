@@ -24,25 +24,21 @@ class AwaitStressTest : TestBase() {
 
     @Test
     fun testMultipleExceptions() = runTest {
-
+        val ctx = pool + NonCancellable
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
-
-            val d1 = async(pool) {
+            val d1 = async(ctx) {
                 barrier.await()
                 throw TestException()
             }
-
-            val d2 = async(pool) {
+            val d2 = async(ctx) {
                 barrier.await()
                 throw TestException()
             }
-
-            val d3 = async(pool) {
+            val d3 = async(ctx) {
                 barrier.await()
                 1L
             }
-
             try {
                 barrier.await()
                 awaitAll(d1, d2, d3)
@@ -58,18 +54,15 @@ class AwaitStressTest : TestBase() {
     @Test
     fun testAwaitAll() = runTest {
         val barrier = CyclicBarrier(3)
-
         repeat(iterations) {
             val d1 = async(pool) {
                 barrier.await()
                 1L
             }
-
             val d2 = async(pool) {
                 barrier.await()
                 2L
             }
-
             barrier.await()
             awaitAll(d1, d2)
             require(d1.isCompleted && d2.isCompleted)

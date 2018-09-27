@@ -7,7 +7,6 @@ package kotlinx.coroutines.experimental
 import kotlin.test.*
 
 class NonCancellableTest : TestBase() {
-
     @Test
     fun testNonCancellable() = runTest {
         expect(1)
@@ -39,7 +38,7 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableWithException() = runTest {
         expect(1)
-        val deferred = async {
+        val deferred = async(NonCancellable) {
             withContext(NonCancellable) {
                 expect(2)
                 yield()
@@ -52,13 +51,13 @@ class NonCancellableTest : TestBase() {
         }
 
         yield()
-        deferred.cancel(NumberFormatException())
+        deferred.cancel(TestException())
         expect(3)
         assertTrue(deferred.isCancelled)
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: NumberFormatException) {
+        } catch (e: TestException) {
             finish(6)
         }
     }
@@ -124,4 +123,6 @@ class NonCancellableTest : TestBase() {
             finish(7)
         }
     }
+
+    private class TestException : Exception()
 }

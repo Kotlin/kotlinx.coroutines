@@ -278,7 +278,7 @@ private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHand
 }
 
 @PublishedApi
-internal class CancellableContinuationImpl<in T>(
+internal open class CancellableContinuationImpl<in T>(
     delegate: Continuation<T>,
     resumeMode: Int
 ) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable {
@@ -317,7 +317,7 @@ internal class CancellableContinuationImpl<in T>(
 
     override fun tryResumeWithException(exception: Throwable): Any? {
         loopOnState { state ->
-        when (state) {
+            when (state) {
                 is NotCompleted -> {
                     if (tryUpdateStateToFinal(state, CompletedExceptionally(exception))) return state
                 }

@@ -182,5 +182,20 @@ class WithTimeoutTest : TestBase() {
             finish(2)
         }
     }
+
+    @Test
+    fun testExceptionFromWithinTimeout() = runTest {
+        expect(1)
+        try {
+            expect(2)
+            withTimeout(1000) {
+                expect(3)
+                throw TestException()
+            }
+            expectUnreached()
+        } catch (e: TestException) {
+            finish(4)
+        }
+    }
 }
 

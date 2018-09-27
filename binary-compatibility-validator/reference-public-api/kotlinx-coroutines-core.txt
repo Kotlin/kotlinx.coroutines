@@ -71,13 +71,14 @@ public final class kotlinx/coroutines/experimental/CancellableContinuation$Defau
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/experimental/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public final class kotlinx/coroutines/experimental/CancellableContinuationImpl : java/lang/Runnable, kotlinx/coroutines/experimental/CancellableContinuation {
+public class kotlinx/coroutines/experimental/CancellableContinuationImpl : java/lang/Runnable, kotlinx/coroutines/experimental/CancellableContinuation {
 	public fun <init> (Lkotlin/coroutines/experimental/Continuation;I)V
 	public fun completeResume (Ljava/lang/Object;)V
 	public fun getContext ()Lkotlin/coroutines/experimental/CoroutineContext;
 	public fun getSuccessfulResult (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun initCancellability ()V
 	public fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/experimental/DisposableHandle;
+	protected fun nameString ()Ljava/lang/String;
 	public fun resumeUndispatched (Lkotlinx/coroutines/experimental/CoroutineDispatcher;Ljava/lang/Object;)V
 	public fun resumeUndispatchedWithException (Lkotlinx/coroutines/experimental/CoroutineDispatcher;Ljava/lang/Throwable;)V
 	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;

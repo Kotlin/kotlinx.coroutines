@@ -104,7 +104,7 @@ class AsyncLazyTest : TestBase() {
     @Test
     fun testCatchException() = runTest {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) {
+        val d = async(NonCancellable, start = CoroutineStart.LAZY) {
             expect(3)
             throw TestException()
         }

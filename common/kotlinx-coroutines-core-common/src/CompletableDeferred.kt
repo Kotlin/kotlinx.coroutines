@@ -63,6 +63,7 @@ private class CompletableDeferredImpl<T>(
     parent: Job?
 ) : JobSupport(true), CompletableDeferred<T>, SelectClause1<T> {
     init { initParentJobInternal(parent) }
+    override val cancelsParent: Boolean get() = true
     override val onCancelComplete get() = true
     override fun getCompleted(): T = getCompletedInternal() as T
     override suspend fun await(): T = awaitInternal() as T

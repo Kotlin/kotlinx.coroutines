@@ -245,7 +245,7 @@ class ListenableFutureTest : TestBase() {
     fun testThrowingFutureAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { throw TestException() })
-        val deferred = async {
+        val deferred = GlobalScope.async {
             future.asDeferred().await()
         }
 

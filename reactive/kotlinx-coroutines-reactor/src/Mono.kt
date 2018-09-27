@@ -57,6 +57,8 @@ private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>
 ) : AbstractCoroutine<T>(parentContext, true), Disposable {
+    override val cancelsParent: Boolean get() = true
+
     var disposed = false
 
     override fun onCompleted(value: T) {

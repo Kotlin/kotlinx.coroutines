@@ -91,12 +91,22 @@ internal abstract class AbstractContinuation<in T>(
 
     override fun takeState(): Any? = state
 
-    public fun cancel(cause: Throwable?): Boolean {
+    public fun cancel(cause: Throwable?): Boolean =
+        cancelImpl(cause)
+
+    fun cancelImpl(cause: Throwable?): Boolean {
         loopOnState { state ->
             if (state !is NotCompleted) return false // quit if already complete
-            if (tryCancel(state, cause)) return true
+            val update = CancelledContinuation(this, cause)
+            if (updateStateToFinal(state, update, mode = MODE_ATOMIC_DEFAULT)) return true
         }
     }
+
+    /**
+     * It is used when parent is cancelled to get the cancellation cause for this continuation.
+     */
+    open fun getParentCancellationCause(parent: Job): Throwable =
+        parent.getCancellationException()
 
     private fun trySuspend(): Boolean {
         _decision.loop { decision ->
@@ -133,6 +143,9 @@ internal abstract class AbstractContinuation<in T>(
     override fun resumeWithException(exception: Throwable) =
         resumeImpl(CompletedExceptionally(exception), resumeMode)
 
+    internal fun resumeWithExceptionMode(exception: Throwable, mode: Int) =
+        resumeImpl(CompletedExceptionally(exception), mode)
+
     public fun invokeOnCancellation(handler: CompletionHandler) {
         var handleCache: CancelHandler? = null
         loopOnState { state ->
@@ -165,9 +178,6 @@ internal abstract class AbstractContinuation<in T>(
 
     private fun makeHandler(handler: CompletionHandler): CancelHandler =
         if (handler is CancelHandler) handler else InvokeOnCancel(handler)
-
-    private fun tryCancel(state: NotCompleted, cause: Throwable?): Boolean =
-        updateStateToFinal(state, CancelledContinuation(this, cause), mode = MODE_ATOMIC_DEFAULT)
 
     private fun dispatchResume(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out

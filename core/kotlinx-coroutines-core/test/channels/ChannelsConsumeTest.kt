@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.channels
 
 import kotlinx.coroutines.experimental.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 /**
@@ -14,7 +15,7 @@ class ChannelsConsumeTest {
     private val sourceList = (1..10).toList()
 
     // test source with numbers 1..10
-    private fun CoroutineScope.testSource() = produce {
+    private fun CoroutineScope.testSource() = produce(NonCancellable) {
         for (i in sourceList) {
             send(i)
         }
@@ -478,7 +479,7 @@ class ChannelsConsumeTest {
     fun testFlatMap() {
         checkTransform(sourceList.flatMap { listOf("A$it", "B$it") }) {
             flatMap {
-                GlobalScope.produce {
+                GlobalScope.produce(coroutineContext) {
                     send("A$it")
                     send("B$it")
                 }
@@ -846,7 +847,7 @@ class ChannelsConsumeTest {
         val src = runBlocking {
             val src = testSource()
             // terminal operation in a separate async context started until the first suspension
-            val d = async(start = CoroutineStart.UNDISPATCHED) {
+            val d = async(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
                 terminal(src)
             }
             // then cancel it
