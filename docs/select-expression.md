@@ -25,7 +25,7 @@ class SelectGuideTest {
 
 <!--- TOC -->
 
-* [Select expression (experimental)](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/select-expression.md#select-expression-(experimental))
+* [Select expression (experimental)](https://github.com/Kotlin/kotlinx.coroutineskotlinx.coroutines/blob/master/docs/select-expression.md#select-expression-(experimental))
   * [Selecting from channels](#selecting-from-channels)
   * [Selecting on close](#selecting-on-close)
   * [Selecting to send](#selecting-to-send)

@@ -22,7 +22,7 @@ class ChannelsGuideTest {
 
 <!--- TOC -->
 
-* [Channels (experimental)](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/channels.md#channels-(experimental))
+* [Channels (experimental)](https://github.com/Kotlin/kotlinx.coroutineskotlinx.coroutines/blob/master/docs/channels.md#channels-(experimental))
   * [Channel basics](#channel-basics)
   * [Closing and iteration over channels](#closing-and-iteration-over-channels)
   * [Building channel producers](#building-channel-producers)
@@ -194,7 +194,7 @@ Done!
 -->
 
 > All functions that create coroutines are defined as extensions on [CoroutineScope],
-so that we can rely on [structured concurrency](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) to make
+so that we can rely on [structured concurrency](https://github.com/Kotlin/kotlinx.coroutineskotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) to make
 sure that we don't have lingering global coroutines in our application.
 
 ### Prime numbers with pipeline

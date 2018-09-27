@@ -46,7 +46,7 @@ exposing them to users ([async] and [produce]).
 The former treat exceptions as unhandled, similar to Java's `Thread.uncaughExceptionHandler`, 
 while the latter are relying on the user to consume the final 
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
-([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/channels.md) section).
+([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
 It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
 
@@ -73,7 +73,7 @@ fun main(args: Array<String>) = runBlocking {
 
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-01.kt)
 
-The output of this code is (with [debug](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
+The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
 ```text
 Throwing exception from launch
@@ -173,7 +173,7 @@ Parent is not cancelled
 
 If a coroutine encounters exception other than `CancellationException`, it cancels its parent with that exception. 
 This behaviour cannot be overridden and is used to provide stable coroutines hierarchies for
-[structured concurrency](https://github.com/AlexanderPrendota/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
+[structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
 [CoroutineExceptionHandler] implementation.
 The original exception is handled by the parent when all its children terminate.
 
