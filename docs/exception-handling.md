@@ -46,9 +46,11 @@ exposing them to users ([async] and [produce]).
 The former treat exceptions as unhandled, similar to Java's `Thread.uncaughExceptionHandler`, 
 while the latter are relying on the user to consume the final 
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
-([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](#channels) section).
+([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
 It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
+
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
@@ -71,9 +73,11 @@ fun main(args: Array<String>) = runBlocking {
 }
 ```
 
+</div>
+
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-01.kt)
 
-The output of this code is (with [debug](#debugging-coroutines-and-threads)):
+The output of this code is (with [debug](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/coroutine-context-and-dispatchers.md#debugging-coroutines-and-threads)):
 
 ```text
 Throwing exception from launch
@@ -101,6 +105,8 @@ On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exc
 [CoroutineExceptionHandler] is invoked only on exceptions which are not expected to be handled by the user, 
 so registering it in [async] builder and the like of it has no effect.
 
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
+
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
@@ -115,6 +121,8 @@ fun main(args: Array<String>) = runBlocking {
     joinAll(job, deferred)
 }
 ```
+
+</div>
 
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-02.kt)
 
@@ -138,6 +146,8 @@ Cancelling without cause is a mechanism for parent to cancel its children withou
 import kotlin.coroutines.experimental.*
 -->
 
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
+
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
     val job = launch {
@@ -159,6 +169,8 @@ fun main(args: Array<String>) = runBlocking {
 }
 ```
 
+</div>
+
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-03.kt)
 
 The output of this code is:
@@ -173,7 +185,7 @@ Parent is not cancelled
 
 If a coroutine encounters exception other than `CancellationException`, it cancels its parent with that exception. 
 This behaviour cannot be overridden and is used to provide stable coroutines hierarchies for
-[structured concurrency](#structured-concurrency) which do not depend on 
+[structured concurrency](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) which do not depend on 
 [CoroutineExceptionHandler] implementation.
 The original exception is handled by the parent when all its children terminate.
 
@@ -185,6 +197,8 @@ when its child completes with exception despite the installed handler.
 <!--- INCLUDE
 import kotlin.coroutines.experimental.*
 -->
+
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
@@ -212,6 +226,8 @@ fun main(args: Array<String>) = runBlocking {
     job.join()
 }
 ```
+
+</div>
 
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-04.kt)
 
@@ -243,6 +259,8 @@ import kotlin.coroutines.experimental.*
 import java.io.*
 -->
 
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
+
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
@@ -265,6 +283,8 @@ fun main(args: Array<String>) = runBlocking {
 }
 ```
 
+</div>
+
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-05.kt)
 
 The output of this code is:
@@ -284,6 +304,8 @@ Cancellation exceptions are transparent and unwrapped by default:
 import kotlin.coroutines.experimental.*
 import java.io.*
 -->
+
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 fun main(args: Array<String>) = runBlocking {
@@ -308,6 +330,8 @@ fun main(args: Array<String>) = runBlocking {
     job.join()
 }
 ```
+
+</div>
 
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-exceptions-06.kt)
 
