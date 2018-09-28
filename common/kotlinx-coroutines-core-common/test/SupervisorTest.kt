@@ -107,22 +107,73 @@ class SupervisorTest : TestBase() {
     }
 
     @Test
-    fun testSupervisorFlaw() = runTest {
+    fun testSupervisorThrows() = runTest {
         try {
             supervisorScope {
                 expect(1)
                 launch {
-                    // Test exception from supervisor is handled by launch though it clearly will be rethtown by supervisorScope{}
                     expect(2)
                     delay(Long.MAX_VALUE)
                 }
 
+                launch {
+                    expect(3)
+                    delay(Long.MAX_VALUE)
+                }
+
                 yield()
-                expect(3)
+                expect(4)
                 throw TestException1()
             }
         } catch (e: TestException1) {
-            finish(4)
+            finish(5)
+        }
+    }
+
+    @Test
+    @Ignore // JS BE bug
+    fun testSupervisorThrowsWithFailingChild() = runTest(unhandled = listOf({e -> e is TestException2})) {
+        try {
+            supervisorScope {
+                expect(1)
+                launch {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                }
+
+                launch {
+                    expect(3)
+                    try {
+                        delay(Long.MAX_VALUE)
+                    } finally {
+                        throw TestException2()
+                    }
+                }
+
+                yield()
+                expect(4)
+                throw TestException1()
+            }
+        } catch (e: TestException1) {
+            finish(5)
+        }
+    }
+
+    @Test
+    fun testAsyncCancellation() = runTest {
+        val parent = SupervisorJob()
+        val deferred = async(parent) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+        expect(1)
+        yield()
+        parent.cancel(TestException1())
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: TestException1) {
+            finish(3)
         }
     }
 

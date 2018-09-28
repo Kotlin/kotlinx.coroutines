@@ -70,6 +70,102 @@ class ProduceExceptionsTest : TestBase() {
         }
     }
 
+    @Test
+    fun testCancelProduceChannel() = runTest {
+        var channel: ReceiveChannel<Int>? = null
+        channel = produce {
+            expect(2)
+            channel!!.cancel()
+            try {
+                send(1)
+            } catch (e: ClosedSendChannelException) {
+                expect(3)
+                throw e
+            }
+        }
+
+        expect(1)
+        yield()
+        try {
+            channel.receive()
+        } catch (e: ClosedReceiveChannelException) {
+            assertTrue(e.suppressed().isEmpty())
+            finish(4)
+        }
+    }
+
+    @Test
+    fun testCancelProduceChannelWithException() = runTest {
+        var channel: ReceiveChannel<Int>? = null
+        channel = produce {
+            expect(2)
+            channel!!.cancel(TestException())
+            try {
+                send(1)
+                // Not a ClosedForSendException
+            } catch (e: TestException) {
+                expect(3)
+                throw e
+            }
+        }
+
+        expect(1)
+        yield()
+        try {
+            channel.receive()
+        } catch (e: TestException) {
+            assertTrue(e.suppressed().isEmpty())
+            finish(4)
+        }
+    }
+
+    @Test
+    fun testCancelChannelWithJob() = runTest {
+        val job = Job()
+        val channel = produce(job) {
+            expect(2)
+            job.cancel()
+            try {
+                send(1)
+            } catch (e: CancellationException) {
+                expect(3)
+                throw e
+            }
+        }
+
+        expect(1)
+        yield()
+        try {
+            channel.receive()
+        } catch (e: CancellationException) {
+            assertTrue(e.suppressed().isEmpty())
+            finish(4)
+        }
+    }
+
+    @Test
+    fun testCancelChannelWithJobWithException() = runTest {
+        val job = Job()
+        val channel = produce(job) {
+            expect(2)
+            job.cancel(TestException2())
+            try {
+                send(1)
+            } catch (e: CancellationException) { // Not a TestException2
+                expect(3)
+                throw e
+            }
+        }
+
+        expect(1)
+        yield()
+        try {
+            channel.receive()
+        } catch (e: TestException2) {
+            finish(4)
+        }
+    }
+
     class TestException : Exception()
     class TestException2 : Exception()
 }

@@ -35,6 +35,45 @@ class JobExceptionHandlingTest : TestBase() {
     }
 
     @Test
+    fun testAsyncCancellationWithCause() = runTest {
+        val deferred = async {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        expect(1)
+        yield()
+        deferred.cancel(IOException())
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: IOException) {
+            assertTrue(e.suppressed().isEmpty())
+            finish(3)
+        }
+    }
+
+    @Test
+    fun testAsyncCancellationWithCauseAndParent() = runTest {
+        val parent = Job()
+        val deferred = async(parent) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
+
+        expect(1)
+        yield()
+        parent.cancel(IOException())
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: IOException) {
+            assertTrue(e.suppressed().isEmpty())
+            finish(3)
+        }
+    }
+
+    @Test
     fun testExceptionDuringCancellation() {
         /*
          * Root parent: JobImpl()
@@ -190,7 +229,6 @@ class JobExceptionHandlingTest : TestBase() {
         assertEquals(1, suppressed.size)
         checkException<ArithmeticException>(suppressed[0])
     }
-
 
     @Test
     fun testMultipleChildrenThrowAtomically() {

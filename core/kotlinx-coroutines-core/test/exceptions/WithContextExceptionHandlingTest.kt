@@ -6,11 +6,20 @@ package kotlinx.coroutines.experimental.exceptions
 
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
+import org.junit.runner.*
+import org.junit.runners.*
 import java.io.*
 import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
-class WithContextExceptionHandlingTest : TestBase() {
+@RunWith(Parameterized::class)
+class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestBase() {
+    companion object {
+        @Parameterized.Parameters(name = "withContext={0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> = listOf<Array<Any>>(arrayOf(true), arrayOf(false))
+    }
+
     @Test
     fun testCancellation() = runTest {
         /*
@@ -151,12 +160,11 @@ class WithContextExceptionHandlingTest : TestBase() {
     }
 
     @Test
-    @Ignore // todo: decide shall we fix unwrapping logic in JobSupport
     fun testThrowingCancellationWithCause() = runTest {
         val thrown = CancellationException()
         thrown.initCause(IOException())
         runThrowing(thrown) { e ->
-            assertSame(thrown, e)
+           checkException<IOException>(e)
         }
     }
 
@@ -202,9 +210,9 @@ class WithContextExceptionHandlingTest : TestBase() {
         exceptionChecker: (Throwable) -> Unit
     ) {
         expect(1)
-        val job = Job()
+
         try {
-            withContext(wrapperDispatcher(coroutineContext) + job) {
+            withCtx(wrapperDispatcher(coroutineContext)) { job ->
                 require(isActive) // not cancelled yet
                 job.cancel(cancellationCause)
                 require(!isActive) // now cancelled
@@ -225,7 +233,7 @@ class WithContextExceptionHandlingTest : TestBase() {
     ) {
         expect(1)
         try {
-            withContext(wrapperDispatcher(coroutineContext)) {
+            withCtx(wrapperDispatcher(coroutineContext).minusKey(Job)) {
                 require(isActive)
                 expect(2)
                 throw thrownException
@@ -236,6 +244,18 @@ class WithContextExceptionHandlingTest : TestBase() {
             return
         }
         fail()
+    }
+
+    private suspend fun withCtx(context: CoroutineContext, job: Job = Job(), block: suspend CoroutineScope.(Job) -> Nothing) {
+        if (withContext) {
+            withContext(context + job) {
+                block(job)
+            }
+        } else {
+            CoroutineScope(coroutineContext).async(context + job) {
+                block(job)
+            }.await()
+        }
     }
 
     private suspend fun runOnlyCancellation(

@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.experimental
 
-import java.io.*
 import kotlin.test.*
 
 class WithTimeoutOrNullJvmTest : TestBase() {

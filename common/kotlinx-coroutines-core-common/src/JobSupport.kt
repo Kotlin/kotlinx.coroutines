@@ -234,18 +234,18 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
          * This is a place where we step on our API limitation:
          * We can't distinguish internal JobCancellationException from our parent
          * from external cancellation, thus we ought to collect all exceptions.
-         *
-         * But it has negative consequences: same exception can be added as suppressed more than once.
-         * Consider concurrent parent-child relationship:
-         * 1) Child throws E1 and parent throws E2.
-         * 2) Parent goes to "Cancelling(E1)" and cancels child with E1
-         * 3) Child goes to "Cancelling(E1)", but throws an exception E2
-         * 4) When child throws, it notifies parent that it is cancelled, adding its exception to parent's list of exceptions
-         * 5) Child builds final exception: E1 with suppressed E2, reports it to parent.
-         * 6) Parent aggregates three exceptions: original E1, reported E2 and "final" E1.
-         *    It filters the third exception, but adds the second one to the first one, thus adding suppressed duplicate.
-         *
-         * Note that it's only happening when both parent and child throw exception simultaneously.
+         * If parent is cancelling, it cancels its children with JCE(rootCause).
+         * When child is building final exception, it can skip JCE(anything) if it knows
+         * that parent handles exceptions, because parent should already have this exception.
+         * If parent does not, then we should unwrap exception, otherwise in the following code
+         * ```
+         * val parent = Job()
+         * launch(parent) {
+         *   try { delay() } finally { throw E2() }
+         * }
+         * parent.cancel(E1)
+         * ```
+         * E1 will be lost.
          */
         var rootCause = exceptions[0]
         if (rootCause is CancellationException) {
@@ -275,13 +275,17 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         return suppressed
     }
 
-    private tailrec fun unwrap(exception: Throwable): Throwable? =
-        if (exception is CancellationException) {
+    private tailrec fun unwrap(exception: Throwable): Throwable? {
+        if (exception is CancellationException && parentHandlesExceptions) {
+            return null
+        }
+        return if (exception is CancellationException) {
             val cause = exception.cause
             if (cause !== null) unwrap(cause) else null
         } else {
             exception
         }
+    }
 
     // fast-path method to finalize normally completed coroutines without children
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?, mode: Int): Boolean {
@@ -922,6 +926,10 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
      * @suppress **This is unstable API and it is subject to change.*
      */
     protected open val handlesException: Boolean get() = true
+
+    // returns true when we know that parent handles exceptions
+    private val parentHandlesExceptions: Boolean get() =
+        (parentHandle as? ChildHandleNode)?.job?.handlesException ?: false
 
     /**
      * This method is invoked **exactly once** when the final exception of the job is determined
