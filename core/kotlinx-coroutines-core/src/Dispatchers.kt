@@ -20,6 +20,10 @@ public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.paralleli
  * The number of threads used by this dispatcher is limited by the value of
  * "`kotlinx.coroutines.io.parallelism`" ([IO_PARALLELISM_PROPERTY_NAME]) system property.
  * It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+ *
+ * This dispatcher shares threads with a [Default][Dispatchers.Default] dispatcher, so using
+ * `withContext(Dispatchers.IO) { ... }` does not lead to an actual switching to another thread &mdash;
+ * typically execution continues in the same thread.
  */
 public val Dispatchers.IO: CoroutineDispatcher
-    get() = BackgroundDispatcher.IO
+    get() = DefaultScheduler.IO

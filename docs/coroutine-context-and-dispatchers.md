@@ -72,7 +72,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(Dispatchers.Default) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+    launch(Dispatchers.Default) { // will get dispatched to DefaultDispatcher 
         println("Default               : I'm working in thread ${Thread.currentThread().name}")
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
@@ -89,7 +89,7 @@ It produces the following output (maybe in different order):
 
 ```text
 Unconfined            : I'm working in thread main
-Default               : I'm working in thread CommonPool-worker-1
+Default               : I'm working in thread DefaultDispatcher-worker-1
 newSingleThreadContext: I'm working in thread MyOwnThread
 main runBlocking      : I'm working in thread main
 ```
@@ -475,7 +475,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
 The output of this code  with `-Dkotlinx.coroutines.debug` JVM option is: 
 
 ```text
-I'm working in thread CommonPool-worker-1 @test#2
+I'm working in thread DefaultDispatcher-worker-1 @test#2
 ```
 
 <!--- TEST FLEXIBLE_THREAD -->
@@ -632,8 +632,8 @@ Thus, output (with [debug](#debugging-coroutines-and-threads)) is:
 
 ```text
 Pre-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'
-Launch start, current thread: Thread[CommonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'
-After yield, current thread: Thread[CommonPool-worker-2 @coroutine#2,5,main], thread local value: 'launch'
+Launch start, current thread: Thread[DefaultDispatcher-worker-1 @coroutine#2,5,main], thread local value: 'launch'
+After yield, current thread: Thread[DefaultDispatcher-worker-2 @coroutine#2,5,main], thread local value: 'launch'
 Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'
 ```
 

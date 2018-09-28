@@ -6,11 +6,12 @@ package kotlinx.coroutines.experimental.guide.test
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.experimental.scheduling.*
 import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
 
-fun trackTask(block: Runnable) = timeSource.trackTask(block)
+fun wrapTask(block: Runnable) = timeSource.wrapTask(block)
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =
@@ -37,6 +38,7 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
     System.setErr(ps)
     System.setOut(ps)
     CommonPool.usePrivatePool()
+    DefaultScheduler.usePrivateScheduler()
     DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
     resetCoroutineId()
     val threadsBefore = currentThreads()
@@ -53,9 +55,9 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
             oldOut.println("--- shutting down")
             // the shutdown
             CommonPool.shutdown(SHUTDOWN_TIMEOUT)
+            DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
             shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
             DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
-            CommonPool.restore()
             if (tee.flushLine()) oldOut.println()
             oldOut.println("--- done")
             System.setOut(sout)
@@ -63,6 +65,8 @@ fun test(name: String, block: () -> Unit): List<String> = outputException(name) 
             checkTestThreads(threadsBefore)
         }
     }
+    CommonPool.restore()
+    DefaultScheduler.restore()
     return ByteArrayInputStream(bytes).bufferedReader().readLines()
 }
 
@@ -122,9 +126,10 @@ private fun sanitize(s: String, mode: SanitizeMode): String {
             res = res.replace(Regex(" [0-9]+ ms"), " xxx ms")
         }
         SanitizeMode.FLEXIBLE_THREAD -> {
-            res = res.replace(Regex("ForkJoinPool\\.commonPool-worker-[0-9]+"), "CommonPool")
-            res = res.replace(Regex("ForkJoinPool-[0-9]+-worker-[0-9]+"), "CommonPool")
-            res = res.replace(Regex("CommonPool-worker-[0-9]+"), "CommonPool")
+            res = res.replace(Regex("ForkJoinPool\\.commonPool-worker-[0-9]+"), "DefaultDispatcher")
+            res = res.replace(Regex("ForkJoinPool-[0-9]+-worker-[0-9]+"), "DefaultDispatcher")
+            res = res.replace(Regex("CommonPool-worker-[0-9]+"), "DefaultDispatcher")
+            res = res.replace(Regex("DefaultDispatcher-worker-[0-9]+"), "DefaultDispatcher")
             res = res.replace(Regex("RxComputationThreadPool-[0-9]+"), "RxComputationThreadPool")
             res = res.replace(Regex("Test( worker)?"), "main")
         }

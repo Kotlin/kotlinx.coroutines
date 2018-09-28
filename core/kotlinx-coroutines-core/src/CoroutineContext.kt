@@ -20,8 +20,8 @@ internal const val COROUTINES_SCHEDULER_PROPERTY_NAME = "kotlinx.coroutines.sche
 
 internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_NAME).let { value ->
     when (value) {
-        null -> false
-        "", "on" -> true
+        null, "", "on" -> true
+        "off" -> false
         else -> error("System property '$COROUTINES_SCHEDULER_PROPERTY_NAME' has unrecognized value '$value'")
     }
 }
@@ -39,7 +39,7 @@ public actual val DefaultDispatcher: CoroutineDispatcher
     get() = Dispatchers.Default
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    if (useCoroutinesScheduler) BackgroundDispatcher else CommonPool
+    if (useCoroutinesScheduler) DefaultScheduler else CommonPool
 
 /**
  * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.

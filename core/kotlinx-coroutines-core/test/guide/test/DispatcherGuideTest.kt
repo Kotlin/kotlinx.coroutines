@@ -9,7 +9,7 @@ class DispatchersGuideTest {
     fun testKotlinxCoroutinesExperimentalGuideContext01() {
         test("KotlinxCoroutinesExperimentalGuideContext01") { kotlinx.coroutines.experimental.guide.context01.main(emptyArray()) }.verifyLinesStartUnordered(
             "Unconfined            : I'm working in thread main",
-            "Default               : I'm working in thread CommonPool-worker-1",
+            "Default               : I'm working in thread DefaultDispatcher-worker-1",
             "newSingleThreadContext: I'm working in thread MyOwnThread",
             "main runBlocking      : I'm working in thread main"
         )
@@ -84,7 +84,7 @@ class DispatchersGuideTest {
     @Test
     fun testKotlinxCoroutinesExperimentalGuideContext09() {
         test("KotlinxCoroutinesExperimentalGuideContext09") { kotlinx.coroutines.experimental.guide.context09.main(emptyArray()) }.verifyLinesFlexibleThread(
-            "I'm working in thread CommonPool-worker-1 @test#2"
+            "I'm working in thread DefaultDispatcher-worker-1 @test#2"
         )
     }
 
@@ -102,8 +102,8 @@ class DispatchersGuideTest {
     fun testKotlinxCoroutinesExperimentalGuideContext11() {
         test("KotlinxCoroutinesExperimentalGuideContext11") { kotlinx.coroutines.experimental.guide.context11.main(emptyArray()) }.verifyLinesFlexibleThread(
             "Pre-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'",
-            "Launch start, current thread: Thread[CommonPool-worker-1 @coroutine#2,5,main], thread local value: 'launch'",
-            "After yield, current thread: Thread[CommonPool-worker-2 @coroutine#2,5,main], thread local value: 'launch'",
+            "Launch start, current thread: Thread[DefaultDispatcher-worker-1 @coroutine#2,5,main], thread local value: 'launch'",
+            "After yield, current thread: Thread[DefaultDispatcher-worker-2 @coroutine#2,5,main], thread local value: 'launch'",
             "Post-main, current thread: Thread[main @coroutine#1,5,main], thread local value: 'main'"
         )
     }

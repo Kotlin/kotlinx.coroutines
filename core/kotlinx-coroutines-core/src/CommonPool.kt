@@ -106,7 +106,7 @@ object CommonPool : ExecutorCoroutineDispatcher() {
         pool ?: createPool().also { pool = it }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        try { (pool ?: getOrCreatePoolSync()).execute(timeSource.trackTask(block)) }
+        try { (pool ?: getOrCreatePoolSync()).execute(timeSource.wrapTask(block)) }
         catch (e: RejectedExecutionException) {
             timeSource.unTrackTask()
             DefaultExecutor.execute(block)

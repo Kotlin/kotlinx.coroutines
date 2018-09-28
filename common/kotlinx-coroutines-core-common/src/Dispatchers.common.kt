@@ -16,10 +16,8 @@ public object Dispatchers {
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
      * if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
      *
-     * It is backed by a shared pool of threads on JVM.
-     * You can set system property "`kotlinx.coroutines.scheduler`" (either no value or to the value of "`on`")
-     * to use an experimental coroutine dispatcher that shares threads with [Dispatchers.IO] and thus can switch to
-     * context without performing an actual thread context switch.
+     * It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
+     * by this dispatcher is equal to the number CPU cores, but is at least two.
      */
     @JvmField
     public val Default: CoroutineDispatcher =

@@ -144,6 +144,13 @@ internal class WorkQueue {
         }
     }
 
+    internal fun offloadAllWork(globalQueue: GlobalQueue) {
+        while (true) {
+            val task = pollExternal() ?: return
+            globalQueue.addLast(task)
+        }
+    }
+
     /**
      * [poll] for external (not owning this queue) workers
      */

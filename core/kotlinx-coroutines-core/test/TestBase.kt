@@ -5,8 +5,8 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.internal.*
-import org.junit.*
 import kotlinx.coroutines.experimental.scheduling.*
+import org.junit.*
 import java.util.concurrent.atomic.*
 
 private val VERBOSE = systemProp("test.verbose", false)
@@ -124,13 +124,15 @@ public actual open class TestBase actual constructor() {
 
     fun initPoolsBeforeTest() {
         CommonPool.usePrivatePool()
-        BackgroundDispatcher.usePrivateScheduler()
+        DefaultScheduler.usePrivateScheduler()
     }
 
     fun shutdownPoolsAfterTest() {
         CommonPool.shutdown(SHUTDOWN_TIMEOUT)
-        BackgroundDispatcher.shutdown(SHUTDOWN_TIMEOUT)
+        DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
         DefaultExecutor.shutdown(SHUTDOWN_TIMEOUT)
+        CommonPool.restore()
+        DefaultScheduler.restore()
     }
 
     @Suppress("ACTUAL_WITHOUT_EXPECT", "ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")

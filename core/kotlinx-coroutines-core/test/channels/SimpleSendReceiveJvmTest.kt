@@ -16,7 +16,7 @@ class SimpleSendReceiveJvmTest(
     private val kind: TestChannelKind,
     val n: Int,
     val concurrent: Boolean
-) {
+) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}, n={1}, concurrent={2}")
         @JvmStatic

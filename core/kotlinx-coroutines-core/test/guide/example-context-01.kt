@@ -15,7 +15,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
     }
-    launch(Dispatchers.Default) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+    launch(Dispatchers.Default) { // will get dispatched to DefaultDispatcher 
         println("Default               : I'm working in thread ${Thread.currentThread().name}")
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread

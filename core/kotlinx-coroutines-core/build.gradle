@@ -32,6 +32,7 @@ tasks.withType(Test) {
 
 test {
     exclude '**/*LFTest.*'
+    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
 task lockFreedomTest(type: Test, dependsOn: testClasses) {
@@ -48,18 +49,14 @@ task jdk16Test(type: Test, dependsOn: [testClasses, checkJdk16]) {
     exclude '**/exceptions/.*'
 }
 
-task schedulerTest(type: Test, dependsOn: testClasses) {
-    systemProperty 'kotlinx.coroutines.scheduler', ''
-    systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
-}
-
 // Always run those tests
 task moreTest(dependsOn: [lockFreedomTest])
 
-build.dependsOn moreTest
-
 // Run these tests only during nightly stress test
-task extraTest(dependsOn: [jdk16Test, schedulerTest])
+task extraTest(dependsOn: [jdk16Test])
+
+
+build.dependsOn moreTest
 
 extraTest.onlyIf { project.properties['stressTest'] != null }
 

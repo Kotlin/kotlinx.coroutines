@@ -58,13 +58,17 @@ internal class VirtualTimeSource(
     override fun currentTimeMillis(): Long = TimeUnit.NANOSECONDS.toMillis(time)
     override fun nanoTime(): Long = time
 
-    @Synchronized
-    override fun trackTask(block: Runnable): Runnable {
-        trackedTasks++
+    override fun wrapTask(block: Runnable): Runnable {
+        trackTask()
         return Runnable {
             try { block.run() }
             finally { unTrackTask() }
         }
+    }
+
+    @Synchronized
+    override fun trackTask() {
+        trackedTasks++
     }
 
     @Synchronized
