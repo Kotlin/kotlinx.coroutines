@@ -46,19 +46,17 @@ task jdk16Test(type: Test, dependsOn: [testClasses, checkJdk16]) {
     executable = "$System.env.JDK_16/bin/java"
     exclude '**/*LinearizabilityTest.*'
     exclude '**/*LFTest.*'
-    exclude '**/exceptions/.*'
+    exclude '**/exceptions/**'
+    exclude '**/ExceptionsGuideTest.*'
 }
 
-// Always run those tests
-task moreTest(dependsOn: [lockFreedomTest])
-
 // Run these tests only during nightly stress test
-task extraTest(dependsOn: [jdk16Test])
+jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
+// Always run those tests
+task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
 
 build.dependsOn moreTest
-
-extraTest.onlyIf { project.properties['stressTest'] != null }
 
 task testsJar(type: Jar, dependsOn: testClasses) {
     classifier = 'tests'

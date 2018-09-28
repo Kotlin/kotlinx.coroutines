@@ -53,7 +53,7 @@ class JobExceptionsStressTest : TestBase() {
                 TestException2::class,
                 TestException3::class
             )
-            val suppressedExceptions = exception.suppressed().toSet()
+            val suppressedExceptions = exception.suppressed.toSet()
             assertTrue(classes.remove(exception::class),
                 "Failed to remove ${exception::class} from $suppressedExceptions"
             )

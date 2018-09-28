@@ -48,7 +48,7 @@ class JobExceptionHandlingTest : TestBase() {
             deferred.await()
             expectUnreached()
         } catch (e: IOException) {
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
             finish(3)
         }
     }
@@ -68,7 +68,7 @@ class JobExceptionHandlingTest : TestBase() {
             deferred.await()
             expectUnreached()
         } catch (e: IOException) {
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
             finish(3)
         }
     }
@@ -122,7 +122,7 @@ class JobExceptionHandlingTest : TestBase() {
         }
 
         assertTrue(exception is ArithmeticException)
-        val suppressed = exception.suppressed()
+        val suppressed = exception.suppressed
         assertEquals(2, suppressed.size)
         checkException<NullPointerException>(suppressed[0])
         checkException<IOException>(suppressed[1])
@@ -225,7 +225,7 @@ class JobExceptionHandlingTest : TestBase() {
 
         assertTrue(exception is IOException)
         assertNull(exception.cause)
-        val suppressed = exception.suppressed()
+        val suppressed = exception.suppressed
         assertEquals(1, suppressed.size)
         checkException<ArithmeticException>(suppressed[0])
     }
@@ -266,7 +266,7 @@ class JobExceptionHandlingTest : TestBase() {
         }
 
         assertTrue(exception is ArithmeticException)
-        val suppressed = exception.suppressed()
+        val suppressed = exception.suppressed
         assertEquals(2, suppressed.size)
         assertTrue(suppressed[0] is IOException)
         assertTrue(suppressed[1] is IllegalArgumentException)
@@ -303,7 +303,7 @@ class JobExceptionHandlingTest : TestBase() {
         }
 
         assertTrue(exception is AssertionError)
-        val suppressed = exception.suppressed()
+        val suppressed = exception.suppressed
         assertEquals(2, suppressed.size)
         assertTrue(suppressed[0] is IOException)
         assertTrue(suppressed[1] is IllegalArgumentException)

@@ -49,7 +49,7 @@ const val LINES_START_UNORDERED_PREDICATE = "LINES_START_UNORDERED"
 const val EXCEPTION_MODE = "EXCEPTION"
 const val LINES_START_PREDICATE = "LINES_START"
 
-val API_REF_REGEX = Regex("(^|[ \\]])\\[([A-Za-z0-9_().]+)\\]($|[^\\[\\(])")
+val API_REF_REGEX = Regex("(^|[ \\](])\\[([A-Za-z0-9_().]+)]($|[^\\[(])")
 val LINK_DEF_REGEX = Regex("^\\[([A-Za-z0-9_().]+)\\]: .*")
 
 fun main(args: Array<String>) {

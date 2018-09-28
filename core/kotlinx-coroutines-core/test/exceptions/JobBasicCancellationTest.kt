@@ -152,6 +152,6 @@ class JobBasicCancellationTest : TestBase() {
         val cause = deferred.getCancellationException().cause!!
         assertTrue(cause is IndexOutOfBoundsException)
         assertNull(cause.cause)
-        assertTrue(cause.suppressed().isEmpty())
+        assertTrue(cause.suppressed.isEmpty())
     }
 }

@@ -14,7 +14,8 @@ import kotlin.test.*
  * Proxy for [Throwable.getSuppressed] for tests, which are compiled for both JDK 1.6 and JDK 1.8,
  * but run only under JDK 1.8
  */
-fun Throwable.suppressed(): Array<Throwable> {
+@Suppress("ConflictingExtensionProperty")
+val Throwable.suppressed: Array<Throwable> get() {
     val method = this::class.java.getMethod("getSuppressed") ?: error("This test can only be run using JDK 1.7")
     @Suppress("UNCHECKED_CAST")
     return method.invoke(this) as Array<Throwable>
@@ -22,7 +23,7 @@ fun Throwable.suppressed(): Array<Throwable> {
 
 internal inline fun <reified T : Throwable> checkException(exception: Throwable): Boolean {
     assertTrue(exception is T)
-    assertTrue(exception.suppressed().isEmpty())
+    assertTrue(exception.suppressed.isEmpty())
     assertNull(exception.cause)
     return true
 }

@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines.experimental.exceptions
 
-import kotlinx.coroutines.experimental.exceptions.*
+import kotlinx.coroutines.experimental.*
 import org.junit.*
 import org.junit.Test
 import java.io.*
@@ -92,7 +92,7 @@ class WithContextCancellationStressTest : TestBase() {
         aeException: Boolean = false,
         aioobException: Boolean = false
     ) {
-        val suppressed = suppressed()
+        val suppressed: Array<Throwable> = suppressed
 
         try {
             if (ioException) {

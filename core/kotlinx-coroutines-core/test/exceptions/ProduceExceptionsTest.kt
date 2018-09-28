@@ -33,7 +33,7 @@ class ProduceExceptionsTest : TestBase() {
 
     @Test
     fun testSuppressedExceptionUncaught() =
-        runTest(unhandled = listOf({ e -> e is TestException && e.suppressed()[0] is TestException2 })) {
+        runTest(unhandled = listOf({ e -> e is TestException && e.suppressed[0] is TestException2 })) {
             val produce = produce<Int>(Job()) {
                 launch(start = CoroutineStart.ATOMIC) {
                     throw TestException()
@@ -66,7 +66,7 @@ class ProduceExceptionsTest : TestBase() {
             produce.receive()
             expectUnreached()
         } catch (e: TestException) {
-            assertTrue(e.suppressed()[0] is TestException2)
+            assertTrue(e.suppressed[0] is TestException2)
         }
     }
 
@@ -89,7 +89,7 @@ class ProduceExceptionsTest : TestBase() {
         try {
             channel.receive()
         } catch (e: ClosedReceiveChannelException) {
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
             finish(4)
         }
     }
@@ -114,7 +114,7 @@ class ProduceExceptionsTest : TestBase() {
         try {
             channel.receive()
         } catch (e: TestException) {
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
             finish(4)
         }
     }
@@ -138,7 +138,7 @@ class ProduceExceptionsTest : TestBase() {
         try {
             channel.receive()
         } catch (e: CancellationException) {
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
             finish(4)
         }
     }

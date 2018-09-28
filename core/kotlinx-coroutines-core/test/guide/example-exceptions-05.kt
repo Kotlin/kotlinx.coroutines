@@ -12,7 +12,7 @@ import java.io.*
 
 fun main(args: Array<String>) = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
-        println("Caught $exception with suppressed ${exception.suppressed().contentToString()}")
+        println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
     }
     val job = GlobalScope.launch(handler) {
         launch {

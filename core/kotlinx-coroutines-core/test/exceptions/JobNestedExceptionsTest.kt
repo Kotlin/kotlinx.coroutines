@@ -81,7 +81,7 @@ class JobNestedExceptionsTest : TestBase() {
             finish(5)
         }
         assertTrue(exception is ArithmeticException, "Found $exception")
-        checkException<IOException>(exception.suppressed()[0])
+        checkException<IOException>(exception.suppressed[0])
     }
 
     @Test
@@ -111,10 +111,10 @@ class JobNestedExceptionsTest : TestBase() {
         assertEquals(1, exceptions.size, "Found $exceptions")
         val exception = exceptions[0]
         assertTrue(exception is ArithmeticException, "Exception is $exception")
-        val suppressed = exception.suppressed()
+        val suppressed = exception.suppressed
         val ioe = suppressed[0]
         assertTrue(ioe is IOException)
-        checkException<NullPointerException>(ioe.suppressed()[0])
+        checkException<NullPointerException>(ioe.suppressed[0])
         checkCycles(exception)
     }
 }

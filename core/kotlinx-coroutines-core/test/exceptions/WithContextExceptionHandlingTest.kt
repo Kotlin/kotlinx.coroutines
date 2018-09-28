@@ -30,7 +30,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(null, IllegalStateException()) { e ->
             assertTrue(e is IllegalStateException)
             assertNull(e.cause)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
         }
     }
@@ -46,7 +46,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(cancellationCause, IllegalStateException()) { e ->
             assertTrue(e is IOException)
             assertNull(e.cause)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertEquals(suppressed.size, 1)
             assertTrue(suppressed[0] is IllegalStateException)
         }
@@ -63,7 +63,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(cancellationCause, cancellationCause) { e ->
             assertTrue(e is IllegalStateException)
             assertNull(e.cause)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
         }
     }
@@ -79,7 +79,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(cancellationCause, cancellationCause) { e ->
             assertSame(e, cancellationCause)
             assertNull(e.cause)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
         }
     }
@@ -97,7 +97,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(cancellationCause, exception) { e ->
             assertSame(exception, e)
             assertNull(e.cause)
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 
@@ -113,7 +113,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         thrown.initCause(IOException())
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertEquals(1, suppressed.size)
             assertTrue(suppressed[0] is IOException)
         }
@@ -130,7 +130,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         val thrown = CancellationException()
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
-            val suppressed = e.suppressed()
+            val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
         }
     }
@@ -147,7 +147,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
             assertNull(e.cause)
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 
@@ -172,7 +172,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
     fun testCancel() = runTest {
         runOnlyCancellation(null) { e ->
             assertNull(e.cause)
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 
@@ -181,7 +181,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         val cause = IOException()
         runOnlyCancellation(cause) { e ->
             assertSame(cause, e)
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 
@@ -191,7 +191,7 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         runThrowing(cause) { e ->
             assertSame(cause, e)
             assertNull(e.cause)
-            assertTrue(e.suppressed().isEmpty())
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 

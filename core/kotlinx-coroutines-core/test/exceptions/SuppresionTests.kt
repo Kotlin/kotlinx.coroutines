@@ -26,7 +26,7 @@ class SuppresionTests : TestBase() {
         try {
             deferred.await()
         } catch (e: IOException) {
-            checkException<ArithmeticException>(e.suppressed()[0])
+            checkException<ArithmeticException>(e.suppressed[0])
             finish(3)
         }
     }
@@ -42,7 +42,7 @@ class SuppresionTests : TestBase() {
 
             override fun onCancellation(cause: Throwable?) {
                 assertTrue(cause is ArithmeticException)
-                assertTrue(cause!!.suppressed().isEmpty())
+                assertTrue(cause!!.suppressed.isEmpty())
                 expect(5)
             }
 
@@ -52,20 +52,20 @@ class SuppresionTests : TestBase() {
 
             override fun onCompletedExceptionally(exception: Throwable) {
                 assertTrue(exception is ArithmeticException)
-                checkException<IOException>(exception.suppressed()[0])
+                checkException<IOException>(exception.suppressed[0])
                 expect(9)
             }
         }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
             assertTrue(it is ArithmeticException)
-            assertTrue(it!!.suppressed().isEmpty())
+            assertTrue(it!!.suppressed.isEmpty())
             expect(6)
         }
 
         coroutine.invokeOnCompletion {
             assertTrue(it is ArithmeticException)
-            checkException<IOException>(it!!.suppressed()[0])
+            checkException<IOException>(it!!.suppressed[0])
             expect(8)
         }
 

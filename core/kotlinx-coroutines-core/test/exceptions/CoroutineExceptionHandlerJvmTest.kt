@@ -35,7 +35,7 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
         job.join()
         assertTrue(caughtException is RuntimeException)
         assertTrue(caughtException.cause is AssertionError)
-        assertTrue(caughtException.suppressed()[0] is TestException)
+        assertTrue(caughtException.suppressed[0] is TestException)
 
         finish(3)
     }
