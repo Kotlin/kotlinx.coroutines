@@ -23,6 +23,7 @@ fun main(args: Array<String>) = runBlocking {
             }
         }
         launch {
+            delay(100)
             throw IOException()
         }
         delay(Long.MAX_VALUE)
