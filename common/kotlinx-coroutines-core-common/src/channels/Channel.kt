@@ -387,7 +387,7 @@ public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
  * 
  * @throws IllegalArgumentException when [capacity] < -1
  */
-public fun <E> Channel(capacity: Int = 0): Channel<E> =
+public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
     when (capacity) {
         RENDEZVOUS -> RendezvousChannel()
         UNLIMITED -> LinkedListChannel()
