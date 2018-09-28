@@ -17,7 +17,7 @@ import kotlin.coroutines.experimental.*
  *        or artificial [CancellationException] if no cause was provided
  * @suppress **This is unstable API and it is subject to change.**
  */
-// todo: rename to Cancelled
+@InternalCoroutinesApi
 open class CompletedExceptionally(
     @JvmField public val cause: Throwable
 ) {
@@ -34,6 +34,7 @@ open class CompletedExceptionally(
  *        if created on first access to [exception] property.
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public class CancelledContinuation(
     continuation: Continuation<*>,
     cause: Throwable?

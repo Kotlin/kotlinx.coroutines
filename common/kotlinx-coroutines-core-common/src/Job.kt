@@ -411,6 +411,7 @@ public inline fun DisposableHandle(crossinline block: () -> Unit) =
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 internal interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
@@ -419,6 +420,7 @@ internal interface ChildJob : Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun parentCancelled(parentJob: Job)
 }
 
@@ -427,6 +429,7 @@ internal interface ChildJob : Job {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 internal interface ChildHandle : DisposableHandle {
     /**
      * Child is cancelling its parent by invoking this method.
@@ -436,6 +439,7 @@ internal interface ChildHandle : DisposableHandle {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
+    @InternalCoroutinesApi
     public fun childCancelled(cause: Throwable): Boolean
 }
 

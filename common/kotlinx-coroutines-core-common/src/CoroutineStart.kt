@@ -54,10 +54,8 @@ public enum class CoroutineStart {
      *
      * Cancellability of coroutine at suspension points depends on the particular implementation details of
      * suspending functions as in [DEFAULT].
-     *
-     * @suppress **This an internal API and should not be used from general code.**
      */
-    @InternalCoroutinesApi
+    @ExperimentalCoroutinesApi
     ATOMIC,
 
     /**
