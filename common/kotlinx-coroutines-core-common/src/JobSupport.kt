@@ -429,10 +429,13 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
 
     @Suppress("OverridingDeprecatedMember")
+    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
     public final override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
         invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = true, handler = handler)
 
     @Suppress("OverridingDeprecatedMember")
+    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
     public final override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
         invokeOnCompletion(onCancelling = onCancelling_, invokeImmediately = true, handler = handler)
 
@@ -878,6 +881,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
     }
 
     @Suppress("OverridingDeprecatedMember")
+    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
     public final override fun cancelChildren(cause: Throwable?) {
         this.cancelChildren(cause) // use extension function
     }
