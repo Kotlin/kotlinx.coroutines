@@ -245,8 +245,9 @@ internal class CoroutineScheduler(
 
     private val random = Random()
 
-    // This is used a "stop signal" for debugging/tests only
-    private val isTerminated = atomic(false)
+    // This is used a "stop signal" for close and shutdown functions
+    private val _isTerminated = atomic(0) // todo: replace with atomic boolean on new versions of atomicFu
+    private val isTerminated: Boolean get() = _isTerminated.value != 0
 
     companion object {
         private const val MAX_SPINS = 1000
@@ -295,7 +296,7 @@ internal class CoroutineScheduler(
     // Shuts down current scheduler and waits until all work is done and all threads are stopped.
     fun shutdown(timeout: Long) {
         // atomically set termination flag which is checked when workers are added or removed
-        if (!isTerminated.compareAndSet(false, true)) return
+        if (!_isTerminated.compareAndSet(0, 1)) return
         // make sure we are not waiting for the current thread
         val currentWorker = Thread.currentThread() as? Worker
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
@@ -438,7 +439,7 @@ internal class CoroutineScheduler(
     private fun createNewWorker(): Int {
         synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
-            if (isTerminated.value) throw RejectedExecutionException("$schedulerName was terminated")
+            if (isTerminated) throw RejectedExecutionException("$schedulerName was terminated")
             val state = controlState.value
             val created = createdWorkers(state)
             val blocking = blockingWorkers(state)
@@ -693,7 +694,7 @@ internal class CoroutineScheduler(
 
         override fun run() {
             var wasIdle = false // local variable to avoid extra idleReset invocations when tasks repeatedly arrive
-            while (!isTerminated.value && state != WorkerState.TERMINATED) {
+            while (!isTerminated && state != WorkerState.TERMINATED) {
                 val task = findTask()
                 if (task == null) {
                     // Wait for a job with potential park
@@ -817,7 +818,7 @@ internal class CoroutineScheduler(
         private fun tryTerminateWorker() {
             synchronized(workers) {
                 // Make sure we're not trying race with termination of scheduler
-                if (isTerminated.value) return
+                if (isTerminated) return
                 // Someone else terminated, bail out
                 if (createdWorkers <= corePoolSize) return
                 // Try to find blocking task before termination
