@@ -97,7 +97,7 @@ class ProduceExceptionsTest : TestBase() {
     @Test
     fun testCancelProduceChannelWithException() = runTest {
         var channel: ReceiveChannel<Int>? = null
-        channel = produce {
+        channel = produce(NonCancellable) {
             expect(2)
             channel!!.cancel(TestException())
             try {

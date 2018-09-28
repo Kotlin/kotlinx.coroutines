@@ -7,6 +7,7 @@
 package kotlinx.coroutines.experimental
 
 import kotlinx.coroutines.experimental.channels.*
+import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 /**
@@ -14,10 +15,17 @@ import kotlin.test.*
  */
 class ParentCancellationTest : TestBase() {
     @Test
-    @Ignore // todo: shall be passing in Supervisor branch
     fun testJobChild() = runTest {
-        testParentCancellation { fail ->
+        testParentCancellation(expectUnhandled = true) { fail ->
             val child = Job(coroutineContext[Job])
+            CoroutineScope(coroutineContext + child).fail()
+        }
+    }
+
+    @Test
+    fun testSupervisorJobChild() = runTest {
+        testParentCancellation(expectParentActive = true, expectUnhandled = true) { fail ->
+            val child = SupervisorJob(coroutineContext[Job])
             CoroutineScope(coroutineContext + child).fail()
         }
     }
@@ -59,36 +67,47 @@ class ParentCancellationTest : TestBase() {
     }
 
     @Test
+    fun testSupervisorChild() = runTest {
+        testParentCancellation(expectParentActive = true, expectUnhandled = true) { fail ->
+            supervisorScope { fail() }
+        }
+    }
+
+    @Test
     fun testCoroutineScopeChild() = runTest {
-        testParentCancellation(expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
             coroutineScope { fail() }
         }
     }
 
     @Test
     fun testWithContextChild() = runTest {
-        testParentCancellation(expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
             withContext(CoroutineName("fail")) { fail() }
         }
     }
 
     @Test
     fun testWithTimeoutChild() = runTest {
-        testParentCancellation(expectRethrows = true) { fail ->
+        testParentCancellation(expectParentActive = true, expectRethrows = true) { fail ->
             withTimeout(1000) { fail() }
         }
     }
 
     private suspend fun CoroutineScope.testParentCancellation(
+        expectParentActive: Boolean = false,
         expectRethrows: Boolean = false,
+        expectUnhandled: Boolean = false,
         child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
     ) {
-        testWithException(expectRethrows, TestException(), child)
-        testWithException(expectRethrows, CancellationException("Test"), child)
+        testWithException(expectParentActive, expectRethrows, expectUnhandled, TestException(), child)
+        testWithException(true, expectRethrows, false, CancellationException("Test"), child)
     }
 
     private suspend fun CoroutineScope.testWithException(
+        expectParentActive: Boolean,
         expectRethrows: Boolean,
+        expectUnhandled: Boolean,
         throwException: Throwable,
         child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
     ) {
@@ -99,10 +118,17 @@ class ParentCancellationTest : TestBase() {
         try {
             scope.child {
                 // launch failing grandchild
-                val grandchild = launch {
+                var unhandledException: Throwable? = null
+                val handler = CoroutineExceptionHandler { _, e -> unhandledException = e }
+                val grandchild = launch(handler) {
                     throw throwException
                 }
                 grandchild.join()
+                if (expectUnhandled) {
+                    assertSame(throwException, unhandledException)
+                } else {
+                    assertNull(unhandledException)
+                }
             }
             if (expectRethrows && throwException !is CancellationException) {
                 expectUnreached()
@@ -117,8 +143,7 @@ class ParentCancellationTest : TestBase() {
                 expectUnreached()
             }
         }
-        if (expectRethrows || throwException is CancellationException) {
-            // Note: parent is not cancelled on CancellationException or when primitive rethrows it
+        if (expectParentActive) {
             assertTrue(parent.isActive)
         } else {
             parent.join()

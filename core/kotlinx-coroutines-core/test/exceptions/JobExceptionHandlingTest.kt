@@ -36,7 +36,7 @@ class JobExceptionHandlingTest : TestBase() {
 
     @Test
     fun testAsyncCancellationWithCause() = runTest {
-        val deferred = async {
+        val deferred = async(NonCancellable) {
             expect(2)
             delay(Long.MAX_VALUE)
         }
