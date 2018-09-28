@@ -1,5 +1,24 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.30.0
+
+* **[Major]** Further improvements in exception handling &mdash; no failure exception is lost. 
+  * `async` and async-like builders cancel parent on failure (it affects `CompletableDeferred`, and all reactive integration builders).
+  * This makes parallel decomposition exception-safe and reliable without having to rember about `awaitAll` (see #552).
+  * `Job()` wih parent now also cancels parent on failure consistently with other scopes.
+  * All coroutine builders and `Job` implementations propagate failure to the parent unless it is a `CancellationException`. 
+  * Note, "scoping" builders don't "cancel the parent" verbatim, but rethrow the corresponding exception to the caller for handling.
+  * `SupervisorJob()` and `supervisorScope { ... }` are introduced, allowing for a flexible implementation of custom exception-handling policies, see a [new section in the guide on supervision](docs/exception-handling.md#supervision).
+  * Got rid of `awaitAll` in documentation and rewrote `currentScope` section (see #624).
+* **[Major]** Coroutine scheduler is used for `Dispatchers.Default` by default instead of deprecated `CommonPool`.
+  * "`DefaultDispatcher`" is used as a public name of the default impl (you'll see it thread names and in the guide).
+  * `-Dkotlinx.coroutines.scheduler=off` can be used to switch back to `CommonPool` for a time being (until deprecated CommonPool is removed).  
+* Make `CoroutineStart.ATOMIC` experimental as it covers important use-case with resource cleanup in finally block (see #627).
+* Restored binary compatibility of `Executor.asCoroutineDispatcher` (see #629).
+* Fixed OOM in thread-pool dispatchers (see #571).
+* Check for cancellation when starting coroutine with `Dispatchers.Unconfined` (see #621).
+* A bunch of various performance optimizations and docs fixes, including contributions from @AlexanderPrendota, @PaulWoitaschek.
+
 ## Version 0.27.0 
 
 * **[Major]** Public API revision. All public API was reviewed and marked as preparation to `1.0` release:

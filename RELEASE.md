@@ -9,7 +9,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    `git pull`
    
 3. Make sure the `master` branch is fully merged into `develop`:
-   `git merge master`   
+   `git merge origin/master`   
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
    * [`README.md`](README.md)
