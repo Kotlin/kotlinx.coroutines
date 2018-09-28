@@ -43,8 +43,9 @@ internal class DispatchedContinuation<in T>(
             _state = CompletedExceptionally(exception)
             resumeMode = MODE_ATOMIC_DEFAULT
             dispatcher.dispatch(context, this)
-        } else
+        } else {
             resumeUndispatchedWithException(exception)
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
@@ -54,8 +55,11 @@ internal class DispatchedContinuation<in T>(
             _state = value
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
-        } else
-            resumeUndispatched(value)
+        } else {
+            if (!resumeCancelled()) {
+                resumeUndispatched(value)
+            }
+        }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
@@ -65,8 +69,22 @@ internal class DispatchedContinuation<in T>(
             _state = CompletedExceptionally(exception)
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
-        } else
-            resumeUndispatchedWithException(exception)
+        } else {
+            if (!resumeCancelled()) {
+                resumeUndispatchedWithException(exception)
+            }
+        }
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun resumeCancelled(): Boolean {
+        val job = context[Job]
+        if (job != null && !job.isActive) {
+            resumeWithException(job.getCancellationException())
+            return true
+        }
+
+        return false
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
