@@ -89,7 +89,7 @@ with the specified cancel cause.</p>
 <td>
         <div class="signature"><code><span class="keyword">interface </span><span class="identifier">CoroutineExceptionHandler</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code></div>
 
-        <p>An optional element on the coroutine context to handle uncaught exceptions.</p>
+        <p>An optional element in the coroutine context to handle uncaught exceptions.</p>
 
       </td>
 </tr>
@@ -635,8 +635,8 @@ It is optionally a child of a <a href="-completable-deferred.html#kotlinx.corout
 <td>
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
 
-        <p>Creates a new job object in an <em>active</em> state.
-It is optionally a child of a <a href="-job.html#kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</a> job.</p>
+        <p>Creates a new job object in an active state.
+A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.</p>
 
       </td>
 </tr>
@@ -650,6 +650,20 @@ It is optionally a child of a <a href="-job.html#kotlinx.coroutines.experimental
         <div class="signature"><code><span class="keyword">fun </span><span class="identifier">Runnable</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$Runnable(kotlin.Function0((kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-runnable/index.html"><span class="identifier">Runnable</span></a></code></div>
 
         <p>Creates <a href="-runnable/index.html">Runnable</a> task instance.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-supervisor-job.html">SupervisorJob</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">fun </span><span class="identifier">SupervisorJob</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$SupervisorJob(kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code></div>
+
+        <p>Creates a new <em>supervisor</em> job object in an active state.
+Children of a supervisor job can fail independently of each other.</p>
 
       </td>
 </tr>
@@ -931,6 +945,21 @@ scope’s context with the corresponding keys.</p>
         <p>Runs new coroutine and <strong>blocks</strong> current thread <em>interruptibly</em> until its completion.
 This function should not be used from coroutine. It is designed to bridge regular blocking code
 to libraries that are written in suspending style, to be used in <code>main</code> functions and in tests.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="supervisor-scope.html">supervisorScope</a></p>
+
+      </td>
+<td>
+        <div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">supervisorScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.experimental$supervisorScope(kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.supervisorScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="supervisor-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="supervisor-scope.html#R"><span class="identifier">R</span></a></code></div>
+
+        <p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> with <a href="-supervisor-job.html">SupervisorJob</a> and calls the specified suspend block with this scope.
+The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
+context’s <a href="-job/index.html">Job</a> with <a href="-supervisor-job.html">SupervisorJob</a>.</p>
 
       </td>
 </tr>

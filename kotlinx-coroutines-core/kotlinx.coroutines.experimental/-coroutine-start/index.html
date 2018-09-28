@@ -43,7 +43,7 @@ It is used in <code>start</code> parameter of <a href="../launch.html">launch</a
 <ul>
   <li><a href="-d-e-f-a-u-l-t.html">DEFAULT</a> – immediately schedules coroutine for execution according to its context;</li>
   <li><a href="-l-a-z-y.html">LAZY</a> – starts coroutine lazily, only when it is needed;</li>
-  <li><a href="#">ATOMIC</a> – atomically (in a non-cancellable way) schedules coroutine for execution according to its context;</li>
+  <li><a href="-a-t-o-m-i-c.html">ATOMIC</a> – atomically (in a non-cancellable way) schedules coroutine for execution according to its context;</li>
   <li><a href="-u-n-d-i-s-p-a-t-c-h-e-d.html">UNDISPATCHED</a> – immediately executes coroutine until its first suspension point <em>in the current thread</em>.</li>
 </ul>
 
@@ -72,6 +72,19 @@ It is used in <code>start</code> parameter of <a href="../launch.html">launch</a
 <td>
 
         <p>Starts coroutine lazily, only when it is needed.</p>
+
+      </td>
+</tr>
+<tr>
+<td>
+
+        <p><a href="-a-t-o-m-i-c.html">ATOMIC</a></p>
+
+      </td>
+<td>
+
+        <p>Atomically (i.e., in a non-cancellable way) schedules coroutine for execution according to its context.
+This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine cannot be cancelled before it starts executing.</p>
 
       </td>
 </tr>

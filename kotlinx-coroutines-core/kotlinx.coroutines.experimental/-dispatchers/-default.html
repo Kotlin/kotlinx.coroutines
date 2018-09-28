@@ -33,16 +33,14 @@
 
 <h1 id="default">Default</h1>
 
-<div class="signature"><code><span class="identifier">@JvmField</span> <span class="keyword">val </span><span class="identifier">Default</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Dispatchers.common.kt#L25">(source)</a></div>
+<div class="signature"><code><span class="identifier">@JvmField</span> <span class="keyword">val </span><span class="identifier">Default</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Dispatchers.common.kt#L23">(source)</a></div>
 
 <p>The default <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is used by all standard builders like
 <a href="../launch.html">launch</a>, <a href="../async.html">async</a>, etc
 if no dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-continuation-interceptor/index.html">ContinuationInterceptor</a> is specified in their context.</p>
 
-<p>It is backed by a shared pool of threads on JVM.
-You can set system property “<code>kotlinx.coroutines.scheduler</code>” (either no value or to the value of “<code>on</code>”)
-to use an experimental coroutine dispatcher that shares threads with <a href="../-i-o.html">Dispatchers.IO</a> and thus can switch to
-context without performing an actual thread context switch.</p>
+<p>It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
+by this dispatcher is equal to the number CPU cores, but is at least two.</p>
 
 
       </div>

@@ -35,7 +35,7 @@
 
 <div class="overload-group" data-platform="JVM">
 
-  <div class="signature"><code><span class="keyword">val </span><span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L24">(source)</a></div>
+  <div class="signature"><code><span class="keyword">val </span><span class="identifier">&lt;ERROR CLASS&gt;</span><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><span class="identifier">&lt;ERROR CLASS&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L28">(source)</a></div>
 
   <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -46,10 +46,14 @@ The number of threads used by this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
 
+  <p>This dispatcher shares threads with a <a href="#">Default</a> dispatcher, so using
+<code>withContext(Dispatchers.IO) { ... }</code> does not lead to an actual switching to another thread —
+typically execution continues in the same thread.</p>
+
 </div>
 <div class="overload-group">
 
-  <div class="signature"><code><span class="keyword">val </span><a href="-dispatchers/index.html"><span class="identifier">Dispatchers</span></a><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L24">(source)</a></div>
+  <div class="signature"><code><span class="keyword">val </span><a href="-dispatchers/index.html"><span class="identifier">Dispatchers</span></a><span class="symbol">.</span><span class="identifier">IO</span><span class="symbol">: </span><a href="-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L28">(source)</a></div>
 
   <p>The <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
 
@@ -57,6 +61,10 @@ It defaults to the limit of 64 threads or the number of cores (whichever is larg
 The number of threads used by this dispatcher is limited by the value of
 “<code>kotlinx.coroutines.io.parallelism</code>” (<a href="-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
 It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
+
+  <p>This dispatcher shares threads with a <a href="-dispatchers/-default.html">Default</a> dispatcher, so using
+<code>withContext(Dispatchers.IO) { ... }</code> does not lead to an actual switching to another thread —
+typically execution continues in the same thread.</p>
 
 </div>
 

@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Job.Key - kotlinx-coroutines-core</title>
+  <title>CoroutineStart.ATOMIC - kotlinx-coroutines-core</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/-key.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-a-t-o-m-i-c.html">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,13 +29,17 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">Job</a> / <a href="./-key.html">Key</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines.experimental</a> / <a href="index.html">CoroutineStart</a> / <a href="./-a-t-o-m-i-c.html">ATOMIC</a></div>
 
-<h1 id="key">Key</h1>
+<h1 id="atomic">ATOMIC</h1>
 
-<div class="signature"><code><span class="keyword">companion</span> <span class="keyword">object </span><span class="identifier">Key</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-key/index.html"><span class="identifier">Key</span></a><span class="symbol">&lt;</span><a href="index.html"><span class="identifier">Job</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L87">(source)</a></div>
+<div class="signature"><code><span class="identifier">ATOMIC</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineStart.kt#L59">(source)</a></div>
 
-<p>Key for <a href="index.html">Job</a> instance in the coroutine context.</p>
+<p>Atomically (i.e., in a non-cancellable way) schedules coroutine for execution according to its context.
+This is similar to <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>, but the coroutine cannot be cancelled before it starts executing.</p>
+
+<p>Cancellability of coroutine at suspension points depends on the particular implementation details of
+suspending functions as in <a href="-d-e-f-a-u-l-t.html">DEFAULT</a>.</p>
 
 
       </div>

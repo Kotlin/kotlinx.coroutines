@@ -33,7 +33,7 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L81">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Job</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/-element/index.html"><span class="identifier">Element</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L83">(source)</a></div>
 
 <p>A background job. Conceptually, a job is a cancellable thing with a life-cycle that
 culminates in its completion.</p>
@@ -44,8 +44,10 @@ with an exception other than <a href="../-cancellation-exception/index.html">Can
 can <a href="cancel.html">cancel</a> its own children (including all their children recursively) without cancelling itself.</p>
 
 <p>The most basic instances of <a href="./index.md">Job</a> are created with <a href="../launch.html">launch</a> coroutine builder or with a
-<code>Job()</code> factory function.
-Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
+<code>Job()</code> factory function. By default, a failure of a any of the job’s children leads to an immediately failure
+of its parent and cancellation of the rest of its children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p>
+
+<p>Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
 side-effects. See <a href="../-deferred/index.html">Deferred</a> interface for a job that produces a result.</p>
 
 <p>A job has the following states:</p>

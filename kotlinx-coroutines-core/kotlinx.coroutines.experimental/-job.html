@@ -33,11 +33,20 @@
 
 <h1 id="job">Job</h1>
 
-<div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L382">(source)</a></div>
+<div class="signature"><code><span class="keyword">fun </span><span class="identifier">Job</span><span class="symbol">(</span><span class="parameterName" id="kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</span><span class="symbol">:</span>&nbsp;<a href="-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="-job/index.html"><span class="identifier">Job</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/Job.kt#L392">(source)</a></div>
 
-<p>Creates a new job object in an <em>active</em> state.
-It is optionally a child of a <a href="-job.html#kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</a> job.</p>
+<p>Creates a new job object in an active state.
+A failure of any child of this job immediately causes this job to fail, too, and cancels the rest of its children.</p>
 
+<p>To handle children failure independently of each other use <a href="-supervisor-job.html">SupervisorJob</a>.</p>
+
+<p>If <a href="-job.html#kotlinx.coroutines.experimental$Job(kotlinx.coroutines.experimental.Job)/parent">parent</a> job is specified, then this job becomes a child job of its parent and
+is cancelled when its parent fails or is cancelled. All this job’s children are cancelled in this case, too.
+The invocation of <a href="-job/cancel.html">cancel</a> with exception (other than <a href="-cancellation-exception/index.html">CancellationException</a>) on this job also cancels parent.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>parent</code> - an optional parent job.</p>
 
       </div>
     </main>
