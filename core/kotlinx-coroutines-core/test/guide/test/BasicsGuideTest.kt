@@ -64,14 +64,6 @@ class BasicsGuideTest {
     }
 
     @Test
-    fun testKotlinxCoroutinesExperimentalGuideBasic05s() {
-        test("KotlinxCoroutinesExperimentalGuideBasic05s") { kotlinx.coroutines.experimental.guide.basic05s.main(emptyArray()) }.verifyLines(
-            "Hello,",
-            "World!"
-        )
-    }
-
-    @Test
     fun testKotlinxCoroutinesExperimentalGuideBasic06() {
         test("KotlinxCoroutinesExperimentalGuideBasic06") { kotlinx.coroutines.experimental.guide.basic06.main(emptyArray()) }.also { lines ->
             check(lines.size == 1 && lines[0] == ".".repeat(100_000))

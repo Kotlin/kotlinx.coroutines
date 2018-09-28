@@ -267,7 +267,6 @@ scope and that is what [coroutineScope] function provides:
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
-     awaitAll(one, two)
      one.await() + two.await()
 }
 ```
@@ -327,9 +326,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
         println("Second child throws an exception")
         throw ArithmeticException()
     }
-    
-    awaitAll(one, two)
-    one.await() + two.await()
+        one.await() + two.await()
 }
 ```
 

@@ -21,7 +21,6 @@ suspend fun doSomethingUsefulTwo(): Int {
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
-     awaitAll(one, two)
      one.await() + two.await()
 }
 

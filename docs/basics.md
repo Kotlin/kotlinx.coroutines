@@ -310,32 +310,10 @@ World!
 But what if the extracted function contains a coroutine builder which is invoked on the current scope?
 In this case `suspend` modifier on the extracted function is not enough. Making `doWorld` extension
 method on `CoroutineScope` is one of the solutions, but it may not always be applicable as it does not make API clearer.
-[currentScope] builder comes to help: it inherits current [CoroutineScope] from the coroutine context it is invoked.
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
-
-```kotlin
-fun main(args: Array<String>) = runBlocking {
-    launchDoWorld()
-    println("Hello,")
-}
-
-// this is your first suspending function
-suspend fun launchDoWorld() = currentScope {
-    launch {
-        println("World!")
-    }
-}
-```
-
-</div>
-
-> You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-basic-05s.kt)
-
-<!--- TEST
-Hello,
-World!
--->
+Idiomatic solution is to have either explicit `CoroutineScope` as a field in a class containing target function
+or implicit when outer class implements `CoroutineScope`.
+As a last resort, [CoroutineScope(coroutineContext)][CoroutineScope()] can be used, but such approach is structurally unsafe 
+because you no longer have control on the scope this method is executed. Only private API can use this builder.
 
 ### Coroutines ARE light-weight
 
@@ -408,7 +386,7 @@ Active coroutines that were launched in [GlobalScope] do not keep the process al
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
 [Job.join]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/join.html
 [coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/coroutine-scope.html
-[currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
+[CoroutineScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope.html
 <!--- END -->
 
 

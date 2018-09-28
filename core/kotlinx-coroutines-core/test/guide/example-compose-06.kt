@@ -39,7 +39,5 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
         println("Second child throws an exception")
         throw ArithmeticException()
     }
-    
-    awaitAll(one, two)
-    one.await() + two.await()
+        one.await() + two.await()
 }
