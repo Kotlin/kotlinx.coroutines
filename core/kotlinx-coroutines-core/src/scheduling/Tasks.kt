@@ -11,7 +11,7 @@ import java.util.concurrent.*
 
 // TODO most of these fields will be moved to 'object ExperimentalDispatcher'
 
-internal const val DEFAULT_SCHEDULER_NAME = "CoroutineScheduler"
+internal const val DEFAULT_SCHEDULER_NAME = "DefaultDispatcher"
 
 // 100us as default
 @JvmField

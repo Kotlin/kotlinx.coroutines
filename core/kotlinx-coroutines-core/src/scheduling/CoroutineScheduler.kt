@@ -290,35 +290,33 @@ internal class CoroutineScheduler(
 
     override fun execute(command: Runnable) = dispatch(command)
 
-    override fun close() = shutdown(1000L)
+    override fun close() = shutdown(10_000L)
 
-    /*
-     * Shuts down current scheduler and waits until all threads are stopped.
-     * This method uses unsafe API (does unconditional unparks)
-     * and intended to be used only for testing. Invocation has no additional effect if already closed.
-     */
+    // Shuts down current scheduler and waits until all work is done and all threads are stopped.
     fun shutdown(timeout: Long) {
         // atomically set termination flag which is checked when workers are added or removed
         if (!isTerminated.compareAndSet(false, true)) return
-
-        /*
-         * Shutdown current thread. Note that shutdown is testing utility,
-         * so we don't do anything special to properly verify that no tasks are submitted after close()
-         */
-        val thread = Thread.currentThread()
-        (thread as? Worker)?.tryReleaseCpu(WorkerState.TERMINATED)
-
+        // make sure we are not waiting for the current thread
+        val currentWorker = Thread.currentThread() as? Worker
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
         val created = synchronized(workers) { createdWorkers }
         for (i in 1..created) {
             val worker = workers[i]!!
-            if (worker.isAlive) {
-                // Unparking alive thread is unsafe in general, but acceptable for testing purposes
+            if (worker.isAlive && worker !== currentWorker) {
                 LockSupport.unpark(worker)
                 worker.join(timeout)
+                worker.localQueue.offloadAllWork(globalQueue)
             }
+
         }
-        // cleanup state to make sure that tryUnpark tries to create new threads and crashes because it isTerminated
+        // Finish processing tasks from globalQueue and/or from this worker's local queue
+        while (true) {
+            val task = currentWorker?.findTask() ?: globalQueue.removeFirstOrNull() ?: break
+            runSafely(task)
+        }
+        // Shutdown current thread
+        currentWorker?.tryReleaseCpu(WorkerState.TERMINATED)
+        // cleanup state to make sure that tryUnpark tries to create new threads and fails because isTerminated
         assert(cpuPermits.availablePermits() == corePoolSize)
         parkedWorkersStack.value = 0L
         controlState.value = 0L
@@ -333,6 +331,7 @@ internal class CoroutineScheduler(
      * @param fair whether the task should be dispatched fairly (strict FIFO) or not (semi-FIFO)
      */
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false) {
+        timeSource.trackTask() // this is needed for virtual time support
         // TODO at some point make DispatchTask extend Task and make its field settable to save an allocation
         val task = Task(block, schedulerTimeSource.nanoTime(), taskContext)
         // try to submit the task to the local queue and act depending on the result
@@ -439,7 +438,7 @@ internal class CoroutineScheduler(
     private fun createNewWorker(): Int {
         synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
-            if (isTerminated.value) throw ShutdownException()
+            if (isTerminated.value) throw RejectedExecutionException("$schedulerName was terminated")
             val state = controlState.value
             val created = createdWorkers(state)
             val blocking = blockingWorkers(state)
@@ -455,9 +454,6 @@ internal class CoroutineScheduler(
             return cpuWorkers + 1
         }
     }
-
-    // Is thrown when attempting to create new worker, but this scheduler isTerminated
-    private class ShutdownException : RuntimeException()
 
     /**
      * Returns [ADDED], or [NOT_ADDED], or [ADDED_REQUIRES_HELP].
@@ -563,6 +559,17 @@ internal class CoroutineScheduler(
                     "created = ${createdWorkers(state)}, " +
                     "blocking = ${blockingWorkers(state)}}" +
                 "]"
+    }
+
+    private fun runSafely(task: Task) {
+        try {
+            task.run()
+        } catch (e: Throwable) {
+            val thread = Thread.currentThread()
+            thread.uncaughtExceptionHandler.uncaughtException(thread, e)
+        } finally {
+            timeSource.unTrackTask()
+        }
     }
 
     internal inner class Worker private constructor() : Thread() {
@@ -685,41 +692,28 @@ internal class CoroutineScheduler(
         private var lastStealIndex = 0 // try in order repeated, reset when unparked
 
         override fun run() {
-            try {
-                var wasIdle = false // local variable to avoid extra idleReset invocations when tasks repeatedly arrive
-                while (!isTerminated.value && state != WorkerState.TERMINATED) {
-                    val task = findTask()
-                    if (task == null) {
-                        // Wait for a job with potential park
-                        if (state == WorkerState.CPU_ACQUIRED) {
-                            cpuWorkerIdle()
-                        } else {
-                            blockingWorkerIdle()
-                        }
-                        wasIdle = true
+            var wasIdle = false // local variable to avoid extra idleReset invocations when tasks repeatedly arrive
+            while (!isTerminated.value && state != WorkerState.TERMINATED) {
+                val task = findTask()
+                if (task == null) {
+                    // Wait for a job with potential park
+                    if (state == WorkerState.CPU_ACQUIRED) {
+                        cpuWorkerIdle()
                     } else {
-                        if (wasIdle) {
-                            idleReset(task.mode)
-                            wasIdle = false
-                        }
-                        beforeTask(task)
-                        runSafely(task)
-                        afterTask(task)
+                        blockingWorkerIdle()
                     }
+                    wasIdle = true
+                } else {
+                    if (wasIdle) {
+                        idleReset(task.mode)
+                        wasIdle = false
+                    }
+                    beforeTask(task)
+                    runSafely(task)
+                    afterTask(task)
                 }
-            } catch (e: ShutdownException) {
-                // race with shutdown -- ignore exception and don't print it on the console
-            } finally {
-                tryReleaseCpu(WorkerState.TERMINATED)
             }
-        }
-
-        private fun runSafely(task: Task) {
-            try {
-                task.run()
-            } catch (t: Throwable) {
-                uncaughtExceptionHandler.uncaughtException(this, t)
-            }
+            tryReleaseCpu(WorkerState.TERMINATED)
         }
 
         private fun beforeTask(task: Task) {
@@ -823,7 +817,7 @@ internal class CoroutineScheduler(
         private fun tryTerminateWorker() {
             synchronized(workers) {
                 // Make sure we're not trying race with termination of scheduler
-                if (isTerminated.value) throw ShutdownException()
+                if (isTerminated.value) return
                 // Someone else terminated, bail out
                 if (createdWorkers <= corePoolSize) return
                 // Try to find blocking task before termination
@@ -906,7 +900,7 @@ internal class CoroutineScheduler(
             spins = 0 // Volatile write, should be written last
         }
 
-        private fun findTask(): Task? {
+        internal fun findTask(): Task? {
             if (tryAcquireCpuPermit()) return findTaskWithCpuPermit()
             /*
              * If the local queue is empty, try to extract blocking task from global queue.

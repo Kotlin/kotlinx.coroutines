@@ -9,7 +9,7 @@ class ExceptionsGuideTest {
     fun testKotlinxCoroutinesExperimentalGuideExceptions01() {
         test("KotlinxCoroutinesExperimentalGuideExceptions01") { kotlinx.coroutines.experimental.guide.exceptions01.main(emptyArray()) }.verifyExceptions(
             "Throwing exception from launch",
-            "Exception in thread \"ForkJoinPool.commonPool-worker-2 @coroutine#2\" java.lang.IndexOutOfBoundsException",
+            "Exception in thread \"DefaultDispatcher-worker-2 @coroutine#2\" java.lang.IndexOutOfBoundsException",
             "Joined failed job",
             "Throwing exception from async",
             "Caught ArithmeticException"

@@ -7,14 +7,19 @@ package kotlinx.coroutines.experimental.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.*
+import java.lang.UnsupportedOperationException
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
- * Default instance of coroutine dispatcher for background coroutines (as opposed to UI coroutines).
+ * Default instance of coroutine dispatcher.
  */
-internal object BackgroundDispatcher : ExperimentalCoroutineDispatcher() {
+internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
     val IO = blocking(systemProp(IO_PARALLELISM_PROPERTY_NAME, 64.coerceAtLeast(AVAILABLE_PROCESSORS)))
+
+    override fun close() {
+        throw UnsupportedOperationException("$DEFAULT_SCHEDULER_NAME cannot be closed")
+    }
 }
 
 /**
@@ -39,7 +44,7 @@ open class ExperimentalCoroutineDispatcher(
         get() = coroutineScheduler
 
     // This is variable for test purposes, so that we can reinitialize from clean state
-    private var coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
+    private var coroutineScheduler = createScheduler()
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit =
         coroutineScheduler.dispatch(block)
@@ -47,7 +52,6 @@ open class ExperimentalCoroutineDispatcher(
     override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
         coroutineScheduler.dispatch(block, fair = true)
 
-    // TODO throw error when this API becomes public and close it in tests via another method
     override fun close() = coroutineScheduler.close()
 
     override fun toString(): String {
@@ -82,16 +86,23 @@ open class ExperimentalCoroutineDispatcher(
     internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean): Unit =
         coroutineScheduler.dispatch(block, context, fair)
 
+    private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
+
     // fot tests only
+    @Synchronized
     internal fun usePrivateScheduler() {
-        coroutineScheduler.shutdown(1000L)
-        coroutineScheduler = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
+        coroutineScheduler.shutdown(10_000L)
+        coroutineScheduler = createScheduler()
     }
 
     // for tests only
+    @Synchronized
     internal fun shutdown(timeout: Long) {
         coroutineScheduler.shutdown(timeout)
     }
+
+    // for tests only
+    internal fun restore() = usePrivateScheduler() // recreate scheduler
 }
 
 private class LimitingDispatcher(

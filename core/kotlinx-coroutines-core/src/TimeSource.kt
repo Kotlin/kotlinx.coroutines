@@ -9,7 +9,8 @@ import java.util.concurrent.locks.LockSupport
 internal interface TimeSource {
     fun currentTimeMillis(): Long
     fun nanoTime(): Long
-    fun trackTask(block: Runnable): Runnable
+    fun wrapTask(block: Runnable): Runnable
+    fun trackTask()
     fun unTrackTask()
     fun registerTimeLoopThread()
     fun unregisterTimeLoopThread()
@@ -20,7 +21,8 @@ internal interface TimeSource {
 internal object DefaultTimeSource : TimeSource {
     override fun currentTimeMillis(): Long = System.currentTimeMillis()
     override fun nanoTime(): Long = System.nanoTime()
-    override fun trackTask(block: Runnable): Runnable = block
+    override fun wrapTask(block: Runnable): Runnable = block
+    override fun trackTask() {}
     override fun unTrackTask() {}
     override fun registerTimeLoopThread() {}
     override fun unregisterTimeLoopThread() {}

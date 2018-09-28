@@ -95,7 +95,7 @@ public abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatc
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) =
-        try { executor.execute(timeSource.trackTask(block)) }
+        try { executor.execute(timeSource.wrapTask(block)) }
         catch (e: RejectedExecutionException) {
             timeSource.unTrackTask()
             DefaultExecutor.execute(block)

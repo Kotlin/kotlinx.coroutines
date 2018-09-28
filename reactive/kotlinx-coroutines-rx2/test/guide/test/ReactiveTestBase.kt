@@ -43,5 +43,5 @@ private class WrapperWorker(private val worker: Scheduler.Worker) : Scheduler.Wo
     override fun isDisposed(): Boolean = worker.isDisposed
     override fun dispose() = worker.dispose()
     override fun schedule(run: Runnable, delay: Long, unit: TimeUnit): Disposable =
-        worker.schedule(trackTask(run), delay, unit)
+        worker.schedule(wrapTask(run), delay, unit)
 }

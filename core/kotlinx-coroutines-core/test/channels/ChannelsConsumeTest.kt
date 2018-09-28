@@ -11,7 +11,7 @@ import kotlin.test.*
 /**
  * Tests that various operators on channels properly consume (close) their source channels.
  */
-class ChannelsConsumeTest {
+class ChannelsConsumeTest : TestBase() {
     private val sourceList = (1..10).toList()
 
     // test source with numbers 1..10
