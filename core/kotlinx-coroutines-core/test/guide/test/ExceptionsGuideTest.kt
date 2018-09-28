@@ -56,4 +56,34 @@ class ExceptionsGuideTest {
             "Caught original java.io.IOException"
         )
     }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideSupervision01() {
+        test("KotlinxCoroutinesExperimentalGuideSupervision01") { kotlinx.coroutines.experimental.guide.supervision01.main(emptyArray()) }.verifyLines(
+            "First child is failing",
+            "First child is cancelled: true, but second one is still active",
+            "Cancelling supervisor",
+            "Second child is cancelled because supervisor is cancelled"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideSupervision02() {
+        test("KotlinxCoroutinesExperimentalGuideSupervision02") { kotlinx.coroutines.experimental.guide.supervision02.main(emptyArray()) }.verifyLines(
+            "Child is sleeping",
+            "Throwing exception from scope",
+            "Child is cancelled",
+            "Caught assertion error"
+        )
+    }
+
+    @Test
+    fun testKotlinxCoroutinesExperimentalGuideSupervision03() {
+        test("KotlinxCoroutinesExperimentalGuideSupervision03") { kotlinx.coroutines.experimental.guide.supervision03.main(emptyArray()) }.verifyLines(
+            "Scope is completing",
+            "Child throws an exception",
+            "Caught java.lang.AssertionError",
+            "Scope is completed"
+        )
+    }
 }

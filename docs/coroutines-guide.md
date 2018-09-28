@@ -19,7 +19,7 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 * [Cancellation and timeouts](cancellation-and-timeouts.md)
 * [Composing suspending functions](composing-suspending-functions.md)
 * [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md)
-* [Exception handling](exception-handling.md)
+* [Exception handling and supervision](exception-handling.md)
 * [Channels (experimental)](channels.md)
 * [Shared mutable state and concurrency](shared-mutable-state-and-concurrency.md)
 * [Select expression (experimental)](select-expression.md)
