@@ -72,9 +72,12 @@ public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = 
 public fun EventLoop_Deprecated(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
     EventLoop(thread, parentJob) as CoroutineDispatcher
 
-internal const val DELAYED = 0
-internal const val REMOVED = 1
-internal const val RESCHEDULED = 2
+private val DISPOSED_TASK = Symbol("REMOVED_TASK")
+
+// results for scheduleImpl
+private const val SCHEDULE_OK = 0
+private const val SCHEDULE_COMPLETED = 1
+private const val SCHEDULE_DISPOSED = 2
 
 private const val MS_TO_NS = 1_000_000L
 private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
@@ -242,22 +245,23 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     internal fun schedule(delayedTask: DelayedTask) {
-        if (scheduleImpl(delayedTask)) {
-            if (shouldUnpark(delayedTask)) unpark()
-        } else {
-            DefaultExecutor.schedule(delayedTask)
+        when (scheduleImpl(delayedTask)) {
+            SCHEDULE_OK -> if (shouldUnpark(delayedTask)) unpark()
+            SCHEDULE_COMPLETED -> DefaultExecutor.schedule(delayedTask)
+            SCHEDULE_DISPOSED -> {} // do nothing -- task was already disposed
+            else -> error("unexpected result")
         }
     }
 
     private fun shouldUnpark(task: DelayedTask): Boolean = _delayed.value?.peek() === task
 
-    private fun scheduleImpl(delayedTask: DelayedTask): Boolean {
-        if (isCompleted) return false
+    private fun scheduleImpl(delayedTask: DelayedTask): Int {
+        if (isCompleted) return SCHEDULE_COMPLETED
         val delayed = _delayed.value ?: run {
             _delayed.compareAndSet(null, ThreadSafeHeap())
             _delayed.value!!
         }
-        return delayed.addLastIf(delayedTask) { !isCompleted }
+        return delayedTask.schedule(delayed)
     }
 
     internal fun removeDelayedImpl(delayedTask: DelayedTask) {
@@ -273,6 +277,13 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     // This is a "soft" (normal) shutdown
     protected fun rescheduleAllDelayed() {
         while (true) {
+            /*
+             * `removeFirstOrNull` below is the only operation on DelayedTask & ThreadSafeHeap that is not
+             * synchronized on DelayedTask itself. All other operation are synchronized both on
+             * DelayedTask & ThreadSafeHeap instances (in this order). It is still safe, because `dispose`
+             * first removes DelayedTask from the heap (under synchronization) then
+             * assign "_heap = DISPOSED_TASK", so there cannot be ever a race to _heap reference update.
+             */
             val delayedTask = _delayed.value?.removeFirstOrNull() ?: break
             delayedTask.rescheduleOnShutdown()
         }
@@ -281,8 +292,17 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     internal abstract inner class DelayedTask(
         timeMillis: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
+        private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
+        
+        override var heap: ThreadSafeHeap<*>?
+            get() = _heap as? ThreadSafeHeap<*>
+            set(value) {
+                require(_heap !== DISPOSED_TASK) // this can never happen, it is always checked before adding/removing
+                _heap = value
+            }
+        
         override var index: Int = -1
-        @JvmField var state = DELAYED // Guarded by by lock on this task for reschedule/dispose purposes
+        
         @JvmField val nanoTime: Long = timeSource.nanoTime() + delayToNanos(timeMillis)
 
         override fun compareTo(other: DelayedTask): Int {
@@ -297,24 +317,21 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
         @Synchronized
-        fun rescheduleOnShutdown() {
-            if (state != DELAYED) return
-            if (_delayed.value!!.remove(this)) {
-                state = RESCHEDULED
-                DefaultExecutor.schedule(this)
-            } else {
-                state = REMOVED
-            }
+        fun schedule(delayed: ThreadSafeHeap<DelayedTask>): Int {
+            if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
+            return if (delayed.addLastIf(this) { !isCompleted }) SCHEDULE_OK else SCHEDULE_COMPLETED
         }
+
+        // note: DefaultExecutor.schedule performs `schedule` (above) which does sync & checks for DISPOSED_TASK
+        fun rescheduleOnShutdown() = DefaultExecutor.schedule(this)
 
         @Synchronized
         final override fun dispose() {
-            when (state) {
-                DELAYED -> _delayed.value?.remove(this)
-                RESCHEDULED -> DefaultExecutor.removeDelayedImpl(this)
-                else -> return
-            }
-            state = REMOVED
+            val heap = _heap
+            if (heap === DISPOSED_TASK) return // already disposed
+            @Suppress("UNCHECKED_CAST")
+            (heap as? ThreadSafeHeap<DelayedTask>)?.remove(this) // remove if it is in heap (first)
+            _heap = DISPOSED_TASK // never add again to any heap
         }
 
         override fun toString(): String = "Delayed[nanos=$nanoTime]"
