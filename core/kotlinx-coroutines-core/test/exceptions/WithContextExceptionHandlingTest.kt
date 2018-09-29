@@ -13,11 +13,13 @@ import kotlin.coroutines.experimental.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestBase() {
+class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
+    enum class Mode { WITH_CONTEXT, ASYNC_AWAIT }
+
     companion object {
-        @Parameterized.Parameters(name = "withContext={0}")
+        @Parameterized.Parameters(name = "mode={0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = listOf<Array<Any>>(arrayOf(true), arrayOf(false))
+        fun params(): Collection<Array<Any>> = Mode.values().map { arrayOf<Any>(it) }
     }
 
     @Test
@@ -106,16 +108,14 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
         /*
          * context cancelled with ISE
          * block itself throws CE(IOE)
-         * Result: ISE suppressed IOE
+         * Result: ISE (because cancellation exception is always ignored and not handled)
          */
         val cancellationCause = IllegalStateException()
         val thrown = CancellationException()
         thrown.initCause(IOException())
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
-            val suppressed = e.suppressed
-            assertEquals(1, suppressed.size)
-            assertTrue(suppressed[0] is IOException)
+            assertTrue(e.suppressed.isEmpty())
         }
     }
 
@@ -161,10 +161,11 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
 
     @Test
     fun testThrowingCancellationWithCause() = runTest {
+        // Exception are never unwrapped, so if CE(IOE) is thrown then it is the cancellation cause
         val thrown = CancellationException()
         thrown.initCause(IOException())
         runThrowing(thrown) { e ->
-           checkException<IOException>(e)
+           assertSame(thrown, e)
         }
     }
 
@@ -247,12 +248,11 @@ class WithContextExceptionHandlingTest(private val withContext: Boolean) : TestB
     }
 
     private suspend fun withCtx(context: CoroutineContext, job: Job = Job(), block: suspend CoroutineScope.(Job) -> Nothing) {
-        if (withContext) {
-            withContext(context + job) {
+        when (mode) {
+            Mode.WITH_CONTEXT -> withContext(context + job) {
                 block(job)
             }
-        } else {
-            CoroutineScope(coroutineContext).async(context + job) {
+            Mode.ASYNC_AWAIT -> CoroutineScope(coroutineContext).async(context + job) {
                 block(job)
             }.await()
         }
