@@ -20,7 +20,7 @@ GlobalScope.launch {
 
 * [common](common/README.md) &mdash; common coroutines across all backends:
   * `launch` and `async` coroutine builders;
-  * `Job` `Deferred` light-weight future with cancellation support;
+  * `Job` and `Deferred` light-weight future with cancellation support;
   *` Dispatchers.Main` for UI dispatcher for Android, Swing and JavaFx;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;

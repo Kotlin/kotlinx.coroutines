@@ -53,6 +53,9 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
 }
 
 internal class SwingDispatcherFactory : MainDispatcherFactory {
+    override val loadPriority: Int
+        get() = 0
+
     override fun createDispatcher(): MainCoroutineDispatcher = Swing
 }
 
@@ -60,7 +63,7 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = this
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
 
     override fun toString() = "Swing [immediate]"
 }

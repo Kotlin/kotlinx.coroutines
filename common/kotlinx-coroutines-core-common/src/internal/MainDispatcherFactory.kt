@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.*
 
 @InternalCoroutinesApi // Emulating DI for Kotlin object's
 public interface MainDispatcherFactory {
-    val loadPriority: Int get() = 0 // higher priority wins
+    val loadPriority: Int // higher priority wins
 
     fun createDispatcher(): MainCoroutineDispatcher
 }

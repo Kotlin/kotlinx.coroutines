@@ -7,7 +7,7 @@
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
-import android.support.annotation.VisibleForTesting
+import android.support.annotation.*
 import android.view.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.internal.MainDispatcherFactory
@@ -38,8 +38,12 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
     public abstract override val immediate: HandlerDispatcher
 }
 
+@Keep
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
     override fun createDispatcher(): MainCoroutineDispatcher = Main
+
+    override val loadPriority: Int
+        get() = Int.MAX_VALUE
 }
 
 /**
