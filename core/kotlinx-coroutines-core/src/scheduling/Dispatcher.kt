@@ -47,10 +47,18 @@ open class ExperimentalCoroutineDispatcher(
     private var coroutineScheduler = createScheduler()
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit =
-        coroutineScheduler.dispatch(block)
+        try {
+            coroutineScheduler.dispatch(block)
+        } catch (e: RejectedExecutionException) {
+            DefaultExecutor.dispatch(context, block)
+        }
 
     override fun dispatchYield(context: CoroutineContext, block: Runnable): Unit =
-        coroutineScheduler.dispatch(block, fair = true)
+        try {
+            coroutineScheduler.dispatch(block, fair = true)
+        } catch (e: RejectedExecutionException) {
+            DefaultExecutor.dispatchYield(context, block)
+        }
 
     override fun close() = coroutineScheduler.close()
 
@@ -84,7 +92,11 @@ open class ExperimentalCoroutineDispatcher(
     }
 
     internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean): Unit =
-        coroutineScheduler.dispatch(block, context, fair)
+        try {
+            coroutineScheduler.dispatch(block, context, fair)
+        } catch (e: RejectedExecutionException) {
+            DefaultExecutor.execute(block)
+        }
 
     private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)
 
