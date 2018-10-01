@@ -140,14 +140,23 @@ internal class WorkQueue {
     private fun offloadWork(globalQueue: GlobalQueue) {
         repeat((bufferSize / 2).coerceAtLeast(1)) {
             val task = pollExternal() ?: return
-            globalQueue.addLast(task)
+            addToGlobalQueue(globalQueue, task)
         }
     }
 
+    private fun addToGlobalQueue(globalQueue: GlobalQueue, task: Task) {
+        /*
+         * globalQueue is closed as the very last step in the shutdown sequence when all worker threads had
+         * been already shutdown (with the only exception of the last worker thread that might be performing
+         * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
+         */
+        check(globalQueue.add(task)) { "GlobalQueue could not be closed yet" }
+    }
+
     internal fun offloadAllWork(globalQueue: GlobalQueue) {
+        lastScheduledTask.getAndSet(null)?.let { addToGlobalQueue(globalQueue, it) }
         while (true) {
-            val task = pollExternal() ?: return
-            globalQueue.addLast(task)
+            addToGlobalQueue(globalQueue, pollExternal() ?: return)
         }
     }
 
