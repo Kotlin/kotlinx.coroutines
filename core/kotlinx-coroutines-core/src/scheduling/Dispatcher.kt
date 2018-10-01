@@ -26,6 +26,7 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
  * @suppress **This is unstable API and it is subject to change.**
  */
 // TODO make internal (and rename) after complete integration
+@InternalCoroutinesApi
 open class ExperimentalCoroutineDispatcher(
     private val corePoolSize: Int,
     private val maxPoolSize: Int,

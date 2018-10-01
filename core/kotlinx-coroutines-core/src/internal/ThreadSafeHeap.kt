@@ -10,6 +10,7 @@ import java.util.*
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public interface ThreadSafeHeapNode {
     public var heap: ThreadSafeHeap<*>?
     public var index: Int
@@ -20,6 +21,7 @@ public interface ThreadSafeHeapNode {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
