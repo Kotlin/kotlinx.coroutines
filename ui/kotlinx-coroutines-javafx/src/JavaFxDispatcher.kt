@@ -9,12 +9,14 @@ import javafx.application.*
 import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
+@Suppress("unused")
 public val Dispatchers.JavaFx: JavaFxDispatcher
     get() = kotlinx.coroutines.experimental.javafx.JavaFx
 
@@ -23,39 +25,9 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class JavaFxDispatcher : CoroutineDispatcher(), Delay
-
-/**
- * Dispatches execution onto JavaFx application thread and provides native [delay] support.
- * @suppress **Deprecated**: Use [Dispatchers.JavaFx].
- */
-@Deprecated(
-    message = "Use Dispatchers.JavaFx",
-    replaceWith = ReplaceWith("Dispatchers.JavaFx",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
-)
-// todo: it will become an internal implementation object
-object JavaFx : JavaFxDispatcher() {
-    init {
-        // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
-        initPlatform()
-    }
+public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
-
-    /**
-     * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
-     * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
-     * immediately resumes with [CancellationException] .
-     *
-     * @suppress **Deprecated**: Use top-level [awaitPulse].
-     */
-    @Deprecated(
-        message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.javafx.awaitPulse()")
-    )
-    suspend fun awaitPulse(): Long =
-        kotlinx.coroutines.experimental.javafx.awaitPulse()
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
@@ -77,6 +49,57 @@ object JavaFx : JavaFxDispatcher() {
 
     private fun schedule(time: Long, unit: TimeUnit, handler: EventHandler<ActionEvent>): Timeline =
         Timeline(KeyFrame(Duration.millis(unit.toMillis(time).toDouble()), handler)).apply { play() }
+}
+
+internal class JavaFxDispatcherFactory : MainDispatcherFactory {
+    override fun createDispatcher(): MainCoroutineDispatcher = JavaFx
+
+    override val loadPriority: Int
+        get() = 1 // Swing has 0
+}
+
+private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
+    override val immediate: MainCoroutineDispatcher
+        get() = this
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !Platform.isFxApplicationThread()
+
+    override fun toString() = "JavaFx [immediate]"
+}
+
+/**
+ * Dispatches execution onto JavaFx application thread and provides native [delay] support.
+ * @suppress **Deprecated**: Use [Dispatchers.JavaFx].
+ */
+@Deprecated(
+    message = "Use Dispatchers.JavaFx",
+    replaceWith = ReplaceWith("Dispatchers.JavaFx",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.javafx.JavaFx"])
+)
+// todo: it will become an internal implementation object
+object JavaFx : JavaFxDispatcher() {
+    init {
+        // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
+        initPlatform()
+    }
+
+    override val immediate: MainCoroutineDispatcher
+        get() = ImmediateJavaFxDispatcher
+
+    /**
+     * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
+     * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
+     * immediately resumes with [CancellationException] .
+     *
+     * @suppress **Deprecated**: Use top-level [awaitPulse].
+     */
+    @Deprecated(
+        message = "Use top-level awaitFrame",
+        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.javafx.awaitPulse()")
+    )
+    suspend fun awaitPulse(): Long =
+        kotlinx.coroutines.experimental.javafx.awaitPulse()
+
 
     override fun toString() = "JavaFx"
 }

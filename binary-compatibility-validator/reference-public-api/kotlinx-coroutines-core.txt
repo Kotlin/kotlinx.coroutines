@@ -314,14 +314,15 @@ public final class kotlinx/coroutines/experimental/DispatchedTask$DefaultImpls {
 }
 
 public final class kotlinx/coroutines/experimental/Dispatchers {
-	public static final field Default Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 	public static final field INSTANCE Lkotlinx/coroutines/experimental/Dispatchers;
-	public static final field Unconfined Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final fun getDefault ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final fun getIO ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
+	public static final fun getMain ()Lkotlinx/coroutines/experimental/MainCoroutineDispatcher;
+	public static final fun getUnconfined ()Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 }
 
 public final class kotlinx/coroutines/experimental/DispatchersKt {
 	public static final field IO_PARALLELISM_PROPERTY_NAME Ljava/lang/String;
-	public static final fun getIO (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/CoroutineDispatcher;
 }
 
 public abstract interface class kotlinx/coroutines/experimental/DisposableHandle {
@@ -466,6 +467,11 @@ public final class kotlinx/coroutines/experimental/JobKt {
 
 public final class kotlinx/coroutines/experimental/LazyDeferredKt {
 	public static final fun lazyDefer (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/experimental/Deferred;
+}
+
+public abstract class kotlinx/coroutines/experimental/MainCoroutineDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher {
+	public fun <init> ()V
+	public abstract fun getImmediate ()Lkotlinx/coroutines/experimental/MainCoroutineDispatcher;
 }
 
 public final class kotlinx/coroutines/experimental/NonCancellable : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlinx/coroutines/experimental/Job {

@@ -21,9 +21,12 @@ GlobalScope.launch {
 * [common](common/README.md) &mdash; common coroutines across all backends:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
+  *` Dispatchers.Main` for UI dispatcher for Android, Swing and JavaFx;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;
   * `produce` and `actor` coroutine builders;
+  * `coroutineScope` and `supervisorScope` scope builders;
+  * `SupervisorJob` for supervision of coroutines hierarchies;
   * `select` expression support and more.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `Dispatchers.IO` dispatcher for blocking coroutines.
@@ -39,8 +42,8 @@ GlobalScope.launch {
 ## Documentation
 
 * Presentations and videos:
-   * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
-   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
+  * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
+  * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
 * Guides and manuals: 
   * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
