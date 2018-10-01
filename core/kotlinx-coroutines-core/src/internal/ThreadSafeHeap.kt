@@ -48,7 +48,7 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
     // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
     public inline fun removeFirstIf(predicate: (T) -> Boolean): T? = synchronized(this) {
         val first = firstImpl() ?: return null
-        return if (predicate(first)) {
+        if (predicate(first)) {
             removeAtImpl(0)
         } else {
             null
@@ -58,14 +58,15 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
     @Synchronized
     public fun addLast(node: T) = addImpl(node)
 
-    @Synchronized
-    public fun addLastIf(node: T, cond: () -> Boolean): Boolean =
+    // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
+    public inline fun addLastIf(node: T, cond: () -> Boolean): Boolean = synchronized(this) {
         if (cond()) {
             addImpl(node)
             true
         } else {
             false
         }
+    }
 
     @Synchronized
     public fun remove(node: T): Boolean {
