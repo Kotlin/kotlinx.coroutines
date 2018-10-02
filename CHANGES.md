@@ -1,5 +1,13 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.30.1
+ Maintenance release:
+ * Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 
+ * With `Dispatchers.Main` improvement tooling bug in Android Studio #626 is mitigated, so Android users now can safely start the migration to the latest `kotlinx.coroutines` version.
+ * Fixed bug with thread unsafety of shutdown sequence in `EventLoop`.
+ * Experimental coroutine dispatcher now has `close` contract similar to Java `Executor`, so it can be safely instantiated and closed multiple times (affects only unit tests).
+ * Atomicfu version is updated with fixes in JS transformer (see #609)
+
 ## Version 0.30.0
 
 * **[Major]** Further improvements in exception handling &mdash; no failure exception is lost. 
