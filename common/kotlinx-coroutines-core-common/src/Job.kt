@@ -425,13 +425,30 @@ public inline fun DisposableHandle(crossinline block: () -> Unit) =
 internal interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
-     * Child finds the cancellation cause using [getCancellationException] of the [parentJob].
+     * Child finds the cancellation cause using [ParentJob.getChildJobCancellationCause].
      * This method does nothing is the child is already being cancelled.
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
     @InternalCoroutinesApi
-    public fun parentCancelled(parentJob: Job)
+    public fun parentCancelled(parentJob: ParentJob)
+}
+
+/**
+ * A reference that child receives from its parent when it is being cancelled by the parent.
+ *
+ * @suppress **This is unstable API and it is subject to change.**
+ */
+@InternalCoroutinesApi
+internal interface ParentJob : Job {
+    /**
+     * Child job is using this method to learn its cancellation cause when the parent cancels it with [ChildJob.parentCancelled].
+     * This method is invoked only if the child was not already being cancelled.
+     *
+     * @suppress **This is unstable API and it is subject to change.**
+     */
+    @InternalCoroutinesApi
+    public fun getChildJobCancellationCause(): Throwable
 }
 
 /**

@@ -105,7 +105,7 @@ internal abstract class AbstractContinuation<in T>(
     /**
      * It is used when parent is cancelled to get the cancellation cause for this continuation.
      */
-    open fun getParentCancellationCause(parent: Job): Throwable =
+    open fun getContinuationCancellationCause(parent: Job): Throwable =
         parent.getCancellationException()
 
     private fun trySuspend(): Boolean {
