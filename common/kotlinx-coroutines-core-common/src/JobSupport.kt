@@ -20,7 +20,7 @@ import kotlin.coroutines.experimental.intrinsics.*
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, SelectClause0 {
+internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -230,61 +230,21 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
             if (state.isCancelling) return createJobCancellationException()
             return null
         }
-        /*
-         * This is a place where we step on our API limitation:
-         * We can't distinguish internal JobCancellationException from our parent
-         * from external cancellation, thus we ought to collect all exceptions.
-         * If parent is cancelling, it cancels its children with JCE(rootCause).
-         * When child is building final exception, it can skip JCE(anything) if it knows
-         * that parent handles exceptions, because parent should already have this exception.
-         * If parent does not, then we should unwrap exception, otherwise in the following code
-         * ```
-         * val parent = Job()
-         * launch(parent) {
-         *   try { delay() } finally { throw E2() }
-         * }
-         * parent.cancel(E1)
-         * ```
-         * E1 will be lost.
-         */
-        var rootCause = exceptions[0]
-        if (rootCause is CancellationException) {
-            val cause = unwrap(rootCause)
-            rootCause = if (cause !== null) {
-                cause
-            } else {
-                exceptions.firstOrNull { unwrap(it) != null } ?: return rootCause
-            }
-        }
-        return rootCause
+        // Take either the first real exception (not a cancellation) or just the first exception
+        return exceptions.firstOrNull { it !is CancellationException } ?: exceptions[0]
     }
 
     private fun suppressExceptions(rootCause: Throwable, exceptions: List<Throwable>): Boolean {
         if (exceptions.size <= 1) return false // nothing more to do here
         val seenExceptions = identitySet<Throwable>(exceptions.size)
         var suppressed = false
-        for (i in 1 until exceptions.size) {
-            val unwrapped = unwrap(exceptions[i])
-            if (unwrapped !== null && unwrapped !== rootCause) {
-                if (seenExceptions.add(unwrapped)) {
-                    rootCause.addSuppressedThrowable(unwrapped)
-                    suppressed = true
-                }
+        for (exception in exceptions) {
+            if (exception !== rootCause && exception !is CancellationException && seenExceptions.add(exception)) {
+                rootCause.addSuppressedThrowable(exception)
+                suppressed = true
             }
         }
         return suppressed
-    }
-
-    private tailrec fun unwrap(exception: Throwable): Throwable? {
-        if (exception is CancellationException && parentHandlesExceptions) {
-            return null
-        }
-        return if (exception is CancellationException) {
-            val cause = exception.cause
-            if (cause !== null) unwrap(cause) else null
-        } else {
-            exception
-        }
     }
 
     // fast-path method to finalize normally completed coroutines without children
@@ -616,7 +576,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         cancelImpl(cause) && handlesException
 
     // Parent is cancelling child
-    public final override fun parentCancelled(parentJob: Job) {
+    public final override fun parentCancelled(parentJob: ParentJob) {
         cancelImpl(parentJob)
     }
 
@@ -624,7 +584,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
     public open fun childCancelled(cause: Throwable): Boolean =
         cancelImpl(cause) && handlesException
 
-    // cause is Throwable or Job when cancelChild was invoked
+    // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
     private fun cancelImpl(cause: Any?): Boolean {
         if (onCancelComplete) {
@@ -636,6 +596,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         return makeCancelling(cause)
     }
 
+    // cause is Throwable or ParentJob when cancelChild was invoked
     private fun cancelMakeCompleting(cause: Any?): Boolean {
         loopOnState { state ->
             if (state !is Incomplete || state is Finishing && state.isCompleting) {
@@ -654,14 +615,35 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
     private fun createJobCancellationException() =
         JobCancellationException("Job was cancelled", null, this)
 
-    // cause is Throwable or Job when cancelChild was invoked, cause can be null only on cancel
+    override fun getChildJobCancellationCause(): Throwable {
+        // determine root cancellation cause of this job (why is it cancelling its children?)
+        val state = this.state
+        val rootCause = when (state) {
+            is Finishing -> state.rootCause
+            is Incomplete -> error("Cannot be cancelling child in this state: $state")
+            is CompletedExceptionally -> state.cause
+            else -> null // create exception with the below code on normal completion
+        }
+        /*
+         * If this parent job handles exceptions, then wrap cause into JobCancellationException, because we
+         * don't want the child to handle this exception on more time. Otherwise, pass our original rootCause
+         * to the child for cancellation.
+         */
+        return if (rootCause == null || handlesException && rootCause !is CancellationException) {
+            JobCancellationException("Parent job is ${stateString(state)}", rootCause, this)
+        } else {
+            rootCause
+        }
+    }
+
+    // cause is Throwable or ParentJob when cancelChild was invoked
     private fun createCauseException(cause: Any?): Throwable = when(cause) {
         is Throwable? -> cause ?: createJobCancellationException()
-        else -> (cause as Job).getCancellationException()
+        else -> (cause as ParentJob).getChildJobCancellationCause()
     }
 
     // transitions to Cancelling state
-    // cause is Throwable or Job when cancelChild was invoked, cause can be null only on cancel
+    // cause is Throwable or ParentJob when cancelChild was invoked
     private fun makeCancelling(cause: Any?): Boolean {
         var causeExceptionCache: Throwable? = null // lazily init result of createCauseException(cause)
         loopOnState { state ->
@@ -927,10 +909,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
      */
     protected open val handlesException: Boolean get() = true
 
-    // returns true when we know that parent handles exceptions
-    private val parentHandlesExceptions: Boolean get() =
-        (parentHandle as? ChildHandleNode)?.job?.handlesException ?: false
-
     /**
      * This method is invoked **exactly once** when the final exception of the job is determined
      * and before it becomes complete. At the moment of invocation the job and all its children are complete.
@@ -959,27 +937,22 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
 
     // for nicer debugging
     public override fun toString(): String =
-        "${nameString()}{${stateString()}}@$hexAddress"
+        "${nameString()}{${stateString(state)}}@$hexAddress"
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal open fun nameString(): String = classSimpleName
 
-    private fun stateString(): String {
-        val state = this.state
-        return when (state) {
-            is Finishing -> buildString {
-                when {
-                    state.isCancelling -> append("Cancelling")
-                    else -> append("Active")
-                }
-                if (state.isCompleting) append("Completing")
-            }
-            is Incomplete -> if (state.isActive) "Active" else "New"
-            is CompletedExceptionally -> "Cancelled"
-            else -> "Completed"
+    private fun stateString(state: Any?): String = when (state) {
+        is Finishing -> when {
+            state.isCancelling -> "Cancelling"
+            state.isCompleting -> "Completing"
+            else -> "Active"
         }
+        is Incomplete -> if (state.isActive) "Active" else "New"
+        is CompletedExceptionally -> "Cancelled"
+        else -> "Completed"
     }
 
     // Completing & Cancelling states,
@@ -1068,7 +1041,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Sel
         delegate: Continuation<T>,
         private val job: JobSupport
     ) : CancellableContinuationImpl<T>(delegate, MODE_CANCELLABLE) {
-        override fun getParentCancellationCause(parent: Job): Throwable {
+        override fun getContinuationCancellationCause(parent: Job): Throwable {
             val state = job.state
             /*
              * When the job we are waiting for had already completely completed exceptionally or
@@ -1351,7 +1324,7 @@ internal class ChildContinuation(
     @JvmField val child: AbstractContinuation<*>
 ) : JobCancellingNode<Job>(parent) {
     override fun invoke(cause: Throwable?) {
-        child.cancelImpl(child.getParentCancellationCause(job))
+        child.cancelImpl(child.getContinuationCancellationCause(job))
     }
     override fun toString(): String =
         "ChildContinuation[$child]"
