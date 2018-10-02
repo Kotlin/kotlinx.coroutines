@@ -68,7 +68,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.30.0</version>
+    <version>0.30.1</version>
 </dependency>
 ```
 
