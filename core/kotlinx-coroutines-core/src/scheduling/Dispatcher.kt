@@ -20,6 +20,11 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
     override fun close() {
         throw UnsupportedOperationException("$DEFAULT_SCHEDULER_NAME cannot be closed")
     }
+
+    override fun toString(): String = DEFAULT_SCHEDULER_NAME
+
+    @InternalCoroutinesApi
+    fun toDebugString(): String = super.toString()
 }
 
 /**
