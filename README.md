@@ -85,7 +85,9 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.1'
+dependencies {
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.1'
+}
 ```
 
 And make sure that you use the latest Kotlin version:
