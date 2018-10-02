@@ -7,7 +7,7 @@ import java.util.zip.ZipFile
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-ext.androidx_version = '1.0.0'
+ext.androidx_lifecycle_version = '2.0.0'
 
 repositories {
     google()
@@ -29,8 +29,7 @@ dependencies {
         to.attribute(attr, "jar")
         artifactTransform(ExtractJars.class)
     }
-
-    aar("androidx.lifecycle:lifecycle-common:$androidx_version")
+    aar("androidx.lifecycle:lifecycle-common:$androidx_lifecycle_version")
 }
 
 tasks.withType(dokka.getClass()) {
