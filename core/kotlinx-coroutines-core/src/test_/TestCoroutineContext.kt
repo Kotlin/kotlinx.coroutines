@@ -239,6 +239,7 @@ private class TimedRunnable(
     private val count: Long = 0,
     @JvmField internal val time: Long = 0
 ) : Comparable<TimedRunnable>, Runnable by run, ThreadSafeHeapNode {
+    override var heap: ThreadSafeHeap<*>? = null
     override var index: Int = 0
 
     override fun run() = run.run()

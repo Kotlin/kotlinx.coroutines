@@ -7,24 +7,26 @@
 package kotlinx.coroutines.experimental.android
 
 import android.os.*
-import android.support.annotation.VisibleForTesting
+import android.support.annotation.*
 import android.view.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.MainDispatcherFactory
 import java.lang.reflect.Constructor
 import kotlin.coroutines.experimental.*
 
 /**
  * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
  */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Deprecated in favor of Dispatchers property")
 public val Dispatchers.Main: HandlerDispatcher
-    get() = kotlinx.coroutines.experimental.android.Main
+    get() = MainDispatcher
 
 /**
  * Dispatches execution onto Android [Handler].
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class HandlerDispatcher : CoroutineDispatcher(), Delay {
+public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
     /**
      * Returns dispatcher that executes coroutines immediately when it is already in the right handler context
      * (current looper is the same as this handler's looper). See [isDispatchNeeded] documentation on
@@ -33,7 +35,15 @@ public sealed class HandlerDispatcher : CoroutineDispatcher(), Delay {
      * **Note: This is an experimental api.** Semantics of this dispatcher may change in the future.
      */
     @ExperimentalCoroutinesApi
-    public abstract val immediate: HandlerDispatcher
+    public abstract override val immediate: HandlerDispatcher
+}
+
+@Keep
+internal class AndroidDispatcherFactory : MainDispatcherFactory {
+    override fun createDispatcher(): MainCoroutineDispatcher = Main
+
+    override val loadPriority: Int
+        get() = Int.MAX_VALUE
 }
 
 /**
@@ -75,6 +85,8 @@ internal fun Looper.asHandler(async: Boolean): Handler {
 
 @JvmField // this is for a nice Java API, see issue #255
 internal val Main: HandlerDispatcher = HandlerContext(mainHandler, "Main")
+
+private val MainDispatcher: HandlerDispatcher = Main // Alias
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].

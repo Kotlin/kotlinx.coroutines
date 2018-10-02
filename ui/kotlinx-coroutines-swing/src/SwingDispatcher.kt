@@ -4,7 +4,9 @@
 
 package kotlinx.coroutines.experimental.swing
 
+import javafx.application.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.internal.*
 import java.awt.event.*
 import java.util.concurrent.*
 import javax.swing.*
@@ -13,6 +15,7 @@ import kotlin.coroutines.experimental.*
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
+@Suppress("unused")
 public val Dispatchers.Swing : SwingDispatcher
     get() = kotlinx.coroutines.experimental.swing.Swing
 
@@ -21,19 +24,7 @@ public val Dispatchers.Swing : SwingDispatcher
  *
  * This class provides type-safety and a point for future extensions.
  */
-public sealed class SwingDispatcher : CoroutineDispatcher(), Delay
-
-/**
- * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
- * @suppress **Deprecated**: Use [Dispatchers.Swing].
- */
-@Deprecated(
-    message = "Use Dispatchers.Swing",
-    replaceWith = ReplaceWith("Dispatchers.Swing",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.swing.Swing"])
-)
-// todo: it will become an internal implementation object
-object Swing : SwingDispatcher() {
+public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -59,6 +50,37 @@ object Swing : SwingDispatcher() {
             isRepeats = false
             start()
         }
+}
+
+internal class SwingDispatcherFactory : MainDispatcherFactory {
+    override val loadPriority: Int
+        get() = 0
+
+    override fun createDispatcher(): MainCoroutineDispatcher = Swing
+}
+
+private object ImmediateSwingDispatcher : SwingDispatcher() {
+    override val immediate: MainCoroutineDispatcher
+        get() = this
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = !SwingUtilities.isEventDispatchThread()
+
+    override fun toString() = "Swing [immediate]"
+}
+
+/**
+ * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
+ * @suppress **Deprecated**: Use [Dispatchers.Swing].
+ */
+@Deprecated(
+    message = "Use Dispatchers.Swing",
+    replaceWith = ReplaceWith("Dispatchers.Swing",
+        imports = ["kotlinx.coroutines.experimental.Dispatchers", "kotlinx.coroutines.experimental.swing.Swing"])
+)
+// todo: it will become an internal implementation object
+object Swing : SwingDispatcher() {
+    override val immediate: MainCoroutineDispatcher
+        get() = ImmediateSwingDispatcher
 
     override fun toString() = "Swing"
 }

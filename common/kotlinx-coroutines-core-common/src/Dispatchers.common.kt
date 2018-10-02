@@ -4,13 +4,12 @@
 
 package kotlinx.coroutines.experimental
 
-import kotlinx.coroutines.experimental.internal.*
 import kotlin.coroutines.experimental.*
 
 /**
  * Groups various implementations of [CoroutineDispatcher].
  */
-public object Dispatchers {
+expect object Dispatchers {
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
@@ -19,9 +18,27 @@ public object Dispatchers {
      * It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
      * by this dispatcher is equal to the number CPU cores, but is at least two.
      */
-    @JvmField
-    public val Default: CoroutineDispatcher =
-        createDefaultDispatcher()
+    public val Default: CoroutineDispatcher
+
+    /**
+     * A coroutine dispatcher that is confined to the Main thread operating with UI objects.
+     * Usually such dispatcher is single-threaded.
+     *
+     * Access to this property may throw [IllegalStateException] if no main dispatchers are present in the classpath.
+     *
+     * Depending on platform and classpath it can be mapped to different dispatchers:
+     * - On JS and Native it is equivalent of [Default] dispatcher.
+     * - On JVM it either Android main thread dispatcher, JavaFx or Swing EDT dispatcher. It is chosen by
+     *   [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html).
+     *
+     * In order to work with `Main` dispatcher, following artifact should be added to project runtime dependencies:
+     *  - `kotlinx-coroutines-android` for Android Main thread dispatcher
+     *  - `kotlinx-coroutines-javafx` for JavaFx Application thread dispatcher
+     *  - `kotlinx-coroutines-swing` for Swing EDT dispatcher
+     *
+     * Implementation note: [MainCoroutineDispatcher.immediate] is not supported on Native and JS platforms.
+     */
+    public val Main: MainCoroutineDispatcher
 
     /**
      * A coroutine dispatcher that is not confined to any specific thread.
@@ -39,8 +56,6 @@ public object Dispatchers {
      * **Note: This is an experimental api.**
      * Semantics, order of execution, and particular implementation details of this dispatcher may change in the future.
      */
-    @JvmField
     @ExperimentalCoroutinesApi
-    public val Unconfined: CoroutineDispatcher =
-        kotlinx.coroutines.experimental.Unconfined
+    public val Unconfined: CoroutineDispatcher
 }

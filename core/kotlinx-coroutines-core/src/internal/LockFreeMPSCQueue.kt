@@ -5,6 +5,7 @@
 package kotlinx.coroutines.experimental.internal
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.experimental.*
 import java.util.concurrent.atomic.*
 
 private typealias Core<E> = LockFreeMPSCQueueCore<E>
@@ -22,7 +23,8 @@ private typealias Core<E> = LockFreeMPSCQueueCore<E>
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-class LockFreeMPSCQueue<E : Any> {
+@InternalCoroutinesApi
+internal class LockFreeMPSCQueue<E : Any> {
     private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY))
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)

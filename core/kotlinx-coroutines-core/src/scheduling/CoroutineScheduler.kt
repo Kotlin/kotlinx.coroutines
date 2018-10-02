@@ -301,23 +301,29 @@ internal class CoroutineScheduler(
         val currentWorker = Thread.currentThread() as? Worker
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
         val created = synchronized(workers) { createdWorkers }
+        // Shutdown all workers with the only exception of the current thread
         for (i in 1..created) {
             val worker = workers[i]!!
-            if (worker.isAlive && worker !== currentWorker) {
-                LockSupport.unpark(worker)
-                worker.join(timeout)
+            if (worker !== currentWorker) {
+                while (worker.isAlive) {
+                    LockSupport.unpark(worker)
+                    worker.join(timeout)
+                }
+                val state = worker.state
+                check(state === WorkerState.TERMINATED) { "Expected TERMINATED state, but found $state"}
                 worker.localQueue.offloadAllWork(globalQueue)
             }
-
         }
+        // Make sure no more work is added to GlobalQueue from anywhere
+        check(globalQueue.add(CLOSED_TASK)) { "GlobalQueue could not be closed yet" }
         // Finish processing tasks from globalQueue and/or from this worker's local queue
         while (true) {
-            val task = currentWorker?.findTask() ?: globalQueue.removeFirstOrNull() ?: break
+            val task = currentWorker?.findTask() ?: globalQueue.removeFirstIfNotClosed() ?: break
             runSafely(task)
         }
         // Shutdown current thread
         currentWorker?.tryReleaseCpu(WorkerState.TERMINATED)
-        // cleanup state to make sure that tryUnpark tries to create new threads and fails because isTerminated
+        // check & cleanup state
         assert(cpuPermits.availablePermits() == corePoolSize)
         parkedWorkersStack.value = 0L
         controlState.value = 0L
@@ -339,8 +345,12 @@ internal class CoroutineScheduler(
         when (submitToLocalQueue(task, fair)) {
             ADDED -> return
             NOT_ADDED -> {
-                globalQueue.addLast(task) // offload task to local queue
-                requestCpuWorker() // ask for help
+                // try to offload task to global queue
+                if (!globalQueue.add(task)) {
+                    // Global queue is closed in the last step of close/shutdown -- no more tasks should be accepted
+                    throw RejectedExecutionException("$schedulerName was terminated")
+                }
+                requestCpuWorker()
             }
             else -> requestCpuWorker() // ask for help
         }
@@ -439,7 +449,7 @@ internal class CoroutineScheduler(
     private fun createNewWorker(): Int {
         synchronized(workers) {
             // Make sure we're not trying to resurrect terminated scheduler
-            if (isTerminated) throw RejectedExecutionException("$schedulerName was terminated")
+            if (isTerminated) return -1
             val state = controlState.value
             val created = createdWorkers(state)
             val blocking = blockingWorkers(state)
@@ -463,6 +473,12 @@ internal class CoroutineScheduler(
         val worker = Thread.currentThread() as? Worker
             ?: return NOT_ADDED
         if (worker.scheduler !== this) return NOT_ADDED // different scheduler's worker (!!!)
+
+        /*
+         * This worker could have been already terminated from this thread by close/shutdown and it should not
+         * accept any more tasks into its local queue.
+         */
+        if (worker.state === WorkerState.TERMINATED) return NOT_ADDED
 
         var result = ADDED
         if (task.mode == TaskMode.NON_BLOCKING) {
@@ -923,9 +939,9 @@ internal class CoroutineScheduler(
              * once per two core pool size iterations
              */
             val globalFirst = nextInt(2 * corePoolSize) == 0
-            if (globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
+            if (globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
             localQueue.poll()?.let { return it }
-            if (!globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
+            if (!globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
             return trySteal()
         }
 

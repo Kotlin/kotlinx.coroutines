@@ -10,7 +10,9 @@ import java.util.*
 /**
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public interface ThreadSafeHeapNode {
+    public var heap: ThreadSafeHeap<*>?
     public var index: Int
 }
 
@@ -19,6 +21,7 @@ public interface ThreadSafeHeapNode {
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
+@InternalCoroutinesApi
 public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
@@ -44,10 +47,10 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
             null
         }
 
-    @Synchronized
-    public inline fun removeFirstIf(predicate: (T) -> Boolean): T?  {
+    // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
+    public inline fun removeFirstIf(predicate: (T) -> Boolean): T? = synchronized(this) {
         val first = firstImpl() ?: return null
-        return if (predicate(first)) {
+        if (predicate(first)) {
             removeAtImpl(0)
         } else {
             null
@@ -57,21 +60,24 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
     @Synchronized
     public fun addLast(node: T) = addImpl(node)
 
-    @Synchronized
-    public fun addLastIf(node: T, cond: () -> Boolean): Boolean =
+    // @Synchronized // NOTE! NOTE! NOTE! inline fun cannot be @Synchronized
+    public inline fun addLastIf(node: T, cond: () -> Boolean): Boolean = synchronized(this) {
         if (cond()) {
             addImpl(node)
             true
         } else {
             false
         }
+    }
 
     @Synchronized
     public fun remove(node: T): Boolean {
-        return if (node.index < 0) {
+        return if (node.heap == null) {
             false
         } else {
-            removeAtImpl(node.index)
+            val index = node.index
+            check(index >= 0)
+            removeAtImpl(index)
             true
         }
     }
@@ -95,6 +101,8 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
             }
         }
         val result = a[size]!!
+        check(result.heap === this)
+        result.heap = null
         result.index = -1
         a[size] = null
         return result
@@ -102,11 +110,8 @@ public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNod
 
     @PublishedApi
     internal fun addImpl(node: T) {
-        // TODO remove this after #541 when ThreadSafeHeapNode is gone
-        if (node is EventLoopBase.DelayedTask && node.state == REMOVED) {
-            return
-        }
-
+        check(node.heap == null)
+        node.heap = this
         val a = realloc()
         val i = size++
         a[i] = node

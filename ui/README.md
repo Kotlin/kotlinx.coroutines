@@ -1,6 +1,7 @@
 # Coroutines for UI
 
 This directory contains modules for coroutine programming with various single-threaded UI libraries.
+After adding dependency to the UI library, corresponding UI dispatcher will be available via `Dispatchers.Main`.
 Module name below corresponds to the artifact name in Maven/Gradle.
 
 ## Modules
