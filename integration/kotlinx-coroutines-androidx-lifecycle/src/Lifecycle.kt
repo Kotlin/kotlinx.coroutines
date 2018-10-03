@@ -31,7 +31,7 @@ val Lifecycle.job: Job
 private val lifecycleCoroutineScopes = mutableMapOf<Lifecycle, CoroutineScope>()
 
 val Lifecycle.coroutineScope: CoroutineScope
-    get() = lifecycleCoroutineScopes[this] ?: createJob().let { job ->
+    get() = lifecycleCoroutineScopes[this] ?: job.let { job ->
         val newScope = CoroutineScope(job + Dispatchers.Main)
         if (job.isActive) {
             lifecycleCoroutineScopes[this] = newScope
