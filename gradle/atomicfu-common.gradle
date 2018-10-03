@@ -3,5 +3,5 @@
  */
 
 dependencies {
-    compile "org.jetbrains.kotlinx:atomicfu-common:$atomicFU_version"
+    compileOnly "org.jetbrains.kotlinx:atomicfu-common:$atomicFU_version"
 }
