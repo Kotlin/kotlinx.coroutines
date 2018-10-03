@@ -1,4 +1,4 @@
-package kotlinx.coroutines.experimental.guava
+package kotlinx.coroutines.androidx.lifecycle
 
 import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
