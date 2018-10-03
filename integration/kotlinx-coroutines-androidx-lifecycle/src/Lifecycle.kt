@@ -23,16 +23,20 @@ private val lifecycleJobs = mutableMapOf<Lifecycle, Job>()
 
 val Lifecycle.job: Job
     get() = lifecycleJobs[this] ?: createJob().also {
-        lifecycleJobs[this] = it
-        it.invokeOnCompletion { _ -> lifecycleJobs -= this }
+        if (it.isActive) {
+            lifecycleJobs[this] = it
+            it.invokeOnCompletion { _ -> lifecycleJobs -= this }
+        }
     }
 private val lifecycleCoroutineScopes = mutableMapOf<Lifecycle, CoroutineScope>()
 
 val Lifecycle.coroutineScope: CoroutineScope
-    get() = lifecycleCoroutineScopes[this] ?: createJob().let {
-        val newScope = CoroutineScope(it + Dispatchers.Main)
-        lifecycleCoroutineScopes[this] = newScope
-        it.invokeOnCompletion { _ -> lifecycleCoroutineScopes -= this }
+    get() = lifecycleCoroutineScopes[this] ?: createJob().let { job ->
+        val newScope = CoroutineScope(job + Dispatchers.Main)
+        if (job.isActive) {
+            lifecycleCoroutineScopes[this] = newScope
+            job.invokeOnCompletion { _ -> lifecycleCoroutineScopes -= this }
+        }
         newScope
     }
 
