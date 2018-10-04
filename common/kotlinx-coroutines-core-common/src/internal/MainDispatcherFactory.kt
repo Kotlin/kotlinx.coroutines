@@ -6,6 +6,7 @@ package kotlinx.coroutines.experimental.internal
 
 import kotlinx.coroutines.experimental.*
 
+@Keep
 @InternalCoroutinesApi // Emulating DI for Kotlin object's
 public interface MainDispatcherFactory {
     val loadPriority: Int // higher priority wins
