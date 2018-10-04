@@ -21,6 +21,11 @@ configurations {
         sourceSets.test.compileClasspath += it
         sourceSets.test.runtimeClasspath += it
     }
+    aarTest {
+        attributes { attribute(attr, ArtifactTypeDefinition.JAR_TYPE) }
+        sourceSets.test.compileClasspath += it
+        sourceSets.test.runtimeClasspath += it
+    }
 }
 
 dependencies {
@@ -30,6 +35,7 @@ dependencies {
         artifactTransform(ExtractJars.class)
     }
     aar("androidx.lifecycle:lifecycle-common:$androidx_lifecycle_version")
+    aarTest("androidx.lifecycle:lifecycle-runtime:$androidx_lifecycle_version")
 }
 
 tasks.withType(dokka.getClass()) {
