@@ -82,6 +82,7 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
  *     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
  *     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
  **/
+@Keep
 public interface CoroutineExceptionHandler : CoroutineContext.Element {
     /**
      * Key for [CoroutineExceptionHandler] instance in the coroutine context.
