@@ -36,7 +36,7 @@ public fun <T : Any> CoroutineScope.rxSingle(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-private class RxSingleCoroutine<T>(
+private class RxSingleCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true) {
