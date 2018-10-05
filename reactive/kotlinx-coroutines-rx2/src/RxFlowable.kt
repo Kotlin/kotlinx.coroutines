@@ -36,7 +36,7 @@ import kotlin.coroutines.*
  * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
-public fun <T> CoroutineScope.rxFlowable(
+public fun <T: Any> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
