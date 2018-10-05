@@ -5,18 +5,21 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.TestBase
-import kotlin.test.*
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [28])
 class LifecycleTest : TestBase() {
-
-    @BeforeTest
-    fun setupMainThread() {
-        TODO("Add RoboElectric and kotlinx-coroutines-android dependencies")
-        //TODO: Check if setting up main thread is really needed
-    }
 
     @Test fun testLifecycleDefaultScopeUsesDefaultJob() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
+        lifecycle.markState(Lifecycle.State.CREATED)
         val lifecycleJob = lifecycle.job
         val lifecycleScopeJob = lifecycle.coroutineScope.coroutineContext[Job]
         assertSame(lifecycleJob, lifecycleScopeJob)
@@ -25,6 +28,7 @@ class LifecycleTest : TestBase() {
 
     @Test fun testLifecycleJobIsCached() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
+        lifecycle.markState(Lifecycle.State.CREATED)
         assertSame(lifecycle.job, lifecycle.job)
         lifecycle.markState(Lifecycle.State.DESTROYED)
     }
@@ -42,6 +46,7 @@ class LifecycleTest : TestBase() {
 
     @Test fun testAlreadyDestroyedLifecycleMakesCancelledJob() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
+        lifecycle.markState(Lifecycle.State.CREATED)
         lifecycle.markState(Lifecycle.State.DESTROYED)
         val job = lifecycle.job
         assertFalse(job.isActive)
