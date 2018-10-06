@@ -36,6 +36,14 @@ fun Lifecycle.createJob(cancelEvent: Lifecycle.Event = ON_DESTROY): Job {
 private val allowedCancelEvents = arrayOf(ON_PAUSE, ON_STOP, ON_DESTROY)
 private val lifecycleJobs = ConcurrentHashMap<Lifecycle, Job>()
 
+/**
+ * Returns a [Job] that will be cancelled as soon as the [Lifecycle] reaches
+ * [Lifecycle.State.DESTROYED] state.
+ *
+ * Note that this value is cached until the Lifecycle reaches the destroyed state.
+ *
+ * You can use this job for custom [CoroutineScope]s, or as a parent [Job].
+ */
 val Lifecycle.job: Job
     get() = lifecycleJobs[this] ?: createJob().also {
         if (it.isActive) {
@@ -45,6 +53,12 @@ val Lifecycle.job: Job
     }
 private val lifecycleCoroutineScopes = ConcurrentHashMap<Lifecycle, CoroutineScope>()
 
+/**
+ * Returns a [CoroutineScope] that uses [Dispatchers.Main] by default, and that is cancelled when
+ * the [Lifecycle] reaches [Lifecycle.State.DESTROYED] state.
+ *
+ * Note that this value is cached until the Lifecycle reaches the destroyed state.
+ */
 val Lifecycle.coroutineScope: CoroutineScope
     get() = lifecycleCoroutineScopes[this] ?: job.let { job ->
         val newScope = CoroutineScope(job + Dispatchers.Main)
@@ -55,8 +69,18 @@ val Lifecycle.coroutineScope: CoroutineScope
         newScope
     }
 
+/**
+ * Calls [Lifecycle.coroutineScope] for the [Lifecycle] of this [LifecycleOwner].
+ *
+ * This is an inline property, just there for convenient usage from any [LifecycleOwner],
+ * like FragmentActivity, AppCompatActivity, Fragment and LifecycleService.
+ */
 inline val LifecycleOwner.coroutineScope get() = lifecycle.coroutineScope
 
+/**
+ * Returns a [CoroutineScope] that uses [Dispatchers.Main] by default, and that is cancelled when
+ * the [Lifecycle] encounters the passed [cancelEvent].
+ */
 fun Lifecycle.createScope(cancelEvent: Lifecycle.Event): CoroutineScope {
     return CoroutineScope(createJob(cancelEvent) + Dispatchers.Main)
 }
