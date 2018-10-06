@@ -1,27 +1,27 @@
 - md: basics.md
   url: basics.html
-  title: Basics
+  title: 基础
 - md: coroutines-guide.md
   url: coroutines-guide.html
-  title: Coroutines Guide
+  title: 协程指南
 - md: cancellation-and-timeouts.md
   url: cancellation-and-timeouts.html
-  title: Cancellation and Timeouts
+  title: 取消与超时
 - md: channels.md
   url: channels.html
-  title: Channels
+  title: 通道
 - md: composing-suspending-functions.md
   url: composing-suspending-functions.html
-  title: Composing Suspending Functions
+  title: 组合挂起函数
 - md: coroutine-context-and-dispatchers.md
   url: coroutine-context-and-dispatchers.html
-  title: Coroutine Context and Dispatchers
+  title: 协程上下文与调度器
 - md: exception-handling.md
   url: exception-handling.html
-  title: Exception Handling
+  title: 异常处理
 - md: select-expression.md
   url: select-expression.html
-  title: Select Expression
+  title: Select 表达式
 - md: shared-mutable-state-and-concurrency.md
   url: shared-mutable-state-and-concurrency.html
-  title: Shared Mutable State and Concurrency
+  title: 共享的可变状态与并发
