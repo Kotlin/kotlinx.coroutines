@@ -82,5 +82,6 @@ inline val LifecycleOwner.coroutineScope get() = lifecycle.coroutineScope
  * the [Lifecycle] encounters the passed [cancelEvent].
  */
 fun Lifecycle.createScope(cancelEvent: Lifecycle.Event): CoroutineScope {
+    if (cancelEvent == ON_DESTROY) return coroutineScope
     return CoroutineScope(createJob(cancelEvent) + Dispatchers.Main)
 }
