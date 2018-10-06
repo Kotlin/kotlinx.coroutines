@@ -6,7 +6,7 @@ package kotlinx.coroutines.experimental
 
 import kotlin.coroutines.experimental.*
 
-actual object Dispatchers {
+public actual object Dispatchers {
 
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
 
