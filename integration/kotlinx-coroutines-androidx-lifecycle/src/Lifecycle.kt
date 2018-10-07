@@ -1,4 +1,4 @@
-package kotlinx.coroutines.androidx.lifecycle
+package kotlinx.coroutines.experimental.androidx.lifecycle
 
 import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
