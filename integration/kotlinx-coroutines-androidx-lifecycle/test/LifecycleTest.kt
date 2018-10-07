@@ -39,6 +39,10 @@ class LifecycleTest : TestBase() {
         val job = lifecycle.job
         assertTrue(job.isActive)
         assertFalse(job.isCancelled)
+        lifecycle.markState(Lifecycle.State.STARTED)
+        lifecycle.markState(Lifecycle.State.RESUMED)
+        assertTrue(job.isActive)
+        assertFalse(job.isCancelled)
         lifecycle.markState(Lifecycle.State.DESTROYED)
         assertFalse(job.isActive)
         assertTrue(job.isCancelled)
