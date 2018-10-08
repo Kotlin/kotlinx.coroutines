@@ -101,7 +101,8 @@ open class ExperimentalCoroutineDispatcher(
         try {
             coroutineScheduler.dispatch(block, context, fair)
         } catch (e: RejectedExecutionException) {
-            DefaultExecutor.execute(block)
+            // Context shouldn't be lost here to properly invoke before/after task
+            DefaultExecutor.execute(coroutineScheduler.createTask(block, context))
         }
 
     private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)

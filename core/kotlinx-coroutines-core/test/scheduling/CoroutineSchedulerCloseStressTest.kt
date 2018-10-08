@@ -7,16 +7,29 @@ package kotlinx.coroutines.experimental.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.experimental.*
 import org.junit.Test
+import org.junit.runner.*
+import org.junit.runners.*
 import java.util.*
+import java.util.concurrent.*
 import kotlin.test.*
 
-class CoroutineSchedulerCloseStressTest : TestBase() {
+@RunWith(Parameterized::class)
+class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
+    enum class Mode { CPU, BLOCKING, CPU_LIMITED }
+
+    companion object {
+        @Parameterized.Parameters(name = "mode={0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> = Mode.values().map { arrayOf<Any>(it) }
+    }
+
     private val N_REPEAT = 2 * stressTestMultiplier
     private val MAX_LEVEL = 5
     private val N_COROS = (1 shl (MAX_LEVEL + 1)) - 1
     private val N_THREADS = 4
     private val rnd = Random()
 
+    private lateinit var closeableDispatcher: ExperimentalCoroutineDispatcher
     private lateinit var dispatcher: ExecutorCoroutineDispatcher
     private var closeIndex = -1
 
@@ -28,7 +41,7 @@ class CoroutineSchedulerCloseStressTest : TestBase() {
         try {
             launchCoroutines()
         } finally {
-            dispatcher.close()
+            closeableDispatcher.close()
         }
     }
 
@@ -41,7 +54,12 @@ class CoroutineSchedulerCloseStressTest : TestBase() {
     }
 
     private fun launchCoroutines() = runBlocking {
-        dispatcher = ExperimentalCoroutineDispatcher(N_THREADS)
+        closeableDispatcher = ExperimentalCoroutineDispatcher(N_THREADS)
+        dispatcher = when (mode) {
+            Mode.CPU -> closeableDispatcher
+            Mode.CPU_LIMITED -> closeableDispatcher.limited(N_THREADS) as ExecutorCoroutineDispatcher
+            Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS) as ExecutorCoroutineDispatcher
+        }
         started.value = 0
         finished.value = 0
         withContext(dispatcher) {
@@ -54,12 +72,16 @@ class CoroutineSchedulerCloseStressTest : TestBase() {
     private fun CoroutineScope.launchChild(index: Int, level: Int): Job = launch(start = CoroutineStart.ATOMIC) {
         started.incrementAndGet()
         try {
-            if (index == closeIndex) dispatcher.close()
+            if (index == closeIndex) closeableDispatcher.close()
             if (level < MAX_LEVEL) {
                 launchChild(2 * index + 1, level + 1)
                 launchChild(2 * index + 2, level + 1)
             } else {
-                delay(1000)
+                if (rnd.nextBoolean()) {
+                    delay(1000)
+                } else {
+                    yield()
+                }
             }
         } finally {
             finished.incrementAndGet()
