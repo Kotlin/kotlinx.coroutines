@@ -237,6 +237,7 @@ internal class CoroutineScheduler(
     private inline fun createdWorkers(state: Long): Int = (state and CREATED_MASK).toInt()
     private inline fun blockingWorkers(state: Long): Int = (state and BLOCKING_MASK shr BLOCKING_SHIFT).toInt()
 
+    // Guarded by synchronization
     private inline fun incrementCreatedWorkers(): Int = createdWorkers(controlState.incrementAndGet())
     private inline fun decrementCreatedWorkers(): Int = createdWorkers(controlState.getAndDecrement())
 
@@ -340,7 +341,7 @@ internal class CoroutineScheduler(
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false) {
         timeSource.trackTask() // this is needed for virtual time support
         // TODO at some point make DispatchTask extend Task and make its field settable to save an allocation
-        val task = Task(block, schedulerTimeSource.nanoTime(), taskContext)
+        val task = createTask(block, taskContext)
         // try to submit the task to the local queue and act depending on the result
         when (submitToLocalQueue(task, fair)) {
             ADDED -> return
@@ -355,6 +356,8 @@ internal class CoroutineScheduler(
             else -> requestCpuWorker() // ask for help
         }
     }
+
+    internal fun createTask(block: Runnable, taskContext: TaskContext) = Task(block, schedulerTimeSource.nanoTime(), taskContext)
 
     /**
      * Unparks or creates a new [Worker] for executing non-blocking tasks if there are idle cores
@@ -764,8 +767,12 @@ internal class CoroutineScheduler(
         private fun afterTask(task: Task) {
             if (task.mode != TaskMode.NON_BLOCKING) {
                 decrementBlockingWorkers()
-                assert(state == WorkerState.BLOCKING) { "Expected BLOCKING state, but has $state" }
-                state = WorkerState.RETIRING
+                val currentState = state
+                // Shutdown sequence of blocking dispatcher
+                if (currentState !== WorkerState.TERMINATED) {
+                    assert(currentState == WorkerState.BLOCKING) { "Expected BLOCKING state, but has $currentState" }
+                    state = WorkerState.RETIRING
+                }
             }
         }
 

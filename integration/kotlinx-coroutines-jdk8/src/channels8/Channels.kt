@@ -33,6 +33,7 @@ public fun <E : Any> ReceiveChannel<E>.asStream(): Stream<E> = StreamSupport.str
 /**
  * Applies the [collector] to the [ReceiveChannel]
  */
+@Deprecated("No replacement")
 public suspend fun <T, A : Any, R> ReceiveChannel<T>.collect(collector: Collector<T, A, R>): R {
     val container: A = collector.supplier().get()
     val accumulator: BiConsumer<A, T> = collector.accumulator()

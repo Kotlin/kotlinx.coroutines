@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 0.30.2
+ * `Dispatchers.Main` is instantiated lazily (see #658 and #665).
+ * Blocking coroutine dispatcher views are now shutdown properly (#678).
+ * Prevent leaking Kotlin 1.3 from atomicfu dependency (#659).
+ * Thread-pool based dispatcher factories are marked as obsolete (#261).
+ * Fixed exception loss on `withContext` cancellation (#675).   
+
 ## Version 0.30.1
  Maintenance release:
  * Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 

@@ -42,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-native:0.30.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-native:0.30.2'
 }
 
 sourceSets {

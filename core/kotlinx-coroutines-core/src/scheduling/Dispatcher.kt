@@ -20,6 +20,11 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
     override fun close() {
         throw UnsupportedOperationException("$DEFAULT_SCHEDULER_NAME cannot be closed")
     }
+
+    override fun toString(): String = DEFAULT_SCHEDULER_NAME
+
+    @InternalCoroutinesApi
+    fun toDebugString(): String = super.toString()
 }
 
 /**
@@ -96,7 +101,8 @@ open class ExperimentalCoroutineDispatcher(
         try {
             coroutineScheduler.dispatch(block, context, fair)
         } catch (e: RejectedExecutionException) {
-            DefaultExecutor.execute(block)
+            // Context shouldn't be lost here to properly invoke before/after task
+            DefaultExecutor.execute(coroutineScheduler.createTask(block, context))
         }
 
     private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs)

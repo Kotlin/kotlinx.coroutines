@@ -220,6 +220,30 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
+    fun testCoroutineScopeCancellationVsException() = runTest {
+        expect(1)
+        var job: Job? = null
+        job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            try {
+                coroutineScope {
+                    expect(3)
+                    yield() // must suspend
+                    expect(5)
+                    job!!.cancel() // cancel this job _before_ it throws
+                    throw TestException1()
+                }
+            } catch (e: TestException1) {
+                // must have caught TextException
+                expect(6)
+            }
+        }
+        expect(4)
+        yield() // to coroutineScope
+        finish(7)
+    }
+
+    @Test
     fun testScopePlusContext() {
         assertSame(EmptyCoroutineContext, scopePlusContext(EmptyCoroutineContext, EmptyCoroutineContext))
         assertSame(Dispatchers.Default, scopePlusContext(EmptyCoroutineContext, Dispatchers.Default))

@@ -26,8 +26,8 @@ task prepareNodePackage(type: Copy) {
 
 npmInstall.dependsOn prepareNodePackage
 
-task populateNodeModules(type: Copy, dependsOn: [compileKotlin2Js]) {
-    from compileKotlin2Js.destinationDir
+task populateNodeModules(type: Copy) {
+    from sourceSets.main.output
     into "$node.nodeModulesDir/node_modules"
 
     afterEvaluate {

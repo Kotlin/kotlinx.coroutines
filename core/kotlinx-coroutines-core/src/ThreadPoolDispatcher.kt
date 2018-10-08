@@ -14,8 +14,19 @@ import kotlin.coroutines.experimental.*
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its thread).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
+ * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
+ * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
+ * will be provided, thus avoiding potential thread leaks and also significantly improving performance, due
+ * to coroutine-oriented scheduling policy and thread-switch minimization.
+ * See [issue #261](https://github.com/Kotlin/kotlinx.coroutines/issues/261) for details.
+ * If you need a completely separate thread-pool with scheduling policy that is based on the standard
+ * JDK executors, use the following expression:
+ * `Executors.newSingleThreadExecutor().asCoroutineDispatcher()`.
+ * See [Executor.asCoroutineDispatcher] for details.
+ *
  * @param name the base name of the created thread.
  */
+@ObsoleteCoroutinesApi
 fun newSingleThreadContext(name: String): ExecutorCoroutineDispatcher =
     newFixedThreadPoolContext(1, name)
 
@@ -40,9 +51,20 @@ fun newSingleThreadContext(name: String, parent: Job? = null): CoroutineContext 
  * **NOTE: The resulting [ExecutorCoroutineDispatcher] owns native resources (its threads).
  * Resources are reclaimed by [ExecutorCoroutineDispatcher.close].**
  *
+ * **NOTE: This API will be replaced in the future**. A different API to create thread-limited thread pools
+ * that is based on a shared thread-pool and does not require the resulting dispatcher to be explicitly closed
+ * will be provided, thus avoiding potential thread leaks and also significantly improving performance, due
+ * to coroutine-oriented scheduling policy and thread-switch minimization.
+ * See [issue #261](https://github.com/Kotlin/kotlinx.coroutines/issues/261) for details.
+ * If you need a completely separate thread-pool with scheduling policy that is based on the standard
+ * JDK executors, use the following expression:
+ * `Executors.newFixedThreadPool().asCoroutineDispatcher()`.
+ * See [Executor.asCoroutineDispatcher] for details.
+ *
  * @param nThreads the number of threads.
  * @param name the base name of the created threads.
  */
+@ObsoleteCoroutinesApi
 fun newFixedThreadPoolContext(nThreads: Int, name: String): ExecutorCoroutineDispatcher {
     require(nThreads >= 1) { "Expected at least one thread, but $nThreads specified" }
     return ThreadPoolDispatcher(nThreads, name)

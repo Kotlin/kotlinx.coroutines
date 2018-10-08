@@ -9,7 +9,7 @@ import kotlin.coroutines.experimental.*
 /**
  * Groups various implementations of [CoroutineDispatcher].
  */
-expect object Dispatchers {
+public expect object Dispatchers {
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
