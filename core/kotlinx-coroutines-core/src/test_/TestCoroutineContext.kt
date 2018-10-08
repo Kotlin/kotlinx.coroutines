@@ -93,7 +93,12 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
      */
     public fun advanceTimeBy(delayTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Long {
         val oldTime = time
-        advanceTimeTo(oldTime + unit.toNanos(delayTime), TimeUnit.NANOSECONDS)
+        val targetTime = try {
+            Math.addExact(oldTime, unit.toNanos(delayTime))
+        } catch (e: ArithmeticException){
+            throw IllegalArgumentException("delayTime will overflow internal clock. delayTime: $delayTime, clock: $oldTime", e)
+        }
+        advanceTimeTo(targetTime, TimeUnit.NANOSECONDS)
         return unit.convert(time - oldTime, TimeUnit.NANOSECONDS)
     }
 
@@ -185,7 +190,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
         queue.addLast(TimedRunnable(block, counter++))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
-        TimedRunnable(block, counter++, time + TimeUnit.MILLISECONDS.toNanos(delayTime))
+        TimedRunnable(block, counter++, Math.addExact(time, TimeUnit.MILLISECONDS.toNanos(delayTime)))
             .also {
                 queue.addLast(it)
             }

@@ -5,8 +5,10 @@
 package kotlinx.coroutines.experimental.test
 
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CancellationException
 import org.junit.*
 import org.junit.Assert.*
+import java.util.concurrent.*
 import kotlin.coroutines.experimental.*
 
 class TestCoroutineContextTest {
@@ -382,6 +384,21 @@ class TestCoroutineContextTest {
 
         advanceTimeBy(500)
         assertTrue(job.cancel())
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testAdvanceTimeByOverflow() = withTestContext {
+        advanceTimeBy(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+        assertEquals(Long.MAX_VALUE, now(TimeUnit.NANOSECONDS))
+        advanceTimeBy(1, TimeUnit.NANOSECONDS)
+    }
+
+    @Test(expected = ArithmeticException::class)
+    fun testRunBlockingWithMaxValueClock() = withTestContext {
+        advanceTimeTo(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+        runBlocking(this) {
+            launch { delay(1) }.join()
+        }
     }
 }
 
