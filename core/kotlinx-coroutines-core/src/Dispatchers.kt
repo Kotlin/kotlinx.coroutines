@@ -8,6 +8,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
+import kotlin.coroutines.*
 import java.util.*
 
 /**
