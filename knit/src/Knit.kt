@@ -22,6 +22,7 @@ const val DIRECTIVE_START = "<!--- "
 const val DIRECTIVE_END = "-->"
 
 const val TOC_DIRECTIVE = "TOC"
+const val TOC_REF_DIRECTIVE = "TOC_REF"
 const val KNIT_DIRECTIVE = "KNIT"
 const val INCLUDE_DIRECTIVE = "INCLUDE"
 const val CLEAR_DIRECTIVE = "CLEAR"
@@ -50,21 +51,26 @@ const val EXCEPTION_MODE = "EXCEPTION"
 const val LINES_START_PREDICATE = "LINES_START"
 
 val API_REF_REGEX = Regex("(^|[ \\](])\\[([A-Za-z0-9_().]+)]($|[^\\[(])")
-val LINK_DEF_REGEX = Regex("^\\[([A-Za-z0-9_().]+)\\]: .*")
+val LINK_DEF_REGEX = Regex("^\\[([A-Za-z0-9_().]+)]: .*")
+
+val tocRefMap = HashMap<File, List<TocRef>>()
+val fileSet = HashSet<File>()
+val fileQueue = ArrayDeque<File>()
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
         println("Usage: Knit <markdown-files>")
         return
     }
-    args.forEach {
-        if (!knit(it)) System.exit(1) // abort on first error with error exit code
+    args.map { File(it) }.toCollection(fileQueue)
+    fileQueue.toCollection(fileSet)
+    while (!fileQueue.isEmpty()) {
+        if (!knit(fileQueue.removeFirst())) System.exit(1) // abort on first error with error exit code
     }
 }
 
-fun knit(markdownFileName: String): Boolean {
-    println("*** Reading $markdownFileName")
-    val markdownFile = File(markdownFileName)
+fun knit(markdownFile: File): Boolean {
+    println("*** Reading $markdownFile")
     val tocLines = arrayListOf<String>()
     var knitRegex: Regex? = null
     val includes = arrayListOf<Include>()
@@ -78,12 +84,12 @@ fun knit(markdownFileName: String): Boolean {
     val remainingApiRefNames = mutableSetOf<String>()
     var moduleName: String by Delegates.notNull()
     var docsRoot: String by Delegates.notNull()
+    var retryKnitLater = false
+    val tocRefs = ArrayList<TocRef>().also { tocRefMap[markdownFile] = it }
     // read markdown file
-    var putBackLine: String? = null
     val markdown = markdownFile.withMarkdownTextReader {
         mainLoop@ while (true) {
-            val inLine = putBackLine ?: readLine() ?: break
-            putBackLine = null
+            val inLine = readLine() ?: break
             val directive = directive(inLine)
             if (directive != null && markdownPart == MarkdownPart.TOC) {
                 markdownPart = MarkdownPart.POST_TOC
@@ -95,6 +101,22 @@ fun knit(markdownFileName: String): Boolean {
                     require(directive.param.isEmpty()) { "$TOC_DIRECTIVE directive must not have parameters" }
                     require(markdownPart == MarkdownPart.PRE_TOC) { "Only one TOC directive is supported" }
                     markdownPart = MarkdownPart.TOC
+                }
+                TOC_REF_DIRECTIVE -> {
+                    requireSingleLine(directive)
+                    require(!directive.param.isEmpty()) { "$TOC_REF_DIRECTIVE directive must include reference file path" }
+                    val refPath = directive.param
+                    val refFile = File(markdownFile.parent, refPath.replace('/', File.separatorChar))
+                    require(fileSet.contains(refFile)) { "Referenced file $refFile is missing from the processed file set" }
+                    val toc = tocRefMap[refFile]
+                    if (toc == null) {
+                        retryKnitLater = true // put this file at the end of the queue and retry later
+                    } else {
+                        val lines = toc.map { (levelPrefix, name, ref) ->
+                            "$levelPrefix <a name='$ref'></a>[$name]($refPath#$ref)"
+                        }
+                        if (!replaceUntilNextDirective(lines)) error("Unexpected end of file after $TOC_REF_DIRECTIVE")
+                    }
                 }
                 KNIT_DIRECTIVE -> {
                     requireSingleLine(directive)
@@ -153,19 +175,9 @@ fun knit(markdownFileName: String): Boolean {
                 }
                 INDEX_DIRECTIVE -> {
                     requireSingleLine(directive)
-                    val indexLines = processApiIndex(siteRoot + "/" + moduleName, docsRoot, directive.param, remainingApiRefNames)
+                    val indexLines = processApiIndex("$siteRoot/$moduleName", docsRoot, directive.param, remainingApiRefNames)
                         ?: throw IllegalArgumentException("Failed to load index for ${directive.param}")
-                    skip = true
-                    while (true) {
-                        val skipLine = readLine() ?: break@mainLoop
-                        if (directive(skipLine) != null) {
-                            putBackLine = skipLine
-                            break
-                        }
-                    }
-                    skip = false
-                    outText += indexLines
-                    outText += putBackLine!!
+                    if (!replaceUntilNextDirective(indexLines)) error("Unexpected end of file after $INDEX_DIRECTIVE")
                 }
             }
             if (inLine.startsWith(CODE_START)) {
@@ -183,7 +195,10 @@ fun knit(markdownFileName: String): Boolean {
                 val i = inLine.indexOf(' ')
                 require(i >= 2) { "Invalid section start" }
                 val name = inLine.substring(i + 1).trim()
-                tocLines += "  ".repeat(i - 2) + "* [$name](#${makeSectionRef(name)})"
+                val levelPrefix = "  ".repeat(i - 2) + "*"
+                val sectionRef = makeSectionRef(name)
+                tocLines += "$levelPrefix [$name](#$sectionRef)"
+                tocRefs += TocRef(levelPrefix, name, sectionRef)
                 continue@mainLoop
             }
             val linkDefMatch = LINK_DEF_REGEX.matchEntire(inLine)
@@ -220,6 +235,11 @@ fun knit(markdownFileName: String): Boolean {
             }
         }
     } ?: return false // false when failed
+    // bailout if retry was requested
+    if (retryKnitLater) {
+        fileQueue.add(markdownFile)
+        return true
+    }
     // update markdown file with toc
     val newLines = buildList<String> {
         addAll(markdown.preTocText)
@@ -241,6 +261,8 @@ fun knit(markdownFileName: String): Boolean {
     flushTestOut(markdownFile.parentFile, testOut, testOutLines)
     return true
 }
+
+data class TocRef(val levelPrefix: String, val name: String, val ref: String)
 
 fun makeTest(testOutLines: MutableList<String>, pgk: String, test: List<String>, predicate: String) {
     val funName = buildString {
@@ -361,6 +383,7 @@ class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
     val postTocText = arrayListOf<String>()
     var markdownPart: MarkdownPart = MarkdownPart.PRE_TOC
     var skip = false
+    var putBackLine: String? = null
 
     val outText: MutableList<String> get() = when (markdownPart) {
         MarkdownPart.PRE_TOC -> preTocText
@@ -369,11 +392,30 @@ class MarkdownTextReader(r: Reader) : LineNumberReader(r) {
     }
 
     override fun readLine(): String? {
+        putBackLine?.let {
+            putBackLine = null
+            return it
+        }
         val line = super.readLine() ?: return null
         inText += line
         if (!skip && markdownPart != MarkdownPart.TOC)
             outText += line
         return line
+    }
+
+    fun replaceUntilNextDirective(lines: List<String>): Boolean {
+        skip = true
+        while (true) {
+            val skipLine = readLine() ?: return false
+            if (directive(skipLine) != null) {
+                putBackLine = skipLine
+                break
+            }
+        }
+        skip = false
+        outText += lines
+        outText += putBackLine!!
+        return true
     }
 }
 
