@@ -106,6 +106,32 @@ repository {
 }
 ```
 
+### Gradle Kotlin DSL
+
+Add dependencies (you can also add other modules that you need):
+
+```groovy
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2")
+}
+```
+
+And make sure that you use the latest Kotlin version:
+
+```groovy
+plugins {
+    kotlin("jvm") version "1.2.70"
+}
+```
+
+Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories:
+
+```
+repository {
+    jcenter()
+}
+```
+
 ### Multiplatform
 
 Core modules of `kotlinx.coroutines` are also available for 
