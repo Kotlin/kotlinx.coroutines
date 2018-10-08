@@ -214,7 +214,7 @@ public suspend fun <T> withContext(
         }
     }
     // SLOW PATH -- use new dispatcher
-    val coroutine = DispatchedCoroutine(newContext, uCont) // MODE_DISPATCHED
+    val coroutine = DispatchedCoroutine(newContext, uCont) // MODE_ATOMIC_DEFAULT
     coroutine.initParentJob()
     block.startCoroutineCancellable(coroutine, coroutine)
     coroutine.getResult()
@@ -292,7 +292,7 @@ private class DispatchedCoroutine<in T>(
     context: CoroutineContext,
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
-    override val defaultResumeMode: Int get() = MODE_CANCELLABLE
+    override val defaultResumeMode: Int get() = MODE_ATOMIC_DEFAULT
 
     // this is copy-and-paste of a decision state machine inside AbstractionContinuation
     // todo: we may some-how abstract it via inline class
