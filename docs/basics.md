@@ -125,7 +125,7 @@ the execution of the main function:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking { // start main coroutine
+fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
