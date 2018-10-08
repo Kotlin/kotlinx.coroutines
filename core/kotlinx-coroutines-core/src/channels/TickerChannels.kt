@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.timeunit.*
 import kotlin.coroutines.*
 
 /**
@@ -75,20 +74,6 @@ public fun ticker(
         }
     }
 }
-
-/** @suppress **Deprecated**: TimeUnit is not longer supported */
-@Deprecated(
-    message = "TimeUnit is no longer supported",
-    replaceWith = ReplaceWith("ticker(unit.toMillis(delay), unit.toMillis(initialDelay), context, mode)")
-)
-public fun ticker(
-    delay: Long,
-    unit: TimeUnit = TimeUnit.MILLISECONDS, // todo: remove
-    initialDelay: Long = delay,
-    context: CoroutineContext = EmptyCoroutineContext,
-    mode: TickerMode = TickerMode.FIXED_PERIOD
-): ReceiveChannel<Unit> =
-    ticker(unit.toMillis(delay), unit.toMillis(initialDelay), context, mode)
 
 private suspend fun fixedPeriodTicker(
     delayMillis: Long,

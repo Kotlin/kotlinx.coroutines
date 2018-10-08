@@ -53,21 +53,6 @@ public fun <T : Any> CoroutineScope.rxObservable(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxObservable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxObservable(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxObservable"])
-)
-public fun <T : Any> rxObservable(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Observable<T> = GlobalScope.rxObservable(context + (parent ?: EmptyCoroutineContext), block)
-
 private const val OPEN = 0        // open channel, still working
 private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2  // already signalled subscriber onCompleted/onError

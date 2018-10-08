@@ -29,17 +29,6 @@ public interface EventLoop: ContinuationInterceptor {
      * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
      */
     public fun processNextEvent(): Long
-
-    /** @suppress **Deprecated **/
-    @Deprecated(message = "Companion object to be removed, no replacement")
-    public companion object Factory {
-        /** @suppress **Deprecated **/
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun invoke(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
-            EventLoopImpl(thread).apply {
-                if (parentJob != null) initParentJob(parentJob)
-            }
-    }
 }
 
 /**
@@ -63,14 +52,6 @@ public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = 
     EventLoopImpl(thread).apply {
         if (parentJob != null) initParentJob(parentJob)
     }
-
-/**
- * @suppress **Deprecated**: Preserves binary compatibility with old code
- */
-@JvmName("EventLoop")
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Preserves binary compatibility with old code")
-public fun EventLoop_Deprecated(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
-    EventLoop(thread, parentJob) as CoroutineDispatcher
 
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 

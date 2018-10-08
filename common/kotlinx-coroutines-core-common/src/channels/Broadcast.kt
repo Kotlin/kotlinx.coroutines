@@ -30,27 +30,6 @@ fun <E> ReceiveChannel<E>.broadcast(
     }
 
 /**
- * Launches new coroutine to produce a stream of values by sending them to a broadcast channel.
- * @suppress **Deprecated**: use [CoroutineScope.broadcast] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith(
-        "GlobalScope.broadcast(context + parent, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.channels.broadcast"]
-    )
-)
-public fun <E> broadcast(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 1,
-    start: CoroutineStart = CoroutineStart.LAZY,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
-): BroadcastChannel<E> =
-    GlobalScope.broadcast(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
-
-/**
  * Launches new coroutine to produce a stream of values by sending them to a broadcast channel
  * and returns a reference to the coroutine as a [BroadcastChannel]. The resulting
  * object can be used to [subscribe][BroadcastChannel.openSubscription] to elements produced by this coroutine.
@@ -110,7 +89,7 @@ private open class BroadcastCoroutine<E>(
     active: Boolean
 ) : AbstractCoroutine<Unit>(parentContext, active), ProducerScope<E>, BroadcastChannel<E> by _channel {
     override val cancelsParent: Boolean get() = true
-    override val isActive: Boolean get() = super<AbstractCoroutine>.isActive
+    override val isActive: Boolean get() = super.isActive
 
     override val channel: SendChannel<E>
         get() = this

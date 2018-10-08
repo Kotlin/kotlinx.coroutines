@@ -5,6 +5,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.test.*
 
@@ -14,11 +15,6 @@ class ChannelsTest: TestBase() {
     @Test
     fun testIterableAsReceiveChannel() = runTest {
         assertEquals(testList, testList.asReceiveChannel().toList())
-    }
-
-    @Test
-    fun testSequenceAsReceiveChannel() = runTest {
-        assertEquals(testList, testList.asSequence().asReceiveChannel().toList())
     }
 
     @Test
@@ -555,4 +551,10 @@ class ChannelsTest: TestBase() {
     fun testRequireNoNulls() = runTest {
         assertEquals(testList.requireNoNulls(), testList.asReceiveChannel().requireNoNulls().toList())
     }
+
+    private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
+        GlobalScope.produce(context) {
+            for (element in this@asReceiveChannel)
+                send(element)
+        }
 }

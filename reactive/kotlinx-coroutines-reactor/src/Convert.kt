@@ -23,21 +23,6 @@ import kotlin.coroutines.*
  */
 @ExperimentalCoroutinesApi
 public fun Job.asMono(context: CoroutineContext): Mono<Unit> = GlobalScope.mono(context) { this@asMono.join() }
-
-/**
- * @suppress **Deprecated**: Specify explicit context
- */
-@Deprecated("Specify explicit context", level = DeprecationLevel.HIDDEN)
-@JvmName("asMono\$default")
-public fun Job.asMono0(context: CoroutineContext?, flags: Int, obj: Any?): Mono<Unit> =
-    asMono(context ?: EmptyCoroutineContext)
-
-/**
- * @suppress **Deprecated**: Specify explicit context
- */
-@Deprecated("Specify explicit context", replaceWith = ReplaceWith("asMono(EmptyCoroutineContext)"))
-public fun Job.asMono(): Mono<Unit> = asMono(EmptyCoroutineContext)
-
 /**
  * Converts this deferred value to the hot reactive mono that signals
  * [success][MonoSink.success] or [error][MonoSink.error].
@@ -52,20 +37,6 @@ public fun Job.asMono(): Mono<Unit> = asMono(EmptyCoroutineContext)
  */
 @ExperimentalCoroutinesApi
 public fun <T> Deferred<T?>.asMono(context: CoroutineContext): Mono<T> = GlobalScope.mono(context) { this@asMono.await() }
-
-/**
- * @suppress **Deprecated**: Specify explicit context
- */
-@Deprecated("Specify explicit context", level = DeprecationLevel.HIDDEN)
-@JvmName("asMono\$default")
-public fun <T> Deferred<T?>.asMono0(context: CoroutineContext?, flags: Int, obj: Any?): Mono<T> =
-    asMono(context ?: EmptyCoroutineContext)
-
-/**
- * @suppress **Deprecated**: Specify explicit context
- */
-@Deprecated("Specify explicit context", replaceWith = ReplaceWith("asMono(EmptyCoroutineContext)"))
-public fun <T> Deferred<T?>.asMono(): Mono<T> = asMono(EmptyCoroutineContext)
 
 /**
  * Converts a stream of elements received from the channel to the hot reactive flux.

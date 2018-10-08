@@ -93,8 +93,10 @@ class Application : CoroutineScope {
     private fun animation(cls: String, size: Double, block: suspend CoroutineScope.(HTMLElement) -> Unit) {
         val elem = scene.append.div(cls)
         elem.setSize(size, size)
-        launch(onCompletion = { scene.removeChild(elem) }) {
+        launch {
             block(elem)
+        }.also {
+            it.invokeOnCompletion { scene.removeChild(elem) }
         }
     }
 

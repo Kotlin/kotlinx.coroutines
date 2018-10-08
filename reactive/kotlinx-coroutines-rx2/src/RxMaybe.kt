@@ -42,21 +42,6 @@ public fun <T> CoroutineScope.rxMaybe(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [maybe][Maybe] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxMaybe] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxMaybe(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxMaybe"])
-)
-public fun <T> rxMaybe(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T?
-): Maybe<T> = GlobalScope.rxMaybe(context + (parent ?: EmptyCoroutineContext), block)
-
 private class RxMaybeCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: MaybeEmitter<T>

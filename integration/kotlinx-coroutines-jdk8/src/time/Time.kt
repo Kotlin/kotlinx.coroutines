@@ -21,35 +21,13 @@ public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () 
     onTimeout(duration.toMillis(), block)
 
 /**
- * @suppress
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary")
-@JvmName("onTimeout")
-public suspend fun <R> SelectBuilder<R>.onTimeout0(duration: Duration, block: suspend () -> R) =
-    onTimeout(duration.toMillis(), block)
-
-/**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeout]
  */
 public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T =
     kotlinx.coroutines.withTimeout(duration.toMillis(), block)
 
 /**
- * @suppress **Deprecated**: for binary compatibility only
- */
-@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
-public suspend fun <T> withTimeout(duration: Duration, block: suspend () -> T): T =
-    kotlinx.coroutines.withTimeout(duration.toNanos(), TimeUnit.NANOSECONDS) { block() }
-
-/**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeoutOrNull]
  */
 public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend CoroutineScope.() -> T): T? =
     kotlinx.coroutines.withTimeoutOrNull(duration.toMillis(), block)
-
-/**
- * @suppress **Deprecated**: for binary compatibility only
- */
-@Deprecated("for binary compatibility only", level=DeprecationLevel.HIDDEN)
-public suspend fun <T> withTimeoutOrNull(duration: Duration, block: suspend () -> T): T? =
-    kotlinx.coroutines.withTimeoutOrNull(duration.toNanos(), TimeUnit.NANOSECONDS) { block() }

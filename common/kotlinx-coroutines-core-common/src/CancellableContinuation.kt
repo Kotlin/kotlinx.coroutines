@@ -116,31 +116,6 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * Installed [handler] should not throw any exceptions. If it does, they will get caught,
      * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
      *
-     * At most one [handler] can be installed on one continuation
-     *
-     * @param invokeImmediately not used
-     * @param onCancelling not used
-     * @return not used
-     */
-    @Deprecated(
-        message = "Disposable handlers on regular completion are no longer supported",
-        replaceWith = ReplaceWith("invokeOnCancellation(handler)"),
-        level = DeprecationLevel.WARNING
-    )
-    public fun invokeOnCompletion(
-        onCancelling: Boolean = false,
-        invokeImmediately: Boolean = true,
-        handler: CompletionHandler): DisposableHandle
-
-    /**
-     * Registers handler that is **synchronously** invoked once on cancellation (both regular and exceptional) of this continuation.
-     * When the continuation is already cancelled, then the handler is immediately invoked
-     * with cancellation exception. Otherwise, the handler will be invoked once on cancellation if this
-     * continuation is cancelled.
-     *
-     * Installed [handler] should not throw any exceptions. If it does, they will get caught,
-     * wrapped into [CompletionHandlerException], and rethrown, potentially causing the crash of unrelated code.
-     *
      * At most one [handler] can be installed on one continuation.
      */
     public fun invokeOnCancellation(handler: CompletionHandler)
@@ -182,16 +157,6 @@ public suspend inline fun <T> suspendCancellableCoroutine(
         cancellable.getResult()
     }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated(
-    level = DeprecationLevel.ERROR,
-    message = "holdCancellability is no longer supported, no replacement"
-)
-public suspend inline fun <T> suspendCancellableCoroutine(
-    holdCancellability: Boolean = false,
-    crossinline block: (CancellableContinuation<T>) -> Unit
-): T = error("holdCancellability is no longer supported, no replacement")
-
 /**
  * Suspends coroutine similar to [suspendCancellableCoroutine], but with *atomic cancellation*.
  *
@@ -218,39 +183,9 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
  * Removes a given node on cancellation.
  * @suppress **This is unstable API and it is subject to change.**
  */
-@Deprecated(
-    message = "Disposable handlers on cancellation are no longer supported",
-    replaceWith = ReplaceWith("removeOnCancellation(handler)"),
-    level = DeprecationLevel.WARNING)
-public fun CancellableContinuation<*>.removeOnCancel(node: LockFreeLinkedListNode): DisposableHandle {
-    removeOnCancellation(node)
-    return NonDisposableHandle
-}
-
-/**
- * Removes a given node on cancellation.
- * @suppress **This is unstable API and it is subject to change.**
- */
 @InternalCoroutinesApi
 public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
     invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
-
-/**
- * Disposes a specified [handle] when this continuation is cancelled.
- *
- * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
- * ```
- * invokeOnCancellation { handle.dispose() }
- * ```
- */
-@Deprecated(
-    message = "Disposable handlers on regular completion are no longer supported",
-    replaceWith = ReplaceWith("disposeOnCancellation(handler)"),
-    level = DeprecationLevel.WARNING)
-public fun CancellableContinuation<*>.disposeOnCompletion(handle: DisposableHandle): DisposableHandle {
-    disposeOnCancellation(handle)
-    return NonDisposableHandle
-}
 
 /**
  * Disposes a specified [handle] when this continuation is cancelled.
@@ -288,12 +223,6 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun initCancellability() {
         initParentJobInternal(delegate.context[Job])
-    }
-
-    override fun invokeOnCompletion(onCancelling: Boolean,
-        invokeImmediately: Boolean, handler: CompletionHandler): DisposableHandle {
-        invokeOnCancellation(handler)
-        return NonDisposableHandle
     }
 
     override fun tryResume(value: T, idempotent: Any?): Any? {

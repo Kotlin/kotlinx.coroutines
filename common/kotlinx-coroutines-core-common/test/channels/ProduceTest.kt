@@ -94,7 +94,7 @@ class ProduceTest : TestBase() {
         cancelOnCompletion(coroutineContext)
     }
 
-    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = currentScope {
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
         val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {

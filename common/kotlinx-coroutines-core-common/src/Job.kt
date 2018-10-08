@@ -85,14 +85,6 @@ public interface Job : CoroutineContext.Element {
      * Key for [Job] instance in the coroutine context.
      */
     public companion object Key : CoroutineContext.Key<Job> {
-        /**
-         * Creates a new job object in _active_ state.
-         * It is optionally a child of a [parent] job.
-         * @suppress **Deprecated**
-         */
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun invoke(parent: Job? = null): Job = Job(parent)
-
         init {
             /*
              * Here we make sure that CoroutineExceptionHandler is always initialized in advance, so
@@ -151,13 +143,6 @@ public interface Job : CoroutineContext.Element {
      */
     @InternalCoroutinesApi
     public fun getCancellationException(): CancellationException
-
-    /**
-     * @suppress **Deprecated**: Renamed to [getCancellationException]
-     */
-    @Deprecated("Renamed to getCancellationException", replaceWith = ReplaceWith("getCancellationException()"))
-    public fun getCompletionException(): Throwable =
-        getCancellationException()
 
     // ------------ state update ------------
 
@@ -239,14 +224,6 @@ public interface Job : CoroutineContext.Element {
     @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     public fun attachChild(child: ChildJob): ChildHandle
 
-    /**
-     * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
-     * the state of this job itself is not affected.
-     * @suppress **Deprecated**: Binary compatibility, it is an extension now
-     */
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    public fun cancelChildren(cause: Throwable? = null)
-
     // ------------ state waiting ------------
 
     /**
@@ -279,19 +256,6 @@ public interface Job : CoroutineContext.Element {
     public val onJoin: SelectClause0
 
     // ------------ low-level state-notification ------------
-
-    /**
-     * @suppress **Deprecated**: For binary compatibility
-     */
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
-
-    /**
-     * @suppress **Deprecated**: Use with named `onCancellation` and `handler` parameters.
-     */
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    public fun invokeOnCompletion(onCancelling_: Boolean = false, handler: CompletionHandler): DisposableHandle
 
     /**
      * Registers handler that is **synchronously** invoked once on completion of this job.
@@ -473,20 +437,6 @@ internal interface ChildHandle : DisposableHandle {
 // -------------------- Job extensions --------------------
 
 /**
- * Unregisters a specified [registration] when this job is complete.
- *
- * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
- * ```
- * invokeOnCompletion { registration.unregister() }
- * ```
- * @suppress: **Deprecated**: Renamed to `disposeOnCompletion`.
- */
-@Deprecated(message = "Renamed to `disposeOnCompletion`",
-    replaceWith = ReplaceWith("disposeOnCompletion(registration)"))
-public fun Job.unregisterOnCompletion(registration: DisposableHandle): DisposableHandle =
-    invokeOnCompletion(handler = DisposeOnCompletion(this, registration).asHandler)
-
-/**
  * Disposes a specified [handle] when this job is complete.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
@@ -526,18 +476,6 @@ public suspend fun Job.cancelAndJoin() {
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER") // See KT-21598
 public fun Job.cancelChildren(cause: Throwable? = null) {
     children.forEach { it.cancel(cause) }
-}
-
-/**
- * Suspends coroutine until all [children][Job.children] of this job are complete using
- * [Job.join] for all of them. Unlike [Job.join] on this job as a whole, it does not wait until
- * this job is complete.
- *
- * @suppress **Deprecated**: No replacement. Group child in a `coroutineScope { }` block to wait for them
- */
-@Deprecated("No replacement. Group child in a coroutineScope { } block to wait for them")
-public suspend fun Job.joinChildren() {
-    children.forEach { it.join() }
 }
 
 // -------------------- CoroutineContext extensions --------------------
@@ -599,13 +537,6 @@ public fun CoroutineContext.cancelChildren() {
 public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
     this[Job]?.children?.forEach { it.cancel(cause) }
 }
-
-/**
- * @suppress **Deprecated**: `join` is now a member function of `Job`.
- */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DeprecatedCallableAddReplaceWith")
-@Deprecated(message = "`join` is now a member function of `Job`")
-public suspend fun Job.join() = this.join()
 
 /**
  * No-op implementation of [DisposableHandle].

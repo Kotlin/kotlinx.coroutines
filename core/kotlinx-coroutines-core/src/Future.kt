@@ -26,22 +26,6 @@ public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
  * Cancels a specified [future] when this job is cancelled.
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
  * ```
- * invokeOnCompletion { future.cancel(false) }
- * ```
- */
-@Deprecated(
-    message = "Disposable handlers on regular completion are no longer supported",
-    replaceWith = ReplaceWith("cancelFutureOnCancellation(future)"),
-    level = DeprecationLevel.WARNING)
-public fun CancellableContinuation<*>.cancelFutureOnCompletion(future: Future<*>): DisposableHandle {
-    cancelFutureOnCancellation(future)
-    return NonDisposableHandle
-}
-
-/**
- * Cancels a specified [future] when this job is cancelled.
- * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
- * ```
  * invokeOnCancellation { future.cancel(false) }
  * ```
  */

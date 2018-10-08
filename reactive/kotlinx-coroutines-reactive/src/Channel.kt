@@ -26,13 +26,6 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T
     return channel
 }
 
-/** @suppress **Deprecated**: Left here for binary compatibility */
-@JvmOverloads // for binary compatibility
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-@Suppress("CONFLICTING_OVERLOADS")
-public fun <T> Publisher<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> =
-    openSubscription(request) as SubscriptionReceiveChannel<T>
-
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
@@ -42,16 +35,9 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
     channel.cancel()
 }
 
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Publisher<T>.consumeEach(action: suspend (T) -> Unit) =
-    consumeEach { action(it) }
-
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T>, SubscriptionReceiveChannel<T> {
+) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }

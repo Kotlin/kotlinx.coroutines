@@ -57,70 +57,6 @@ public fun CoroutineScope.launch(
     return coroutine
 }
 
-/**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun CoroutineScope.launch(
-    context: CoroutineContext = EmptyCoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Job =
-    launch(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }
-
-/**
- * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
- * @suppress **Deprecated** Use [CoroutineScope.launch] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.launch(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
-)
-public fun launch(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Job =
-    GlobalScope.launch(context, start, onCompletion, block)
-
-/**
- * Launches new coroutine without blocking current thread and returns a reference to the coroutine as a [Job].
- * @suppress **Deprecated** Use [CoroutineScope.launch] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.launch(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.*"])
-)
-public fun launch(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null, // nullable for binary compatibility
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Job =
-    GlobalScope.launch(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun launch(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Job =
-    GlobalScope.launch(context + (parent ?: EmptyCoroutineContext), start, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun launch(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> Unit
-): Job =
-    GlobalScope.launch(context, start, block = block)
-
 // --------------- async ---------------
 
 /**
@@ -142,6 +78,7 @@ public fun launch(
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code.
  */
+@BuilderInference
 public fun <T> CoroutineScope.async(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -180,14 +117,6 @@ private class LazyDeferredCoroutine<T>(
 // --------------- withContext ---------------
 
 /**
- * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
- */
-@Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
-    replaceWith = ReplaceWith("launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
-public fun launch(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> Unit): Job =
-    GlobalScope.launch(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
-
-/**
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
  * the result.
  *
@@ -222,42 +151,6 @@ public suspend fun <T> withContext(
     block.startCoroutineCancellable(coroutine, coroutine)
     coroutine.getResult()
 }
-
-/**
- * @suppress **Deprecated**: start parameter is deprecated, no replacement.
- */
-@Deprecated("start parameter is deprecated, no replacement")
-public suspend fun <T> withContext(
-    context: CoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-): T =
-    withContext(context, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
-@JvmName("withContext")
-public suspend fun <T> withContext0(
-    context: CoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend () -> T
-): T =
-    withContext(context) { block() }
-
-/** @suppress **Deprecated**: Renamed to [withContext]. */
-@Deprecated(message = "Renamed to `withContext`", level=DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("withContext(context, start, block)"))
-public suspend fun <T> run(
-    context: CoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend () -> T
-): T =
-    withContext(context) { block() }
-
-/** @suppress **Deprecated** */
-@Deprecated(message = "It is here for binary compatibility only", level=DeprecationLevel.HIDDEN)
-public suspend fun <T> run(context: CoroutineContext, block: suspend () -> T): T =
-    withContext(context) { block() }
 
 // --------------- implementation ---------------
 

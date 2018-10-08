@@ -229,7 +229,7 @@ class ListenableFutureTest : TestBase() {
             setException(TestException())
         }
         val deferred = future.asDeferred()
-        assertTrue(deferred.isCompletedExceptionally)
+        assertTrue(deferred.isCancelled && deferred.isCompleted)
         val completionException = deferred.getCompletionExceptionOrNull()!!
         assertTrue(completionException is TestException)
 

@@ -87,7 +87,6 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         val busySpinTasks = (1..2).map {
             async(dispatcher) {
                 while (true) {
-                    delay(100, TimeUnit.MICROSECONDS)
                     yield()
                 }
             }

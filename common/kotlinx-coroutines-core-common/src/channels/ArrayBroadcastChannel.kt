@@ -195,7 +195,7 @@ constructor(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), ReceiveChannel<E>, SubscriptionReceiveChannel<E> {
+    ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         @Volatile

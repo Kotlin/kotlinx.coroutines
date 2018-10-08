@@ -799,12 +799,12 @@ class ChannelsConsumeTest : TestBase() {
     fun testZip() {
         val expect = sourceList.zip(sourceList) { a, b -> a + 2 * b }
         checkTransform(expect) {
-            currentScope {
+            with(CoroutineScope(coroutineContext)) {
                 zip(testSource()) { a, b -> a + 2*b }
             }
         }
         checkTransform(expect) {
-            currentScope {
+            with(CoroutineScope(coroutineContext)) {
                 testSource().zip(this@checkTransform) { a, b -> a + 2*b }
             }
         }

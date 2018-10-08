@@ -1,17 +1,13 @@
 public final class kotlinx/coroutines/javafx/JavaFx : kotlinx/coroutines/javafx/JavaFxDispatcher {
 	public static final field INSTANCE Lkotlinx/coroutines/javafx/JavaFx;
-	public final fun awaitPulse (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
 	public fun toString ()Ljava/lang/String;
 }
 
 public abstract class kotlinx/coroutines/javafx/JavaFxDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/CancellableContinuation;)V
 	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 }
 

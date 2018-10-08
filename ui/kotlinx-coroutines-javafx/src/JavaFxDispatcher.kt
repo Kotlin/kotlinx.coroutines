@@ -86,21 +86,6 @@ object JavaFx : JavaFxDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateJavaFxDispatcher
 
-    /**
-     * Suspends coroutine until next JavaFx pulse and returns time of the pulse on resumption.
-     * If the [Job] of the current coroutine is completed while this suspending function is waiting, this function
-     * immediately resumes with [CancellationException] .
-     *
-     * @suppress **Deprecated**: Use top-level [awaitPulse].
-     */
-    @Deprecated(
-        message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.javafx.awaitPulse()")
-    )
-    suspend fun awaitPulse(): Long =
-        kotlinx.coroutines.javafx.awaitPulse()
-
-
     override fun toString() = "JavaFx"
 }
 

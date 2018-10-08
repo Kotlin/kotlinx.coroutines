@@ -4,7 +4,7 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.timeunit.*
+import java.util.concurrent.*
 
 internal actual val DefaultDelay: Delay = DefaultExecutor
 

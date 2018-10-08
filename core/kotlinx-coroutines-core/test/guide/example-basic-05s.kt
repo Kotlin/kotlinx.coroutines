@@ -13,7 +13,7 @@ fun main(args: Array<String>) = runBlocking {
 }
 
 // this is your first suspending function
-suspend fun launchDoWorld() = currentScope {
+suspend fun launchDoWorld() = coroutineScope {
     launch {
         println("World!")
     }

@@ -112,27 +112,6 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
     }
 }
 
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Mutex.withLock(owner: Any? = null, action: suspend () -> T): T =
-    withLock(owner) { action() }
-
-/**
- * @suppress: **Deprecated**: Use [withLock]
- */
-@Deprecated("Use `withLock(owner, action)", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Mutex.withLock(action: suspend () -> T): T =
-    withLock { action() }
-
-/**
- * @suppress: **Deprecated**: Use [withLock]
- */
-@Deprecated("Use `withLock`", replaceWith = ReplaceWith("withLock(action)"))
-public suspend fun <T> Mutex.withMutex(action: suspend () -> T): T =
-    withLock { action() }
-
 private val LOCK_FAIL = Symbol("LOCK_FAIL")
 private val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
 private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")

@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
-import kotlinx.coroutines.timeunit.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -48,16 +47,6 @@ public interface SelectBuilder<in R> {
      */
     @ExperimentalCoroutinesApi
     public fun onTimeout(timeMillis: Long, block: suspend () -> R)
-
-    /**
-     * @suppress **Deprecated**: onTimeout(unit.toMillis(time), block)`
-     */
-    @Deprecated(
-        message = "Replace with onTimeout(unit.toMillis(time), block)",
-        replaceWith = ReplaceWith("onTimeout(unit.toMillis(time), block)")
-    )
-    public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R) =
-        onTimeout(time.convertToMillis(unit), block)
 }
 
 /**

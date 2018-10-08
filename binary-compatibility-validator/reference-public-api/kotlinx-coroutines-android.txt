@@ -1,7 +1,6 @@
 public final class kotlinx/coroutines/android/HandlerContext : kotlinx/coroutines/android/HandlerDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Landroid/os/Handler;Ljava/lang/String;)V
 	public synthetic fun <init> (Landroid/os/Handler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun awaitFrame (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public synthetic fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
@@ -14,18 +13,10 @@ public final class kotlinx/coroutines/android/HandlerContext : kotlinx/coroutine
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class kotlinx/coroutines/android/HandlerContextKt {
-	public static final synthetic fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/android/HandlerContext;
-	public static final fun getUI ()Lkotlinx/coroutines/android/HandlerContext;
-}
-
 public abstract class kotlinx/coroutines/android/HandlerDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getImmediate ()Lkotlinx/coroutines/android/HandlerDispatcher;
 	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/CancellableContinuation;)V
 }
 
 public final class kotlinx/coroutines/android/HandlerDispatcherKt {
@@ -33,6 +24,5 @@ public final class kotlinx/coroutines/android/HandlerDispatcherKt {
 	public static final fun from (Landroid/os/Handler;)Lkotlinx/coroutines/android/HandlerDispatcher;
 	public static final fun from (Landroid/os/Handler;Ljava/lang/String;)Lkotlinx/coroutines/android/HandlerDispatcher;
 	public static synthetic fun from$default (Landroid/os/Handler;Ljava/lang/String;ILjava/lang/Object;)Lkotlinx/coroutines/android/HandlerDispatcher;
-	public static final synthetic fun getMain (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/android/HandlerDispatcher;
 }
 

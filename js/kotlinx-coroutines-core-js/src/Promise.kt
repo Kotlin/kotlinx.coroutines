@@ -34,53 +34,6 @@ public fun <T> CoroutineScope.promise(
     async(context, start, block).asPromise()
 
 /**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun <T> CoroutineScope.promise(
-    context: CoroutineContext = EmptyCoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    async(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }.asPromise()
-
-/**
- * Starts new coroutine and returns its result as an implementation of [Promise].
- * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.*"])
-)
-public fun <T> promise(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    GlobalScope.promise(context, start, onCompletion, block = block)
-
-/**
- * Starts new coroutine and returns its result as an implementation of [Promise].
- * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.*"])
-)
-public fun <T> promise(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    GlobalScope.promise(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block = block)
-
-/**
  * Converts this deferred value to the instance of [Promise].
  */
 public fun <T> Deferred<T>.asPromise(): Promise<T> {

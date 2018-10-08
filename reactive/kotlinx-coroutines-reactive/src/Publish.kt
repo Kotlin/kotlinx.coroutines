@@ -52,21 +52,6 @@ public fun <T> CoroutineScope.publish(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.publish] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.publish(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactive.publish"])
-)
-public fun <T> publish(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = GlobalScope.publish(context + (parent ?: EmptyCoroutineContext), block)
-
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError
 

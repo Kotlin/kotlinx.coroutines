@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.timeunit.TimeUnit
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*

@@ -391,20 +391,18 @@ class TestCoroutineContextTest {
 private fun TestCoroutineContext.launch(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
-        onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> Unit
 ) =
-    GlobalScope.launch(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+    GlobalScope.launch(this + (parent ?: EmptyCoroutineContext), start, block)
 
 // todo: deprecate, replace, see https://github.com/Kotlin/kotlinx.coroutines/issues/541
 private fun <T> TestCoroutineContext.async(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
-        onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> T
 
 ) =
-    GlobalScope.async(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+    GlobalScope.async(this + (parent ?: EmptyCoroutineContext), start, block)
 
 private fun <T> TestCoroutineContext.runBlocking(
         block: suspend CoroutineScope.() -> T

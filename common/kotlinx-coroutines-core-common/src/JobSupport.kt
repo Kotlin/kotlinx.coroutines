@@ -393,17 +393,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
         invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
 
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    public final override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
-        invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = true, handler = handler)
-
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    public final override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
-        invokeOnCompletion(onCancelling = onCancelling_, invokeImmediately = true, handler = handler)
-
     // todo: non-final as a workaround for KT-21968, should be final in the future
     public override fun invokeOnCompletion(
         onCancelling: Boolean,
@@ -865,12 +854,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
          * cancellation, but parent *will* wait for that child before completion and will handle its exception.
          */
         return invokeOnCompletion(onCancelling = true, handler = ChildHandleNode(this, child).asHandler) as ChildHandle
-    }
-
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    public final override fun cancelChildren(cause: Throwable?) {
-        this.cancelChildren(cause) // use extension function
     }
 
     /**

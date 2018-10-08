@@ -365,21 +365,8 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Requests conflated channel in `Channel(...)` factory function -- the `ConflatedChannel` gets created.
          */
         public const val CONFLATED = -1
-
-        /**
-         * Creates a channel with the specified buffer capacity (or without a buffer by default).
-         * @suppress **Deprecated**
-         */
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun <E> invoke(capacity: Int = 0): Channel<E> = Channel(capacity)
     }
 }
-
-/**
- * Creates a channel without a buffer -- [RendezvousChannel].
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
-public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
 
 /**
  * Creates a channel with the specified buffer capacity (or without a buffer by default).

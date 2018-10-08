@@ -17,7 +17,7 @@ import kotlin.coroutines.*
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API which requires instance of the [Executor].
  */
-public abstract class ExecutorCoroutineDispatcher: CloseableCoroutineDispatcher(), Closeable {
+public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
     /**
      * Closes this coroutine dispatcher and shuts down its executor.
      *
@@ -32,14 +32,6 @@ public abstract class ExecutorCoroutineDispatcher: CloseableCoroutineDispatcher(
 }
 
 /**
- * [CoroutineDispatcher] that implements [Closeable].
- *
- * @suppress **Deprecated**: Use [ExecutorCoroutineDispatcher].
- */
-@Deprecated("Use ExecutorCoroutineDispatcher instead", replaceWith = ReplaceWith("ExecutorCoroutineDispatcher"))
-public abstract class CloseableCoroutineDispatcher: CoroutineDispatcher(), Closeable
-
-/**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
  */
 public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
@@ -52,29 +44,6 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 @JvmName("from") // this is for a nice Java API, see issue #255
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcherImpl(this)
-
-/** @suppress */
-@JvmName("asCoroutineDispatcher")
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
-public fun Executor.asCoroutineDispatcher0(): CoroutineDispatcher = asCoroutineDispatcher()
-
-/**
- * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
- * @suppress **Deprecated**: Return type changed to [ExecutorCoroutineDispatcher].
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Return type changed to ExecutorCoroutineDispatcher")
-@JvmName("asCoroutineDispatcher") // for binary compatibility
-public fun ExecutorService.asCoroutineDispatcher_Deprecated(): CloseableCoroutineDispatcher =
-    asCoroutineDispatcher()
-
-/**
- * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
- * @suppress **Deprecated**: Renamed to [asCoroutineDispatcher].
- */
-@Deprecated("Renamed to `asCoroutineDispatcher`",
-    replaceWith = ReplaceWith("asCoroutineDispatcher()"))
-public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
-    asCoroutineDispatcher()
 
 private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcherBase() {
     init {

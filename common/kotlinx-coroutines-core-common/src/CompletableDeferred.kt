@@ -33,7 +33,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    @Deprecated(message = "Use cancel", replaceWith = ReplaceWith("cancel(exception)"))
     public fun completeExceptionally(exception: Throwable): Boolean
 }
 
@@ -43,11 +42,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
  */
 @Suppress("FunctionName")
 public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
-
-/** @suppress **Deprecated:** Binary compatibility only */
-@Deprecated(message = "Binary compatibility only", level = DeprecationLevel.HIDDEN)
-@Suppress("FunctionName")
-public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl(null)
 
 /**
  * Creates an already _completed_ [CompletableDeferred] with a given [value].

@@ -15,13 +15,6 @@ import java.lang.reflect.Constructor
 import kotlin.coroutines.*
 
 /**
- * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Deprecated in favor of Dispatchers property")
-public val Dispatchers.Main: HandlerDispatcher
-    get() = MainDispatcher
-
-/**
  * Dispatches execution onto Android [Handler].
  *
  * This class provides type-safety and a point for future extensions.
@@ -141,17 +134,6 @@ public class HandlerContext private constructor(
             }
         }
     }
-
-    /**
-     * Awaits the next animation frame and returns frame time in nanoseconds.
-     * @suppress **Deprecated**: Use top-level [awaitFrame].
-     */
-    @Deprecated(
-        message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.android.awaitFrame()")
-    )
-    public suspend fun awaitFrame(): Long =
-        kotlinx.coroutines.android.awaitFrame()
 
     override fun toString(): String =
         if (name != null) {

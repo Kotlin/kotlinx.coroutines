@@ -42,22 +42,3 @@ fun <T> CoroutineScope.flux(
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flux<T> =
     Flux.from(publish(newCoroutineContext(context), block = block))
-
-
-/**
- * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.mono] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith(
-        "GlobalScope.flux(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactor.flux"]
-    )
-)
-@JvmOverloads // for binary compatibility with older code compiled before context had a default
-fun <T> flux(
-    context: CoroutineContext = Dispatchers.Default,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flux<T> =
-    GlobalScope.flux(context, block)

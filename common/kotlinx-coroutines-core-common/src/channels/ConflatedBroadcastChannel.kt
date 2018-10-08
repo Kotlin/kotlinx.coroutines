@@ -272,7 +272,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     @Suppress("DEPRECATION")
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
-    ) : ConflatedChannel<E>(), ReceiveChannel<E>, SubscriptionReceiveChannel<E> {
+    ) : ConflatedChannel<E>(), ReceiveChannel<E> {
         override fun cancel(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)

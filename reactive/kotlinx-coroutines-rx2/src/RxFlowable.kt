@@ -44,18 +44,3 @@ public fun <T> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
-
-/**
- * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxFlowable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxFlowable(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxFlowable"])
-)
-@JvmOverloads // for binary compatibility with older code compiled before context had a default
-public fun <T> rxFlowable(
-    context: CoroutineContext = Dispatchers.Default,
-    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = GlobalScope.rxFlowable(context, block)

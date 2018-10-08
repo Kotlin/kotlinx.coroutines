@@ -29,32 +29,8 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
     }
 }
 
-/**
- * The default [CoroutineDispatcher] that is used by all standard builders.
- * @suppress **Deprecated**: Use [Dispatchers.Default].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.Dispatchers"]))
-public actual val DefaultDispatcher: CoroutineDispatcher
-    get() = Dispatchers.Default
-
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     if (useCoroutinesScheduler) DefaultScheduler else CommonPool
-
-/**
- * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
- * @suppress **Deprecated**: Use [Dispatchers.IO].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.IO",
-    replaceWith = ReplaceWith("Dispatchers.IO",
-        imports = ["kotlinx.coroutines.*"]))
-public val IO: CoroutineDispatcher
-    get() = Dispatchers.IO
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
@@ -87,18 +63,6 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
 }
-
-/**
- * @suppress **Deprecated**: Use extension on CoroutineScope.
- */
-@JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
-@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-@Deprecated(
-    message = "Use extension on CoroutineScope",
-    replaceWith = ReplaceWith("GlobalScope.newCoroutineContext(context + parent)")
-)
-public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext =
-    GlobalScope.newCoroutineContext(context + (parent ?: EmptyCoroutineContext))
 
 /**
  * Executes a block using a given coroutine context.

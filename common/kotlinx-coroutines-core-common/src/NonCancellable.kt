@@ -80,26 +80,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
-        NonDisposableHandle
-
-    /**
-     * Always returns no-op handle.
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
-        NonDisposableHandle
-
-    /**
      * Always returns no-op handle.
      * @suppress **This an internal API and should not be used from general code.**
      */
@@ -136,13 +116,4 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     @InternalCoroutinesApi
     override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
-
-    /**
-     * Does not do anything.
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    override fun cancelChildren(cause: Throwable?) {}
 }

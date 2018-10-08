@@ -49,86 +49,10 @@ public fun <T> CoroutineScope.future(
     return future
 }
 
-/**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun <T> CoroutineScope.future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-) : CompletableFuture<T> {
-    require(!start.isLazy) { "$start start is not supported" }
-    val newContext = this.newCoroutineContext(context)
-    val job = Job(newContext[Job])
-    val future = CompletableFutureCoroutine<T>(newContext + job)
-    job.cancelFutureOnCompletion(future)
-    future.whenComplete { _, exception -> job.cancel(exception) }
-    if (onCompletion != null) job.invokeOnCompletion(handler = onCompletion)
-    start(block, receiver=future, completion=future) // use the specified start strategy
-    return future
-}
-
-/**
- * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
- * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
-)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> =
-    GlobalScope.future(context, start, onCompletion, block)
-
-/**
- * Starts new coroutine and returns its result as an implementation of [CompletableFuture].
- * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.future.future"])
-)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> =
-    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> =
-    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-): CompletableFuture<T> =
-    GlobalScope.future(context, start, block = block)
-
 private class CompletableFutureCoroutine<T>(
     override val context: CoroutineContext
 ) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
     override val coroutineContext: CoroutineContext get() = context
-    override val isActive: Boolean get() = context[Job]!!.isActive
     override fun resumeWith(result: Result<T>) {
         result
             .onSuccess { complete(it) }
@@ -183,15 +107,6 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
 }
 
 /**
- * Awaits for completion of the future without blocking a thread.
- *
- * @suppress **Deprecated**: For binary compatibility only
- */
-@Deprecated("For binary compatibility only", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> CompletableFuture<T>.await(): T =
-    (this as CompletionStage<T>).await()
-
-/**
  * Awaits for completion of the completion stage without blocking a thread.
  *
  * This suspending function is cancellable.
@@ -237,25 +152,3 @@ private class ContinuationConsumer<T>(
         }
     }
 }
-
-// --------------------------------------- DEPRECATED APIs ---------------------------------------
-// We keep it only for backwards compatibility with old versions of this integration library.
-// Do not copy when using this file an example for other integration.
-
-/**
- * Converts this deferred value to the instance of [CompletableFuture].
- * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
- * @suppress: **Deprecated**: Renamed to [asCompletableFuture]
- */
-@Deprecated("Renamed to `asCompletableFuture`",
-    replaceWith = ReplaceWith("asCompletableFuture()"))
-public fun <T> Deferred<T>.toCompletableFuture(): CompletableFuture<T> = asCompletableFuture()
-
-/** @suppress **Deprecated** */
-@Suppress("DeprecatedCallableAddReplaceWith") // todo: the warning is incorrectly shown, see KT-17917
-@Deprecated("Use the other version. This one is for binary compatibility only.", level=DeprecationLevel.HIDDEN)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    block: suspend () -> T
-): CompletableFuture<T> =
-    GlobalScope.future(context = context, block = { block() })

@@ -41,21 +41,6 @@ public fun <T : Any> CoroutineScope.rxSingle(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [single][Single] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxSingle] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxSingle(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxSingle"])
-)
-public fun <T : Any> rxSingle(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T
-): Single<T> = GlobalScope.rxSingle(context + (parent ?: EmptyCoroutineContext), block)
-
 private class RxSingleCoroutine<T>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>

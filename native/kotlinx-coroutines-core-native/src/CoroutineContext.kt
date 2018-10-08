@@ -33,18 +33,6 @@ internal object DefaultExecutor : CoroutineDispatcher(), Delay {
     }
 }
 
-/**
- * The default [CoroutineDispatcher] that is used by all standard builders.
- * @suppress **Deprecated**: Use [Dispatchers.Default].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.Dispatchers"]))
-public actual val DefaultDispatcher: CoroutineDispatcher
-    get() = Dispatchers.Default
-
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     DefaultExecutor
 

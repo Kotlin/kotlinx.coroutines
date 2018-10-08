@@ -24,11 +24,6 @@ public fun <T> MaybeSource<T>.openSubscription(): ReceiveChannel<T> {
     return channel
 }
 
-/** @suppress **Deprecated**: Left here for binary compatibility */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-@Suppress("CONFLICTING_OVERLOADS")
-public fun <T> MaybeSource<T>.openSubscription(): SubscriptionReceiveChannel<T> =
-    openSubscription() as SubscriptionReceiveChannel<T>
 /**
  * Subscribes to this [ObservableSource] and returns a channel to receive elements emitted by it.
  * The resulting channel shall be [cancelled][ReceiveChannel.cancel] to unsubscribe from this source.
@@ -43,12 +38,6 @@ public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
     subscribe(channel)
     return channel
 }
-
-/** @suppress **Deprecated**: Left here for binary compatibility */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-@Suppress("CONFLICTING_OVERLOADS")
-public fun <T> ObservableSource<T>.openSubscription(): SubscriptionReceiveChannel<T> =
-    openSubscription() as SubscriptionReceiveChannel<T>
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
@@ -69,7 +58,7 @@ public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Uni
 }
 
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(), ReceiveChannel<T>, Observer<T>, MaybeObserver<T>, SubscriptionReceiveChannel<T>
+    LinkedListChannel<T>(), ReceiveChannel<T>, Observer<T>, MaybeObserver<T>
 {
     @Volatile
     var subscription: Disposable? = null

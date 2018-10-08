@@ -13,28 +13,6 @@ import kotlin.coroutines.*
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 
 
-// -------- Conversions to ReceiveChannel  --------
-
-/**
- * Returns a channel to read all element of the [Iterable].
- */
-@Deprecated("No replacement")
-public fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
-    GlobalScope.produce(context) {
-        for (element in this@asReceiveChannel)
-            send(element)
-    }
-
-/**
- * Returns a channel to read all element of the [Sequence].
- */
-@Deprecated("No replacement")
-public fun <E> Sequence<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
-    GlobalScope.produce(context) {
-        for (element in this@asReceiveChannel)
-            send(element)
-    }
-
 // -------- Operations on BroadcastChannel --------
 
 /**
@@ -65,13 +43,6 @@ public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Uni
     consume {
         for (element in this) action(element)
     }
-
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <E> BroadcastChannel<E>.consumeEach(action: suspend (E) -> Unit) =
-    consumeEach { action(it) }
 
 // -------- Operations on ReceiveChannel --------
 
@@ -165,13 +136,6 @@ public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit)
     consume {
         for (e in this) action(e)
     }
-
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <E> ReceiveChannel<E>.consumeEach(action: suspend (E) -> Unit) =
-    consumeEach { action(it) }
 
 /**
  * Performs the given [action] for each received element.
@@ -745,12 +709,6 @@ public suspend inline fun <E, C : SendChannel<E>> ReceiveChannel<E>.filterIndexe
 // todo: mark predicate with crossinline modifier when it is supported: https://youtrack.jetbrains.com/issue/KT-19159
 public fun <E> ReceiveChannel<E>.filterNot(context: CoroutineContext = Dispatchers.Unconfined, predicate: suspend (E) -> Boolean): ReceiveChannel<E> =
     filter(context) { !predicate(it) }
-
-/**
- * @suppress **Deprecated**: For binary compatibility only
- */
-@Deprecated("For binary compatibility only", level = DeprecationLevel.HIDDEN)
-public fun <E> ReceiveChannel<E>.filterNot(predicate: suspend (E) -> Boolean): ReceiveChannel<E> = filterNot(predicate = predicate)
 
 /**
  * Returns a channel containing all elements that are not `null`.

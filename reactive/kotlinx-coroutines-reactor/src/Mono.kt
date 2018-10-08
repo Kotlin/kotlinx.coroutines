@@ -42,22 +42,6 @@ fun <T> CoroutineScope.mono(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.mono] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.mono(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.reactor.mono"])
-)
-fun <T> mono(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T?
-): Mono<T> =
-    GlobalScope.mono(context + (parent ?: EmptyCoroutineContext), block)
-
 private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>

@@ -41,21 +41,6 @@ public fun CoroutineScope.rxCompletable(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [Completable] that runs a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxCompletable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxCompletable(context, block)",
-        imports = ["kotlinx.coroutines.GlobalScope", "kotlinx.coroutines.rx2.rxCompletable"])
-)
-public fun rxCompletable(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Completable = GlobalScope.rxCompletable(context + (parent ?: EmptyCoroutineContext), block)
-
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,
     private val subscriber: CompletableEmitter

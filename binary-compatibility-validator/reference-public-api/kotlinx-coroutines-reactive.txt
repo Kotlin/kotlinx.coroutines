@@ -9,12 +9,8 @@ public final class kotlinx/coroutines/reactive/AwaitKt {
 
 public final class kotlinx/coroutines/reactive/ChannelKt {
 	public static final fun consumeEach (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final synthetic fun consumeEach (Lorg/reactivestreams/Publisher;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;)Lkotlinx/coroutines/channels/SubscriptionReceiveChannel;
 	public static final fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/channels/ReceiveChannel;
-	public static final synthetic fun openSubscription (Lorg/reactivestreams/Publisher;I)Lkotlinx/coroutines/channels/SubscriptionReceiveChannel;
 	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/ReceiveChannel;
-	public static synthetic fun openSubscription$default (Lorg/reactivestreams/Publisher;IILjava/lang/Object;)Lkotlinx/coroutines/channels/SubscriptionReceiveChannel;
 }
 
 public final class kotlinx/coroutines/reactive/ConvertKt {
@@ -23,9 +19,7 @@ public final class kotlinx/coroutines/reactive/ConvertKt {
 }
 
 public final class kotlinx/coroutines/reactive/PublishKt {
-	public static final fun publish (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
 	public static final fun publish (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lorg/reactivestreams/Publisher;
-	public static synthetic fun publish$default (Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 	public static synthetic fun publish$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lorg/reactivestreams/Publisher;
 }
 
