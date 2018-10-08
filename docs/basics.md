@@ -60,7 +60,7 @@ fun main(args: Array<String>) {
 
 > You can get full code [here](../core/kotlinx-coroutines-core/test/guide/example-basic-01.kt)
 
-Run this code:
+You will see the following result:
 
 ```text
 Hello,
