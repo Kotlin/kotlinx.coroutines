@@ -5,7 +5,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.selects.*
-import kotlinx.coroutines.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
@@ -17,13 +16,7 @@ import kotlinx.coroutines.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public open class LinkedListChannel<E>
-@Deprecated(
-    "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel(Channel.UNLIMITED)")
-)
-constructor() : AbstractChannel<E>() {
+internal open class LinkedListChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false

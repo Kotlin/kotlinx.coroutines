@@ -130,11 +130,7 @@ internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable)
     else -> resumeWithException(exception)
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public interface DispatchedTask<in T> : Runnable {
+internal interface DispatchedTask<in T> : Runnable {
     public val delegate: Continuation<T>
     public val resumeMode: Int get() = MODE_CANCELLABLE
 
@@ -171,11 +167,7 @@ public interface DispatchedTask<in T> : Runnable {
     }
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
+internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
     var useMode = mode
     val delegate = this.delegate
     if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {

@@ -27,12 +27,8 @@ public actual typealias CancellationException = java.util.concurrent.Cancellatio
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
- * 
- * @suppress **Deprecated**: Replace with [CancellationException].
  */
-@InternalCoroutinesApi
-@Deprecated(message = "Replace with CancellationException", replaceWith = ReplaceWith("CancellationException"))
-public actual class JobCancellationException public actual constructor(
+internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
     @JvmField internal actual val job: Job

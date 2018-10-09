@@ -51,7 +51,7 @@ class ExampleApp : Application() {
 }
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
-    val eventActor = actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
+    val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->

@@ -19,14 +19,8 @@ import kotlin.coroutines.*
  * If there is a SecurityManager present (as would be if running inside a Java Web Start context) then a plain thread
  * pool is created. This is to work around the fact that ForkJoinPool creates threads that cannot perform
  * privileged actions.
- *
- * @suppress **Deprecated**: Use [Dispatchers.Default].
  */
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.Dispatchers"]))
-object CommonPool : ExecutorCoroutineDispatcher() {
+internal object CommonPool : ExecutorCoroutineDispatcher() {
 
     /**
      * Name of the property that controls default parallelism level of [CommonPool].

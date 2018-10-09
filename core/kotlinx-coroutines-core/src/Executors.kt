@@ -51,11 +51,7 @@ private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) :
     }
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
+internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
 
     private var removesFutureOnCancellation: Boolean = false
 

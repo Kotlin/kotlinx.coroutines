@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 
@@ -16,16 +15,8 @@ import kotlinx.coroutines.selects.*
  *
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lists of suspended senders or receivers are lock-free.
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-@InternalCoroutinesApi
-public open class ArrayChannel<E>
-@Deprecated(
-    "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel(capacity)")
-)
-constructor(
+ **/
+internal open class ArrayChannel<E>(
     /**
      * Buffer capacity.
      */

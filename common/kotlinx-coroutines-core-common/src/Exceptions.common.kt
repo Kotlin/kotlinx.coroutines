@@ -9,14 +9,7 @@ public expect class CompletionHandlerException(message: String, cause: Throwable
 
 public expect open class CancellationException(message: String?) : IllegalStateException
 
-/**
- * @suppress **Deprecated**: Replace with [CancellationException].
- */
-@InternalCoroutinesApi
-@Deprecated( // todo: remove deprecated, make it internal
-    message = "Replace with CancellationException",
-    replaceWith = ReplaceWith("CancellationException"))
-public expect class JobCancellationException(
+internal expect class JobCancellationException(
     message: String,
     cause: Throwable?,
     job: Job

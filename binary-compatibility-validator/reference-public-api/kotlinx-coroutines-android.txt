@@ -1,18 +1,3 @@
-public final class kotlinx/coroutines/android/HandlerContext : kotlinx/coroutines/android/HandlerDispatcher, kotlinx/coroutines/Delay {
-	public fun <init> (Landroid/os/Handler;Ljava/lang/String;)V
-	public synthetic fun <init> (Landroid/os/Handler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun equals (Ljava/lang/Object;)Z
-	public synthetic fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
-	public fun getImmediate ()Lkotlinx/coroutines/android/HandlerContext;
-	public synthetic fun getImmediate ()Lkotlinx/coroutines/android/HandlerDispatcher;
-	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
-	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
-	public fun toString ()Ljava/lang/String;
-}
-
 public abstract class kotlinx/coroutines/android/HandlerDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getImmediate ()Lkotlinx/coroutines/android/HandlerDispatcher;

@@ -11,6 +11,7 @@ import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.TearDown
 import java.io.Closeable
+import java.util.concurrent.*
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -26,7 +27,7 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     @Setup
     open fun setup() {
         coroutineContext = when {
-            dispatcher == "fjp" -> CommonPool
+            dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
             dispatcher == "experimental" -> {
                 ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
             }

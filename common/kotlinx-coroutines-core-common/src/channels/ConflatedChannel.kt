@@ -17,16 +17,8 @@ import kotlinx.coroutines.*
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  *
  * This implementation is fully lock-free.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public open class ConflatedChannel<E>
-@Deprecated(
-    "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel(Channel.CONFLATED)")
-)
-constructor(): AbstractChannel<E>() {
+internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false

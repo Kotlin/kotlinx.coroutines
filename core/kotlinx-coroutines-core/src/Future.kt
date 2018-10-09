@@ -15,7 +15,7 @@ import java.util.concurrent.*
  * ```
  * invokeOnCompletion { future.cancel(false) }
  * ```
- * 
+ *
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi

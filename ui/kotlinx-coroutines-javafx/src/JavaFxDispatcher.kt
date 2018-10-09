@@ -69,15 +69,8 @@ private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
 
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
- * @suppress **Deprecated**: Use [Dispatchers.JavaFx].
  */
-@Deprecated(
-    message = "Use Dispatchers.JavaFx",
-    replaceWith = ReplaceWith("Dispatchers.JavaFx",
-        imports = ["kotlinx.coroutines.Dispatchers", "kotlinx.coroutines.javafx.JavaFx"])
-)
-// todo: it will become an internal implementation object
-object JavaFx : JavaFxDispatcher() {
+internal object JavaFx : JavaFxDispatcher() {
     init {
         // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
         initPlatform()

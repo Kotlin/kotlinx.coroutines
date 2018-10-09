@@ -57,13 +57,15 @@ public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Uni
     channel.cancel()
 }
 
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
-    LinkedListChannel<T>(), ReceiveChannel<T>, Observer<T>, MaybeObserver<T>
+    LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
 {
     @Volatile
     var subscription: Disposable? = null
 
     // AbstractChannel overrides
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun afterClose(cause: Throwable?) {
         subscription?.dispose()
     }

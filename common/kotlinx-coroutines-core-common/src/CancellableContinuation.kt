@@ -181,10 +181,8 @@ public suspend inline fun <T> suspendAtomicCancellableCoroutine(
 
 /**
  * Removes a given node on cancellation.
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
-public fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
+internal fun CancellableContinuation<*>.removeOnCancellation(node: LockFreeLinkedListNode) =
     invokeOnCancellation(handler = RemoveOnCancel(node).asHandler)
 
 /**

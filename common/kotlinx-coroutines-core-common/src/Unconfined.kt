@@ -8,15 +8,8 @@ import kotlin.coroutines.*
 
 /**
  * A coroutine dispatcher that is not confined to any specific thread.
- * @suppress **Deprecated**: Use [Dispatchers.Unconfined].
  */
-@Deprecated(
-    message = "Use Dispatchers.Unconfined",
-    replaceWith = ReplaceWith("Dispatchers.Unconfined",
-        imports = ["kotlinx.coroutines.Dispatchers"])
-)
-// todo: This will become an internal implementation object
-public object Unconfined : CoroutineDispatcher() {
+internal object Unconfined : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
     override fun dispatch(context: CoroutineContext, block: Runnable) { throw UnsupportedOperationException() }
     override fun toString(): String = "Unconfined"

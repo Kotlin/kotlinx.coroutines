@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
-import kotlinx.coroutines.timeunit.*
 
 internal val currentEventLoop = ArrayList<BlockingEventLoop>()
 
@@ -40,8 +39,8 @@ internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
-    return if (combined !== kotlinx.coroutines.DefaultDispatcher && combined[ContinuationInterceptor] == null)
-        combined + kotlinx.coroutines.DefaultDispatcher else combined
+    return if (combined !== kotlinx.coroutines.DefaultExecutor && combined[ContinuationInterceptor] == null)
+        combined + kotlinx.coroutines.DefaultExecutor else combined
 }
 
 // No debugging facilities on native

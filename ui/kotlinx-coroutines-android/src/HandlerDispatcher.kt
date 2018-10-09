@@ -83,14 +83,8 @@ private val MainDispatcher: HandlerDispatcher = Main // Alias
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
- * @suppress **Deprecated**: Use [HandlerDispatcher].
  */
-@Deprecated(
-    message = "Use HandlerDispatcher",
-    replaceWith = ReplaceWith("HandlerDispatcher",
-        imports = ["kotlinx.coroutines.android.HandlerDispatcher"])
-)
-public class HandlerContext private constructor(
+internal class HandlerContext private constructor(
     private val handler: Handler,
     private val name: String?,
     private val invokeImmediately: Boolean

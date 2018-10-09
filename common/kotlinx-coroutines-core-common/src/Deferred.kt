@@ -37,15 +37,6 @@ import kotlin.experimental.*
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 public interface Deferred<out T> : Job {
-    /**
-     * Returns `true` if computation of this deferred value has _completed exceptionally_.
-     * It is `true` when both [isCompleted] and [isCancelled] are true.
-     * It implies that [isActive] is `false`.
-     *
-     * @suppress **Deprecated**: Use [isCancelled] && [isCompleted]
-     */
-    @Deprecated("Use isCancelled && isCompleted", ReplaceWith("this.isCancelled && this.isCompleted"))
-    public val isCompletedExceptionally: Boolean
 
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,

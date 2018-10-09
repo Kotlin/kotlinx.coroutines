@@ -49,7 +49,7 @@ open class PingPongWithBlockingContext {
 
     @Benchmark
     fun commonPoolWithContextPingPong() = runBlocking {
-        runPingPongs(CommonPool, threadPool)
+        runPingPongs(ForkJoinPool.commonPool().asCoroutineDispatcher(), threadPool)
     }
 
     private suspend fun runPingPongs(pingContext: CoroutineContext, pongContext: CoroutineContext) {

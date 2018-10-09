@@ -21,16 +21,8 @@ import kotlinx.coroutines.selects.*
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
  * The lists of suspended senders or receivers are lock-free.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public class ArrayBroadcastChannel<E>
-@Deprecated(
-    "Replace with BroadcastChannel factory function",
-    replaceWith = ReplaceWith("BroadcastChannel(capacity)")
-)
-constructor(
+internal class ArrayBroadcastChannel<E>(
     /**
      * Buffer capacity.
      */

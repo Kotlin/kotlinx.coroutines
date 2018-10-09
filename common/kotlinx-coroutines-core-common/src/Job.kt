@@ -443,11 +443,8 @@ internal interface ChildHandle : DisposableHandle {
  * ```
  * invokeOnCompletion { handle.dispose() }
  * ```
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
+internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
     invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
 
 /**

@@ -69,15 +69,8 @@ private object ImmediateSwingDispatcher : SwingDispatcher() {
 
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
- * @suppress **Deprecated**: Use [Dispatchers.Swing].
  */
-@Deprecated(
-    message = "Use Dispatchers.Swing",
-    replaceWith = ReplaceWith("Dispatchers.Swing",
-        imports = ["kotlinx.coroutines.Dispatchers", "kotlinx.coroutines.swing.Swing"])
-)
-// todo: it will become an internal implementation object
-object Swing : SwingDispatcher() {
+internal object Swing : SwingDispatcher() {
     override val immediate: MainCoroutineDispatcher
         get() = ImmediateSwingDispatcher
 

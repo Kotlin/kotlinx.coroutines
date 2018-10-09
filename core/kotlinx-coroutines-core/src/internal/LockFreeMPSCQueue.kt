@@ -20,10 +20,7 @@ private typealias Core<E> = LockFreeMPSCQueueCore<E>
  * Thread 1: addLast(1) = true, removeFirstOrNull() = null
  * Thread 2: addLast(2) = 2 // this operation is concurrent with both operations in the first thread
  * ```
- *
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
 internal class LockFreeMPSCQueue<E : Any> {
     private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY))
 

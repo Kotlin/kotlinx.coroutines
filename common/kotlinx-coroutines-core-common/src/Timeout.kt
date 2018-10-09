@@ -113,11 +113,9 @@ public class TimeoutCancellationException internal constructor(
     /**
      * Creates timeout exception with a given message.
      * This constructor is needed for exception stack-traces recovery.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
      */
-    @InternalCoroutinesApi
-    public constructor(message: String) : this(message, null)
+    @Suppress("UNUSED")
+    internal constructor(message: String) : this(message, null)
 }
 
 @Suppress("FunctionName")

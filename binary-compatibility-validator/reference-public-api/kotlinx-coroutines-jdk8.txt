@@ -1,7 +1,3 @@
-public final class kotlinx/coroutines/channels8/ChannelsKt {
-	public static final fun collect (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/util/stream/Collector;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-}
-
 public final class kotlinx/coroutines/future/FutureKt {
 	public static final fun asCompletableFuture (Lkotlinx/coroutines/Deferred;)Ljava/util/concurrent/CompletableFuture;
 	public static final fun asDeferred (Ljava/util/concurrent/CompletionStage;)Lkotlinx/coroutines/Deferred;

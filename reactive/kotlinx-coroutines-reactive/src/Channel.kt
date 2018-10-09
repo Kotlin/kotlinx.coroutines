@@ -35,9 +35,10 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
     channel.cancel()
 }
 
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T> {
+) : LinkedListChannel<T>(), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -50,6 +51,7 @@ private class SubscriptionChannel<T>(
     private val _requested = atomic(0)
 
     // AbstractChannel overrides
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
             val subscription = this.subscription
@@ -66,10 +68,12 @@ private class SubscriptionChannel<T>(
         }
     }
 
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveDequeued() {
         _requested.incrementAndGet()
     }
 
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun afterClose(cause: Throwable?) {
         subscription?.cancel()
     }

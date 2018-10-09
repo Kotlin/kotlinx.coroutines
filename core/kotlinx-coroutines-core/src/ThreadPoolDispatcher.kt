@@ -64,12 +64,8 @@ internal class PoolThread(
 /**
  * Dispatches coroutine execution to a thread pool of a fixed size. Instances of this dispatcher are
  * created with [newSingleThreadContext] and [newFixedThreadPoolContext].
- * 
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-@Deprecated("Replace with ExecutorCoroutineDispatcher", replaceWith = ReplaceWith("ExecutorCoroutineDispatcher"))
-public class ThreadPoolDispatcher internal constructor(
+internal class ThreadPoolDispatcher internal constructor(
     private val nThreads: Int,
     private val name: String
 ) : ExecutorCoroutineDispatcherBase() {

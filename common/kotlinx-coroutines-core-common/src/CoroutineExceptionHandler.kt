@@ -21,7 +21,6 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
  * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
-@JvmOverloads // binary compatibility
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
     // Ignore CancellationException (they are normal ways to terminate a coroutine)

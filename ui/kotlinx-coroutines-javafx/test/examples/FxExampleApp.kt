@@ -56,7 +56,9 @@ class FxTestApp : Application(), CoroutineScope {
 
     private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
-        launch(onCompletion = { root.children -= node }, block = block)
+        launch(block = block).also {
+            it.invokeOnCompletion { root.children -= node }
+        }
     }
 
     fun doRect() {

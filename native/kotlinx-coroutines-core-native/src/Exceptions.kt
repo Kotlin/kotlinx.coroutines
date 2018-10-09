@@ -25,7 +25,7 @@ public actual open class CancellationException actual constructor(message: Strin
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
  */
-public actual class JobCancellationException public actual constructor(
+internal actual class JobCancellationException public actual constructor(
     message: String,
     public override val cause: Throwable?,
     internal actual val job: Job

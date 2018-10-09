@@ -24,7 +24,8 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
     override fun toString(): String = DEFAULT_SCHEDULER_NAME
 
     @InternalCoroutinesApi
-    fun toDebugString(): String = super.toString()
+    @Suppress("UNUSED")
+    public fun toDebugString(): String = super.toString()
 }
 
 /**
