@@ -103,4 +103,39 @@ class RunBlockingTest : TestBase() {
             finish(4)
         }
     }
+
+    @Test(expected = CancellationException::class)
+    fun testDispatchOnShutdown() = runBlocking<Unit> {
+        expect(1)
+        val job = launch(NonCancellable) {
+            try {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            } finally {
+                finish(4)
+            }
+        }
+
+        yield()
+        expect(3)
+        coroutineContext.cancel()
+        job.cancel()
+    }
+
+    @Test(expected = CancellationException::class)
+    fun testDispatchOnShutdown2() = runBlocking<Unit> {
+        coroutineContext.cancel()
+        expect(1)
+        val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            } finally {
+                finish(4)
+            }
+        }
+
+        expect(3)
+        job.cancel()
+    }
 }
