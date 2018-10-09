@@ -2,15 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 private val COROUTINE_ID = AtomicLong()
 
@@ -55,7 +52,6 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
  * **Note: This is an experimental api.**
  *   Behavior of this function may change in the future with respect to its support for debugging facilities.
  */
-@BuilderInference
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context

@@ -2,13 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines
 
 import kotlin.browser.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
@@ -30,7 +27,6 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
 internal actual val DefaultDelay: Delay
     get() = Dispatchers.Default as Delay
 
-@BuilderInference
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)

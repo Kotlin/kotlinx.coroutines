@@ -170,13 +170,23 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             }
         }
     }
-    
+
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
         // dump declarations from main JVM module for binary-compatibility-validator
         compileKotlin {
             kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
         }
+    }
+
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
+                                           "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                                           "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
+
     }
 }
 

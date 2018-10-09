@@ -2,14 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
-@BuilderInference
 public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher

@@ -2,19 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.functions.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
@@ -41,7 +37,6 @@ import kotlin.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
-@BuilderInference
 @ExperimentalCoroutinesApi
 public fun <T : Any> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,

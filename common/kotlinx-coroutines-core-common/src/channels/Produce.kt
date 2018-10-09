@@ -2,14 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Scope for [produce][CoroutineScope.produce] coroutine builder.
@@ -61,7 +57,6 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
-@BuilderInference
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
@@ -78,7 +73,6 @@ public fun <E> CoroutineScope.produce(
  * @suppress **This an internal API and should not be used from general code.**
  *           onCompletion parameter will be redesigned.
  */
-@BuilderInference
 @InternalCoroutinesApi
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,

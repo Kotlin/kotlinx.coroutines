@@ -14,6 +14,22 @@ sourceSets {
             pom {
                 withXml(configureMavenCentralMetadata)
             }
+
+            extraOpts "-Xuse-experimental=kotlin.Experimental",
+                    "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                    "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"
+        }
+    }
+
+    test {
+        component {
+            extraOpts "-Xuse-experimental=kotlin.Experimental",
+                    "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                    "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"
         }
     }
 }

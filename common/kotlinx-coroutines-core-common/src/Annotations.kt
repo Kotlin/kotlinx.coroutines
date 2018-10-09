@@ -11,8 +11,8 @@ package kotlinx.coroutines
  * the semantics of their behavior may change in some way that may break some code.
  */
 @MustBeDocumented
-@Retention(value = AnnotationRetention.SOURCE)
-// todo: Experimental WARNING
+@Retention(value = AnnotationRetention.BINARY)
+@Experimental(level = Experimental.Level.WARNING)
 public annotation class ExperimentalCoroutinesApi
 
 /**
@@ -22,8 +22,8 @@ public annotation class ExperimentalCoroutinesApi
  * so they cannot be deprecated right away.
  */
 @MustBeDocumented
-@Retention(value = AnnotationRetention.SOURCE)
-// todo: Experimental WARNING
+@Retention(value = AnnotationRetention.BINARY)
+@Experimental(level = Experimental.Level.WARNING)
 public annotation class ObsoleteCoroutinesApi
 
 /**
@@ -33,6 +33,6 @@ public annotation class ObsoleteCoroutinesApi
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@Retention(value = AnnotationRetention.SOURCE)
-// todo: Experimental ERROR
+@Retention(value = AnnotationRetention.BINARY)
+@Experimental(level = Experimental.Level.ERROR)
 public annotation class InternalCoroutinesApi

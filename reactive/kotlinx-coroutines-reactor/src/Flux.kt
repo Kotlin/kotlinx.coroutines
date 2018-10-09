@@ -2,8 +2,6 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
@@ -11,7 +9,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import reactor.core.publisher.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Creates cold reactive [Flux] that runs a given [block] in a coroutine.
@@ -36,7 +33,6 @@ import kotlin.experimental.*
  *        to cancellation and error handling may change in the future.
  */
 @ExperimentalCoroutinesApi
-@BuilderInference
 fun <T> CoroutineScope.flux(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit

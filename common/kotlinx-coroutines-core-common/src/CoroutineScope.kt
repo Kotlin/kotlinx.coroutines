@@ -2,15 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
@@ -74,7 +71,6 @@ public interface CoroutineScope {
  *
  * This is a shorthand for `CoroutineScope(thisScope + context)`.
  */
-@BuilderInference
 public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineScope =
     ContextScope(coroutineContext + context)
 
@@ -94,7 +90,6 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-@BuilderInference
 public val CoroutineScope.isActive: Boolean
     get() = coroutineContext[Job]?.isActive ?: true
 
@@ -164,7 +159,7 @@ object GlobalScope : CoroutineScope {
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
     suspendCoroutineUninterceptedOrReturn { uCont ->
-        val coroutine = ScopeCoroutine<R>(uCont.context, uCont)
+        val coroutine = ScopeCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
 

@@ -2,8 +2,6 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:UseExperimental(ExperimentalTypeInference::class)
-
 package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
@@ -13,7 +11,6 @@ import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
 import kotlin.coroutines.*
-import kotlin.experimental.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -40,7 +37,6 @@ import kotlin.experimental.*
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
-@BuilderInference
 @ExperimentalCoroutinesApi
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
