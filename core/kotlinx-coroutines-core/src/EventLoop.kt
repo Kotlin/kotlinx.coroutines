@@ -261,7 +261,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
             _delayed.compareAndSet(null, ThreadSafeHeap())
             _delayed.value!!
         }
-        return delayedTask.schedule(delayed)
+        return delayedTask.schedule(delayed, this)
     }
 
     internal fun removeDelayedImpl(delayedTask: DelayedTask) {
@@ -289,7 +289,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
     }
 
-    internal abstract inner class DelayedTask(
+    internal abstract class DelayedTask(
         timeMillis: Long
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode {
         private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
@@ -317,9 +317,9 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
         @Synchronized
-        fun schedule(delayed: ThreadSafeHeap<DelayedTask>): Int {
+        fun schedule(delayed: ThreadSafeHeap<DelayedTask>, eventLoop: EventLoopBase): Int {
             if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
-            return if (delayed.addLastIf(this) { !isCompleted }) SCHEDULE_OK else SCHEDULE_COMPLETED
+            return if (delayed.addLastIf(this) { !eventLoop.isCompleted }) SCHEDULE_OK else SCHEDULE_COMPLETED
         }
 
         // note: DefaultExecutor.schedule performs `schedule` (above) which does sync & checks for DISPOSED_TASK
@@ -352,7 +352,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     // Cannot be moved to DefaultExecutor due to BE bug
-    internal inner class DelayedRunnableTask(
+    internal class DelayedRunnableTask(
         time: Long,
         private val block: Runnable
     ) : DelayedTask(time) {
