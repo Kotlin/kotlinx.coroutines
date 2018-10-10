@@ -7,7 +7,8 @@
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
 This is a companion version for Kotlin 1.2.70 release.
 
-**NOTE**: This is the latest experimental release. See [COMPATIBILITY.md](COMPATIBILITY.md) for details on migration.
+**NOTE**: This is the _last_ experimental feature release. 
+See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
 
 ```kotlin
 GlobalScope.launch {
