@@ -22,23 +22,24 @@ GlobalScope.launch {
 * [common](common/README.md) &mdash; common coroutines across all backends:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
-  *` Dispatchers.Main` for UI dispatcher for Android, Swing and JavaFx;
+  * `Dispatchers` object with `Main` dispatcher for Android/Swing/JavaFx, and `Default` dispatcher for background coroutines;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;
-  * `produce` and `actor` coroutine builders;
   * `coroutineScope` and `supervisorScope` scope builders;
-  * `SupervisorJob` for supervision of coroutines hierarchies;
+  * `SupervisorJob` and `CoroutineExceptionHandler` for supervision of coroutines hierarchies;
   * `select` expression support and more.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
-  * `Dispatchers.IO` dispatcher for blocking coroutines.
+  * `Dispatchers.IO` dispatcher for blocking coroutines;
+  * `Executor.asCoroutineDispatcher()` extension, custom thread pools, and more.
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
-  * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
+  * Reactive Streams, RxJava 2.x, and Project Reactor. 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries.
-  * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and synchronous networking/IO.
+  * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and Google Play Services `Task`;
+  * SLF4J MDC integration via `MDCContext`.
 
 ## Documentation
 
