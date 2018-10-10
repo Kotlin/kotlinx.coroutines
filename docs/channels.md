@@ -179,7 +179,7 @@ fun CoroutineScope.produceNumbers() = produce<Int> {
 </div>
 
 And another coroutine or coroutines are consuming that stream, doing some processing, and producing some other results.
-In the below example the numbers are just squared:
+In the example below, the numbers are just squared:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
