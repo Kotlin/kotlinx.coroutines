@@ -45,14 +45,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @JvmField
-        val CLOSED = Closed(null)
-
-        @JvmField
-        val UNDEFINED = Symbol("UNDEFINED")
-
-        @JvmField
-        val INITIAL_STATE = State<Any?>(UNDEFINED, null)
+        private val CLOSED = Closed(null)
+        private val UNDEFINED = Symbol("UNDEFINED")
+        private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }
 
     private class State<E>(
