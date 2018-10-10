@@ -133,7 +133,7 @@ This is a part of _producer-consumer_ pattern that is often found in concurrent 
 You could abstract such a producer into a function that takes channel as its parameter, but this goes contrary
 to common sense that results must be returned from functions. 
 
-There is a convenience coroutine builder named [produce] that makes it easy to do it right on producer side,
+There is a convenient coroutine builder named [produce] that makes it easy to do it right on producer side,
 and an extension function [consumeEach], that replaces a `for` loop on the consumer side:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
