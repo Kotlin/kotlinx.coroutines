@@ -393,8 +393,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
         invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
 
-    // todo: non-final as a workaround for KT-21968, should be final in the future
-    public override fun invokeOnCompletion(
+    public final override fun invokeOnCompletion(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
         handler: CompletionHandler

@@ -31,7 +31,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
     @Test
     fun testCompletableDeferred() = runTest {
         expect(1)
-        val handler = CoroutineExceptionHandler { _, ex ->
+        val handler = CoroutineExceptionHandler { _, _ ->
             expectUnreached()
         }
         val parent = CompletableDeferred<Unit>()

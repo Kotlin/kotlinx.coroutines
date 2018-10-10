@@ -5,7 +5,6 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 
 private typealias Core<E> = LockFreeMPSCQueueCore<E>
@@ -59,13 +58,12 @@ internal class LockFreeMPSCQueue<E : Any> {
  * *Note: This queue is NOT linearizable. It provides only quiescent consistency for its operations.*
  *
  * @see LockFreeMPSCQueue
- * @suppress **This is unstable API and it is subject to change.**
  */
 internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
     private val mask = capacity - 1
     private val _next = atomic<Core<E>?>(null)
     private val _state = atomic(0L)
-    private val array = AtomicReferenceArray<Any?>(capacity);
+    private val array = AtomicReferenceArray<Any?>(capacity)
 
     init {
         check(mask <= MAX_CAPACITY_MASK)
@@ -148,6 +146,7 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
                 // Slow-path for remove in case of interference
                 var cur = this
                 while (true) {
+                    @Suppress("UNUSED_VALUE")
                     cur = cur.removeSlowPath(head, newHead) ?: return element
                 }
             }

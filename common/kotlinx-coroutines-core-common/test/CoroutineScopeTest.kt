@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("UNREACHABLE_CODE")
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
@@ -146,7 +148,7 @@ class CoroutineScopeTest : TestBase() {
             expect(3)
             throw TestException1()
         }
-        val two = async<Int>(start = CoroutineStart.ATOMIC) {
+        val two = async(start = CoroutineStart.ATOMIC) {
             try {
                 expect(4)
                 delay(Long.MAX_VALUE) // Emulates very long computation

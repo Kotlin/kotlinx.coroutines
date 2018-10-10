@@ -265,6 +265,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         if (handler !== null && handler !== HANDLER_INVOKED
             && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
             // CAS failed -> concurrent invokeOnClose() invoked handler
+            @Suppress("UNCHECKED_CAST")
             (handler as Handler)(cause)
         }
     }

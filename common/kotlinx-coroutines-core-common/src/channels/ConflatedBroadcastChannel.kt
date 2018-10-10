@@ -181,6 +181,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         val handler = onCloseHandler.value
         if (handler !== null && handler !== HANDLER_INVOKED
             && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+            @Suppress("UNCHECKED_CAST")
             (handler as Handler)(cause)
         }
     }

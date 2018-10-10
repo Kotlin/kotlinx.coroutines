@@ -50,17 +50,16 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
 public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? {
     if (timeMillis <= 0L) return null
 
-    // Workaround for K/N bug
-    val array = arrayOfNulls<TimeoutCoroutine<T?, T?>>(1)
+    var coroutine: TimeoutCoroutine<T?, T?>? = null
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
             val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
-            array[0] = timeoutCoroutine
+            coroutine = timeoutCoroutine
             setupTimeout<T?, T?>(timeoutCoroutine, block)
         }
     } catch (e: TimeoutCancellationException) {
         // Return null iff it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
-        if (e.coroutine === array[0]) {
+        if (e.coroutine === coroutine) {
             return null
         }
         throw e
