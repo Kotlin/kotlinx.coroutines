@@ -47,7 +47,7 @@ coroutine throw an exception?
 
 Coroutine builders come in two flavors: propagating exceptions automatically ([launch] and [actor]) or 
 exposing them to users ([async] and [produce]).
-The former treat exceptions as unhandled, similar to Java's `Thread.uncaughExceptionHandler`, 
+The former treat exceptions as unhandled, similar to Java's `Thread.uncaughtExceptionHandler`, 
 while the latter are relying on the user to consume the final 
 exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.receive] 
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
