@@ -1,4 +1,4 @@
-public abstract class kotlinx/coroutines/AbstractCoroutine : kotlin/coroutines/Continuation, kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/Job {
+public abstract class kotlinx/coroutines/AbstractCoroutine : kotlinx/coroutines/JobSupport, kotlin/coroutines/Continuation, kotlinx/coroutines/CoroutineScope, kotlinx/coroutines/Job {
 	protected final field parentContext Lkotlin/coroutines/CoroutineContext;
 	public fun <init> (Lkotlin/coroutines/CoroutineContext;Z)V
 	public synthetic fun <init> (Lkotlin/coroutines/CoroutineContext;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -65,6 +65,22 @@ public class kotlinx/coroutines/CancellableContinuationImpl : java/lang/Runnable
 
 public final class kotlinx/coroutines/CancellableContinuationKt {
 	public static final fun disposeOnCancellation (Lkotlinx/coroutines/CancellableContinuation;Lkotlinx/coroutines/DisposableHandle;)V
+}
+
+public abstract interface class kotlinx/coroutines/ChildHandle : kotlinx/coroutines/DisposableHandle {
+	public abstract fun childCancelled (Ljava/lang/Throwable;)Z
+}
+
+public abstract interface class kotlinx/coroutines/ChildJob : kotlinx/coroutines/Job {
+	public abstract fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
+}
+
+public final class kotlinx/coroutines/ChildJob$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/ChildJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/ChildJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/ChildJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/ChildJob;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/ChildJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
 public abstract interface class kotlinx/coroutines/CompletableDeferred : kotlinx/coroutines/Deferred {
@@ -307,6 +323,41 @@ public final class kotlinx/coroutines/JobKt {
 	public static final fun isActive (Lkotlin/coroutines/CoroutineContext;)Z
 }
 
+public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
+	public fun <init> (Z)V
+	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
+	public fun cancel ()Z
+	public fun cancel (Ljava/lang/Throwable;)Z
+	public fun childCancelled (Ljava/lang/Throwable;)Z
+	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public final fun getCancellationException ()Ljava/util/concurrent/CancellationException;
+	protected fun getCancelsParent ()Z
+	public fun getChildJobCancellationCause ()Ljava/lang/Throwable;
+	public final fun getChildren ()Lkotlin/sequences/Sequence;
+	protected final fun getCompletionCause ()Ljava/lang/Throwable;
+	public final fun getCompletionExceptionOrNull ()Ljava/lang/Throwable;
+	protected fun getHandlesException ()Z
+	public final fun getKey ()Lkotlin/coroutines/CoroutineContext$Key;
+	public final fun getOnJoin ()Lkotlinx/coroutines/selects/SelectClause0;
+	protected fun handleJobException (Ljava/lang/Throwable;)V
+	public final fun invokeOnCompletion (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
+	public final fun invokeOnCompletion (ZZLkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/DisposableHandle;
+	public fun isActive ()Z
+	public final fun isCancelled ()Z
+	public final fun isCompleted ()Z
+	public final fun isCompletedExceptionally ()Z
+	public final fun join (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	protected fun onCancellation (Ljava/lang/Throwable;)V
+	public final fun parentCancelled (Lkotlinx/coroutines/ParentJob;)V
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public final fun registerSelectClause0 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function1;)V
+	public final fun start ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract class kotlinx/coroutines/MainCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher {
 	public fun <init> ()V
 	public abstract fun getImmediate ()Lkotlinx/coroutines/MainCoroutineDispatcher;
@@ -338,6 +389,18 @@ public final class kotlinx/coroutines/NonDisposableHandle : kotlinx/coroutines/C
 }
 
 public abstract interface annotation class kotlinx/coroutines/ObsoleteCoroutinesApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class kotlinx/coroutines/ParentJob : kotlinx/coroutines/Job {
+	public abstract fun getChildJobCancellationCause ()Ljava/lang/Throwable;
+}
+
+public final class kotlinx/coroutines/ParentJob$DefaultImpls {
+	public static fun fold (Lkotlinx/coroutines/ParentJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/ParentJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/ParentJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/ParentJob;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/ParentJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 }
 
 public final class kotlinx/coroutines/RunnableKt {

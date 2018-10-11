@@ -29,6 +29,7 @@ class CoroutinesJvmTest : TestBase() {
             // create a child that already completed
             val child = launch(start = CoroutineStart.UNDISPATCHED) { /* do nothing */ }
             // attach it manually via internal API
+            @Suppress("DEPRECATION_ERROR")
             parent.attachChild(child as ChildJob)
         }
         parent.cancelAndJoin() // cancel parent, make sure no stack overflow

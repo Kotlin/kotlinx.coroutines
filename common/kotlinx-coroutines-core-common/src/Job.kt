@@ -4,6 +4,7 @@
 
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
@@ -221,7 +222,6 @@ public interface Job : CoroutineContext.Element {
      */
     // ChildJob and ChildHandle are made internal on purpose to further deter 3rd-party impl of Job
     @InternalCoroutinesApi
-    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     public fun attachChild(child: ChildJob): ChildHandle
 
     // ------------ state waiting ------------
@@ -386,7 +386,8 @@ public inline fun DisposableHandle(crossinline block: () -> Unit) =
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ChildJob : Job {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
      * Child finds the cancellation cause using [ParentJob.getChildJobCancellationCause].
@@ -404,7 +405,8 @@ internal interface ChildJob : Job {
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ParentJob : Job {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ParentJob : Job {
     /**
      * Child job is using this method to learn its cancellation cause when the parent cancels it with [ChildJob.parentCancelled].
      * This method is invoked only if the child was not already being cancelled.
@@ -421,7 +423,8 @@ internal interface ParentJob : Job {
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ChildHandle : DisposableHandle {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ChildHandle : DisposableHandle {
     /**
      * Child is cancelling its parent by invoking this method.
      * This method is invoked by the child twice. The first time child report its root cause as soon as possible,

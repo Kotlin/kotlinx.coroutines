@@ -682,7 +682,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
+    public actual final override fun remove(): Boolean = throw UnsupportedOperationException()
 
     public final override fun describeRemove(): Nothing = throw UnsupportedOperationException()
 

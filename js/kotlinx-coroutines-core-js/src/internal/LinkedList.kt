@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("unused")
+
 package kotlinx.coroutines.internal
 
 private typealias Node = LinkedListNode
@@ -154,5 +156,5 @@ public open class LinkedListHead : LinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public final override fun remove() = throw UnsupportedOperationException()
+    public final override fun remove(): Boolean = throw UnsupportedOperationException()
 }

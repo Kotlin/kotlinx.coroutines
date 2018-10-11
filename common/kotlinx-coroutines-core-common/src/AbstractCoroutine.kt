@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
@@ -31,7 +32,6 @@ import kotlin.coroutines.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@Suppress("EXPOSED_SUPER_CLASS")
 @InternalCoroutinesApi
 public abstract class AbstractCoroutine<in T>(
     /**

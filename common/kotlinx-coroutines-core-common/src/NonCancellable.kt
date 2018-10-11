@@ -1,6 +1,7 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
@@ -113,7 +114,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * Always returns [NonDisposableHandle] and does not do anything.
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     @InternalCoroutinesApi
     override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
 }

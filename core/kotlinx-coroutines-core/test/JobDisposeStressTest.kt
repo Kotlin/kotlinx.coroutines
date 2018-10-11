@@ -76,5 +76,6 @@ class JobDisposeStressTest: TestBase() {
         // rethrow exception if any
     }
 
+    @Suppress("DEPRECATION_ERROR")
     private class TestJob : JobSupport(active = true)
 }
