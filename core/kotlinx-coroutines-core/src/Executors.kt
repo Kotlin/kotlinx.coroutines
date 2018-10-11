@@ -34,6 +34,7 @@ public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closea
 /**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
  */
+@JvmName("from") // this is for a nice Java API, see issue #255
 public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
     // we know that an implementation of Executor.asCoroutineDispatcher actually returns a closeable one
     (this as Executor).asCoroutineDispatcher() as ExecutorCoroutineDispatcher

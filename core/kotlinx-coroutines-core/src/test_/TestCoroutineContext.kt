@@ -193,7 +193,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
     private fun processNextEvent(): Long {
         val current = queue.peek()
         if (current != null) {
-            /** Automatically advance time for [EventLoop]-callbacks */
+            // Automatically advance time for EventLoop callbacks
             triggerActions(current.time)
         }
         return if (queue.isEmpty) Long.MAX_VALUE else 0L

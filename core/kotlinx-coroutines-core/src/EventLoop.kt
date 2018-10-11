@@ -6,7 +6,6 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
-import java.util.concurrent.locks.*
 import kotlin.coroutines.*
 
 /**
@@ -18,8 +17,7 @@ import kotlin.coroutines.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc references to this interface
-public interface EventLoop: ContinuationInterceptor {
+internal interface EventLoop: ContinuationInterceptor {
     /**
      * Processes next event in this event loop.
      *
@@ -30,28 +28,6 @@ public interface EventLoop: ContinuationInterceptor {
      */
     public fun processNextEvent(): Long
 }
-
-/**
- * Creates a new event loop that is bound the specified [thread] (current thread by default) and
- * stops accepting new events when [parentJob] completes. Every continuation that is scheduled
- * onto this event loop unparks the specified thread via [LockSupport.unpark].
- *
- * The main event-processing loop using the resulting `eventLoop` object should look like this:
- * ```
- * while (needsToBeRunning) {
- *     if (Thread.interrupted()) break // or handle somehow
- *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
- * }
- * ```
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-@Suppress("FunctionName")
-@InternalCoroutinesApi
-public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): EventLoop =
-    EventLoopImpl(thread).apply {
-        if (parentJob != null) initParentJob(parentJob)
-    }
 
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
@@ -359,17 +335,6 @@ internal abstract class ThreadEventLoop(
         while (processNextEvent() <= 0) { /* spin */ }
         // reschedule the rest of delayed tasks
         rescheduleAllDelayed()
-    }
-}
-
-private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
-    private var parentJob: Job? = null
-
-    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
-
-    fun initParentJob(parentJob: Job) {
-        require(this.parentJob == null)
-        this.parentJob = parentJob
     }
 }
 

@@ -235,23 +235,6 @@ public abstract interface class kotlinx/coroutines/DisposableHandle {
 	public abstract fun dispose ()V
 }
 
-public abstract interface class kotlinx/coroutines/EventLoop : kotlin/coroutines/ContinuationInterceptor {
-	public abstract fun processNextEvent ()J
-}
-
-public final class kotlinx/coroutines/EventLoop$DefaultImpls {
-	public static fun fold (Lkotlinx/coroutines/EventLoop;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public static fun get (Lkotlinx/coroutines/EventLoop;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
-	public static fun minusKey (Lkotlinx/coroutines/EventLoop;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
-	public static fun plus (Lkotlinx/coroutines/EventLoop;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
-	public static fun releaseInterceptedContinuation (Lkotlinx/coroutines/EventLoop;Lkotlin/coroutines/Continuation;)V
-}
-
-public final class kotlinx/coroutines/EventLoopKt {
-	public static final fun EventLoop (Ljava/lang/Thread;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/EventLoop;
-	public static synthetic fun EventLoop$default (Ljava/lang/Thread;Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/EventLoop;
-}
-
 public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, java/io/Closeable {
 	public fun <init> ()V
 	public abstract fun close ()V
@@ -259,8 +242,8 @@ public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/c
 }
 
 public final class kotlinx/coroutines/ExecutorsKt {
-	public static final fun asCoroutineDispatcher (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/ExecutorCoroutineDispatcher;
 	public static final fun from (Ljava/util/concurrent/Executor;)Lkotlinx/coroutines/CoroutineDispatcher;
+	public static final fun from (Ljava/util/concurrent/ExecutorService;)Lkotlinx/coroutines/ExecutorCoroutineDispatcher;
 }
 
 public abstract interface annotation class kotlinx/coroutines/ExperimentalCoroutinesApi : java/lang/annotation/Annotation {
