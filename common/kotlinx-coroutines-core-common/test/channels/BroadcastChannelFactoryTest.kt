@@ -4,10 +4,11 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.*
 import kotlin.test.*
 
 
-class BroadcastChannelFactoryTest {
+class BroadcastChannelFactoryTest : TestBase() {
 
     @Test
     fun testRendezvousChannelNotSupported() {

@@ -16,7 +16,7 @@ import kotlin.coroutines.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: Remove references from other docs
+@InternalCoroutinesApi
 public interface Delay {
     /**
      * Delays coroutine for a given time without blocking a thread and resumes it after a specified time.
@@ -65,9 +65,7 @@ public interface Delay {
  *
  * Note, that delay can be used in [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * This function delegates to [Delay.scheduleResumeAfterDelay] if the context [CoroutineDispatcher]
- * implements [Delay] interface, otherwise it resumes using a built-in single-threaded scheduled executor service.
- *
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  * @param timeMillis time in milliseconds.
  */
 public suspend fun delay(timeMillis: Long) {

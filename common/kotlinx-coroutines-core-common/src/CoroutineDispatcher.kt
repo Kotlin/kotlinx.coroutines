@@ -103,7 +103,7 @@ public abstract class CoroutineDispatcher :
     )
     public operator fun plus(other: CoroutineDispatcher) = other
 
-    // for nicer debugging
+    /** @suppress for nicer debugging */
     override fun toString(): String = "$classSimpleName@$hexAddress"
 }
 

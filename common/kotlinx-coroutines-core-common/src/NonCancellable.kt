@@ -5,12 +5,11 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 
 /**
- * A non-cancelable job that is always [active][isActive]. It is designed for [withContext] function
+ * A non-cancelable job that is always [active][Job.isActive]. It is designed for [withContext] function
  * to prevent cancellation of code blocks that need to be executed without cancellation.
  *
  * Use it like this:
@@ -26,7 +25,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    override val isActive: Boolean  get() = true
+    override val isActive: Boolean get() = true
 
     /**
      * Always returns `false`.

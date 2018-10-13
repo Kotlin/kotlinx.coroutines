@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+/** @suppress */
 public expect interface Runnable {
     public fun run()
 }

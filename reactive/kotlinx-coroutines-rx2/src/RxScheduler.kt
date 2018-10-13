@@ -5,16 +5,13 @@
 package kotlinx.coroutines.rx2
 
 import io.reactivex.Scheduler
-import kotlinx.coroutines.CancellableContinuation
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Delay
-import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher]
- * and provides native [delay][Delay.delay] support.
+ * and provides native support of [delay] and [withTimeout].
  */
 public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
 

@@ -342,7 +342,7 @@ public interface ChannelIterator<out E> {
  *   while previously sent elements **are lost**.
  *   Sender to this channel never suspends and [offer] always returns `true`.
  *
- * * When `capacity` is positive, but less than [UNLIMITED] -- it creates [ArrayChannel].
+ * * When `capacity` is positive, but less than [UNLIMITED] -- it creates array-based channel with given capacity.
  *   This channel has an array buffer of a fixed `capacity`.
  *   Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
  */

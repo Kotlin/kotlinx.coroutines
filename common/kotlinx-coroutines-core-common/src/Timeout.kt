@@ -20,8 +20,7 @@ import kotlin.coroutines.intrinsics.*
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
- * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -42,8 +41,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
- * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  *
  * @param timeMillis timeout time in milliseconds.
  */

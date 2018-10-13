@@ -101,7 +101,7 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
+ * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion])
  * @param block the coroutine code.
  */
 @ObsoleteCoroutinesApi

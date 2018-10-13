@@ -27,8 +27,10 @@ public val Dispatchers.JavaFx: JavaFxDispatcher
  */
 public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 
+    /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) = Platform.runLater(block)
 
+    /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             with(continuation) { resumeUndispatched(Unit) }
@@ -36,6 +38,7 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
         continuation.invokeOnCancellation { timeline.stop() }
     }
 
+    /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val timeline = schedule(timeMillis, TimeUnit.MILLISECONDS, EventHandler {
             block.run()

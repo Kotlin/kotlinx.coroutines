@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
+ * @suppress
  */
 public actual class CompletionHandlerException public actual constructor(
     message: String,

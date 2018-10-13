@@ -103,7 +103,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 // --------------- Configure sub-projects that are part of the library ---------------
 
-def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
 
 // Reconfigure source sets to avoid long "src/main/kotlin/fqn"
 configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {

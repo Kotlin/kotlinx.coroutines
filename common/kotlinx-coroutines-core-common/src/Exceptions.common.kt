@@ -4,6 +4,9 @@
 
 package kotlinx.coroutines
 
+/**
+ * @suppress **This an internal API and should not be used from general code.**
+ */
 @InternalCoroutinesApi
 public expect class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException
 

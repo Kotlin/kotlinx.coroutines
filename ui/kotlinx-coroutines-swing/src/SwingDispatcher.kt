@@ -24,8 +24,10 @@ public val Dispatchers.Swing : SwingDispatcher
  * This class provides type-safety and a point for future extensions.
  */
 public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
+    /** @suppress */
     override fun dispatch(context: CoroutineContext, block: Runnable) = SwingUtilities.invokeLater(block)
 
+    /** @suppress */
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             with(continuation) { resumeUndispatched(Unit) }
@@ -33,6 +35,7 @@ public sealed class SwingDispatcher : MainCoroutineDispatcher(), Delay {
         continuation.invokeOnCancellation { timer.stop() }
     }
 
+    /** @suppress */
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
         val timer = schedule(timeMillis, TimeUnit.MILLISECONDS, ActionListener {
             block.run()

@@ -58,7 +58,6 @@ import kotlin.coroutines.*
  * ```
  */
 public interface CoroutineScope {
-
     /**
      * Context of this scope.
      */
