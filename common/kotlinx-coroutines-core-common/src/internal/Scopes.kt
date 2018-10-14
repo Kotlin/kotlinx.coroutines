@@ -6,6 +6,7 @@ package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * This is a coroutine instance that is created by [coroutineScope] builder.

@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")

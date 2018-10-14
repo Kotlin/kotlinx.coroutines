@@ -11,6 +11,7 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.

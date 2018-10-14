@@ -12,6 +12,7 @@ import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.sync.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Scope for [select] invocation.

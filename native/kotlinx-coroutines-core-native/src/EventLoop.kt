@@ -311,7 +311,6 @@ private class EventLoopImpl : EventLoopBase() {
 }
 
 internal class BlockingEventLoop : EventLoopBase() {
-    @Volatile
     public override var isCompleted: Boolean = false
 }
 

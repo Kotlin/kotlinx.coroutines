@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Abstract send channel. It is a base class for all send channel implementations.

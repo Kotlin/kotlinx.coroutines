@@ -5,8 +5,8 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values

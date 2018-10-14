@@ -6,6 +6,7 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Channel with array buffer of a fixed [capacity].

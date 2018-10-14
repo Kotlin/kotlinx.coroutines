@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 internal fun <T> Result<T>.toState(): Any? =
     if (isSuccess) getOrThrow() else CompletedExceptionally(exceptionOrNull()!!) // todo: need to do it better

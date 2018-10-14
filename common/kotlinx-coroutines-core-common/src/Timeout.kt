@@ -4,11 +4,11 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws

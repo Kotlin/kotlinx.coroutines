@@ -7,6 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].

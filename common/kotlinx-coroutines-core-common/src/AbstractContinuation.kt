@@ -5,9 +5,9 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1

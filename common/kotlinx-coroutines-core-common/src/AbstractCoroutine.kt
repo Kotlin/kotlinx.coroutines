@@ -6,9 +6,9 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.CoroutineStart.*
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Abstract base class for implementation of coroutines in coroutine builders.
@@ -37,6 +37,7 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * Context of the parent coroutine.
      */
+
     @JvmField
     protected val parentContext: CoroutineContext,
     active: Boolean = true

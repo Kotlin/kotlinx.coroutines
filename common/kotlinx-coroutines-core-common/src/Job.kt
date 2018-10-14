@@ -8,9 +8,9 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
+import kotlin.jvm.*
 
 // --------------- core job interfaces ---------------
 

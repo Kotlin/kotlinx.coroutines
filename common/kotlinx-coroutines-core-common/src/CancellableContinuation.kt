@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 // --------------- cancellable continuations ---------------
 
