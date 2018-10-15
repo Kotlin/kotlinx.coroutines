@@ -28,6 +28,12 @@ configurations {
     }
 }
 
+sourceSets {
+    test {
+        resources.srcDirs = ["test/resources"]
+    }
+}
+
 dependencies {
     registerTransform {
         from.attribute(attr, "aar")
@@ -37,8 +43,6 @@ dependencies {
     aar("androidx.lifecycle:lifecycle-common:$androidx_lifecycle_version")
     aarTest("androidx.lifecycle:lifecycle-runtime:$androidx_lifecycle_version")
     api project(":kotlinx-coroutines-android")
-    testImplementation 'com.google.android:android:4.1.1.4'
-    testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
 }
 
 tasks.withType(dokka.getClass()) {

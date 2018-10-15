@@ -5,19 +5,13 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.TestBase
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.coroutines.experimental.suspendCoroutine
+import kotlin.test.*
 
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [28])
 class LifecycleTest : TestBase() {
 
-    @Test fun testLifecycleDefaultScopeUsesDefaultJob() = runTest {
+    @Test
+    fun testLifecycleDefaultScopeUsesDefaultJob() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         val lifecycleJob = lifecycle.job
@@ -26,14 +20,16 @@ class LifecycleTest : TestBase() {
         lifecycle.markState(Lifecycle.State.DESTROYED)
     }
 
-    @Test fun testLifecycleJobIsCached() = runTest {
+    @Test
+    fun testLifecycleJobIsCached() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         assertSame(lifecycle.job, lifecycle.job)
         lifecycle.markState(Lifecycle.State.DESTROYED)
     }
 
-    @Test fun testLifecycleOnDestroyCancelsJob() = runTest {
+    @Test
+    fun testLifecycleOnDestroyCancelsJob() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         val job = lifecycle.job
@@ -44,17 +40,26 @@ class LifecycleTest : TestBase() {
         assertTrue(job.isActive)
         assertFalse(job.isCancelled)
         lifecycle.markState(Lifecycle.State.DESTROYED)
-        assertFalse(job.isActive)
+        suspendCoroutine<Unit> { c ->
+            job.invokeOnCompletion { c.resume(Unit) }
+        }
         assertTrue(job.isCancelled)
+        assertFalse(job.isActive)
     }
 
-    @Test fun testAlreadyDestroyedLifecycleMakesCancelledJob() = runTest {
+    @Test
+    fun testAlreadyDestroyedLifecycleMakesCancelledJob() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         lifecycle.markState(Lifecycle.State.DESTROYED)
         val job = lifecycle.job
         assertFalse(job.isActive)
         assertTrue(job.isCancelled)
+    }
+
+    @AfterTest
+    fun closeTestMainDispatcher() {
+        TestMainDispatcher.default.close()
     }
 
     private class TestLifecycleOwner : LifecycleOwner {
