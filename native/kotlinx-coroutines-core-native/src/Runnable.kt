@@ -11,6 +11,9 @@ public actual interface Runnable {
     public actual fun run()
 }
 
+/**
+ * Creates [Runnable] task instance.
+ */
 @Suppress("FunctionName")
 public actual inline fun Runnable(crossinline block: () -> Unit): Runnable =
     object : Runnable {
