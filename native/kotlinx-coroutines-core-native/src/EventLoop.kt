@@ -18,7 +18,7 @@ import kotlin.system.*
  * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
  */
-public interface EventLoop {
+internal interface EventLoop {
     /**
      * Processes next event in this event loop.
      *
@@ -34,7 +34,7 @@ public interface EventLoop {
  * Creates a new event loop.
  */
 @Suppress("FunctionName")
-public fun EventLoop(parentJob: Job? = null): CoroutineDispatcher =
+internal fun EventLoop(parentJob: Job? = null): CoroutineDispatcher =
     EventLoopImpl().apply {
         if (parentJob != null) initParentJob(parentJob)
     }
