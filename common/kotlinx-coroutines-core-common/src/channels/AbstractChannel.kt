@@ -677,8 +677,6 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
     }
 
-    public final override fun iterator(): ChannelIterator<E> = Itr(this)
-
     // ------ registerSelectReceive ------
 
     /**
@@ -840,65 +838,6 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         override fun toString(): String = "RemoveReceiveOnCancel[$receive]"
     }
 
-    private class Itr<E>(val channel: AbstractChannel<E>) : ChannelIterator<E> {
-        var result: Any? = POLL_FAILED // E | POLL_FAILED | Closed
-
-        override suspend fun hasNext(): Boolean {
-            // check for repeated hasNext
-            if (result !== POLL_FAILED) return hasNextResult(result)
-            // fast path -- try poll non-blocking
-            result = channel.pollInternal()
-            if (result !== POLL_FAILED) return hasNextResult(result)
-            // slow-path does suspend
-            return hasNextSuspend()
-        }
-
-        private fun hasNextResult(result: Any?): Boolean {
-            if (result is Closed<*>) {
-                if (result.closeCause != null) throw result.receiveException
-                return false
-            }
-            return true
-        }
-
-        private suspend fun hasNextSuspend(): Boolean = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
-            val receive = ReceiveHasNext(this, cont)
-            while (true) {
-                if (channel.enqueueReceive(receive)) {
-                    cont.initCancellability() // make it properly cancellable
-                    channel.removeReceiveOnCancel(cont, receive)
-                    return@sc
-                }
-                // hm... something is not right. try to poll
-                val result = channel.pollInternal()
-                this.result = result
-                if (result is Closed<*>) {
-                    if (result.closeCause == null)
-                        cont.resume(false)
-                    else
-                        cont.resumeWithException(result.receiveException)
-                    return@sc
-                }
-                if (result !== POLL_FAILED) {
-                    cont.resume(true)
-                    return@sc
-                }
-            }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        override suspend fun next(): E {
-            val result = this.result
-            if (result is Closed<*>) throw result.receiveException
-            if (result !== POLL_FAILED) {
-                this.result = POLL_FAILED
-                return result as E
-            }
-            // rare case when hasNext was not invoked yet -- just delegate to receive (leave state as is)
-            return channel.receive()
-        }
-    }
-
     private class ReceiveElement<in E>(
         @JvmField val cont: CancellableContinuation<E?>,
         @JvmField val nullOnClose: Boolean
@@ -912,45 +851,6 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 cont.resumeWithException(closed.receiveException)
         }
         override fun toString(): String = "ReceiveElement[$cont,nullOnClose=$nullOnClose]"
-    }
-
-    private class ReceiveHasNext<E>(
-        @JvmField val iterator: Itr<E>,
-        @JvmField val cont: CancellableContinuation<Boolean>
-    ) : Receive<E>() {
-        override fun tryResumeReceive(value: E, idempotent: Any?): Any? {
-            val token = cont.tryResume(true, idempotent)
-            if (token != null) {
-                /*
-                   When idempotent != null this invocation can be stale and we cannot directly update iterator.result
-                   Instead, we save both token & result into a temporary IdempotentTokenValue object and
-                   set iterator result only in completeResumeReceive that is going to be invoked just once
-                 */
-                if (idempotent != null) return IdempotentTokenValue(token, value)
-                iterator.result = value
-            }
-            return token
-        }
-
-        override fun completeResumeReceive(token: Any) {
-            if (token is IdempotentTokenValue<*>) {
-                iterator.result = token.value
-                cont.completeResume(token.token)
-            } else
-                cont.completeResume(token)
-        }
-
-        override fun resumeReceiveClosed(closed: Closed<*>) {
-            val token = if (closed.closeCause == null)
-                cont.tryResume(false)
-            else
-                cont.tryResumeWithException(closed.receiveException)
-            if (token != null) {
-                iterator.result = closed
-                cont.completeResume(token)
-            }
-        }
-        override fun toString(): String = "ReceiveHasNext[$cont]"
     }
 
     private inner class ReceiveSelect<R, in E>(

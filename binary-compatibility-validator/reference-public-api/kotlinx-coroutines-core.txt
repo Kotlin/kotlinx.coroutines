@@ -477,6 +477,10 @@ public abstract interface class kotlinx/coroutines/channels/ChannelIterator {
 	public abstract fun next (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class kotlinx/coroutines/channels/ChannelIteratorKt {
+	public static final fun iterator (Lkotlinx/coroutines/channels/ReceiveChannel;)Lkotlinx/coroutines/channels/ChannelIterator;
+}
+
 public final class kotlinx/coroutines/channels/ChannelKt {
 	public static final fun Channel (I)Lkotlinx/coroutines/channels/Channel;
 	public static synthetic fun Channel$default (IILjava/lang/Object;)Lkotlinx/coroutines/channels/Channel;
@@ -643,7 +647,6 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun getOnReceiveOrNull ()Lkotlinx/coroutines/selects/SelectClause1;
 	public abstract fun isClosedForReceive ()Z
 	public abstract fun isEmpty ()Z
-	public abstract fun iterator ()Lkotlinx/coroutines/channels/ChannelIterator;
 	public abstract fun poll ()Ljava/lang/Object;
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
