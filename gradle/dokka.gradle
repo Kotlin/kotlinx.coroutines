@@ -52,9 +52,10 @@ if (platform == "jvm") {
         dokka {
             kotlinTasks { [] }
             suppressedModifiers = ['actual']
-            // map for JS & Common sources
+            // map for JS, Native, and Common sources
             makeLinkMapping(it, projectDir)
             makeLinkMapping(it, rootProject.file("js/$project.name-js"))
+            makeLinkMapping(it, rootProject.file("native/$project.name-native"))
             makeLinkMapping(it, rootProject.file("common/$project.name-common"))
             // source roots
             impliedPlatforms = ['JVM', 'JS', 'Native']
@@ -72,15 +73,6 @@ if (platform == "jvm") {
             }
             sourceRoot {
                 path = rootProject.file("common/$project.name-common/src")
-            }
-            // depends on other platforms, too
-            afterEvaluate {
-                dependsOn(tasks.getByPath(":$project.name:classes"))
-                dependsOn(tasks.getByPath(":$project.name-js:classes"))
-                dependsOn(tasks.getByPath(":$project.name-common:classes"))
-                dependsOn(project.configurations.dokkaStubs)
-                dependsOn(project.configurations.compileClasspath)
-                classpath = project.configurations.dokkaStubs.files + project.configurations.compileClasspath.files + project.sourceSets.main.output.files
             }
         }
     }
