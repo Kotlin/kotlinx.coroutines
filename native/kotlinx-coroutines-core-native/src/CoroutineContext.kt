@@ -44,6 +44,6 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 // No debugging facilities on native
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T = block()
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on native

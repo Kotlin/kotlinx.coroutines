@@ -37,7 +37,7 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, 
  */
 internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
     startDirect(completion) {
-        withCoroutineContext(completion.context) {
+        withCoroutineContext(completion.context, null) {
             startCoroutineUninterceptedOrReturn(completion)
         }
     }
@@ -50,7 +50,7 @@ internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Contin
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     startDirect(completion) {
-        withCoroutineContext(completion.context) {
+        withCoroutineContext(completion.context, null) {
             startCoroutineUninterceptedOrReturn(receiver, completion)
         }
     }
