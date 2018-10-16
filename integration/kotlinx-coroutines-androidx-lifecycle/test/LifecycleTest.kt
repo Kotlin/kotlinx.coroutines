@@ -77,6 +77,7 @@ class LifecycleTest : TestBase() {
                 expectUnreached()
             } catch (e: CancellationException) {
                 expect(3)
+                throw e
             } finally {
                 expect(4)
             }
