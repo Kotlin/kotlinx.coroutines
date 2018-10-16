@@ -71,15 +71,21 @@ class LifecycleTest : TestBase() {
         val scope = lifecycle.createScope(Lifecycle.State.STARTED)
         expect(1)
         val testJob = scope.launch {
-            expect(2)
-            delay(Long.MAX_VALUE)
-            expectUnreached()
+            try {
+                expect(2)
+                delay(Long.MAX_VALUE)
+                expectUnreached()
+            } catch (e: CancellationException) {
+                expect(3)
+            } finally {
+                expect(4)
+            }
         }
         lifecycle.markState(Lifecycle.State.CREATED)
         testJob.join()
+        finish(5)
         assertFalse(scope.isActive)
         lifecycle.markState(Lifecycle.State.DESTROYED)
-        finish(3)
     }
 
     @AfterTest
