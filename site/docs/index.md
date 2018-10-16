@@ -23,6 +23,7 @@ Library support for Kotlin coroutines. This reference is a companion to
 | [kotlinx-coroutines-guava](kotlinx-coroutines-guava)                 | Integration with Guava [ListenableFuture](https://github.com/google/guava/wiki/ListenableFutureExplained) |
 | [kotlinx-coroutines-slf4j](kotlinx-coroutines-slf4j)                 | Integration with SLF4J [MDC](https://logback.qos.ch/manual/mdc.html) |
 | [kotlinx-coroutines-play-services](kotlinx-coroutines-play-services) | Integration with Google Play Services [Tasks API](https://developers.google.com/android/guides/tasks) |
+| [kotlinx-coroutines-androidx-lifecycle](kotlinx-coroutines-androidx-lifecycle) | Integration with AndroidX [Lifecycle](https://developer.android.com/reference/kotlin/androidx/lifecycle/Lifecycle) and [LifecycleOwner](https://developer.android.com/reference/kotlin/androidx/lifecycle/LifecycleOwner) |
 
 ## Examples
 
