@@ -24,6 +24,7 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     override lateinit var coroutineContext: CoroutineContext
     var closeable: Closeable? = null
 
+    @UseExperimental(InternalCoroutinesApi::class)
     @Setup
     open fun setup() {
         coroutineContext = when {

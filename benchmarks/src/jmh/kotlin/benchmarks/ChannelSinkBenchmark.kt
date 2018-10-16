@@ -21,12 +21,12 @@ open class ChannelSinkBenchmark {
     @Benchmark
     fun channelPipeline(): Int = runBlocking {
         Channel
-            .range(1, 1_000_000, Unconfined)
-            .filter(Unconfined) { it % 4 == 0 }
+            .range(1, 1_000_000, Dispatchers.Unconfined)
+            .filter(Dispatchers.Unconfined) { it % 4 == 0 }
             .fold(0) { a, b -> a + b }
     }
 
-    private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) = produce(context) {
+    private fun Channel.Factory.range(start: Int, count: Int, context: CoroutineContext) = GlobalScope.produce(context) {
         for (i in start until (start + count))
             send(i)
     }
