@@ -47,7 +47,7 @@ dependencies {
 
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
-        url = new URL("https://developer.android.com/reference/kotlin/androidx/")
+        url = new URL("https://developer.android.com/reference/androidx/")
     }
 }
 
