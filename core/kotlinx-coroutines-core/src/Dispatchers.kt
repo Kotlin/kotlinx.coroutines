@@ -8,8 +8,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import kotlin.coroutines.*
 import java.util.*
+import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -20,7 +20,6 @@ public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.paralleli
  * Groups various implementations of [CoroutineDispatcher].
  */
 public actual object Dispatchers {
-
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
@@ -95,7 +94,21 @@ private object MainDispatcherLoader {
     val dispatcher: MainCoroutineDispatcher =
         MainDispatcherFactory::class.java.let { clz ->
             ServiceLoader.load(clz, clz.classLoader).toList()
-        }.maxBy { it.loadPriority }?.tryCreateDispatcher() ?: MissingMainCoroutineDispatcher(null)
+        }.maxBy { it.loadPriority }?.tryCreateDispatcher()
+            ?: (tryLoadAndroidDispatcher() ?: MissingMainCoroutineDispatcher(null))
+
+    private fun tryLoadAndroidDispatcher(): MainCoroutineDispatcher? {
+        /*
+         * Latest Android toolchain (androidx) *sometimes* mangles the name of the service loaded by ServiceLoader even if
+         * it is present in the manifest. To workaround it (we don't want our users to suffer) we optimistically
+         * try to load android factory manually (implementation is not mangled because it is marked with @Keep)
+         */
+        val dispatcher = kotlin.runCatching {
+            val clazz = Class.forName("kotlinx.coroutines.android.AndroidDispatcherFactory")
+            clazz.getMethod("getDispatcher")?.invoke(null) as MainCoroutineDispatcher
+        }
+        return dispatcher.getOrNull()
+    }
 
     /**
      * If anything goes wrong while trying to create main dispatcher (class not found,

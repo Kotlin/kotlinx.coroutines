@@ -33,6 +33,11 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 
 @Keep
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
+    companion object {
+        @JvmStatic // accessed reflectively from core
+        fun getDispatcher(): MainCoroutineDispatcher = Main
+    }
+
     override fun createDispatcher(): MainCoroutineDispatcher = Main
 
     override val loadPriority: Int
