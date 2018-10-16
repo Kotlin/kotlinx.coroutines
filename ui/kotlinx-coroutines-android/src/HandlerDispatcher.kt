@@ -128,9 +128,11 @@ public class HandlerContext private constructor(
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        handler.postDelayed({
+        val block = Runnable {
             with(continuation) { resumeUndispatched(Unit) }
-        }, timeMillis.coerceAtMost(MAX_DELAY))
+        }
+        handler.postDelayed(block, timeMillis.coerceAtMost(MAX_DELAY))
+        continuation.invokeOnCancellation { handler.removeCallbacks(block) }
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
