@@ -594,7 +594,7 @@ are not bound to any particular thread, it is hard to achieve it manually withou
 
 For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html), 
 [asContextElement] extension function is here for the rescue. It creates an additional context element, 
-which keep the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
+which keeps the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
 
 It is easy to demonstrate it in action:
 
