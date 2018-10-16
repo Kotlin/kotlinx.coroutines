@@ -2,7 +2,8 @@ package kotlinx.coroutines.experimental.androidx.lifecycle
 
 import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Lifecycle.Event.*
+import androidx.lifecycle.Lifecycle.State.DESTROYED
+import androidx.lifecycle.Lifecycle.State.INITIALIZED
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Dispatchers
@@ -10,21 +11,22 @@ import kotlinx.coroutines.experimental.Job
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Creates a [Job] that will be cancelled when the [Lifecycle] encounters [cancelEvent]
- * (which defaults to [ON_DESTROY]).
+ * Creates a [Job] that will be cancelled as soon as this [Lifecycle]
+ * [currentState][Lifecycle.getCurrentState] is no longer [at least][Lifecycle.State.isAtLeast] the
+ * passed [activeWhile] state.
  *
- * Note that [cancelEvent] supports only "**down**" events. That means that only [ON_PAUSE],
- * [ON_STOP] and [ON_DESTROY] are supported.
- *
- * If the [Lifecycle] is already destroyed, then the returned [Job] comes already cancelled.
+ * **Beware**: if the current state is lower than the passed [activeWhile] state, you'll get an
+ * already cancelled job.
  */
-fun Lifecycle.createJob(cancelEvent: Lifecycle.Event = ON_DESTROY): Job {
-    require(cancelEvent in allowedCancelEvents) { "$cancelEvent is forbidden for createJob(…)." }
+fun Lifecycle.createJob(activeWhile: Lifecycle.State = INITIALIZED): Job {
+    require(activeWhile != Lifecycle.State.DESTROYED) {
+        "DESTROYED is a terminal state that is forbidden for createJob(…), to avoid leaks."
+    }
     return Job().also { job ->
-        if (currentState == Lifecycle.State.DESTROYED) job.cancel()
+        if (!currentState.isAtLeast(activeWhile)) job.cancel()
         else addObserver(object : GenericLifecycleObserver {
             override fun onStateChanged(source: LifecycleOwner?, event: Lifecycle.Event) {
-                if (event == cancelEvent) {
+                if (!currentState.isAtLeast(activeWhile)) {
                     removeObserver(this)
                     job.cancel()
                 }
@@ -33,7 +35,6 @@ fun Lifecycle.createJob(cancelEvent: Lifecycle.Event = ON_DESTROY): Job {
     }
 }
 
-private val allowedCancelEvents = arrayOf(ON_PAUSE, ON_STOP, ON_DESTROY)
 private val lifecycleJobs = ConcurrentHashMap<Lifecycle, Job>()
 
 /**
@@ -78,10 +79,14 @@ val Lifecycle.coroutineScope: CoroutineScope
 inline val LifecycleOwner.coroutineScope get() = lifecycle.coroutineScope
 
 /**
- * Returns a [CoroutineScope] that uses [Dispatchers.Main] by default, and that is cancelled when
- * the [Lifecycle] encounters the passed [cancelEvent].
+ * Returns a [CoroutineScope] that uses [Dispatchers.Main] by default, and that will be cancelled as
+ * soon as this [Lifecycle] [currentState][Lifecycle.getCurrentState] is no longer
+ * [at least][Lifecycle.State.isAtLeast] the passed [activeWhile] state.
+ *
+ * **Beware**: if the current state is lower than the passed [activeWhile] state, you'll get an
+ * already cancelled scope.
  */
-fun Lifecycle.createScope(cancelEvent: Lifecycle.Event): CoroutineScope {
-    if (cancelEvent == ON_DESTROY) return coroutineScope
-    return CoroutineScope(createJob(cancelEvent) + Dispatchers.Main)
+fun Lifecycle.createScope(activeWhile: Lifecycle.State): CoroutineScope {
+    if (activeWhile == DESTROYED) return coroutineScope
+    return CoroutineScope(createJob(activeWhile) + Dispatchers.Main)
 }

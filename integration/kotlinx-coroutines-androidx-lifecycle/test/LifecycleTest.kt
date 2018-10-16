@@ -3,8 +3,7 @@ package kotlinx.coroutines.experimental.androidx.lifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.suspendCoroutine
 import kotlin.test.*
 
@@ -55,6 +54,32 @@ class LifecycleTest : TestBase() {
         val job = lifecycle.job
         assertFalse(job.isActive)
         assertTrue(job.isCancelled)
+    }
+
+    @Test
+    fun testLifecycleOwnerScopeIsLifecycleScope() = runTest {
+        val lifecycleOwner = TestLifecycleOwner()
+        val lifecycle = lifecycleOwner.lifecycle
+        assertSame(lifecycle.coroutineScope, lifecycleOwner.coroutineScope)
+    }
+
+    @Test
+    fun testScopeIsNotActiveAfterDestroy() = runTest {
+        val lifecycle = TestLifecycleOwner().lifecycle
+        lifecycle.markState(Lifecycle.State.CREATED)
+        lifecycle.markState(Lifecycle.State.STARTED)
+        val scope = lifecycle.createScope(Lifecycle.State.STARTED)
+        expect(1)
+        val testJob = scope.launch {
+            expect(2)
+            delay(Long.MAX_VALUE)
+            expectUnreached()
+        }
+        lifecycle.markState(Lifecycle.State.CREATED)
+        testJob.join()
+        assertFalse(scope.isActive)
+        lifecycle.markState(Lifecycle.State.DESTROYED)
+        finish(3)
     }
 
     @AfterTest
