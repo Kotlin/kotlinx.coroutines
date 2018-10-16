@@ -5,12 +5,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.internal.Symbol
 import kotlinx.coroutines.yield
+import kotlin.jvm.JvmField
 
 /**
  * Iterator for [ReceiveChannel]. Instances of this interface are *not thread-safe* and shall not be used
  * from concurrent coroutines.
  */
-interface ChannelIterator<out E> {
+public interface ChannelIterator<out E> {
     /**
      * Returns `true` if the channel has more elements suspending the caller while this channel
      * [isEmpty][ReceiveChannel.isEmpty] or returns `false` if the channel
@@ -60,7 +61,7 @@ interface ChannelIterator<out E> {
  * Iteration completes normally when the channel is [isClosedForReceive] without cause and
  * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
  */
-operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> {
+public operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> {
     val c = this
     return object: ChannelIterator<E> {
         var result: Any? = NO_RESULT // NO_RESULT | E (next element) | ClosedResult
@@ -71,6 +72,7 @@ operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> {
             // receiving fails in order to process further [hasNext]
             // and [next] invocations properly.
             try {
+                // TODO use `receiveOrClosed` when it is added
                 result = c.receive()
                 return true
             } catch (closedException: ClosedReceiveChannelException) {
@@ -114,6 +116,6 @@ operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> {
 }
 
 private val NO_RESULT = Symbol("NO_RESULT")
-private class ClosedResult(val cause: Throwable?) {
+private class ClosedResult(@JvmField val cause: Throwable?) {
     val receiveException: Throwable get() = cause ?: ClosedReceiveChannelException(DEFAULT_CLOSE_MESSAGE)
 }

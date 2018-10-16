@@ -230,6 +230,16 @@ public interface ReceiveChannel<out E> {
     public fun poll(): E?
 
     /**
+     * Returns new iterator to receive elements from this channels using `for` loop.
+     * Iteration completes normally when the channel is [isClosedForReceive] without cause and
+     * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
+     */
+    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @Deprecated(message = "Use extension function ReceiveChannel<E>.iterator() instead", level = DeprecationLevel.HIDDEN)
+    @kotlin.internal.LowPriorityInOverloadResolution
+    public operator fun iterator(): ChannelIterator<E> = iterator()
+
+    /**
      * Cancels reception of remaining elements from this channel. This function closes the channel
      * and removes all buffered sent elements from it.
      * This function returns `true` if the channel was not closed previously, or `false` otherwise.

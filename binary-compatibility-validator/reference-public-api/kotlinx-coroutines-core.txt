@@ -439,6 +439,10 @@ public abstract interface class kotlinx/coroutines/channels/ActorScope : kotlinx
 	public abstract fun getChannel ()Lkotlinx/coroutines/channels/Channel;
 }
 
+public final class kotlinx/coroutines/channels/ActorScope$DefaultImpls {
+	public static synthetic fun iterator (Lkotlinx/coroutines/channels/ActorScope;)Lkotlinx/coroutines/channels/ChannelIterator;
+}
+
 public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : kotlinx/coroutines/channels/SendChannel {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun openSubscription ()Lkotlinx/coroutines/channels/ReceiveChannel;
@@ -464,6 +468,10 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 	public static final field Factory Lkotlinx/coroutines/channels/Channel$Factory;
 	public static final field RENDEZVOUS I
 	public static final field UNLIMITED I
+}
+
+public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
+	public static synthetic fun iterator (Lkotlinx/coroutines/channels/Channel;)Lkotlinx/coroutines/channels/ChannelIterator;
 }
 
 public final class kotlinx/coroutines/channels/Channel$Factory {
@@ -647,6 +655,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 	public abstract fun getOnReceiveOrNull ()Lkotlinx/coroutines/selects/SelectClause1;
 	public abstract fun isClosedForReceive ()Z
 	public abstract fun isEmpty ()Z
+	public abstract synthetic fun iterator ()Lkotlinx/coroutines/channels/ChannelIterator;
 	public abstract fun poll ()Ljava/lang/Object;
 	public abstract fun receive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun receiveOrNull (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -654,6 +663,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 
 public final class kotlinx/coroutines/channels/ReceiveChannel$DefaultImpls {
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
+	public static synthetic fun iterator (Lkotlinx/coroutines/channels/ReceiveChannel;)Lkotlinx/coroutines/channels/ChannelIterator;
 }
 
 public abstract interface class kotlinx/coroutines/channels/SendChannel {
