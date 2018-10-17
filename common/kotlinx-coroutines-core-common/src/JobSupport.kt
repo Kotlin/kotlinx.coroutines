@@ -1072,7 +1072,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     internal suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
-        while(true) { // lock-free loop on state
+        while (true) { // lock-free loop on state
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result

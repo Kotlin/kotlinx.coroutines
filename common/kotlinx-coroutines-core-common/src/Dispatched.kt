@@ -9,51 +9,24 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 @Suppress("PrivatePropertyName")
-@JvmField
-internal val UNDEFINED = Symbol("UNDEFINED")
+private val UNDEFINED = Symbol("UNDEFINED")
 
 @NativeThreadLocal
 internal object UndispatchedEventLoop {
     data class State(
         @JvmField var isActive: Boolean = false,
-        @JvmField val threadLocalQueue: ArrayList<Runnable> = ArrayList()
+        @JvmField val threadLocalQueue: ArrayQueue<Runnable> = ArrayQueue()
     )
 
     @JvmField
     internal val state = CommonThreadLocal { State() }
-
-    fun dispatch(block: Runnable) {
-        val state = state.get()
-        if (state.isActive) {
-            state.threadLocalQueue.add(block)
-            return
-        }
-
-        try {
-            state.isActive = true
-            block.run()
-            while (!state.threadLocalQueue.isEmpty()) {
-                val element = state.threadLocalQueue.removeAt(state.threadLocalQueue.lastIndex)
-                element.run()
-            }
-        } catch (e: Throwable) {
-            /*
-             * This exception doesn't happen normally, only if user either submitted throwing runnable
-             * or if we have a bug in implementation. Anyway, reset state of the dispatcher to the initial.
-             */
-            state.threadLocalQueue.clear()
-            throw DispatchException("Unexpected exception in undispatched event loop, clearing pending tasks", e)
-        } finally {
-            state.isActive = false
-        }
-    }
 
     inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, block: () -> Unit) {
         val state = state.get()
         if (state.isActive) {
             continuation._state = contState
             continuation.resumeMode = mode
-            state.threadLocalQueue.add(continuation)
+            state.threadLocalQueue.addLast(continuation)
             return
         }
 
@@ -63,7 +36,7 @@ internal object UndispatchedEventLoop {
     inline fun execute(task: DispatchedTask<*>, block: () -> Unit) {
         val state = state.get()
         if (state.isActive) {
-            state.threadLocalQueue.add(task)
+            state.threadLocalQueue.addLast(task)
             return
         }
 
@@ -74,8 +47,8 @@ internal object UndispatchedEventLoop {
         try {
             state.isActive = true
             block()
-            while (!state.threadLocalQueue.isEmpty()) {
-                val element = state.threadLocalQueue.removeAt(state.threadLocalQueue.lastIndex)
+            while (!state.threadLocalQueue.isEmpty) {
+                val element = state.threadLocalQueue.removeFirst()
                 element.run()
             }
         } catch (e: Throwable) {
