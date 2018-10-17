@@ -12,7 +12,7 @@ public actual object Dispatchers {
 
     public actual val Main: MainCoroutineDispatcher = NativeMainDispatcher(Default)
 
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
+    public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
 }
 
 private class NativeMainDispatcher(val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {
