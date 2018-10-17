@@ -234,9 +234,7 @@ public interface ReceiveChannel<out E> {
      * Iteration completes normally when the channel is [isClosedForReceive] without cause and
      * throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
      */
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
     @Deprecated(message = "Use extension function ReceiveChannel<E>.iterator() instead", level = DeprecationLevel.HIDDEN)
-    @kotlin.internal.LowPriorityInOverloadResolution
     public operator fun iterator(): ChannelIterator<E> = iterator()
 
     /**
@@ -271,8 +269,6 @@ public interface ReceiveChannel<out E> {
     @ExperimentalCoroutinesApi
     public fun cancel(cause: Throwable? = null): Boolean
 }
-
-
 
 /**
  * Channel is a non-blocking primitive for communication between sender using [SendChannel] and receiver using [ReceiveChannel].

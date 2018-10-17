@@ -14,7 +14,6 @@ import kotlin.jvm.*
 
 /**
  * Abstract send channel. It is a base class for all send channel implementations.
- *
  */
 internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     /** @suppress **This is unstable API and it is subject to change.** */
