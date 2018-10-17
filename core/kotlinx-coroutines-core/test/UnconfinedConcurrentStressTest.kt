@@ -9,9 +9,9 @@ import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
 
-class UnconfinedConcurrentTest : TestBase() {
+class UnconfinedConcurrentStressTest : TestBase() {
     private val threads = 4
-    private val executor = newFixedThreadPoolContext(threads, "UnconfinedConcurrentTest")
+    private val executor = newFixedThreadPoolContext(threads, "UnconfinedConcurrentStressTest")
     private val threadLocal = ThreadLocal<Int>()
 
     @After
@@ -21,7 +21,7 @@ class UnconfinedConcurrentTest : TestBase() {
 
     @Test(timeout = 10_000L)
     fun testConcurrent() = runTest {
-        val iterations = 10_000
+        val iterations = 10_000 * stressTestMultiplier
         val startBarrier = CyclicBarrier(threads + 1)
         val finishLatch = CountDownLatch(threads)
 

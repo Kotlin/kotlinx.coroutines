@@ -16,11 +16,11 @@ class UnconfinedTest : TestBase() {
             launch {
                 expect(4)
                 launch {
-                    expect(7)
+                    expect(6)
                 }
 
                 launch {
-                    expect(6)
+                    expect(7)
                 }
                 expect(5)
             }
