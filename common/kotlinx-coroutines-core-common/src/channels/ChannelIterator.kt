@@ -60,7 +60,7 @@ public interface ChannelIterator<out E> {
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER") // NOT shadowed -- member is HIDDEN
 public operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> = object : ChannelIterator<E> {
-    var result: Any? = NO_RESULT // NO_RESULT | E (next element) | ClosedResult
+    private var result: Any? = NO_RESULT // NO_RESULT | E (next element) | ClosedResult
 
     override suspend fun hasNext(): Boolean {
         if (result != NO_RESULT) return checkNotClosed(result)
@@ -86,8 +86,9 @@ public operator fun <E> ReceiveChannel<E>.iterator(): ChannelIterator<E> = objec
         if (result is ClosedResult) {
             if (result.cause != null) throw result.cause
             false
-        } else
+        } else {
             true
+        }
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun next(): E =
