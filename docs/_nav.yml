@@ -1,9 +1,9 @@
-- md: basics.md
-  url: basics.html
-  title: Basics
 - md: coroutines-guide.md
   url: coroutines-guide.html
   title: Coroutines Guide
+- md: basics.md
+  url: basics.html
+  title: Basics
 - md: cancellation-and-timeouts.md
   url: cancellation-and-timeouts.html
   title: Cancellation and Timeouts
