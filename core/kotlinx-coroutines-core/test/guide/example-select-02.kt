@@ -26,7 +26,7 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
         }
     }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }

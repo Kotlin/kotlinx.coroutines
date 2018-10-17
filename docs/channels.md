@@ -5,9 +5,6 @@
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
-
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ChannelsGuideTest.kt
@@ -36,10 +33,6 @@ class ChannelsGuideTest {
 
 <!--- END_TOC -->
 
-
-
-
-
 ## Channels (experimental) 
 
 Deferred values provide a convenient way to transfer a single value between coroutines.
@@ -56,10 +49,14 @@ instead of a blocking `put` operation it has a suspending [send][SendChannel.sen
 a blocking `take` operation it has a suspending [receive][ReceiveChannel.receive].
 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<Int>()
     launch {
         // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
@@ -68,6 +65,7 @@ fun main(args: Array<String>) = runBlocking {
     // here we print five received integers:
     repeat(5) { println(channel.receive()) }
     println("Done!")
+//sampleEnd
 }
 ```
 
@@ -98,10 +96,14 @@ Conceptually, a [close][SendChannel.close] is like sending a special close token
 The iteration stops as soon as this close token is received, so there is a guarantee 
 that all previously sent elements before the close are received:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<Int>()
     launch {
         for (x in 1..5) channel.send(x * x)
@@ -110,6 +112,7 @@ fun main(args: Array<String>) = runBlocking {
     // here we print received values using `for` loop (until the channel is closed)
     for (y in channel) println(y)
     println("Done!")
+//sampleEnd
 }
 ```
 
@@ -136,17 +139,22 @@ to common sense that results must be returned from functions.
 There is a convenient coroutine builder named [produce] that makes it easy to do it right on producer side,
 and an extension function [consumeEach], that replaces a `for` loop on the consumer side:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
 fun CoroutineScope.produceSquares(): ReceiveChannel<Int> = produce {
     for (x in 1..5) send(x * x)
 }
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val squares = produceSquares()
     squares.consumeEach { println(it) }
     println("Done!")
+//sampleEnd
 }
 ```
 
@@ -193,15 +201,34 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = p
 
 The main code starts and connects the whole pipeline:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val numbers = produceNumbers() // produces integers from 1 and on
     val squares = square(numbers) // squares integers
     for (i in 1..5) println(squares.receive()) // print first five
     println("Done!") // we are done
     coroutineContext.cancelChildren() // cancel children coroutines
+//sampleEnd
+}
+
+fun CoroutineScope.produceSquares(): ReceiveChannel<Int> = produce {
+    for (x in 1..5) send(x * x)
+}
+
+fun CoroutineScope.produceNumbers() = produce<Int> {
+    var x = 1
+    while (true) send(x++) // infinite stream of integers starting from 1
+}
+fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce {
+    for (x in numbers) send(x * x)
 }
 ```
 
@@ -226,10 +253,6 @@ sure that we don't have lingering global coroutines in our application.
 
 Let's take pipelines to the extreme with an example that generates prime numbers using a pipeline 
 of coroutines. We start with an infinite sequence of numbers. 
- 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
  
@@ -270,10 +293,16 @@ We use [cancelChildren][kotlin.coroutines.CoroutineContext.cancelChildren]
 extension function to cancel all the children coroutines after we have printed
 the first ten prime numbers. 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     var cur = numbersFrom(2)
     for (i in 1..10) {
         val prime = cur.receive()
@@ -281,6 +310,16 @@ fun main(args: Array<String>) = runBlocking {
         cur = filter(cur, prime)
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
+//sampleEnd    
+}
+
+fun CoroutineScope.numbersFrom(start: Int) = produce<Int> {
+    var x = start
+    while (true) send(x++) // infinite stream of integers from start
+}
+
+fun CoroutineScope.filter(numbers: ReceiveChannel<Int>, prime: Int) = produce<Int> {
+    for (x in numbers) if (x % prime != 0) send(x)
 }
 ```
 
@@ -355,14 +394,35 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 
 Now let us launch five processors and let them work for almost a second. See what happens:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val producer = produceNumbers()
     repeat(5) { launchProcessor(it, producer) }
     delay(950)
     producer.cancel() // cancel producer coroutine and thus kill them all
+//sampleEnd
+}
+
+fun CoroutineScope.produceNumbers() = produce<Int> {
+    var x = 1 // start from 1
+    while (true) {
+        send(x++) // produce next
+        delay(100) // wait 0.1s
+    }
+}
+
+fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
+    for (msg in channel) {
+        println("Processor #$id received $msg")
+    }    
 }
 ```
 
@@ -402,10 +462,6 @@ Multiple coroutines may send to the same channel.
 For example, let us have a channel of strings, and a suspending function that 
 repeatedly sends a specified string to this channel with a specified delay:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -422,10 +478,16 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 Now, let us see what happens if we launch a couple of coroutines sending strings 
 (in this example we launch them in the context of the main thread as main coroutine's children):
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<String>()
     launch { sendString(channel, "foo", 200L) }
     launch { sendString(channel, "BAR!", 500L) }
@@ -433,6 +495,14 @@ fun main(args: Array<String>) = runBlocking {
         println(channel.receive())
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
+//sampleEnd
+}
+
+suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
+    while (true) {
+        delay(time)
+        channel.send(s)
+    }
 }
 ```
 
@@ -465,14 +535,15 @@ similar to the `BlockingQueue` with a specified capacity, which blocks when buff
 
 Take a look at the behavior of the following code:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val channel = Channel<Int>(4) // create buffered channel
     val sender = launch { // launch sender coroutine
         repeat(10) {
@@ -483,6 +554,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // don't receive anything... just wait....
     delay(1000)
     sender.cancel() // cancel sender coroutine
+//sampleEnd    
 }
 ```
 
@@ -511,16 +583,17 @@ multiple coroutines. They are served in first-in first-out order, e.g. the first
 gets the element. In the following example two coroutines "ping" and "pong" are 
 receiving the "ball" object from the shared "table" channel. 
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+//sampleStart
 data class Ball(var hits: Int)
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val table = Channel<Ball>() // a shared table
     launch { player("ping", table) }
     launch { player("pong", table) }
@@ -537,6 +610,7 @@ suspend fun player(name: String, table: Channel<Ball>) {
         table.send(ball) // send the ball back
     }
 }
+//sampleEnd
 ```
 
 </div>
@@ -574,7 +648,10 @@ Now let's see how it works in practice:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking<Unit> {
     val tickerChannel = ticker(delayMillis = 100, initialDelayMillis = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
     println("Initial element is available immediately: $nextElement") // initial delay hasn't passed yet

@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")

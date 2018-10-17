@@ -26,7 +26,7 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 @Volatile // in Kotlin `volatile` is an annotation 
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         counter++
     }

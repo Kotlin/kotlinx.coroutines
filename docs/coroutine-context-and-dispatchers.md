@@ -5,8 +5,6 @@
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
-
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/DispatcherGuideTest.kt
@@ -58,14 +56,13 @@ parameter that can be used to explicitly specify the dispatcher for new coroutin
 
 Try the following example:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -78,6 +75,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -124,14 +122,13 @@ The default dispatcher for [runBlocking] coroutine, in particular,
 is confined to the invoker thread, so inheriting it has the effect of confining execution to
 this thread with a predictable FIFO scheduling.
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
@@ -142,6 +139,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -180,16 +178,15 @@ by logging frameworks. When using coroutines, the thread name alone does not giv
 
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val a = async {
         log("I'm computing a piece of the answer")
         6
@@ -199,6 +196,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         7
     }
     log("The answer is ${a.await() * b.await()}")
+//sampleEnd    
 }
 ```
 
@@ -229,12 +227,15 @@ You can read more about debugging facilities in the documentation for [newCorout
 
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option (see [debug](#debugging-coroutines-and-threads)):
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) {
+fun main() {
+//sampleStart
     newSingleThreadContext("Ctx1").use { ctx1 ->
         newSingleThreadContext("Ctx2").use { ctx2 ->
             runBlocking(ctx1) {
@@ -246,6 +247,7 @@ fun main(args: Array<String>) {
             }
         }
     }
+//sampleEnd    
 }
 ```
 
@@ -273,15 +275,15 @@ are created with [newSingleThreadContext] when they are no longer needed.
 The coroutine's [Job] is part of its context. The coroutine can retrieve it from its own context 
 using `coroutineContext[Job]` expression:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     println("My job is ${coroutineContext[Job]}")
+//sampleEnd    
 }
 ```
 
@@ -311,14 +313,14 @@ are recursively cancelled, too.
 However, when [GlobalScope] is used to launch a coroutine, it is not tied to the scope it
 was launched from and operates independently.
   
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         // it spawns two other jobs, one with GlobalScope
@@ -339,6 +341,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     request.cancel() // cancel processing of the request
     delay(1000) // delay a second to see what happens
     println("main: Who has survived request cancellation?")
+//sampleEnd
 }
 ```
 
@@ -362,14 +365,13 @@ main: Who has survived request cancellation?
 A parent coroutine always waits for completion of all its children. Parent does not have to explicitly track
 all the children it launches and it does not have to use [Job.join] to wait for them at the end:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         repeat(3) { i -> // launch a few children jobs
@@ -382,6 +384,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     request.join() // wait for completion of the request, including all its children
     println("Now processing of the request is complete")
+//sampleEnd
 }
 ```
 
@@ -411,12 +414,15 @@ is executing this coroutine when [debugging mode](#debugging-coroutines-and-thre
 
 The following example demonstrates this concept:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+fun main() = runBlocking(CoroutineName("main")) {
+//sampleStart
     log("Started main coroutine")
     // run two background value computations
     val v1 = async(CoroutineName("v1coroutine")) {
@@ -430,6 +436,7 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
         6
     }
     log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
+//sampleEnd    
 }
 ```
 
@@ -454,17 +461,17 @@ Sometimes we need to define multiple elements for coroutine context. We can use 
 For example, we can launch a coroutine with an explicitly specified dispatcher and an explicitly specified 
 name at the same time: 
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -492,9 +499,6 @@ We manage a lifecycle of our coroutines by creating an instance of [Job] that is
 the lifecycle of our activity. A job instance is created using [Job()] factory function when
 activity is created and it is cancelled when an activity is destroyed like this:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -554,10 +558,45 @@ In our main function we create activity, call our test `doSomething` function, a
 This cancels all the coroutines that were launched which we can confirm by noting that it does not print 
 onto the screen anymore if we wait: 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlin.coroutines.*
+import kotlinx.coroutines.*
+
+class Activity : CoroutineScope {
+    lateinit var job: Job
+
+    fun create() {
+        job = Job()
+    }
+
+    fun destroy() {
+        job.cancel()
+    }
+    // to be continued ...
+
+    // class Activity continues
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Default + job
+    // to be continued ...
+
+    // class Activity continues
+    fun doSomething() {
+        // launch ten coroutines for a demo, each working for a different time
+        repeat(10) { i ->
+            launch {
+                delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
+                println("Coroutine $i is done")
+            }
+        }
+    }
+} // class Activity ends
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val activity = Activity()
     activity.create() // create an activity
     activity.doSomething() // run test function
@@ -566,6 +605,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     println("Destroying activity!")
     activity.destroy() // cancels all coroutines
     delay(1000) // visually confirm that they don't work
+//sampleEnd    
 }
 ```
 
@@ -598,16 +638,15 @@ which keeps the value of the given `ThreadLocal` and restores it every time the 
 
 It is easy to demonstrate it in action:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 val threadLocal = ThreadLocal<String?>() // declare thread-local variable
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     threadLocal.set("main")
     println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     val job = launch(Dispatchers.Default + threadLocal.asContextElement(value = "launch")) {
@@ -617,6 +656,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     job.join()
     println("Post-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+//sampleEnd    
 }
 ```  
 

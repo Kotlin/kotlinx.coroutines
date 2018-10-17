@@ -25,7 +25,7 @@ fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
     for (x in start until start + count) send(x)
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
    range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings

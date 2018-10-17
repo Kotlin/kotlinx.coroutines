@@ -6,9 +6,9 @@
 package kotlinx.coroutines.guide.context02
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
@@ -19,4 +19,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }

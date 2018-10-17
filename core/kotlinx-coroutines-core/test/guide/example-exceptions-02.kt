@@ -7,7 +7,8 @@ package kotlinx.coroutines.guide.exceptions02
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
@@ -18,4 +19,5 @@ fun main(args: Array<String>) = runBlocking {
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
     joinAll(job, deferred)
+//sampleEnd    
 }

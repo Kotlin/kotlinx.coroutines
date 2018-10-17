@@ -8,14 +8,13 @@ package kotlinx.coroutines.guide.compose05
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-suspend fun doSomethingUsefulOne(): Int {
-    delay(1000L) // pretend we are doing something useful here
-    return 13
-}
-
-suspend fun doSomethingUsefulTwo(): Int {
-    delay(1000L) // pretend we are doing something useful here, too
-    return 29
+fun main() = runBlocking<Unit> {
+//sampleStart
+    val time = measureTimeMillis {
+        println("The answer is ${concurrentSum()}")
+    }
+    println("Completed in $time ms")
+//sampleEnd    
 }
 
 suspend fun concurrentSum(): Int = coroutineScope {
@@ -24,9 +23,12 @@ suspend fun concurrentSum(): Int = coroutineScope {
      one.await() + two.await()
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val time = measureTimeMillis {
-        println("The answer is ${concurrentSum()}")
-    }
-    println("Completed in $time ms")
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }

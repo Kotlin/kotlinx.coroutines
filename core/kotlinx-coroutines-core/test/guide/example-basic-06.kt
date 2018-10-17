@@ -7,7 +7,7 @@ package kotlinx.coroutines.guide.basic06
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     repeat(100_000) { // launch a lot of coroutines
         launch {
             delay(1000L)

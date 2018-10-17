@@ -7,11 +7,11 @@ package kotlinx.coroutines.guide.channel09
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
 
+//sampleStart
 data class Ball(var hits: Int)
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val table = Channel<Ball>() // a shared table
     launch { player("ping", table) }
     launch { player("pong", table) }
@@ -28,3 +28,4 @@ suspend fun player(name: String, table: Channel<Ball>) {
         table.send(ball) // send the ball back
     }
 }
+//sampleEnd

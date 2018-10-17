@@ -5,10 +5,10 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.supervision02
 
-import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     try {
         supervisorScope {
             val child = launch {

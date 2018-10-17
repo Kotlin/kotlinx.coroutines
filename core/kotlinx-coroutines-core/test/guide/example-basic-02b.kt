@@ -7,7 +7,7 @@ package kotlinx.coroutines.guide.basic02b
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> { // start main coroutine
+fun main() = runBlocking<Unit> { // start main coroutine
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")

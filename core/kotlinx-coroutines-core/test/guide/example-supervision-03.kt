@@ -5,10 +5,10 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.supervision03
 
-import kotlinx.coroutines.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }

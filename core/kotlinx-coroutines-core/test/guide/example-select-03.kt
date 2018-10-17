@@ -20,7 +20,7 @@ fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val side = Channel<Int>() // allocate side channel
     launch { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }

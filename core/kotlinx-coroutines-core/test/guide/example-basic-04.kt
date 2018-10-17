@@ -7,7 +7,7 @@ package kotlinx.coroutines.guide.basic04
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking { // this: CoroutineScope
+fun main() = runBlocking { // this: CoroutineScope
     launch { 
         delay(200L)
         println("Task from runBlocking")

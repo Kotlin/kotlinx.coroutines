@@ -8,7 +8,8 @@ package kotlinx.coroutines.guide.channel01
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<Int>()
     launch {
         // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
@@ -17,4 +18,5 @@ fun main(args: Array<String>) = runBlocking {
     // here we print five received integers:
     repeat(5) { println(channel.receive()) }
     println("Done!")
+//sampleEnd
 }

@@ -5,12 +5,12 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.exceptions05
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.exceptions.*
-import kotlin.coroutines.*
+
+import kotlinx.coroutines.*
 import java.io.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
     }
@@ -28,5 +28,5 @@ fun main(args: Array<String>) = runBlocking {
         }
         delay(Long.MAX_VALUE)
     }
-    job.join()
+    job.join()  
 }

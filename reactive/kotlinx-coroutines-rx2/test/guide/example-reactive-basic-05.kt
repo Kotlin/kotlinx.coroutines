@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> { 
+fun main() = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
     val source = rxFlowable {
         for (x in 1..3) {

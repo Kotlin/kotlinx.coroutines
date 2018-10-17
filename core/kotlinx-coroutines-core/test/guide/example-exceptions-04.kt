@@ -6,9 +6,9 @@
 package kotlinx.coroutines.guide.exceptions04
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleEnd
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
@@ -31,4 +31,5 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     job.join()
+//sampleEnd    
 }

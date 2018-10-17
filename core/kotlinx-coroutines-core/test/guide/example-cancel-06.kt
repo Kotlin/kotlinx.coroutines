@@ -7,11 +7,13 @@ package kotlinx.coroutines.guide.cancel06
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     withTimeout(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
             delay(500L)
         }
     }
+//sampleEnd
 }

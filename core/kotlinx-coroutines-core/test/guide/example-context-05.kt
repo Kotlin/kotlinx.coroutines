@@ -6,8 +6,9 @@
 package kotlinx.coroutines.guide.context05
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     println("My job is ${coroutineContext[Job]}")
+//sampleEnd    
 }

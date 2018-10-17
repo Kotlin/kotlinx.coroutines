@@ -108,7 +108,7 @@ Let us run it all seven times:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
@@ -175,7 +175,7 @@ channel `b` that produces "World" four times:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -251,7 +251,7 @@ Consumer is going to be quite slow, taking 250 ms to process each number:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val side = Channel<Int>() // allocate side channel
     launch { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
@@ -329,7 +329,7 @@ of deferred values to provide `onAwait` clause for each deferred value.
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val list = asyncStringsList()
     val result = select<String> {
         list.withIndex().forEach { (index, deferred) ->
@@ -414,7 +414,7 @@ data to it:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val chan = Channel<Deferred<String>>() // the channel for test
     launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 

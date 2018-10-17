@@ -9,7 +9,8 @@ import kotlinx.coroutines.*
 
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) {
+fun main() {
+//sampleStart
     newSingleThreadContext("Ctx1").use { ctx1 ->
         newSingleThreadContext("Ctx2").use { ctx2 ->
             runBlocking(ctx1) {
@@ -21,4 +22,5 @@ fun main(args: Array<String>) {
             }
         }
     }
+//sampleEnd    
 }

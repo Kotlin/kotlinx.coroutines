@@ -26,7 +26,7 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 
 var counter = AtomicInteger()
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         counter.incrementAndGet()
     }

@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
     val source = publish<Int> {
     //           ^^^^^^^  <---  Difference from the previous examples is here

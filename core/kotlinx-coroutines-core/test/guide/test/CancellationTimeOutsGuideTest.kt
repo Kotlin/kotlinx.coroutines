@@ -7,7 +7,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel01() {
-        test("KotlinxCoroutinesGuideCancel01") { kotlinx.coroutines.guide.cancel01.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel01") { kotlinx.coroutines.guide.cancel01.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -18,7 +18,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel02() {
-        test("KotlinxCoroutinesGuideCancel02") { kotlinx.coroutines.guide.cancel02.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel02") { kotlinx.coroutines.guide.cancel02.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -31,7 +31,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel03() {
-        test("KotlinxCoroutinesGuideCancel03") { kotlinx.coroutines.guide.cancel03.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel03") { kotlinx.coroutines.guide.cancel03.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -42,7 +42,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel04() {
-        test("KotlinxCoroutinesGuideCancel04") { kotlinx.coroutines.guide.cancel04.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel04") { kotlinx.coroutines.guide.cancel04.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -54,7 +54,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel05() {
-        test("KotlinxCoroutinesGuideCancel05") { kotlinx.coroutines.guide.cancel05.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel05") { kotlinx.coroutines.guide.cancel05.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -67,7 +67,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel06() {
-        test("KotlinxCoroutinesGuideCancel06") { kotlinx.coroutines.guide.cancel06.main(emptyArray()) }.verifyLinesStartWith(
+        test("KotlinxCoroutinesGuideCancel06") { kotlinx.coroutines.guide.cancel06.main() }.verifyLinesStartWith(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",
@@ -77,7 +77,7 @@ class CancellationTimeOutsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideCancel07() {
-        test("KotlinxCoroutinesGuideCancel07") { kotlinx.coroutines.guide.cancel07.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideCancel07") { kotlinx.coroutines.guide.cancel07.main() }.verifyLines(
             "I'm sleeping 0 ...",
             "I'm sleeping 1 ...",
             "I'm sleeping 2 ...",

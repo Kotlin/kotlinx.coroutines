@@ -18,7 +18,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
