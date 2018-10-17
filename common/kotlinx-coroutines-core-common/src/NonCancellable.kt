@@ -88,11 +88,13 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * Always returns `false`.
+     * Does nothing.
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    override fun cancel(): Boolean = false
+    @Suppress("RETURN_TYPE_MISMATCH_ON_OVERRIDE")
+    override fun cancel(): Unit {
+    }
 
     /**
      * Always returns `false`.

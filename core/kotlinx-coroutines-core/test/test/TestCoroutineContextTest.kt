@@ -369,8 +369,7 @@ class TestCoroutineContextTest {
         }
 
         advanceTimeBy(500)
-        assertTrue(job.cancel())
-
+        job.cancel()
         assertAllUnhandledExceptions { it is CancellationException }
     }
 
@@ -381,7 +380,7 @@ class TestCoroutineContextTest {
         }
 
         advanceTimeBy(500)
-        assertTrue(job.cancel())
+        job.cancel()
     }
 }
 

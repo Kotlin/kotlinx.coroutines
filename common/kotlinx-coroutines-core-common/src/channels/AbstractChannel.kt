@@ -657,7 +657,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         return if (result === POLL_FAILED) null else receiveOrNullResult(result)
     }
 
-    override fun cancel(): Boolean = cancel(null)
+    override fun cancel(): Unit {
+        cancel(null)
+    }
 
     override fun cancel(cause: Throwable?): Boolean =
         close(cause).also {

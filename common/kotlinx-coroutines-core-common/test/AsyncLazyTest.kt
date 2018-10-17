@@ -150,9 +150,8 @@ class AsyncLazyTest : TestBase() {
         }
         expect(2)
         assertTrue(!d.isActive && !d.isCompleted)
-        assertTrue(d.cancel())
+        d.cancel()
         assertTrue(!d.isActive && d.isCompleted && d.isCancelled)
-        assertTrue(!d.cancel())
         assertTrue(!d.start())
         finish(3)
         assertEquals(d.await(), 42) // await shall throw CancellationException
@@ -178,9 +177,8 @@ class AsyncLazyTest : TestBase() {
         yield() // yield to d
         expect(5)
         assertTrue(d.isActive && !d.isCompleted && !d.isCancelled)
-        assertTrue(d.cancel())
+        d.cancel()
         assertTrue(!d.isActive && d.isCancelled) // cancelling !
-        assertTrue(d.cancel())
         assertTrue(!d.isActive && d.isCancelled) // still cancelling
         finish(6)
         assertEquals(d.await(), 42) // await shall throw CancellationException

@@ -203,7 +203,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel()
                     require(job!!.cancel(AssertionError())) // cancel again, no success here
                     require(!isActive)
                     throw TestException() // but throw a different exception
@@ -233,7 +233,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel() // cancel itself
                     require(job!!.cancel(AssertionError()))
                     require(!isActive)
                 }
