@@ -22,6 +22,7 @@ dependencies {
     testArtifacts project(':kotlinx-coroutines-jdk8')
     testArtifacts project(':kotlinx-coroutines-slf4j')
     testArtifacts project(path: ':kotlinx-coroutines-play-services', configuration: 'default')
+    testArtifacts project(path: ':kotlinx-coroutines-androidx-lifecycle', configuration: 'default')
 
     testArtifacts project(':kotlinx-coroutines-android')
     testArtifacts project(':kotlinx-coroutines-javafx')
