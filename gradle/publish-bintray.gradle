@@ -73,3 +73,15 @@ bintrayUpload.doFirst {
         it
     }
 }
+
+// TODO :kludge this is required to disable publish of metadata for all but native
+if (!isNative) {
+    afterEvaluate {
+        publishing.publications.each { pub ->
+            pub.gradleModuleMetadataFile = null
+            tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
+                onlyIf { false }
+            }
+        }
+    }
+}
