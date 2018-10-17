@@ -559,8 +559,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     internal open val onCancelComplete: Boolean get() = false
 
     // external cancel without cause, never invoked implicitly from internal machinery
-    public override fun cancel(): Boolean =
+    public override fun cancel(): Unit {
         cancel(null) // must delegate here, because some classes override cancel(x)
+    }
 
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
     public override fun cancel(cause: Throwable?): Boolean =

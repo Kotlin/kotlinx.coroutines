@@ -58,7 +58,7 @@ private class MonoCoroutine<in T>(
     
     override fun dispose() {
         disposed = true
-        cancel(cause = null)
+        cancel()
     }
 
     override fun isDisposed(): Boolean = disposed

@@ -76,6 +76,7 @@ public abstract interface class kotlinx/coroutines/ChildJob : kotlinx/coroutines
 }
 
 public final class kotlinx/coroutines/ChildJob$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/ChildJob;)Z
 	public static fun fold (Lkotlinx/coroutines/ChildJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/ChildJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public static fun minusKey (Lkotlinx/coroutines/ChildJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
@@ -89,6 +90,7 @@ public abstract interface class kotlinx/coroutines/CompletableDeferred : kotlinx
 }
 
 public final class kotlinx/coroutines/CompletableDeferred$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/CompletableDeferred;)Z
 	public static fun fold (Lkotlinx/coroutines/CompletableDeferred;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/CompletableDeferred;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public static fun minusKey (Lkotlinx/coroutines/CompletableDeferred;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
@@ -197,6 +199,7 @@ public abstract interface class kotlinx/coroutines/Deferred : kotlinx/coroutines
 }
 
 public final class kotlinx/coroutines/Deferred$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/Deferred;)Z
 	public static fun fold (Lkotlinx/coroutines/Deferred;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public static fun minusKey (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
@@ -260,7 +263,8 @@ public abstract interface annotation class kotlinx/coroutines/InternalCoroutines
 public abstract interface class kotlinx/coroutines/Job : kotlin/coroutines/CoroutineContext$Element {
 	public static final field Key Lkotlinx/coroutines/Job$Key;
 	public abstract fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
-	public abstract fun cancel ()Z
+	public abstract fun cancel ()V
+	public abstract synthetic fun cancel ()Z
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public abstract fun getChildren ()Lkotlin/sequences/Sequence;
@@ -276,6 +280,7 @@ public abstract interface class kotlinx/coroutines/Job : kotlin/coroutines/Corou
 }
 
 public final class kotlinx/coroutines/Job$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/Job;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/Job;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static fun fold (Lkotlinx/coroutines/Job;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
@@ -292,12 +297,14 @@ public final class kotlinx/coroutines/JobKt {
 	public static final fun DisposableHandle (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/DisposableHandle;
 	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 	public static synthetic fun Job$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
-	public static final fun cancel (Lkotlin/coroutines/CoroutineContext;)Z
+	public static final fun cancel (Lkotlin/coroutines/CoroutineContext;)V
+	public static final synthetic fun cancel (Lkotlin/coroutines/CoroutineContext;)Z
 	public static final fun cancel (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)Z
 	public static synthetic fun cancel$default (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 	public static final fun cancelAndJoin (Lkotlinx/coroutines/Job;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun cancelChildren (Lkotlin/coroutines/CoroutineContext;)V
 	public static final fun cancelChildren (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
+	public static final fun cancelChildren (Lkotlinx/coroutines/Job;)V
 	public static final fun cancelChildren (Lkotlinx/coroutines/Job;Ljava/lang/Throwable;)V
 	public static synthetic fun cancelChildren$default (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static synthetic fun cancelChildren$default (Lkotlinx/coroutines/Job;Ljava/lang/Throwable;ILjava/lang/Object;)V
@@ -309,7 +316,8 @@ public final class kotlinx/coroutines/JobKt {
 public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlinx/coroutines/Job, kotlinx/coroutines/ParentJob, kotlinx/coroutines/selects/SelectClause0 {
 	public fun <init> (Z)V
 	public final fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
-	public fun cancel ()Z
+	public fun cancel ()V
+	public synthetic fun cancel ()Z
 	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun childCancelled (Ljava/lang/Throwable;)Z
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
@@ -349,7 +357,8 @@ public abstract class kotlinx/coroutines/MainCoroutineDispatcher : kotlinx/corou
 public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/Job {
 	public static final field INSTANCE Lkotlinx/coroutines/NonCancellable;
 	public fun attachChild (Lkotlinx/coroutines/ChildJob;)Lkotlinx/coroutines/ChildHandle;
-	public fun cancel ()Z
+	public fun cancel ()V
+	public synthetic fun cancel ()Z
 	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun getCancellationException ()Ljava/util/concurrent/CancellationException;
 	public fun getChildren ()Lkotlin/sequences/Sequence;
@@ -379,6 +388,7 @@ public abstract interface class kotlinx/coroutines/ParentJob : kotlinx/coroutine
 }
 
 public final class kotlinx/coroutines/ParentJob$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/ParentJob;)Z
 	public static fun fold (Lkotlinx/coroutines/ParentJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
 	public static fun get (Lkotlinx/coroutines/ParentJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public static fun minusKey (Lkotlinx/coroutines/ParentJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
@@ -439,6 +449,10 @@ public abstract interface class kotlinx/coroutines/channels/ActorScope : kotlinx
 	public abstract fun getChannel ()Lkotlinx/coroutines/channels/Channel;
 }
 
+public final class kotlinx/coroutines/channels/ActorScope$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ActorScope;)Z
+}
+
 public abstract interface class kotlinx/coroutines/channels/BroadcastChannel : kotlinx/coroutines/channels/SendChannel {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun openSubscription ()Lkotlinx/coroutines/channels/ReceiveChannel;
@@ -464,6 +478,10 @@ public abstract interface class kotlinx/coroutines/channels/Channel : kotlinx/co
 	public static final field Factory Lkotlinx/coroutines/channels/Channel$Factory;
 	public static final field RENDEZVOUS I
 	public static final field UNLIMITED I
+}
+
+public final class kotlinx/coroutines/channels/Channel$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/channels/Channel;)Z
 }
 
 public final class kotlinx/coroutines/channels/Channel$Factory {
@@ -637,7 +655,8 @@ public abstract interface class kotlinx/coroutines/channels/ProducerScope : kotl
 }
 
 public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
-	public abstract fun cancel ()Z
+	public abstract fun cancel ()V
+	public abstract synthetic fun cancel ()Z
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun getOnReceive ()Lkotlinx/coroutines/selects/SelectClause1;
 	public abstract fun getOnReceiveOrNull ()Lkotlinx/coroutines/selects/SelectClause1;
@@ -650,6 +669,7 @@ public abstract interface class kotlinx/coroutines/channels/ReceiveChannel {
 }
 
 public final class kotlinx/coroutines/channels/ReceiveChannel$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/channels/ReceiveChannel;)Z
 	public static synthetic fun cancel$default (Lkotlinx/coroutines/channels/ReceiveChannel;Ljava/lang/Throwable;ILjava/lang/Object;)Z
 }
 

@@ -59,7 +59,7 @@ private class ChannelViaBroadcast<E>(
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    override fun cancel(): Boolean = sub.cancel()
+    override fun cancel(): Unit = sub.cancel()
     override fun cancel(cause: Throwable?): Boolean = sub.cancel(cause)
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive

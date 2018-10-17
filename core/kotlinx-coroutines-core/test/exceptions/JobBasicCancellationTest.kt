@@ -26,7 +26,7 @@ class JobBasicCancellationTest : TestBase() {
 
             yield()
             expect(3)
-            assertFalse(child.cancel())
+            child.cancel()
             child.join()
             expect(4)
         }
@@ -44,7 +44,7 @@ class JobBasicCancellationTest : TestBase() {
             }
 
             expect(2)
-            assertTrue(child.cancel())
+            child.cancel()
             child.join()
             yield()
             expect(4)
@@ -66,7 +66,7 @@ class JobBasicCancellationTest : TestBase() {
 
             yield()
             expect(3)
-            assertFalse(child.cancel())
+            child.cancel()
             child.await()
             expect(4)
         }
@@ -84,7 +84,7 @@ class JobBasicCancellationTest : TestBase() {
             }
 
             expect(2)
-            assertTrue(child.cancel())
+            child.cancel()
             child.join()
             expect(4)
         }
@@ -121,7 +121,7 @@ class JobBasicCancellationTest : TestBase() {
             expect(1)
             val child = Job(coroutineContext[Job])
             expect(2)
-            assertFalse(child.cancel()) // cancel without cause -- should not cancel us (parent)
+            child.cancel() // cancel without cause -- should not cancel us (parent)
             child.join()
             expect(3)
         }
@@ -135,7 +135,7 @@ class JobBasicCancellationTest : TestBase() {
             expect(1)
             val child = CompletableDeferred<Unit>(coroutineContext[Job])
             expect(2)
-            assertTrue(child.cancel()) // cancel without cause -- should not cancel us (parent)
+            child.cancel() // cancel without cause -- should not cancel us (parent)
             child.join()
             expect(3)
         }

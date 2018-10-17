@@ -49,9 +49,8 @@ class JobDisposeStressTest: TestBase() {
         threads += testThread("canceller") {
             while (!done) {
                 val job = this.job ?: continue
-                val result = job.cancel()
+                job.cancel()
                 // Always returns true, TestJob never completes
-                check(result)
             }
         }
 

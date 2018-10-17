@@ -7,10 +7,11 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Sender's interface to [Channel].
@@ -243,7 +244,6 @@ public interface ReceiveChannel<out E> {
     /**
      * Cancels reception of remaining elements from this channel. This function closes the channel
      * and removes all buffered sent elements from it.
-     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]
@@ -251,25 +251,21 @@ public interface ReceiveChannel<out E> {
      * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
      * [ClosedReceiveChannelException].
      */
-    public fun cancel(): Boolean
+    public fun cancel(): Unit
 
     /**
-     * Cancels reception of remaining elements from this channel. This function closes the channel with
-     * the specified cause (unless it was already closed) and removes all buffered sent elements from it.
-     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
-     *
-     * Immediately after invocation of this function [isClosedForReceive] and
-     * [isClosedForSend][SendChannel.isClosedForSend]
-     * on the side of [SendChannel] start returning `true`, so all attempts to send to this channel
-     * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
-     * [ClosedReceiveChannelException] if it was cancelled without a cause.
-     * A channel that was cancelled with non-null [cause] is called a _failed_ channel. Attempts to send or
-     * receive on a failed channel throw the specified [cause] exception.
-     *
-     * **Note: This is an experimental api.** Semantics of _cancelling_ a channel with exception may
-     *         change in the future or this feature may be completely removed.
+     * @suppress
      */
-    @ExperimentalCoroutinesApi
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+    @JvmName("cancel")
+    public fun cancel0(): Boolean = cancel(null)
+
+    /**
+     * @suppress
+     */
+    @ObsoleteCoroutinesApi
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel without cause", replaceWith = ReplaceWith("cancel()"))
     public fun cancel(cause: Throwable? = null): Boolean
 }
 
