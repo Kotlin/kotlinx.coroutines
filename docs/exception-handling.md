@@ -254,7 +254,7 @@ So, additional exceptions are suppressed.
 
 > One of the solutions would have been to report each exception separately, 
 but then [Deferred.await] should have had the same mechanism to avoid behavioural inconsistency and this 
-would cause implementation details of a coroutines (whether it had delegate parts of its work to its children or not)
+would cause implementation details of a coroutines (whether it had delegated parts of its work to its children or not)
 to leak to its exception handler.
 
 <!--- INCLUDE
