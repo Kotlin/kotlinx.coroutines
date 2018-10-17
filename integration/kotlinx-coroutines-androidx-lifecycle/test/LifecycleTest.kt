@@ -1,5 +1,6 @@
 package kotlinx.coroutines.experimental.androidx.lifecycle
 
+import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -10,7 +11,7 @@ import kotlin.test.*
 class LifecycleTest : TestBase() {
 
     @Test
-    fun testLifecycleDefaultScopeUsesDefaultJob() = runTest {
+    fun `Test lifecycle default scope uses default job`() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         val lifecycleJob = lifecycle.job
@@ -20,7 +21,7 @@ class LifecycleTest : TestBase() {
     }
 
     @Test
-    fun testLifecycleJobIsCached() = runTest {
+    fun `Test lifecycle job is cached`() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         assertSame(lifecycle.job, lifecycle.job)
@@ -28,7 +29,7 @@ class LifecycleTest : TestBase() {
     }
 
     @Test
-    fun testLifecycleOnDestroyCancelsJob() = runTest {
+    fun `Test lifecycle on destroy cancels job`() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         val job = lifecycle.job
@@ -47,7 +48,7 @@ class LifecycleTest : TestBase() {
     }
 
     @Test
-    fun testAlreadyDestroyedLifecycleMakesCancelledJob() = runTest {
+    fun `Test already destroyed lifecycle makes cancelled job`() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         lifecycle.markState(Lifecycle.State.DESTROYED)
@@ -57,14 +58,14 @@ class LifecycleTest : TestBase() {
     }
 
     @Test
-    fun testLifecycleOwnerScopeIsLifecycleScope() = runTest {
+    fun `Test lifecycle owner scope is lifecycle scope`() = runTest {
         val lifecycleOwner = TestLifecycleOwner()
         val lifecycle = lifecycleOwner.lifecycle
         assertSame(lifecycle.coroutineScope, lifecycleOwner.coroutineScope)
     }
 
     @Test
-    fun testScopeIsNotActiveAfterDestroy() = runTest {
+    fun `Test scope is not active after destroy`() = runTest {
         val lifecycle = TestLifecycleOwner().lifecycle
         lifecycle.markState(Lifecycle.State.CREATED)
         lifecycle.markState(Lifecycle.State.STARTED)
@@ -87,6 +88,31 @@ class LifecycleTest : TestBase() {
         finish(5)
         assertFalse(scope.isActive)
         lifecycle.markState(Lifecycle.State.DESTROYED)
+    }
+
+    @Test
+    fun `Test observer is called after destroy`() = runTest {
+        val lifecycle = TestLifecycleOwner().lifecycle
+        lifecycle.markState(Lifecycle.State.CREATED)
+        val activeWhile = Lifecycle.State.INITIALIZED
+        val job = with(lifecycle) {
+            Job().also { job ->
+                addObserver(object : GenericLifecycleObserver {
+                    override fun onStateChanged(source: LifecycleOwner?, event: Lifecycle.Event) {
+                        if (!currentState.isAtLeast(activeWhile)) {
+                            removeObserver(this)
+                            job.cancel()
+                        }
+                    }
+                })
+            }
+        }
+        assertTrue(job.isActive)
+        assertFalse(job.isCancelled)
+        lifecycle.markState(Lifecycle.State.DESTROYED)
+        job.join()
+        assertFalse(job.isActive)
+        assertTrue(job.isCancelled)
     }
 
     @AfterTest
