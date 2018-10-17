@@ -7,7 +7,7 @@ package kotlinx.coroutines.experimental.guide.basic02
 
 import kotlinx.coroutines.experimental.*
 
-fun main(args: Array<String>) { 
+fun main() { 
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")
