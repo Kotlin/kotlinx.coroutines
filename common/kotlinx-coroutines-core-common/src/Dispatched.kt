@@ -33,14 +33,14 @@ internal object UndispatchedEventLoop {
         runLoop(state, block)
     }
 
-    inline fun execute(task: DispatchedTask<*>, block: () -> Unit) {
+    fun resumeUndispatched(task: DispatchedTask<*>) {
         val state = state.get()
         if (state.isActive) {
             state.threadLocalQueue.addLast(task)
             return
         }
 
-        runLoop(state, block)
+        runLoop(state, { task.resume(task.delegate, MODE_UNDISPATCHED) })
     }
 
     inline fun runLoop(state: State, block: () -> Unit) {
@@ -226,7 +226,6 @@ internal interface DispatchedTask<in T> : Runnable {
 }
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
-    var useMode = mode
     val delegate = this.delegate
     if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
@@ -234,20 +233,21 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
         val context = delegate.context
         if (dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
-            return // and that's it -- dispatched via fast-path
         } else {
-            useMode = MODE_UNDISPATCHED
+            UndispatchedEventLoop.resumeUndispatched(this)
         }
+    } else {
+        resume(delegate, mode)
     }
+}
 
-    UndispatchedEventLoop.execute(this) {
-        // slow-path - use delegate
-        val state = takeState()
-        val exception = getExceptionalResult(state)
-        if (exception != null) {
-            delegate.resumeWithExceptionMode(exception, useMode)
-        } else {
-            delegate.resumeMode(getSuccessfulResult(state), useMode)
-        }
+internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
+    // slow-path - use delegate
+    val state = takeState()
+    val exception = getExceptionalResult(state)
+    if (exception != null) {
+        delegate.resumeWithExceptionMode(exception, useMode)
+    } else {
+        delegate.resumeMode(getSuccessfulResult(state), useMode)
     }
 }

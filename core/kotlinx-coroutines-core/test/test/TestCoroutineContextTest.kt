@@ -137,6 +137,44 @@ class TestCoroutineContextTest {
         }.await()
     }
 
+    @Test
+    fun testBlockingFunctionWithRunBlocking() = withTestContext(injectedContext) {
+        val delay = 1000L
+        val expectedValue = 16
+        val result = runBlocking {
+            suspendedBlockingFunction(delay) {
+                expectedValue
+            }
+        }
+        assertEquals(expectedValue, result)
+        assertEquals(delay, now())
+    }
+
+    @Test
+    fun testBlockingFunctionWithAsync() = withTestContext(injectedContext) {
+        val delay = 1000L
+        val expectedValue = 16
+        var now = 0L
+        val deferred = async {
+            suspendedBlockingFunction(delay) {
+                expectedValue
+            }
+        }
+        now += advanceTimeBy((delay / 4) - 1)
+        assertEquals((delay / 4) - 1, now)
+        assertEquals(now, now())
+        try {
+            deferred.getCompleted()
+            fail("The Job should not have been completed yet.")
+        } catch (e: Exception) {
+            // Success.
+        }
+        now += advanceTimeBy(1)
+        assertEquals(delay, now())
+        assertEquals(now, now())
+        assertEquals(expectedValue, deferred.getCompleted())
+    }
+
     private suspend fun <T> TestCoroutineContext.suspendedBlockingFunction(delay: Long, function: () -> T): T {
         delay(delay / 4)
         return runBlocking {

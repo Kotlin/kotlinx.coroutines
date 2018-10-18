@@ -103,4 +103,18 @@ class RunBlockingTest : TestBase() {
             finish(4)
         }
     }
+
+    @Test
+    fun testNestedRunBlocking() = runBlocking {
+        delay(100)
+        val value = runBlocking {
+            delay(100)
+            runBlocking {
+                delay(100)
+                1
+            }
+        }
+
+        assertEquals(1, value)
+    }
 }
