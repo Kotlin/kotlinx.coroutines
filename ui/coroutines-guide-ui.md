@@ -527,27 +527,36 @@ class MainActivity : ScopedAppActivity() {
 Every coroutine launched from within a `MainActivity` has its job as a parent and is immediately cancelled when
 activity is destroyed.
 
-To propagate activity scope to its views and presenters, one can use [currentScope] builder which captures current 
-scope. Another solution is to implement [CoroutineScope] in child elements using delegation, for example:
+To propagate activity scope to its views and presenters, multiple techniques can be used:
+- [coroutineScope] builder to provide a nested scope
+- Receive [CoroutineScope] in presenter method parameters
+- Make method extension on [CoroutineScope] (applicable only for top-level methods)
 
 ```kotlin
 class ActivityWithPresenters: ScopedAppActivity() {
     fun init() {
         val presenter = Presenter()
-        val presenter2 = NonSuspendingPresenter(this)
+        val presenter2 = ScopedPresenter(this)
     }
 }
 
 class Presenter {
-    suspend fun loadData() = currentScope {
-        // Now we're in the scope of ActivityWithPresenters
+    suspend fun loadData() = coroutineScope {
+        // Nested scope of outer activity
+    }
+    
+    suspend fun loadData(uiScope: CoroutineScope) = uiScope.launch {
+      // Invoked in the uiScope
     }
 }
 
-class NonSuspendingPresenter(scope: CoroutineScope): CoroutineScope by scope {
+class ScopedPresenter(scope: CoroutineScope): CoroutineScope by scope {
     fun loadData() = launch { // Extension on ActivityWithPresenters's scope
-        // Implementation
     }
+}
+
+suspend fun CoroutineScope.launchInIO() = launch(Dispatchers.IO) {
+   // Launched in the scope of the caller, but with IO dispatcher
 }
 ``` 
 
@@ -709,6 +718,7 @@ After delay
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
