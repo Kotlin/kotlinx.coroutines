@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import org.junit.*
 import org.junit.Test
@@ -173,7 +173,7 @@ class ThreadLocalTest : TestBase() {
             val data = 42
             GlobalScope.async(Dispatchers.Default + intThreadLocal.asContextElement(42)) {
 
-                assertSame(data, intThreadLocal.get())
+                assertEquals(data, intThreadLocal.get())
                 expect(2)
 
                 GlobalScope.async(it + intThreadLocal.asContextElement(31)) {
@@ -182,7 +182,7 @@ class ThreadLocalTest : TestBase() {
                 }.await()
 
                 withContext(it + intThreadLocal.asContextElement(2)) {
-                    assertSame(2, intThreadLocal.get())
+                    assertEquals(2, intThreadLocal.get())
                     expect(4)
                 }
 

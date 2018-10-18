@@ -5,7 +5,7 @@
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import java.util.concurrent.*
 
@@ -15,28 +15,12 @@ import java.util.concurrent.*
  * ```
  * invokeOnCompletion { future.cancel(false) }
  * ```
- * 
+ *
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
 public fun Job.cancelFutureOnCompletion(future: Future<*>): DisposableHandle =
     invokeOnCompletion(handler = CancelFutureOnCompletion(this, future)) // TODO make it work only on cancellation as well?
-
-/**
- * Cancels a specified [future] when this job is cancelled.
- * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
- * ```
- * invokeOnCompletion { future.cancel(false) }
- * ```
- */
-@Deprecated(
-    message = "Disposable handlers on regular completion are no longer supported",
-    replaceWith = ReplaceWith("cancelFutureOnCancellation(future)"),
-    level = DeprecationLevel.WARNING)
-public fun CancellableContinuation<*>.cancelFutureOnCompletion(future: Future<*>): DisposableHandle {
-    cancelFutureOnCancellation(future)
-    return NonDisposableHandle
-}
 
 /**
  * Cancels a specified [future] when this job is cancelled.

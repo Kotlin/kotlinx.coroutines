@@ -2,11 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactive
+package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.reactivestreams.*
 
 /**
@@ -26,13 +26,6 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T
     return channel
 }
 
-/** @suppress **Deprecated**: Left here for binary compatibility */
-@JvmOverloads // for binary compatibility
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-@Suppress("CONFLICTING_OVERLOADS")
-public fun <T> Publisher<T>.openSubscription(request: Int = 0): SubscriptionReceiveChannel<T> =
-    openSubscription(request) as SubscriptionReceiveChannel<T>
-
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
@@ -42,16 +35,10 @@ public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
     channel.cancel()
 }
 
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Publisher<T>.consumeEach(action: suspend (T) -> Unit) =
-    consumeEach { action(it) }
-
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T>(
     private val request: Int
-) : LinkedListChannel<T>(), ReceiveChannel<T>, Subscriber<T>, SubscriptionReceiveChannel<T> {
+) : LinkedListChannel<T>(), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -64,6 +51,7 @@ private class SubscriptionChannel<T>(
     private val _requested = atomic(0)
 
     // AbstractChannel overrides
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
             val subscription = this.subscription
@@ -80,10 +68,12 @@ private class SubscriptionChannel<T>(
         }
     }
 
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveDequeued() {
         _requested.incrementAndGet()
     }
 
+    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun afterClose(cause: Throwable?) {
         subscription?.cancel()
     }

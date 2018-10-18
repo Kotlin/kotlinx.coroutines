@@ -4,22 +4,15 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.experimental.android
+package kotlinx.coroutines.android
 
 import android.os.*
 import android.support.annotation.*
 import android.view.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.MainDispatcherFactory
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.MainDispatcherFactory
 import java.lang.reflect.Constructor
-import kotlin.coroutines.experimental.*
-
-/**
- * Dispatches execution onto Android main thread and provides native [delay][Delay.delay] support.
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Deprecated in favor of Dispatchers property")
-public val Dispatchers.Main: HandlerDispatcher
-    get() = MainDispatcher
+import kotlin.coroutines.*
 
 /**
  * Dispatches execution onto Android [Handler].
@@ -40,6 +33,11 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 
 @Keep
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
+    companion object {
+        @JvmStatic // accessed reflectively from core
+        fun getDispatcher(): MainCoroutineDispatcher = Main
+    }
+
     override fun createDispatcher(): MainCoroutineDispatcher = Main
 
     override val loadPriority: Int
@@ -90,14 +88,8 @@ private val MainDispatcher: HandlerDispatcher = Main // Alias
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
- * @suppress **Deprecated**: Use [HandlerDispatcher].
  */
-@Deprecated(
-    message = "Use HandlerDispatcher",
-    replaceWith = ReplaceWith("HandlerDispatcher",
-        imports = ["kotlinx.coroutines.experimental.android.HandlerDispatcher"])
-)
-public class HandlerContext private constructor(
+internal class HandlerContext private constructor(
     private val handler: Handler,
     private val name: String?,
     private val invokeImmediately: Boolean
@@ -141,17 +133,6 @@ public class HandlerContext private constructor(
             }
         }
     }
-
-    /**
-     * Awaits the next animation frame and returns frame time in nanoseconds.
-     * @suppress **Deprecated**: Use top-level [awaitFrame].
-     */
-    @Deprecated(
-        message = "Use top-level awaitFrame",
-        replaceWith = ReplaceWith("kotlinx.coroutines.experimental.android.awaitFrame()")
-    )
-    public suspend fun awaitFrame(): Long =
-        kotlinx.coroutines.experimental.android.awaitFrame()
 
     override fun toString(): String =
         if (name != null) {

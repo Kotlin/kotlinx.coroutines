@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 public actual object Dispatchers {
 
@@ -12,7 +12,7 @@ public actual object Dispatchers {
 
     public actual val Main: MainCoroutineDispatcher = JsMainDispatcher(Default)
 
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.experimental.Unconfined
+    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 }
 
 private class JsMainDispatcher(val delegate: CoroutineDispatcher) : MainCoroutineDispatcher() {

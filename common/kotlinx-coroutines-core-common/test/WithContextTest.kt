@@ -5,9 +5,9 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class WithContextTest : TestBase() {
@@ -203,7 +203,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel()
                     require(job!!.cancel(AssertionError())) // cancel again, no success here
                     require(!isActive)
                     throw TestException() // but throw a different exception
@@ -233,7 +233,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel() // cancel itself
                     require(job!!.cancel(AssertionError()))
                     require(!isActive)
                 }

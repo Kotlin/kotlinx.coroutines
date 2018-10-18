@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlin.test.*
 
 class ConflatedBroadcastChannelTest : TestBase() {
@@ -36,7 +36,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
     fun testBasicScenario() = runTest {
         expect(1)
         val broadcast = ConflatedBroadcastChannel<String>()
-        assertTrue(exceptionFromNotInline { broadcast.value } is IllegalStateException)
+        assertTrue(exceptionFrom { broadcast.value } is IllegalStateException)
         assertNull(broadcast.valueOrNull)
 
         launch(start = CoroutineStart.UNDISPATCHED) {
@@ -88,7 +88,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
         yield() // to second receiver
         expect(18)
         broadcast.close()
-        assertTrue(exceptionFromNotInline { broadcast.value } is IllegalStateException)
+        assertTrue(exceptionFrom { broadcast.value } is IllegalStateException)
         assertNull(broadcast.valueOrNull)
         expect(19)
         yield() // to second receiver
@@ -117,22 +117,12 @@ class ConflatedBroadcastChannelTest : TestBase() {
         finish(7)
     }
 
-    inline fun exceptionFrom(block: () -> Unit): Throwable? {
-        try {
+    private inline fun exceptionFrom(block: () -> Unit): Throwable? {
+        return try {
             block()
-            return null
+            null
         } catch (e: Throwable) {
-            return e
-        }
-    }
-
-    // Workaround for KT-23921
-    fun exceptionFromNotInline(block: () -> Unit): Throwable? {
-        try {
-            block()
-            return null
-        } catch (e: Throwable) {
-            return e
+            e
         }
     }
 }

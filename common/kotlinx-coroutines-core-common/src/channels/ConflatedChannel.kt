@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -17,16 +17,8 @@ import kotlinx.coroutines.experimental.selects.*
  * This channel is created by `Channel(Channel.CONFLATED)` factory function invocation.
  *
  * This implementation is fully lock-free.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public open class ConflatedChannel<E>
-@Deprecated(
-    "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel(Channel.CONFLATED)")
-)
-constructor(): AbstractChannel<E>() {
+internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -51,7 +43,6 @@ constructor(): AbstractChannel<E>() {
                     when (sendResult) {
                         null -> return OFFER_SUCCESS
                         is Closed<*> -> return sendResult
-                        else -> Unit // todo:KLUDGE: works around native BE bug
                     }
                     // otherwise there was receiver in queue, retry super.offerInternal
                 }

@@ -1,15 +1,17 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION_ERROR")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * A concrete implementation of [Job]. It is optionally a child to a parent job.
@@ -20,7 +22,8 @@ import kotlin.coroutines.experimental.intrinsics.*
  * @param active when `true` the job is created in _active_ state, when `false` in _new_ state. See [Job] for details.
  * @suppress **This is unstable API and it is subject to change.**
  */
-internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob, SelectClause0 {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -393,19 +396,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
     public final override fun invokeOnCompletion(handler: CompletionHandler): DisposableHandle =
         invokeOnCompletion(onCancelling = false, invokeImmediately = true, handler = handler)
 
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    public final override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
-        invokeOnCompletion(onCancelling = onCancelling, invokeImmediately = true, handler = handler)
-
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    public final override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
-        invokeOnCompletion(onCancelling = onCancelling_, invokeImmediately = true, handler = handler)
-
-    // todo: non-final as a workaround for KT-21968, should be final in the future
-    public override fun invokeOnCompletion(
+    public final override fun invokeOnCompletion(
         onCancelling: Boolean,
         invokeImmediately: Boolean,
         handler: CompletionHandler
@@ -568,8 +559,9 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
     internal open val onCancelComplete: Boolean get() = false
 
     // external cancel without cause, never invoked implicitly from internal machinery
-    public override fun cancel(): Boolean =
+    public override fun cancel(): Unit {
         cancel(null) // must delegate here, because some classes override cancel(x)
+    }
 
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
     public override fun cancel(cause: Throwable?): Boolean =
@@ -843,7 +835,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
         }
     }
 
-    public final override val children: Sequence<Job> get() = buildSequence {
+    public final override val children: Sequence<Job> get() = sequence {
         val state = this@JobSupport.state
         when (state) {
             is ChildHandleNode -> yield(state.childJob)
@@ -865,12 +857,6 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
          * cancellation, but parent *will* wait for that child before completion and will handle its exception.
          */
         return invokeOnCompletion(onCancelling = true, handler = ChildHandleNode(this, child).asHandler) as ChildHandle
-    }
-
-    @Suppress("OverridingDeprecatedMember")
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    public final override fun cancelChildren(cause: Throwable?) {
-        this.cancelChildren(cause) // use extension function
     }
 
     /**
@@ -1087,7 +1073,7 @@ internal open class JobSupport constructor(active: Boolean) : Job, ChildJob, Par
      */
     internal suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
-        while(true) { // lock-free loop on state
+        while (true) { // lock-free loop on state
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result

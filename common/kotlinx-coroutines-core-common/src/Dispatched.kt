@@ -2,20 +2,78 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
+import kotlin.jvm.*
 
 @Suppress("PrivatePropertyName")
 private val UNDEFINED = Symbol("UNDEFINED")
+
+@NativeThreadLocal
+internal object UndispatchedEventLoop {
+    data class EventLoop(
+        @JvmField var isActive: Boolean = false,
+        @JvmField val queue: ArrayQueue<Runnable> = ArrayQueue()
+    )
+
+    @JvmField
+    internal val threadLocalEventLoop = CommonThreadLocal { EventLoop() }
+
+    inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, block: () -> Unit) {
+        val eventLoop = threadLocalEventLoop.get()
+        if (eventLoop.isActive) {
+            continuation._state = contState
+            continuation.resumeMode = mode
+            eventLoop.queue.addLast(continuation)
+            return
+        }
+
+        runEventLoop(eventLoop, block)
+    }
+
+    fun resumeUndispatched(task: DispatchedTask<*>) {
+        val eventLoop = threadLocalEventLoop.get()
+        if (eventLoop.isActive) {
+            eventLoop.queue.addLast(task)
+            return
+        }
+
+        runEventLoop(eventLoop, { task.resume(task.delegate, MODE_UNDISPATCHED) })
+    }
+
+    inline fun runEventLoop(eventLoop: EventLoop, block: () -> Unit) {
+        try {
+            eventLoop.isActive = true
+            block()
+            while (true) {
+                val nextEvent = eventLoop.queue.removeFirstOrNull() ?: return
+                nextEvent.run()
+            }
+        } catch (e: Throwable) {
+            /*
+             * This exception doesn't happen normally, only if user either submitted throwing runnable
+             * or if we have a bug in implementation. Anyway, reset state of the dispatcher to the initial.
+             */
+            eventLoop.queue.clear()
+            throw DispatchException("Unexpected exception in undispatched event loop, clearing pending tasks", e)
+        } finally {
+            eventLoop.isActive = false
+        }
+    }
+}
 
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
 ) : Continuation<T> by continuation, DispatchedTask<T> {
-    private var _state: Any? = UNDEFINED
+    @JvmField
+    @Suppress("PropertyName")
+    internal var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0
+    @JvmField // pre-cached value to avoid ctx.fold on every resumption
+    internal val countOrElement = threadContextElements(context)
 
     override fun takeState(): Any? {
         val state = _state
@@ -27,37 +85,33 @@ internal class DispatchedContinuation<in T>(
     override val delegate: Continuation<T>
         get() = this
 
-    override fun resume(value: T) {
+    override fun resumeWith(result: Result<T>) {
         val context = continuation.context
+        val state = result.toState()
         if (dispatcher.isDispatchNeeded(context)) {
-            _state = value
-            resumeMode = MODE_ATOMIC_DEFAULT
-            dispatcher.dispatch(context, this)
-        } else
-            resumeUndispatched(value)
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        val context = continuation.context
-        if (dispatcher.isDispatchNeeded(context)) {
-            _state = CompletedExceptionally(exception)
+            _state = state
             resumeMode = MODE_ATOMIC_DEFAULT
             dispatcher.dispatch(context, this)
         } else {
-            resumeUndispatchedWithException(exception)
+            UndispatchedEventLoop.execute(this, state, MODE_ATOMIC_DEFAULT) {
+                withCoroutineContext(this.context, countOrElement) {
+                    continuation.resumeWith(result)
+                }
+            }
         }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeCancellable(value: T) {
-        val context = continuation.context
         if (dispatcher.isDispatchNeeded(context)) {
             _state = value
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
-            if (!resumeCancelled()) {
-                resumeUndispatched(value)
+            UndispatchedEventLoop.execute(this, value, MODE_CANCELLABLE) {
+                if (!resumeCancelled()) {
+                    resumeUndispatched(value)
+                }
             }
         }
     }
@@ -65,13 +119,16 @@ internal class DispatchedContinuation<in T>(
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeCancellableWithException(exception: Throwable) {
         val context = continuation.context
+        val state = CompletedExceptionally(exception)
         if (dispatcher.isDispatchNeeded(context)) {
             _state = CompletedExceptionally(exception)
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
-            if (!resumeCancelled()) {
-                resumeUndispatchedWithException(exception)
+            UndispatchedEventLoop.execute(this, state, MODE_CANCELLABLE) {
+                if (!resumeCancelled()) {
+                    resumeUndispatchedWithException(exception)
+                }
             }
         }
     }
@@ -89,14 +146,14 @@ internal class DispatchedContinuation<in T>(
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatched(value: T) {
-        withCoroutineContext(context) {
+        withCoroutineContext(context, countOrElement) {
             continuation.resume(value)
         }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWithException(exception: Throwable) {
-        withCoroutineContext(context) {
+        withCoroutineContext(context, countOrElement) {
             continuation.resumeWithException(exception)
         }
     }
@@ -133,11 +190,7 @@ internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable)
     else -> resumeWithException(exception)
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public interface DispatchedTask<in T> : Runnable {
+internal interface DispatchedTask<in T> : Runnable {
     public val delegate: Continuation<T>
     public val resumeMode: Int get() = MODE_CANCELLABLE
 
@@ -157,7 +210,7 @@ public interface DispatchedTask<in T> : Runnable {
             val context = continuation.context
             val job = if (resumeMode.isCancellableMode) context[Job] else null
             val state = takeState() // NOTE: Must take state in any case, even if cancelled
-            withCoroutineContext(context) {
+            withCoroutineContext(context, delegate.countOrElement) {
                 if (job != null && !job.isActive)
                     continuation.resumeWithException(job.getCancellationException())
                 else {
@@ -174,12 +227,7 @@ public interface DispatchedTask<in T> : Runnable {
     }
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
-    var useMode = mode
+internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
     val delegate = this.delegate
     if (mode.isDispatchedMode && delegate is DispatchedContinuation<*> && mode.isCancellableMode == resumeMode.isCancellableMode) {
         // dispatch directly using this instance's Runnable implementation
@@ -187,11 +235,15 @@ public fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
         val context = delegate.context
         if (dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
-            return // and that's it -- dispatched via fast-path
         } else {
-            useMode = MODE_UNDISPATCHED
+            UndispatchedEventLoop.resumeUndispatched(this)
         }
+    } else {
+        resume(delegate, mode)
     }
+}
+
+internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: Int) {
     // slow-path - use delegate
     val state = takeState()
     val exception = getExceptionalResult(state)

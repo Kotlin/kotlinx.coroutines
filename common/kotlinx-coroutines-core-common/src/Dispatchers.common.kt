@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Groups various implementations of [CoroutineDispatcher].
@@ -42,10 +42,10 @@ public expect object Dispatchers {
 
     /**
      * A coroutine dispatcher that is not confined to any specific thread.
-     * It executes initial continuation of the coroutine _immediately_ in the current call-frame
+     * It executes initial continuation of the coroutine in the current call-frame
      * and lets the coroutine resume in whatever thread that is used by the corresponding suspending function, without
-     * mandating any specific threading policy.
-     * **Note: use with extreme caution, not for general code**.
+     * mandating any specific threading policy. Nested coroutines launched in this dispatcher form an event-loop to avoid
+     * stack overflows.
      *
      * Note, that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
      * but still want to execute it in the current call-frame until its first suspension, then you can use

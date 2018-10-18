@@ -5,16 +5,15 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.timeunit.*
 import kotlin.test.*
 
 class DelayTest : TestBase() {
 
     @Test
     fun testCancellation() = runTest(expected = {it is CancellationException }) {
-        runAndCancel(3600, TimeUnit.SECONDS)
+        runAndCancel(1000)
     }
 
     @Test
@@ -25,11 +24,6 @@ class DelayTest : TestBase() {
     @Test
     fun testMaxIntValue()= runTest(expected = {it is CancellationException }) {
         runAndCancel(Int.MAX_VALUE.toLong())
-    }
-
-    @Test
-    fun testOverflowOnUnitConversion()= runTest(expected = {it is CancellationException }) {
-        runAndCancel(Long.MAX_VALUE, TimeUnit.SECONDS)
     }
 
     @Test
@@ -46,11 +40,11 @@ class DelayTest : TestBase() {
         finish(4)
     }
 
-    private suspend fun runAndCancel(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) = coroutineScope {
+    private suspend fun runAndCancel(time: Long) = coroutineScope {
         expect(1)
         val deferred = async {
             expect(2)
-            delay(time, unit)
+            delay(time)
             expectUnreached()
         }
 

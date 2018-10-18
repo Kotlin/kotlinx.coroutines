@@ -2,11 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
+ *
+ * @suppress **This an internal API and should not be used from general code.**
  */
+@InternalCoroutinesApi
 public actual class CompletionHandlerException public actual constructor(
     message: String,
     public override val cause: Throwable
@@ -25,7 +28,7 @@ public actual open class CancellationException actual constructor(message: Strin
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
  */
-public actual class JobCancellationException public actual constructor(
+internal actual class JobCancellationException public actual constructor(
     message: String,
     public override val cause: Throwable?,
     internal actual val job: Job

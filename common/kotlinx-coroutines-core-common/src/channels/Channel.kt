@@ -4,13 +4,14 @@
 
 @file:Suppress("FunctionName")
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.experimental.channels.Channel.Factory.RENDEZVOUS
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Sender's interface to [Channel].
@@ -206,9 +207,13 @@ public interface ReceiveChannel<out E> {
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
      * Use [poll] to try receiving from this channel without waiting.
      *
-     * **Note: This is an experimental api.** This function may be replaced with a better on in the future.
+     * **Note: This is an obsolete api.**
+     * This function will be replaced with `receiveOrClosed: ReceiveResult<E>` and
+     * extension `suspend fun <E: Any> ReceiveChannel<E>.receiveOrNull(): E?`
      */
     @ExperimentalCoroutinesApi
+    @ObsoleteCoroutinesApi
+    @Deprecated(level = DeprecationLevel.WARNING, message = "This method does not distinguish closed channel and null elements")
     public suspend fun receiveOrNull(): E?
 
     /**
@@ -239,7 +244,6 @@ public interface ReceiveChannel<out E> {
     /**
      * Cancels reception of remaining elements from this channel. This function closes the channel
      * and removes all buffered sent elements from it.
-     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
      *
      * Immediately after invocation of this function [isClosedForReceive] and
      * [isClosedForSend][SendChannel.isClosedForSend]
@@ -247,25 +251,21 @@ public interface ReceiveChannel<out E> {
      * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
      * [ClosedReceiveChannelException].
      */
-    public fun cancel(): Boolean
+    public fun cancel(): Unit
 
     /**
-     * Cancels reception of remaining elements from this channel. This function closes the channel with
-     * the specified cause (unless it was already closed) and removes all buffered sent elements from it.
-     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
-     *
-     * Immediately after invocation of this function [isClosedForReceive] and
-     * [isClosedForSend][SendChannel.isClosedForSend]
-     * on the side of [SendChannel] start returning `true`, so all attempts to send to this channel
-     * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
-     * [ClosedReceiveChannelException] if it was cancelled without a cause.
-     * A channel that was cancelled with non-null [cause] is called a _failed_ channel. Attempts to send or
-     * receive on a failed channel throw the specified [cause] exception.
-     *
-     * **Note: This is an experimental api.** Semantics of _cancelling_ a channel with exception may
-     *         change in the future or this feature may be completely removed.
+     * @suppress
      */
-    @ExperimentalCoroutinesApi
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+    @JvmName("cancel")
+    public fun cancel0(): Boolean = cancel(null)
+
+    /**
+     * @suppress
+     */
+    @ObsoleteCoroutinesApi
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel without cause", replaceWith = ReplaceWith("cancel()"))
     public fun cancel(cause: Throwable? = null): Boolean
 }
 
@@ -342,7 +342,7 @@ public interface ChannelIterator<out E> {
  *   while previously sent elements **are lost**.
  *   Sender to this channel never suspends and [offer] always returns `true`.
  *
- * * When `capacity` is positive, but less than [UNLIMITED] -- it creates [ArrayChannel].
+ * * When `capacity` is positive, but less than [UNLIMITED] -- it creates array-based channel with given capacity.
  *   This channel has an array buffer of a fixed `capacity`.
  *   Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
  */
@@ -365,26 +365,13 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
          * Requests conflated channel in `Channel(...)` factory function -- the `ConflatedChannel` gets created.
          */
         public const val CONFLATED = -1
-
-        /**
-         * Creates a channel with the specified buffer capacity (or without a buffer by default).
-         * @suppress **Deprecated**
-         */
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun <E> invoke(capacity: Int = 0): Channel<E> = Channel(capacity)
     }
 }
 
 /**
- * Creates a channel without a buffer -- [RendezvousChannel].
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
-public fun <E> Channel(): Channel<E> = RendezvousChannel<E>()
-
-/**
  * Creates a channel with the specified buffer capacity (or without a buffer by default).
  * See [Channel] interface documentation for details.
- * 
+ *
  * @throws IllegalArgumentException when [capacity] < -1
  */
 public fun <E> Channel(capacity: Int = RENDEZVOUS): Channel<E> =
@@ -406,6 +393,7 @@ public class ClosedSendChannelException(message: String?) : CancellationExceptio
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
  * channel that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on receive attempts.
+ *
+ * This exception is subclass of [NoSuchElementException] to be consistent with plain collections.
  */
-// todo: explain when this exception is thrown
 public class ClosedReceiveChannelException(message: String?) : NoSuchElementException(message)

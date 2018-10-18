@@ -4,14 +4,14 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.$$1$$2
+package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ExceptionsGuideTest.kt
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.test
+package kotlinx.coroutines.guide.test
 
 import org.junit.Test
 
@@ -147,7 +147,7 @@ When a coroutine is cancelled using [Job.cancel] without a cause, it terminates,
 Cancelling without cause is a mechanism for parent to cancel its children without cancelling itself. 
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -199,7 +199,7 @@ is launched in the scope of the main [runBlocking], since the main coroutine is 
 when its child completes with exception despite the installed handler. 
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -258,8 +258,8 @@ would cause implementation details of a coroutines (whether it had delegated par
 to leak to its exception handler.
 
 <!--- INCLUDE
-import kotlinx.coroutines.experimental.exceptions.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.exceptions.*
+import kotlin.coroutines.*
 import java.io.*
 -->
 
@@ -308,7 +308,7 @@ Limitation on JS and Native is temporary and will be fixed in the future.
 Cancellation exceptions are transparent and unwrapped by default:
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import java.io.*
 -->
 
@@ -368,7 +368,7 @@ For these purposes [SupervisorJob][SupervisorJob()] can be used. It is similar t
 only downwards. It is easy to demonstrate with an example:
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -425,7 +425,7 @@ only in one direction and cancels all children only if it has failed itself. It 
 just like [coroutineScope] does.
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -474,7 +474,7 @@ Every child should handle its exceptions by itself via exception handling mechan
 This difference comes from the fact that child's failure is not propagated to the parent.
 
 <!--- INCLUDE
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -510,21 +510,21 @@ Scope is completed
 <!--- TEST-->
 
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-cancellation-exception/index.html
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
-[Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/await.html
-[GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/index.html
-[CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-exception-handler/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/run-blocking.html
-[SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-supervisor-job.html
-[Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job.html
-[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/supervisor-scope.html
-[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/coroutine-scope.html
-<!--- INDEX kotlinx.coroutines.experimental.channels -->
-[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
-[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/produce.html
-[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-receive-channel/receive.html
+<!--- INDEX kotlinx.coroutines -->
+[CancellationException]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-cancellation-exception/index.html
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
+[Deferred.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/await.html
+[GlobalScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/index.html
+[CoroutineExceptionHandler]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
+[SupervisorJob()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-supervisor-job.html
+[Job()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job.html
+[supervisorScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/supervisor-scope.html
+[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+<!--- INDEX kotlinx.coroutines.channels -->
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
+[produce]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/produce.html
+[ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 <!--- END -->

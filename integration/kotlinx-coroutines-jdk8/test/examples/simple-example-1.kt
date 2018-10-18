@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.examples
+package kotlinx.coroutines.examples
 
-import kotlinx.coroutines.experimental.future.await
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 
 fun main(args: Array<String>) {

@@ -2,13 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.scheduling
+package kotlinx.coroutines.scheduling
 
-import kotlinx.coroutines.experimental.TestBase
-import org.junit.*
+import kotlinx.coroutines.TestBase
+import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import java.util.concurrent.CountDownLatch
+import kotlin.coroutines.*
 
 class CoroutineSchedulerTest : TestBase() {
 

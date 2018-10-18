@@ -14,6 +14,7 @@ buildscript {
         jcenter()
         maven { url "https://kotlin.bintray.com/kotlinx" }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://jetbrains.bintray.com/kotlin-native-dependencies" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
@@ -53,7 +54,7 @@ allprojects {
 
     repositories {
         jcenter()
-        maven { url "https://kotlin.bintray.com/kotlin-dev" }
+        maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 }
@@ -102,7 +103,7 @@ configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
 
 // --------------- Configure sub-projects that are part of the library ---------------
 
-def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'binary-compatibility-validator']
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
 
 // Reconfigure source sets to avoid long "src/main/kotlin/fqn"
 configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
@@ -169,13 +170,23 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
             }
         }
     }
-    
+
     if (platform == "jvm") {
         dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
         // dump declarations from main JVM module for binary-compatibility-validator
         compileKotlin {
             kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
         }
+    }
+
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
+                                           "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                                           "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
+
     }
 }
 

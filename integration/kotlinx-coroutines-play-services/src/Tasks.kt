@@ -4,17 +4,18 @@
 
 @file:Suppress("RedundantVisibilityModifier")
 
-package kotlinx.coroutines.experimental.tasks
+package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.RuntimeExecutionException
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.TaskCompletionSource
-import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.CompletableDeferred
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.suspendCancellableCoroutine
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.*
 
 /**
  * Converts this deferred to the instance of [Task].

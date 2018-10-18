@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.future
+package kotlinx.coroutines.future
 
-import kotlinx.coroutines.experimental.*
-import org.junit.Test
+import kotlinx.coroutines.*
+import org.junit.*
+import org.junit.Assert.*
 import java.io.*
 import java.util.concurrent.*
-import kotlin.test.*
 
 class FutureExceptionsTest : TestBase() {
 

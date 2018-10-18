@@ -3,7 +3,7 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.context01
+package kotlinx.coroutines.rx2.guide.context01
 
 import io.reactivex.*
 import io.reactivex.functions.BiFunction

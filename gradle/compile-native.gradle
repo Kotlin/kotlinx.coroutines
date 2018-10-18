@@ -9,11 +9,27 @@ apply from: project.rootProject.file('gradle/maven-central.gradle')
 sourceSets {
     main {
         component {
-            target "ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"
+            targets = ["ios_arm64", "ios_arm32", "ios_x64", "macos_x64", "linux_x64", "mingw_x64"]
             outputKinds = [KLIBRARY]
             pom {
                 withXml(configureMavenCentralMetadata)
             }
+
+            extraOpts "-Xuse-experimental=kotlin.Experimental",
+                    "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                    "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"
+        }
+    }
+
+    test {
+        component {
+            extraOpts "-Xuse-experimental=kotlin.Experimental",
+                    "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                    "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                    "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"
         }
     }
 }
@@ -24,7 +40,7 @@ dependencies {
 
 if (project.hasProperty("teamcity")) {
     afterEvaluate {
-        runTestDebug {
+        tasks.withType(Class.forName("org.gradle.nativeplatform.test.tasks.RunTestExecutable_Decorated")) {
             args '--ktest_logger=TEAMCITY'
         }
     }

@@ -2,14 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.experimental.TestBase
+import kotlinx.coroutines.TestBase
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
-import kotlin.coroutines.experimental.buildIterator
+import kotlin.sequences.buildIterator
 
 /**
  * This stress test has 2 threads adding on one side on list, 2 more threads adding on the other,
@@ -61,7 +61,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         // verification
         println("Verify result")
         list.validate()
-        val expected = buildIterator {
+        val expected = iterator {
             for (i in 0 until nAdded)
                 if (!shallRemove(i))
                     yield(i)

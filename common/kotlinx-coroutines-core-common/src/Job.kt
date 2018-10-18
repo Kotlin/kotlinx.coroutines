@@ -4,12 +4,13 @@
 
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
+@file:Suppress("DEPRECATION_ERROR", "RedundantUnitReturnType")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.jvm.*
 
 // --------------- core job interfaces ---------------
 
@@ -63,7 +64,7 @@ import kotlin.coroutines.experimental.*
  * ```
  *
  * A `Job` instance in the
- * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * represents the coroutine itself.
  *
  * A job can have a _parent_ job. A job with a parent is cancelled when its parent is cancelled.
@@ -85,14 +86,6 @@ public interface Job : CoroutineContext.Element {
      * Key for [Job] instance in the coroutine context.
      */
     public companion object Key : CoroutineContext.Key<Job> {
-        /**
-         * Creates a new job object in _active_ state.
-         * It is optionally a child of a [parent] job.
-         * @suppress **Deprecated**
-         */
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun invoke(parent: Job? = null): Job = Job(parent)
-
         init {
             /*
              * Here we make sure that CoroutineExceptionHandler is always initialized in advance, so
@@ -152,13 +145,6 @@ public interface Job : CoroutineContext.Element {
     @InternalCoroutinesApi
     public fun getCancellationException(): CancellationException
 
-    /**
-     * @suppress **Deprecated**: Renamed to [getCancellationException]
-     */
-    @Deprecated("Renamed to getCancellationException", replaceWith = ReplaceWith("getCancellationException()"))
-    public fun getCompletionException(): Throwable =
-        getCancellationException()
-
     // ------------ state update ------------
 
     /**
@@ -169,28 +155,26 @@ public interface Job : CoroutineContext.Element {
     public fun start(): Boolean
 
     /**
-     * Cancels this job.
-     * The result is `true` if this job was either cancelled as a result of this invocation
-     * or was already being cancelled.
-     * If job is already completed, method returns `false`.
+     * @suppress
      */
-    public fun cancel(): Boolean
+    @Suppress("INAPPLICABLE_JVM_NAME")
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
+    @JvmName("cancel")
+    public fun cancel0(): Boolean = cancel(null)
 
     /**
-     * Cancels this job with an optional cancellation [cause].
-     * The result is `true` if this job was either cancelled as a result of this invocation
-     * or it's being cancelled and given [cause] was successfully received by the job and will be properly handled, `false` otherwise.
-     *
-     * If this method returned `false`, then caller is responsible for handling [cause].
-     * If job is already completed, method returns `false`.
-     *
-     * When cancellation has a clear reason in the code, an instance of [CancellationException] should be created
-     * at the corresponding original cancellation site and passed into this method to aid in debugging by providing
-     * both the context of cancellation and text description of the reason.
-     *
-     * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
+     * Cancels this job.
+     * See [Job] documentation for full explanation of cancellation machinery.
      */
-    @ExperimentalCoroutinesApi
+    public fun cancel(): Unit
+
+    /**
+     * @suppress
+     */
+    @ObsoleteCoroutinesApi
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use CompletableDeferred.completeExceptionally(cause) or Job.cancel() instead",
+        replaceWith = ReplaceWith("cancel()")
+    )
     public fun cancel(cause: Throwable? = null): Boolean
 
     // ------------ parent-child ------------
@@ -236,16 +220,7 @@ public interface Job : CoroutineContext.Element {
      */
     // ChildJob and ChildHandle are made internal on purpose to further deter 3rd-party impl of Job
     @InternalCoroutinesApi
-    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     public fun attachChild(child: ChildJob): ChildHandle
-
-    /**
-     * Cancels all children jobs of this coroutine with the given [cause]. Unlike [cancel],
-     * the state of this job itself is not affected.
-     * @suppress **Deprecated**: Binary compatibility, it is an extension now
-     */
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    public fun cancelChildren(cause: Throwable? = null)
 
     // ------------ state waiting ------------
 
@@ -279,19 +254,6 @@ public interface Job : CoroutineContext.Element {
     public val onJoin: SelectClause0
 
     // ------------ low-level state-notification ------------
-
-    /**
-     * @suppress **Deprecated**: For binary compatibility
-     */
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    public fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle
-
-    /**
-     * @suppress **Deprecated**: Use with named `onCancellation` and `handler` parameters.
-     */
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    public fun invokeOnCompletion(onCancelling_: Boolean = false, handler: CompletionHandler): DisposableHandle
 
     /**
      * Registers handler that is **synchronously** invoked once on completion of this job.
@@ -422,7 +384,8 @@ public inline fun DisposableHandle(crossinline block: () -> Unit) =
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ChildJob : Job {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ChildJob : Job {
     /**
      * Parent is cancelling its child by invoking this method.
      * Child finds the cancellation cause using [ParentJob.getChildJobCancellationCause].
@@ -440,7 +403,8 @@ internal interface ChildJob : Job {
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ParentJob : Job {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ParentJob : Job {
     /**
      * Child job is using this method to learn its cancellation cause when the parent cancels it with [ChildJob.parentCancelled].
      * This method is invoked only if the child was not already being cancelled.
@@ -457,7 +421,8 @@ internal interface ParentJob : Job {
  * @suppress **This is unstable API and it is subject to change.**
  */
 @InternalCoroutinesApi
-internal interface ChildHandle : DisposableHandle {
+@Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
+public interface ChildHandle : DisposableHandle {
     /**
      * Child is cancelling its parent by invoking this method.
      * This method is invoked by the child twice. The first time child report its root cause as soon as possible,
@@ -473,31 +438,14 @@ internal interface ChildHandle : DisposableHandle {
 // -------------------- Job extensions --------------------
 
 /**
- * Unregisters a specified [registration] when this job is complete.
- *
- * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
- * ```
- * invokeOnCompletion { registration.unregister() }
- * ```
- * @suppress: **Deprecated**: Renamed to `disposeOnCompletion`.
- */
-@Deprecated(message = "Renamed to `disposeOnCompletion`",
-    replaceWith = ReplaceWith("disposeOnCompletion(registration)"))
-public fun Job.unregisterOnCompletion(registration: DisposableHandle): DisposableHandle =
-    invokeOnCompletion(handler = DisposeOnCompletion(this, registration).asHandler)
-
-/**
  * Disposes a specified [handle] when this job is complete.
  *
  * This is a shortcut for the following code with slightly more efficient implementation (one fewer object created).
  * ```
  * invokeOnCompletion { handle.dispose() }
  * ```
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
+internal fun Job.disposeOnCompletion(handle: DisposableHandle): DisposableHandle =
     invokeOnCompletion(handler = DisposeOnCompletion(this, handle).asHandler)
 
 /**
@@ -520,24 +468,20 @@ public suspend fun Job.cancelAndJoin() {
 }
 
 /**
- * Cancels all [children][Job.children] jobs of this coroutine with the given [cause] using [Job.cancel]
- * for all of them. Unlike [Job.cancel] on this job as a whole, the state of this job itself is not affected.
+ * @suppress
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER") // See KT-21598
+@ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
 public fun Job.cancelChildren(cause: Throwable? = null) {
     children.forEach { it.cancel(cause) }
 }
 
 /**
- * Suspends coroutine until all [children][Job.children] of this job are complete using
- * [Job.join] for all of them. Unlike [Job.join] on this job as a whole, it does not wait until
- * this job is complete.
- *
- * @suppress **Deprecated**: No replacement. Group child in a `coroutineScope { }` block to wait for them
+ * Cancels all [children][Job.children] jobs of this coroutine using [Job.cancel] for all of them.
+ * Unlike [Job.cancel] on this job as a whole, the state of this job itself is not affected.
  */
-@Deprecated("No replacement. Group child in a coroutineScope { } block to wait for them")
-public suspend fun Job.joinChildren() {
-    children.forEach { it.join() }
+public fun Job.cancelChildren() {
+    children.forEach { it.cancel() }
 }
 
 // -------------------- CoroutineContext extensions --------------------
@@ -561,22 +505,29 @@ public suspend fun Job.joinChildren() {
 public val CoroutineContext.isActive: Boolean
     get() = this[Job]?.isActive == true
 
-/**
- * Cancels [Job] of this context. The result is `true` if the job was
- * cancelled as a result of this invocation or was already being cancelled and
- * `false` if there is no job in the context or if it was already completed. See [Job.cancel] for details.
- */
-public fun CoroutineContext.cancel(): Boolean =
-    this[Job]?.cancel() ?: false
 
 /**
- * Cancels [Job] of this context with an optional cancellation [cause]. The result is `true` if the job was
- * cancelled as a result of this invocation and `false` if there is no job in the context or if it was already
- * cancelled or completed. See [Job.cancel] for details.
- *
- * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
+ * @suppress
  */
-@ExperimentalCoroutinesApi
+@JvmName("cancel")
+@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+public fun CoroutineContext.cancel0(): Boolean {
+    this[Job]?.cancel()
+    return true
+}
+
+/**
+ * Cancels [Job] of this context. See [Job.cancel] for details.
+ */
+public fun CoroutineContext.cancel(): Unit {
+    this[Job]?.cancel()
+}
+
+/**
+ * @suppress
+ */
+@ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel() without cause", replaceWith = ReplaceWith("cancel()"))
 public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
     this[Job]?.cancel(cause) ?: false
 
@@ -588,24 +539,11 @@ public fun CoroutineContext.cancelChildren() {
     this[Job]?.children?.forEach { it.cancel() }
 }
 
-/**
- * Cancels all children of the [Job] in this context with an optional cancellation [cause],
- * without touching the the state of this job itself.
- * It does not do anything if there is no job in the context or it has no children.
- *
- * **Note: This is an experimental api.** Cancellation of a job with exception may change its semantics in the future.
- */
-@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
+@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
 public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
     this[Job]?.children?.forEach { it.cancel(cause) }
 }
-
-/**
- * @suppress **Deprecated**: `join` is now a member function of `Job`.
- */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DeprecatedCallableAddReplaceWith")
-@Deprecated(message = "`join` is now a member function of `Job`")
-public suspend fun Job.join() = this.join()
 
 /**
  * No-op implementation of [DisposableHandle].

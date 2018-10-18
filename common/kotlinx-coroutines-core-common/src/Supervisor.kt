@@ -2,12 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+@file:Suppress("DEPRECATION_ERROR")
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+package kotlinx.coroutines
+
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Creates a new _supervisor_ job object in an active state.

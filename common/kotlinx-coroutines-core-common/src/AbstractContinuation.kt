@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
@@ -137,11 +137,8 @@ internal abstract class AbstractContinuation<in T>(
         return getSuccessfulResult(state)
     }
 
-    override fun resume(value: T) =
-        resumeImpl(value, resumeMode)
-
-    override fun resumeWithException(exception: Throwable) =
-        resumeImpl(CompletedExceptionally(exception), resumeMode)
+    override fun resumeWith(result: Result<T>) =
+        resumeImpl(result.toState(), resumeMode)
 
     internal fun resumeWithExceptionMode(exception: Throwable, mode: Int) =
         resumeImpl(CompletedExceptionally(exception), mode)

@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Base class that shall be extended by all coroutine dispatcher implementations.
@@ -103,7 +103,7 @@ public abstract class CoroutineDispatcher :
     )
     public operator fun plus(other: CoroutineDispatcher) = other
 
-    // for nicer debugging
+    /** @suppress for nicer debugging */
     override fun toString(): String = "$classSimpleName@$hexAddress"
 }
 

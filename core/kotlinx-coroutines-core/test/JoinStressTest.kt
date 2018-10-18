@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import org.junit.*
 import org.junit.Test
@@ -50,7 +50,6 @@ class JoinStressTest : TestBase() {
             barrier.await()
             exceptionalJob.cancel()
             ++results[awaiterJob.await()]
-            require(!exceptionalJob.cancel())
         }
 
         // Check that concurrent cancellation of job which throws TestException without suspends doesn't suppress TestException
@@ -93,7 +92,6 @@ class JoinStressTest : TestBase() {
                 assertTrue(cancellerResult)
             }
             ++results[awaiterResult]
-            require(!exceptionalJob.cancel())
 
             if (cancellerResult) {
                 ++successfulCancellations

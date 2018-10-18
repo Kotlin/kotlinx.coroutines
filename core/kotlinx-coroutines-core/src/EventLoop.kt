@@ -2,12 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.internal.*
-import java.util.concurrent.locks.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 /**
  * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -18,8 +17,7 @@ import kotlin.coroutines.experimental.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi // todo: review KDoc references to this interface
-public interface EventLoop: ContinuationInterceptor {
+internal interface EventLoop: ContinuationInterceptor {
     /**
      * Processes next event in this event loop.
      *
@@ -29,48 +27,7 @@ public interface EventLoop: ContinuationInterceptor {
      * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
      */
     public fun processNextEvent(): Long
-
-    /** @suppress **Deprecated **/
-    @Deprecated(message = "Companion object to be removed, no replacement")
-    public companion object Factory {
-        /** @suppress **Deprecated **/
-        @Deprecated("Replaced with top-level function", level = DeprecationLevel.HIDDEN)
-        public operator fun invoke(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
-            EventLoopImpl(thread).apply {
-                if (parentJob != null) initParentJob(parentJob)
-            }
-    }
 }
-
-/**
- * Creates a new event loop that is bound the specified [thread] (current thread by default) and
- * stops accepting new events when [parentJob] completes. Every continuation that is scheduled
- * onto this event loop unparks the specified thread via [LockSupport.unpark].
- *
- * The main event-processing loop using the resulting `eventLoop` object should look like this:
- * ```
- * while (needsToBeRunning) {
- *     if (Thread.interrupted()) break // or handle somehow
- *     LockSupport.parkNanos(eventLoop.processNextEvent()) // event loop will unpark
- * }
- * ```
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-@Suppress("FunctionName")
-@InternalCoroutinesApi
-public fun EventLoop(thread: Thread = Thread.currentThread(), parentJob: Job? = null): EventLoop =
-    EventLoopImpl(thread).apply {
-        if (parentJob != null) initParentJob(parentJob)
-    }
-
-/**
- * @suppress **Deprecated**: Preserves binary compatibility with old code
- */
-@JvmName("EventLoop")
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Preserves binary compatibility with old code")
-public fun EventLoop_Deprecated(thread: Thread = Thread.currentThread(), parentJob: Job? = null): CoroutineDispatcher =
-    EventLoop(thread, parentJob) as CoroutineDispatcher
 
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
@@ -378,17 +335,6 @@ internal abstract class ThreadEventLoop(
         while (processNextEvent() <= 0) { /* spin */ }
         // reschedule the rest of delayed tasks
         rescheduleAllDelayed()
-    }
-}
-
-private class EventLoopImpl(thread: Thread) : ThreadEventLoop(thread) {
-    private var parentJob: Job? = null
-
-    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
-
-    fun initParentJob(parentJob: Job) {
-        require(this.parentJob == null)
-        this.parentJob = parentJob
     }
 }
 

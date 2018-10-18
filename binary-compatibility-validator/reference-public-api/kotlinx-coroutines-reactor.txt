@@ -1,45 +1,33 @@
-public final class kotlinx/coroutines/experimental/reactor/ConvertKt {
-	public static final fun asFlux (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;)Lreactor/core/publisher/Flux;
-	public static synthetic fun asFlux$default (Lkotlinx/coroutines/experimental/channels/ReceiveChannel;Lkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
-	public static final fun asMono (Lkotlinx/coroutines/experimental/Deferred;)Lreactor/core/publisher/Mono;
-	public static final fun asMono (Lkotlinx/coroutines/experimental/Deferred;Lkotlin/coroutines/experimental/CoroutineContext;)Lreactor/core/publisher/Mono;
-	public static final fun asMono (Lkotlinx/coroutines/experimental/Job;)Lreactor/core/publisher/Mono;
-	public static final fun asMono (Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/CoroutineContext;)Lreactor/core/publisher/Mono;
-	public static final synthetic fun asMono$default (Lkotlinx/coroutines/experimental/Deferred;Lkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
-	public static final synthetic fun asMono$default (Lkotlinx/coroutines/experimental/Job;Lkotlin/coroutines/experimental/CoroutineContext;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
+public final class kotlinx/coroutines/reactor/ConvertKt {
+	public static final fun asFlux (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;)Lreactor/core/publisher/Flux;
+	public static synthetic fun asFlux$default (Lkotlinx/coroutines/channels/ReceiveChannel;Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
+	public static final fun asMono (Lkotlinx/coroutines/Deferred;Lkotlin/coroutines/CoroutineContext;)Lreactor/core/publisher/Mono;
+	public static final fun asMono (Lkotlinx/coroutines/Job;Lkotlin/coroutines/CoroutineContext;)Lreactor/core/publisher/Mono;
 }
 
-public final class kotlinx/coroutines/experimental/reactor/FluxKt {
-	public static final fun flux (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;
-	public static final fun flux (Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;
-	public static final fun flux (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;
-	public static synthetic fun flux$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
-	public static synthetic fun flux$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
+public final class kotlinx/coroutines/reactor/FluxKt {
+	public static final fun flux (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Flux;
+	public static synthetic fun flux$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Flux;
 }
 
-public final class kotlinx/coroutines/experimental/reactor/MonoKt {
-	public static final fun mono (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Mono;
-	public static final fun mono (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Mono;
-	public static synthetic fun mono$default (Lkotlin/coroutines/experimental/CoroutineContext;Lkotlinx/coroutines/experimental/Job;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
-	public static synthetic fun mono$default (Lkotlinx/coroutines/experimental/CoroutineScope;Lkotlin/coroutines/experimental/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
+public final class kotlinx/coroutines/reactor/MonoKt {
+	public static final fun mono (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;)Lreactor/core/publisher/Mono;
+	public static synthetic fun mono$default (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lreactor/core/publisher/Mono;
 }
 
-public final class kotlinx/coroutines/experimental/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/experimental/CoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
+public final class kotlinx/coroutines/reactor/SchedulerCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lreactor/core/scheduler/Scheduler;)V
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getScheduler ()Lreactor/core/scheduler/Scheduler;
 	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class kotlinx/coroutines/experimental/reactor/SchedulerKt {
-	public static final fun asCoroutineDispatcher (Lreactor/core/scheduler/Scheduler;)Lkotlinx/coroutines/experimental/reactor/SchedulerCoroutineDispatcher;
+public final class kotlinx/coroutines/reactor/SchedulerKt {
+	public static final fun asCoroutineDispatcher (Lreactor/core/scheduler/Scheduler;)Lkotlinx/coroutines/reactor/SchedulerCoroutineDispatcher;
 }
 

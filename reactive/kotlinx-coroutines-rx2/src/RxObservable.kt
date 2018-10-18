@@ -2,16 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.functions.*
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.sync.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.sync.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
@@ -41,28 +40,13 @@ import kotlin.coroutines.experimental.*
 @ExperimentalCoroutinesApi
 public fun <T : Any> CoroutineScope.rxObservable(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Observable<T> = Observable.create { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = RxObservableCoroutine(newContext, subscriber)
     subscriber.setCancellable(RxCancellable(coroutine)) // do it first (before starting coroutine), to await unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
-
-/**
- * Creates cold [observable][Observable] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxObservable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxObservable(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxObservable"])
-)
-public fun <T : Any> rxObservable(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend ProducerScope<T>.() -> Unit
-): Observable<T> = GlobalScope.rxObservable(context + (parent ?: EmptyCoroutineContext), block)
 
 private const val OPEN = 0        // open channel, still working
 private const val CLOSED = -1     // closed, but have not signalled onCompleted/onError yet

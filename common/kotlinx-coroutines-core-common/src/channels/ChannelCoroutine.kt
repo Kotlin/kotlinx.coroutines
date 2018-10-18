@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
@@ -16,7 +16,11 @@ internal open class ChannelCoroutine<E>(
 
     val channel: Channel<E> get() = this
 
-    override fun cancel() = cancel(null)
+    override fun cancel(): Unit {
+        cancel(null)
+    }
+
+    override fun cancel0(): Boolean = cancel(null)
 
     override fun cancel(cause: Throwable?): Boolean {
         val wasCancelled = _channel.cancel(cause)

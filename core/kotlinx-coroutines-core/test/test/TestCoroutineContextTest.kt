@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.test
+package kotlinx.coroutines.test
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Assert.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 class TestCoroutineContextTest {
     private val injectedContext = TestCoroutineContext()
@@ -141,13 +141,11 @@ class TestCoroutineContextTest {
     fun testBlockingFunctionWithRunBlocking() = withTestContext(injectedContext) {
         val delay = 1000L
         val expectedValue = 16
-
         val result = runBlocking {
             suspendedBlockingFunction(delay) {
                 expectedValue
             }
         }
-
         assertEquals(expectedValue, result)
         assertEquals(delay, now())
     }
@@ -157,13 +155,11 @@ class TestCoroutineContextTest {
         val delay = 1000L
         val expectedValue = 16
         var now = 0L
-
         val deferred = async {
             suspendedBlockingFunction(delay) {
                 expectedValue
             }
         }
-
         now += advanceTimeBy((delay / 4) - 1)
         assertEquals((delay / 4) - 1, now)
         assertEquals(now, now())
@@ -173,7 +169,6 @@ class TestCoroutineContextTest {
         } catch (e: Exception) {
             // Success.
         }
-
         now += advanceTimeBy(1)
         assertEquals(delay, now())
         assertEquals(now, now())
@@ -369,8 +364,7 @@ class TestCoroutineContextTest {
         }
 
         advanceTimeBy(500)
-        assertTrue(job.cancel())
-
+        job.cancel()
         assertAllUnhandledExceptions { it is CancellationException }
     }
 
@@ -381,7 +375,7 @@ class TestCoroutineContextTest {
         }
 
         advanceTimeBy(500)
-        assertTrue(job.cancel())
+        job.cancel()
     }
 }
 
@@ -391,20 +385,18 @@ class TestCoroutineContextTest {
 private fun TestCoroutineContext.launch(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
-        onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> Unit
 ) =
-    GlobalScope.launch(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+    GlobalScope.launch(this + (parent ?: EmptyCoroutineContext), start, block)
 
 // todo: deprecate, replace, see https://github.com/Kotlin/kotlinx.coroutines/issues/541
 private fun <T> TestCoroutineContext.async(
         start: CoroutineStart = CoroutineStart.DEFAULT,
         parent: Job? = null,
-        onCompletion: CompletionHandler? = null,
         block: suspend CoroutineScope.() -> T
 
 ) =
-    GlobalScope.async(this + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
+    GlobalScope.async(this + (parent ?: EmptyCoroutineContext), start, block)
 
 private fun <T> TestCoroutineContext.runBlocking(
         block: suspend CoroutineScope.() -> T

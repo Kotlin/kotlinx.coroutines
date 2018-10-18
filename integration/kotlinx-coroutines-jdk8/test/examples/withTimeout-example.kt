@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.examples
+package kotlinx.coroutines.examples
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.future.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.*
 
 fun main(args: Array<String>) {
     fun slow(s: String) = GlobalScope.future {

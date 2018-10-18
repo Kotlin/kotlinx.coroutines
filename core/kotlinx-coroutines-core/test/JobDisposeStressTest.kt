@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import org.junit.Test
 import kotlin.concurrent.thread
@@ -49,9 +49,8 @@ class JobDisposeStressTest: TestBase() {
         threads += testThread("canceller") {
             while (!done) {
                 val job = this.job ?: continue
-                val result = job.cancel()
+                job.cancel()
                 // Always returns true, TestJob never completes
-                check(result)
             }
         }
 
@@ -76,5 +75,6 @@ class JobDisposeStressTest: TestBase() {
         // rethrow exception if any
     }
 
+    @Suppress("DEPRECATION_ERROR")
     private class TestJob : JobSupport(active = true)
 }

@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.js.*
 
 /**
@@ -28,53 +28,6 @@ public fun <T> CoroutineScope.promise(
     block: suspend CoroutineScope.() -> T
 ): Promise<T> =
     async(context, start, block).asPromise()
-
-/**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun <T> CoroutineScope.promise(
-    context: CoroutineContext = EmptyCoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    async(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }.asPromise()
-
-/**
- * Starts new coroutine and returns its result as an implementation of [Promise].
- * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.*"])
-)
-public fun <T> promise(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    GlobalScope.promise(context, start, onCompletion, block = block)
-
-/**
- * Starts new coroutine and returns its result as an implementation of [Promise].
- * @suppress **Deprecated**. Use [CoroutineScope.promise] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.promise(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.*"])
-)
-public fun <T> promise(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Promise<T> =
-    GlobalScope.promise(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block = block)
 
 /**
  * Converts this deferred value to the instance of [Promise].

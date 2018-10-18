@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
@@ -31,27 +31,12 @@ import kotlin.coroutines.experimental.*
  *
  * **Note: This is an experimental api.** Behaviour of publishers that work as children in a parent scope with respect
  *        to cancellation and error handling may change in the future.
- *        
+ *
  * @param context context of the coroutine.
  * @param block the coroutine code.
  */
 @ExperimentalCoroutinesApi
 public fun <T> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Flowable<T> = Flowable.fromPublisher(publish(newCoroutineContext(context), block = block))
-
-/**
- * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxFlowable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxFlowable(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxFlowable"])
-)
-@JvmOverloads // for binary compatibility with older code compiled before context had a default
-public fun <T> rxFlowable(
-    context: CoroutineContext = Dispatchers.Default,
-    block: suspend ProducerScope<T>.() -> Unit
-): Flowable<T> = GlobalScope.rxFlowable(context, block)

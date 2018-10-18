@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.android
+package kotlinx.coroutines.android
 
 import android.support.annotation.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.lang.reflect.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 private val getter =
     try {
@@ -21,11 +21,8 @@ private val getter =
  * Uses Android's `Thread.getUncaughtExceptionPreHandler()` whose default behavior is to log exception.
  * See
  * [here](https://github.com/aosp-mirror/platform_frameworks_base/blob/2efbc7239f419c931784acf98960ed6abc38c3f2/core/java/com/android/internal/os/RuntimeInit.java#L142)
- *
- * @suppress This is an internal impl class.
  */
 @Keep
-@InternalCoroutinesApi
 internal class AndroidExceptionPreHandler :
     AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler
 {

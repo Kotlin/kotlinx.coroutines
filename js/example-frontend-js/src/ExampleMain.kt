@@ -18,14 +18,14 @@
  * limitations under the License.
  */
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlinx.html.*
 import kotlinx.html.div
 import kotlinx.html.dom.*
 import kotlinx.html.js.onClickFunction
 import org.w3c.dom.*
 import kotlin.browser.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.math.*
 
 fun main(args: Array<String>) {
@@ -93,9 +93,11 @@ class Application : CoroutineScope {
     private fun animation(cls: String, size: Double, block: suspend CoroutineScope.(HTMLElement) -> Unit) {
         val elem = scene.append.div(cls)
         elem.setSize(size, size)
-        launch(onCompletion = { scene.removeChild(elem) }) {
+        val job = launch {
             block(elem)
         }
+
+        job.invokeOnCompletion { scene.removeChild(elem) }
     }
 
     private fun onRect() {

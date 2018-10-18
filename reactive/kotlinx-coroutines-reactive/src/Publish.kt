@@ -2,15 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.reactive
+package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.sync.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.sync.*
 import org.reactivestreams.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
@@ -40,28 +40,13 @@ import kotlin.coroutines.experimental.*
 @ExperimentalCoroutinesApi
 public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: suspend ProducerScope<T>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     val newContext = newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
-
-/**
- * Creates cold reactive [Publisher] that runs a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.publish] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.publish(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactive.publish"])
-)
-public fun <T> publish(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend ProducerScope<T>.() -> Unit
-): Publisher<T> = GlobalScope.publish(context + (parent ?: EmptyCoroutineContext), block)
 
 private const val CLOSED = -1L    // closed, but have not signalled onCompleted/onError yet
 private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/onError

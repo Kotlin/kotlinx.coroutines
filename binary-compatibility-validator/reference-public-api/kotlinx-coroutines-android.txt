@@ -1,38 +1,13 @@
-public final class kotlinx/coroutines/experimental/android/HandlerContext : kotlinx/coroutines/experimental/android/HandlerDispatcher, kotlinx/coroutines/experimental/Delay {
-	public fun <init> (Landroid/os/Handler;Ljava/lang/String;)V
-	public synthetic fun <init> (Landroid/os/Handler;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun awaitFrame (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun dispatch (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Runnable;)V
-	public fun equals (Ljava/lang/Object;)Z
-	public synthetic fun getImmediate ()Lkotlinx/coroutines/experimental/MainCoroutineDispatcher;
-	public fun getImmediate ()Lkotlinx/coroutines/experimental/android/HandlerContext;
-	public synthetic fun getImmediate ()Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public fun hashCode ()I
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public fun isDispatchNeeded (Lkotlin/coroutines/experimental/CoroutineContext;)Z
-	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/experimental/CancellableContinuation;)V
-	public fun toString ()Ljava/lang/String;
+public abstract class kotlinx/coroutines/android/HandlerDispatcher : kotlinx/coroutines/MainCoroutineDispatcher, kotlinx/coroutines/Delay {
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getImmediate ()Lkotlinx/coroutines/android/HandlerDispatcher;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/DisposableHandle;
 }
 
-public final class kotlinx/coroutines/experimental/android/HandlerContextKt {
-	public static final synthetic fun asCoroutineDispatcher (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerContext;
-	public static final fun getUI ()Lkotlinx/coroutines/experimental/android/HandlerContext;
-}
-
-public abstract class kotlinx/coroutines/experimental/android/HandlerDispatcher : kotlinx/coroutines/experimental/MainCoroutineDispatcher, kotlinx/coroutines/experimental/Delay {
-	public synthetic fun delay (JLjava/util/concurrent/TimeUnit;Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public fun delay (JLkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public abstract fun getImmediate ()Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public fun invokeOnTimeout (JLjava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun invokeOnTimeout (JLjava/util/concurrent/TimeUnit;Ljava/lang/Runnable;)Lkotlinx/coroutines/experimental/DisposableHandle;
-	public synthetic fun scheduleResumeAfterDelay (JLjava/util/concurrent/TimeUnit;Lkotlinx/coroutines/experimental/CancellableContinuation;)V
-}
-
-public final class kotlinx/coroutines/experimental/android/HandlerDispatcherKt {
-	public static final fun awaitFrame (Lkotlin/coroutines/experimental/Continuation;)Ljava/lang/Object;
-	public static final fun from (Landroid/os/Handler;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public static final fun from (Landroid/os/Handler;Ljava/lang/String;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public static synthetic fun from$default (Landroid/os/Handler;Ljava/lang/String;ILjava/lang/Object;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
-	public static final synthetic fun getMain (Lkotlinx/coroutines/experimental/Dispatchers;)Lkotlinx/coroutines/experimental/android/HandlerDispatcher;
+public final class kotlinx/coroutines/android/HandlerDispatcherKt {
+	public static final fun awaitFrame (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun from (Landroid/os/Handler;)Lkotlinx/coroutines/android/HandlerDispatcher;
+	public static final fun from (Landroid/os/Handler;Ljava/lang/String;)Lkotlinx/coroutines/android/HandlerDispatcher;
+	public static synthetic fun from$default (Landroid/os/Handler;Ljava/lang/String;ILjava/lang/Object;)Lkotlinx/coroutines/android/HandlerDispatcher;
 }
 

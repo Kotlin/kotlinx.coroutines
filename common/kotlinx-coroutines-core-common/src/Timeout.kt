@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Runs a given suspending [block] of code inside a coroutine with a specified timeout and throws
@@ -20,8 +20,7 @@ import kotlin.coroutines.experimental.intrinsics.*
  * The sibling function that does not throw exception on timeout is [withTimeoutOrNull].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
- * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  *
  * @param timeMillis timeout time in milliseconds.
  */
@@ -42,25 +41,23 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * The sibling function that throws exception on timeout is [withTimeout].
  * Note, that timeout action can be specified for [select] invocation with [onTimeout][SelectBuilder.onTimeout] clause.
  *
- * This function delegates to [Delay.invokeOnTimeout] if the context [CoroutineDispatcher]
- * implements [Delay] interface, otherwise it tracks time using a built-in single-threaded scheduled executor service.
+ * Implementation note: how exactly time is tracked is an implementation detail of [CoroutineDispatcher] in the context.
  *
  * @param timeMillis timeout time in milliseconds.
  */
 public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? {
     if (timeMillis <= 0L) return null
 
-    // Workaround for K/N bug
-    val array = arrayOfNulls<TimeoutCoroutine<T?, T?>>(1)
+    var coroutine: TimeoutCoroutine<T?, T?>? = null
     try {
         return suspendCoroutineUninterceptedOrReturn { uCont ->
             val timeoutCoroutine = TimeoutCoroutine(timeMillis, uCont)
-            array[0] = timeoutCoroutine
+            coroutine = timeoutCoroutine
             setupTimeout<T?, T?>(timeoutCoroutine, block)
         }
     } catch (e: TimeoutCancellationException) {
         // Return null iff it's our exception, otherwise propagate it upstream (e.g. in case of nested withTimeouts)
-        if (e.coroutine === array[0]) {
+        if (e.coroutine === coroutine) {
             return null
         }
         throw e
@@ -113,11 +110,9 @@ public class TimeoutCancellationException internal constructor(
     /**
      * Creates timeout exception with a given message.
      * This constructor is needed for exception stack-traces recovery.
-     *
-     * @suppress **This an internal API and should not be used from general code.**
      */
-    @InternalCoroutinesApi
-    public constructor(message: String) : this(message, null)
+    @Suppress("UNUSED")
+    internal constructor(message: String) : this(message, null)
 }
 
 @Suppress("FunctionName")

@@ -2,27 +2,19 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.internal
 
-import kotlinx.coroutines.experimental.*
 import java.util.*
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public interface ThreadSafeHeapNode {
+internal interface ThreadSafeHeapNode {
     public var heap: ThreadSafeHeap<*>?
     public var index: Int
 }
 
 /**
  * Synchronized binary heap.
- *
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
-public class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
+internal class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
     private var a: Array<T?>? = null
 
     @JvmField @PublishedApi @Volatile

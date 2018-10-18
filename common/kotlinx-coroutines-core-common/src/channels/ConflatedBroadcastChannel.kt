@@ -2,13 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Broadcasts the most recently sent element (aka [value]) to all [openSubscription] subscribers.
@@ -45,14 +46,9 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     private val onCloseHandler = atomic<Any?>(null)
 
     private companion object {
-        @JvmField
-        val CLOSED = Closed(null)
-
-        @JvmField
-        val UNDEFINED = Symbol("UNDEFINED")
-
-        @JvmField
-        val INITIAL_STATE = State<Any?>(UNDEFINED, null)
+        private val CLOSED = Closed(null)
+        private val UNDEFINED = Symbol("UNDEFINED")
+        private val INITIAL_STATE = State<Any?>(UNDEFINED, null)
     }
 
     private class State<E>(
@@ -181,6 +177,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
         val handler = onCloseHandler.value
         if (handler !== null && handler !== HANDLER_INVOKED
             && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
+            @Suppress("UNCHECKED_CAST")
             (handler as Handler)(cause)
         }
     }
@@ -272,7 +269,7 @@ public class ConflatedBroadcastChannel<E>() : BroadcastChannel<E> {
     @Suppress("DEPRECATION")
     private class Subscriber<E>(
         private val broadcastChannel: ConflatedBroadcastChannel<E>
-    ) : ConflatedChannel<E>(), ReceiveChannel<E>, SubscriptionReceiveChannel<E> {
+    ) : ConflatedChannel<E>(), ReceiveChannel<E> {
         override fun cancel(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.closeSubscriber(this)

@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class ProduceTest : TestBase() {
@@ -94,7 +94,7 @@ class ProduceTest : TestBase() {
         cancelOnCompletion(coroutineContext)
     }
 
-    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = currentScope {
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
         val source = Channel<Int>()
         expect(1)
         val produced = produce<Int>(coroutineContext, onCompletion = source.consumes()) {

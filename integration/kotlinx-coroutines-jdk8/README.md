@@ -14,7 +14,7 @@ Extension functions:
 | -------- | ---------------
 | [CompletionStage.await][java.util.concurrent.CompletionStage.await] | Awaits for completion of the completion stage
 | [CompletionStage.asDeferred][java.util.concurrent.CompletionStage.asDeferred] | Converts completion stage to an instance of [Deferred]
-| [Deferred.asCompletableFuture][kotlinx.coroutines.experimental.Deferred.asCompletableFuture] | Converts a deferred value to the future
+| [Deferred.asCompletableFuture][kotlinx.coroutines.Deferred.asCompletableFuture] | Converts a deferred value to the future
 
 ## Example
 
@@ -45,20 +45,20 @@ a _blocking_ method
 [get](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#get--) 
 that makes it especially bad choice for coroutine-based Kotlin code.
 
-# Package kotlinx.coroutines.experimental.future
+# Package kotlinx.coroutines.future
 
 Integration with JDK8 [CompletableFuture] (Android API level 24).
 
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html
 
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-deferred/index.html
+<!--- INDEX kotlinx.coroutines -->
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
 <!--- MODULE kotlinx-coroutines-jdk8 -->
-<!--- INDEX kotlinx.coroutines.experimental.future -->
-[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-coroutine-scope/future.html
-[java.util.concurrent.CompletionStage.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/await.html
-[java.util.concurrent.CompletionStage.asDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/java.util.concurrent.-completion-stage/as-deferred.html
-[kotlinx.coroutines.experimental.Deferred.asCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.experimental.future/kotlinx.coroutines.experimental.-deferred/as-completable-future.html
+<!--- INDEX kotlinx.coroutines.future -->
+[future]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/kotlinx.coroutines.-coroutine-scope/future.html
+[java.util.concurrent.CompletionStage.await]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/java.util.concurrent.-completion-stage/await.html
+[java.util.concurrent.CompletionStage.asDeferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/java.util.concurrent.-completion-stage/as-deferred.html
+[kotlinx.coroutines.Deferred.asCompletableFuture]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-jdk8/kotlinx.coroutines.future/kotlinx.coroutines.-deferred/as-completable-future.html
 <!--- END -->

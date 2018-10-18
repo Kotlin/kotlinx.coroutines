@@ -5,7 +5,7 @@
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.30.2) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.30.2)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin 1.2.70 release.
+This is a companion version for Kotlin 1.3.0-rc-146 release.
 
 **NOTE**: This is the _last_ experimental feature release. 
 See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
@@ -70,7 +70,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.30.2</version>
+    <version>0.30.2-eap13</version>
 </dependency>
 ```
 
@@ -78,9 +78,11 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.70</kotlin.version>
+    <kotlin.version>1.3.0-rc-146</kotlin.version>
 </properties>
 ```
+
+While Kotlin 1.3 is still in release candidate status, in order to depend on it you should add eap repository: `https://dl.bintray.com/kotlin/kotlin-eap`.
 
 ### Gradle
 
@@ -88,7 +90,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2-eap13'
 }
 ```
 
@@ -96,7 +98,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.70'
+    ext.kotlin_version = '1.3.0-rc-146'
 }
 ```
 
@@ -148,24 +150,16 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.2'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.2-eap13'
 ```
-This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/kotlinx.coroutines.experimental.-dispatchers/index.html)
+This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/kotlinx.coroutines.-dispatchers/index.html)
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
 threads are handled by Android runtime. 
 
-### ProGuard
+### R8 and ProGuard
 
-In obfuscated code, fields with different types can have the same names,
-and `AtomicReferenceFieldUpdater` may be unable to find the correct ones.
-To avoid field overloading by type during obfuscation, add this to your config:
-
-```
--keepclassmembernames class kotlinx.** {
-    volatile <fields>;
-}
-```
+If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
 
 ## Building 
 

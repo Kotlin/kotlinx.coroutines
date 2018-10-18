@@ -2,14 +2,14 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.scheduling
+package kotlinx.coroutines.scheduling
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import java.lang.UnsupportedOperationException
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Default instance of coroutine dispatcher.
@@ -24,7 +24,8 @@ internal object DefaultScheduler : ExperimentalCoroutineDispatcher() {
     override fun toString(): String = DEFAULT_SCHEDULER_NAME
 
     @InternalCoroutinesApi
-    fun toDebugString(): String = super.toString()
+    @Suppress("UNUSED")
+    public fun toDebugString(): String = super.toString()
 }
 
 /**
