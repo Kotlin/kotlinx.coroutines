@@ -43,7 +43,7 @@ internal fun <T> Continuation<T>.resumeUninterceptedMode(value: T, mode: Int) {
         MODE_ATOMIC_DEFAULT -> intercepted().resume(value)
         MODE_CANCELLABLE -> intercepted().resumeCancellable(value)
         MODE_DIRECT -> resume(value)
-        MODE_UNDISPATCHED -> withCoroutineContext(context) { resume(value) }
+        MODE_UNDISPATCHED -> withCoroutineContext(context, null) { resume(value) }
         MODE_IGNORE -> {}
         else -> error("Invalid mode $mode")
     }
@@ -54,7 +54,7 @@ internal fun <T> Continuation<T>.resumeUninterceptedWithExceptionMode(exception:
         MODE_ATOMIC_DEFAULT -> intercepted().resumeWithException(exception)
         MODE_CANCELLABLE -> intercepted().resumeCancellableWithException(exception)
         MODE_DIRECT -> resumeWithException(exception)
-        MODE_UNDISPATCHED -> withCoroutineContext(context) { resumeWithException(exception) }
+        MODE_UNDISPATCHED -> withCoroutineContext(context, null) { resumeWithException(exception) }
         MODE_IGNORE -> {}
         else -> error("Invalid mode $mode")
     }

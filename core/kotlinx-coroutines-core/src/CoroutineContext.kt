@@ -63,8 +63,8 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 /**
  * Executes a block using a given coroutine context.
  */
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
-    val oldValue = updateThreadContext(context)
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
+    val oldValue = updateThreadContext(context, countOrElement)
     try {
         return block()
     } finally {

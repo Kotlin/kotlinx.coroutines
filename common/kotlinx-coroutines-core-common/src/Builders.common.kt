@@ -138,7 +138,7 @@ public suspend fun <T> withContext(
     if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
         val coroutine = UndispatchedCoroutine(newContext, uCont) // MODE_UNDISPATCHED
         // There are changes in the context, so this thread needs to be updated
-        withCoroutineContext(newContext) {
+        withCoroutineContext(newContext, null) {
             return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
         }
     }

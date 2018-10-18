@@ -57,20 +57,24 @@ private val restoreState =
         return state
     }
 
-internal fun updateThreadContext(context: CoroutineContext): Any? {
-    val count = context.fold(0, countAll)
+internal actual fun threadContextElements(context: CoroutineContext): Any = context.fold(0, countAll)!!
+
+// countOrElement is pre-cached in dispatched continuation
+internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?): Any? {
+    @Suppress("NAME_SHADOWING")
+    val countOrElement = countOrElement ?: threadContextElements(context)
     @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
     return when {
-        count === 0 -> ZERO // very fast path when there are no active ThreadContextElements
+        countOrElement === 0 -> ZERO // very fast path when there are no active ThreadContextElements
         //    ^^^ identity comparison for speed, we know zero always has the same identity
-        count is Int -> {
+        countOrElement is Int -> {
             // slow path for multiple active ThreadContextElements, allocates ThreadState for multiple old values
-            context.fold(ThreadState(context, count), updateState)
+            context.fold(ThreadState(context, countOrElement), updateState)
         }
         else -> {
             // fast path for one ThreadContextElement (no allocations, no additional context scan)
             @Suppress("UNCHECKED_CAST")
-            val element = count as ThreadContextElement<Any?>
+            val element = countOrElement as ThreadContextElement<Any?>
             element.updateThreadContext(context)
         }
     }

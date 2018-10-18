@@ -72,6 +72,8 @@ internal class DispatchedContinuation<in T>(
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
     public override var resumeMode: Int = 0
+    @JvmField // pre-cached value to avoid ctx.fold on every resumption
+    internal val countOrElement = threadContextElements(context)
 
     override fun takeState(): Any? {
         val state = _state
@@ -92,7 +94,7 @@ internal class DispatchedContinuation<in T>(
             dispatcher.dispatch(context, this)
         } else {
             UndispatchedEventLoop.execute(this, state, MODE_ATOMIC_DEFAULT) {
-                withCoroutineContext(this.context) {
+                withCoroutineContext(this.context, countOrElement) {
                     continuation.resumeWith(result)
                 }
             }
@@ -144,14 +146,14 @@ internal class DispatchedContinuation<in T>(
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatched(value: T) {
-        withCoroutineContext(context) {
+        withCoroutineContext(context, countOrElement) {
             continuation.resume(value)
         }
     }
 
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWithException(exception: Throwable) {
-        withCoroutineContext(context) {
+        withCoroutineContext(context, countOrElement) {
             continuation.resumeWithException(exception)
         }
     }
@@ -208,7 +210,7 @@ internal interface DispatchedTask<in T> : Runnable {
             val context = continuation.context
             val job = if (resumeMode.isCancellableMode) context[Job] else null
             val state = takeState() // NOTE: Must take state in any case, even if cancelled
-            withCoroutineContext(context) {
+            withCoroutineContext(context, delegate.countOrElement) {
                 if (job != null && !job.isActive)
                     continuation.resumeWithException(job.getCancellationException())
                 else {

@@ -10,19 +10,39 @@ import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
-@Warmup(iterations = 10, time = 1)
-@Measurement(iterations = 10, time = 1)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 5, time = 1)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-@Fork(2)
+@Fork(1)
 open class ChannelSinkBenchmark {
+    private val tl = ThreadLocal.withInitial({ 42 })
+    private val tl2 = ThreadLocal.withInitial({ 239 })
+
+    private val unconfined = Dispatchers.Unconfined
+    private val unconfinedOneElement = Dispatchers.Unconfined + tl.asContextElement()
+    private val unconfinedTwoElements = Dispatchers.Unconfined + tl.asContextElement() + tl2.asContextElement()
 
     @Benchmark
     fun channelPipeline(): Int = runBlocking {
-        Channel
-            .range(1, 1_000_000, Dispatchers.Unconfined)
-            .filter(Dispatchers.Unconfined) { it % 4 == 0 }
+        run(unconfined)
+    }
+
+    @Benchmark
+    fun channelPipelineOneThreadLocal(): Int = runBlocking {
+        run(unconfinedOneElement)
+    }
+
+    @Benchmark
+    fun channelPipelineTwoThreadLocals(): Int = runBlocking {
+        run(unconfinedTwoElements)
+    }
+
+    private suspend inline fun run(context: CoroutineContext): Int {
+        return Channel
+            .range(1, 1_000_000, context)
+            .filter(context) { it % 4 == 0 }
             .fold(0) { a, b -> a + b }
     }
 
