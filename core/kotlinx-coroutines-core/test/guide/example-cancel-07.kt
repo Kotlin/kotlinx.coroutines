@@ -7,7 +7,10 @@ package kotlinx.coroutines.guide.cancel07
 
 import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val result = withTimeoutOrNull(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -16,4 +19,5 @@ fun main(args: Array<String>) = runBlocking {
         "Done" // will get cancelled before it produces this result
     }
     println("Result is $result")
+//sampleEnd
 }

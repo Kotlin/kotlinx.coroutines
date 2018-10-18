@@ -42,10 +42,13 @@ For example, a user might have closed the page that launched a coroutine and now
 is no longer needed and its operation can be cancelled. 
 The [launch] function returns a [Job] that can be used to cancel running coroutine:
  
-<div class="sample" markdown="1" theme="idea" data-highlight-only> 
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -57,6 +60,7 @@ fun main(args: Array<String>) = runBlocking {
     job.cancel() // cancels the job
     job.join() // waits for job's completion 
     println("main: Now I can quit.")
+//sampleEnd    
 }
 ``` 
 
@@ -88,10 +92,13 @@ coroutine and throw [CancellationException] when cancelled. However, if a corout
 a computation and does not check for cancellation, then it cannot be cancelled, like the following 
 example shows:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
@@ -108,6 +115,7 @@ fun main(args: Array<String>) = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
+//sampleEnd    
 }
 ```
 
@@ -136,10 +144,13 @@ The other one is to explicitly check the cancellation status. Let us try the lat
 
 Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
         var nextPrintTime = startTime
@@ -156,6 +167,7 @@ fun main(args: Array<String>) = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
+//sampleEnd    
 }
 ```
 
@@ -181,10 +193,13 @@ a usual way. For example, `try {...} finally {...}` expression and Kotlin `use` 
 finalization actions normally when coroutine is cancelled:
  
  
-<div class="sample" markdown="1" theme="idea" data-highlight-only> 
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -199,6 +214,7 @@ fun main(args: Array<String>) = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
+//sampleEnd    
 }
 ``` 
 
@@ -229,10 +245,13 @@ communication channel) are usually non-blocking and do not involve any suspendin
 rare case when you need to suspend in the cancelled coroutine you can wrap the corresponding code in
 `withContext(NonCancellable) {...}` using [withContext] function and [NonCancellable] context as the following example shows:
  
-<div class="sample" markdown="1" theme="idea" data-highlight-only> 
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -251,6 +270,7 @@ fun main(args: Array<String>) = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
+//sampleEnd    
 }
 ``` 
 
@@ -276,16 +296,20 @@ While you can manually track the reference to the corresponding [Job] and launch
 the tracked one after delay, there is a ready to use [withTimeout] function that does it.
 Look at the following example:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     withTimeout(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
             delay(500L)
         }
     }
+//sampleEnd
 }
 ```
 
@@ -314,10 +338,13 @@ You can wrap the code with timeout in `try {...} catch (e: TimeoutCancellationEx
 you need to do some additional action specifically on any kind of timeout or use [withTimeoutOrNull] function
 that is similar to [withTimeout], but returns `null` on timeout instead of throwing an exception:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val result = withTimeoutOrNull(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -326,6 +353,7 @@ fun main(args: Array<String>) = runBlocking {
         "Done" // will get cancelled before it produces this result
     }
     println("Result is $result")
+//sampleEnd
 }
 ```
 
