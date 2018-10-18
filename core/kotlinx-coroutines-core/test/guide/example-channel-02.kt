@@ -8,7 +8,11 @@ package kotlinx.coroutines.guide.channel02
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<Int>()
     launch {
         for (x in 1..5) channel.send(x * x)
@@ -17,4 +21,5 @@ fun main(args: Array<String>) = runBlocking {
     // here we print received values using `for` loop (until the channel is closed)
     for (y in channel) println(y)
     println("Done!")
+//sampleEnd
 }

@@ -9,7 +9,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val channel = Channel<Int>(4) // create buffered channel
     val sender = launch { // launch sender coroutine
         repeat(10) {
@@ -20,4 +24,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // don't receive anything... just wait....
     delay(1000)
     sender.cancel() // cancel sender coroutine
+//sampleEnd    
 }

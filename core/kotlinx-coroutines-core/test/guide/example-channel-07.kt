@@ -16,7 +16,11 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
     }
 }
 
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<String>()
     launch { sendString(channel, "foo", 200L) }
     launch { sendString(channel, "BAR!", 500L) }
@@ -24,4 +28,12 @@ fun main(args: Array<String>) = runBlocking {
         println(channel.receive())
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
+//sampleEnd
+}
+
+suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
+    while (true) {
+        delay(time)
+        channel.send(s)
+    }
 }
