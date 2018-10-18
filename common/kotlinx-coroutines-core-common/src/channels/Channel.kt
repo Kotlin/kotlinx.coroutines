@@ -397,6 +397,7 @@ public class ClosedSendChannelException(message: String?) : CancellationExceptio
  * Indicates attempt to [receive][ReceiveChannel.receive] on [isClosedForReceive][ReceiveChannel.isClosedForReceive]
  * channel that was closed without a cause. A _failed_ channel rethrows the original [close][SendChannel.close] cause
  * exception on receive attempts.
+ *
+ * This exception is subclass of [NoSuchElementException] to be consistent with plain collections.
  */
-// todo: explain when this exception is thrown
 public class ClosedReceiveChannelException(message: String?) : NoSuchElementException(message)
