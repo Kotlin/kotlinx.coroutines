@@ -129,17 +129,9 @@ coroutine dispatcher and also makes sure that in case of crashed coroutine with 
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
 threads are handled by Android runtime. 
 
-### ProGuard
+### R8 and ProGuard
 
-In obfuscated code, fields with different types can have the same names,
-and `AtomicReferenceFieldUpdater` may be unable to find the correct ones.
-To avoid field overloading by type during obfuscation, add this to your config:
-
-```
--keepclassmembernames class kotlinx.** {
-    volatile <fields>;
-}
-```
+If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
 
 ## Building 
 

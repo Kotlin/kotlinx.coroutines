@@ -4,7 +4,6 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)

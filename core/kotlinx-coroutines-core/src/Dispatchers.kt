@@ -8,8 +8,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
-import kotlin.coroutines.*
 import java.util.*
+import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -20,7 +20,6 @@ public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.paralleli
  * Groups various implementations of [CoroutineDispatcher].
  */
 public actual object Dispatchers {
-
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
