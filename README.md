@@ -130,6 +130,7 @@ exception is logged before crashing Android application, similarly to the way un
 threads are handled by Android runtime. 
 
 ### R8 and ProGuard
+
 If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
 
 ## Building 
