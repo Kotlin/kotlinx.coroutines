@@ -52,7 +52,7 @@ Coroutine context includes a _coroutine dispatcher_ (see [CoroutineDispatcher]) 
 the corresponding coroutine uses for its execution. Coroutine dispatcher can confine coroutine execution 
 to a specific thread, dispatch it to a thread pool, or let it run unconfined. 
 
-All coroutines builders like [launch] and [async] accept an optional 
+All coroutine builders like [launch] and [async] accept an optional 
 [CoroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/-coroutine-context/) 
 parameter that can be used to explicitly specify the dispatcher for new coroutine and other context elements. 
 
@@ -594,7 +594,7 @@ are not bound to any particular thread, it is hard to achieve it manually withou
 
 For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLocal.html), 
 [asContextElement] extension function is here for the rescue. It creates an additional context element, 
-which keep the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
+which keeps the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
 
 It is easy to demonstrate it in action:
 

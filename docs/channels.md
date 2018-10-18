@@ -133,7 +133,7 @@ This is a part of _producer-consumer_ pattern that is often found in concurrent 
 You could abstract such a producer into a function that takes channel as its parameter, but this goes contrary
 to common sense that results must be returned from functions. 
 
-There is a convenience coroutine builder named [produce] that makes it easy to do it right on producer side,
+There is a convenient coroutine builder named [produce] that makes it easy to do it right on producer side,
 and an extension function [consumeEach], that replaces a `for` loop on the consumer side:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -179,7 +179,7 @@ fun CoroutineScope.produceNumbers() = produce<Int> {
 </div>
 
 And another coroutine or coroutines are consuming that stream, doing some processing, and producing some other results.
-In the below example the numbers are just squared:
+In the example below, the numbers are just squared:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -219,7 +219,7 @@ Done!
 -->
 
 > All functions that create coroutines are defined as extensions on [CoroutineScope],
-so that we can rely on [structured concurrency](https://github.com/Kotlin/kotlinx.coroutineskotlinx.coroutines/blob/master/docs/composing-suspending-functions.md#structured-concurrency-with-async) to make
+so that we can rely on [structured concurrency](https://kotlinlang.org/docs/reference/coroutines/composing-suspending-functions.html#structured-concurrency-with-async) to make
 sure that we don't have lingering global coroutines in our application.
 
 ### Prime numbers with pipeline
