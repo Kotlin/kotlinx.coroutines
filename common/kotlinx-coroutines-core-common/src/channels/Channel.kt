@@ -206,9 +206,13 @@ public interface ReceiveChannel<out E> {
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
      * Use [poll] to try receiving from this channel without waiting.
      *
-     * **Note: This is an experimental api.** This function may be replaced with a better on in the future.
+     * **Note: This is an obsolete api.**
+     * This function will be replaced with `receiveOrClosed: ReceiveResult<E>` and
+     * extension `suspend fun <E: Any> ReceiveChannel<E>.receiveOrNull(): E?`
      */
     @ExperimentalCoroutinesApi
+    @ObsoleteCoroutinesApi
+    @Deprecated(level = DeprecationLevel.WARNING, message = "This method does not distinguish closed channel and null elements")
     public suspend fun receiveOrNull(): E?
 
     /**
