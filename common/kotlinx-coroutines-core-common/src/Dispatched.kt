@@ -13,53 +13,53 @@ private val UNDEFINED = Symbol("UNDEFINED")
 
 @NativeThreadLocal
 internal object UndispatchedEventLoop {
-    data class State(
+    data class EventLoop(
         @JvmField var isActive: Boolean = false,
-        @JvmField val threadLocalQueue: ArrayQueue<Runnable> = ArrayQueue()
+        @JvmField val queue: ArrayQueue<Runnable> = ArrayQueue()
     )
 
     @JvmField
-    internal val state = CommonThreadLocal { State() }
+    internal val threadLocalEventLoop = CommonThreadLocal { EventLoop() }
 
     inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, block: () -> Unit) {
-        val state = state.get()
-        if (state.isActive) {
+        val eventLoop = threadLocalEventLoop.get()
+        if (eventLoop.isActive) {
             continuation._state = contState
             continuation.resumeMode = mode
-            state.threadLocalQueue.addLast(continuation)
+            eventLoop.queue.addLast(continuation)
             return
         }
 
-        runLoop(state, block)
+        runEventLoop(eventLoop, block)
     }
 
     fun resumeUndispatched(task: DispatchedTask<*>) {
-        val state = state.get()
-        if (state.isActive) {
-            state.threadLocalQueue.addLast(task)
+        val eventLoop = threadLocalEventLoop.get()
+        if (eventLoop.isActive) {
+            eventLoop.queue.addLast(task)
             return
         }
 
-        runLoop(state, { task.resume(task.delegate, MODE_UNDISPATCHED) })
+        runEventLoop(eventLoop, { task.resume(task.delegate, MODE_UNDISPATCHED) })
     }
 
-    inline fun runLoop(state: State, block: () -> Unit) {
+    inline fun runEventLoop(eventLoop: EventLoop, block: () -> Unit) {
         try {
-            state.isActive = true
+            eventLoop.isActive = true
             block()
-            while (!state.threadLocalQueue.isEmpty) {
-                val element = state.threadLocalQueue.removeFirst()
-                element.run()
+            while (true) {
+                val nextEvent = eventLoop.queue.removeFirstOrNull() ?: return
+                nextEvent.run()
             }
         } catch (e: Throwable) {
             /*
              * This exception doesn't happen normally, only if user either submitted throwing runnable
              * or if we have a bug in implementation. Anyway, reset state of the dispatcher to the initial.
              */
-            state.threadLocalQueue.clear()
+            eventLoop.queue.clear()
             throw DispatchException("Unexpected exception in undispatched event loop, clearing pending tasks", e)
         } finally {
-            state.isActive = false
+            eventLoop.isActive = false
         }
     }
 }
