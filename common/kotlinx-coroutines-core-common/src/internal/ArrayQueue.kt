@@ -5,8 +5,6 @@
 package kotlinx.coroutines.internal
 
 internal class ArrayQueue<T : Any> {
-    public val isEmpty: Boolean get() = head == tail
-
     private var elements = arrayOfNulls<Any>(16)
     private var head = 0
     private var tail = 0
@@ -18,12 +16,12 @@ internal class ArrayQueue<T : Any> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    public fun removeFirst(): T {
-        require(head != tail) { "Queue is empty" }
+    public fun removeFirstOrNull(): T? {
+        if (head == tail) return null
         val element = elements[head]
         elements[head] = null
         head = (head + 1) and elements.size - 1
-        return element!! as T
+        return element as T
     }
 
     public fun clear() {
