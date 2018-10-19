@@ -1,28 +1,24 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
-$dokka.location:kotlinx.coroutines.experimental$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.experimental.asContextElement.T)), kotlinx.coroutines.experimental.asContextElement.T)kotlinx.coroutines.experimental/java.lang.-thread-local/as-context-element.html
-$dokka.location:kotlinx.coroutines.experimental$asCoroutineDispatcher(java.util.concurrent.Executor)kotlinx.coroutines.experimental/java.util.concurrent.-executor/as-coroutine-dispatcher.html
-$dokka.location:kotlinx.coroutines.experimental$asCoroutineDispatcher(java.util.concurrent.ExecutorService)kotlinx.coroutines.experimental/java.util.concurrent.-executor-service/as-coroutine-dispatcher.html
-$dokka.location:kotlinx.coroutines.experimental$asCoroutineDispatcher(org.w3c.dom.Window)kotlinx.coroutines.experimental/org.w3c.dom.-window/as-coroutine-dispatcher.html
-$dokka.location:kotlinx.coroutines.experimental$asDeferred(kotlin.js.Promise((kotlinx.coroutines.experimental.asDeferred.T)))kotlinx.coroutines.experimental/kotlin.js.-promise/as-deferred.html
-$dokka.location:kotlinx.coroutines.experimental$await(kotlin.js.Promise((kotlinx.coroutines.experimental.await.T)))kotlinx.coroutines.experimental/kotlin.js.-promise/await.html
-$dokka.location:kotlinx.coroutines.experimental$awaitAll(kotlin.collections.Collection((kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.awaitAll.T)))))kotlinx.coroutines.experimental/kotlin.collections.-collection/await-all.html
-$dokka.location:kotlinx.coroutines.experimental$awaitAnimationFrame(org.w3c.dom.Window)kotlinx.coroutines.experimental/org.w3c.dom.-window/await-animation-frame.html
-$dokka.location:kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel.html
-$dokka.location:kotlinx.coroutines.experimental$cancel(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel.html
-$dokka.location:kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
-$dokka.location:kotlinx.coroutines.experimental$cancelChildren(kotlin.coroutines.experimental.CoroutineContext, kotlin.Throwable)kotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/cancel-children.html
-$dokka.location:kotlinx.coroutines.experimental$isActive#kotlin.coroutines.experimental.CoroutineContextkotlinx.coroutines.experimental/kotlin.coroutines.experimental.-coroutine-context/is-active.html
-$dokka.location:kotlinx.coroutines.experimental$joinAll(kotlin.collections.Collection((kotlinx.coroutines.experimental.Job)))kotlinx.coroutines.experimental/kotlin.collections.-collection/join-all.html
-$dokka.location:kotlinx.coroutines.experimental.CancellationExceptionkotlinx.coroutines.experimental/-cancellation-exception/index.html
-$dokka.location:kotlinx.coroutines.experimental.CancellationException$<init>(kotlin.String)kotlinx.coroutines.experimental/-cancellation-exception/-cancellation-exception/-init-.html
-$dokka.location:kotlinx.coroutines.experimental.Runnablekotlinx.coroutines.experimental/-runnable/index.html
-$dokka.location:kotlinx.coroutines.experimental.Runnable$run()kotlinx.coroutines.experimental/-runnable/-runnable/run.html
-$dokka.location:kotlinx.coroutines.experimental.channels$asReceiveChannel(kotlin.collections.Iterable((kotlinx.coroutines.experimental.channels.asReceiveChannel.E)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.channels/kotlin.collections.-iterable/as-receive-channel.html
-$dokka.location:kotlinx.coroutines.experimental.channels$asReceiveChannel(kotlin.sequences.Sequence((kotlinx.coroutines.experimental.channels.asReceiveChannel.E)), kotlin.coroutines.experimental.CoroutineContext)kotlinx.coroutines.experimental.channels/kotlin.sequences.-sequence/as-receive-channel.html
-kotlinx.coroutines.experimental
-kotlinx.coroutines.experimental.channels
-kotlinx.coroutines.experimental.selects
-kotlinx.coroutines.experimental.sync
-kotlinx.coroutines.experimental.test
-kotlinx.coroutines.experimental.timeunit
+$dokka.location:kotlinx.coroutines$asContextElement(java.lang.ThreadLocal((kotlinx.coroutines.asContextElement.T)), kotlinx.coroutines.asContextElement.T)kotlinx.coroutines/java.lang.-thread-local/as-context-element.html
+$dokka.location:kotlinx.coroutines$asCoroutineDispatcher(java.util.concurrent.Executor)kotlinx.coroutines/java.util.concurrent.-executor/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines$asCoroutineDispatcher(java.util.concurrent.ExecutorService)kotlinx.coroutines/java.util.concurrent.-executor-service/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines$asCoroutineDispatcher(org.w3c.dom.Window)kotlinx.coroutines/org.w3c.dom.-window/as-coroutine-dispatcher.html
+$dokka.location:kotlinx.coroutines$asDeferred(kotlin.js.Promise((kotlinx.coroutines.asDeferred.T)))kotlinx.coroutines/kotlin.js.-promise/as-deferred.html
+$dokka.location:kotlinx.coroutines$await(kotlin.js.Promise((kotlinx.coroutines.await.T)))kotlinx.coroutines/kotlin.js.-promise/await.html
+$dokka.location:kotlinx.coroutines$awaitAll(kotlin.collections.Collection((kotlinx.coroutines.Deferred((kotlinx.coroutines.awaitAll.T)))))kotlinx.coroutines/kotlin.collections.-collection/await-all.html
+$dokka.location:kotlinx.coroutines$awaitAnimationFrame(org.w3c.dom.Window)kotlinx.coroutines/org.w3c.dom.-window/await-animation-frame.html
+$dokka.location:kotlinx.coroutines$cancel(kotlin.coroutines.CoroutineContext)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel.html
+$dokka.location:kotlinx.coroutines$cancelChildren(kotlin.coroutines.CoroutineContext)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel-children.html
+$dokka.location:kotlinx.coroutines$cancelChildren(kotlin.coroutines.CoroutineContext, kotlin.Throwable)kotlinx.coroutines/kotlin.coroutines.-coroutine-context/cancel-children.html
+$dokka.location:kotlinx.coroutines$isActive#kotlin.coroutines.CoroutineContextkotlinx.coroutines/kotlin.coroutines.-coroutine-context/is-active.html
+$dokka.location:kotlinx.coroutines$joinAll(kotlin.collections.Collection((kotlinx.coroutines.Job)))kotlinx.coroutines/kotlin.collections.-collection/join-all.html
+$dokka.location:kotlinx.coroutines.CancellationExceptionkotlinx.coroutines/-cancellation-exception/index.html
+$dokka.location:kotlinx.coroutines.CancellationException$<init>(kotlin.String)kotlinx.coroutines/-cancellation-exception/-cancellation-exception/-init-.html
+$dokka.location:kotlinx.coroutines.Runnablekotlinx.coroutines/-runnable/index.html
+$dokka.location:kotlinx.coroutines.Runnable$run()kotlinx.coroutines/-runnable/-runnable/run.html
+kotlinx.coroutines
+kotlinx.coroutines.channels
+kotlinx.coroutines.selects
+kotlinx.coroutines.sync
+kotlinx.coroutines.test

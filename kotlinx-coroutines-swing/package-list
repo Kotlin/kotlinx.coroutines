@@ -1,4 +1,4 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
-$dokka.location:kotlinx.coroutines.experimental.swing$Swing#kotlinx.coroutines.experimental.Dispatcherskotlinx.coroutines.experimental.swing/kotlinx.coroutines.experimental.-dispatchers/-swing.html
-kotlinx.coroutines.experimental.swing
+$dokka.location:kotlinx.coroutines.swing$Swing#kotlinx.coroutines.Dispatcherskotlinx.coroutines.swing/kotlinx.coroutines.-dispatchers/-swing.html
+kotlinx.coroutines.swing

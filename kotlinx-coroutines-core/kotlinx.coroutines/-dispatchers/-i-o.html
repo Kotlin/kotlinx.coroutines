@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dispatchers.IO - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-i-o.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-core</a> / <a href="../index.html">kotlinx.coroutines</a> / <a href="index.html">Dispatchers</a> / <a href="./-i-o.html">IO</a></div>
+
+<h1 id="io">IO</h1>
+
+<div class="signature"><code><span class="identifier">@JvmStatic</span> <span class="keyword">val </span><span class="identifier">IO</span><span class="symbol">: </span><a href="../-coroutine-dispatcher/index.html"><span class="identifier">CoroutineDispatcher</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/Dispatchers.kt#L88">(source)</a></div>
+
+<p><strong>Platform and version requirements:</strong> JVM</p>
+
+<p>The <a href="../-coroutine-dispatcher/index.html">CoroutineDispatcher</a> that is designed for offloading blocking IO tasks to a shared pool of threads.</p>
+
+<p>Additional threads in this pool are created and are shutdown on demand.
+The number of threads used by this dispatcher is limited by the value of
+“<code>kotlinx.coroutines.io.parallelism</code>” (<a href="../-i-o_-p-a-r-a-l-l-e-l-i-s-m_-p-r-o-p-e-r-t-y_-n-a-m-e.html">IO_PARALLELISM_PROPERTY_NAME</a>) system property.
+It defaults to the limit of 64 threads or the number of cores (whichever is larger).</p>
+
+<p>This dispatcher shares threads with a <a href="-default.html">Default</a> dispatcher, so using
+<code>withContext(Dispatchers.IO) { ... }</code> does not lead to an actual switching to another thread —
+typically execution continues in the same thread.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CompletionHandler - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completion-handler.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines</a> / <a href="./-completion-handler.html">CompletionHandler</a></div>
+
+<h1 id="completionhandler">CompletionHandler</h1>
+
+<div class="signature"><code><span class="keyword">typealias </span><span class="identifier">CompletionHandler</span>&nbsp;<span class="symbol">=</span>&nbsp;<span class="symbol">(</span><span class="parameterName">cause</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CompletionHandler.common.kt#L26">(source)</a></div>
+
+<p>Handler for <a href="-job/invoke-on-completion.html">Job.invokeOnCompletion</a> and <a href="-cancellable-continuation/invoke-on-cancellation.html">CancellableContinuation.invokeOnCancellation</a>.</p>
+
+<p>Installed handler should not throw any exceptions. If it does, they will get caught,
+wrapped into <a href="#">CompletionHandlerException</a>, and rethrown, potentially causing crash of unrelated code.</p>
+
+<p>The meaning of <code>cause</code> that is passed to the handler:</p>
+
+<ul>
+  <li>Cause is <code>null</code> when job has completed normally.</li>
+  <li>Cause is an instance of <a href="-cancellation-exception/index.html">CancellationException</a> when job was cancelled <em>normally</em>.
+<strong>It should not be treated as an error</strong>. In particular, it should not be reported to error logs.</li>
+  <li>Otherwise, the job had <em>failed</em>.</li>
+</ul>
+
+<p><strong>Note</strong>: This type is a part of internal machinery that supports parent-child hierarchies
+and allows for implementation of suspending functions that wait on the Job’s state.
+This type should not be used in general application code.
+Implementations of <code>CompletionHandler</code> must be fast and <em>lock-free</em>.</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

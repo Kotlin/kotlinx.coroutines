@@ -1,4 +1,4 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
-$dokka.location:kotlinx.coroutines.experimental.javafx$JavaFx#kotlinx.coroutines.experimental.Dispatcherskotlinx.coroutines.experimental.javafx/kotlinx.coroutines.experimental.-dispatchers/-java-fx.html
-kotlinx.coroutines.experimental.javafx
+$dokka.location:kotlinx.coroutines.javafx$JavaFx#kotlinx.coroutines.Dispatcherskotlinx.coroutines.javafx/kotlinx.coroutines.-dispatchers/-java-fx.html
+kotlinx.coroutines.javafx

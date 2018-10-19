@@ -1,4 +1,4 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
 
-kotlinx.coroutines.experimental.slf4j
+kotlinx.coroutines.slf4j

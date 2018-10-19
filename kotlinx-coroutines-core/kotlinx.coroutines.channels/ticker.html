@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ticker - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/ticker.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.channels</a> / <a href="./ticker.html">ticker</a></div>
+
+<h1 id="ticker">ticker</h1>
+
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="identifier">ticker</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/delayMillis">delayMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/initialDelayMillis">initialDelayMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a>&nbsp;<span class="symbol">=</span>&nbsp;delayMillis<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/mode">mode</span><span class="symbol">:</span>&nbsp;<a href="-ticker-mode/index.html"><span class="identifier">TickerMode</span></a>&nbsp;<span class="symbol">=</span>&nbsp;TickerMode.FIXED_PERIOD<br /><span class="symbol">)</span><span class="symbol">: </span><a href="-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/channels/TickerChannels.kt#L62">(source)</a></div>
+
+<p><strong>Platform and version requirements:</strong> JVM</p>
+
+<p>Creates a channel that produces the first item after the given initial delay and subsequent items with the
+given delay between them.</p>
+
+<p>The resulting channel is a <em>rendezvous channel</em>. When receiver from this channel does not keep
+up with receiving the elements from this channel, they are not being sent due to backpressure. The actual
+timing behavior of ticker in this case is controlled by <a href="ticker.html#kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/mode">mode</a> parameter which
+is set to <a href="-ticker-mode/-f-i-x-e-d_-p-e-r-i-o-d.html">TickerMode.FIXED_PERIOD</a> by default. See <a href="-ticker-mode/index.html">TickerMode</a> for other details.</p>
+
+<p>This channel stops producing elements immediately after <a href="-receive-channel/cancel.html">ReceiveChannel.cancel</a> invocation.</p>
+
+<p><strong>Note</strong> producer to this channel is dispatched via <a href="../kotlinx.coroutines/-dispatchers/-unconfined.html">Dispatchers.Unconfined</a> by default and started eagerly.</p>
+
+<p><strong>Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.</strong></p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>delayMillis</code> - delay between each element in milliseconds.</p>
+
+<p><code>initialDelayMillis</code> - delay after which the first element will be produced (it is equal to <a href="ticker.html#kotlinx.coroutines.channels$ticker(kotlin.Long, kotlin.Long, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.channels.TickerMode)/delayMillis">delayMillis</a> by default) in milliseconds.</p>
+
+<p><code>context</code> - context of the producing coroutine.</p>
+
+<p><code>mode</code> - specifies behavior when elements are not received (<a href="-ticker-mode/-f-i-x-e-d_-p-e-r-i-o-d.html">FIXED_PERIOD</a> by default).</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

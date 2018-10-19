@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>coroutineScope - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines</a> / <a href="./coroutine-scope.html">coroutineScope</a></div>
+
+<h1 id="coroutinescope">coroutineScope</h1>
+
+<div class="signature"><code><span class="keyword">suspend</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">R</span><span class="symbol">&gt;</span> <span class="identifier">coroutineScope</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines$coroutineScope(kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.coroutineScope.R)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="coroutine-scope.html#R"><span class="identifier">R</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="coroutine-scope.html#R"><span class="identifier">R</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CoroutineScope.kt#L159">(source)</a></div>
+
+<p>Creates new <a href="-coroutine-scope/index.html">CoroutineScope</a> and calls the specified suspend block with this scope.
+The provided scope inherits its <a href="-coroutine-scope/coroutine-context.html">coroutineContext</a> from the outer scope, but overrides
+context’s <a href="-job/index.html">Job</a>.</p>
+
+<p>This function is designed for a <em>parallel decomposition</em> of work. When any child coroutine in this scope fails,
+this scope fails and all the rest of the children are cancelled (for a different behavior see <a href="supervisor-scope.html">supervisorScope</a>).
+This function returns as soon as given block and all its children coroutines are completed.
+Example of the scope usages looks like this:</p>
+
+<pre>suspend fun loadDataForUI() = coroutineScope {
+
+  val data = async { // &lt;- extension on current scope
+     ... load some UI data ...
+  }
+
+  withContext(UI) {
+    doSomeWork()
+    val result = data.await()
+    display(result)
+  }
+}
+</pre>
+
+<p>Semantics of the scope in this example:</p>
+
+<ol>
+  <li><code>loadDataForUI</code> returns as soon as data is loaded and UI is updated.</li>
+  <li>If <code>doSomeWork</code> throws an exception, then <code>async</code> task is cancelled and <code>loadDataForUI</code> rethrows that exception.</li>
+  <li>If outer scope of <code>loadDataForUI</code> is cancelled, both started <code>async</code> and <code>withContext</code> are cancelled.</li>
+</ol>
+
+<p>Method may throw <a href="-cancellation-exception/index.html">CancellationException</a> if the current job was cancelled externally
+or may throw the corresponding unhandled <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a> if there is any unhandled exception in this scope
+(for example, from a crashed coroutine that was started with <a href="launch.html">launch</a> in this scope).</p>
+
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>actor - kotlinx-coroutines-core</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="api-docs-breadcrumbs"><a href="../index.html">kotlinx-coroutines-core</a> / <a href="index.html">kotlinx.coroutines.channels</a> / <a href="./actor.html">actor</a></div>
+
+<h1 id="actor">actor</h1>
+
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span> <a href="../kotlinx.coroutines/-coroutine-scope/index.html"><span class="identifier">CoroutineScope</span></a><span class="symbol">.</span><span class="identifier">actor</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a>&nbsp;<span class="symbol">=</span>&nbsp;EmptyCoroutineContext<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/capacity">capacity</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/start">start</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-coroutine-start/index.html"><span class="identifier">CoroutineStart</span></a>&nbsp;<span class="symbol">=</span>&nbsp;CoroutineStart.DEFAULT<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/onCompletion">onCompletion</span><span class="symbol">:</span>&nbsp;<a href="../kotlinx.coroutines/-completion-handler.html"><span class="identifier">CompletionHandler</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/block">block</span><span class="symbol">:</span>&nbsp;<span class="keyword">suspend </span><a href="-actor-scope/index.html"><span class="identifier">ActorScope</span></a><span class="symbol">&lt;</span><a href="actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">.</span><span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="actor.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/channels/Actor.kt#L108">(source)</a></div>
+
+<p><strong>Platform and version requirements:</strong> JVM</p>
+
+<p>Launches new coroutine that is receiving messages from its mailbox channel
+and returns a reference to its mailbox channel as a <a href="-send-channel/index.html">SendChannel</a>. The resulting
+object can be used to <a href="-send-channel/send.html">send</a> messages to this coroutine.</p>
+
+<p>The scope of the coroutine contains <a href="-actor-scope/index.html">ActorScope</a> interface, which implements
+both <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> and <a href="-receive-channel/index.html">ReceiveChannel</a>, so that coroutine can invoke
+<a href="-receive-channel/receive.html">receive</a> directly. The channel is <a href="-send-channel/close.html">closed</a>
+when the coroutine completes.</p>
+
+<p>Coroutine context is inherited from a <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a>, additional context elements can be specified with <a href="actor.html#kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/context">context</a> argument.
+If the context does not have any dispatcher nor any other <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation-interceptor/index.html">ContinuationInterceptor</a>, then <a href="../kotlinx.coroutines/-dispatchers/-default.html">Dispatchers.Default</a> is used.
+The parent job is inherited from a <a href="../kotlinx.coroutines/-coroutine-scope/index.html">CoroutineScope</a> as well, but it can also be overridden
+with corresponding <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html">coroutineContext</a> element.</p>
+
+<p>By default, the coroutine is immediately scheduled for execution.
+Other options can be specified via <code>start</code> parameter. See <a href="../kotlinx.coroutines/-coroutine-start/index.html">CoroutineStart</a> for details.
+An optional <a href="actor.html#kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/start">start</a> parameter can be set to <a href="../kotlinx.coroutines/-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a> to start coroutine <em>lazily</em>. In this case,
+it will be started implicitly on the first message
+<a href="-send-channel/send.html">sent</a> to this actors’s mailbox channel.</p>
+
+<p>Uncaught exceptions in this coroutine close the channel with this exception as a cause and
+the resulting channel becomes <em>failed</em>, so that any attempt to send to such a channel throws exception.</p>
+
+<p>The kind of the resulting channel depends on the specified <a href="actor.html#kotlinx.coroutines.channels$actor(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlin.Int, kotlinx.coroutines.CoroutineStart, kotlin.Function1((kotlin.Throwable, kotlin.Unit)), kotlin.SuspendFunction1((kotlinx.coroutines.channels.ActorScope((kotlinx.coroutines.channels.actor.E)), kotlin.Unit)))/capacity">capacity</a> parameter.
+See <a href="-channel/index.html">Channel</a> interface documentation for details.</p>
+
+<p>See <a href="../kotlinx.coroutines/new-coroutine-context.html">newCoroutineContext</a> for a description of debugging facilities that are available for newly created coroutine.</p>
+
+<h3 id="using-actors">Using actors</h3>
+
+<p>A typical usage of the actor builder looks like this:</p>
+
+<pre>val c = actor {
+    // initialize actor's state
+    for (msg in channel) {
+        // process message here
+    }
+}
+// send messages to the actor
+c.send(...)
+...
+// stop the actor when it is no longer needed
+c.close()
+</pre>
+
+<h3 id="stopping-and-cancelling-actors">Stopping and cancelling actors</h3>
+
+<p>When the inbox channel of the actor is <a href="-send-channel/close.html">closed</a> it sends a special “close token” to the actor.
+The actor still processes all the messages that were already sent and then “<code>for (msg in channel)</code>” loop terminates
+and the actor completes.</p>
+
+<p>If the actor needs to be aborted without processing all the messages that were already sent to it, then
+it shall be created with a parent job:</p>
+
+<pre>val job = Job()
+val c = actor(context = job) {  ... }
+...
+// abort the actor
+job.cancel()
+</pre>
+
+<p>When actor’s parent job is <a href="../kotlinx.coroutines/-job/cancel.html">cancelled</a>, then actor’s job becomes cancelled. It means that
+“<code>for (msg in channel)</code>” and other cancellable suspending functions throw <a href="../kotlinx.coroutines/-cancellation-exception/index.html">CancellationException</a> and actor
+completes without processing remaining messages.</p>
+
+<p><strong>Note: This API will become obsolete in future updates with introduction of complex actors.</strong>
+    See <a href="https://github.com/Kotlin/kotlinx.coroutines/issues/87">issue #87</a>.</p>
+
+<h3 id="parameters">Parameters</h3>
+
+<p><code>context</code> - additional to <a href="../kotlinx.coroutines/-coroutine-scope/coroutine-context.html">CoroutineScope.coroutineContext</a> context of the coroutine.</p>
+
+<p><code>capacity</code> - capacity of the channel’s buffer (no buffer by default).</p>
+
+<p><code>start</code> - coroutine start option. The default value is <a href="../kotlinx.coroutines/-coroutine-start/-d-e-f-a-u-l-t.html">CoroutineStart.DEFAULT</a>.</p>
+
+<p><code>onCompletion</code> - optional completion handler for the actor coroutine (see <a href="#">Job.invokeOnCompletion</a>)</p>
+
+<p><code>block</code> - the coroutine code.</p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

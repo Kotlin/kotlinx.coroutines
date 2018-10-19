@@ -1,7 +1,7 @@
 $dokka.format:kotlin-website
 $dokka.linkExtension:html
-$dokka.location:kotlinx.coroutines.experimental.guava$asDeferred(com.google.common.util.concurrent.ListenableFuture((kotlinx.coroutines.experimental.guava.asDeferred.T)))kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/as-deferred.html
-$dokka.location:kotlinx.coroutines.experimental.guava$asListenableFuture(kotlinx.coroutines.experimental.Deferred((kotlinx.coroutines.experimental.guava.asListenableFuture.T)))kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-deferred/as-listenable-future.html
-$dokka.location:kotlinx.coroutines.experimental.guava$await(com.google.common.util.concurrent.ListenableFuture((kotlinx.coroutines.experimental.guava.await.T)))kotlinx.coroutines.experimental.guava/com.google.common.util.concurrent.-listenable-future/await.html
-$dokka.location:kotlinx.coroutines.experimental.guava$future(kotlinx.coroutines.experimental.CoroutineScope, kotlin.coroutines.experimental.CoroutineContext, kotlinx.coroutines.experimental.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.experimental.CoroutineScope, kotlinx.coroutines.experimental.guava.future.T)))kotlinx.coroutines.experimental.guava/kotlinx.coroutines.experimental.-coroutine-scope/future.html
-kotlinx.coroutines.experimental.guava
+$dokka.location:kotlinx.coroutines.guava$asDeferred(com.google.common.util.concurrent.ListenableFuture((kotlinx.coroutines.guava.asDeferred.T)))kotlinx.coroutines.guava/com.google.common.util.concurrent.-listenable-future/as-deferred.html
+$dokka.location:kotlinx.coroutines.guava$asListenableFuture(kotlinx.coroutines.Deferred((kotlinx.coroutines.guava.asListenableFuture.T)))kotlinx.coroutines.guava/kotlinx.coroutines.-deferred/as-listenable-future.html
+$dokka.location:kotlinx.coroutines.guava$await(com.google.common.util.concurrent.ListenableFuture((kotlinx.coroutines.guava.await.T)))kotlinx.coroutines.guava/com.google.common.util.concurrent.-listenable-future/await.html
+$dokka.location:kotlinx.coroutines.guava$future(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.guava.future.T)))kotlinx.coroutines.guava/kotlinx.coroutines.-coroutine-scope/future.html
+kotlinx.coroutines.guava
