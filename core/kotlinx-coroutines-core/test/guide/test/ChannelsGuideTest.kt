@@ -7,7 +7,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel01() {
-        test("KotlinxCoroutinesGuideChannel01") { kotlinx.coroutines.guide.channel01.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel01") { kotlinx.coroutines.guide.channel01.main() }.verifyLines(
             "1",
             "4",
             "9",
@@ -19,7 +19,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel02() {
-        test("KotlinxCoroutinesGuideChannel02") { kotlinx.coroutines.guide.channel02.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel02") { kotlinx.coroutines.guide.channel02.main() }.verifyLines(
             "1",
             "4",
             "9",
@@ -31,7 +31,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel03() {
-        test("KotlinxCoroutinesGuideChannel03") { kotlinx.coroutines.guide.channel03.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel03") { kotlinx.coroutines.guide.channel03.main() }.verifyLines(
             "1",
             "4",
             "9",
@@ -43,7 +43,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel04() {
-        test("KotlinxCoroutinesGuideChannel04") { kotlinx.coroutines.guide.channel04.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel04") { kotlinx.coroutines.guide.channel04.main() }.verifyLines(
             "1",
             "4",
             "9",
@@ -55,7 +55,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel05() {
-        test("KotlinxCoroutinesGuideChannel05") { kotlinx.coroutines.guide.channel05.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel05") { kotlinx.coroutines.guide.channel05.main() }.verifyLines(
             "2",
             "3",
             "5",
@@ -71,14 +71,14 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel06() {
-        test("KotlinxCoroutinesGuideChannel06") { kotlinx.coroutines.guide.channel06.main(emptyArray()) }.also { lines ->
+        test("KotlinxCoroutinesGuideChannel06") { kotlinx.coroutines.guide.channel06.main() }.also { lines ->
             check(lines.size == 10 && lines.withIndex().all { (i, line) -> line.startsWith("Processor #") && line.endsWith(" received ${i + 1}") })
         }
     }
 
     @Test
     fun testKotlinxCoroutinesGuideChannel07() {
-        test("KotlinxCoroutinesGuideChannel07") { kotlinx.coroutines.guide.channel07.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel07") { kotlinx.coroutines.guide.channel07.main() }.verifyLines(
             "foo",
             "foo",
             "BAR!",
@@ -90,7 +90,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel08() {
-        test("KotlinxCoroutinesGuideChannel08") { kotlinx.coroutines.guide.channel08.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel08") { kotlinx.coroutines.guide.channel08.main() }.verifyLines(
             "Sending 0",
             "Sending 1",
             "Sending 2",
@@ -101,7 +101,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel09() {
-        test("KotlinxCoroutinesGuideChannel09") { kotlinx.coroutines.guide.channel09.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel09") { kotlinx.coroutines.guide.channel09.main() }.verifyLines(
             "ping Ball(hits=1)",
             "pong Ball(hits=2)",
             "ping Ball(hits=3)",
@@ -111,7 +111,7 @@ class ChannelsGuideTest {
 
     @Test
     fun testKotlinxCoroutinesGuideChannel10() {
-        test("KotlinxCoroutinesGuideChannel10") { kotlinx.coroutines.guide.channel10.main(emptyArray()) }.verifyLines(
+        test("KotlinxCoroutinesGuideChannel10") { kotlinx.coroutines.guide.channel10.main() }.verifyLines(
             "Initial element is available immediately: kotlin.Unit",
             "Next element is not ready in 50 ms: null",
             "Next element is ready in 100 ms: kotlin.Unit",
