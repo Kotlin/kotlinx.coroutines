@@ -62,10 +62,13 @@ Try the following example:
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -78,6 +81,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -128,10 +132,13 @@ this thread with a predictable FIFO scheduling.
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
         println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
         delay(500)
@@ -142,6 +149,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -184,12 +192,15 @@ Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val a = async {
         log("I'm computing a piece of the answer")
         6
@@ -199,6 +210,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         7
     }
     log("The answer is ${a.await() * b.await()}")
+//sampleEnd    
 }
 ```
 
@@ -229,12 +241,15 @@ You can read more about debugging facilities in the documentation for [newCorout
 
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option (see [debug](#debugging-coroutines-and-threads)):
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) {
+fun main() {
+//sampleStart
     newSingleThreadContext("Ctx1").use { ctx1 ->
         newSingleThreadContext("Ctx2").use { ctx2 ->
             runBlocking(ctx1) {
@@ -246,6 +261,7 @@ fun main(args: Array<String>) {
             }
         }
     }
+//sampleEnd    
 }
 ```
 
@@ -277,11 +293,15 @@ using `coroutineContext[Job]` expression:
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     println("My job is ${coroutineContext[Job]}")
+//sampleEnd    
 }
 ```
 
@@ -315,10 +335,13 @@ was launched from and operates independently.
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         // it spawns two other jobs, one with GlobalScope
@@ -339,6 +362,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     request.cancel() // cancel processing of the request
     delay(1000) // delay a second to see what happens
     println("main: Who has survived request cancellation?")
+//sampleEnd
 }
 ```
 
@@ -366,10 +390,13 @@ all the children it launches and it does not have to use [Job.join] to wait for 
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         repeat(3) { i -> // launch a few children jobs
@@ -382,6 +409,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     request.join() // wait for completion of the request, including all its children
     println("Now processing of the request is complete")
+//sampleEnd
 }
 ```
 
@@ -411,12 +439,15 @@ is executing this coroutine when [debugging mode](#debugging-coroutines-and-thre
 
 The following example demonstrates this concept:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+​
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-
-fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+​
+fun main() = runBlocking(CoroutineName("main")) {
+//sampleStart
     log("Started main coroutine")
     // run two background value computations
     val v1 = async(CoroutineName("v1coroutine")) {
@@ -430,6 +461,7 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
         6
     }
     log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
+//sampleEnd    
 }
 ```
 
@@ -458,13 +490,17 @@ name at the same time:
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
 ```
 
@@ -557,7 +593,7 @@ onto the screen anymore if we wait:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val activity = Activity()
     activity.create() // create an activity
     activity.doSomething() // run test function
@@ -602,12 +638,15 @@ It is easy to demonstrate it in action:
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 val threadLocal = ThreadLocal<String?>() // declare thread-local variable
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     threadLocal.set("main")
     println("Pre-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
     val job = launch(Dispatchers.Default + threadLocal.asContextElement(value = "launch")) {
@@ -617,6 +656,7 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     }
     job.join()
     println("Post-main, current thread: ${Thread.currentThread()}, thread local value: '${threadLocal.get()}'")
+//sampleEnd    
 }
 ```  
 

@@ -8,8 +8,12 @@ package kotlinx.coroutines.guide.context09
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }
