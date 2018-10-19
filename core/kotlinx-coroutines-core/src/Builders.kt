@@ -21,7 +21,7 @@ import kotlin.coroutines.*
  *
  * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
  * the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another `runBlocking`,
- * the this invocation uses an outer event loop.
+ * then this invocation uses an outer event loop.
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].
