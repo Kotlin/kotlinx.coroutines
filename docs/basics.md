@@ -6,7 +6,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/BasicsGuideTest.kt
@@ -42,6 +41,10 @@ This section covers basic coroutine concepts.
 ### Your first coroutine
 
 Run the following code:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -91,6 +94,10 @@ coroutine and it can be only used from a coroutine.
 The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same code. 
 It is easy to get lost which one is blocking and which one is not. 
 Let's be explicit about blocking using [runBlocking] coroutine builder:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -150,6 +157,10 @@ Here `runBlocking<Unit> { ... }` works as an adaptor that is used to start the t
 We explicitly specify its `Unit` return type, because a well-formed `main` function in Kotlin has to return `Unit`.
 
 This is also a way to write unit-tests for suspending functions:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
  
@@ -292,9 +303,11 @@ That is your first _suspending function_. Suspending functions can be used insid
 just like regular functions, but their additional feature is that they can, in turn, 
 use other suspending functions, like `delay` in this example, to _suspend_ execution of a coroutine.
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     launch { doWorld() }
     println("Hello,")
@@ -328,6 +341,10 @@ because you no longer have control on the scope this method is executed. Only pr
 ### Coroutines ARE light-weight
 
 Run the following code:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
