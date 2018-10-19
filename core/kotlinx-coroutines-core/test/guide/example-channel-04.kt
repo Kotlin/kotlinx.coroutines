@@ -5,17 +5,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.channel04
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-
-fun CoroutineScope.produceNumbers() = produce<Int> {
-    var x = 1
-    while (true) send(x++) // infinite stream of integers starting from 1
-}
-
-fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce {
-    for (x in numbers) send(x * x)
-}
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

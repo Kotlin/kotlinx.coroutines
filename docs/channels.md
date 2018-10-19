@@ -6,8 +6,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ChannelsGuideTest.kt
@@ -35,10 +33,6 @@ class ChannelsGuideTest {
   * [Ticker channels](#ticker-channels)
 
 <!--- END_TOC -->
-
-
-
-
 
 ## Channels (experimental) 
 
@@ -208,6 +202,8 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = p
 
 The main code starts and connects the whole pipeline:
 
+<!--- CLEAR -->
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -258,10 +254,6 @@ sure that we don't have lingering global coroutines in our application.
 
 Let's take pipelines to the extreme with an example that generates prime numbers using a pipeline 
 of coroutines. We start with an infinite sequence of numbers. 
- 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
  
@@ -301,6 +293,8 @@ we don't have to keep an explicit list of all the coroutines we have started.
 We use [cancelChildren][kotlin.coroutines.CoroutineContext.cancelChildren] 
 extension function to cancel all the children coroutines after we have printed
 the first ten prime numbers. 
+
+<!--- CLEAR -->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -401,12 +395,14 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
 
 Now let us launch five processors and let them work for almost a second. See what happens:
 
+<!--- CLEAR -->
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-​
+
 fun main() = runBlocking<Unit> {
 //sampleStart
     val producer = produceNumbers()
@@ -415,7 +411,7 @@ fun main() = runBlocking<Unit> {
     producer.cancel() // cancel producer coroutine and thus kill them all
 //sampleEnd
 }
-​
+
 fun CoroutineScope.produceNumbers() = produce<Int> {
     var x = 1 // start from 1
     while (true) {
@@ -423,7 +419,7 @@ fun CoroutineScope.produceNumbers() = produce<Int> {
         delay(100) // wait 0.1s
     }
 }
-​
+
 fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
     for (msg in channel) {
         println("Processor #$id received $msg")
@@ -467,10 +463,6 @@ Multiple coroutines may send to the same channel.
 For example, let us have a channel of strings, and a suspending function that 
 repeatedly sends a specified string to this channel with a specified delay:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -486,6 +478,8 @@ suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
 
 Now, let us see what happens if we launch a couple of coroutines sending strings 
 (in this example we launch them in the context of the main thread as main coroutine's children):
+
+<!--- CLEAR -->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -542,9 +536,6 @@ similar to the `BlockingQueue` with a specified capacity, which blocks when buff
 
 Take a look at the behavior of the following code:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -593,9 +584,6 @@ multiple coroutines. They are served in first-in first-out order, e.g. the first
 gets the element. In the following example two coroutines "ping" and "pong" are 
 receiving the "ball" object from the shared "table" channel. 
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -657,6 +645,11 @@ To create such channel use a factory method [ticker].
 To indicate that no further elements are needed use [ReceiveChannel.cancel] method on it.
 
 Now let's see how it works in practice:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 

@@ -5,16 +5,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.channel07
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
-
-suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
-    while (true) {
-        delay(time)
-        channel.send(s)
-    }
-}
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

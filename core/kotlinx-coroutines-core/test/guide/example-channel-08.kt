@@ -5,9 +5,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.channel08
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
