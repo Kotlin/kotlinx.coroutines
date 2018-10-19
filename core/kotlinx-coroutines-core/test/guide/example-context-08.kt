@@ -7,9 +7,12 @@ package kotlinx.coroutines.experimental.guide.context08
 
 import kotlinx.coroutines.experimental.*
 
+import kotlinx.coroutines.*
+​
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-
-fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
+​
+fun main() = runBlocking(CoroutineName("main")) {
+//sampleStart
     log("Started main coroutine")
     // run two background value computations
     val v1 = async(CoroutineName("v1coroutine")) {
@@ -23,4 +26,5 @@ fun main(args: Array<String>) = runBlocking(CoroutineName("main")) {
         6
     }
     log("The answer for v1 / v2 = ${v1.await() / v2.await()}")
+//sampleEnd    
 }

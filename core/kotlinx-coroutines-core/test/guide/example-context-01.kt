@@ -8,7 +8,10 @@ package kotlinx.coroutines.experimental.guide.context01
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -21,4 +24,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }

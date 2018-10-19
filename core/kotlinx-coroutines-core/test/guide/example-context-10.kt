@@ -37,7 +37,7 @@ class Activity : CoroutineScope {
     }
 } // class Activity ends
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val activity = Activity()
     activity.create() // create an activity
     activity.doSomething() // run test function

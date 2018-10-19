@@ -8,9 +8,12 @@ package kotlinx.coroutines.experimental.guide.context03
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
+import kotlinx.coroutines.*
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val a = async {
         log("I'm computing a piece of the answer")
         6
@@ -20,4 +23,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         7
     }
     log("The answer is ${a.await() * b.await()}")
+//sampleEnd    
 }

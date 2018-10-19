@@ -8,7 +8,10 @@ package kotlinx.coroutines.experimental.guide.context06
 import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     // launch a coroutine to process some kind of incoming request
     val request = launch {
         // it spawns two other jobs, one with GlobalScope
@@ -29,4 +32,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     request.cancel() // cancel processing of the request
     delay(1000) // delay a second to see what happens
     println("main: Who has survived request cancellation?")
+//sampleEnd
 }
