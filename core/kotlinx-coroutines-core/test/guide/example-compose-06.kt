@@ -7,7 +7,6 @@ package kotlinx.coroutines.guide.compose06
 
 
 import kotlinx.coroutines.*
-import kotlin.system.*
 
 fun main() = runBlocking<Unit> {
     try {

@@ -6,7 +6,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/DispatcherGuideTest.kt
@@ -57,10 +56,6 @@ All coroutine builders like [launch] and [async] accept an optional
 parameter that can be used to explicitly specify the dispatcher for new coroutine and other context elements. 
 
 Try the following example:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -128,10 +123,6 @@ The default dispatcher for [runBlocking] coroutine, in particular,
 is confined to the invoker thread, so inheriting it has the effect of confining execution to
 this thread with a predictable FIFO scheduling.
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -187,10 +178,6 @@ by logging frameworks. When using coroutines, the thread name alone does not giv
 `kotlinx.coroutines` includes debugging facilities to make it easier. 
 
 Run the following code with `-Dkotlinx.coroutines.debug` JVM option:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -289,10 +276,6 @@ are created with [newSingleThreadContext] when they are no longer needed.
 The coroutine's [Job] is part of its context. The coroutine can retrieve it from its own context 
 using `coroutineContext[Job]` expression:
 
-<!--- INCLUDE  
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -331,9 +314,6 @@ are recursively cancelled, too.
 However, when [GlobalScope] is used to launch a coroutine, it is not tied to the scope it
 was launched from and operates independently.
   
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -385,10 +365,6 @@ main: Who has survived request cancellation?
 
 A parent coroutine always waits for completion of all its children. Parent does not have to explicitly track
 all the children it launches and it does not have to use [Job.join] to wait for them at the end:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -443,9 +419,9 @@ The following example demonstrates this concept:
 
 ```kotlin
 import kotlinx.coroutines.*
-​
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-​
+
 fun main() = runBlocking(CoroutineName("main")) {
 //sampleStart
     log("Started main coroutine")
@@ -486,10 +462,6 @@ Sometimes we need to define multiple elements for coroutine context. We can use 
 For example, we can launch a coroutine with an explicitly specified dispatcher and an explicitly specified 
 name at the same time: 
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -528,9 +500,6 @@ We manage a lifecycle of our coroutines by creating an instance of [Job] that is
 the lifecycle of our activity. A job instance is created using [Job()] factory function when
 activity is created and it is cancelled when an activity is destroyed like this:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -590,10 +559,45 @@ In our main function we create activity, call our test `doSomething` function, a
 This cancels all the coroutines that were launched which we can confirm by noting that it does not print 
 onto the screen anymore if we wait: 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlin.coroutines.*
+import kotlinx.coroutines.*
+
+class Activity : CoroutineScope {
+    lateinit var job: Job
+
+    fun create() {
+        job = Job()
+    }
+
+    fun destroy() {
+        job.cancel()
+    }
+    // to be continued ...
+
+    // class Activity continues
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Default + job
+    // to be continued ...
+
+    // class Activity continues
+    fun doSomething() {
+        // launch ten coroutines for a demo, each working for a different time
+        repeat(10) { i ->
+            launch {
+                delay((i + 1) * 200L) // variable delay 200ms, 400ms, ... etc
+                println("Coroutine $i is done")
+            }
+        }
+    }
+} // class Activity ends
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val activity = Activity()
     activity.create() // create an activity
     activity.doSomething() // run test function
@@ -602,6 +606,7 @@ fun main() = runBlocking<Unit> {
     println("Destroying activity!")
     activity.destroy() // cancels all coroutines
     delay(1000) // visually confirm that they don't work
+//sampleEnd    
 }
 ```
 
@@ -633,10 +638,6 @@ For [`ThreadLocal`](https://docs.oracle.com/javase/8/docs/api/java/lang/ThreadLo
 which keeps the value of the given `ThreadLocal` and restores it every time the coroutine switches its context.
 
 It is easy to demonstrate it in action:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 

@@ -5,12 +5,11 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.context08
 
-import kotlinx.coroutines.*
 
 import kotlinx.coroutines.*
-​
+
 fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-​
+
 fun main() = runBlocking(CoroutineName("main")) {
 //sampleStart
     log("Started main coroutine")

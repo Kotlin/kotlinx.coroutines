@@ -5,8 +5,9 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.context10
 
-import kotlinx.coroutines.*
+
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 
 class Activity : CoroutineScope {
     lateinit var job: Job
@@ -38,6 +39,7 @@ class Activity : CoroutineScope {
 } // class Activity ends
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     val activity = Activity()
     activity.create() // create an activity
     activity.doSomething() // run test function
@@ -46,4 +48,5 @@ fun main() = runBlocking<Unit> {
     println("Destroying activity!")
     activity.destroy() // cancels all coroutines
     delay(1000) // visually confirm that they don't work
+//sampleEnd    
 }
