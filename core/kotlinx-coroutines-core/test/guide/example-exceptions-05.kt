@@ -10,7 +10,11 @@ import kotlinx.coroutines.exceptions.*
 import kotlin.coroutines.*
 import java.io.*
 
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import java.io.*
+
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
     }
@@ -29,4 +33,5 @@ fun main(args: Array<String>) = runBlocking {
         delay(Long.MAX_VALUE)
     }
     job.join()
+//sampleEnd    
 }

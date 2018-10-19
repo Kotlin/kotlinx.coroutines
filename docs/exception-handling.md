@@ -109,10 +109,13 @@ On Android, `uncaughtExceptionPreHandler` is installed as a global coroutine exc
 [CoroutineExceptionHandler] is invoked only on exceptions which are not expected to be handled by the user, 
 so registering it in [async] builder and the like of it has no effect.
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
@@ -123,6 +126,7 @@ fun main(args: Array<String>) = runBlocking {
         throw ArithmeticException() // Nothing will be printed, relying on user to call deferred.await()
     }
     joinAll(job, deferred)
+//sampleEnd    
 }
 ```
 
@@ -150,10 +154,13 @@ Cancelling without cause is a mechanism for parent to cancel its children withou
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         val child = launch {
             try {
@@ -170,6 +177,7 @@ fun main(args: Array<String>) = runBlocking {
         println("Parent is not cancelled")
     }
     job.join()
+//sampleEnd    
 }
 ```
 
@@ -202,10 +210,13 @@ when its child completes with exception despite the installed handler.
 import kotlin.coroutines.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+//sampleEnd
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
@@ -228,6 +239,7 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     job.join()
+//sampleEnd    
 }
 ```
 
@@ -263,10 +275,14 @@ import kotlin.coroutines.*
 import java.io.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import java.io.*
+
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
     }
@@ -285,6 +301,7 @@ fun main(args: Array<String>) = runBlocking {
         delay(Long.MAX_VALUE)
     }
     job.join()
+//sampleEnd    
 }
 ```
 
@@ -312,10 +329,14 @@ import kotlin.coroutines.*
 import java.io.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import java.io.*
+
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
@@ -335,6 +356,7 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     job.join()
+//sampleEnd    
 }
 ```
 
