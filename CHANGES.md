@@ -13,6 +13,7 @@
  * `Job.cancel(cause)` and `ReceiveChannel.cancel(cause)` are deprecated, `cancel()` returns `Unit` (#713).
 
 ## Version 0.30.2
+
  * `Dispatchers.Main` is instantiated lazily (see #658 and #665).
  * Blocking coroutine dispatcher views are now shutdown properly (#678).
  * Prevent leaking Kotlin 1.3 from atomicfu dependency (#659).
@@ -20,6 +21,7 @@
  * Fixed exception loss on `withContext` cancellation (#675).   
 
 ## Version 0.30.1
+
  Maintenance release:
  * Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 
  * With `Dispatchers.Main` improvement tooling bug in Android Studio #626 is mitigated, so Android users now can safely start the migration to the latest `kotlinx.coroutines` version.
@@ -75,6 +77,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Update to Kotlin 1.2.70.
 
 ## Version 0.26.1
+
 * Android `Main` dispatcher is `async` by default which may significantly improve UI performance. Contributed by @JakeWharton (see #427).
 * Fixed bug when lazily-started coroutine with registered cancellation handler was concurrently started and cancelled. 
 * Improved termination sequence in IO dispatcher.
@@ -82,6 +85,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Various fixes in the documentation. Thanks to @SUPERCILEX, @yorlov, @dualscyther and @soudmaijer!
 
 ## Version 0.26.0
+
 * Major rework of `kotlinx.coroutines` concurrency model (see #410 for a full explanation of the rationale behind this change):
   * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
   * As a consequence, all nested coroutines launched via builders now automatically establish parent-child relationship and inherit `CoroutineDispatcher`.
