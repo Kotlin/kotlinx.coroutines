@@ -31,7 +31,6 @@ fun somethingUsefulTwoAsync() = GlobalScope.async {
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-
 //sampleStart
 // note, that we don't have `runBlocking` to the right of `main` in this example
 fun main() {
@@ -52,7 +51,6 @@ fun main() {
 fun somethingUsefulOneAsync() = GlobalScope.async {
     doSomethingUsefulOne()
 }
-
 
 fun somethingUsefulTwoAsync() = GlobalScope.async {
     doSomethingUsefulTwo()
