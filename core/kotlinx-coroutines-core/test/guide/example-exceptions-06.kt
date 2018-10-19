@@ -9,7 +9,11 @@ import kotlinx.coroutines.experimental.*
 import kotlin.coroutines.experimental.*
 import java.io.*
 
-fun main(args: Array<String>) = runBlocking {
+import kotlinx.coroutines.*
+import java.io.*
+
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
@@ -29,4 +33,5 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     job.join()
+//sampleEnd    
 }
