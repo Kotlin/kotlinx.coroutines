@@ -72,16 +72,31 @@ We use a normal sequential invocation, because the code in the coroutine, just l
 code, is _sequential_ by default. The following example demonstrates it by measuring the total 
 time it takes to execute both suspending functions:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val time = measureTimeMillis {
         val one = doSomethingUsefulOne()
         val two = doSomethingUsefulTwo()
         println("The answer is ${one + two}")
     }
     println("Completed in $time ms")
+//sampleEnd    
+}
+
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }
 ```
 
@@ -110,16 +125,31 @@ that represents a promise to provide a result later. You can use `.await()` on a
 but `Deferred` is also a `Job`, so you can cancel it if needed.
  
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val time = measureTimeMillis {
         val one = async { doSomethingUsefulOne() }
         val two = async { doSomethingUsefulTwo() }
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
+//sampleEnd    
+}
+
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }
 ```
 
@@ -146,10 +176,14 @@ It starts coroutine only when its result is needed by some
 [await][Deferred.await] or if a [start][Job.start] function 
 is invoked. Run the following example:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
     val time = measureTimeMillis {
         val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
         val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
@@ -159,6 +193,17 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         println("The answer is ${one.await() + two.await()}")
     }
     println("Completed in $time ms")
+//sampleEnd    
+}
+
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }
 ```
 
@@ -215,11 +260,15 @@ with the invoking code.
  
 The following example shows their use outside of coroutine:  
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+//sampleStart
 // note, that we don't have `runBlocking` to the right of `main` in this example
-fun main(args: Array<String>) {
+fun main() {
     val time = measureTimeMillis {
         // we can initiate async actions outside of a coroutine
         val one = somethingUsefulOneAsync()
@@ -231,6 +280,25 @@ fun main(args: Array<String>) {
         }
     }
     println("Completed in $time ms")
+}
+//sampleEnd
+
+fun somethingUsefulOneAsync() = GlobalScope.async {
+    doSomethingUsefulOne()
+}
+
+fun somethingUsefulTwoAsync() = GlobalScope.async {
+    doSomethingUsefulTwo()
+}
+
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }
 ```
 
@@ -276,14 +344,35 @@ suspend fun concurrentSum(): Int = coroutineScope {
 This way, if something goes wrong inside the code of `concurrentSum` function and it throws an exception,
 all the coroutines that were launched in its scope are cancelled.
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+import kotlinx.coroutines.*
+import kotlin.system.*
+​
+fun main() = runBlocking<Unit> {
+//sampleEnd
     val time = measureTimeMillis {
         println("The answer is ${concurrentSum()}")
     }
     println("Completed in $time ms")
+//sampleEnd    
+}
+​
+suspend fun concurrentSum(): Int = coroutineScope {
+    val one = async { doSomethingUsefulOne() }
+    val two = async { doSomethingUsefulTwo() }
+     one.await() + two.await()
+}
+​
+suspend fun doSomethingUsefulOne(): Int {
+    delay(1000L) // pretend we are doing something useful here
+    return 13
+}
+​
+suspend fun doSomethingUsefulTwo(): Int {
+    delay(1000L) // pretend we are doing something useful here, too
+    return 29
 }
 ```
 
@@ -302,10 +391,10 @@ Completed in 1017 ms
 
 Cancellation is always propagated through coroutines hierarchy:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     try {
         failedConcurrentSum()
     } catch(e: ArithmeticException) {

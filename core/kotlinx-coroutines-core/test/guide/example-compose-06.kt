@@ -18,7 +18,7 @@ suspend fun doSomethingUsefulTwo(): Int {
     return 29
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     try {
         failedConcurrentSum()
     } catch(e: ArithmeticException) {
