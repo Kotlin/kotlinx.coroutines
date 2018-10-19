@@ -5,28 +5,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.compose04
 
-import kotlinx.coroutines.*
-import kotlin.system.*
-
-suspend fun doSomethingUsefulOne(): Int {
-    delay(1000L) // pretend we are doing something useful here
-    return 13
-}
-
-suspend fun doSomethingUsefulTwo(): Int {
-    delay(1000L) // pretend we are doing something useful here, too
-    return 29
-}
-
-// The result type of somethingUsefulOneAsync is Deferred<Int>
-fun somethingUsefulOneAsync() = GlobalScope.async {
-    doSomethingUsefulOne()
-}
-
-// The result type of somethingUsefulTwoAsync is Deferred<Int>
-fun somethingUsefulTwoAsync() = GlobalScope.async {
-    doSomethingUsefulTwo()
-}
 
 import kotlinx.coroutines.*
 import kotlin.system.*

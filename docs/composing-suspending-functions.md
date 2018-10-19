@@ -6,7 +6,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ComposingGuideTest.kt
@@ -41,10 +40,6 @@ Assume that we have two suspending functions defined elsewhere that do something
 remote service call or computation. We just pretend they are useful, but actually each one just
 delays for a second for the purpose of this example:
 
-<!--- INCLUDE .*/example-compose-([0-9]+).kt
-import kotlin.system.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -61,7 +56,6 @@ suspend fun doSomethingUsefulTwo(): Int {
 
 </div>
 
-<!--- INCLUDE .*/example-compose-([0-9]+).kt -->
 
 What do we do if need to invoke them _sequentially_ -- first `doSomethingUsefulOne` _and then_ 
 `doSomethingUsefulTwo` and compute the sum of their results? 
@@ -71,6 +65,8 @@ to invoke the second one or to decide on how to invoke it.
 We use a normal sequential invocation, because the code in the coroutine, just like in the regular 
 code, is _sequential_ by default. The following example demonstrates it by measuring the total 
 time it takes to execute both suspending functions:
+
+<!--- CLEAR -->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -260,6 +256,8 @@ with the invoking code.
  
 The following example shows their use outside of coroutine:  
 
+<!--- CLEAR -->
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
@@ -344,32 +342,34 @@ suspend fun concurrentSum(): Int = coroutineScope {
 This way, if something goes wrong inside the code of `concurrentSum` function and it throws an exception,
 all the coroutines that were launched in its scope are cancelled.
 
+<!--- CLEAR -->
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
  
 ```kotlin
 import kotlinx.coroutines.*
 import kotlin.system.*
-​
+
 fun main() = runBlocking<Unit> {
-//sampleEnd
+//sampleStart
     val time = measureTimeMillis {
         println("The answer is ${concurrentSum()}")
     }
     println("Completed in $time ms")
 //sampleEnd    
 }
-​
+
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
      one.await() + two.await()
 }
-​
+
 suspend fun doSomethingUsefulOne(): Int {
     delay(1000L) // pretend we are doing something useful here
     return 13
 }
-​
+
 suspend fun doSomethingUsefulTwo(): Int {
     delay(1000L) // pretend we are doing something useful here, too
     return 29
@@ -391,9 +391,13 @@ Completed in 1017 ms
 
 Cancellation is always propagated through coroutines hierarchy:
 
+<!--- CLEAR -->
+
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() = runBlocking<Unit> {
     try {
         failedConcurrentSum()
