@@ -2,12 +2,12 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.30.2) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.30.2)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.0.0-RC1) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.0.0-RC1)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin 1.3.0-rc-146 release.
+This is a companion version for Kotlin `1.3.0-rc-146` release.
 
-**NOTE**: This is the _last_ experimental feature release. 
+**NOTE**: `0.30.2` was the last release with Kotlin 1.2 and experimental coroutines.
 See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
 
 ```kotlin
@@ -56,8 +56,6 @@ GlobalScope.launch {
  
 ## Using in your projects
 
-> Note that these libraries are experimental and are subject to change.
-
 The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository,
 linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines) and 
 pushed to [Maven Central](https://search.maven.org/#search%7Cga%7C1%7Cg%3Aorg.jetbrains.kotlinx%20a%3Akotlinx-coroutines*).
@@ -70,7 +68,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.30.2-eap13</version>
+    <version>1.0.0-RC1</version>
 </dependency>
 ```
 
@@ -90,7 +88,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2-eap13'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1'
 }
 ```
 
@@ -116,7 +114,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1")
 }
 ```
 
@@ -124,15 +122,17 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.2.70"
+    kotlin("jvm") version "1.3.0-rc-146"
 }
 ```
 
-Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories:
+Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories.
+For Kotlin EAP builds you also may need `kotlin-eap` repository:
 
 ```
 repository {
     jcenter()
+    maven { url "https://kotlin.bintray.com/kotlin-eap" }
 }
 ```
 
@@ -150,7 +150,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.2-eap13'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0-RC1'
 ```
 This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/kotlinx.coroutines.-dispatchers/index.html)
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this

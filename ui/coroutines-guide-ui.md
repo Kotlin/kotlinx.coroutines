@@ -165,14 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.2"
-```
-
-Coroutines are experimental feature in Kotlin.
-You need to enable coroutines in Kotlin compiler by adding the following line to `gradle.properties` file:
- 
-```properties
-kotlin.coroutines=enable
+compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0-RC1"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 

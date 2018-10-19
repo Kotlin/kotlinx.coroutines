@@ -1,5 +1,17 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.0.0-RC1
+
+ * Coroutines API is updated to Kotlin 1.3.
+ * Deprecated API is removed or marked as `internal`.
+ * Experimental and internal coroutine API is marked with corresponding `kotlin.experimental.Experimental` annotation. If you are using `@ExperimentalCoroutinesApi` or `@InternalCoroutinesApi` you should explicitly opt-in, otherwise compilation warning (or error) will be produced. 
+ * `Unconfined` dispatcher (and all dispatchers which support immediate invocation) forms event-loop on top of current thread, thus preventing all `StackOverflowError`s. `Unconfined` dispatcher is now much safer for the general use and may leave its experimental status soon (#704).
+ * Significantly improved performance of suspending hot loops in `kotlinx.coroutines` (#537).
+ * Proguard rules are embedded into coroutines JAR to assist jettifier (#657)
+ * Fixed bug in shutdown sequence of `runBlocking` (#692).
+ * `ReceiveChannel.receiveOrNull` is marked as obsolete and deprecated.
+ * `Job.cancel(cause)` and `ReceiveChannel.cancel(cause)` are deprecated, `cancel()` returns `Unit` (#713).
+
 ## Version 0.30.2
  * `Dispatchers.Main` is instantiated lazily (see #658 and #665).
  * Blocking coroutine dispatcher views are now shutdown properly (#678).
