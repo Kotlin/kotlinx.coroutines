@@ -6,7 +6,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
 
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/ExceptionsGuideTest.kt
@@ -35,8 +34,6 @@ class ExceptionsGuideTest {
 
 ## Exception handling
 
-<!--- INCLUDE .*/example-exceptions-([0-9]+).kt
--->
 
 This section covers exception handling and cancellation on exceptions.
 We already know that cancelled coroutine throws [CancellationException] in suspension points and that it 
@@ -53,6 +50,10 @@ exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.r
 ([produce] and [receive][ReceiveChannel.receive] are covered later in [Channels](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/channels.md) section).
 
 It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
+
+<!--- INCLUDE
+import kotlinx.coroutines.*
+-->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -150,10 +151,6 @@ be obtained by `catch` block.
 When a coroutine is cancelled using [Job.cancel] without a cause, it terminates, but it does not cancel its parent.
 Cancelling without cause is a mechanism for parent to cancel its children without cancelling itself. 
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
@@ -205,10 +202,6 @@ The original exception is handled by the parent when all its children terminate.
 that is created in [GlobalScope]. It does not make sense to install an exception handler to a coroutine that
 is launched in the scope of the main [runBlocking], since the main coroutine is going to be always cancelled
 when its child completes with exception despite the installed handler. 
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -269,11 +262,6 @@ but then [Deferred.await] should have had the same mechanism to avoid behavioura
 would cause implementation details of a coroutines (whether it had delegated parts of its work to its children or not)
 to leak to its exception handler.
 
-<!--- INCLUDE
-import kotlinx.coroutines.exceptions.*
-import kotlin.coroutines.*
-import java.io.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -323,11 +311,6 @@ Caught java.io.IOException with suppressed [java.lang.ArithmeticException]
 Limitation on JS and Native is temporary and will be fixed in the future.
 
 Cancellation exceptions are transparent and unwrapped by default:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
-import java.io.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
@@ -390,7 +373,7 @@ For these purposes [SupervisorJob][SupervisorJob()] can be used. It is similar t
 only downwards. It is easy to demonstrate with an example:
 
 <!--- INCLUDE
-import kotlin.coroutines.*
+import kotlinx.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -448,6 +431,7 @@ just like [coroutineScope] does.
 
 <!--- INCLUDE
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
@@ -497,6 +481,7 @@ This difference comes from the fact that child's failure is not propagated to th
 
 <!--- INCLUDE
 import kotlin.coroutines.*
+import kotlinx.coroutines.*
 -->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>

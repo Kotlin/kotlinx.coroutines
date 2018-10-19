@@ -6,7 +6,6 @@
 package kotlinx.coroutines.guide.supervision01
 
 import kotlinx.coroutines.*
-import kotlin.coroutines.*
 
 fun main(args: Array<String>) = runBlocking {
     val supervisor = SupervisorJob()
