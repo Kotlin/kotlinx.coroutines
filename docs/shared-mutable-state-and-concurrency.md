@@ -91,7 +91,7 @@ multi-threaded [Dispatchers.Default] that is used in [GlobalScope].
 ```kotlin
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         counter++
     }
@@ -121,7 +121,7 @@ following change:
 val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define context with two threads
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
         counter++
     }
@@ -148,7 +148,7 @@ There is common misconception that making a variable `volatile` solves concurren
 @Volatile // in Kotlin `volatile` is an annotation 
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         counter++
     }
@@ -181,7 +181,7 @@ In the case of a simple counter we can use `AtomicInteger` class which has atomi
 ```kotlin
 var counter = AtomicInteger()
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         counter.incrementAndGet()
     }
@@ -215,7 +215,7 @@ single-threaded context.
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun { // run each coroutine with DefaultDispathcer
         withContext(counterContext) { // but confine each increment to the single-threaded context
             counter++
@@ -250,7 +250,7 @@ Here we use [CoroutineScope()] function to convert coroutine context reference t
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     CoroutineScope(counterContext).massiveRun { // run each coroutine in the single-threaded context
         counter++
     }
@@ -285,7 +285,7 @@ There is also [withLock] extension function that conveniently represents
 val mutex = Mutex()
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     GlobalScope.massiveRun {
         mutex.withLock {
             counter++        
@@ -360,7 +360,7 @@ The main code is straightforward:
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val counter = counterActor() // create the actor
     GlobalScope.massiveRun {
         counter.send(IncCounter)

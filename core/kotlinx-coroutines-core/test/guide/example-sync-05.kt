@@ -26,7 +26,7 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     CoroutineScope(counterContext).massiveRun { // run each coroutine in the single-threaded context
         counter++
     }

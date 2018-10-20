@@ -40,7 +40,7 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val counter = counterActor() // create the actor
     GlobalScope.massiveRun {
         counter.send(IncCounter)

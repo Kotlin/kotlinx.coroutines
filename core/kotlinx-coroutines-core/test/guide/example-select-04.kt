@@ -20,7 +20,7 @@ fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
     return List(12) { asyncString(random.nextInt(1000)) }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val list = asyncStringsList()
     val result = select<String> {
         list.withIndex().forEach { (index, deferred) ->

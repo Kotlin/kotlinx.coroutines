@@ -58,7 +58,7 @@ import kotlinx.coroutines.*
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val job = GlobalScope.launch {
         println("Throwing exception from launch")
         throw IndexOutOfBoundsException() // Will be printed to the console by Thread.defaultUncaughtExceptionHandler
@@ -380,7 +380,7 @@ import kotlinx.coroutines.*
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practise!)
@@ -438,7 +438,7 @@ import kotlinx.coroutines.*
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     try {
         supervisorScope {
             val child = launch {
@@ -488,7 +488,7 @@ import kotlinx.coroutines.*
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }
