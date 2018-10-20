@@ -268,6 +268,7 @@ to leak to its exception handler.
 ```kotlin
 import kotlinx.coroutines.*
 import java.io.*
+import kotlinx.coroutines.exceptions.*
 
 fun main() = runBlocking {
 //sampleStart
@@ -317,6 +318,7 @@ Cancellation exceptions are transparent and unwrapped by default:
 ```kotlin
 import kotlinx.coroutines.*
 import java.io.*
+import kotlinx.coroutines.exceptions.*
 
 fun main() = runBlocking {
 //sampleStart
