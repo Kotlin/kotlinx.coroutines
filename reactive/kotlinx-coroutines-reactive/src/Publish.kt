@@ -42,6 +42,8 @@ public fun <T> CoroutineScope.publish(
     context: CoroutineContext = EmptyCoroutineContext,
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
+    // specification requires NPE on null subscriber
+    if (subscriber == null) throw NullPointerException("subscriber")
     val newContext = newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
@@ -63,6 +65,9 @@ private class PublisherCoroutine<in T>(
     private val mutex = Mutex(locked = true)
 
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
+
+    @Volatile
+    private var cancelled = false // true when Subscription.cancel() is invoked
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
@@ -148,6 +153,12 @@ private class PublisherCoroutine<in T>(
             if (_nRequested.value >= CLOSED) {
                 _nRequested.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
                 val cause = getCompletionCause()
+                // Specification requires that after cancellation requested we don't call onXXX
+                if (cancelled) {
+                    // but we cannot just ignore exception so we handle it
+                    if (cause != null) handleCoroutineException(context, cause, this)
+                    return
+                }
                 try {
                     if (cause != null && cause !is CancellationException)
                         subscriber.onError(cause)
@@ -163,8 +174,9 @@ private class PublisherCoroutine<in T>(
     }
 
     override fun request(n: Long) {
-        if (n < 0) {
-            cancel(IllegalArgumentException("Must request non-negative number, but $n requested"))
+        if (n <= 0) {
+            // Specification requires IAE for n <= 0
+            cancel(IllegalArgumentException("non-positive subscription request $n"))
             return
         }
         while (true) { // lock-free loop for nRequested
@@ -206,8 +218,10 @@ private class PublisherCoroutine<in T>(
         }
     }
 
-    // Subscription impl
-    @JvmName("cancel")
-    @Suppress("NOTHING_TO_OVERRIDE", "ACCIDENTAL_OVERRIDE")
-    override fun cancelSubscription() = super.cancel(null)
+    override fun cancel() {
+        // Specification requires that after cancellation publisher stops signalling
+        // This flag distinguishes subscription cancellation request from the job crash
+        cancelled = true
+        super.cancel()
+    }
 }
