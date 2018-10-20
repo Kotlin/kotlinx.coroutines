@@ -16,7 +16,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         Flowable.interval(time, TimeUnit.MILLISECONDS, scheduler),
         BiFunction { x, _ -> x })
 
-fun main(args: Array<String>) {
+fun main() {
     rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)

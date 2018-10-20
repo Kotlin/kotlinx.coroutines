@@ -13,7 +13,7 @@ fun CoroutineScope.range(context: CoroutineContext, start: Int, count: Int) = pu
     for (x in start until start + count) send(x)
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // Range inherits parent job from runBlocking, but overrides dispatcher with Dispatchers.Default
     range(Dispatchers.Default, 1, 5).consumeEach { println(it) }
 }

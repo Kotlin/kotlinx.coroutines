@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")

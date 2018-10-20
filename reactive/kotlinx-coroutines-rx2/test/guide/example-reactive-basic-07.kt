@@ -9,7 +9,7 @@ import io.reactivex.subjects.BehaviorSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.consumeEach
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")

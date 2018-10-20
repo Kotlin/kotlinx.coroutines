@@ -93,7 +93,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
     val source = produce<Int> {
         println("Begin") // mark the beginning of this coroutine in output
@@ -150,7 +150,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // create a publisher that produces numbers from 1 to 3 with 200ms delays between them
     val source = publish<Int> {
     //           ^^^^^^^  <---  Difference from the previous examples is here
@@ -230,7 +230,7 @@ import kotlinx.coroutines.reactive.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doOnComplete { println("OnComplete") }   // ...
@@ -279,7 +279,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doOnComplete { println("OnComplete") }   // ...
@@ -340,7 +340,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> { 
+fun main() = runBlocking<Unit> { 
     // coroutine -- fast producer of elements in the context of the main thread
     val source = rxFlowable {
         for (x in 1..3) {
@@ -393,7 +393,7 @@ import io.reactivex.subjects.BehaviorSubject
 -->
 
 ```kotlin
-fun main(args: Array<String>) {
+fun main() {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two") // updates the state of BehaviorSubject, "one" value is lost
@@ -426,7 +426,7 @@ import kotlinx.coroutines.rx2.consumeEach
 -->   
    
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")
@@ -470,7 +470,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two")
@@ -506,7 +506,7 @@ import kotlin.coroutines.*
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val broadcast = ConflatedBroadcastChannel<String>()
     broadcast.offer("one")
     broadcast.offer("two")
@@ -582,7 +582,7 @@ that defines `Publisher` interface and its friends.
 It is straightforward to use from a coroutine:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // Range inherits parent job from runBlocking, but overrides dispatcher with Dispatchers.Default
     range(Dispatchers.Default, 1, 5).consumeEach { println(it) }
 }
@@ -641,7 +641,7 @@ fun CoroutineScope.range(start: Int, count: Int) = publish<Int> {
 -->
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
    range(1, 5)
        .fusedFilterMap(coroutineContext, { it % 2 == 0}, { "$it is even" })
        .consumeEach { println(it) } // print all the resulting strings
@@ -714,7 +714,7 @@ fun CoroutineScope.rangeWithInterval(time: Long, start: Int, count: Int) = publi
 The following code shows how `takeUntil` works: 
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val slowNums = rangeWithInterval(200, 1, 10)         // numbers with 200ms interval
     val stop = rangeWithInterval(500, 1, 10)             // the first one after 500ms
     slowNums.takeUntil(coroutineContext, stop).consumeEach { println(it) } // let's test it
@@ -791,7 +791,7 @@ fun CoroutineScope.testPub() = publish<Publisher<Int>> {
 The test code is to use `merge` on `testPub` and to display the results:
 
 ```kotlin
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     testPub().merge(coroutineContext).consumeEach { println(it) } // print the whole stream
 }
 ```
@@ -839,7 +839,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         Flowable.interval(time, TimeUnit.MILLISECONDS, scheduler),
         BiFunction { x, _ -> x })
 
-fun main(args: Array<String>) {
+fun main() {
     rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
@@ -881,7 +881,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
     Thread.sleep(1000)
@@ -931,7 +931,7 @@ fun rangeWithInterval(context: CoroutineContext, time: Long, start: Int, count: 
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     Flowable.fromPublisher(rangeWithInterval(Dispatchers.Default, 100, 1, 3))
         .observeOn(Schedulers.computation())                           // <-- THIS LINE IS ADDED
         .subscribe { println("$it on thread ${Thread.currentThread().name}") }
@@ -973,7 +973,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         Flowable.interval(time, TimeUnit.MILLISECONDS, scheduler),
         BiFunction { x, _ -> x })
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
         .consumeEach { println("$it on thread ${Thread.currentThread().name}") }
 }
@@ -1018,7 +1018,7 @@ fun rangeWithIntervalRx(scheduler: Scheduler, time: Long, start: Int, count: Int
         Flowable.interval(time, TimeUnit.MILLISECONDS, scheduler),
         BiFunction { x, _ -> x })
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val job = launch(Dispatchers.Unconfined) { // launch new coroutine in Unconfined context (without its own thread pool)
         rangeWithIntervalRx(Schedulers.computation(), 100, 1, 3)
             .consumeEach { println("$it on thread ${Thread.currentThread().name}") }

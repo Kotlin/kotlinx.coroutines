@@ -32,6 +32,6 @@ fun CoroutineScope.testPub() = publish<Publisher<Int>> {
     delay(1100) // wait for 1.1s - done in 1.2 sec after start
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     testPub().merge(coroutineContext).consumeEach { println(it) } // print the whole stream
 }
