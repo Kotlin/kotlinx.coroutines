@@ -4,6 +4,7 @@
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.basic02
+
 import kotlinx.coroutines.*
 
 fun main() { 

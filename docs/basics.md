@@ -41,13 +41,11 @@ This section covers basic coroutine concepts.
 
 Run the following code:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() {
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
@@ -94,13 +92,11 @@ The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep
 It is easy to get lost which one is blocking and which one is not. 
 Let's be explicit about blocking using [runBlocking] coroutine builder:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() { 
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
