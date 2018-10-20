@@ -5,7 +5,6 @@
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.context11
 
-
 import kotlinx.coroutines.*
 
 val threadLocal = ThreadLocal<String?>() // declare thread-local variable
