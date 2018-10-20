@@ -263,15 +263,16 @@ would cause implementation details of a coroutines (whether it had delegated par
 to leak to its exception handler.
 
 
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
-
-```kotlin
+<!--- INCLUDE
 import kotlinx.coroutines.*
 import java.io.*
 import kotlinx.coroutines.exceptions.*
+-->
 
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
+
+```kotlin
 fun main() = runBlocking {
-//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
     }
@@ -289,8 +290,7 @@ fun main() = runBlocking {
         }
         delay(Long.MAX_VALUE)
     }
-    job.join()
-//sampleEnd    
+    job.join()  
 }
 ```
 
@@ -318,7 +318,6 @@ Cancellation exceptions are transparent and unwrapped by default:
 ```kotlin
 import kotlinx.coroutines.*
 import java.io.*
-import kotlinx.coroutines.exceptions.*
 
 fun main() = runBlocking {
 //sampleStart
