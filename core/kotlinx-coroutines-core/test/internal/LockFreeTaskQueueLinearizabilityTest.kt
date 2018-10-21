@@ -14,12 +14,13 @@ import kotlin.test.*
 
 @OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeMPSCQueueLinearizabilityTest : TestBase() {
-    private lateinit var q: LockFreeMPSCQueue<Int>
+class LockFreeTaskQueueLinearizabilityTest : TestBase() {
+    private var singleConsumer = false
+    private lateinit var q: LockFreeTaskQueue<Int>
 
     @Reset
     fun resetQueue() {
-        q = LockFreeMPSCQueue()
+        q = LockFreeTaskQueue(singleConsumer)
     }
 
     @Operation
@@ -36,13 +37,24 @@ class LockFreeMPSCQueueLinearizabilityTest : TestBase() {
 //    fun removeFirstOrNull() = q.removeFirstOrNull()
 
     @Test
-    fun testLinearizability() {
+    fun testLinearizabilitySC() {
+        singleConsumer = true
+        linTest()
+    }
+
+    @Test
+    fun testLinearizabilityMC() {
+        singleConsumer = false
+        linTest()
+    }
+
+    private fun linTest() {
         val options = StressOptions()
             .iterations(100 * stressTestMultiplierSqrt)
             .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .addThread(1, 3)
             .addThread(1, 3)
             .addThread(1, 3)
-        LinChecker.check(LockFreeMPSCQueueLinearizabilityTest::class.java, options)
+        LinChecker.check(LockFreeTaskQueueLinearizabilityTest::class.java, options)
     }
 }

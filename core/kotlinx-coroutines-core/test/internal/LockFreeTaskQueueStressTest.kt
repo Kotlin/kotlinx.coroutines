@@ -11,7 +11,7 @@ import kotlin.concurrent.*
 import kotlin.test.*
 
 // Tests many short queues to stress copy/resize
-class LockFreeMPSCQueueStressTest : TestBase() {
+class LockFreeTaskQueueStressTest : TestBase() {
     private val nSeconds = 3 * stressTestMultiplier
     private val nProducers = 4
     private val batchSize = 100
@@ -21,7 +21,7 @@ class LockFreeMPSCQueueStressTest : TestBase() {
     private val consumed = atomic(0L)
     private var expected = LongArray(nProducers)
 
-    private val queue = atomic<LockFreeMPSCQueue<Item>?>(null)
+    private val queue = atomic<LockFreeTaskQueue<Item>?>(null)
     private val done = atomic(0)
     private val doneProducers = atomic(0)
 
@@ -34,7 +34,7 @@ class LockFreeMPSCQueueStressTest : TestBase() {
         val threads = mutableListOf<Thread>()
         threads += thread(name = "Pacer", start = false) {
             while (done.value == 0) {
-                queue.value = LockFreeMPSCQueue()
+                queue.value = LockFreeTaskQueue(false)
                 batch.value = 0
                 doneProducers.value = 0
                 barrier.await() // start consumers & producers

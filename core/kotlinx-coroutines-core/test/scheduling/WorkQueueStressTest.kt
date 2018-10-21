@@ -122,10 +122,4 @@ internal class Queue : GlobalQueue() {
     fun addAll(tasks: Collection<Task>) {
         tasks.forEach { addLast(it) }
     }
-
-    fun <R> map(transform: (Task) -> R): List<R> {
-        val result = ArrayList<R>()
-        fold(Unit) { _, task -> result.add(transform(task)) }
-        return result
-    }
 }

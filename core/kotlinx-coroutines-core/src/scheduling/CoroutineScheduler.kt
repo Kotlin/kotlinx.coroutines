@@ -316,10 +316,10 @@ internal class CoroutineScheduler(
             }
         }
         // Make sure no more work is added to GlobalQueue from anywhere
-        check(globalQueue.add(CLOSED_TASK)) { "GlobalQueue could not be closed yet" }
+        globalQueue.close()
         // Finish processing tasks from globalQueue and/or from this worker's local queue
         while (true) {
-            val task = currentWorker?.findTask() ?: globalQueue.removeFirstIfNotClosed() ?: break
+            val task = currentWorker?.findTask() ?: globalQueue.removeFirstOrNull() ?: break
             runSafely(task)
         }
         // Shutdown current thread
@@ -347,7 +347,7 @@ internal class CoroutineScheduler(
             ADDED -> return
             NOT_ADDED -> {
                 // try to offload task to global queue
-                if (!globalQueue.add(task)) {
+                if (!globalQueue.addLast(task)) {
                     // Global queue is closed in the last step of close/shutdown -- no more tasks should be accepted
                     throw RejectedExecutionException("$schedulerName was terminated")
                 }
@@ -946,9 +946,9 @@ internal class CoroutineScheduler(
              * once per two core pool size iterations
              */
             val globalFirst = nextInt(2 * corePoolSize) == 0
-            if (globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
+            if (globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             localQueue.poll()?.let { return it }
-            if (!globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
+            if (!globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             return trySteal()
         }
 

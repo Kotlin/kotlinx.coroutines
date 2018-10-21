@@ -86,7 +86,7 @@ internal class Task(
     @JvmField val block: Runnable,
     @JvmField val submissionTime: Long,
     @JvmField val taskContext: TaskContext
-) : Runnable, LockFreeMPMCQueueNode<Task>() {
+) : Runnable {
     val mode: TaskMode get() = taskContext.taskMode
     
     override fun run() {
@@ -101,19 +101,8 @@ internal class Task(
         "Task[${block.classSimpleName}@${block.hexAddress}, $submissionTime, $taskContext]"
 }
 
-private val EMPTY_RUNNABLE = Runnable {}
-internal val CLOSED_TASK = Task(EMPTY_RUNNABLE, 0, NonBlockingContext)
-
 // Open for tests
-internal open class GlobalQueue : LockFreeMPMCQueue<Task>() {
-    // Returns false when GlobalQueue was was already closed
-    public fun add(task: Task): Boolean =
-        addLastIfPrev(task) { prev -> prev !== CLOSED_TASK }
-
-    // Returns null when GlobalQueue was was already closed
-    public fun removeFirstIfNotClosed(): Task? =
-        removeFirstOrNullIf { first -> first !== CLOSED_TASK }
-
+internal open class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false) {
     // Open for tests
     public open fun removeFirstBlockingModeOrNull(): Task? =
         removeFirstOrNullIf { it.mode == TaskMode.PROBABLY_BLOCKING }

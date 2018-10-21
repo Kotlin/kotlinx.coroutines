@@ -51,7 +51,7 @@ internal fun delayNanosToMillis(timeNanos: Long): Long =
 @Suppress("PrivatePropertyName")
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
-private typealias Queue<T> = LockFreeMPSCQueueCore<T>
+private typealias Queue<T> = LockFreeTaskQueueCore<T>
 
 internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
@@ -150,7 +150,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
                     queue === CLOSED_EMPTY -> return false
                     else -> {
                         // update to full-blown queue to add one more
-                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY)
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
                         newQueue.addLast(queue as Runnable)
                         newQueue.addLast(task)
                         if (_queue.compareAndSet(queue, newQueue)) return true
@@ -191,7 +191,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
                     queue === CLOSED_EMPTY -> return
                     else -> {
                         // update to full-blown queue to close
-                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY)
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
                         newQueue.addLast(queue as Runnable)
                         if (_queue.compareAndSet(queue, newQueue)) return
                     }
