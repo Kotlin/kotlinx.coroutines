@@ -645,14 +645,12 @@ To indicate that no further elements are needed use [ReceiveChannel.cancel] meth
 
 Now let's see how it works in practice:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
 fun main() = runBlocking<Unit> {
     val tickerChannel = ticker(delayMillis = 100, initialDelayMillis = 0) // create ticker channel
     var nextElement = withTimeoutOrNull(1) { tickerChannel.receive() }
