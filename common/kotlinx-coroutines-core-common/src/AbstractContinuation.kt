@@ -19,7 +19,7 @@ private const val RESUMED = 2
 internal abstract class AbstractContinuation<in T>(
     public final override val delegate: Continuation<T>,
     public final override val resumeMode: Int
-) : Continuation<T>, DispatchedTask<T> {
+) : SchedulerTaskBase(), Continuation<T>, DispatchedTask<T> {
 
     /*
      * Implementation notes

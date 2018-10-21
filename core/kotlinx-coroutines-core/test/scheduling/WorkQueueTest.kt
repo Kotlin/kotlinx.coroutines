@@ -130,7 +130,7 @@ internal fun GlobalQueue.asTimeList(): List<Long> {
     return result
 }
 
-internal fun task(n: Long) = Task(Runnable {}, n, NonBlockingContext)
+internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
 
 internal fun WorkQueue.drain(): List<Long> {
     var task: Task? = poll()

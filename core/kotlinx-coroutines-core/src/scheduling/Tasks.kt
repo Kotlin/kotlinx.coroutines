@@ -82,18 +82,22 @@ internal object NonBlockingContext : TaskContext {
     }
 }
 
-internal class Task(
-    @JvmField val block: Runnable,
-    @JvmField val submissionTime: Long,
-    @JvmField val taskContext: TaskContext
-) : Runnable {
+internal interface Task : Runnable {
+    var submissionTime: Long
+    var taskContext: TaskContext
     val mode: TaskMode get() = taskContext.taskMode
-    
+}
+
+internal class TaskImpl(
+    @JvmField val block: Runnable,
+    override var submissionTime: Long,
+    override var taskContext: TaskContext
+) : SchedulerTaskBase() {
     override fun run() {
         try {
             block.run()
         } finally {
-            taskContext.afterTask()
+            afterTask()
         }
     }
 
