@@ -337,13 +337,11 @@ because you no longer have control on the scope this method is executed. Only pr
 
 Run the following code:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     repeat(100_000) { // launch a lot of coroutines
         launch {
