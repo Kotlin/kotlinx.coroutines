@@ -50,13 +50,11 @@ exception, for example via [await][Deferred.await] or [receive][ReceiveChannel.r
 
 It can be demonstrated by a simple example that creates new coroutines in [GlobalScope]:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     val job = GlobalScope.launch {
         println("Throwing exception from launch")
@@ -263,14 +261,16 @@ to leak to its exception handler.
 
 
 <!--- INCLUDE
-import kotlinx.coroutines.*
-import java.io.*
+
 import kotlinx.coroutines.exceptions.*
 -->
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import java.io.*
+
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught $exception with suppressed ${exception.suppressed.contentToString()}")
@@ -372,13 +372,11 @@ their execution, tracking their failures and restarting just those children jobs
 For these purposes [SupervisorJob][SupervisorJob()] can be used. It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
 only downwards. It is easy to demonstrate with an example:
 
-<!--- INCLUDE
-import kotlinx.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
@@ -429,14 +427,12 @@ For *scoped* concurrency [supervisorScope] can be used instead of [coroutineScop
 only in one direction and cancels all children only if it has failed itself. It also waits for all children before completion
 just like [coroutineScope] does.
 
-<!--- INCLUDE
-import kotlin.coroutines.*
-import kotlinx.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlin.coroutines.*
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     try {
         supervisorScope {
@@ -479,14 +475,12 @@ Another crucial difference between regular and supervisor jobs is exception hand
 Every child should handle its exceptions by itself via exception handling mechanisms.
 This difference comes from the fact that child's failure is not propagated to the parent.
 
-<!--- INCLUDE
-import kotlin.coroutines.*
-import kotlinx.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
+import kotlin.coroutines.*
+import kotlinx.coroutines.*
+
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
