@@ -685,7 +685,7 @@ It has one key limitation: when thread-local is mutated, a new value is not prop
 Use [withContext] to update the value of the thread-local in a coroutine, see [asContextElement] for more details. 
 
 Alternatively, a value can be stored in a mutable box like `class Counter(var i: Int)`, which is, in turn, 
-is stored in a thread-local variable. However, in this case you are fully responsible to synchronize 
+stored in a thread-local variable. However, in this case you are fully responsible to synchronize 
 potentially concurrent modifications to the variable in this mutable box.
 
 For advanced usage, for example for integration with logging MDC, transactional contexts or any other libraries
