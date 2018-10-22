@@ -8,8 +8,6 @@ package kotlinx.coroutines.guide.select01
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
 
 fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms
@@ -37,10 +35,12 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 }
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
-    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines    
+    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
+//sampleEnd        
 }

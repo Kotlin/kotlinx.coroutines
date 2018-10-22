@@ -5,8 +5,6 @@
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
-
-import kotlinx.coroutines.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/SharedStateGuideTest.kt
@@ -44,24 +42,7 @@ but others are unique.
 Let us launch a hundred coroutines all doing the same action thousand times. 
 We'll also measure their completion time for further comparisons:
 
-<!--- INCLUDE .*/example-sync-03.kt
-import java.util.concurrent.atomic.*
--->
-
-<!--- INCLUDE .*/example-sync-06.kt
-import kotlinx.coroutines.sync.*
--->
-
-<!--- INCLUDE .*/example-sync-07.kt
-import kotlinx.coroutines.channels.*
--->
-
-<!--- INCLUDE .*/example-sync-([0-9a-z]+).kt
-import kotlin.system.*
-import kotlin.coroutines.*
--->
-
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
@@ -81,21 +62,40 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 
 </div> 
 
-<!--- INCLUDE .*/example-sync-([0-9a-z]+).kt -->
-
 We start with a very simple action that increments a shared mutable variable using 
 multi-threaded [Dispatchers.Default] that is used in [GlobalScope]. 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*    
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         counter++
     }
     println("Counter = $counter")
+//sampleEnd    
 }
 ```
 
@@ -115,17 +115,38 @@ increment the `counter` concurrently from multiple threads without any synchroni
 the thread pool is running in only one thread in this case. To reproduce the problem you'll need to make the
 following change:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define context with two threads
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
         counter++
     }
     println("Counter = $counter")
+//sampleEnd    
 }
 ```
 
@@ -142,9 +163,28 @@ Counter =
 
 There is common misconception that making a variable `volatile` solves concurrency problem. Let us try it:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 @Volatile // in Kotlin `volatile` is an annotation 
 var counter = 0
 
@@ -176,16 +216,38 @@ linearizable, or atomic) data structure that provides all the necessarily synchr
 operations that needs to be performed on a shared state. 
 In the case of a simple counter we can use `AtomicInteger` class which has atomic `incrementAndGet` operations:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import java.util.concurrent.atomic.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 var counter = AtomicInteger()
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         counter.incrementAndGet()
     }
     println("Counter = ${counter.get()}")
+//sampleEnd    
 }
 ```
 
@@ -209,19 +271,40 @@ state is confined to a single thread. It is typically used in UI applications, w
 the single event-dispatch/application thread. It is easy to apply with coroutines by using a  
 single-threaded context. 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun { // run each coroutine with DefaultDispathcer
         withContext(counterContext) { // but confine each increment to the single-threaded context
             counter++
         }
     }
     println("Counter = $counter")
+//sampleEnd    
 }
 ```
 
@@ -244,17 +327,38 @@ are confined to the single thread. The following example does it like that, runn
 the single-threaded context to start with. 
 Here we use [CoroutineScope()] function to convert coroutine context reference to [CoroutineScope]:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     CoroutineScope(counterContext).massiveRun { // run each coroutine in the single-threaded context
         counter++
     }
     println("Counter = $counter")
+//sampleEnd    
 }
 ```
 
@@ -279,19 +383,41 @@ delimit a critical section. The key difference is that `Mutex.lock()` is a suspe
 There is also [withLock] extension function that conveniently represents 
 `mutex.lock(); try { ... } finally { mutex.unlock() }` pattern: 
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
 val mutex = Mutex()
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         mutex.withLock {
             counter++        
         }
     }
     println("Counter = $counter")
+//sampleEnd    
 }
 ```
 
@@ -357,10 +483,47 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
 
 The main code is straightforward:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlin.system.*
+
+suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
+    val n = 100  // number of coroutines to launch
+    val k = 1000 // times an action is repeated by each coroutine
+    val time = measureTimeMillis {
+        val jobs = List(n) {
+            launch {
+                repeat(k) { action() }
+            }
+        }
+        jobs.forEach { it.join() }
+    }
+    println("Completed ${n * k} actions in $time ms")    
+}
+
+// Message types for counterActor
+sealed class CounterMsg
+object IncCounter : CounterMsg() // one-way message to increment counter
+class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg() // a request with reply
+
+// This function launches a new counter actor
+fun CoroutineScope.counterActor() = actor<CounterMsg> {
+    var counter = 0 // actor state
+    for (msg in channel) { // iterate over incoming messages
+        when (msg) {
+            is IncCounter -> counter++
+            is GetCounter -> msg.response.complete(counter)
+        }
+    }
+}
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val counter = counterActor() // create the actor
     GlobalScope.massiveRun {
         counter.send(IncCounter)
@@ -370,6 +533,7 @@ fun main() = runBlocking<Unit> {
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
+//sampleEnd    
 }
 ```
 
