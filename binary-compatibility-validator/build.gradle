@@ -13,6 +13,7 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 
     testArtifacts project(':kotlinx-coroutines-core')
+    testArtifacts project(':kotlinx-coroutines-core-test')
 
     testArtifacts project(':kotlinx-coroutines-reactive')
     testArtifacts project(':kotlinx-coroutines-reactor')

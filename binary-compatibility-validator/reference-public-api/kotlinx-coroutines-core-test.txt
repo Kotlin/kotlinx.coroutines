@@ -1,0 +1,6 @@
+public final class kotlinx/coroutines/test/MainDispatcherInjector {
+	public static final field INSTANCE Lkotlinx/coroutines/test/MainDispatcherInjector;
+	public final fun inject (Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public final fun reset ()V
+}
+
