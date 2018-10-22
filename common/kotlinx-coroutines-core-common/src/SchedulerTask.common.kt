@@ -8,4 +8,8 @@ internal expect interface SchedulerTask : Runnable
 
 internal expect abstract class SchedulerTaskBase() : SchedulerTask
 
-internal expect inline fun SchedulerTask.afterTask()
+internal expect interface SchedulerTaskContext
+
+internal expect val SchedulerTask.taskContext: SchedulerTaskContext
+
+internal expect inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext)

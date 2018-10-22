@@ -9,6 +9,11 @@ internal actual typealias SchedulerTask = Runnable
 
 internal actual abstract class SchedulerTaskBase actual constructor() : SchedulerTask
 
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias SchedulerTaskContext = Unit
+
+internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = Unit
+
 @Suppress("NOTHING_TO_INLINE")
-internal actual inline fun SchedulerTask.afterTask() {}
+internal actual inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext) {}
 

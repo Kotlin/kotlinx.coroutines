@@ -88,6 +88,7 @@ internal interface Task : Runnable {
     val mode: TaskMode get() = taskContext.taskMode
 }
 
+// Non-reusable Task implementation to wrap Runnable instances that do not otherwise implement task
 internal class TaskImpl(
     @JvmField val block: Runnable,
     override var submissionTime: Long,
@@ -97,7 +98,7 @@ internal class TaskImpl(
         try {
             block.run()
         } finally {
-            afterTask()
+            afterTask(taskContext)
         }
     }
 

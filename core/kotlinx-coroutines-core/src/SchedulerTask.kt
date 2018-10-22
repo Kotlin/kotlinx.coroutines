@@ -13,5 +13,11 @@ internal actual abstract class SchedulerTaskBase actual constructor() : Schedule
     override var taskContext: TaskContext = NonBlockingContext
 }
 
+internal actual typealias SchedulerTaskContext = TaskContext
+
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = taskContext
+
 @Suppress("NOTHING_TO_INLINE")
-internal actual inline fun SchedulerTask.afterTask() = taskContext.afterTask()
+internal actual inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext) =
+    taskContext.afterTask()
