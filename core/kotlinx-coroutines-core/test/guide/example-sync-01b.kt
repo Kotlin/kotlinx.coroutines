@@ -7,7 +7,6 @@ package kotlinx.coroutines.guide.sync01b
 
 import kotlinx.coroutines.*
 import kotlin.system.*
-import kotlin.coroutines.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -27,8 +26,10 @@ val mtContext = newFixedThreadPoolContext(2, "mtPool") // explicitly define cont
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     CoroutineScope(mtContext).massiveRun { // use it instead of Dispatchers.Default in this sample and below 
         counter++
     }
     println("Counter = $counter")
+//sampleEnd    
 }

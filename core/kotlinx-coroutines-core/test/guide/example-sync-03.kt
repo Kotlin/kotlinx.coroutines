@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.sync03
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.*
 import kotlin.system.*
-import kotlin.coroutines.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -27,8 +26,10 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 var counter = AtomicInteger()
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         counter.incrementAndGet()
     }
     println("Counter = ${counter.get()}")
+//sampleEnd    
 }
