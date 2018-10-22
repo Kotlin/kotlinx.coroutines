@@ -19,9 +19,9 @@ class UnconfinedConcurrentStressTest : TestBase() {
         executor.close()
     }
 
-    @Test(timeout = 10_000L)
+    @Test
     fun testConcurrent() = runTest {
-        val iterations = 10_000 * stressTestMultiplier
+        val iterations = 1_000 * stressTestMultiplier
         val startBarrier = CyclicBarrier(threads + 1)
         val finishLatch = CountDownLatch(threads)
 
