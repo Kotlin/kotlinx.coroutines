@@ -21,26 +21,33 @@ internal object UndispatchedEventLoop {
     @JvmField
     internal val threadLocalEventLoop = CommonThreadLocal { EventLoop() }
 
-    inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, block: () -> Unit) {
+    inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, doYield: Boolean = false, block: () -> Unit) : Boolean {
         val eventLoop = threadLocalEventLoop.get()
         if (eventLoop.isActive) {
+            // If we are yielding and queue is empty, yield should be a no-op
+            if (doYield && eventLoop.queue.isEmpty) {
+                return false
+            }
+
             continuation._state = contState
             continuation.resumeMode = mode
             eventLoop.queue.addLast(continuation)
-            return
+            return true
         }
 
         runEventLoop(eventLoop, block)
+        return false
     }
 
-    fun resumeUndispatched(task: DispatchedTask<*>) {
+    fun resumeUndispatched(task: DispatchedTask<*>): Boolean {
         val eventLoop = threadLocalEventLoop.get()
         if (eventLoop.isActive) {
             eventLoop.queue.addLast(task)
-            return
+            return true
         }
 
         runEventLoop(eventLoop, { task.resume(task.delegate, MODE_UNDISPATCHED) })
+        return false
     }
 
     inline fun runEventLoop(eventLoop: EventLoop, block: () -> Unit) {
@@ -224,6 +231,12 @@ internal interface DispatchedTask<in T> : Runnable {
         } catch (e: Throwable) {
             throw DispatchException("Unexpected exception running $this", e)
         }
+    }
+}
+
+internal fun DispatchedContinuation<Unit>.yield(): Boolean {
+    return UndispatchedEventLoop.execute(this, Unit, MODE_CANCELLABLE, true) {
+        run()
     }
 }
 
