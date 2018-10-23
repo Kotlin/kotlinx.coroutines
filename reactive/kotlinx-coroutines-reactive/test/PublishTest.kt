@@ -12,7 +12,7 @@ import org.reactivestreams.*
 
 class PublishTest : TestBase() {
     @Test
-    fun testBasicEmpty() = runBlocking {
+    fun testBasicEmpty() = runTest {
         expect(1)
         val publisher = publish<Int> {
             expect(5)
@@ -30,7 +30,7 @@ class PublishTest : TestBase() {
     }
 
     @Test
-    fun testBasicSingle() = runBlocking {
+    fun testBasicSingle() = runTest {
         expect(1)
         val publisher = publish {
             expect(5)
@@ -56,7 +56,7 @@ class PublishTest : TestBase() {
     }
 
     @Test
-    fun testBasicError() = runBlocking<Unit> {
+    fun testBasicError() = runTest {
         expect(1)
         val publisher = publish<Int>(NonCancellable) {
             expect(5)

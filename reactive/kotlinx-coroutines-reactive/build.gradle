@@ -9,6 +9,21 @@ dependencies {
     testCompile "org.reactivestreams:reactive-streams-tck:$reactive_streams_version"
 }
 
+task testNG(type: Test) {
+    useTestNG()
+    reports.html.destination = file("$buildDir/reports/testng")
+    include '**/*ReactiveStreamTckTest.*'
+    doFirst {
+        // Classic gradle, nothing works without doFirst
+        println "TestNG tests: ($includes)"
+    }
+}
+
+test {
+    dependsOn(testNG)
+    reports.html.destination = file("$buildDir/reports/junit")
+}
+
 tasks.withType(dokka.getClass()) {
     externalDocumentationLink {
         url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
