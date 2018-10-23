@@ -21,10 +21,17 @@ internal object UndispatchedEventLoop {
     @JvmField
     internal val threadLocalEventLoop = CommonThreadLocal { EventLoop() }
 
-    inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int, doYield: Boolean = false, block: () -> Unit) : Boolean {
+    /**
+     * Executes given [block] as part of current event loop, updating related to block [continuation]
+     * mode and state if continuation is not resumed immediately.
+     * [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty).
+     * Returns `true` if execution of continuation was queued (trampolined) or `false` otherwise.
+     */
+    inline fun execute(continuation: DispatchedContinuation<*>, contState: Any?, mode: Int,
+                       doYield: Boolean = false, block: () -> Unit) : Boolean {
         val eventLoop = threadLocalEventLoop.get()
         if (eventLoop.isActive) {
-            // If we are yielding and queue is empty, yield should be a no-op
+            // If we are yielding and queue is empty, we can bail out as part of fast path
             if (doYield && eventLoop.queue.isEmpty) {
                 return false
             }
@@ -234,11 +241,10 @@ internal interface DispatchedTask<in T> : Runnable {
     }
 }
 
-internal fun DispatchedContinuation<Unit>.yield(): Boolean {
-    return UndispatchedEventLoop.execute(this, Unit, MODE_CANCELLABLE, true) {
+internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
+    UndispatchedEventLoop.execute(this, Unit, MODE_CANCELLABLE, doYield = true) {
         run()
     }
-}
 
 internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
     val delegate = this.delegate
