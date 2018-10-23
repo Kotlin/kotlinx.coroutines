@@ -774,13 +774,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {
-                val enqueueOp = TryEnqueueReceiveDesc<E, R>(select, block as (suspend (Any?) -> R), ResumeMode.THROW_ON_CLOSE)
-                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
-                when {
-                    enqueueResult === ALREADY_SELECTED -> return
-                    enqueueResult === ENQUEUE_FAILED -> {} // retry
-                    else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
-                }
+                if (registerEnqueueDesc(select, block, ResumeMode.THROW_ON_CLOSE)) return
             } else {
                 val pollResult = pollSelectInternal(select)
                 when {
@@ -808,13 +802,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {
-                val enqueueOp = TryEnqueueReceiveDesc<E, R>(select, block as suspend (Any?) -> R, ResumeMode.NULL_ON_CLOSE)
-                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
-                when {
-                    enqueueResult === ALREADY_SELECTED -> return
-                    enqueueResult === ENQUEUE_FAILED -> {} // retry
-                    else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
-                }
+                if (registerEnqueueDesc(select, block, ResumeMode.NULL_ON_CLOSE)) return
             } else {
                 val pollResult = pollSelectInternal(select)
                 when {
@@ -825,8 +813,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                             if (select.trySelect(null))
                                 block.startCoroutineUnintercepted(null, select.completion)
                             return
-                        } else
+                        } else {
                             throw pollResult.closeCause
+                        }
                     }
                     else -> {
                         // selected successfully
@@ -850,13 +839,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         while (true) {
             if (select.isSelected) return
             if (isEmpty) {
-                val enqueueOp = TryEnqueueReceiveDesc<E, R>(select, block as suspend (Any?) -> R, ResumeMode.RECEIVE_RESULT)
-                val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return
-                when {
-                    enqueueResult === ALREADY_SELECTED -> return
-                    enqueueResult === ENQUEUE_FAILED -> {} // retry
-                    else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
-                }
+                if (registerEnqueueDesc(select, block, ResumeMode.RECEIVE_RESULT)) return
             } else {
                 val pollResult = pollSelectInternal(select)
                 when {
@@ -872,6 +855,20 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                     }
                 }
             }
+        }
+    }
+
+    private fun <R, E> registerEnqueueDesc(select: SelectInstance<R>, block: suspend (E) -> R,
+                                        mode: ResumeMode): Boolean {
+        @Suppress("UNCHECKED_CAST")
+        val enqueueOp = TryEnqueueReceiveDesc<E, R>(select, block as suspend (Any?) -> R, mode)
+        val enqueueResult = select.performAtomicIfNotSelected(enqueueOp) ?: return true
+        return when {
+            enqueueResult === ALREADY_SELECTED -> true
+            enqueueResult === ENQUEUE_FAILED -> {
+                false // retry
+            }
+            else -> error("performAtomicIfNotSelected(TryEnqueueReceiveDesc) returned $enqueueResult")
         }
     }
 
