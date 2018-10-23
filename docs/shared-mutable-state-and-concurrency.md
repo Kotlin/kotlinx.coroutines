@@ -42,7 +42,7 @@ but others are unique.
 Let us launch a hundred coroutines all doing the same action thousand times. 
 We'll also measure their completion time for further comparisons:
 
-<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
+<div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
