@@ -23,7 +23,7 @@ import kotlin.jvm.*
  *
  * If [parent] job is specified, then this supervisor job becomes a child job of its parent and is cancelled when its
  * parent fails or is cancelled. All this supervisor's children are cancelled in this case, too. The invocation of
- * of [cancel][Job.cancel] with exception (other than [CancellationException]) on this supervisor job also cancels parent.
+ * [cancel][Job.cancel] with exception (other than [CancellationException]) on this supervisor job also cancels parent.
  *
  * @param parent an optional parent job.
  */
