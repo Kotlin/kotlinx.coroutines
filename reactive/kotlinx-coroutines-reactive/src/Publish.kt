@@ -43,7 +43,7 @@ public fun <T> CoroutineScope.publish(
     @BuilderInference block: suspend ProducerScope<T>.() -> Unit
 ): Publisher<T> = Publisher { subscriber ->
     // specification requires NPE on null subscriber
-    if (subscriber == null) throw NullPointerException("subscriber")
+    if (subscriber == null) throw NullPointerException("Subscriber cannot be null")
     val newContext = newCoroutineContext(context)
     val coroutine = PublisherCoroutine(newContext, subscriber)
     subscriber.onSubscribe(coroutine) // do it first (before starting coroutine), to avoid unnecessary suspensions
