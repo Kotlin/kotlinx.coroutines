@@ -90,4 +90,44 @@ class PublishTest : TestBase() {
             throw RuntimeException("OK")
         }.openSubscription()
     }
+
+    @Test
+    fun testHandleFailureAfterCancel() = runTest(
+        unhandled = listOf({ it -> it is RuntimeException && it.message == "FAILED" })
+    ){
+        expect(1)
+        // Exception should be delivered to CoroutineExceptionHandler, because we create publisher
+        // with the NonCancellable parent
+        val publisher = publish<Unit>(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                expect(3)
+                delay(10000)
+            } finally {
+                expect(5)
+                throw RuntimeException("FAILED") // crash after cancel
+            }
+        }
+        var sub: Subscription? = null
+        publisher.subscribe(object : Subscriber<Unit> {
+            override fun onComplete() {
+                expectUnreached()
+            }
+
+            override fun onSubscribe(s: Subscription) {
+                expect(2)
+                sub = s
+            }
+
+            override fun onNext(t: Unit?) {
+                expectUnreached()
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
+        expect(4)
+        sub!!.cancel()
+        finish(6)
+    }
 }

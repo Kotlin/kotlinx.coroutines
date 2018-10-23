@@ -199,7 +199,9 @@ private class PublisherCoroutine<in T>(
         }
     }
 
-    override fun onCancellation(cause: Throwable?) {
+    override fun onCompletedExceptionally(exception: Throwable) = onCompleted(Unit)
+
+    override fun onCompleted(value: Unit) {
         while (true) { // lock-free loop for nRequested
             val cur = _nRequested.value
             if (cur == SIGNALLED) return // some other thread holding lock already signalled cancellation/completion
