@@ -130,4 +130,43 @@ class PublishTest : TestBase() {
         sub!!.cancel()
         finish(6)
     }
+
+    @Test
+    fun testPublishFailureCancelsParent() = runTest(
+        expected = { it is TestException }
+    ) {
+        expect(1)
+        val publisher = publish<Unit> {
+            expect(5)
+            throw TestException()
+        }
+        expect(2)
+        publisher.subscribe(object : Subscriber<Unit> {
+            override fun onComplete() {
+                expectUnreached()
+            }
+
+            override fun onSubscribe(s: Subscription) {
+                expect(3)
+            }
+
+            override fun onNext(t: Unit?) {
+                expectUnreached()
+            }
+
+            override fun onError(t: Throwable?) {
+                assertTrue(t is TestException)
+                expect(6)
+            }
+        })
+        expect(4)
+        try {
+            yield() // to coroutine, will crash because it is a cancelled parent coroutine
+        } finally {
+            finish(7)
+        }
+        expectUnreached()
+    }
+
+    private class TestException : Exception()
 }

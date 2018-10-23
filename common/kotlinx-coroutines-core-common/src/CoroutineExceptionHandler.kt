@@ -31,7 +31,11 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
     handleExceptionViaHandler(context, exception)
 }
 
-internal fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
+/**
+ * @suppress This is an internal API and it is subject to change.
+ */
+@InternalCoroutinesApi
+public fun handleExceptionViaHandler(context: CoroutineContext, exception: Throwable) {
     // Invoke exception handler from the context if present
     try {
         context[CoroutineExceptionHandler]?.let {

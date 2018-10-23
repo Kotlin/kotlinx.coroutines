@@ -144,6 +144,7 @@ public final class kotlinx/coroutines/CoroutineExceptionHandlerKt {
 	public static final fun CoroutineExceptionHandler (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/CoroutineExceptionHandler;
 	public static final fun handleCoroutineException (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;Lkotlinx/coroutines/Job;)V
 	public static synthetic fun handleCoroutineException$default (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;Lkotlinx/coroutines/Job;ILjava/lang/Object;)V
+	public static final fun handleExceptionViaHandler (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Throwable;)V
 }
 
 public final class kotlinx/coroutines/CoroutineName : kotlin/coroutines/AbstractCoroutineContextElement {
