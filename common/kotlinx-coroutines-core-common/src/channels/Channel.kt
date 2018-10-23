@@ -217,7 +217,7 @@ public interface ReceiveChannel<out E> {
 
     /**
      * Clause for [select] expression of [receiveOrNull] suspending function that selects with the element that
-     * is received from the channel or selects with `null` if if the channel
+     * is received from the channel or selects with `null` if the channel
      * [isClosedForReceive] without cause. The [select] invocation fails with
      * the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
@@ -225,6 +225,37 @@ public interface ReceiveChannel<out E> {
      */
     @ExperimentalCoroutinesApi
     public val onReceiveOrNull: SelectClause1<E?>
+
+    /**
+     * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty].
+     * This method returns [ReceiveResult] with a value if element was successfully retrieved from the channel
+     * or [ReceiveResult] with close cause if channel was closed.
+     *
+     * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
+     * function is suspended, this function immediately resumes with [CancellationException].
+     *
+     * *Cancellation of suspended receive is atomic* -- when this function
+     * throws [CancellationException] it means that the element was not retrieved from this channel.
+     * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may
+     * continue to execute even after it was cancelled from the same thread in the case when this receive operation
+     * was already resumed and the continuation was posted for execution to the thread's queue.
+     *
+     * Note, that this function does not check for cancellation when it is not suspended.
+     * Use [yield] or [CoroutineScope.isActive] to periodically check for cancellation in tight loops if needed.
+     *
+     * This function can be used in [select] invocation with [onReceiveOrClosed] clause.
+     * Use [poll] to try receiving from this channel without waiting.
+     */
+    @ExperimentalCoroutinesApi
+    public suspend fun receiveOrClosed(): ReceiveResult<E>
+
+    /**
+     * Clause for [select] expression of [receiveOrClosed] suspending function that selects with the [ReceiveResult] with a value
+     * that is received from the channel or selects with [ReceiveResult] with a close cause if the channel
+     * [isClosedForReceive].
+     */
+    @ExperimentalCoroutinesApi
+    public val onReceiveOrClosed: SelectClause1<ReceiveResult<E>>
 
     /**
      * Retrieves and removes the element from this channel, or returns `null` if this channel [isEmpty]
@@ -250,7 +281,7 @@ public interface ReceiveChannel<out E> {
      * afterwards will throw [ClosedSendChannelException], while attempts to receive will throw
      * [ClosedReceiveChannelException].
      */
-    public fun cancel(): Unit
+    public fun cancel()
 
     /**
      * @suppress
@@ -266,6 +297,75 @@ public interface ReceiveChannel<out E> {
     @ObsoleteCoroutinesApi
     @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel without cause", replaceWith = ReplaceWith("cancel()"))
     public fun cancel(cause: Throwable? = null): Boolean
+}
+
+/**
+ * A discriminated union of [ReceiveChannel.receiveOrClosed] result,
+ * that encapsulates either successfully received element of type [T] from the channel or a close cause.
+ */
+@Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
+public inline class ReceiveResult<out T>
+internal constructor(private val holder: Any?) {
+    /**
+     * Returns `true` if this instance represents received element.
+     * In this case [isClosed] returns `false`.
+     */
+    public val isValue: Boolean get() = holder !is Closed
+
+    /**
+     * Returns `true` if this instance represents close cause.
+     * In this case [isValue] returns `false`.
+     */
+    public val isClosed: Boolean get() = holder is Closed
+
+    /**
+     * Returns received value if this instance represents received value or throws [IllegalStateException] otherwise.
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val value: T
+        get() = if (isClosed) throw IllegalStateException() else holder as T
+
+    /**
+     * Returns received value if this element represents received value or `null` otherwise.
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val valueOrNull: T?
+        get() = if (isClosed) null else holder as T
+
+    @Suppress("UNCHECKED_CAST")
+    public val valueOrThrow: T
+        get() = if (isClosed) throw closeCause else holder as T
+
+    /**
+     * Returns close cause of the channel if this instance represents close cause or throws [IllegalStateException] otherwise.
+     */
+    @Suppress("UNCHECKED_CAST")
+    public val closeCause: Throwable get() = if (isClosed) (holder as Closed).exception else error("ReceiveResult is not closed")
+
+    /**
+     * @suppress
+     */
+    public override fun toString(): String =
+        when (holder) {
+            is Closed -> holder.toString()
+            else -> "Value($holder)"
+    }
+
+    internal class Closed(@JvmField val exception: Throwable) {
+        override fun equals(other: Any?): Boolean = other is Closed && exception == other.exception
+        override fun hashCode(): Int = exception.hashCode()
+        override fun toString(): String = "Closed($exception)"
+    }
+
+    internal companion object {
+        @Suppress("NOTHING_TO_INLINE")
+        internal inline fun <E> value(value: E): ReceiveResult<E> =
+            ReceiveResult(value)
+
+        @Suppress("NOTHING_TO_INLINE")
+        internal inline fun <E> closed(cause: Throwable): ReceiveResult<E> =
+            ReceiveResult(Closed(cause))
+    }
 }
 
 /**

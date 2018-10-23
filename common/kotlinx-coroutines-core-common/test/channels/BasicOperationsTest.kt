@@ -31,6 +31,11 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
+    fun testReceiveOrClosed() = runTest {
+        TestChannelKind.values().forEach { kind -> testReceiveOrClosed(kind) }
+    }
+
+    @Test
     fun testInvokeOnClose() = TestChannelKind.values().forEach { kind ->
         reset()
         val channel = kind.create()
@@ -108,6 +113,35 @@ class BasicOperationsTest : TestBase() {
         assertTrue(d.getCancellationException().cause is TestException)
     }
 
+    @Suppress("ReplaceAssertBooleanWithAssertEquality")
+    private suspend fun testReceiveOrClosed(kind: TestChannelKind) = coroutineScope {
+        reset()
+        val channel = kind.create()
+        launch {
+            expect(2)
+            channel.send(1)
+        }
+
+        expect(1)
+        val result = channel.receiveOrClosed()
+        assertEquals(1, result.value)
+        assertEquals(1, result.valueOrNull)
+        assertTrue(ReceiveResult.value(1) == result)
+
+        expect(3)
+        launch {
+            expect(4)
+            channel.close()
+        }
+        val closed = channel.receiveOrClosed()
+        expect(5)
+        assertNull(closed.valueOrNull)
+        assertTrue(closed.isClosed)
+        assertTrue(closed.closeCause is ClosedReceiveChannelException)
+        assertFailsWith<ClosedReceiveChannelException> { closed.valueOrThrow }
+        assertTrue(ReceiveResult.closed<Int>(closed.closeCause) == closed)
+        finish(6)
+    }
 
     private suspend fun testOffer(kind: TestChannelKind) = coroutineScope {
         val channel = kind.create()
