@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.select02
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.*
-import kotlin.coroutines.*
 
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
     select<String> {
@@ -25,8 +24,9 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
                 "b -> '$value'"
         }
     }
-
+    
 fun main() = runBlocking<Unit> {
+//sampleStart
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -36,5 +36,6 @@ fun main() = runBlocking<Unit> {
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
     }
-    coroutineContext.cancelChildren()    
-}
+    coroutineContext.cancelChildren()  
+//sampleEnd      
+}    

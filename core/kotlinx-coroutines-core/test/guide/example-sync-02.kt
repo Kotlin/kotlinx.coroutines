@@ -7,7 +7,6 @@ package kotlinx.coroutines.guide.sync02
 
 import kotlinx.coroutines.*
 import kotlin.system.*
-import kotlin.coroutines.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch

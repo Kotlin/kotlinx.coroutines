@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.sync07
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.system.*
-import kotlin.coroutines.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -41,6 +40,7 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
 }
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     val counter = counterActor() // create the actor
     GlobalScope.massiveRun {
         counter.send(IncCounter)
@@ -50,4 +50,5 @@ fun main() = runBlocking<Unit> {
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
+//sampleEnd    
 }

@@ -8,7 +8,6 @@ package kotlinx.coroutines.guide.sync06
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.system.*
-import kotlin.coroutines.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -28,10 +27,12 @@ val mutex = Mutex()
 var counter = 0
 
 fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         mutex.withLock {
             counter++        
         }
     }
     println("Counter = $counter")
+//sampleEnd    
 }

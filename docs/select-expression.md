@@ -5,10 +5,6 @@
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
 package kotlinx.coroutines.guide.$$1$$2
-
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.selects.*
 -->
 <!--- KNIT     ../core/kotlinx-coroutines-core/test/guide/.*\.kt -->
 <!--- TEST_OUT ../core/kotlinx-coroutines-core/test/guide/test/SelectGuideTest.kt
@@ -48,11 +44,6 @@ breaking changes.
 ### Selecting from channels
 
 Let us have two producers of strings: `fizz` and `buzz`. The `fizz` produces "Fizz" string every 300 ms:
-
-<!--- INCLUDE
-import kotlinx.coroutines.*
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -105,16 +96,49 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
 
 Let us run it all seven times:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+
+fun CoroutineScope.fizz() = produce<String> {
+    while (true) { // sends "Fizz" every 300 ms
+        delay(300)
+        send("Fizz")
+    }
+}
+
+fun CoroutineScope.buzz() = produce<String> {
+    while (true) { // sends "Buzz!" every 500 ms
+        delay(500)
+        send("Buzz!")
+    }
+}
+
+suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
+    select<Unit> { // <Unit> means that this select expression does not produce any result 
+        fizz.onReceive { value ->  // this is the first select clause
+            println("fizz -> '$value'")
+        }
+        buzz.onReceive { value ->  // this is the second select clause
+            println("buzz -> '$value'")
+        }
+    }
+}
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
-    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines    
+    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
+//sampleEnd        
 }
 ```
 
@@ -143,10 +167,6 @@ The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the chan
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -172,10 +192,33 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
 Let's use it with channel `a` that produces "Hello" string four times and 
 channel `b` that produces "World" four times:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+
+suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
+    select<String> {
+        a.onReceiveOrNull { value -> 
+            if (value == null) 
+                "Channel 'a' is closed" 
+            else 
+                "a -> '$value'"
+        }
+        b.onReceiveOrNull { value -> 
+            if (value == null) 
+                "Channel 'b' is closed"
+            else    
+                "b -> '$value'"
+        }
+    }
+    
 fun main() = runBlocking<Unit> {
+//sampleStart
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -185,8 +228,9 @@ fun main() = runBlocking<Unit> {
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
     }
-    coroutineContext.cancelChildren()    
-}
+    coroutineContext.cancelChildren()  
+//sampleEnd      
+}    
 ```
 
 </div>
@@ -226,10 +270,6 @@ with a biased nature of selection.
 Let us write an example of producer of integers that sends its values to a `side` channel when 
 the consumers on its primary channel cannot keep up with it:
 
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -248,10 +288,27 @@ fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
 
 Consumer is going to be quite slow, taking 250 ms to process each number:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+
+fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
+    for (num in 1..10) { // produce 10 numbers from 1 to 10
+        delay(100) // every 100 ms
+        select<Unit> {
+            onSend(num) {} // Send to the primary channel
+            side.onSend(num) {} // or to the side channel     
+        }
+    }
+}
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val side = Channel<Int>() // allocate side channel
     launch { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
@@ -261,7 +318,8 @@ fun main() = runBlocking<Unit> {
         delay(250) // let us digest the consumed number properly, do not hurry
     }
     println("Done consuming")
-    coroutineContext.cancelChildren()    
+    coroutineContext.cancelChildren()  
+//sampleEnd      
 }
 ```
 
@@ -293,10 +351,6 @@ Deferred values can be selected using [onAwait][Deferred.onAwait] clause.
 Let us start with an async function that returns a deferred string value after 
 a random delay:
 
-<!--- INCLUDE .*/example-select-04.kt
-import java.util.*
--->
-
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
@@ -326,10 +380,27 @@ that are still active. Note, that we've used here the fact that `select` express
 so we can provide clauses for it using an arbitrary code. In this case we iterate over a list
 of deferred values to provide `onAwait` clause for each deferred value.
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.*
+import java.util.*
+    
+fun CoroutineScope.asyncString(time: Int) = async {
+    delay(time.toLong())
+    "Waited for $time ms"
+}
+
+fun CoroutineScope.asyncStringsList(): List<Deferred<String>> {
+    val random = Random(3)
+    return List(12) { asyncString(random.nextInt(1000)) }
+}
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val list = asyncStringsList()
     val result = select<String> {
         list.withIndex().forEach { (index, deferred) ->
@@ -341,6 +412,7 @@ fun main() = runBlocking<Unit> {
     println(result)
     val countActive = list.count { it.isActive }
     println("$countActive coroutines are still active")
+//sampleEnd
 }
 ```
 
@@ -362,10 +434,6 @@ Deferred 4 produced answer 'Waited for 128 ms'
 Let us write a channel producer function that consumes a channel of deferred string values, waits for each received
 deferred value, but only until the next deferred value comes over or the channel is closed. This example puts together 
 [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] and [onAwait][Deferred.onAwait] clauses in the same `select`:
-
-<!--- INCLUDE
-import kotlin.coroutines.*
--->
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
@@ -411,10 +479,43 @@ fun CoroutineScope.asyncString(str: String, time: Long) = async {
 The main function just launches a coroutine to print results of `switchMapDeferreds` and sends some test
 data to it:
 
-<div class="sample" markdown="1" theme="idea" data-highlight-only>
+<!--- CLEAR -->
+
+<div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">
 
 ```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+    
+fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
+    var current = input.receive() // start with first received deferred value
+    while (isActive) { // loop while not cancelled/closed
+        val next = select<Deferred<String>?> { // return next deferred value from this select or null
+            input.onReceiveOrNull { update ->
+                update // replaces next value to wait
+            }
+            current.onAwait { value ->  
+                send(value) // send value that current deferred has produced
+                input.receiveOrNull() // and use the next deferred from the input channel
+            }
+        }
+        if (next == null) {
+            println("Channel was closed")
+            break // out of loop
+        } else {
+            current = next
+        }
+    }
+}
+
+fun CoroutineScope.asyncString(str: String, time: Long) = async {
+    delay(time)
+    str
+}
+
 fun main() = runBlocking<Unit> {
+//sampleStart
     val chan = Channel<Deferred<String>>() // the channel for test
     launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
@@ -430,6 +531,7 @@ fun main() = runBlocking<Unit> {
     delay(1000) // give it time to process
     chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
+//sampleEnd
 }
 ```
 
