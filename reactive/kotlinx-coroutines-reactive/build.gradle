@@ -13,6 +13,10 @@ task testNG(type: Test) {
     useTestNG()
     reports.html.destination = file("$buildDir/reports/testng")
     include '**/*ReactiveStreamTckTest.*'
+    // Skip testNG when tests are filtered with --tests, otherwise it simply fails
+    onlyIf {
+        filter.includePatterns.isEmpty()
+    }
     doFirst {
         // Classic gradle, nothing works without doFirst
         println "TestNG tests: ($includes)"
