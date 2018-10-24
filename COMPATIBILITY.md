@@ -20,6 +20,6 @@ In order to migrate `kotlinx.coroutines` to `1.0.0`, follow these steps:
 
 1. Update `kotlinx.coroutines` to `0.30.2` version.
 2. Inspect compiler warnings about deprecated API and migrate it to a proposed alternative. Most of deprecated API has a corresponding   replacement which can be applied from IDEA with quickfix.
-3. Update Kotlin version to `1.3.0` or to the latest `1.3.0-rc` and `kotlinx.coroutines` to version `0.30.2-eap13`. Then just get rid of `experimental` suffix in all imports.
+3. Update Kotlin version to `1.3.0` and `kotlinx.coroutines` to version `0.30.2-eap13`. Then just get rid of `experimental` suffix in all imports.
 4. Update `kotlinx.coroutines` to version `1.0.0` or to the corresponding release candidate of it).
  

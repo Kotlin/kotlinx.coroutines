@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.0.0
+
+  * All Kotlin dependencies updated to 1.3 release version.
+  * Fixed potential memory leak in `HandlerDispatcher.scheduleResumeAfterDelay`, thanks @cbeyls.
+  * `yield` support for `Unconfined` and immediate dispatchers (#737).
+  * Various documentation improvements.
+
 ## Version 1.0.0-RC1
 
  * Coroutines API is updated to Kotlin 1.3.
