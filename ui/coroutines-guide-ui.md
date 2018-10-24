@@ -556,7 +556,7 @@ suspend fun CoroutineScope.launchInIO() = launch(Dispatchers.IO) {
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
 when the parent job is cancelled. An example of that is shown in the
-["Children of a coroutine"](../docs/coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
+["Children of a coroutine"](../docs/coroutine-context-and-dispatchers.md#children-of-a-coroutine) section of the guide to coroutines.
 <!--- CLEAR -->
 
 ### Blocking operations
