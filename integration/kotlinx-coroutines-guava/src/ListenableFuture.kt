@@ -7,6 +7,7 @@ package kotlinx.coroutines.guava
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import kotlin.coroutines.*
 
 /**
@@ -37,23 +38,40 @@ public fun <T> CoroutineScope.future(
 ): ListenableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
     val newContext = newCoroutineContext(context)
-    val job = Job(newContext[Job])
-    val future = ListenableFutureCoroutine<T>(newContext + job)
-    job.cancelFutureOnCompletion(future)
-    start(block, receiver = future, completion = future) // use the specified start strategy
+    val future = SettableFuture.create<T>()
+    val coroutine = ListenableFutureCoroutine(newContext, future)
+    future.addCallback(coroutine, MoreExecutors.directExecutor())
+    coroutine.start(start, coroutine, block)
     return future
 }
 
 private class ListenableFutureCoroutine<T>(
-    override val context: CoroutineContext
-) : AbstractFuture<T>(), Continuation<T>, CoroutineScope {
-    override val coroutineContext: CoroutineContext get() = context
-    override fun resumeWith(result: Result<T>) {
-        result
-            .onSuccess { set(it) }
-            .onFailure { setException(it) }
+    context: CoroutineContext,
+    private val completion: SettableFuture<T>
+) : AbstractCoroutine<T>(context), FutureCallback<T> {
+
+    /*
+     * We register coroutine as callback to the future this coroutine completes.
+     * But when future is cancelled externally, we'd like to cancel coroutine,
+     * so we register on failure handler for this purpose
+     */
+    override fun onSuccess(result: T?) {
+        // Do nothing
     }
-    override fun interruptTask() { context[Job]!!.cancel() }
+
+    override fun onFailure(t: Throwable) {
+        if (t is CancellationException) {
+            cancel()
+        }
+    }
+
+    override fun onCompleted(value: T) {
+        completion.set(value)
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        completion.setException(exception)
+    }
 }
 
 /**

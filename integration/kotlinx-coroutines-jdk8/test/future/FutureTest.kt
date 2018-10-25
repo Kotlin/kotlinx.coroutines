@@ -15,6 +15,7 @@ import java.util.concurrent.locks.*
 import java.util.function.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
+import kotlin.reflect.*
 import kotlin.test.assertFailsWith
 
 class FutureTest : TestBase() {
@@ -367,6 +368,56 @@ class FutureTest : TestBase() {
         expect(3)
         latch.countDown()
         return future
+    }
+
+    @Test
+    fun testChildException() = runTest {
+        val result = future(Dispatchers.Unconfined) {
+            // child crashes
+            launch { throw TestException("FAIL") }
+            42
+        }
+
+        result.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testExceptionAggregation() = runTest {
+        val result = future(Dispatchers.Unconfined) {
+            // child crashes
+            launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
+            launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
+            throw TestException()
+        }
+
+        expect(1)
+        result.checkFutureException<TestException>(TestException1::class, TestException2::class)
+        yield()
+        finish(2) // we are not cancelled
+    }
+
+    @Test
+    fun testExternalCompletion() = runTest {
+        expect(1)
+        val result = future(Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+            }
+        }
+
+        result.complete(Unit)
+        finish(3)
+    }
+
+    private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+        val e = assertFailsWith<ExecutionException> { get() }
+        val cause = e.cause!!
+        assertTrue(cause is T)
+        for ((index, clazz) in suppressed.withIndex()) {
+            assertTrue(clazz.isInstance(cause.suppressed[index]))
+        }
     }
 
     private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {

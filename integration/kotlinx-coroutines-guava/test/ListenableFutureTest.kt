@@ -13,6 +13,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
+import kotlin.reflect.*
 import kotlin.test.assertFailsWith
 
 class ListenableFutureTest : TestBase() {
@@ -254,6 +255,57 @@ class ListenableFutureTest : TestBase() {
             expectUnreached()
         } catch (e: Throwable) {
             assertTrue(e is TestException)
+        }
+    }
+
+    @Test
+    fun testChildException() = runTest {
+        val result = future(Dispatchers.Unconfined) {
+            // child crashes
+            launch { throw TestException("FAIL") }
+            42
+        }
+
+        result.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testExceptionAggregation() = runTest {
+        val result = future(Dispatchers.Unconfined) {
+            // child crashes
+            launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
+            launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
+            throw TestException()
+        }
+
+        expect(1)
+        result.checkFutureException<TestException>(TestException1::class, TestException2::class)
+        yield()
+        finish(2) // we are not cancelled
+    }
+
+    @Test
+    fun testExternalCancellation() = runTest {
+        val future = future(Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+            }
+        }
+
+        yield()
+        expect(1)
+        future.cancel(true)
+        finish(3)
+    }
+
+    private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+        val e = assertFailsWith<ExecutionException> { get() }
+        val cause = e.cause!!
+        assertTrue(cause is T)
+        for ((index, clazz) in suppressed.withIndex()) {
+            assertTrue(clazz.isInstance(cause.suppressed[index]))
         }
     }
 
