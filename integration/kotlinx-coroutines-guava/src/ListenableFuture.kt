@@ -70,7 +70,9 @@ private class ListenableFutureCoroutine<T>(
     }
 
     override fun onCompletedExceptionally(exception: Throwable) {
-        completion.setException(exception)
+        if (!completion.setException(exception)) {
+            handleCoroutineException(parentContext, exception, this)
+        }
     }
 }
 
