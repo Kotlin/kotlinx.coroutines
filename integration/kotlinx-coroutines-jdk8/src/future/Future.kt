@@ -37,22 +37,28 @@ public fun <T> CoroutineScope.future(
 ) : CompletableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
     val newContext = this.newCoroutineContext(context)
-    val job = Job(newContext[Job])
-    val future = CompletableFutureCoroutine<T>(newContext + job)
-    job.cancelFutureOnCompletion(future)
-    future.whenComplete { _, exception -> job.cancel(exception) }
-    start(block, receiver = future, completion = future) // use the specified start strategy
+    val future = CompletableFuture<T>()
+    val coroutine = CompletableFutureCoroutine(newContext, future)
+    future.whenComplete(coroutine) // Cancel coroutine if future was completed externally
+    coroutine.start(start, coroutine, block)
     return future
 }
 
 private class CompletableFutureCoroutine<T>(
-    override val context: CoroutineContext
-) : CompletableFuture<T>(), Continuation<T>, CoroutineScope {
-    override val coroutineContext: CoroutineContext get() = context
-    override fun resumeWith(result: Result<T>) {
-        result
-            .onSuccess { complete(it) }
-            .onFailure { completeExceptionally(it) }
+    context: CoroutineContext,
+    private val completion: CompletableFuture<T>
+) : AbstractCoroutine<T>(context), BiConsumer<T?, Throwable?> {
+
+    override fun accept(value: T?, exception: Throwable?) {
+        cancel()
+    }
+
+    override fun onCompleted(value: T) {
+        completion.complete(value)
+    }
+
+    override fun onCompletedExceptionally(exception: Throwable) {
+        completion.completeExceptionally(exception)
     }
 }
 
