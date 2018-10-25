@@ -57,6 +57,4 @@ class JobChildStressTest : TestBase() {
             }
         }
     }
-
-    private class TestException : Exception()
 }

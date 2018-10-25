@@ -10,8 +10,6 @@ import org.junit.*
 import org.junit.Assert.*
 
 class ConvertTest : TestBase() {
-    class TestException(s: String): RuntimeException(s)
-
     @Test
     fun testToCompletableSuccess() = runBlocking {
         expect(1)
@@ -75,15 +73,15 @@ class ConvertTest : TestBase() {
     fun testToMaybeFail() {
         val d = GlobalScope.async {
             delay(50)
-            throw TestException("OK")
+            throw TestRuntimeException("OK")
         }
         val maybe1 = d.asMaybe(Dispatchers.Unconfined)
         checkErroneous(maybe1) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
         val maybe2 = d.asMaybe(Dispatchers.Unconfined)
         checkErroneous(maybe2) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
     }
 
@@ -107,15 +105,15 @@ class ConvertTest : TestBase() {
     fun testToSingleFail() {
         val d = GlobalScope.async {
             delay(50)
-            throw TestException("OK")
+            throw TestRuntimeException("OK")
         }
         val single1 = d.asSingle(Dispatchers.Unconfined)
         checkErroneous(single1) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
         val single2 = d.asSingle(Dispatchers.Unconfined)
         checkErroneous(single2) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
     }
 

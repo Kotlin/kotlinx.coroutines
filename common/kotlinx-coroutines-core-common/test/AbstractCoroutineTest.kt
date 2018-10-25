@@ -58,7 +58,7 @@ class AbstractCoroutineTest : TestBase() {
             }
 
             override fun onCancellation(cause: Throwable?) {
-                assertTrue(cause is TestException0)
+                assertTrue(cause is TestException1)
                 expect(5)
             }
 
@@ -67,30 +67,27 @@ class AbstractCoroutineTest : TestBase() {
             }
 
             override fun onCompletedExceptionally(exception: Throwable) {
-                assertTrue(exception is TestException0)
+                assertTrue(exception is TestException1)
                 expect(9)
             }
         }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
-            assertTrue(it is TestException0)
+            assertTrue(it is TestException1)
             expect(6)
         }
 
         coroutine.invokeOnCompletion {
-            assertTrue(it is TestException0)
+            assertTrue(it is TestException1)
             expect(8)
         }
 
         expect(2)
         coroutine.start()
         expect(4)
-        coroutine.cancel(TestException0())
+        coroutine.cancel(TestException1())
         expect(7)
-        coroutine.resumeWithException(TestException1())
+        coroutine.resumeWithException(TestException2())
         finish(10)
     }
-
-    private class TestException0 : Throwable()
-    private class TestException1 : Throwable()
 }

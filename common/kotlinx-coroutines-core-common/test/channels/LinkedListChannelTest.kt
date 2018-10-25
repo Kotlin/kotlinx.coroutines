@@ -40,6 +40,4 @@ class LinkedListChannelTest : TestBase() {
         channel.cancel(TestException())
         channel.receiveOrNull()
     }
-
-    private class TestException : Exception()
 }

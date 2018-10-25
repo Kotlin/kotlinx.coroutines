@@ -184,6 +184,4 @@ class AsyncLazyTest : TestBase() {
         assertEquals(d.await(), 42) // await shall throw CancellationException
         expectUnreached()
     }
-
-    private class TestException : Exception()
 }

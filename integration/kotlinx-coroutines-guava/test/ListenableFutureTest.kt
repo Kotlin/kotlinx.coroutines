@@ -236,7 +236,7 @@ class ListenableFutureTest : TestBase() {
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             assertTrue(e is TestException)
         }
     }
@@ -252,7 +252,7 @@ class ListenableFutureTest : TestBase() {
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             assertTrue(e is TestException)
         }
     }
@@ -273,6 +273,4 @@ class ListenableFutureTest : TestBase() {
         latch.countDown()
         return future
     }
-
-    private class TestException : Exception()
 }

@@ -94,14 +94,13 @@ class JobTest : TestBase() {
         val job = Job()
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
-        class TestException : Throwable()
         for (i in 0 until n) job.invokeOnCompletion {
             fireCount[i]++
             throw TestException()
         }
         assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
-        val tryCancel = Try<Unit> { job.cancel() }
+        val tryCancel = Try { job.cancel() }
         assertTrue(!job.isActive)
         for (i in 0 until n) assertEquals(1, fireCount[i])
         assertTrue(tryCancel.exception is CompletionHandlerException)
@@ -206,6 +205,4 @@ class JobTest : TestBase() {
         assertTrue(job.isCancelled)
         assertTrue(parent.isCancelled)
     }
-
-    private class TestException : Exception()
 }

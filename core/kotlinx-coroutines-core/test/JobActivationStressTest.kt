@@ -68,6 +68,4 @@ class JobActivationStressTest : TestBase() {
             }
         }
     }
-
-    private class TestException : Exception()
 }

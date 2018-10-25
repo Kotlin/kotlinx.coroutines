@@ -123,6 +123,4 @@ class NonCancellableTest : TestBase() {
             finish(7)
         }
     }
-
-    private class TestException : Exception()
 }

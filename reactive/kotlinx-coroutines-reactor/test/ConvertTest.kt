@@ -11,8 +11,6 @@ import org.junit.*
 import org.junit.Assert.*
 
 class ConvertTest : TestBase() {
-    class TestException(s: String): RuntimeException(s)
-
     @Test
     fun testJobToMonoSuccess() = runBlocking {
         expect(1)
@@ -77,15 +75,15 @@ class ConvertTest : TestBase() {
     fun testDeferredToMonoFail() {
         val d = GlobalScope.async {
             delay(50)
-            throw TestException("OK")
+            throw TestRuntimeException("OK")
         }
         val mono1 = d.asMono(Dispatchers.Unconfined)
         checkErroneous(mono1) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
         val mono2 = d.asMono(Dispatchers.Unconfined)
         checkErroneous(mono2) {
-            check(it is TestException && it.message == "OK") { "$it" }
+            check(it is TestRuntimeException && it.message == "OK") { "$it" }
         }
     }
 

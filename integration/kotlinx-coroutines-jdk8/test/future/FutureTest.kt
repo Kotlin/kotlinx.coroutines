@@ -286,7 +286,7 @@ class FutureTest : TestBase() {
         try {
             deferred.await()
             fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             assertTrue(e is TestException)
             assertEquals("something went wrong", e.message)
         }
@@ -368,8 +368,6 @@ class FutureTest : TestBase() {
         latch.countDown()
         return future
     }
-
-    class TestException(message: String) : Exception(message)
 
     private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {

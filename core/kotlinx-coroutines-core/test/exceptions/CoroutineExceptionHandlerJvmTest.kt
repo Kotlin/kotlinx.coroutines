@@ -39,6 +39,4 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
 
         finish(3)
     }
-
-    private class TestException : Throwable()
 }

@@ -59,6 +59,4 @@ class FailedJobTest : TestBase() {
         assertTrue(!job.isActive)
         assertTrue(job.isCancelled)
     }
-
-    private class TestException : Exception()
 }

@@ -165,7 +165,4 @@ class ProduceExceptionsTest : TestBase() {
             finish(4)
         }
     }
-
-    class TestException : Exception()
-    class TestException2 : Exception()
 }

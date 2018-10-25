@@ -36,6 +36,4 @@ class CoroutinesJvmTest : TestBase() {
     }
 
     private fun throwTestException(): Unit = throw TestException()
-
-    private class TestException : Exception()
 }

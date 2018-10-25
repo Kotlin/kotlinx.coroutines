@@ -159,6 +159,4 @@ class JobStatesTest : TestBase() {
         assertTrue(job.isCompleted)
         assertTrue(job.isCancelled)
     }
-
-    private class TestException : Exception()
 }

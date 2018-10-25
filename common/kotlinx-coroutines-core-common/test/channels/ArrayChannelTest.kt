@@ -144,6 +144,4 @@ class ArrayChannelTest : TestBase() {
         channel.cancel(TestException())
         channel.receiveOrNull()
     }
-
-    private class TestException : Exception()
 }

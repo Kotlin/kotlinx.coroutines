@@ -206,6 +206,4 @@ class ArrayBroadcastChannelTest : TestBase() {
         assertTrue(sub.isClosedForReceive)
         check(sub.receiveOrNull() == null)
     }
-
-    private class TestException : Exception()
 }

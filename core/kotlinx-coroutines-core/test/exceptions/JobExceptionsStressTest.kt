@@ -64,8 +64,4 @@ class JobExceptionsStressTest : TestBase() {
             assertTrue(classes.isEmpty(), "Expected all exception to be present, but following exceptions are missing: $classes")
         }
     }
-
-    private class TestException1 : Exception()
-    private class TestException2 : Exception()
-    private class TestException3 : Exception()
 }

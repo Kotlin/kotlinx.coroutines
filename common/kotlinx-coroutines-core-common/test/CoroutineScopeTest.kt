@@ -258,7 +258,4 @@ class CoroutineScopeTest : TestBase() {
 
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
         (ContextScope(c1) + c2).coroutineContext
-
-    private class TestException1 : Exception()
-    private class TestException2 : Exception()
 }

@@ -50,10 +50,8 @@ class FutureExceptionsTest : TestBase() {
         testException(TestException(), { it is TestException }, { f -> f.thenApply { it + 1 } })
     }
 
-    class TestException : CompletionException("test2")
-
     private fun testException(
-        exception: Exception,
+        exception: Throwable,
         expected: ((Throwable) -> Boolean),
         transformer: (CompletableFuture<Int>) -> CompletableFuture<Int> = { it }
     ) {
@@ -65,7 +63,7 @@ class FutureExceptionsTest : TestBase() {
             future.completeExceptionally(exception)
             try {
                 chained.await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 assertTrue(expected(e))
             }
         }
@@ -81,7 +79,7 @@ class FutureExceptionsTest : TestBase() {
 
             try {
                 chained.await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 assertTrue(expected(e))
             }
         }

@@ -20,10 +20,6 @@ class JoinStressTest : TestBase() {
         pool.close()
     }
 
-    class TestException : Exception() {
-        override fun fillInStackTrace(): Throwable = this
-    }
-
     @Test
     fun testExceptionalJoinWithCancellation() = runBlocking {
         val results = IntArray(2)

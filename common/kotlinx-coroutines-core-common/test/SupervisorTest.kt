@@ -218,7 +218,4 @@ class SupervisorTest : TestBase() {
         yield() // to coroutineScope
         finish(7)
     }
-
-    private class TestException1 : Exception()
-    private class TestException2 : Exception()
 }

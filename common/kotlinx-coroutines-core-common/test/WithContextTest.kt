@@ -309,6 +309,4 @@ class WithContextTest : TestBase() {
             }
         }
     }
-
-    private class TestException : Exception()
 }

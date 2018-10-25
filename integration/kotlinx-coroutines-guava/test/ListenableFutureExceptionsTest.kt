@@ -46,10 +46,8 @@ class ListenableFutureExceptionsTest : TestBase() {
         testException(TestException(), { it is TestException }, { i -> i!! + 1 })
     }
 
-    class TestException : CompletionException("test2")
-
     private fun testException(
-        exception: Exception,
+        exception: Throwable,
         expected: ((Throwable) -> Boolean),
         transformer: ((Int?) -> Int?)? = null
     ) {
@@ -61,7 +59,7 @@ class ListenableFutureExceptionsTest : TestBase() {
             future.setException(exception)
             try {
                 chained.await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 assertTrue(expected(e))
             }
         }
@@ -76,7 +74,7 @@ class ListenableFutureExceptionsTest : TestBase() {
 
             try {
                 chained.await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 assertTrue(expected(e))
             }
         }

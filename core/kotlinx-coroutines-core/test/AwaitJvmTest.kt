@@ -24,6 +24,4 @@ class AwaitJvmTest : TestBase() {
         }
         finish(iterations + 1)
     }
-
-    private class TestException : Exception()
 }

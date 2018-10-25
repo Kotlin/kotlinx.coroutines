@@ -20,3 +20,9 @@ public expect open class TestBase constructor() {
         block: suspend CoroutineScope.() -> Unit
     )
 }
+
+public class TestException(message: String? = null) : Throwable(message)
+public class TestException1(message: String? = null) : Throwable(message)
+public class TestException2(message: String? = null) : Throwable(message)
+public class TestException3(message: String? = null) : Throwable(message)
+public class TestRuntimeException(message: String? = null) : RuntimeException(message)

@@ -184,6 +184,4 @@ class CompletableDeferredTest : TestBase() {
             assertTrue(e is T)
         }
     }
-
-    class TestException : Throwable()
 }

@@ -238,6 +238,4 @@ class AsyncTest : TestBase() {
             finish(3)
         }
     }
-
-    private class TestException : Exception()
 }

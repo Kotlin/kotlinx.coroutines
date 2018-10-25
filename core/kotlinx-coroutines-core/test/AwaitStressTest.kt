@@ -10,10 +10,6 @@ import java.util.concurrent.*
 
 class AwaitStressTest : TestBase() {
 
-    private class TestException : Exception() {
-        override fun fillInStackTrace(): Throwable = this
-    }
-
     private val iterations = 50_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(4, "AwaitStressTest")
 

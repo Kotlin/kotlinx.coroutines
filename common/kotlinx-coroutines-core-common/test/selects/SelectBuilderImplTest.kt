@@ -4,11 +4,12 @@
 
 package kotlinx.coroutines.selects
 
+import kotlinx.coroutines.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.test.*
 
-class SelectBuilderImplTest {
+class SelectBuilderImplTest : TestBase() {
     @Test
     fun testIdempotentSelectResumeInline() {
         var resumed = false
@@ -113,6 +114,4 @@ class SelectBuilderImplTest {
         check(!c.trySelect("OTHER"))
         check(c.trySelect("SELECT"))
     }
-
-    class TestException : Throwable()
 }

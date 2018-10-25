@@ -152,6 +152,4 @@ class ParentCancellationTest : TestBase() {
         }
         finish(3)
     }
-
-    private class TestException : Exception()
 }

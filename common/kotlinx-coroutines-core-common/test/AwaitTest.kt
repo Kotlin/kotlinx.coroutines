@@ -351,6 +351,4 @@ class AwaitTest : TestBase() {
             async(NonCancellable) { throw TestException() }
         joinAll(job, job, job)
     }
-
-    private class TestException : Exception()
 }

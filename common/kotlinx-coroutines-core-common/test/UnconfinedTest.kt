@@ -110,6 +110,4 @@ class UnconfinedTest : TestBase() {
 
         finish(7)
     }
-
-    class TestException : Throwable()
 }

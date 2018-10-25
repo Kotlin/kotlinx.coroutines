@@ -147,6 +147,4 @@ class BasicOperationsTest : TestBase() {
             assertEquals(iterations, expected)
         }
     }
-
-    private class TestException : Exception()
 }

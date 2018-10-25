@@ -116,6 +116,4 @@ class CancellableContinuationTest : TestBase() {
         continuation!!.resume(Unit) // Should not fail
         finish(4)
     }
-
-    private class TestException : Exception()
 }

@@ -112,6 +112,4 @@ class ProduceTest : TestBase() {
             finish(4)
         }
     }
-
-    private class TestException : Exception()
 }

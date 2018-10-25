@@ -167,8 +167,6 @@ class WithTimeoutTest : TestBase() {
         }
     }
 
-    private class TestException : Exception()
-
     @Test
     fun testNegativeTimeout() = runTest {
         expect(1)

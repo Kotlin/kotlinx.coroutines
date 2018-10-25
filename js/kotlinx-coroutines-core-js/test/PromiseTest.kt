@@ -71,9 +71,7 @@ class PromiseTest : TestBase() {
         val deferred = async { "OK" }
         val promise = deferred.asPromise()
         val d2 = promise.asDeferred()
-        assertTrue(d2 === deferred)
+        assertSame(d2, deferred)
         assertEquals("OK", d2.await())
     }
-
-    private class TestException(message: String) : Exception(message)
 }

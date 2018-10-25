@@ -44,6 +44,4 @@ class CoroutineExceptionHandlerTest : TestBase() {
         assertTrue(parent.isCancelled)
         assertTrue(parent.getCompletionExceptionOrNull() is TestException)
     }
-
-    private class TestException: RuntimeException()
 }

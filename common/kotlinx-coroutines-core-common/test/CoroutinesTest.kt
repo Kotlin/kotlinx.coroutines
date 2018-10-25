@@ -330,9 +330,4 @@ class CoroutinesTest : TestBase() {
     }
 
     private fun throwTestException() { throw TestException() }
-
-    private class TestException : Exception {
-        constructor(message: String): super(message)
-        constructor(): super()
-    }
 }
