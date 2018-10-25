@@ -300,6 +300,22 @@ class ListenableFutureTest : TestBase() {
         finish(3)
     }
 
+    @Test
+    fun testExceptionOnExternalCancellation() = runTest(expected = {it is TestException}) {
+        expect(1)
+        val result = future(Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestException()
+            }
+        }
+
+        result.cancel(true)
+        finish(3)
+    }
+
     private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!

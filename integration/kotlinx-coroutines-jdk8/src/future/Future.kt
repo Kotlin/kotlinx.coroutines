@@ -58,7 +58,9 @@ private class CompletableFutureCoroutine<T>(
     }
 
     override fun onCompletedExceptionally(exception: Throwable) {
-        completion.completeExceptionally(exception)
+        if (!completion.completeExceptionally(exception)) {
+            handleCoroutineException(parentContext, exception, this)
+        }
     }
 }
 

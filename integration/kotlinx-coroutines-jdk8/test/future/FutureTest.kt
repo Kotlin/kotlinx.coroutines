@@ -411,6 +411,22 @@ class FutureTest : TestBase() {
         finish(3)
     }
 
+    @Test
+    fun testExceptionOnExternalCompletion() = runTest(expected = {it is TestException}) {
+        expect(1)
+        val result = future(Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestException()
+            }
+        }
+
+        result.complete(Unit)
+        finish(3)
+    }
+
     private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
