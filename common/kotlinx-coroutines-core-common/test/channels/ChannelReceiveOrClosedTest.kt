@@ -46,7 +46,7 @@ class ChannelReceiveOrClosedTest : TestBase() {
         assertEquals(1, element.value)
         assertEquals(1, element.valueOrNull)
         assertEquals("Value(1)", element.toString())
-        assertTrue(ReceiveResult.value(1) == element) // Don't box
+        assertTrue(ValueOrClosed.value(1) == element) // Don't box
 
         expect(4)
         val nullElement = channel.receiveOrClosed()
@@ -54,7 +54,7 @@ class ChannelReceiveOrClosedTest : TestBase() {
         assertNull(nullElement.value)
         assertNull(nullElement.valueOrNull)
         assertEquals("Value(null)", nullElement.toString())
-        assertTrue(ReceiveResult.value(null) == nullElement) // Don't box
+        assertTrue(ValueOrClosed.value(null) == nullElement) // Don't box
 
         expect(5)
         val closed = channel.receiveOrClosed()
@@ -107,10 +107,10 @@ class ChannelReceiveOrClosedTest : TestBase() {
     @Test
     @ExperimentalUnsignedTypes
     fun testReceiveResultChannel() = runTest {
-        val channel = Channel<ReceiveResult<UInt>>()
+        val channel = Channel<ValueOrClosed<UInt>>()
         launch {
-            channel.send(ReceiveResult.value(1u))
-            channel.send(ReceiveResult.closed(TestException1()))
+            channel.send(ValueOrClosed.value(1u))
+            channel.send(ValueOrClosed.closed(TestException1()))
             channel.close(TestException2())
         }
 

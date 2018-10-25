@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.selects.*
 import kotlin.jvm.*
+import kotlin.internal.*
 
 /**
  * Sender's interface to [Channel].
@@ -188,10 +189,6 @@ public interface ReceiveChannel<out E> {
     public val onReceive: SelectClause1<E>
 
     /**
-     * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty]
-     * or returns `null` if the channel is [closed][isClosedForReceive] without cause
-     * or throws the original [close][SendChannel.close] cause exception if the channel has _failed_.
-     *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
      *
@@ -207,12 +204,14 @@ public interface ReceiveChannel<out E> {
      * This function can be used in [select] invocation with [onReceiveOrNull] clause.
      * Use [poll] to try receiving from this channel without waiting.
      *
-     * **Note: This is an obsolete api.**
-     * This function will be replaced with `receiveOrClosed: ReceiveResult<E>` and
-     * extension `suspend fun <E: Any> ReceiveChannel<E>.receiveOrNull(): E?`
-     * It is obsolete because it does not distinguish closed channel and null elements.
+     * This function is deprecated  because it does not distinguish closed channel and null elements.
+     * Use [receiveOrClosed] or [receiveOrNull] extension method.
      */
     @ObsoleteCoroutinesApi
+    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @LowPriorityInOverloadResolution
+    @Deprecated(message = "Deprecated in favor of receiveOrClosed and receiveOrNull extension",
+        level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("receiveOrClosed"))
     public suspend fun receiveOrNull(): E?
 
     /**
@@ -224,12 +223,15 @@ public interface ReceiveChannel<out E> {
      * **Note: This is an experimental api.** This function may be replaced with a better on in the future.
      */
     @ExperimentalCoroutinesApi
+    @ObsoleteCoroutinesApi
+    @Deprecated(message = "Deprecated in favor of onReceiveOrClosed and onReceiveOrNull extension",
+        level = DeprecationLevel.WARNING, replaceWith = ReplaceWith("onReceiveOrClosed"))
     public val onReceiveOrNull: SelectClause1<E?>
 
     /**
      * Retrieves and removes the element from this channel suspending the caller while this channel [isEmpty].
-     * This method returns [ReceiveResult] with a value if element was successfully retrieved from the channel
-     * or [ReceiveResult] with close cause if channel was closed.
+     * This method returns [ValueOrClosed] with a value if element was successfully retrieved from the channel
+     * or [ValueOrClosed] with close cause if channel was closed.
      *
      * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
      * function is suspended, this function immediately resumes with [CancellationException].
@@ -247,15 +249,15 @@ public interface ReceiveChannel<out E> {
      * Use [poll] to try receiving from this channel without waiting.
      */
     @ExperimentalCoroutinesApi
-    public suspend fun receiveOrClosed(): ReceiveResult<E>
+    public suspend fun receiveOrClosed(): ValueOrClosed<E>
 
     /**
-     * Clause for [select] expression of [receiveOrClosed] suspending function that selects with the [ReceiveResult] with a value
-     * that is received from the channel or selects with [ReceiveResult] with a close cause if the channel
+     * Clause for [select] expression of [receiveOrClosed] suspending function that selects with the [ValueOrClosed] with a value
+     * that is received from the channel or selects with [ValueOrClosed] with a close cause if the channel
      * [isClosedForReceive].
      */
     @ExperimentalCoroutinesApi
-    public val onReceiveOrClosed: SelectClause1<ReceiveResult<E>>
+    public val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
 
     /**
      * Retrieves and removes the element from this channel, or returns `null` if this channel [isEmpty]
@@ -304,7 +306,7 @@ public interface ReceiveChannel<out E> {
  * that encapsulates either successfully received element of type [T] from the channel or a close cause.
  */
 @Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
-public inline class ReceiveResult<out T>
+public inline class ValueOrClosed<out T>
 internal constructor(private val holder: Any?) {
     /**
      * Returns `true` if this instance represents received element.
@@ -359,12 +361,12 @@ internal constructor(private val holder: Any?) {
 
     internal companion object {
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> value(value: E): ReceiveResult<E> =
-            ReceiveResult(value)
+        internal inline fun <E> value(value: E): ValueOrClosed<E> =
+            ValueOrClosed(value)
 
         @Suppress("NOTHING_TO_INLINE")
-        internal inline fun <E> closed(cause: Throwable): ReceiveResult<E> =
-            ReceiveResult(Closed(cause))
+        internal inline fun <E> closed(cause: Throwable): ValueOrClosed<E> =
+            ValueOrClosed(Closed(cause))
     }
 }
 

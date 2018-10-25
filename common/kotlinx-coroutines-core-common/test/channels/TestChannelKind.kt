@@ -57,7 +57,7 @@ private class ChannelViaBroadcast<E>(
 
     override suspend fun receive(): E = sub.receive()
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
-    override suspend fun receiveOrClosed(): ReceiveResult<E> = sub.receiveOrClosed()
+    override suspend fun receiveOrClosed(): ValueOrClosed<E> = sub.receiveOrClosed()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
     override fun cancel(): Unit = sub.cancel()
@@ -66,6 +66,6 @@ private class ChannelViaBroadcast<E>(
         get() = sub.onReceive
     override val onReceiveOrNull: SelectClause1<E?>
         get() = sub.onReceiveOrNull
-    override val onReceiveOrClosed: SelectClause1<ReceiveResult<E>>
+    override val onReceiveOrClosed: SelectClause1<ValueOrClosed<E>>
         get() = sub.onReceiveOrClosed
 }

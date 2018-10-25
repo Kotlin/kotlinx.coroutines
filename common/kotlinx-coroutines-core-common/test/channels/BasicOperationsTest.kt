@@ -126,7 +126,7 @@ class BasicOperationsTest : TestBase() {
         val result = channel.receiveOrClosed()
         assertEquals(1, result.value)
         assertEquals(1, result.valueOrNull)
-        assertTrue(ReceiveResult.value(1) == result)
+        assertTrue(ValueOrClosed.value(1) == result)
 
         expect(3)
         launch {
@@ -139,7 +139,7 @@ class BasicOperationsTest : TestBase() {
         assertTrue(closed.isClosed)
         assertTrue(closed.closeCause is ClosedReceiveChannelException)
         assertFailsWith<ClosedReceiveChannelException> { closed.valueOrThrow }
-        assertTrue(ReceiveResult.closed<Int>(closed.closeCause) == closed)
+        assertTrue(ValueOrClosed.closed<Int>(closed.closeCause) == closed)
         finish(6)
     }
 

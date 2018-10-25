@@ -163,7 +163,8 @@ buzz -> 'Buzz!'
 ### Selecting on close
 
 The [onReceive][ReceiveChannel.onReceive] clause in `select` fails when the channel is closed causing the corresponding
-`select` to throw an exception. We can use [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] clause to perform a
+`select` to throw an exception. We can use [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] 
+or [onReceiveOrClosed][ReceiveChannel.onReceiveOrClosed] clause to perform a
 specific action when the channel is closed. The following example also shows that `select` is an expression that returns 
 the result of its selected clause:
 
@@ -178,14 +179,16 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
             else 
                 "a -> '$value'"
         }
-        b.onReceiveOrNull { value -> 
-            if (value == null) 
+        b.onReceiveOrClosed { valueOrClosed -> 
+            if (valueOrClosed.isClosed) 
                 "Channel 'b' is closed"
             else    
-                "b -> '$value'"
+                "b -> '${valueOrClosed.value}'"
         }
     }
 ```
+Note that [onReceiveOrNull][ReceiveChannel.onReceiveOrNull] is an extension function defined only for channels with non-nullable elements.
+
 
 </div>
 
@@ -557,6 +560,7 @@ Channel was closed
 [ReceiveChannel.receive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/receive.html
 [ReceiveChannel.onReceive]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive.html
 [ReceiveChannel.onReceiveOrNull]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive-or-null.html
+[ReceiveChannel.onReceiveOrClosed]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-receive-channel/on-receive-or-closed.html
 [SendChannel.send]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/send.html
 [SendChannel.onSend]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/on-send.html
 <!--- INDEX kotlinx.coroutines.selects -->
