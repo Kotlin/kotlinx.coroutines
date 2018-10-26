@@ -72,7 +72,7 @@ private class PublisherCoroutine<in T>(
     @Volatile
     private var cancelled = false // true when Subscription.cancel() is invoked
 
-    private var handleException = false // when handleJobException is invoked
+    private var shouldHandleException = false // when handleJobException is invoked
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
@@ -172,7 +172,7 @@ private class PublisherCoroutine<in T>(
                 if (cancelled) {
                     // If the parent had failed to handle our exception (handleJobException was invoked), then
                     // we must not loose this exception
-                    if (handleException && cause != null) handleExceptionViaHandler(parentContext, cause)
+                    if (shouldHandleException && cause != null) handleExceptionViaHandler(parentContext, cause)
                 } else {
                     try {
                         if (cause != null && cause !is CancellationException)
@@ -236,7 +236,7 @@ private class PublisherCoroutine<in T>(
     // This way we defer decision to handle this exception based on our ability to send this exception
     // to the subscriber (see doLockedSignalCompleted)
     override fun handleJobException(exception: Throwable) {
-        handleException = true
+        shouldHandleException = true
     }
     
     override fun onCompletedExceptionally(exception: Throwable) {
