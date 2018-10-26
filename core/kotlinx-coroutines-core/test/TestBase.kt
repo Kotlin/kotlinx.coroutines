@@ -7,7 +7,9 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
 import org.junit.*
+import java.util.*
 import java.util.concurrent.atomic.*
+import kotlin.test.*
 
 private val VERBOSE = systemProp("test.verbose", false)
 
@@ -47,6 +49,12 @@ public actual open class TestBase actual constructor() {
     private var actionIndex = AtomicInteger()
     private var finished = AtomicBoolean()
     private var error = AtomicReference<Throwable>()
+
+    // Shutdown sequence
+    private lateinit var threadsBefore: Set<Thread>
+    private val uncaughtExceptions = Collections.synchronizedList(ArrayList<Throwable>())
+    private var originalUncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
+    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
 
     /**
      * Throws [IllegalStateException] like `error` in stdlib, but also ensures that the test will not
@@ -105,13 +113,12 @@ public actual open class TestBase actual constructor() {
         finished.set(false)
     }
 
-    private lateinit var threadsBefore: Set<Thread>
-    private val SHUTDOWN_TIMEOUT = 10_000L // 10s at most to wait
-
     @Before
     fun before() {
         initPoolsBeforeTest()
         threadsBefore = currentThreads()
+        originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler({ t, e -> uncaughtExceptions.add(e) })
     }
 
     @After
@@ -120,6 +127,8 @@ public actual open class TestBase actual constructor() {
         check(actionIndex.get() == 0 || finished.get()) { "Expecting that 'finish(...)' was invoked, but it was not" }
         shutdownPoolsAfterTest()
         checkTestThreads(threadsBefore)
+        Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler)
+        assertTrue(uncaughtExceptions.isEmpty(), "Expected no uncaught exceptions, but got $uncaughtExceptions")
     }
 
     fun initPoolsBeforeTest() {
