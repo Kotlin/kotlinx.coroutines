@@ -111,15 +111,15 @@ private class PublisherCoroutine<in T>(
     }
 
     /*
-       This code is not trivial because of the two properties:
-       1. It ensures conformance to the reactive specification that mandates that onXXX invocations should not
-          be concurrent. It uses Mutex to protect all onXXX invocation and ensure conformance even when multiple
-          coroutines are invoking `send` function.
-       2. Normally, `onComplete/onError` notification is sent only when coroutine and all its children are complete.
-          However, nothing prevents `publish` coroutine from leaking reference to it send channel to some
-          globally-scoped coroutine that is invoking `send` outside of this context. Without extra precaution this may
-          lead to `onNext` that is concurrent with `onComplete/onError`, so that is why signalling for
-          `onComplete/onError` is also done under the same mutex.
+     * This code is not trivial because of the two properties:
+     * 1. It ensures conformance to the reactive specification that mandates that onXXX invocations should not
+     *    be concurrent. It uses Mutex to protect all onXXX invocation and ensure conformance even when multiple
+     *    coroutines are invoking `send` function.
+     * 2. Normally, `onComplete/onError` notification is sent only when coroutine and all its children are complete.
+     *    However, nothing prevents `publish` coroutine from leaking reference to it send channel to some
+     *    globally-scoped coroutine that is invoking `send` outside of this context. Without extra precaution this may
+     *    lead to `onNext` that is concurrent with `onComplete/onError`, so that is why signalling for
+     *    `onComplete/onError` is also done under the same mutex.
      */
 
     // assert: mutex.isLocked()
