@@ -132,7 +132,15 @@ private class PublisherCoroutine<in T>(
             throw getCancellationException()
         }
         // notify subscriber
-        subscriber.onNext(elem)
+        try {
+            subscriber.onNext(elem)
+        } catch (e: Throwable) {
+            // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
+            // to abort the corresponding send/offer invocation
+            cancel(e)
+            unlockAndCheckCompleted()
+            throw e
+        }
         // now update nRequested
         while (true) { // lock-free loop on nRequested
             val cur = _nRequested.value
