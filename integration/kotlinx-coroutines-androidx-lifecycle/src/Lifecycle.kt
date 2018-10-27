@@ -8,6 +8,7 @@ import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -48,7 +49,7 @@ fun Lifecycle.createScope(activeWhile: Lifecycle.State): CoroutineScope {
 }
 
 /**
- * Returns a [Job] that will be cancelled as soon as the [Lifecycle] reaches
+ * Returns a [SupervisorJob] that will be cancelled as soon as the [Lifecycle] reaches
  * [Lifecycle.State.DESTROYED] state.
  *
  * Note that this value is cached until the Lifecycle reaches the destroyed state.
@@ -64,7 +65,7 @@ val Lifecycle.job: Job
     }
 
 /**
- * Creates a [Job] that will be cancelled as soon as this [Lifecycle]
+ * Creates a [SupervisorJob] that will be cancelled as soon as this [Lifecycle]
  * [currentState][Lifecycle.getCurrentState] is no longer [at least][Lifecycle.State.isAtLeast] the
  * passed [activeWhile] state.
  *
@@ -75,7 +76,7 @@ fun Lifecycle.createJob(activeWhile: Lifecycle.State = INITIALIZED): Job {
     require(activeWhile != Lifecycle.State.DESTROYED) {
         "DESTROYED is a terminal state that is forbidden for createJob(…), to avoid leaks."
     }
-    return Job().also { job ->
+    return SupervisorJob().also { job ->
         if (!currentState.isAtLeast(activeWhile)) job.cancel()
         else addObserver(object : GenericLifecycleObserver {
             override fun onStateChanged(source: LifecycleOwner?, event: Lifecycle.Event) {
