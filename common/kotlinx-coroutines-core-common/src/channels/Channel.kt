@@ -210,10 +210,9 @@ public interface ReceiveChannel<out E> {
      * **Note: This is an obsolete api.**
      * This function will be replaced with `receiveOrClosed: ReceiveResult<E>` and
      * extension `suspend fun <E: Any> ReceiveChannel<E>.receiveOrNull(): E?`
+     * It is obsolete because it does not distinguish closed channel and null elements.
      */
-    @ExperimentalCoroutinesApi
     @ObsoleteCoroutinesApi
-    @Deprecated(level = DeprecationLevel.WARNING, message = "This method does not distinguish closed channel and null elements")
     public suspend fun receiveOrNull(): E?
 
     /**

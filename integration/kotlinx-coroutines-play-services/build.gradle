@@ -9,10 +9,6 @@ import java.util.zip.ZipFile
 
 ext.tasks_version = '15.0.1'
 
-repositories {
-    google()
-}
-
 def attr = Attribute.of("artifactType", String.class)
 configurations {
     aar {

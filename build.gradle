@@ -52,8 +52,17 @@ allprojects {
         kotlin_version = '1.2-SNAPSHOT'
     }
 
+    def name = it.name
     repositories {
+        /*
+         * google should be first in the repository list because some of the play services
+         * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
+         */
+        if (name == "kotlinx-coroutines-play-services") {
+            google()
+        }
         jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
