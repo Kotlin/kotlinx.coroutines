@@ -107,8 +107,10 @@ private open class BroadcastCoroutine<E>(
 private class LazyBroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     channel: BroadcastChannel<E>,
-    private val block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit
 ) : BroadcastCoroutine<E>(parentContext, channel, active = false) {
+    private var block: (suspend ProducerScope<E>.() -> Unit)? = block
+
     override fun openSubscription(): ReceiveChannel<E> {
         // open subscription _first_
         val subscription = _channel.openSubscription()
@@ -118,6 +120,8 @@ private class LazyBroadcastCoroutine<E>(
     }
 
     override fun onStart() {
+        val block = checkNotNull(this.block) { "Already started" }
+        this.block = null
         block.startCoroutineCancellable(this, this)
     }
 }
