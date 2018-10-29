@@ -104,9 +104,13 @@ private open class DeferredCoroutine<T>(
 
 private class LazyDeferredCoroutine<T>(
     parentContext: CoroutineContext,
-    private val block: suspend CoroutineScope.() -> T
+    block: suspend CoroutineScope.() -> T
 ) : DeferredCoroutine<T>(parentContext, active = false) {
+    private var block: (suspend CoroutineScope.() -> T)? = block
+
     override fun onStart() {
+        val block = checkNotNull(this.block) { "Already started" }
+        this.block = null
         block.startCoroutineCancellable(this, this)
     }
 }
@@ -161,9 +165,13 @@ private open class StandaloneCoroutine(
 
 private class LazyStandaloneCoroutine(
     parentContext: CoroutineContext,
-    private val block: suspend CoroutineScope.() -> Unit
+    block: suspend CoroutineScope.() -> Unit
 ) : StandaloneCoroutine(parentContext, active = false) {
+    private var block: (suspend CoroutineScope.() -> Unit)? = block
+
     override fun onStart() {
+        val block = checkNotNull(this.block) { "Already started" }
+        this.block = null
         block.startCoroutineCancellable(this, this)
     }
 }
