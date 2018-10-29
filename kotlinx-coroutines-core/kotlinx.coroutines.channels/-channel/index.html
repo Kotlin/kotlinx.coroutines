@@ -33,7 +33,7 @@
 
 <h1 id="channel">Channel</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L349">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">Channel</span><span class="symbol">&lt;</span><span class="identifier">E</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-send-channel/index.html"><span class="identifier">SendChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><a href="../-receive-channel/index.html"><span class="identifier">ReceiveChannel</span></a><span class="symbol">&lt;</span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L348">(source)</a></div>
 
 <p>Channel is a non-blocking primitive for communication between sender using <a href="../-send-channel/index.html">SendChannel</a> and receiver using <a href="../-receive-channel/index.html">ReceiveChannel</a>.
 Conceptually, a channel is similar to <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html">BlockingQueue</a>,
@@ -300,7 +300,7 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><s><span class="identifier">receiveOrNull</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
 
         <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/is-empty.html">isEmpty</a>
 or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> without cause

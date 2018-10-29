@@ -33,9 +33,7 @@
 
 <h1 id="receiveornull">receiveOrNull</h1>
 
-<div class="signature"><code><span class="identifier">@ExperimentalCoroutinesApi</span> <span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><s><span class="identifier">receiveOrNull</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L217">(source)</a></div>
-
-<p><strong>Deprecated:</strong> DeprecationLevel.WARNING</p>
+<div class="signature"><code><span class="identifier">@ObsoleteCoroutinesApi</span> <span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/channels/Channel.kt#L216">(source)</a></div>
 
 <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/is-empty.html">isEmpty</a>
 or returns <code>null</code> if the channel is <a href="is-closed-for-receive.html">closed</a> without cause
@@ -58,7 +56,8 @@ Use <a href="poll.html">poll</a> to try receiving from this channel without wait
 
 <p><strong>Note: This is an obsolete api.</strong>
 This function will be replaced with <code>receiveOrClosed: ReceiveResult&lt;E&gt;</code> and
-extension <code>suspend fun &lt;E: Any&gt; ReceiveChannel&lt;E&gt;.receiveOrNull(): E?</code></p>
+extension <code>suspend fun &lt;E: Any&gt; ReceiveChannel&lt;E&gt;.receiveOrNull(): E?</code>
+It is obsolete because it does not distinguish closed channel and null elements.</p>
 
 
       </div>

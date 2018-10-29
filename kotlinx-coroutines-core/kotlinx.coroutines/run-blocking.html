@@ -47,7 +47,7 @@ See <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> for the o
 
 <p>When <a href="-coroutine-dispatcher/index.html">CoroutineDispatcher</a> is explicitly specified in the <a href="run-blocking.html#kotlinx.coroutines$runBlocking(kotlin.coroutines.CoroutineContext, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.runBlocking.T)))/context">context</a>, then the new coroutine runs in the context of
 the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another <code>runBlocking</code>,
-the this invocation uses an outer event loop.</p>
+then this invocation uses an outer event loop.</p>
 
 <p>If this blocked thread is interrupted (see <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#interrupt()">Thread.interrupt</a>), then the coroutine job is cancelled and
 this <code>runBlocking</code> invocation throws <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/InterruptedException.html">InterruptedException</a>.</p>

@@ -220,7 +220,7 @@ throws the original <a href="../-send-channel/close.html">close</a> cause except
 
       </td>
 <td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><s><span class="identifier">receiveOrNull</span></s><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
+        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">suspend</span> <span class="keyword">fun </span><span class="identifier">receiveOrNull</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-receive-channel/index.html#E"><span class="identifier">E</span></a><span class="symbol">?</span></code></div>
 
         <p>Retrieves and removes the element from this channel suspending the caller while this channel <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/is-empty.html">isEmpty</a>
 or returns <code>null</code> if the channel is <a href="../-receive-channel/is-closed-for-receive.html">closed</a> without cause

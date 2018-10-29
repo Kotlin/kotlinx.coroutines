@@ -48,7 +48,7 @@ so a supervisor can implement a custom policy for handling failures of its child
 
 <p>If <a href="-supervisor-job.html#kotlinx.coroutines$SupervisorJob(kotlinx.coroutines.Job)/parent">parent</a> job is specified, then this supervisor job becomes a child job of its parent and is cancelled when its
 parent fails or is cancelled. All this supervisor’s children are cancelled in this case, too. The invocation of
-of <a href="-job/cancel.html">cancel</a> with exception (other than <a href="-cancellation-exception/index.html">CancellationException</a>) on this supervisor job also cancels parent.</p>
+<a href="-job/cancel.html">cancel</a> with exception (other than <a href="-cancellation-exception/index.html">CancellationException</a>) on this supervisor job also cancels parent.</p>
 
 <h3 id="parameters">Parameters</h3>
 
