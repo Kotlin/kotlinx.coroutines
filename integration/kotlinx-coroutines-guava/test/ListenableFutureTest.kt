@@ -13,7 +13,6 @@ import org.junit.Assert.*
 import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
-import kotlin.reflect.*
 import kotlin.test.assertFailsWith
 
 class ListenableFutureTest : TestBase() {
@@ -270,21 +269,6 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testExceptionAggregation() = runTest {
-        val result = future(Dispatchers.Unconfined) {
-            // child crashes
-            launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
-            launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
-            throw TestException()
-        }
-
-        expect(1)
-        result.checkFutureException<TestException>(TestException1::class, TestException2::class)
-        yield()
-        finish(2) // we are not cancelled
-    }
-
-    @Test
     fun testExternalCancellation() = runTest {
         val future = future(Dispatchers.Unconfined) {
             try {
@@ -316,13 +300,10 @@ class ListenableFutureTest : TestBase() {
         finish(3)
     }
 
-    private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+    private inline fun <reified T: Throwable> ListenableFuture<*>.checkFutureException() {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
         assertTrue(cause is T)
-        for ((index, clazz) in suppressed.withIndex()) {
-            assertTrue(clazz.isInstance(cause.suppressed[index]))
-        }
     }
 
     private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): ListenableFuture<Int> {
