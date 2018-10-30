@@ -220,7 +220,7 @@ Instead of launching coroutines in the [GlobalScope], just like we usually do wi
 we can launch coroutines in the specific scope of the operation we are performing. 
 
 In our example, we have `main` function that is turned into a coroutine using [runBlocking] coroutine builder.
-Every coroutine builder, including `runBlocking`, adds an instance of [CoroutineScope] to the scope its code block. 
+Every coroutine builder, including `runBlocking`, adds an instance of [CoroutineScope] to the scope of its code block. 
 We can launch coroutines in this scope without having to `join` them explicitly, because
 an outer coroutine (`runBlocking` in our example) does not complete until all the coroutines launched
 in its scope complete. Thus, we can make our example simpler:
