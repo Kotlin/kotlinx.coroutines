@@ -165,7 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0-RC1"
+compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
@@ -556,7 +556,7 @@ suspend fun CoroutineScope.launchInIO() = launch(Dispatchers.IO) {
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
 when the parent job is cancelled. An example of that is shown in the
-["Children of a coroutine"](../docs/coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
+["Children of a coroutine"](../docs/coroutine-context-and-dispatchers.md#children-of-a-coroutine) section of the guide to coroutines.
 <!--- CLEAR -->
 
 ### Blocking operations

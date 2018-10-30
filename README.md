@@ -2,10 +2,10 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.0.0-RC1) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.0.0-RC1)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.0.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.0.0)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin `1.3.0-rc-146` release.
+This is a companion version for Kotlin `1.3.0` release.
 
 **NOTE**: `0.30.2` was the last release with Kotlin 1.2 and experimental coroutines.
 See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
@@ -69,7 +69,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -77,11 +77,9 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.3.0-rc-146</kotlin.version>
+    <kotlin.version>1.3.0</kotlin.version>
 </properties>
 ```
-
-While Kotlin 1.3 is still in release candidate status, in order to depend on it you should add eap repository: `https://dl.bintray.com/kotlin/kotlin-eap`.
 
 ### Gradle
 
@@ -89,7 +87,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0'
 }
 ```
 
@@ -97,7 +95,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.3.0-rc-146'
+    ext.kotlin_version = '1.3.0'
 }
 ```
 
@@ -115,7 +113,7 @@ Add dependencies (you can also add other modules that you need):
 
 ```groovy
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0-RC1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0")
 }
 ```
 
@@ -123,19 +121,11 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.3.0-rc-146"
+    kotlin("jvm") version "1.3.0"
 }
 ```
 
 Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories.
-For Kotlin EAP builds you also may need `kotlin-eap` repository:
-
-```
-repository {
-    jcenter()
-    maven { url "https://kotlin.bintray.com/kotlin-eap" }
-}
-```
 
 ### Multiplatform
 
@@ -151,7 +141,7 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0-RC1'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0'
 ```
 This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/kotlinx.coroutines.-dispatchers/index.html)
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this

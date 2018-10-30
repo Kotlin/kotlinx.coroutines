@@ -62,6 +62,7 @@ allprojects {
             google()
         }
         jcenter()
+        maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
