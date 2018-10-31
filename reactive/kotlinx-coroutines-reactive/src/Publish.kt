@@ -160,10 +160,10 @@ private class PublisherCoroutine<in T>(
 
     private fun unlockAndCheckCompleted() {
        /*
-         There is no sense to check completion before doing `unlock`, because completion might
-         happen after this check and before `unlock` (see `signalCompleted` that does not do anything
-         if it fails to acquire the lock that we are still holding).
-         We have to recheck `isCompleted` after `unlock` anyway.
+        * There is no sense to check completion before doing `unlock`, because completion might
+        * happen after this check and before `unlock` (see `signalCompleted` that does not do anything
+        * if it fails to acquire the lock that we are still holding).
+        * We have to recheck `isCompleted` after `unlock` anyway.
         */
         mutex.unlock()
         // check isCompleted and and try to regain lock to signal completion
@@ -180,13 +180,17 @@ private class PublisherCoroutine<in T>(
                 if (cancelled) {
                     // If the parent had failed to handle our exception (handleJobException was invoked), then
                     // we must not loose this exception
-                    if (shouldHandleException && cause != null) handleExceptionViaHandler(parentContext, cause)
+                    if (shouldHandleException && cause != null) {
+                        handleExceptionViaHandler(parentContext, cause)
+                    }
                 } else {
                     try {
-                        if (cause != null && cause !is CancellationException)
+                        if (cause != null && cause !is CancellationException) {
                             subscriber.onError(cause)
-                        else
+                        }
+                        else {
                             subscriber.onComplete()
+                        }
                     } catch (e: Throwable) {
                         handleExceptionViaHandler(parentContext, e)
                     }
