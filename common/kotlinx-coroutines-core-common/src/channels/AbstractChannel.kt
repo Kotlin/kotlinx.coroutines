@@ -2,22 +2,21 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Abstract send channel. It is a base class for all send channel implementations.
  *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public abstract class AbstractSendChannel<E> : SendChannel<E> {
+internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     /** @suppress **This is unstable API and it is subject to change.** */
     protected val queue = LockFreeLinkedListHead()
 
@@ -267,6 +266,7 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
         if (handler !== null && handler !== HANDLER_INVOKED
             && onCloseHandler.compareAndSet(handler, HANDLER_INVOKED)) {
             // CAS failed -> concurrent invokeOnClose() invoked handler
+            @Suppress("UNCHECKED_CAST")
             (handler as Handler)(cause)
         }
     }
@@ -502,11 +502,8 @@ public abstract class AbstractSendChannel<E> : SendChannel<E> {
 
 /**
  * Abstract send/receive channel. It is a base class for all channel implementations.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> {
+internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> {
     // ------ extension points for buffered channels ------
 
     /**
@@ -660,7 +657,9 @@ public abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E> 
         return if (result === POLL_FAILED) null else receiveOrNullResult(result)
     }
 
-    override fun cancel(): Boolean = cancel(null)
+    override fun cancel(): Unit {
+        cancel(null)
+    }
 
     override fun cancel(cause: Throwable?): Boolean =
         close(cause).also {
@@ -1030,10 +1029,8 @@ internal typealias Handler = (Throwable?) -> Unit
 
 /**
  * Represents sending waiter in the queue.
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
-public interface Send {
+internal interface Send {
     val pollResult: Any? // E | Closed
     fun tryResumeSend(idempotent: Any?): Any?
     fun completeResumeSend(token: Any)
@@ -1042,10 +1039,8 @@ public interface Send {
 
 /**
  * Represents receiver waiter in the queue or closed token.
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
-public interface ReceiveOrClosed<in E> {
+internal interface ReceiveOrClosed<in E> {
     val offerResult: Any // OFFER_SUCCESS | Closed
     fun tryResumeReceive(value: E, idempotent: Any?): Any?
     fun completeResumeReceive(token: Any)
@@ -1053,11 +1048,9 @@ public interface ReceiveOrClosed<in E> {
 
 /**
  * Represents sender for a specific element.
- * @suppress **This is unstable API and it is subject to change.**
  */
 @Suppress("UNCHECKED_CAST")
-@InternalCoroutinesApi
-public class SendElement(
+internal class SendElement(
     override val pollResult: Any?,
     @JvmField val cont: CancellableContinuation<Unit>
 ) : LockFreeLinkedListNode(), Send {
@@ -1069,10 +1062,8 @@ public class SendElement(
 
 /**
  * Represents closed channel.
- * @suppress **This is unstable API and it is subject to change.**
  */
-@InternalCoroutinesApi
-public class Closed<in E>(
+internal class Closed<in E>(
     @JvmField val closeCause: Throwable?
 ) : LockFreeLinkedListNode(), Send, ReceiveOrClosed<E> {
     val sendException: Throwable get() = closeCause ?: ClosedSendChannelException(DEFAULT_CLOSE_MESSAGE)

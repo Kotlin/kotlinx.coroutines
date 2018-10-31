@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.selects.*
 
 enum class TestChannelKind {
     RENDEZVOUS {
@@ -59,7 +59,7 @@ private class ChannelViaBroadcast<E>(
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    override fun cancel(): Boolean = sub.cancel()
+    override fun cancel(): Unit = sub.cancel()
     override fun cancel(cause: Throwable?): Boolean = sub.cancel(cause)
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive

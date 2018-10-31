@@ -2,11 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.selects.*
 
 /**
  * Deferred value is a non-blocking cancellable future &mdash; it is a [Job] that has a result.
@@ -27,22 +25,13 @@ import kotlin.coroutines.experimental.*
  * Such a deferred can be be made _active_ by invoking [start], [join], or [await].
  *
  * A deferred value is a [Job]. A job in the
- * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines.experimental/coroutine-context.html)
+ * [coroutineContext](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/coroutine-context.html)
  * of [async][CoroutineScope.async] builder represents the coroutine itself.
  *
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
 public interface Deferred<out T> : Job {
-    /**
-     * Returns `true` if computation of this deferred value has _completed exceptionally_.
-     * It is `true` when both [isCompleted] and [isCancelled] are true.
-     * It implies that [isActive] is `false`.
-     *
-     * @suppress **Deprecated**: Use [isCancelled] && [isCompleted]
-     */
-    @Deprecated("Use isCancelled && isCompleted", ReplaceWith("this.isCancelled && this.isCompleted"))
-    public val isCompletedExceptionally: Boolean
 
     /**
      * Awaits for completion of this value without blocking a thread and resumes when deferred computation is complete,
@@ -88,91 +77,4 @@ public interface Deferred<out T> : Job {
      */
     @ExperimentalCoroutinesApi
     public fun getCompletionExceptionOrNull(): Throwable?
-
-    /**
-     * @suppress **Deprecated**: Use `isActive`.
-     */
-    @Deprecated(message = "Use `isActive`", replaceWith = ReplaceWith("isActive"))
-    public val isComputing: Boolean get() = isActive
 }
-
-/**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun <T> CoroutineScope.async(
-    context: CoroutineContext = EmptyCoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    async(context, start, block).also { if (onCompletion != null) it.invokeOnCompletion(onCompletion) }
-
-/**
- * Creates new coroutine and returns its future result as an implementation of [Deferred].
- * @suppress **Deprecated**. Use [CoroutineScope.async] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.async(context, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
-)
-public fun <T> async(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    GlobalScope.async(context, start, onCompletion, block)
-
-/**
- * Creates new coroutine and returns its future result as an implementation of [Deferred].
- * @suppress **Deprecated**. Use [CoroutineScope.async] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.async(context + parent, start, onCompletion, block)", imports = ["kotlinx.coroutines.experimental.*"])
-)
-public fun <T> async(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    GlobalScope.async(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> async(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    GlobalScope.async(context + (parent ?: EmptyCoroutineContext), start, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> async(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-): Deferred<T> =
-    GlobalScope.async(context, start, block = block)
-
-/**
- * @suppress **Deprecated**: Use `start = CoroutineStart.XXX` parameter
- */
-@Deprecated(message = "Use `start = CoroutineStart.XXX` parameter",
-    replaceWith = ReplaceWith("async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block)"))
-public fun <T> async(context: CoroutineContext, start: Boolean, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    GlobalScope.async(context, if (start) CoroutineStart.DEFAULT else CoroutineStart.LAZY, block = block)
-
-/**
- * @suppress **Deprecated**: `defer` was renamed to `async`.
- */
-@Deprecated(message = "`defer` was renamed to `async`", level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("async(context, block = block)"))
-public fun <T> defer(context: CoroutineContext, block: suspend CoroutineScope.() -> T): Deferred<T> =
-    GlobalScope.async(context, block = block)
-

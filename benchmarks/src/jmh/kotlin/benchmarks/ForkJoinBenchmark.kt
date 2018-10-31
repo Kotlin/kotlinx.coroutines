@@ -4,7 +4,7 @@
 
 package benchmarks
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
 
@@ -54,7 +54,7 @@ open class ForkJoinBenchmark : ParametrizedDispatcherBase() {
 
     @Benchmark
     fun asyncFjp() = runBlocking {
-        CoroutineScope(CommonPool).startAsync(coefficients, 0, coefficients.size).await()
+        CoroutineScope(ForkJoinPool.commonPool().asCoroutineDispatcher()).startAsync(coefficients, 0, coefficients.size).await()
     }
 
     @Benchmark

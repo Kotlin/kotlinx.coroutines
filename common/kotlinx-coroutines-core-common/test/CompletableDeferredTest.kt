@@ -4,7 +4,7 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "DEPRECATION") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -40,15 +40,6 @@ class CompletableDeferredTest : TestBase() {
         assertTrue(c.getCancellationException() is JobCancellationException)
         assertEquals("OK", c.getCompleted())
         assertEquals(null, c.getCompletionExceptionOrNull())
-    }
-
-    @Test
-    fun testCancel() {
-        val c = CompletableDeferred<String>()
-        assertEquals(true, c.cancel())
-        checkCancel(c)
-        assertEquals(false, c.cancel())
-        checkCancel(c)
     }
 
     private fun checkCancel(c: CompletableDeferred<String>) {
@@ -121,7 +112,7 @@ class CompletableDeferredTest : TestBase() {
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
         assertEquals(true, parent.isActive)
-        assertEquals(true, c.cancel())
+        c.cancel()
         checkCancel(c)
         assertEquals(true, parent.isActive)
     }

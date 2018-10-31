@@ -2,10 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.selects.*
 
 /**
  * Channel with linked-list buffer of a unlimited capacity (limited only by available memory).
@@ -17,13 +16,7 @@ import kotlinx.coroutines.experimental.selects.*
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public open class LinkedListChannel<E>
-@Deprecated(
-    "Replace with Channel factory function",
-    replaceWith = ReplaceWith("Channel(Channel.UNLIMITED)")
-)
-constructor() : AbstractChannel<E>() {
+internal open class LinkedListChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysEmpty: Boolean get() = true
     protected final override val isBufferEmpty: Boolean get() = true
     protected final override val isBufferAlwaysFull: Boolean get() = false
@@ -40,7 +33,6 @@ constructor() : AbstractChannel<E>() {
                     when (sendResult) {
                         null -> return OFFER_SUCCESS
                         is Closed<*> -> return sendResult
-                        else -> Unit // todo:KLUDGE: works around native BE bug
                     }
                     // otherwise there was receiver in queue, retry super.offerInternal
                 }

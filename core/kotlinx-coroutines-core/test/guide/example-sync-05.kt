@@ -3,11 +3,10 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.sync05
+package kotlinx.coroutines.guide.sync05
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import kotlin.system.*
-import kotlin.coroutines.experimental.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -26,9 +25,11 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 val counterContext = newSingleThreadContext("CounterContext")
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     CoroutineScope(counterContext).massiveRun { // run each coroutine in the single-threaded context
         counter++
     }
     println("Counter = $counter")
+//sampleEnd    
 }

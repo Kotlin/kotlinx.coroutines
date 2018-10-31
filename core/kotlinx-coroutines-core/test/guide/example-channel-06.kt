@@ -3,10 +3,19 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.channel06
+package kotlinx.coroutines.guide.channel06
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+
+fun main() = runBlocking<Unit> {
+//sampleStart
+    val producer = produceNumbers()
+    repeat(5) { launchProcessor(it, producer) }
+    delay(950)
+    producer.cancel() // cancel producer coroutine and thus kill them all
+//sampleEnd
+}
 
 fun CoroutineScope.produceNumbers() = produce<Int> {
     var x = 1 // start from 1
@@ -20,11 +29,4 @@ fun CoroutineScope.launchProcessor(id: Int, channel: ReceiveChannel<Int>) = laun
     for (msg in channel) {
         println("Processor #$id received $msg")
     }    
-}
-
-fun main(args: Array<String>) = runBlocking<Unit> {
-    val producer = produceNumbers()
-    repeat(5) { launchProcessor(it, producer) }
-    delay(950)
-    producer.cancel() // cancel producer coroutine and thus kill them all
 }

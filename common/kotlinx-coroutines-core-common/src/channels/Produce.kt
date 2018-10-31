@@ -2,11 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 /**
  * Scope for [produce][CoroutineScope.produce] coroutine builder.
@@ -24,16 +23,6 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
      * the channel instance returned by this function.
      */
     val channel: SendChannel<E>
-}
-
-/**
- * @suppress **Deprecated**: Use `ReceiveChannel`.
- */
-@Deprecated(message = "Use `ReceiveChannel`", replaceWith = ReplaceWith("ReceiveChannel"))
-@Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE")
-interface ProducerJob<out E> : ReceiveChannel<E>, Job {
-    @Deprecated(message = "Use ReceiveChannel itself")
-    val channel: ReceiveChannel<E>
 }
 
 /**
@@ -71,7 +60,7 @@ interface ProducerJob<out E> : ReceiveChannel<E>, Job {
 public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
     val channel = Channel<E>(capacity)
     val newContext = newCoroutineContext(context)
@@ -89,7 +78,7 @@ public fun <E> CoroutineScope.produce(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 0,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    @BuilderInference block: suspend ProducerScope<E>.() -> Unit
 ): ReceiveChannel<E> {
     val channel = Channel<E>(capacity)
     val newContext = newCoroutineContext(context)
@@ -99,77 +88,11 @@ public fun <E> CoroutineScope.produce(
     return coroutine
 }
 
-/**
- * Launches new coroutine to produce a stream of values by sending them to a channel
- * and returns a reference to the coroutine as a [ReceiveChannel].
- * @suppress **Deprecated** Use [CoroutineScope.produce] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.produce(context, capacity, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.produce"])
-)
-public fun <E> produce(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, capacity, onCompletion, block)
-
-/**
- * Launches new coroutine to produce a stream of values by sending them to a channel
- * and returns a reference to the coroutine as a [ReceiveChannel].
- * @suppress **Deprecated** Use [CoroutineScope.produce] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.produce(context + parent, capacity, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.produce"])
-)
-public fun <E> produce(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> =
-    GlobalScope.produce(context + (parent ?: EmptyCoroutineContext), capacity, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> produce(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    parent: Job? = null,
-    block: suspend ProducerScope<E>.() -> Unit
-): ReceiveChannel<E> = GlobalScope.produce(context + (parent ?: EmptyCoroutineContext), capacity, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> produce(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    block: suspend ProducerScope<E>.() -> Unit
-): ProducerJob<E> =
-    GlobalScope.produce(context, capacity, block = block) as ProducerJob<E>
-
-/**
- * @suppress **Deprecated**: Renamed to `produce`.
- */
-@Deprecated(message = "Renamed to `produce`", replaceWith = ReplaceWith("produce(context, capacity, block)"))
-public fun <E> buildChannel(
-    context: CoroutineContext,
-    capacity: Int = 0,
-    block: suspend ProducerScope<E>.() -> Unit
-): ProducerJob<E> =
-    GlobalScope.produce(context, capacity, block = block) as ProducerJob<E>
-
 private class ProducerCoroutine<E>(
     parentContext: CoroutineContext, channel: Channel<E>
-) : ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E>, ProducerJob<E> {
+) : ChannelCoroutine<E>(parentContext, channel, active = true), ProducerScope<E> {
     override val isActive: Boolean
-        get() = super<ChannelCoroutine>.isActive
+        get() = super.isActive
 
     override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         val cause = (state as? CompletedExceptionally)?.cause

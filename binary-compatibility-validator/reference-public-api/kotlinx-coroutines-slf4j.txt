@@ -1,19 +1,19 @@
-public final class kotlinx/coroutines/experimental/slf4j/MDCContext : kotlin/coroutines/experimental/AbstractCoroutineContextElement, kotlinx/coroutines/experimental/ThreadContextElement {
-	public static final field Key Lkotlinx/coroutines/experimental/slf4j/MDCContext$Key;
+public final class kotlinx/coroutines/slf4j/MDCContext : kotlin/coroutines/AbstractCoroutineContextElement, kotlinx/coroutines/ThreadContextElement {
+	public static final field Key Lkotlinx/coroutines/slf4j/MDCContext$Key;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Map;)V
 	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun fold (Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
-	public fun get (Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext$Element;
+	public fun get (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
 	public final fun getContextMap ()Ljava/util/Map;
-	public fun minusKey (Lkotlin/coroutines/experimental/CoroutineContext$Key;)Lkotlin/coroutines/experimental/CoroutineContext;
-	public fun plus (Lkotlin/coroutines/experimental/CoroutineContext;)Lkotlin/coroutines/experimental/CoroutineContext;
-	public synthetic fun restoreThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/lang/Object;)V
-	public fun restoreThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;Ljava/util/Map;)V
-	public synthetic fun updateThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;)Ljava/lang/Object;
-	public fun updateThreadContext (Lkotlin/coroutines/experimental/CoroutineContext;)Ljava/util/Map;
+	public fun minusKey (Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public fun plus (Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public synthetic fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Object;)V
+	public fun restoreThreadContext (Lkotlin/coroutines/CoroutineContext;Ljava/util/Map;)V
+	public synthetic fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/lang/Object;
+	public fun updateThreadContext (Lkotlin/coroutines/CoroutineContext;)Ljava/util/Map;
 }
 
-public final class kotlinx/coroutines/experimental/slf4j/MDCContext$Key : kotlin/coroutines/experimental/CoroutineContext$Key {
+public final class kotlinx/coroutines/slf4j/MDCContext$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 

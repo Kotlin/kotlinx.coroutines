@@ -4,12 +4,12 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
 import java.util.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Name of the property that defines the maximal number of threads that are used by [Dispatchers.IO] coroutines dispatcher.
@@ -19,16 +19,7 @@ public const val IO_PARALLELISM_PROPERTY_NAME = "kotlinx.coroutines.io.paralleli
 /**
  * Groups various implementations of [CoroutineDispatcher].
  */
-actual object Dispatchers {
-
-    private val mainDispatcher = loadMainDispatcher()
-
-    private fun loadMainDispatcher(): MainCoroutineDispatcher? {
-        return MainDispatcherFactory::class.java.let { clz ->
-            ServiceLoader.load(clz, clz.classLoader).toList()
-        }.maxBy { it.loadPriority }?.createDispatcher()
-    }
-
+public actual object Dispatchers {
     /**
      * The default [CoroutineDispatcher] that is used by all standard builders like
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
@@ -59,8 +50,7 @@ actual object Dispatchers {
      * Implementation note: [MainCoroutineDispatcher.immediate] is not supported on Native and JS platforms.
      */
     @JvmStatic
-    public actual val Main: MainCoroutineDispatcher get() = mainDispatcher ?: error("Module with Main dispatcher is missing. " +
-            "Add dependency with required Main dispatcher, e.g. 'kotlinx-coroutines-android'")
+    public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
 
     /**
      * A coroutine dispatcher that is not confined to any specific thread.
@@ -80,7 +70,7 @@ actual object Dispatchers {
      */
     @JvmStatic
     @ExperimentalCoroutinesApi
-    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.experimental.Unconfined
+    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 
     /**
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
@@ -96,4 +86,48 @@ actual object Dispatchers {
      */
     @JvmStatic
     public val IO: CoroutineDispatcher = DefaultScheduler.IO
+}
+
+// Lazy loader for the main dispatcher
+private object MainDispatcherLoader {
+    @JvmField
+    val dispatcher: MainCoroutineDispatcher =
+        MainDispatcherFactory::class.java.let { clz ->
+            ServiceLoader.load(clz, clz.classLoader).toList()
+        }.maxBy { it.loadPriority }?.tryCreateDispatcher() ?: MissingMainCoroutineDispatcher(null)
+
+    /**
+     * If anything goes wrong while trying to create main dispatcher (class not found,
+     * initialization failed, etc), then replace the main dispatcher with a special
+     * stub that throws an error message on any attempt to actually use it.
+     */
+    private fun MainDispatcherFactory.tryCreateDispatcher(): MainCoroutineDispatcher =
+        try {
+            createDispatcher()
+        } catch (cause: Throwable) {
+            MissingMainCoroutineDispatcher(cause)
+        }
+}
+
+private class MissingMainCoroutineDispatcher(val cause: Throwable?) : MainCoroutineDispatcher(), Delay {
+    override val immediate: MainCoroutineDispatcher get() = this
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) =
+        missing()
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
+        missing()
+
+    private fun missing() {
+        if  (cause == null) {
+            throw IllegalStateException(
+                "Module with the Main dispatcher is missing. " +
+                    "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android'"
+            )
+        } else {
+            throw IllegalStateException("Module with the Main dispatcher had failed to initialize", cause)
+        }
+    }
+
+    override fun toString(): String = "Main[missing${if (cause != null) ", cause=$cause" else ""}]"
 }

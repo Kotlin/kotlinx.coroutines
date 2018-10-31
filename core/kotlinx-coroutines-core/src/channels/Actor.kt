@@ -2,13 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
 
 /**
  * Scope for [actor][GlobalScope.actor] coroutine builder.
@@ -26,15 +25,6 @@ public interface ActorScope<E> : CoroutineScope, ReceiveChannel<E> {
      * the channel instance returned by this function.
      */
     val channel: Channel<E>
-}
-
-/**
- * @suppress **Deprecated**: Use `SendChannel`.
- */
-@Deprecated(message = "Use `SendChannel`", replaceWith = ReplaceWith("SendChannel"))
-interface ActorJob<in E> : SendChannel<E> {
-    @Deprecated(message = "Use SendChannel itself")
-    val channel: SendChannel<E>
 }
 
 /**
@@ -111,7 +101,7 @@ interface ActorJob<in E> : SendChannel<E> {
  * @param context additional to [CoroutineScope.coroutineContext] context of the coroutine.
  * @param capacity capacity of the channel's buffer (no buffer by default).
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
- * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion]).
+ * @param onCompletion optional completion handler for the actor coroutine (see [Job.invokeOnCompletion])
  * @param block the coroutine code.
  */
 @ObsoleteCoroutinesApi
@@ -132,71 +122,11 @@ public fun <E> CoroutineScope.actor(
     return coroutine
 }
 
-/**
- * Launches new coroutine that is receiving messages from its mailbox channel
- * and returns a reference to its mailbox channel as a [SendChannel].
- * @suppress **Deprecated** Use [CoroutineScope.actor] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.actor(context, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
-)
-public fun <E> actor(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend ActorScope<E>.() -> Unit
-): SendChannel<E> =
-    GlobalScope.actor(context, capacity, start, onCompletion, block)
-
-/**
- * Launches new coroutine that is receiving messages from its mailbox channel
- * and returns a reference to its mailbox channel as a [SendChannel].
- * @suppress **Deprecated** Use [CoroutineScope.actor] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.actor(context + parent, capacity, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.channels.actor"])
-)
-public fun <E> actor(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend ActorScope<E>.() -> Unit
-): SendChannel<E> =
-    GlobalScope.actor(context + (parent ?: EmptyCoroutineContext), capacity, start, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> actor(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    block: suspend ActorScope<E>.() -> Unit
-): SendChannel<E> =
-    GlobalScope.actor(context + (parent ?: EmptyCoroutineContext), capacity, start, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> actor(
-    context: CoroutineContext = Dispatchers.Default,
-    capacity: Int = 0,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend ActorScope<E>.() -> Unit
-): ActorJob<E> =
-    GlobalScope.actor(context, capacity, start, block = block) as ActorJob<E>
-
 private open class ActorCoroutine<E>(
     parentContext: CoroutineContext,
     channel: Channel<E>,
     active: Boolean
-) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E>, ActorJob<E> {
+) : ChannelCoroutine<E>(parentContext, channel, active), ActorScope<E> {
     override fun onCancellation(cause: Throwable?) {
         _channel.cancel(cause)
     }

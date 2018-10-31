@@ -3,13 +3,14 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.context09
+package kotlinx.coroutines.guide.context09
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch(Dispatchers.Default + CoroutineName("test")) {
         println("I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }

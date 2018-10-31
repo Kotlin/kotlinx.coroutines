@@ -2,16 +2,17 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.selects
+package kotlinx.coroutines.selects
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.timeunit.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.sync.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Scope for [select] invocation.
@@ -48,16 +49,6 @@ public interface SelectBuilder<in R> {
      */
     @ExperimentalCoroutinesApi
     public fun onTimeout(timeMillis: Long, block: suspend () -> R)
-
-    /**
-     * @suppress **Deprecated**: onTimeout(unit.toMillis(time), block)`
-     */
-    @Deprecated(
-        message = "Replace with onTimeout(unit.toMillis(time), block)",
-        replaceWith = ReplaceWith("onTimeout(unit.toMillis(time), block)")
-    )
-    public fun onTimeout(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS, block: suspend () -> R) =
-        onTimeout(time.convertToMillis(unit), block)
 }
 
 /**
@@ -161,12 +152,12 @@ public interface SelectInstance<in R> {
  *
  * | **Receiver**     | **Suspending function**                       | **Select clause**                                | **Non-suspending version**
  * | ---------------- | --------------------------------------------- | ------------------------------------------------ | --------------------------
- * | [Job]            | [join][Job.join]                              | [onJoin][SelectBuilder.onJoin]                   | [isCompleted][Job.isCompleted]
- * | [Deferred]       | [await][Deferred.await]                       | [onAwait][SelectBuilder.onAwait]                 | [isCompleted][Job.isCompleted]
- * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SelectBuilder.onSend]                   | [offer][SendChannel.offer]
- * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][SelectBuilder.onReceive]             | [poll][ReceiveChannel.poll]
- * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][SelectBuilder.onReceiveOrNull] | [poll][ReceiveChannel.poll]
- * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][SelectBuilder.onLock]                   | [tryLock][Mutex.tryLock]
+ * | [Job]            | [join][Job.join]                              | [onJoin][Job.onJoin]                             | [isCompleted][Job.isCompleted]
+ * | [Deferred]       | [await][Deferred.await]                       | [onAwait][Deferred.onAwait]                      | [isCompleted][Job.isCompleted]
+ * | [SendChannel]    | [send][SendChannel.send]                      | [onSend][SendChannel.onSend]                     | [offer][SendChannel.offer]
+ * | [ReceiveChannel] | [receive][ReceiveChannel.receive]             | [onReceive][ReceiveChannel.onReceive]            | [poll][ReceiveChannel.poll]
+ * | [ReceiveChannel] | [receiveOrNull][ReceiveChannel.receiveOrNull] | [onReceiveOrNull][ReceiveChannel.onReceiveOrNull]| [poll][ReceiveChannel.poll]
+ * | [Mutex]          | [lock][Mutex.lock]                            | [onLock][Mutex.onLock]                           | [tryLock][Mutex.tryLock]
  * | none             | [delay]                                       | [onTimeout][SelectBuilder.onTimeout]             | none
  *
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
@@ -251,22 +242,15 @@ internal class SelectBuilderImpl<in R>(
     }
 
     // Resumes in MODE_DIRECT
-    override fun resume(value: R) {
-        doResume({ value }) {
-            uCont.resume(value)
-        }
-    }
-
-    // Resumes in MODE_DIRECT
-    override fun resumeWithException(exception: Throwable) {
-        doResume({ Fail(exception) }) {
-            uCont.resumeWithException(exception)
+    override fun resumeWith(result: Result<R>) {
+        doResume({ result.toState() }) {
+            uCont.resumeWith(result)
         }
     }
 
     // Resumes in MODE_CANCELLABLE
     override fun resumeSelectCancellableWithException(exception: Throwable) {
-        doResume({ Fail(exception) }) {
+        doResume({ CompletedExceptionally(exception) }) {
             uCont.intercepted().resumeCancellableWithException(exception)
         }
     }
@@ -281,7 +265,7 @@ internal class SelectBuilderImpl<in R>(
         }
         when {
             result === RESUMED -> throw IllegalStateException("Already resumed")
-            result is Fail -> throw result.exception
+            result is CompletedExceptionally -> throw result.cause
             else -> return result // either COROUTINE_SUSPENDED or data
         }
     }
@@ -438,8 +422,4 @@ internal class SelectBuilderImpl<in R>(
     private class DisposeNode(
         @JvmField val handle: DisposableHandle
     ) : LockFreeLinkedListNode()
-
-    private class Fail(
-        @JvmField val exception: Throwable
-    )
 }

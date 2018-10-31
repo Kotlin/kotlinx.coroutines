@@ -2,12 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.rx2
+package kotlinx.coroutines.rx2
 
 import io.reactivex.*
-import io.reactivex.functions.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold [Completable] that runs a given [block] in a coroutine.
@@ -36,21 +35,6 @@ public fun CoroutineScope.rxCompletable(
     subscriber.setCancellable(RxCancellable(coroutine))
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
-
-/**
- * Creates cold [Completable] that runs a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.rxCompletable] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.rxCompletable(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.rx2.rxCompletable"])
-)
-public fun rxCompletable(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> Unit
-): Completable = GlobalScope.rxCompletable(context + (parent ?: EmptyCoroutineContext), block)
 
 private class RxCompletableCoroutine(
     parentContext: CoroutineContext,

@@ -3,12 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.select03
+package kotlinx.coroutines.guide.select03
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
 
 fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
     for (num in 1..10) { // produce 10 numbers from 1 to 10
@@ -20,7 +19,8 @@ fun CoroutineScope.produceNumbers(side: SendChannel<Int>) = produce<Int> {
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val side = Channel<Int>() // allocate side channel
     launch { // this is a very fast consumer for the side channel
         side.consumeEach { println("Side channel has $it") }
@@ -30,5 +30,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
         delay(250) // let us digest the consumed number properly, do not hurry
     }
     println("Done consuming")
-    coroutineContext.cancelChildren()    
+    coroutineContext.cancelChildren()  
+//sampleEnd      
 }

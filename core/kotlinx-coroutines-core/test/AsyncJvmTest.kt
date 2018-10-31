@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -28,9 +28,8 @@ class AsyncJvmTest : TestBase() {
         yield() // to async
         expect(4)
         check(d.isActive && !d.isCompleted && !d.isCancelled)
-        check(d.cancel())
+        d.cancel()
         check(!d.isActive && !d.isCompleted && d.isCancelled)
-        check(d.cancel()) // second attempt still returns true (still cancelling)
         check(!d.isActive && !d.isCompleted && d.isCancelled)
         expect(5)
         try {
@@ -40,8 +39,6 @@ class AsyncJvmTest : TestBase() {
             expect(7)
             check(e is CancellationException)
         }
-        check(!d.isActive && d.isCompleted && d.isCancelled)
-        check(!d.cancel()) // now cancel return false -- already cancelled
         check(!d.isActive && d.isCompleted && d.isCancelled)
         finish(8)
     }

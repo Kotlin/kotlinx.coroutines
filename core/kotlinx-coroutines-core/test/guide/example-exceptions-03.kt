@@ -3,12 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.exceptions03
+package kotlinx.coroutines.guide.exceptions03
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         val child = launch {
             try {
@@ -25,4 +25,5 @@ fun main(args: Array<String>) = runBlocking {
         println("Parent is not cancelled")
     }
     job.join()
+//sampleEnd    
 }

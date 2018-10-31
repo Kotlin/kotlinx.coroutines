@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 /**
@@ -799,12 +799,12 @@ class ChannelsConsumeTest : TestBase() {
     fun testZip() {
         val expect = sourceList.zip(sourceList) { a, b -> a + 2 * b }
         checkTransform(expect) {
-            currentScope {
+            with(CoroutineScope(coroutineContext)) {
                 zip(testSource()) { a, b -> a + 2*b }
             }
         }
         checkTransform(expect) {
-            currentScope {
+            with(CoroutineScope(coroutineContext)) {
                 testSource().zip(this@checkTransform) { a, b -> a + 2*b }
             }
         }

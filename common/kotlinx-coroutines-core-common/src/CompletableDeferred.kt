@@ -1,10 +1,11 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION_ERROR")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.selects.*
 
 /**
  * A [Deferred] that can be completed via public functions [complete] or [cancel][Job.cancel].
@@ -33,7 +34,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      */
-    @Deprecated(message = "Use cancel", replaceWith = ReplaceWith("cancel(exception)"))
     public fun completeExceptionally(exception: Throwable): Boolean
 }
 
@@ -43,11 +43,6 @@ public interface CompletableDeferred<T> : Deferred<T> {
  */
 @Suppress("FunctionName")
 public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
-
-/** @suppress **Deprecated:** Binary compatibility only */
-@Deprecated(message = "Binary compatibility only", level = DeprecationLevel.HIDDEN)
-@Suppress("FunctionName")
-public fun <T> CompletableDeferred(): CompletableDeferred<T> = CompletableDeferredImpl(null)
 
 /**
  * Creates an already _completed_ [CompletableDeferred] with a given [value].

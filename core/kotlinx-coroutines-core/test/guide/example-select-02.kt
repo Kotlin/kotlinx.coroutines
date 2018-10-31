@@ -3,12 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.select02
+package kotlinx.coroutines.guide.select02
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
 
 suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
     select<String> {
@@ -25,8 +24,9 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
                 "b -> '$value'"
         }
     }
-
-fun main(args: Array<String>) = runBlocking<Unit> {
+    
+fun main() = runBlocking<Unit> {
+//sampleStart
     val a = produce<String> {
         repeat(4) { send("Hello $it") }
     }
@@ -36,5 +36,6 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     repeat(8) { // print first eight results
         println(selectAorB(a, b))
     }
-    coroutineContext.cancelChildren()    
-}
+    coroutineContext.cancelChildren()  
+//sampleEnd      
+}    

@@ -1,15 +1,15 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
+@file:Suppress("DEPRECATION_ERROR")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.NonCancellable.isActive
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
 
 /**
- * A non-cancelable job that is always [active][isActive]. It is designed for [withContext] function
+ * A non-cancelable job that is always [active][Job.isActive]. It is designed for [withContext] function
  * to prevent cancellation of code blocks that need to be executed without cancellation.
  *
  * Use it like this:
@@ -25,7 +25,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    override val isActive: Boolean  get() = true
+    override val isActive: Boolean get() = true
 
     /**
      * Always returns `false`.
@@ -80,26 +80,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "For binary compatibility", level = DeprecationLevel.HIDDEN)
-    override fun invokeOnCompletion(handler: CompletionHandler, onCancelling: Boolean): DisposableHandle =
-        NonDisposableHandle
-
-    /**
-     * Always returns no-op handle.
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "Use with named `onCancellation` and `handler` parameters", level = DeprecationLevel.WARNING,
-        replaceWith = ReplaceWith("this.invokeOnCompletion(onCancellation = onCancelling_, handler = handler)"))
-    override fun invokeOnCompletion(onCancelling_: Boolean, handler: CompletionHandler): DisposableHandle =
-        NonDisposableHandle
-
-    /**
      * Always returns no-op handle.
      * @suppress **This an internal API and should not be used from general code.**
      */
@@ -108,11 +88,13 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
         NonDisposableHandle
 
     /**
-     * Always returns `false`.
+     * Does nothing.
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    override fun cancel(): Boolean = false
+    @Suppress("RETURN_TYPE_MISMATCH_ON_OVERRIDE")
+    override fun cancel(): Unit {
+    }
 
     /**
      * Always returns `false`.
@@ -133,16 +115,6 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * Always returns [NonDisposableHandle] and does not do anything.
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
     @InternalCoroutinesApi
     override fun attachChild(child: ChildJob): ChildHandle = NonDisposableHandle
-
-    /**
-     * Does not do anything.
-     * @suppress **This an internal API and should not be used from general code.**
-     */
-    @Suppress("OverridingDeprecatedMember")
-    @InternalCoroutinesApi
-    @Deprecated(message = "Binary compatibility, it is an extension now", level = DeprecationLevel.HIDDEN)
-    override fun cancelChildren(cause: Throwable?) {}
 }

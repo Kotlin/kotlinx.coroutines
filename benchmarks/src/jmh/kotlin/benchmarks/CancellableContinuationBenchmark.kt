@@ -4,11 +4,11 @@
 
 package benchmarks
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 @Warmup(iterations = 5)
 @Measurement(iterations = 10)
@@ -47,10 +47,7 @@ open class CancellableContinuationBenchmark {
         override val context: CoroutineContext
             get() = EmptyCoroutineContext
 
-        override fun resume(value: Int) {
-        }
-
-        override fun resumeWithException(exception: Throwable) {
+        override fun resumeWith(result: Result<Int>) {
         }
     }
 }

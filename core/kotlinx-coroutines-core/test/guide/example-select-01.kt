@@ -3,13 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.select01
+package kotlinx.coroutines.guide.select01
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
 
 fun CoroutineScope.fizz() = produce<String> {
     while (true) { // sends "Fizz" every 300 ms
@@ -36,11 +34,13 @@ suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<St
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val fizz = fizz()
     val buzz = buzz()
     repeat(7) {
         selectFizzBuzz(fizz, buzz)
     }
-    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines    
+    coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
+//sampleEnd        
 }

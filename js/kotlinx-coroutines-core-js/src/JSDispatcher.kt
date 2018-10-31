@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import org.w3c.dom.*
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()

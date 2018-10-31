@@ -3,11 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.basic02b
+package kotlinx.coroutines.guide.basic02b
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking { // start main coroutine
+fun main() = runBlocking<Unit> { // start main coroutine
     GlobalScope.launch { // launch new coroutine in background and continue
         delay(1000L)
         println("World!")

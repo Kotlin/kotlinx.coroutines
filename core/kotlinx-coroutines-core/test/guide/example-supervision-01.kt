@@ -3,15 +3,14 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.supervision01
+package kotlinx.coroutines.guide.supervision01
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
-        // launch the first child -- its exception is ignored for this example (don't do this in practise!)
+        // launch the first child -- its exception is ignored for this example (don't do this in practice!)
         val firstChild = launch(CoroutineExceptionHandler { _, _ ->  }) {
             println("First child is failing")
             throw AssertionError("First child is cancelled")

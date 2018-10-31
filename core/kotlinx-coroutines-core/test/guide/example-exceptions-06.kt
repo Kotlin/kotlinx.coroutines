@@ -3,13 +3,13 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.exceptions06
+package kotlinx.coroutines.guide.exceptions06
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.io.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception ->
         println("Caught original $exception")
     }
@@ -29,4 +29,5 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     job.join()
+//sampleEnd    
 }

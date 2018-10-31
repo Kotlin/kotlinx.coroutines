@@ -5,9 +5,9 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class WithContextTest : TestBase() {
@@ -140,6 +140,60 @@ class WithContextTest : TestBase() {
     }
 
     @Test
+    fun testRunCancellationUndispatchedVsException() = runTest {
+        expect(1)
+        var job: Job? = null
+        job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            try {
+                // Same dispatcher, different context
+                withContext(CoroutineName("testRunCancellationUndispatchedVsException")) {
+                    expect(3)
+                    yield() // must suspend
+                    expect(5)
+                    job!!.cancel() // cancel this job _before_ it throws
+                    throw TestException()
+                }
+            } catch (e: TestException) {
+                // must have caught TextException
+                expect(6)
+            }
+        }
+        expect(4)
+        yield() // to coroutineScope
+        finish(7)
+    }
+
+    @Test
+    fun testRunCancellationDispatchedVsException() = runTest {
+        expect(1)
+        var job: Job? = null
+        job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            try {
+                // "Different" dispatcher (schedules execution back and forth)
+                withContext(wrapperDispatcher(coroutineContext)) {
+                    expect(4)
+                    yield() // must suspend
+                    expect(6)
+                    job!!.cancel() // cancel this job _before_ it throws
+                    throw TestException()
+                }
+            } catch (e: TestException) {
+                // must have caught TextException
+                expect(8)
+            }
+        }
+        expect(3)
+        yield() // withContext is next
+        expect(5)
+        yield() // withContext again
+        expect(7)
+        yield() // to catch block
+        finish(9)
+    }
+
+    @Test
     fun testRunSelfCancellationWithException() = runTest(unhandled = listOf({e -> e is AssertionError})) {
         expect(1)
         var job: Job? = null
@@ -149,7 +203,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel()
                     require(job!!.cancel(AssertionError())) // cancel again, no success here
                     require(!isActive)
                     throw TestException() // but throw a different exception
@@ -179,7 +233,7 @@ class WithContextTest : TestBase() {
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
                     expect(5)
-                    require(job!!.cancel()) // cancel itself
+                    job!!.cancel() // cancel itself
                     require(job!!.cancel(AssertionError()))
                     require(!isActive)
                 }

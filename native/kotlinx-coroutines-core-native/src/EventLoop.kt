@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.cinterop.*
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.internal.*
 import platform.posix.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.system.*
 
 /**
@@ -18,7 +18,7 @@ import kotlin.system.*
  * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
  * continue processing events when invoked from the event dispatch thread.
  */
-public interface EventLoop {
+internal interface EventLoop {
     /**
      * Processes next event in this event loop.
      *
@@ -34,7 +34,7 @@ public interface EventLoop {
  * Creates a new event loop.
  */
 @Suppress("FunctionName")
-public fun EventLoop(parentJob: Job? = null): CoroutineDispatcher =
+internal fun EventLoop(parentJob: Job? = null): CoroutineDispatcher =
     EventLoopImpl().apply {
         if (parentJob != null) initParentJob(parentJob)
     }
@@ -311,7 +311,6 @@ private class EventLoopImpl : EventLoopBase() {
 }
 
 internal class BlockingEventLoop : EventLoopBase() {
-    @Volatile
     public override var isCompleted: Boolean = false
 }
 

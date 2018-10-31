@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.guava
+package kotlinx.coroutines.guava
 
 import com.google.common.util.concurrent.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
@@ -40,91 +40,19 @@ public fun <T> CoroutineScope.future(
     val job = Job(newContext[Job])
     val future = ListenableFutureCoroutine<T>(newContext + job)
     job.cancelFutureOnCompletion(future)
-    start(block, receiver=future, completion=future) // use the specified start strategy
+    start(block, receiver = future, completion = future) // use the specified start strategy
     return future
 }
-
-/**
- * @suppress **Deprecated**: onCompletion parameter is deprecated.
- */
-@Deprecated("onCompletion parameter is deprecated")
-public fun <T> CoroutineScope.future(
-    context: CoroutineContext = EmptyCoroutineContext,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> {
-    require(!start.isLazy) { "$start start is not supported" }
-    val newContext = newCoroutineContext(context)
-    val job = Job(newContext[Job])
-    val future = ListenableFutureCoroutine<T>(newContext + job)
-    job.cancelFutureOnCompletion(future)
-    if (onCompletion != null) job.invokeOnCompletion(handler = onCompletion)
-    start(block, receiver=future, completion=future) // use the specified start strategy
-    return future
-}
-
-/**
- * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
- * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.future(context, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
-)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> =
-    GlobalScope.future(context, start, onCompletion, block)
-
-/**
- * Starts new coroutine and returns its results an an implementation of [ListenableFuture].
- * @suppress **Deprecated**. Use [CoroutineScope.future] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.future(context + parent, start, onCompletion, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.future.future"])
-)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    onCompletion: CompletionHandler? = null,
-    block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> =
-    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, onCompletion, block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> =
-    GlobalScope.future(context + (parent ?: EmptyCoroutineContext), start, block = block)
-
-/** @suppress **Deprecated**: Binary compatibility */
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <T> future(
-    context: CoroutineContext = Dispatchers.Default,
-    start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-): ListenableFuture<T> =
-    GlobalScope.future(context, start, block = block)
 
 private class ListenableFutureCoroutine<T>(
     override val context: CoroutineContext
 ) : AbstractFuture<T>(), Continuation<T>, CoroutineScope {
     override val coroutineContext: CoroutineContext get() = context
-    override val isActive: Boolean get() = context[Job]!!.isActive
-    override fun resume(value: T) { set(value) }
-    override fun resumeWithException(exception: Throwable) { setException(exception) }
+    override fun resumeWith(result: Result<T>) {
+        result
+            .onSuccess { set(it) }
+            .onFailure { setException(it) }
+    }
     override fun interruptTask() { context[Job]!!.cancel() }
 }
 
@@ -185,7 +113,7 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
- * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.experimental.CancellationException].
+ * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  *
  * This method is intended to be used with one-shot futures, so on coroutine cancellation future is cancelled as well.
  * If cancelling given future is undesired, `future.asDeferred().await()` should be used instead.

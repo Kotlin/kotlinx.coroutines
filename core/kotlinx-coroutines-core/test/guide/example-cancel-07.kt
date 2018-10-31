@@ -3,11 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.cancel07
+package kotlinx.coroutines.guide.cancel07
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val result = withTimeoutOrNull(1300L) {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
@@ -16,4 +17,5 @@ fun main(args: Array<String>) = runBlocking {
         "Done" // will get cancelled before it produces this result
     }
     println("Result is $result")
+//sampleEnd
 }

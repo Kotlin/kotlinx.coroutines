@@ -1,12 +1,13 @@
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
-package kotlinx.coroutines.experimental.reactor
 
-import kotlinx.coroutines.experimental.*
+package kotlinx.coroutines.reactor
+
+import kotlinx.coroutines.*
 import reactor.core.*
 import reactor.core.publisher.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
@@ -37,22 +38,6 @@ fun <T> CoroutineScope.mono(
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
 }
 
-/**
- * Creates cold [mono][Mono] that will run a given [block] in a coroutine.
- * @suppress **Deprecated** Use [CoroutineScope.mono] instead.
- */
-@Deprecated(
-    message = "Standalone coroutine builders are deprecated, use extensions on CoroutineScope instead",
-    replaceWith = ReplaceWith("GlobalScope.mono(context, block)",
-        imports = ["kotlinx.coroutines.experimental.GlobalScope", "kotlinx.coroutines.experimental.reactor.mono"])
-)
-fun <T> mono(
-    context: CoroutineContext = Dispatchers.Default,
-    parent: Job? = null,
-    block: suspend CoroutineScope.() -> T?
-): Mono<T> =
-    GlobalScope.mono(context + (parent ?: EmptyCoroutineContext), block)
-
 private class MonoCoroutine<in T>(
     parentContext: CoroutineContext,
     private val sink: MonoSink<T>
@@ -73,7 +58,7 @@ private class MonoCoroutine<in T>(
     
     override fun dispose() {
         disposed = true
-        cancel(cause = null)
+        cancel()
     }
 
     override fun isDisposed(): Boolean = disposed

@@ -4,11 +4,11 @@
  */
 
 // This file was automatically generated from coroutines-guide-ui.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.javafx.guide.$$1$$2
+package kotlinx.coroutines.javafx.guide.$$1$$2
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.javafx.JavaFx as Main
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.javafx.JavaFx as Main
 import javafx.application.Application
 import javafx.event.EventHandler
 import javafx.geometry.*
@@ -165,14 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.1"
-```
-
-Coroutines are experimental feature in Kotlin.
-You need to enable coroutines in Kotlin compiler by adding the following line to `gradle.properties` file:
- 
-```properties
-kotlin.coroutines=enable
+compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
@@ -187,13 +180,13 @@ This section shows basic usage of coroutines in UI applications.
 ### Launch UI coroutine
 
 The `kotlinx-coroutines-javafx` module contains 
-[Dispatchers.JavaFx][kotlinx.coroutines.experimental.Dispatchers.JavaFx] 
+[Dispatchers.JavaFx][kotlinx.coroutines.Dispatchers.JavaFx] 
 dispatcher that dispatches coroutine execution to
 the JavaFx application thread. We import it as `Main` to make all the presented examples 
 easily portable to Android:
  
 ```kotlin
-import kotlinx.coroutines.experimental.javafx.JavaFx as Main
+import kotlinx.coroutines.javafx.JavaFx as Main
 ```
  
 <!--- CLEAR -->
@@ -418,7 +411,7 @@ block the main UI thread and cause the freeze up of the UI.
 <!--- INCLUDE .*/example-ui-blocking-([0-9]+).kt
 
 fun Node.onClick(action: suspend (MouseEvent) -> Unit) {
-    val eventActor = actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
+    val eventActor = GlobalScope.actor<MouseEvent>(Dispatchers.Main, capacity = Channel.CONFLATED) {
         for (event in channel) action(event) // pass event to action
     }
     onMouseClicked = EventHandler { event ->
@@ -527,34 +520,43 @@ class MainActivity : ScopedAppActivity() {
 Every coroutine launched from within a `MainActivity` has its job as a parent and is immediately cancelled when
 activity is destroyed.
 
-To propagate activity scope to its views and presenters, one can use [currentScope] builder which captures current 
-scope. Another solution is to implement [CoroutineScope] in child elements using delegation, for example:
+To propagate activity scope to its views and presenters, multiple techniques can be used:
+- [coroutineScope] builder to provide a nested scope
+- Receive [CoroutineScope] in presenter method parameters
+- Make method extension on [CoroutineScope] (applicable only for top-level methods)
 
 ```kotlin
 class ActivityWithPresenters: ScopedAppActivity() {
     fun init() {
         val presenter = Presenter()
-        val presenter2 = NonSuspendingPresenter(this)
+        val presenter2 = ScopedPresenter(this)
     }
 }
 
 class Presenter {
-    suspend fun loadData() = currentScope {
-        // Now we're in the scope of ActivityWithPresenters
+    suspend fun loadData() = coroutineScope {
+        // Nested scope of outer activity
+    }
+    
+    suspend fun loadData(uiScope: CoroutineScope) = uiScope.launch {
+      // Invoked in the uiScope
     }
 }
 
-class NonSuspendingPresenter(scope: CoroutineScope): CoroutineScope by scope {
+class ScopedPresenter(scope: CoroutineScope): CoroutineScope by scope {
     fun loadData() = launch { // Extension on ActivityWithPresenters's scope
-        // Implementation
     }
+}
+
+suspend fun CoroutineScope.launchInIO() = launch(Dispatchers.IO) {
+   // Launched in the scope of the caller, but with IO dispatcher
 }
 ``` 
 
 Parent-child relation between jobs forms a hierarchy. A coroutine that performs some background job on behalf of
 the view and in its context can create further children coroutines. The whole tree of coroutines gets cancelled
 when the parent job is cancelled. An example of that is shown in the
-["Children of a coroutine"](../docs/coroutines-guide.md#children-of-a-coroutine) section of the guide to coroutines.
+["Children of a coroutine"](../docs/coroutine-context-and-dispatchers.md#children-of-a-coroutine) section of the guide to coroutines.
 <!--- CLEAR -->
 
 ### Blocking operations
@@ -703,27 +705,27 @@ After delay
 ```
   
 <!--- MODULE kotlinx-coroutines-core -->
-<!--- INDEX kotlinx.coroutines.experimental -->
-[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/launch.html
-[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/delay.html
-[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/index.html
-[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-job/cancel.html
-[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/index.html
-[currentScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/current-scope.html
-[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/with-context.html
-[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-dispatchers/-default.html
-[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/index.html
-[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/async.html
-[CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
-<!--- INDEX kotlinx.coroutines.experimental.channels -->
-[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/actor.html
-[SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/offer.html
-[SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-send-channel/index.html
-[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/index.html
-[Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental.channels/-channel/-c-o-n-f-l-a-t-e-d.html
+<!--- INDEX kotlinx.coroutines -->
+[launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
+[delay]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
+[Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
+[withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
+[Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
+[CoroutineStart]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/index.html
+[async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
+[CoroutineStart.UNDISPATCHED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-start/-u-n-d-i-s-p-a-t-c-h-e-d.html
+<!--- INDEX kotlinx.coroutines.channels -->
+[actor]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/actor.html
+[SendChannel.offer]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/offer.html
+[SendChannel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/index.html
+[Channel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/index.html
+[Channel.CONFLATED]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/-c-o-n-f-l-a-t-e-d.html
 <!--- MODULE kotlinx-coroutines-javafx -->
-<!--- INDEX kotlinx.coroutines.experimental.javafx -->
-[kotlinx.coroutines.experimental.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.experimental.javafx/kotlinx.coroutines.experimental.-dispatchers/-java-fx.html
+<!--- INDEX kotlinx.coroutines.javafx -->
+[kotlinx.coroutines.Dispatchers.JavaFx]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-javafx/kotlinx.coroutines.javafx/kotlinx.coroutines.-dispatchers/-java-fx.html
 <!--- MODULE kotlinx-coroutines-android -->
-<!--- INDEX kotlinx.coroutines.experimental.android -->
+<!--- INDEX kotlinx.coroutines.android -->
 <!--- END -->

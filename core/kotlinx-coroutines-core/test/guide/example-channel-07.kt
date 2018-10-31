@@ -3,20 +3,13 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.channel07
+package kotlinx.coroutines.guide.channel07
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 
-suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
-    while (true) {
-        delay(time)
-        channel.send(s)
-    }
-}
-
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val channel = Channel<String>()
     launch { sendString(channel, "foo", 200L) }
     launch { sendString(channel, "BAR!", 500L) }
@@ -24,4 +17,12 @@ fun main(args: Array<String>) = runBlocking {
         println(channel.receive())
     }
     coroutineContext.cancelChildren() // cancel all children to let main finish
+//sampleEnd
+}
+
+suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
+    while (true) {
+        delay(time)
+        channel.send(s)
+    }
 }

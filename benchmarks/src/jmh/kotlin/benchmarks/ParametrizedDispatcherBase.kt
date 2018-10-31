@@ -5,13 +5,14 @@
 package benchmarks
 
 import benchmarks.actors.CORES_COUNT
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.TearDown
 import java.io.Closeable
-import kotlin.coroutines.experimental.CoroutineContext
+import java.util.concurrent.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Base class to use different [CoroutineContext] in benchmarks via [Param] in inheritors.
@@ -23,10 +24,11 @@ abstract class ParametrizedDispatcherBase : CoroutineScope {
     override lateinit var coroutineContext: CoroutineContext
     var closeable: Closeable? = null
 
+    @UseExperimental(InternalCoroutinesApi::class)
     @Setup
     open fun setup() {
         coroutineContext = when {
-            dispatcher == "fjp" -> CommonPool
+            dispatcher == "fjp" -> ForkJoinPool.commonPool().asCoroutineDispatcher()
             dispatcher == "experimental" -> {
                 ExperimentalCoroutineDispatcher(CORES_COUNT).also { closeable = it }
             }

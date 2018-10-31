@@ -3,12 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.sync07
+package kotlinx.coroutines.guide.sync07
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.system.*
-import kotlin.coroutines.experimental.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -40,7 +39,8 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
     }
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val counter = counterActor() // create the actor
     GlobalScope.massiveRun {
         counter.send(IncCounter)
@@ -50,4 +50,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     counter.send(GetCounter(response))
     println("Counter = ${response.await()}")
     counter.close() // shutdown the actor
+//sampleEnd    
 }

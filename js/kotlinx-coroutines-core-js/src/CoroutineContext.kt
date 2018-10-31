@@ -2,25 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.browser.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 private external val navigator: dynamic
 private const val UNDEFINED = "undefined"
-
-/**
- * The default [CoroutineDispatcher] that is used by all standard builders.
- * @suppress **Deprecated**: Use [Dispatchers.Default].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
-public actual val DefaultDispatcher: CoroutineDispatcher
-    get() = Dispatchers.Default
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are running under ReactNative. We have to use NodeDispatcher under it.
@@ -46,6 +34,6 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 // No debugging facilities on JS
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T = block()
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T = block()
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on JS

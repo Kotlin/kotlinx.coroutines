@@ -2,10 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
 
@@ -21,7 +20,6 @@ internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exce
  * Otherwise, If there is [CoroutineExceptionHandler] in the context, it is used. If it throws an exception during handling
  * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and [Thread.uncaughtExceptionHandler] are invoked
  */
-@JvmOverloads // binary compatibility
 @InternalCoroutinesApi
 public fun handleCoroutineException(context: CoroutineContext, exception: Throwable, caller: Job? = null) {
     // Ignore CancellationException (they are normal ways to terminate a coroutine)

@@ -3,11 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.cancel05
+package kotlinx.coroutines.guide.cancel05
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking {
+fun main() = runBlocking {
+//sampleStart
     val job = launch {
         try {
             repeat(1000) { i ->
@@ -26,4 +27,5 @@ fun main(args: Array<String>) = runBlocking {
     println("main: I'm tired of waiting!")
     job.cancelAndJoin() // cancels the job and waits for its completion
     println("main: Now I can quit.")
+//sampleEnd    
 }

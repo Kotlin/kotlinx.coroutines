@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.scheduling
+package kotlinx.coroutines.scheduling
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 @Ignore // these tests are too unstable on Windows, should be virtualized
 class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
@@ -87,7 +87,6 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         val busySpinTasks = (1..2).map {
             async(dispatcher) {
                 while (true) {
-                    delay(100, TimeUnit.MICROSECONDS)
                     yield()
                 }
             }

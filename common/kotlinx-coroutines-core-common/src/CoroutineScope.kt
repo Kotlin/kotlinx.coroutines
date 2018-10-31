@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlin.coroutines.intrinsics.*
+import kotlin.coroutines.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
@@ -59,27 +59,6 @@ import kotlin.coroutines.experimental.intrinsics.*
  */
 public interface CoroutineScope {
     /**
-     * Returns `true` when this coroutine is still active (has not completed and was not cancelled yet).
-     *
-     * Check this property in long-running computation loops to support cancellation:
-     * ```
-     * while (isActive) {
-     *     // do some computation
-     * }
-     * ```
-     *
-     * This property is a shortcut for `coroutineContext.isActive` in the scope when
-     * [CoroutineScope] is available.
-     * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
-     * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
-     *
-     * @suppress **Deprecated**: Deprecated in favor of top-level extension property
-     */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Deprecated in favor of top-level extension property")
-    public val isActive: Boolean
-        get() = coroutineContext[Job]?.isActive ?: true
-
-    /**
      * Context of this scope.
      */
     public val coroutineContext: CoroutineContext
@@ -106,8 +85,8 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  *
  * This property is a shortcut for `coroutineContext.isActive` in the scope when
  * [CoroutineScope] is available.
- * See [coroutineContext][kotlin.coroutines.experimental.coroutineContext],
- * [isActive][kotlinx.coroutines.experimental.isActive] and [Job.isActive].
+ * See [coroutineContext][kotlin.coroutines.coroutineContext],
+ * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public val CoroutineScope.isActive: Boolean
@@ -136,13 +115,6 @@ public val CoroutineScope.isActive: Boolean
  * ```
  */
 object GlobalScope : CoroutineScope {
-    /**
-     * @suppress **Deprecated**: Deprecated in favor of top-level extension property
-     */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Deprecated in favor of top-level extension property")
-    override val isActive: Boolean
-        get() = true
-
     /**
      * Returns [EmptyCoroutineContext].
      */
@@ -186,17 +158,9 @@ object GlobalScope : CoroutineScope {
  */
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R =
     suspendCoroutineUninterceptedOrReturn { uCont ->
-        val coroutine = ScopeCoroutine<R>(uCont.context, uCont)
+        val coroutine = ScopeCoroutine(uCont.context, uCont)
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
-
-/**
- * Provides [CoroutineScope] that is already present in the current [coroutineContext] to the given [block].
- * Note, this method doesn't wait for all launched children to complete (as opposed to [coroutineScope]).
- */
-@Deprecated("No replacement, usages are discouraged. Find another solution.")
-public suspend inline fun <R> currentScope(block: CoroutineScope.() -> R): R =
-    CoroutineScope(coroutineContext).block()
 
 /**
  * Creates [CoroutineScope] that wraps the given coroutine [context].

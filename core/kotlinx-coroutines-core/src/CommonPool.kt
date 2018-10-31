@@ -2,12 +2,11 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.timeunit.TimeUnit
 import java.util.concurrent.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Represents common pool of shared threads as coroutine dispatcher for compute-intensive tasks.
@@ -20,14 +19,8 @@ import kotlin.coroutines.experimental.*
  * If there is a SecurityManager present (as would be if running inside a Java Web Start context) then a plain thread
  * pool is created. This is to work around the fact that ForkJoinPool creates threads that cannot perform
  * privileged actions.
- *
- * @suppress **Deprecated**: Use [Dispatchers.Default].
  */
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
-object CommonPool : ExecutorCoroutineDispatcher() {
+internal object CommonPool : ExecutorCoroutineDispatcher() {
 
     /**
      * Name of the property that controls default parallelism level of [CommonPool].

@@ -4,7 +4,7 @@
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // KT-21913
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -199,10 +199,9 @@ class CoroutinesTest : TestBase() {
         yield() // to job
         expect(4)
         assertTrue(job.isActive && !job.isCompleted)
-        assertTrue(job.cancel())  // cancels job
+        job.cancel()  // cancels job
         expect(5) // still here
         assertTrue(!job.isActive && !job.isCompleted)
-        assertTrue(job.cancel()) // second attempt returns true as well, job is still completing
         expect(6) // we're still here
         job.join() // join the job, let job complete its "finally" section
         expect(8)

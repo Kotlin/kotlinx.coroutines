@@ -2,12 +2,13 @@
 
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=0.30.1) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/0.30.1)
+[![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.0.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.0.0)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin 1.2.70 release.
+This is a companion version for Kotlin `1.3.0` release.
 
-**NOTE**: This is the latest experimental release. See [COMPATIBILITY.md](COMPATIBILITY.md) for details on migration.
+**NOTE**: `0.30.2` was the last release with Kotlin 1.2 and experimental coroutines.
+See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
 
 ```kotlin
 GlobalScope.launch {
@@ -21,40 +22,40 @@ GlobalScope.launch {
 * [common](common/README.md) &mdash; common coroutines across all backends:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
-  *` Dispatchers.Main` for UI dispatcher for Android, Swing and JavaFx;
+  * `Dispatchers` object with `Main` dispatcher for Android/Swing/JavaFx, and `Default` dispatcher for background coroutines;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;
-  * `produce` and `actor` coroutine builders;
   * `coroutineScope` and `supervisorScope` scope builders;
-  * `SupervisorJob` for supervision of coroutines hierarchies;
+  * `SupervisorJob` and `CoroutineExceptionHandler` for supervision of coroutines hierarchies;
   * `select` expression support and more.
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
-  * `Dispatchers.IO` dispatcher for blocking coroutines.
+  * `Dispatchers.IO` dispatcher for blocking coroutines;
+  * `Executor.asCoroutineDispatcher()` extension, custom thread pools, and more.
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
-  * Reactive Streams, RxJava 1.x and 2.x and Project Reactor. 
+  * Reactive Streams, RxJava 2.x, and Project Reactor. 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:
   * Android, JavaFX, and Swing.
 * [integration](integration/README.md) &mdash; modules that provide integration with various asynchronous callback- and future-based libraries.
-  * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and synchronous networking/IO.
+  * JDK8 `CompletableFuture`, Guava `ListenableFuture`, and Google Play Services `Task`;
+  * SLF4J MDC integration via `MDCContext`.
 
 ## Documentation
 
 * Presentations and videos:
   * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
+  * [Kotlin Coroutines in Practice](https://www.youtube.com/watch?v=a3agLJQ6vt8) (Roman Elizarov at KotlinConf 2018, [slides](https://www.slideshare.net/elizarov/kotlin-coroutines-in-practice-kotlinconf-2018))
 * Guides and manuals: 
   * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
-* [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
+* [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
  
 ## Using in your projects
-
-> Note that these libraries are experimental and are subject to change.
 
 The libraries are published to [kotlinx](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines) bintray repository,
 linked to [JCenter](https://bintray.com/bintray/jcenter?filterByPkgName=kotlinx.coroutines) and 
@@ -68,7 +69,7 @@ Add dependencies (you can also add other modules that you need):
 <dependency>
     <groupId>org.jetbrains.kotlinx</groupId>
     <artifactId>kotlinx-coroutines-core</artifactId>
-    <version>0.30.1</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -76,7 +77,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.2.70</kotlin.version>
+    <kotlin.version>1.3.0</kotlin.version>
 </properties>
 ```
 
@@ -85,14 +86,16 @@ And make sure that you use the latest Kotlin version:
 Add dependencies (you can also add other modules that you need):
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.30.1'
+dependencies {
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0'
+}
 ```
 
 And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.2.70'
+    ext.kotlin_version = '1.3.0'
 }
 ```
 
@@ -103,6 +106,26 @@ repository {
     jcenter()
 }
 ```
+
+### Gradle Kotlin DSL
+
+Add dependencies (you can also add other modules that you need):
+
+```groovy
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0")
+}
+```
+
+And make sure that you use the latest Kotlin version:
+
+```groovy
+plugins {
+    kotlin("jvm") version "1.3.0"
+}
+```
+
+Make sure that you have either `jcenter()` or `mavenCentral()` in the list of repositories.
 
 ### Multiplatform
 
@@ -118,24 +141,16 @@ Add [`kotlinx-coroutines-android`](ui/kotlinx-coroutines-android)
 module as dependency when using `kotlinx.coroutines` on Android:
 
 ```groovy
-implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:0.30.1'
+implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0'
 ```
-This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.experimental.android/kotlinx.coroutines.experimental.-dispatchers/index.html)
+This gives you access to Android [Dispatchers.Main](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-android/kotlinx.coroutines.android/kotlinx.coroutines.-dispatchers/index.html)
 coroutine dispatcher and also makes sure that in case of crashed coroutine with unhandled exception this
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
 threads are handled by Android runtime. 
 
-### ProGuard
+### R8 and ProGuard
 
-In obfuscated code, fields with different types can have the same names,
-and `AtomicReferenceFieldUpdater` may be unable to find the correct ones.
-To avoid field overloading by type during obfuscation, add this to your config:
-
-```
--keepclassmembernames class kotlinx.** {
-    volatile <fields>;
-}
-```
+If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
 
 ## Building 
 

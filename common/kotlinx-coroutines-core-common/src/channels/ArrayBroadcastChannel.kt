@@ -2,11 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.channels
+package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.selects.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.selects.*
+import kotlin.jvm.*
 
 /**
  * Broadcast channel with array buffer of a fixed [capacity].
@@ -21,16 +22,8 @@ import kotlinx.coroutines.experimental.selects.*
  * This implementation uses lock to protect the buffer, which is held only during very short buffer-update operations.
  * The lock at each subscription is also used to manage concurrent attempts to receive from the same subscriber.
  * The lists of suspended senders or receivers are lock-free.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public class ArrayBroadcastChannel<E>
-@Deprecated(
-    "Replace with BroadcastChannel factory function",
-    replaceWith = ReplaceWith("BroadcastChannel(capacity)")
-)
-constructor(
+internal class ArrayBroadcastChannel<E>(
     /**
      * Buffer capacity.
      */
@@ -195,7 +188,7 @@ constructor(
 
     private class Subscriber<E>(
         private val broadcastChannel: ArrayBroadcastChannel<E>
-    ) : AbstractChannel<E>(), ReceiveChannel<E>, SubscriptionReceiveChannel<E> {
+    ) : AbstractChannel<E>(), ReceiveChannel<E> {
         private val subLock = ReentrantLock()
 
         @Volatile

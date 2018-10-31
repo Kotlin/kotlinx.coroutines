@@ -3,13 +3,13 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.channel08
+package kotlinx.coroutines.guide.channel08
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val channel = Channel<Int>(4) // create buffered channel
     val sender = launch { // launch sender coroutine
         repeat(10) {
@@ -20,4 +20,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     // don't receive anything... just wait....
     delay(1000)
     sender.cancel() // cancel sender coroutine
+//sampleEnd    
 }

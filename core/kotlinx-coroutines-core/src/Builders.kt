@@ -5,10 +5,10 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import java.util.concurrent.locks.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * Runs new coroutine and **blocks** current thread _interruptibly_ until its completion.
@@ -21,7 +21,7 @@ import kotlin.coroutines.experimental.*
  *
  * When [CoroutineDispatcher] is explicitly specified in the [context], then the new coroutine runs in the context of
  * the specified dispatcher while the current thread is blocked. If the specified dispatcher is an event loop of another `runBlocking`,
- * the this invocation uses an outer event loop.
+ * then this invocation uses an outer event loop.
  *
  * If this blocked thread is interrupted (see [Thread.interrupt]), then the coroutine job is cancelled and
  * this `runBlocking` invocation throws [InterruptedException].

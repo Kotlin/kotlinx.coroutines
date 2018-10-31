@@ -2,7 +2,7 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
 import kotlin.test.*
 
@@ -31,7 +31,7 @@ class CoroutineExceptionHandlerTest : TestBase() {
     @Test
     fun testCompletableDeferred() = runTest {
         expect(1)
-        val handler = CoroutineExceptionHandler { _, ex ->
+        val handler = CoroutineExceptionHandler { _, _ ->
             expectUnreached()
         }
         val parent = CompletableDeferred<Unit>()

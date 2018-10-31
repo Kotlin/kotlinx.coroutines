@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.internal
+package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.*
 
 private typealias Node = LockFreeLinkedListNode
 
@@ -540,7 +540,7 @@ public actual open class LockFreeLinkedListNode {
     /**
      * Finds the head of the list (implementing [LockFreeLinkedListHead]) by following [next] pointers.
      *
-     * The code in [kotlinx.coroutines.experimental.JobSupport] performs upgrade of a single node to a list.
+     * The code in [kotlinx.coroutines.JobSupport] performs upgrade of a single node to a list.
      * It uses [addOneIfEmpty] to add the list head to "empty list of a single node" once.
      * During upgrade a transient state of the list looks like this:
      *
@@ -682,7 +682,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     }
 
     // just a defensive programming -- makes sure that list head sentinel is never removed
-    public actual final override fun remove(): Nothing = throw UnsupportedOperationException()
+    public actual final override fun remove(): Boolean = throw UnsupportedOperationException()
 
     public final override fun describeRemove(): Nothing = throw UnsupportedOperationException()
 

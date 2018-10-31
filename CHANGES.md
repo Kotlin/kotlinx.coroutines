@@ -1,6 +1,34 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.0.0
+
+  * All Kotlin dependencies updated to 1.3 release version.
+  * Fixed potential memory leak in `HandlerDispatcher.scheduleResumeAfterDelay`, thanks @cbeyls.
+  * `yield` support for `Unconfined` and immediate dispatchers (#737).
+  * Various documentation improvements.
+
+## Version 1.0.0-RC1
+
+ * Coroutines API is updated to Kotlin 1.3.
+ * Deprecated API is removed or marked as `internal`.
+ * Experimental and internal coroutine API is marked with corresponding `kotlin.experimental.Experimental` annotation. If you are using `@ExperimentalCoroutinesApi` or `@InternalCoroutinesApi` you should explicitly opt-in, otherwise compilation warning (or error) will be produced. 
+ * `Unconfined` dispatcher (and all dispatchers which support immediate invocation) forms event-loop on top of current thread, thus preventing all `StackOverflowError`s. `Unconfined` dispatcher is now much safer for the general use and may leave its experimental status soon (#704).
+ * Significantly improved performance of suspending hot loops in `kotlinx.coroutines` (#537).
+ * Proguard rules are embedded into coroutines JAR to assist jettifier (#657)
+ * Fixed bug in shutdown sequence of `runBlocking` (#692).
+ * `ReceiveChannel.receiveOrNull` is marked as obsolete and deprecated.
+ * `Job.cancel(cause)` and `ReceiveChannel.cancel(cause)` are deprecated, `cancel()` returns `Unit` (#713).
+
+## Version 0.30.2
+
+ * `Dispatchers.Main` is instantiated lazily (see #658 and #665).
+ * Blocking coroutine dispatcher views are now shutdown properly (#678).
+ * Prevent leaking Kotlin 1.3 from atomicfu dependency (#659).
+ * Thread-pool based dispatcher factories are marked as obsolete (#261).
+ * Fixed exception loss on `withContext` cancellation (#675).   
+
 ## Version 0.30.1
+
  Maintenance release:
  * Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 
  * With `Dispatchers.Main` improvement tooling bug in Android Studio #626 is mitigated, so Android users now can safely start the migration to the latest `kotlinx.coroutines` version.
@@ -56,6 +84,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Update to Kotlin 1.2.70.
 
 ## Version 0.26.1
+
 * Android `Main` dispatcher is `async` by default which may significantly improve UI performance. Contributed by @JakeWharton (see #427).
 * Fixed bug when lazily-started coroutine with registered cancellation handler was concurrently started and cancelled. 
 * Improved termination sequence in IO dispatcher.
@@ -63,13 +92,14 @@ Visible consequences of include more robust exception handling for large corouti
 * Various fixes in the documentation. Thanks to @SUPERCILEX, @yorlov, @dualscyther and @soudmaijer!
 
 ## Version 0.26.0
+
 * Major rework of `kotlinx.coroutines` concurrency model (see #410 for a full explanation of the rationale behind this change):
   * All coroutine builders are now extensions on `CoroutineScope` and inherit its `coroutineContext`. Standalone builders are deprecated.
   * As a consequence, all nested coroutines launched via builders now automatically establish parent-child relationship and inherit `CoroutineDispatcher`.
   * All coroutine builders use `Dispatchers.Default` by default if `CoroutineInterceptor` is not present in their context.
-  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
+  * [CoroutineScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/) became the first-class citizen in `kolinx.coroutines`.
   * `withContext` `block` argument has `CoroutineScope` as a receiver.
-  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.experimental/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
+  * [GlobalScope](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) is introduced to simplify migration to new API and to launch global-level coroutines.
   * `currentScope` and `coroutineScope` builders are introduced to extract and provide `CoroutineScope`.
   * Factory methods to create `CoroutineScope` from `CoroutineContext` are introduced.
   * `CoroutineScope.isActive` became an extension property.
@@ -597,7 +627,7 @@ Visible consequences of include more robust exception handling for large corouti
 ## Version 0.11-rc
 
 * `select` expression with onJoin/onAwait/onSend/onReceive clauses.
-* `Mutex` is moved to `kotlinx.coroutines.experimental.sync` package.
+* `Mutex` is moved to `kotlinx.coroutines.sync` package.
 * `ClosedSendChannelException` is a subclass of `CancellationException` now.
 * New sections on "Shared mutable state and concurrency" and "Select expression" 
   in [coroutines guide](docs/coroutines-guide.md).

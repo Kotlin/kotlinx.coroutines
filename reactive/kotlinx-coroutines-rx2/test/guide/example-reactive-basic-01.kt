@@ -3,13 +3,13 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.basic01
+package kotlinx.coroutines.rx2.guide.basic01
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     // create a channel that produces numbers from 1 to 3 with 200ms delays between them
     val source = produce<Int> {
         println("Begin") // mark the beginning of this coroutine in output

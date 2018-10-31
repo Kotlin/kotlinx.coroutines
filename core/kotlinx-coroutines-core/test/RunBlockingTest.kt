@@ -2,9 +2,9 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class RunBlockingTest : TestBase() {
@@ -102,5 +102,54 @@ class RunBlockingTest : TestBase() {
         } catch (e: CancellationException) {
             finish(4)
         }
+    }
+
+    @Test(expected = CancellationException::class)
+    fun testDispatchOnShutdown() = runBlocking<Unit> {
+        expect(1)
+        val job = launch(NonCancellable) {
+            try {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            } finally {
+                finish(4)
+            }
+        }
+
+        yield()
+        expect(3)
+        coroutineContext.cancel()
+        job.cancel()
+    }
+
+    @Test(expected = CancellationException::class)
+    fun testDispatchOnShutdown2() = runBlocking<Unit> {
+        coroutineContext.cancel()
+        expect(1)
+        val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            } finally {
+                finish(4)
+            }
+        }
+
+        expect(3)
+        job.cancel()
+    }
+
+    @Test
+    fun testNestedRunBlocking() = runBlocking {
+        delay(100)
+        val value = runBlocking {
+            delay(100)
+            runBlocking {
+                delay(100)
+                1
+            }
+        }
+
+        assertEquals(1, value)
     }
 }

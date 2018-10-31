@@ -3,11 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.basic06
+package kotlinx.coroutines.rx2.guide.basic06
 
 import io.reactivex.subjects.BehaviorSubject
 
-fun main(args: Array<String>) {
+fun main() {
     val subject = BehaviorSubject.create<String>()
     subject.onNext("one")
     subject.onNext("two") // updates the state of BehaviorSubject, "one" value is lost

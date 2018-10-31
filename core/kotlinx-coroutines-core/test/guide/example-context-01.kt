@@ -3,12 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.context01
+package kotlinx.coroutines.guide.context01
 
-import kotlinx.coroutines.experimental.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     launch { // context of the parent, main runBlocking coroutine
         println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
     }
@@ -21,4 +21,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
     }
+//sampleEnd    
 }

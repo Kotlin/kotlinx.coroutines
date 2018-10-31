@@ -2,14 +2,15 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental.sync
+package kotlinx.coroutines.sync
 
 import kotlinx.atomicfu.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.intrinsics.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.intrinsics.*
+import kotlinx.coroutines.selects.*
+import kotlin.coroutines.*
+import kotlin.jvm.*
 
 /**
  * Mutual exclusion for coroutines.
@@ -112,35 +113,12 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
     }
 }
 
-/**
- * @suppress: **Deprecated**: binary compatibility with old code
- */
-@Deprecated("binary compatibility with old code", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Mutex.withLock(owner: Any? = null, action: suspend () -> T): T =
-    withLock(owner) { action() }
-
-/**
- * @suppress: **Deprecated**: Use [withLock]
- */
-@Deprecated("Use `withLock(owner, action)", level = DeprecationLevel.HIDDEN)
-public suspend fun <T> Mutex.withLock(action: suspend () -> T): T =
-    withLock { action() }
-
-/**
- * @suppress: **Deprecated**: Use [withLock]
- */
-@Deprecated("Use `withLock`", replaceWith = ReplaceWith("withLock(action)"))
-public suspend fun <T> Mutex.withMutex(action: suspend () -> T): T =
-    withLock { action() }
-
 private val LOCK_FAIL = Symbol("LOCK_FAIL")
 private val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
 private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
 private val SELECT_SUCCESS = Symbol("SELECT_SUCCESS")
 private val LOCKED = Symbol("LOCKED")
 private val UNLOCKED = Symbol("UNLOCKED")
-private val RESUME_QUIESCENT = Symbol("RESUME_QUIESCENT")
-private val RESUME_ACTIVE = Symbol("RESUME_ACTIVE")
 
 private val EmptyLocked = Empty(LOCKED)
 private val EmptyUnlocked = Empty(UNLOCKED)
@@ -155,9 +133,6 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // State is: Empty | LockedQueue | OpDescriptor
     // shared objects while we have no waiters
     private val _state = atomic<Any?>(if (locked) EmptyLocked else EmptyUnlocked)
-
-    // resumeNext is: RESUME_QUIESCENT | RESUME_ACTIVE | ResumeReq
-    private val _resumeNext = atomic<Any>(RESUME_QUIESCENT)
 
     public override val isLocked: Boolean get() {
         _state.loop { state ->
@@ -352,58 +327,13 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                     } else {
                         val token = (waiter as LockWaiter).tryResumeLockWaiter()
                         if (token != null) {
-                            // successfully resumed waiter that now is holding the lock
-                            // we must immediately transfer ownership to the next waiter, because this coroutine
-                            // might try to lock it again after unlock returns do to StackOverflow avoidance code
-                            // and its attempts to take a lock must be queued.
                             state.owner = waiter.owner ?: LOCKED
-                            // StackOverflow avoidance code
-                            if (startResumeNext(waiter, token)) {
-                                waiter.completeResumeLockWaiter(token)
-                                finishResumeNext()
-                            }
+                            waiter.completeResumeLockWaiter(token)
                             return
                         }
                     }
                 }
                 else -> error("Illegal state $state")
-            }
-        }
-    }
-
-    private class ResumeReq(
-        @JvmField val waiter: LockWaiter,
-        @JvmField val token: Any
-    )
-
-    private fun startResumeNext(waiter: LockWaiter, token: Any): Boolean {
-        _resumeNext.loop { resumeNext ->
-            when {
-                resumeNext === RESUME_QUIESCENT -> {
-                    // this is never concurrent, because only one thread is holding mutex and trying to resume
-                    // next waiter, so no need to CAS here
-                    _resumeNext.value = RESUME_ACTIVE
-                    return true
-                }
-                resumeNext === RESUME_ACTIVE ->
-                    if (_resumeNext.compareAndSet(resumeNext, ResumeReq(waiter, token))) return false
-                else -> error("Cannot happen")
-            }
-        }
-    }
-
-    private fun finishResumeNext() {
-        // also a resumption loop to fulfill requests of inner resume invokes
-        _resumeNext.loop { resumeNext ->
-            when {
-                resumeNext === RESUME_ACTIVE ->
-                    if (_resumeNext.compareAndSet(resumeNext, RESUME_QUIESCENT)) return
-                resumeNext is ResumeReq -> {
-                    // this is never concurrently, only one thread is finishing, so no need to CAS here
-                    _resumeNext.value = RESUME_ACTIVE
-                    resumeNext.waiter.completeResumeLockWaiter(resumeNext.token)
-                }
-                else -> error("Cannot happen")
             }
         }
     }

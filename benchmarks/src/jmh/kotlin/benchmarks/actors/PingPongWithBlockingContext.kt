@@ -4,12 +4,12 @@
 
 package benchmarks.actors
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.scheduling.*
 import org.openjdk.jmh.annotations.*
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 
 /*
@@ -26,7 +26,9 @@ import kotlin.coroutines.experimental.*
 @State(Scope.Benchmark)
 open class PingPongWithBlockingContext {
 
+    @UseExperimental(InternalCoroutinesApi::class)
     private val experimental = ExperimentalCoroutineDispatcher(8)
+    @UseExperimental(InternalCoroutinesApi::class)
     private val blocking = experimental.blocking(8)
     private val threadPool = newFixedThreadPoolContext(8, "PongCtx")
 
@@ -49,13 +51,13 @@ open class PingPongWithBlockingContext {
 
     @Benchmark
     fun commonPoolWithContextPingPong() = runBlocking {
-        runPingPongs(CommonPool, threadPool)
+        runPingPongs(ForkJoinPool.commonPool().asCoroutineDispatcher(), threadPool)
     }
 
     private suspend fun runPingPongs(pingContext: CoroutineContext, pongContext: CoroutineContext) {
         val me = Channel<PingPongActorBenchmark.Letter>()
-        val pong = pongActorCoroutine(pongContext)
-        val ping = pingActorCoroutine(pingContext, pong)
+        val pong = CoroutineScope(pongContext).pongActorCoroutine()
+        val ping = CoroutineScope(pingContext).pingActorCoroutine(pong)
         ping.send(PingPongActorBenchmark.Letter(Start(), me))
 
         me.receive()

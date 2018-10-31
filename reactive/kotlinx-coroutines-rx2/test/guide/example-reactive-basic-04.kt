@@ -3,14 +3,14 @@
  */
 
 // This file was automatically generated from coroutines-guide-reactive.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.rx2.guide.basic04
+package kotlinx.coroutines.rx2.guide.basic04
 
 import io.reactivex.*
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.reactive.*
-import kotlin.coroutines.experimental.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
+import kotlin.coroutines.*
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     val source = Flowable.range(1, 5) // a range of five numbers
         .doOnSubscribe { println("OnSubscribe") } // provide some insight
         .doOnComplete { println("OnComplete") }   // ...

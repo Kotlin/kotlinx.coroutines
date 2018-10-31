@@ -3,13 +3,12 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.select05
+package kotlinx.coroutines.guide.select05
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.selects.*
-import kotlin.coroutines.experimental.*
-
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.*
+    
 fun CoroutineScope.switchMapDeferreds(input: ReceiveChannel<Deferred<String>>) = produce<String> {
     var current = input.receive() // start with first received deferred value
     while (isActive) { // loop while not cancelled/closed
@@ -36,7 +35,8 @@ fun CoroutineScope.asyncString(str: String, time: Long) = async {
     str
 }
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     val chan = Channel<Deferred<String>>() // the channel for test
     launch { // launch printing coroutine
         for (s in switchMapDeferreds(chan)) 
@@ -52,4 +52,5 @@ fun main(args: Array<String>) = runBlocking<Unit> {
     delay(1000) // give it time to process
     chan.close() // close the channel ... 
     delay(500) // and wait some time to let it finish
+//sampleEnd
 }

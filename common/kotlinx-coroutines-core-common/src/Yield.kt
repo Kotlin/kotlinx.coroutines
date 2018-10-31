@@ -2,10 +2,10 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlin.coroutines.experimental.*
-import kotlin.coroutines.experimental.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Yields a thread (or thread pool) of the current coroutine dispatcher to other coroutines to run.
@@ -19,7 +19,9 @@ public suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn sc@ { u
     val context = uCont.context
     context.checkCompletion()
     val cont = uCont.intercepted() as? DispatchedContinuation<Unit> ?: return@sc Unit
-    if (!cont.dispatcher.isDispatchNeeded(context)) return@sc Unit
+    if (!cont.dispatcher.isDispatchNeeded(context)) {
+        return@sc if (cont.yieldUndispatched()) COROUTINE_SUSPENDED else Unit
+    }
     cont.dispatchYield(Unit)
     COROUTINE_SUSPENDED
 }

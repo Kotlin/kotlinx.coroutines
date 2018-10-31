@@ -2,12 +2,12 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
-import kotlinx.coroutines.experimental.scheduling.*
+import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.scheduling.*
 import java.util.concurrent.atomic.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 private val COROUTINE_ID = AtomicLong()
 
@@ -26,32 +26,8 @@ internal val useCoroutinesScheduler = systemProp(COROUTINES_SCHEDULER_PROPERTY_N
     }
 }
 
-/**
- * The default [CoroutineDispatcher] that is used by all standard builders.
- * @suppress **Deprecated**: Use [Dispatchers.Default].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.Default",
-    replaceWith = ReplaceWith("Dispatchers.Default",
-        imports = ["kotlinx.coroutines.experimental.Dispatchers"]))
-public actual val DefaultDispatcher: CoroutineDispatcher
-    get() = Dispatchers.Default
-
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
     if (useCoroutinesScheduler) DefaultScheduler else CommonPool
-
-/**
- * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
- * @suppress **Deprecated**: Use [Dispatchers.IO].
- */
-@Suppress("PropertyName")
-@Deprecated(
-    message = "Use Dispatchers.IO",
-    replaceWith = ReplaceWith("Dispatchers.IO",
-        imports = ["kotlinx.coroutines.experimental.*"]))
-public val IO: CoroutineDispatcher
-    get() = Dispatchers.IO
 
 /**
  * Creates context for the new coroutine. It installs [Dispatchers.Default] when no other dispatcher nor
@@ -85,22 +61,10 @@ public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
 }
 
 /**
- * @suppress **Deprecated**: Use extension on CoroutineScope.
- */
-@JvmOverloads // for binary compatibility with newCoroutineContext(context: CoroutineContext) version
-@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-@Deprecated(
-    message = "Use extension on CoroutineScope",
-    replaceWith = ReplaceWith("GlobalScope.newCoroutineContext(context + parent)")
-)
-public fun newCoroutineContext(context: CoroutineContext, parent: Job? = null): CoroutineContext =
-    GlobalScope.newCoroutineContext(context + (parent ?: EmptyCoroutineContext))
-
-/**
  * Executes a block using a given coroutine context.
  */
-internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, block: () -> T): T {
-    val oldValue = updateThreadContext(context)
+internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, countOrElement: Any?, block: () -> T): T {
+    val oldValue = updateThreadContext(context, countOrElement)
     try {
         return block()
     } finally {

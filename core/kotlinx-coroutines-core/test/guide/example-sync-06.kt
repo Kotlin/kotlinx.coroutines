@@ -3,12 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.sync06
+package kotlinx.coroutines.guide.sync06
 
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.sync.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.*
 import kotlin.system.*
-import kotlin.coroutines.experimental.*
 
 suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
     val n = 100  // number of coroutines to launch
@@ -27,11 +26,13 @@ suspend fun CoroutineScope.massiveRun(action: suspend () -> Unit) {
 val mutex = Mutex()
 var counter = 0
 
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
+//sampleStart
     GlobalScope.massiveRun {
         mutex.withLock {
             counter++        
         }
     }
     println("Counter = $counter")
+//sampleEnd    
 }

@@ -3,22 +3,11 @@
  */
 
 // This file was automatically generated from coroutines-guide.md by Knit tool. Do not edit.
-package kotlinx.coroutines.experimental.guide.compose06
+package kotlinx.coroutines.guide.compose06
 
-import kotlinx.coroutines.experimental.*
-import kotlin.system.*
+import kotlinx.coroutines.*
 
-suspend fun doSomethingUsefulOne(): Int {
-    delay(1000L) // pretend we are doing something useful here
-    return 13
-}
-
-suspend fun doSomethingUsefulTwo(): Int {
-    delay(1000L) // pretend we are doing something useful here, too
-    return 29
-}
-
-fun main(args: Array<String>) = runBlocking<Unit> {
+fun main() = runBlocking<Unit> {
     try {
         failedConcurrentSum()
     } catch(e: ArithmeticException) {

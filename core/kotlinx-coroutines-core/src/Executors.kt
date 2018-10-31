@@ -2,13 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package kotlinx.coroutines.experimental
+package kotlinx.coroutines
 
-import kotlinx.coroutines.experimental.internal.*
+import kotlinx.coroutines.internal.*
 import java.io.*
 import java.io.Closeable
 import java.util.concurrent.*
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
 
 /**
  * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks.
@@ -17,7 +17,7 @@ import kotlin.coroutines.experimental.*
  * This class is generally used as a bridge between coroutine-based API and
  * asynchronous API which requires instance of the [Executor].
  */
-public abstract class ExecutorCoroutineDispatcher: CloseableCoroutineDispatcher(), Closeable {
+public abstract class ExecutorCoroutineDispatcher: CoroutineDispatcher(), Closeable {
     /**
      * Closes this coroutine dispatcher and shuts down its executor.
      *
@@ -32,16 +32,9 @@ public abstract class ExecutorCoroutineDispatcher: CloseableCoroutineDispatcher(
 }
 
 /**
- * [CoroutineDispatcher] that implements [Closeable].
- *
- * @suppress **Deprecated**: Use [ExecutorCoroutineDispatcher].
- */
-@Deprecated("Use ExecutorCoroutineDispatcher instead", replaceWith = ReplaceWith("ExecutorCoroutineDispatcher"))
-public abstract class CloseableCoroutineDispatcher: CoroutineDispatcher(), Closeable
-
-/**
  * Converts an instance of [ExecutorService] to an implementation of [ExecutorCoroutineDispatcher].
  */
+@JvmName("from") // this is for a nice Java API, see issue #255
 public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
     // we know that an implementation of Executor.asCoroutineDispatcher actually returns a closeable one
     (this as Executor).asCoroutineDispatcher() as ExecutorCoroutineDispatcher
@@ -53,40 +46,13 @@ public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher 
 public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
     ExecutorCoroutineDispatcherImpl(this)
 
-/** @suppress */
-@JvmName("asCoroutineDispatcher")
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "binary compatibility")
-public fun Executor.asCoroutineDispatcher0(): CoroutineDispatcher = asCoroutineDispatcher()
-
-/**
- * Converts an instance of [ExecutorService] to an implementation of [CloseableCoroutineDispatcher].
- * @suppress **Deprecated**: Return type changed to [ExecutorCoroutineDispatcher].
- */
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "Return type changed to ExecutorCoroutineDispatcher")
-@JvmName("asCoroutineDispatcher") // for binary compatibility
-public fun ExecutorService.asCoroutineDispatcher_Deprecated(): CloseableCoroutineDispatcher =
-    asCoroutineDispatcher()
-
-/**
- * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
- * @suppress **Deprecated**: Renamed to [asCoroutineDispatcher].
- */
-@Deprecated("Renamed to `asCoroutineDispatcher`",
-    replaceWith = ReplaceWith("asCoroutineDispatcher()"))
-public fun Executor.toCoroutineDispatcher(): CoroutineDispatcher =
-    asCoroutineDispatcher()
-
 private class ExecutorCoroutineDispatcherImpl(override val executor: Executor) : ExecutorCoroutineDispatcherBase() {
     init {
         initFutureCancellation()
     }
 }
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
-@InternalCoroutinesApi
-public abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
+internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispatcher(), Delay {
 
     private var removesFutureOnCancellation: Boolean = false
 

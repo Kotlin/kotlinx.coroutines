@@ -11,13 +11,8 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Dispatchers
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.android.Main
-import kotlinx.coroutines.experimental.android.awaitFrame
-import kotlinx.coroutines.experimental.cancelChildren
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.android.*
 import java.util.*
 
 sealed class AnimatedShape {
