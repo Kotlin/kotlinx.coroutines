@@ -460,10 +460,11 @@ internal class CoroutineScheduler(
             // Double check for overprovision
             if (cpuWorkers >= corePoolSize) return 0
             if (created >= maxPoolSize || cpuPermits.availablePermits() == 0) return 0
-            // start & register new worker
-            val newIndex = incrementCreatedWorkers()
+            // start & register new worker, commit index only after successful creation
+            val newIndex = createdWorkers + 1
             require(newIndex > 0 && workers[newIndex] == null)
             val worker = Worker(newIndex).apply { start() }
+            require(newIndex == incrementCreatedWorkers())
             workers[newIndex] = worker
             return cpuWorkers + 1
         }
