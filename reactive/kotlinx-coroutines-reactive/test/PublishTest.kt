@@ -132,6 +132,51 @@ class PublishTest : TestBase() {
     }
 
     @Test
+    fun testParentHandlesFailure() = runTest {
+        expect(1)
+        val deferred = CompletableDeferred<Unit>()
+        val publisher = publish<Unit>(deferred + Dispatchers.Unconfined) {
+            try {
+                expect(3)
+                delay(10000)
+            } finally {
+                expect(5)
+                throw TestException("FAILED")
+            }
+        }
+        var sub: Subscription? = null
+        publisher.subscribe(object : Subscriber<Unit> {
+            override fun onComplete() {
+                expectUnreached()
+            }
+
+            override fun onSubscribe(s: Subscription) {
+                expect(2)
+                sub = s
+            }
+
+            override fun onNext(t: Unit?) {
+                expectUnreached()
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
+        expect(4)
+        sub!!.cancel()
+
+        try {
+            deferred.await()
+            expectUnreached()
+        } catch (e: TestException) {
+            expect(6)
+        }
+
+        finish(7)
+    }
+
+    @Test
     fun testPublishFailureCancelsParent() = runTest(
         expected = { it is TestException }
     ) {
@@ -207,6 +252,4 @@ class PublishTest : TestBase() {
         latch.await()
         finish(8)
     }
-
-    private class TestException : Exception()
 }
