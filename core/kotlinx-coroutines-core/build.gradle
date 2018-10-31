@@ -3,7 +3,7 @@
  */
 
 dependencies {
-    testCompile "com.devexperts.lincheck:core:$lincheck_version"
+    testCompile "com.devexperts.lincheck:lincheck:$lincheck_version"
     testCompile "com.esotericsoftware:kryo:4.0.0"
 }
 

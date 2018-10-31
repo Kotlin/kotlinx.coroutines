@@ -3,25 +3,21 @@
  */
 @file:Suppress("unused")
 
-package kotlinx.coroutines.internal
+package kotlinx.coroutines.linearizability
 
 import com.devexperts.dxlab.lincheck.*
 import com.devexperts.dxlab.lincheck.annotations.*
 import com.devexperts.dxlab.lincheck.paramgen.*
-import com.devexperts.dxlab.lincheck.stress.*
+import com.devexperts.dxlab.lincheck.strategy.stress.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
 class LockFreeListLinearizabilityTest : TestBase() {
     class Node(val value: Int): LockFreeLinkedListNode()
 
-    private lateinit var q: LockFreeLinkedListHead
-
-    @Reset
-    fun resetList() {
-        q = LockFreeLinkedListHead()
-    }
+    private val q: LockFreeLinkedListHead = LockFreeLinkedListHead()
 
     @Operation
     fun addLast(@Param(name = "value") value: Int) {
@@ -52,10 +48,7 @@ class LockFreeListLinearizabilityTest : TestBase() {
         val options = StressOptions()
             .iterations(100)
             .invocationsPerIteration(1000 * stressTestMultiplier)
-            .addThread(1, 2)
-            .addThread(1, 2)
-            .addThread(1, 2)
-            .addThread(1, 2)
+            .threads(4)
         LinChecker.check(LockFreeListLinearizabilityTest::class.java, options)
     }
 }
