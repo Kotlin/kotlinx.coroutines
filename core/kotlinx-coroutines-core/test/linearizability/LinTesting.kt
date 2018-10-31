@@ -6,6 +6,8 @@ package kotlinx.coroutines
 
 import com.devexperts.dxlab.lincheck.Actor
 import com.devexperts.dxlab.lincheck.Result
+import com.devexperts.dxlab.lincheck.Utils.*
+import com.devexperts.dxlab.lincheck.execution.*
 import com.devexperts.dxlab.lincheck.verifier.Verifier
 import java.lang.reflect.Method
 import java.util.*
@@ -57,22 +59,21 @@ class LinTesting {
     }
 }
 
-class LinVerifier(
-    actorsPerThread: List<List<Actor>>, testInstance: Any, resetMethod: Method?
-) : Verifier(actorsPerThread, testInstance, resetMethod) {
+class LinVerifier(scenario: ExecutionScenario,
+                  testClass: Class<*>) : Verifier {
     private val possibleResultsSet: Set<List<List<Result>>> =
-        generateAllLinearizableExecutions(actorsPerThread)
+        generateAllLinearizableExecutions(scenario.parallelExecution)
             .asSequence()
             .map { linEx: List<Actor> ->
-                val res: List<Result> = executeActors(testInstance, linEx)
+                val res: List<Result> = executeActors(testClass.newInstance(), linEx)
                 val actorIds = linEx.asSequence().withIndex().associateBy({ it.value}, { it.index })
-                actorsPerThread.map { actors -> actors.map { actor -> res[actorIds[actor]!!] } }
+                scenario.parallelExecution.map { actors -> actors.map { actor -> res[actorIds[actor]!!] } }
             }.toSet()
 
-    override fun verifyResults(results: List<List<Result>>) {
-        if (!valid(results)) {
+    override fun verifyResults(results: ExecutionResult): Boolean {
+        if (!valid(results.parallelResults)) {
             println("\nNon-linearizable execution:")
-            printResults(results)
+            printResults(results.parallelResults)
             println("\nPossible linearizable executions:")
             possibleResultsSet.forEach { possibleResults ->
                 printResults(possibleResults)
@@ -80,6 +81,8 @@ class LinVerifier(
             }
             throw AssertionError("Non-linearizable execution detected, see log for details")
         }
+
+        return true
     }
 
     private fun printResults(results: List<List<Result>>) {
@@ -103,7 +106,7 @@ class LinVerifier(
     private fun generateAllLinearizableExecutions(actorsPerThread: List<List<Actor>>): List<List<Actor>> {
         val executions = ArrayList<List<Actor>>()
         generateLinearizableExecutions0(
-            executions, actorsPerThread, ArrayList<Actor>(), IntArray(actorsPerThread.size),
+            executions, actorsPerThread, ArrayList(), IntArray(actorsPerThread.size),
             actorsPerThread.sumBy { it.size })
         return executions
     }

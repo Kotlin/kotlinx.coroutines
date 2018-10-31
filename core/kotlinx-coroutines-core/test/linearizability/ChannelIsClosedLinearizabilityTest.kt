@@ -3,13 +3,14 @@
  */
 @file:Suppress("unused")
 
-package kotlinx.coroutines.channels
+package kotlinx.coroutines.linearizability
 
 import com.devexperts.dxlab.lincheck.*
 import com.devexperts.dxlab.lincheck.annotations.*
 import com.devexperts.dxlab.lincheck.paramgen.*
-import com.devexperts.dxlab.lincheck.stress.*
+import com.devexperts.dxlab.lincheck.strategy.stress.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.junit.*
 import java.io.*
 
@@ -17,12 +18,7 @@ import java.io.*
 class ChannelIsClosedLinearizabilityTest : TestBase() {
 
     private val lt = LinTesting()
-    private lateinit var channel: Channel<Int>
-
-    @Reset
-    fun resetChannel() {
-        channel = Channel()
-    }
+    private val channel = Channel<Int>()
 
     @Operation(runOnce = true)
     fun send1(@Param(name = "value") value: Int) = lt.run("send1") { channel.send(value) }
@@ -50,20 +46,8 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
         val options = StressOptions()
             .iterations(100)
             .invocationsPerIteration(1000 * stressTestMultiplier)
-            .addThread(1, 3)
-            .addThread(1, 3)
-            .addThread(1, 3)
+            .threads(3)
             .verifier(LinVerifier::class.java)
-            .injectExecution { actors, methods ->
-                actors[0].add(actorMethod(methods, "receive1"))
-                actors[0].add(actorMethod(methods, "receive2"))
-                actors[0].add(actorMethod(methods, "close1"))
-
-                actors[1].add(actorMethod(methods, "send2"))
-                actors[1].add(actorMethod(methods, "send1"))
-
-                actors[2].add(actorMethod(methods, "isClosedForSend"))
-            }
 
         LinChecker.check(ChannelIsClosedLinearizabilityTest::class.java, options)
     }
