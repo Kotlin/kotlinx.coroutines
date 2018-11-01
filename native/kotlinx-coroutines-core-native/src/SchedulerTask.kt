@@ -4,10 +4,7 @@
 
 package kotlinx.coroutines
 
-@Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias SchedulerTask = Runnable
-
-internal actual abstract class SchedulerTaskBase actual constructor() : SchedulerTask
+internal actual abstract class SchedulerTask : Runnable
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias SchedulerTaskContext = Unit

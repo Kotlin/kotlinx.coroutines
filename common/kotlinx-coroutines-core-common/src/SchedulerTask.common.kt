@@ -4,9 +4,7 @@
 
 package kotlinx.coroutines
 
-internal expect interface SchedulerTask : Runnable 
-
-internal expect abstract class SchedulerTaskBase() : SchedulerTask
+internal expect abstract class SchedulerTask() : Runnable
 
 internal expect interface SchedulerTaskContext
 

@@ -8,11 +8,6 @@ import kotlinx.coroutines.scheduling.*
 
 internal actual typealias SchedulerTask = Task
 
-internal actual abstract class SchedulerTaskBase actual constructor() : SchedulerTask {
-    override var submissionTime: Long = 0
-    override var taskContext: TaskContext = NonBlockingContext
-}
-
 internal actual typealias SchedulerTaskContext = TaskContext
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")

@@ -82,18 +82,20 @@ internal object NonBlockingContext : TaskContext {
     }
 }
 
-internal interface Task : Runnable {
-    var submissionTime: Long
-    var taskContext: TaskContext
+internal abstract class Task(
+    @JvmField var submissionTime: Long,
+    @JvmField var taskContext: TaskContext
+) : Runnable {
+    constructor() : this(0, NonBlockingContext)
     val mode: TaskMode get() = taskContext.taskMode
 }
 
 // Non-reusable Task implementation to wrap Runnable instances that do not otherwise implement task
 internal class TaskImpl(
     @JvmField val block: Runnable,
-    override var submissionTime: Long,
-    override var taskContext: TaskContext
-) : SchedulerTaskBase() {
+    submissionTime: Long,
+    taskContext: TaskContext
+) : Task(submissionTime, taskContext) {
     override fun run() {
         try {
             block.run()
