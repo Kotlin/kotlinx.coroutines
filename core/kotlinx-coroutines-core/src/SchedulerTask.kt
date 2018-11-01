@@ -13,6 +13,6 @@ internal actual typealias SchedulerTaskContext = TaskContext
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = taskContext
 
-@Suppress("NOTHING_TO_INLINE")
-internal actual inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext) =
-    taskContext.afterTask()
+@Suppress("NOTHING_TO_INLINE", "EXTENSION_SHADOWED_BY_MEMBER")
+internal actual inline fun SchedulerTaskContext.afterTask() =
+    afterTask()

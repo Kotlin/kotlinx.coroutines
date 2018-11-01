@@ -239,7 +239,7 @@ internal abstract class DispatchedTask<in T>(
         } catch (e: Throwable) {
             throw DispatchException("Unexpected exception running $this", e)
         } finally {
-            afterTask(taskContext)
+            taskContext.afterTask()
         }
     }
 }

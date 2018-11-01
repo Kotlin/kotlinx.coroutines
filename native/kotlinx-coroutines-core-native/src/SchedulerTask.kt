@@ -12,4 +12,4 @@ internal actual typealias SchedulerTaskContext = Unit
 internal actual val SchedulerTask.taskContext: SchedulerTaskContext get() = kotlin.Unit
 
 @Suppress("NOTHING_TO_INLINE")
-internal actual inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext) {}
+internal actual inline fun SchedulerTaskContext.afterTask() {}

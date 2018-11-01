@@ -10,4 +10,4 @@ internal expect interface SchedulerTaskContext
 
 internal expect val SchedulerTask.taskContext: SchedulerTaskContext
 
-internal expect inline fun SchedulerTask.afterTask(taskContext: SchedulerTaskContext)
+internal expect inline fun SchedulerTaskContext.afterTask()

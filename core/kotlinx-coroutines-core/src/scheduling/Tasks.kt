@@ -100,7 +100,7 @@ internal class TaskImpl(
         try {
             block.run()
         } finally {
-            afterTask(taskContext)
+            taskContext.afterTask()
         }
     }
 
