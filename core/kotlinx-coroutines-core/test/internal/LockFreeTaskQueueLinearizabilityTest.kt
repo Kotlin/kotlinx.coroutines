@@ -14,8 +14,15 @@ import kotlin.test.*
 
 @OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeTaskQueueLinearizabilityTest : TestBase() {
-    private var singleConsumer = false
+class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityTestBase(singleConsumer = true)
+
+@OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
+@Param(name = "value", gen = IntGen::class, conf = "1:3")
+class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityTestBase(singleConsumer = false)
+
+open class LockFreeTaskQueueLinearizabilityTestBase(
+    private val singleConsumer: Boolean
+) : TestBase() {
     private lateinit var q: LockFreeTaskQueue<Int>
 
     @Reset
@@ -37,24 +44,13 @@ class LockFreeTaskQueueLinearizabilityTest : TestBase() {
 //    fun removeFirstOrNull() = q.removeFirstOrNull()
 
     @Test
-    fun testLinearizabilitySC() {
-        singleConsumer = true
-        linTest()
-    }
-
-    @Test
-    fun testLinearizabilityMC() {
-        singleConsumer = false
-        linTest()
-    }
-
-    private fun linTest() {
+    fun linTest() {
         val options = StressOptions()
             .iterations(100 * stressTestMultiplierSqrt)
             .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .addThread(1, 3)
             .addThread(1, 3)
             .addThread(1, 3)
-        LinChecker.check(LockFreeTaskQueueLinearizabilityTest::class.java, options)
+        LinChecker.check(this::class.java, options)
     }
 }

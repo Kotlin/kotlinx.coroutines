@@ -6,12 +6,25 @@ package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import org.junit.runner.*
+import org.junit.runners.*
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.test.*
 
 // Tests many short queues to stress copy/resize
-class LockFreeTaskQueueStressTest : TestBase() {
+@RunWith(Parameterized::class)
+class LockFreeTaskQueueStressTest(
+    private val nConsumers: Int
+) : TestBase() {
+    companion object {
+        @Parameterized.Parameters(name = "nConsumers={0}")
+        @JvmStatic
+        fun params(): Collection<Int> = listOf(1, 3)
+    }
+
+    private val singleConsumer = nConsumers == 1
+
     private val nSeconds = 3 * stressTestMultiplier
     private val nProducers = 4
     private val batchSize = 100
@@ -25,7 +38,7 @@ class LockFreeTaskQueueStressTest : TestBase() {
     private val done = atomic(0)
     private val doneProducers = atomic(0)
 
-    private val barrier = CyclicBarrier(nProducers + 2)
+    private val barrier = CyclicBarrier(nProducers + nConsumers + 1)
 
     private class Item(val producer: Int, val index: Long)
 
@@ -34,7 +47,7 @@ class LockFreeTaskQueueStressTest : TestBase() {
         val threads = mutableListOf<Thread>()
         threads += thread(name = "Pacer", start = false) {
             while (done.value == 0) {
-                queue.value = LockFreeTaskQueue(false)
+                queue.value = LockFreeTaskQueue(singleConsumer)
                 batch.value = 0
                 doneProducers.value = 0
                 barrier.await() // start consumers & producers
@@ -44,25 +57,30 @@ class LockFreeTaskQueueStressTest : TestBase() {
             println("Pacer done")
             barrier.await() // wakeup the rest
         }
-        threads += thread(name = "Consumer", start = false) {
-            while (true) {
-                barrier.await()
-                val queue = queue.value ?: break
+        threads += List(nConsumers) { consumer ->
+            thread(name = "Consumer-$consumer", start = false) {
                 while (true) {
-                    val item = queue.removeFirstOrNull()
-                    if (item == null) {
-                        if (doneProducers.value == nProducers && queue.isEmpty) break // that's it
-                        continue // spin to retry
+                    barrier.await()
+                    val queue = queue.value ?: break
+                    while (true) {
+                        val item = queue.removeFirstOrNull()
+                        if (item == null) {
+                            if (doneProducers.value == nProducers && queue.isEmpty) break // that's it
+                            continue // spin to retry
+                        }
+                        consumed.incrementAndGet()
+                        if (singleConsumer) {
+                            // This check only properly works in single-consumer case
+                            val eItem = expected[item.producer]++
+                            if (eItem != item.index) error("Expected $eItem but got ${item.index} from Producer-${item.producer}")
+                        }
                     }
-                    consumed.incrementAndGet()
-                    val eItem = expected[item.producer]++
-                    if (eItem != item.index) error("Expected $eItem but got ${item.index} from Producer-${item.producer}")
+                    barrier.await()
                 }
-                barrier.await()
+                println("Consumer-$consumer done")
             }
-            println("Consumer done")
         }
-        val producers = List(nProducers) { producer ->
+        threads += List(nProducers) { producer ->
             thread(name = "Producer-$producer", start = false) {
                 var index = 0L
                 while (true) {
@@ -79,7 +97,6 @@ class LockFreeTaskQueueStressTest : TestBase() {
                 println("Producer-$producer done")
             }
         }
-        threads += producers
         threads.forEach {
             it.setUncaughtExceptionHandler { t, e ->
                 System.err.println("Thread $t failed: $e")

@@ -105,7 +105,8 @@ internal class LockFreeTaskQueueCore<E : Any>(
         _state.loop { state ->
             if (state and (FROZEN_MASK or CLOSED_MASK) != 0L) return state.addFailReason() // cannot add
             state.withState { head, tail ->
-                // If queue is Single-Consumer than there could be one element beyond head that we cannot overwrite,
+                val mask = this.mask // manually move instance field to local for performance
+                // If queue is Single-Consumer then there could be one element beyond head that we cannot overwrite,
                 // so we check for full queue with an extra margin of one element
                 if ((tail + 2) and mask == head and mask) return ADD_FROZEN // overfull, so do freeze & copy
                 // If queue is Multi-Consumer then the consumer could still have not cleared element
