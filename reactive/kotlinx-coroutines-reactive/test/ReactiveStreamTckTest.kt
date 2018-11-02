@@ -24,7 +24,7 @@ class ReactiveStreamTckTest {
 
     public class ReactiveStreamTckTestSuite(
         private val dispatcher: Dispatcher
-    ) : PublisherVerification<Long>(TestEnvironment()) {
+    ) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
 
         private val scope = CoroutineScope(dispatcher.dispatcher + NonCancellable)
 
