@@ -1,9 +1,12 @@
+public final class kotlinx/coroutines/androidx/lifecycle/LifecycleDefaultScopesKt {
+	public static final fun getCoroutineScope (Landroidx/lifecycle/Lifecycle;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun getCoroutineScope (Landroidx/lifecycle/LifecycleOwner;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun getJob (Landroidx/lifecycle/Lifecycle;)Lkotlinx/coroutines/Job;
+}
+
 public final class kotlinx/coroutines/androidx/lifecycle/LifecycleKt {
 	public static final fun createJob (Landroidx/lifecycle/Lifecycle;Landroidx/lifecycle/Lifecycle$State;)Lkotlinx/coroutines/Job;
 	public static synthetic fun createJob$default (Landroidx/lifecycle/Lifecycle;Landroidx/lifecycle/Lifecycle$State;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun createScope (Landroidx/lifecycle/Lifecycle;Landroidx/lifecycle/Lifecycle$State;)Lkotlinx/coroutines/CoroutineScope;
-	public static final fun getCoroutineScope (Landroidx/lifecycle/Lifecycle;)Lkotlinx/coroutines/CoroutineScope;
-	public static final fun getCoroutineScope (Landroidx/lifecycle/LifecycleOwner;)Lkotlinx/coroutines/CoroutineScope;
-	public static final fun getJob (Landroidx/lifecycle/Lifecycle;)Lkotlinx/coroutines/Job;
 }
 
