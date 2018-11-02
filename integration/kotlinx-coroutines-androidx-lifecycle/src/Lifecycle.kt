@@ -4,10 +4,7 @@ import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Lifecycle.State.INITIALIZED
 import androidx.lifecycle.LifecycleOwner
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 
 /**
  * Returns a [CoroutineScope] that uses [Dispatchers.Main] by default, and that will be cancelled as
@@ -34,14 +31,19 @@ fun Lifecycle.createJob(activeWhile: Lifecycle.State = INITIALIZED): Job {
         "DESTROYED is a terminal state that is forbidden for createJob(…), to avoid leaks."
     }
     return SupervisorJob().also { job ->
-        if (!currentState.isAtLeast(activeWhile)) job.cancel()
-        else addObserver(object : GenericLifecycleObserver {
-            override fun onStateChanged(source: LifecycleOwner?, event: Lifecycle.Event) {
-                if (!currentState.isAtLeast(activeWhile)) {
-                    removeObserver(this)
-                    job.cancel()
-                }
+        when (currentState) {
+            Lifecycle.State.DESTROYED -> job.cancel() // Fast path if already destroyed
+            else -> GlobalScope.launch(Dispatchers.Main) { // State is usually synced on next loop,
+                // this allows to use STARTED from onStart in Activities for example.
+                addObserver(object : GenericLifecycleObserver {
+                    override fun onStateChanged(source: LifecycleOwner?, event: Lifecycle.Event) {
+                        if (!currentState.isAtLeast(activeWhile)) {
+                            removeObserver(this)
+                            job.cancel()
+                        }
+                    }
+                })
             }
-        })
+        }
     }
 }
