@@ -2,7 +2,6 @@ package kotlinx.coroutines.androidx.lifecycle
 
 import androidx.lifecycle.GenericLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.Lifecycle.State.DESTROYED
 import androidx.lifecycle.Lifecycle.State.INITIALIZED
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +43,6 @@ inline val LifecycleOwner.coroutineScope get() = lifecycle.coroutineScope
  * already cancelled scope.
  */
 fun Lifecycle.createScope(activeWhile: Lifecycle.State): CoroutineScope {
-    if (activeWhile == DESTROYED) return coroutineScope
     return CoroutineScope(createJob(activeWhile) + Dispatchers.Main)
 }
 
