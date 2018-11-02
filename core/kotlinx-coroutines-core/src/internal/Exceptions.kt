@@ -65,7 +65,7 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
     if (recoveryDisabled(exception)) throw exception
     suspendCoroutineUninterceptedOrReturn<Nothing> {
         if (it !is CoroutineStackFrame) throw exception
-        throw  recoverFromStackFrame(exception, it)
+        throw recoverFromStackFrame(exception, it)
     }
 }
 
@@ -86,34 +86,7 @@ internal actual fun <E : Throwable> unwrap(exception: E): E {
 private fun <E : Throwable> recoveryDisabled(exception: E) =
     !RECOVER_STACKTRACE || !DEBUG || exception is CancellationException || exception is NonRecoverableThrowable
 
-@Suppress("UNCHECKED_CAST")
-private fun <E : Throwable> tryCopyException(exception: E): E? {
-    /*
-     * Try to reflectively find constructor(), constructor(message, cause) or constructor(cause).
-     * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
-     */
-    var newException: E? = null
-    try {
-        val constructors = exception.javaClass.constructors.sortedByDescending { it.parameterTypes.size }
-        for (constructor in constructors) {
-            val parameters = constructor.parameterTypes
-            if (parameters.size == 2 && parameters[0] == String::class.java && parameters[1] == Throwable::class.java) {
-                newException = constructor.newInstance(exception.message, exception) as E
-            } else if (parameters.size == 1 && parameters[0] == Throwable::class.java) {
-                newException = constructor.newInstance(exception) as E
-            } else if (parameters.isEmpty()) {
-                newException = (constructor.newInstance() as E).also { it.initCause(exception) }
-            }
 
-            if (newException != null) {
-                break
-            }
-        }
-    } catch (e: Exception) {
-        // Do nothing
-    }
-    return newException
-}
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayList<StackTraceElement> {
     val stack = ArrayList<StackTraceElement>()
