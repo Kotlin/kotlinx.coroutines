@@ -14,20 +14,12 @@ import kotlin.test.*
 
 @OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityTestBase(singleConsumer = true)
-
-@OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
-@Param(name = "value", gen = IntGen::class, conf = "1:3")
-class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityTestBase(singleConsumer = false)
-
-open class LockFreeTaskQueueLinearizabilityTestBase(
-    private val singleConsumer: Boolean
-) : TestBase() {
+class LockFreeTaskQueueLinearizabilityTestSC : LockFreeTaskQueueLinearizabilityTestBase() {
     private lateinit var q: LockFreeTaskQueue<Int>
 
     @Reset
     fun resetQueue() {
-        q = LockFreeTaskQueue(singleConsumer)
+        q = LockFreeTaskQueue(singleConsumer = true) // SINGLE-CONSUMER !!!
     }
 
     @Operation
@@ -44,6 +36,37 @@ open class LockFreeTaskQueueLinearizabilityTestBase(
 //    fun removeFirstOrNull() = q.removeFirstOrNull()
 
     @Test
+    fun testSC() = linTest()
+}
+
+@OpGroupConfigs(OpGroupConfig(name = "consumer", nonParallel = true))
+@Param(name = "value", gen = IntGen::class, conf = "1:3")
+class LockFreeTaskQueueLinearizabilityTestMC : LockFreeTaskQueueLinearizabilityTestBase() {
+    private lateinit var q: LockFreeTaskQueue<Int>
+
+    @Reset
+    fun resetQueue() {
+        q = LockFreeTaskQueue(singleConsumer = false) // MULTI-CONSUMER !!!
+    }
+
+    @Operation
+    fun close() = q.close()
+
+    @Operation
+    fun addLast(@Param(name = "value") value: Int) = q.addLast(value)
+
+    /**
+     * Note, that removeFirstOrNull is not linearizable w.r.t. to addLast, so here
+     * we test only linearizability of close.
+     */
+//    @Operation(group = "consumer")
+//    fun removeFirstOrNull() = q.removeFirstOrNull()
+
+    @Test
+    fun testMC() = linTest()
+}
+
+open class LockFreeTaskQueueLinearizabilityTestBase : TestBase() {
     fun linTest() {
         val options = StressOptions()
             .iterations(100 * stressTestMultiplierSqrt)
