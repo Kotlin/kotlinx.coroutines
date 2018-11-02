@@ -16,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap
  * Note that this value is cached until the Lifecycle reaches the destroyed state.
  */
 val Lifecycle.coroutineScope: CoroutineScope
-    get() = lifecycleCoroutineScopes[this] ?: job.let { job ->
+    get() = cachedLifecycleCoroutineScopes[this] ?: job.let { job ->
         val newScope = CoroutineScope(job + Dispatchers.Main)
         if (job.isActive) {
-            lifecycleCoroutineScopes[this] = newScope
-            job.invokeOnCompletion { _ -> lifecycleCoroutineScopes -= this }
+            cachedLifecycleCoroutineScopes[this] = newScope
+            job.invokeOnCompletion { _ -> cachedLifecycleCoroutineScopes -= this }
         }
         newScope
     }
@@ -42,12 +42,12 @@ inline val LifecycleOwner.coroutineScope get() = lifecycle.coroutineScope
  * You can use this job for custom [CoroutineScope]s, or as a parent [Job].
  */
 val Lifecycle.job: Job
-    get() = lifecycleJobs[this] ?: createJob().also {
+    get() = cachedLifecycleJobs[this] ?: createJob().also {
         if (it.isActive) {
-            lifecycleJobs[this] = it
-            it.invokeOnCompletion { _ -> lifecycleJobs -= this }
+            cachedLifecycleJobs[this] = it
+            it.invokeOnCompletion { _ -> cachedLifecycleJobs -= this }
         }
     }
 
-private val lifecycleJobs = ConcurrentHashMap<Lifecycle, Job>()
-private val lifecycleCoroutineScopes = ConcurrentHashMap<Lifecycle, CoroutineScope>()
+private val cachedLifecycleJobs = ConcurrentHashMap<Lifecycle, Job>()
+private val cachedLifecycleCoroutineScopes = ConcurrentHashMap<Lifecycle, CoroutineScope>()
