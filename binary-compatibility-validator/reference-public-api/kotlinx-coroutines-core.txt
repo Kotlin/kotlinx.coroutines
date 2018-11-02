@@ -50,10 +50,12 @@ public final class kotlinx/coroutines/CancellableContinuation$DefaultImpls {
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public class kotlinx/coroutines/CancellableContinuationImpl : java/lang/Runnable, kotlinx/coroutines/CancellableContinuation {
+public class kotlinx/coroutines/CancellableContinuationImpl : java/lang/Runnable, kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation {
 	public fun <init> (Lkotlin/coroutines/Continuation;I)V
 	public fun completeResume (Ljava/lang/Object;)V
+	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun getSuccessfulResult (Ljava/lang/Object;)Ljava/lang/Object;
 	public fun initCancellability ()V
 	protected fun nameString ()Ljava/lang/String;

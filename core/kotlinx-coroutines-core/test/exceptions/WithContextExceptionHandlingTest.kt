@@ -26,11 +26,11 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     fun testCancellation() = runTest {
         /*
          * context cancelled without cause
-         * code itself throws ISE
-         * Result: ISE
+         * code itself throws TE2
+         * Result: TE2
          */
-        runCancellation(null, IllegalStateException()) { e ->
-            assertTrue(e is IllegalStateException)
+        runCancellation(null, TestException2()) { e ->
+            assertTrue(e is TestException2)
             assertNull(e.cause)
             val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
@@ -40,30 +40,30 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testCancellationWithException() = runTest {
         /*
-         * context cancelled with IOE
-         * block itself throws ISE
-         * Result: IOE with suppressed ISE
+         * context cancelled with TE
+         * block itself throws TE2
+         * Result: TE with suppressed TE2
          */
-        val cancellationCause = IOException()
-        runCancellation(cancellationCause, IllegalStateException()) { e ->
-            assertTrue(e is IOException)
+        val cancellationCause = TestException()
+        runCancellation(cancellationCause, TestException2()) { e ->
+            assertTrue(e is TestException)
             assertNull(e.cause)
             val suppressed = e.suppressed
             assertEquals(suppressed.size, 1)
-            assertTrue(suppressed[0] is IllegalStateException)
+            assertTrue(suppressed[0] is TestException2)
         }
     }
 
     @Test
     fun testSameException() = runTest {
         /*
-         * context cancelled with ISE
-         * block itself throws the same ISE
-         * Result: ISE
+         * context cancelled with TE
+         * block itself throws the same TE
+         * Result: TE
          */
-        val cancellationCause = IllegalStateException()
+        val cancellationCause = TestException()
         runCancellation(cancellationCause, cancellationCause) { e ->
-            assertTrue(e is IllegalStateException)
+            assertTrue(e is TestException)
             assertNull(e.cause)
             val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
@@ -89,12 +89,12 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testSameCancellationWithException() = runTest {
         /*
-         * context cancelled with CancellationException(IOE)
-         * block itself throws the same IOE
-         * Result: IOE
+         * context cancelled with CancellationException(TE)
+         * block itself throws the same TE
+         * Result: TE
          */
         val cancellationCause = CancellationException()
-        val exception = IOException()
+        val exception = TestException()
         cancellationCause.initCause(exception)
         runCancellation(cancellationCause, exception) { e ->
             assertSame(exception, e)
@@ -106,13 +106,13 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testConflictingCancellation() = runTest {
         /*
-         * context cancelled with ISE
-         * block itself throws CE(IOE)
-         * Result: ISE (because cancellation exception is always ignored and not handled)
+         * context cancelled with TE
+         * block itself throws CE(TE)
+         * Result: TE (because cancellation exception is always ignored and not handled)
          */
-        val cancellationCause = IllegalStateException()
+        val cancellationCause = TestException()
         val thrown = CancellationException()
-        thrown.initCause(IOException())
+        thrown.initCause(TestException())
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
             assertTrue(e.suppressed.isEmpty())
@@ -122,11 +122,11 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testConflictingCancellation2() = runTest {
         /*
-         * context cancelled with ISE
+         * context cancelled with TE
          * block itself throws CE
-         * Result: ISE
+         * Result: TE
          */
-        val cancellationCause = IllegalStateException()
+        val cancellationCause = TestException()
         val thrown = CancellationException()
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
@@ -161,9 +161,9 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     @Test
     fun testThrowingCancellationWithCause() = runTest {
-        // Exception are never unwrapped, so if CE(IOE) is thrown then it is the cancellation cause
+        // Exception are never unwrapped, so if CE(TE) is thrown then it is the cancellation cause
         val thrown = CancellationException()
-        thrown.initCause(IOException())
+        thrown.initCause(TestException())
         runThrowing(thrown) { e ->
            assertSame(thrown, e)
         }
@@ -179,7 +179,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest {
-        val cause = IOException()
+        val cause = TestException()
         runOnlyCancellation(cause) { e ->
             assertSame(cause, e)
             assertTrue(e.suppressed.isEmpty())
@@ -206,7 +206,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     }
 
     private suspend fun runCancellation(
-        cancellationCause: Exception?,
+        cancellationCause: Throwable?,
         thrownException: Throwable,
         exceptionChecker: (Throwable) -> Unit
     ) {

@@ -14,7 +14,9 @@ import kotlin.jvm.*
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
-) : AbstractCoroutine<T>(context, true) {
+) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
+    final override val callerFrame: CoroutineStackFrame? get() = uCont as CoroutineStackFrame?
+    final override fun getStackTraceElement(): StackTraceElement? = null
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
     @Suppress("UNCHECKED_CAST")

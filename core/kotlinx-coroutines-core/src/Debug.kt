@@ -13,6 +13,20 @@ import kotlinx.coroutines.internal.*
 public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
 
 /**
+ * Name of the boolean property that controls stacktrace recovery (enabled by default) on JVM.
+ * Stacktrace recovery is enabled if both debug and stacktrace recovery modes are enabled.
+ *
+ * Stacktrace recovery mode wraps every exception into the exception of the same type with original exception
+ * as cause, but with stacktrace of the current coroutine.
+ * Exception is instantiated using reflection by using no-arg, cause or cause and message constructor.
+ * Stacktrace is not recovered if exception is an instance of [CancellationException] or [NonRecoverableThrowable].
+ *
+ * This mechanism is currently supported for channels, [async], [launch], [coroutineScope], [supervisorScope]
+ * and [withContext] builders.
+ */
+internal const val STACKTRACE_RECOVERY_PROPERTY_NAME = "kotlinx.coroutines.stacktrace.recovery"
+
+/**
  * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
  */
 public const val DEBUG_PROPERTY_VALUE_AUTO = "auto"
@@ -35,6 +49,8 @@ internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
         else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
     }
 }
+
+internal val RECOVER_STACKTRACE = systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
 // internal debugging tools
 
