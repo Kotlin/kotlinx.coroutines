@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -133,7 +134,7 @@ internal abstract class AbstractContinuation<in T>(
         if (trySuspend()) return COROUTINE_SUSPENDED
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         val state = this.state
-        if (state is CompletedExceptionally) throw state.cause
+        if (state is CompletedExceptionally) throw recoverStackTrace(state.cause, this)
         return getSuccessfulResult(state)
     }
 

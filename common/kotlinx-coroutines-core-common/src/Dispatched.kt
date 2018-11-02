@@ -280,4 +280,4 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
 
 
 @Suppress("NOTHING_TO_INLINE")
-private inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) = resumeWith(Result.failure(recoverStackTrace(exception, this)))
+internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) = resumeWith(Result.failure(recoverStackTrace(exception, this)))

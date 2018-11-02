@@ -204,7 +204,7 @@ class StackTraceRecoveryTest : TestBase() {
 
         val causes = stacktrace.count("Caused by")
         assertNotEquals(0, causes)
-        assertEquals(causes, traces.map { it.count("Caused by") }.sum())
+        assertEquals(traces.map { it.count("Caused by") }.sum(), causes)
     }
 
     private fun toStackTrace(t: Throwable): String {
