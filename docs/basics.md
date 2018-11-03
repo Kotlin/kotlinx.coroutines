@@ -75,7 +75,7 @@ Here we are launching a new coroutine in the [GlobalScope], meaning that the lif
 coroutine is limited only by the lifetime of the whole application.  
 
 You can achieve the same result replacing
-`GlobalScope.launch { ... }` with `thread { ... }` and `delay(...)` with `Thread.sleep(...)`. Try it.
+`GlobalScope.launch { ... }` with `Thread { ... }.run()` and `delay(...)` with `Thread.sleep(...)`. Try it.
 
 If you start by replacing `GlobalScope.launch` by `thread`, the compiler produces the following error:
 
