@@ -7,7 +7,6 @@
 
 package kotlinx.coroutines
 
-import kotlin.coroutines.*
 import kotlin.test.*
 
 class WithContextTest : TestBase() {
@@ -85,20 +84,25 @@ class WithContextTest : TestBase() {
         }
         expect(2)
         val job = Job()
-        val result = withContext(coroutineContext + job) { // same context + new job
-            expect(3) // still here
-            job.cancel() // cancel out job!
-            try {
-                yield() // shall throw CancellationException
-                expectUnreached()
-            } catch (e: CancellationException) {
-                expect(4)
+        try {
+            withContext(coroutineContext + job) {
+                // same context + new job
+                expect(3) // still here
+                job.cancel() // cancel out job!
+                try {
+                    yield() // shall throw CancellationException
+                    expectUnreached()
+                } catch (e: CancellationException) {
+                    expect(4)
+                }
+                "OK"
             }
-            "OK"
+
+            expectUnreached()
+        } catch (e: CancellationException) {
+            expect(5)
+            // will wait for the first coroutine
         }
-        assertEquals("OK", result)
-        expect(5)
-        // will wait for the first coroutine
     }
 
     @Test
@@ -299,14 +303,5 @@ class WithContextTest : TestBase() {
             expect(3)
         }
         finish(5)
-    }
-
-    private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
-        val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
-        return object : CoroutineDispatcher() {
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                dispatcher.dispatch(context, block)
-            }
-        }
     }
 }

@@ -21,4 +21,24 @@ class WithTimeoutOrNullJvmTest : TestBase() {
         // outer timeout results in null
         assertEquals(null, result)
     }
+
+    @Test
+    fun testIgnoredTimeout() = runTest {
+        val value =withTimeout(1) {
+            Thread.sleep(10)
+            42
+        }
+
+        assertEquals(42, value)
+    }
+
+    @Test
+    fun testIgnoredTimeoutOnNull() = runTest {
+        val value = withTimeoutOrNull(1) {
+            Thread.sleep(10)
+            42
+        }
+
+        assertEquals(42, value)
+    }
 }

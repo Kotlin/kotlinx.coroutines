@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlin.coroutines.*
+
 public expect open class TestBase constructor() {
     public val isStressTest: Boolean
     public val stressTestMultiplier: Int
@@ -26,3 +28,13 @@ public class TestException1(message: String? = null) : Throwable(message)
 public class TestException2(message: String? = null) : Throwable(message)
 public class TestException3(message: String? = null) : Throwable(message)
 public class TestRuntimeException(message: String? = null) : RuntimeException(message)
+
+// Wrap context to avoid fast-paths on dispatcher comparison
+public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
+    val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
+    return object : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            dispatcher.dispatch(context, block)
+        }
+    }
+}
