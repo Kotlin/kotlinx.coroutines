@@ -7,7 +7,6 @@ package kotlinx.coroutines.scheduling
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.lang.UnsupportedOperationException
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
@@ -43,12 +42,13 @@ open class ExperimentalCoroutineDispatcher(
         corePoolSize: Int = CORE_POOL_SIZE,
         maxPoolSize: Int = MAX_POOL_SIZE,
         schedulerName: String = DEFAULT_SCHEDULER_NAME
-    ) : this(
-        corePoolSize,
-        maxPoolSize,
-        IDLE_WORKER_KEEP_ALIVE_NS,
-        schedulerName
-    )
+    ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS, schedulerName)
+
+    @Deprecated(message = "Binary compatibility for Ktor 1.0-beta", level = DeprecationLevel.HIDDEN)
+    constructor(
+        corePoolSize: Int = CORE_POOL_SIZE,
+        maxPoolSize: Int = MAX_POOL_SIZE
+    ) : this(corePoolSize, maxPoolSize, IDLE_WORKER_KEEP_ALIVE_NS)
 
     override val executor: Executor
         get() = coroutineScheduler
