@@ -1,40 +1,51 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.0.1
+ 
+* Align `publisher` implementation with Reactive TCK.
+* Reimplement `future` coroutine builders on top of `AbstractCoroutine`	(#751).
+* Performance optimizations in `Dispatchers.Default` and `Dispatchers.IO`.
+* Use only public API during `JavaFx` instantiation, fixes warnings on Java 9 and build on Java 11 (#463).
+* Updated contract of `CancellableContinuation.resumeWithException` (documentation fix, see #712).
+* Check cancellation on fast-path of all in-place coroutine builders (`withContext`, `coroutineScope`, `supervisorScope`, `withTimeout` and `withTimeoutOrNull`).
+* Add optional prefix to thread names of `ExperimentalCoroutineDispatcher` (#661).
+* Fixed bug when `ExperimentalCoroutineDispatcher` could end up in inconsistent state if `Thread` constructor throws an exception (#748).
+
 ## Version 1.0.0
 
-  * All Kotlin dependencies updated to 1.3 release version.
-  * Fixed potential memory leak in `HandlerDispatcher.scheduleResumeAfterDelay`, thanks @cbeyls.
-  * `yield` support for `Unconfined` and immediate dispatchers (#737).
-  * Various documentation improvements.
+* All Kotlin dependencies updated to 1.3 release version.
+* Fixed potential memory leak in `HandlerDispatcher.scheduleResumeAfterDelay`, thanks @cbeyls.
+* `yield` support for `Unconfined` and immediate dispatchers (#737).
+* Various documentation improvements.
 
 ## Version 1.0.0-RC1
 
- * Coroutines API is updated to Kotlin 1.3.
- * Deprecated API is removed or marked as `internal`.
- * Experimental and internal coroutine API is marked with corresponding `kotlin.experimental.Experimental` annotation. If you are using `@ExperimentalCoroutinesApi` or `@InternalCoroutinesApi` you should explicitly opt-in, otherwise compilation warning (or error) will be produced. 
- * `Unconfined` dispatcher (and all dispatchers which support immediate invocation) forms event-loop on top of current thread, thus preventing all `StackOverflowError`s. `Unconfined` dispatcher is now much safer for the general use and may leave its experimental status soon (#704).
- * Significantly improved performance of suspending hot loops in `kotlinx.coroutines` (#537).
- * Proguard rules are embedded into coroutines JAR to assist jettifier (#657)
- * Fixed bug in shutdown sequence of `runBlocking` (#692).
- * `ReceiveChannel.receiveOrNull` is marked as obsolete and deprecated.
- * `Job.cancel(cause)` and `ReceiveChannel.cancel(cause)` are deprecated, `cancel()` returns `Unit` (#713).
+* Coroutines API is updated to Kotlin 1.3.
+* Deprecated API is removed or marked as `internal`.
+* Experimental and internal coroutine API is marked with corresponding `kotlin.experimental.Experimental` annotation. If you are using `@ExperimentalCoroutinesApi` or `@InternalCoroutinesApi` you should explicitly opt-in, otherwise compilation warning (or error) will be produced. 
+* `Unconfined` dispatcher (and all dispatchers which support immediate invocation) forms event-loop on top of current thread, thus preventing all `StackOverflowError`s. `Unconfined` dispatcher is now much safer for the general use and may leave its experimental status soon (#704).
+* Significantly improved performance of suspending hot loops in `kotlinx.coroutines` (#537).
+* Proguard rules are embedded into coroutines JAR to assist jettifier (#657)
+* Fixed bug in shutdown sequence of `runBlocking` (#692).
+* `ReceiveChannel.receiveOrNull` is marked as obsolete and deprecated.
+* `Job.cancel(cause)` and `ReceiveChannel.cancel(cause)` are deprecated, `cancel()` returns `Unit` (#713).
 
 ## Version 0.30.2
 
- * `Dispatchers.Main` is instantiated lazily (see #658 and #665).
- * Blocking coroutine dispatcher views are now shutdown properly (#678).
- * Prevent leaking Kotlin 1.3 from atomicfu dependency (#659).
- * Thread-pool based dispatcher factories are marked as obsolete (#261).
- * Fixed exception loss on `withContext` cancellation (#675).   
+* `Dispatchers.Main` is instantiated lazily (see #658 and #665).
+* Blocking coroutine dispatcher views are now shutdown properly (#678).
+* Prevent leaking Kotlin 1.3 from atomicfu dependency (#659).
+* Thread-pool based dispatcher factories are marked as obsolete (#261).
+* Fixed exception loss on `withContext` cancellation (#675).   
 
 ## Version 0.30.1
 
- Maintenance release:
- * Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 
- * With `Dispatchers.Main` improvement tooling bug in Android Studio #626 is mitigated, so Android users now can safely start the migration to the latest `kotlinx.coroutines` version.
- * Fixed bug with thread unsafety of shutdown sequence in `EventLoop`.
- * Experimental coroutine dispatcher now has `close` contract similar to Java `Executor`, so it can be safely instantiated and closed multiple times (affects only unit tests).
- * Atomicfu version is updated with fixes in JS transformer (see #609)
+Maintenance release:
+* Added `Dispatchers.Main` to common dispatchers, which can be used from Android, Swing and JavaFx projects if a corresponding integration library is added to dependencies. 
+* With `Dispatchers.Main` improvement tooling bug in Android Studio #626 is mitigated, so Android users now can safely start the migration to the latest `kotlinx.coroutines` version.
+* Fixed bug with thread unsafety of shutdown sequence in `EventLoop`.
+* Experimental coroutine dispatcher now has `close` contract similar to Java `Executor`, so it can be safely instantiated and closed multiple times (affects only unit tests).
+* Atomicfu version is updated with fixes in JS transformer (see #609)
 
 ## Version 0.30.0
 

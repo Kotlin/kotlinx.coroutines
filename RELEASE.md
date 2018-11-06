@@ -18,6 +18,8 @@ To release new `<version>` of `kotlinx-coroutines`:
    * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
    * [`ui/kotlinx-coroutines-android/animation-app/gradle.properties`](ui/kotlinx-coroutines-android/animation-app/gradle.properties)    
    * Make sure to **exclude** `CHANGES.md` from replacements.
+   
+   As an alternative approach you can use `./bump_version.sh old_version new_version`
   
 5. Write release notes in [`CHANGES.md`](CHANGES.md):
    * Use old releases as example of style.

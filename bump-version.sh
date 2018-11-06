@@ -23,11 +23,13 @@ update_version "ui/kotlinx-coroutines-android/example-app/gradle.properties"
 update_version "ui/kotlinx-coroutines-android/animation-app/gradle.properties"
 update_version "gradle.properties"
 
-result=$(find ./ -type f \( -iname \*.properties -o -iname \*.md \) | grep -v "\.gradle" | grep -v "build" | xargs -I{} grep -H "$old_version" {} | grep -v CHANGES.md)
+# Escape dots, e.g. 1.0.0 -> 1\.0\.0
+escaped_old_version=$(echo $old_version | sed s/[.]/\\\\./g)
+result=$(find ./ -type f \( -iname \*.properties -o -iname \*.md \) | grep -v "\.gradle" | grep -v "build" | xargs -I{} grep -H "$escaped_old_version" {} | grep -v CHANGES.md | grep -v COMPATIBILITY.md)
 if [ -z "$result" ];
 then
     echo "Done"
 else
-    echo "Previous version is present in the project: $result"
-
+    echo "ERROR: Previous version is present in the project: $result"
+    exit -1
 fi
