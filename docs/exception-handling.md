@@ -206,7 +206,7 @@ when its child completes with exception despite the installed handler.
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleEnd
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }

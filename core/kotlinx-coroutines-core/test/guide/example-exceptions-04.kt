@@ -8,7 +8,7 @@ package kotlinx.coroutines.guide.exceptions04
 import kotlinx.coroutines.*
 
 fun main() = runBlocking {
-//sampleEnd
+//sampleStart
     val handler = CoroutineExceptionHandler { _, exception -> 
         println("Caught $exception") 
     }

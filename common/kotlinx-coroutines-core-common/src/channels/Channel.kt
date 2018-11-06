@@ -221,7 +221,7 @@ public interface ReceiveChannel<out E> {
      * [isClosedForReceive] without cause. The [select] invocation fails with
      * the original [close][SendChannel.close] cause exception if the channel has _failed_.
      *
-     * **Note: This is an experimental api.** This function may be replaced with a better on in the future.
+     * **Note: This is an experimental api.** This function may be replaced with a better one in the future.
      */
     @ExperimentalCoroutinesApi
     public val onReceiveOrNull: SelectClause1<E?>
