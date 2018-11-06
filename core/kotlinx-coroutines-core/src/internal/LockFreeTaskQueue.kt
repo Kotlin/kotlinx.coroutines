@@ -5,26 +5,36 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.atomicfu.*
+import java.util.*
 import java.util.concurrent.atomic.*
 
-private typealias Core<E> = LockFreeMPSCQueueCore<E>
+private typealias Core<E> = LockFreeTaskQueueCore<E>
 
 /**
- * Lock-free Multiply-Producer Single-Consumer Queue.
- * *Note: This queue is NOT linearizable. It provides only quiescent consistency for its operations.*
+ * Lock-free Multiply-Producer xxx-Consumer Queue for task scheduling purposes.
  *
+ * **Note 1: This queue is NOT linearizable. It provides only quiescent consistency for its operations.**
+ * However, this guarantee is strong enough for task-scheduling purposes.
  * In particular, the following execution is permitted for this queue, but is not permitted for a linearizable queue:
  *
  * ```
  * Thread 1: addLast(1) = true, removeFirstOrNull() = null
  * Thread 2: addLast(2) = 2 // this operation is concurrent with both operations in the first thread
  * ```
+ *
+ * **Note 2: When this queue is used with multiple consumers (`singleConsumer == false`) this it is NOT lock-free.**
+ * In particular, consumer spins until producer finishes its operation in the case of near-empty queue.
+ * It is a very short window that could manifest itself rarely and only under specific load conditions,
+ * but it still deprives this algorithm of its lock-freedom.
  */
-internal class LockFreeMPSCQueue<E : Any> {
-    private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY))
+internal open class LockFreeTaskQueue<E : Any>(
+    singleConsumer: Boolean // true when there is only a single consumer (slightly faster & lock-free)
+) {
+    private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY, singleConsumer))
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
     val isEmpty: Boolean get() = _cur.value.isEmpty
+    val size: Int get() = _cur.value.size
 
     fun close() {
         _cur.loop { cur ->
@@ -44,22 +54,29 @@ internal class LockFreeMPSCQueue<E : Any> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun removeFirstOrNull(): E? {
+    fun removeFirstOrNull(): E? = removeFirstOrNullIf { true }
+
+    @Suppress("UNCHECKED_CAST")
+    inline fun removeFirstOrNullIf(predicate: (E) -> Boolean): E? {
         _cur.loop { cur ->
-            val result = cur.removeFirstOrNull()
+            val result = cur.removeFirstOrNullIf(predicate)
             if (result !== Core.REMOVE_FROZEN) return result as E?
             _cur.compareAndSet(cur, cur.next())
         }
     }
+
+    // Used for validation in tests only
+    fun <R> map(transform: (E) -> R): List<R> = _cur.value.map(transform)
 }
 
 /**
- * Lock-free Multiply-Producer Single-Consumer Queue core.
- * *Note: This queue is NOT linearizable. It provides only quiescent consistency for its operations.*
- *
- * @see LockFreeMPSCQueue
+ * Lock-free Multiply-Producer xxx-Consumer Queue core.
+ * @see LockFreeTaskQueue
  */
-internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
+internal class LockFreeTaskQueueCore<E : Any>(
+    private val capacity: Int,
+    private val singleConsumer: Boolean // true when there is only a single consumer (slightly faster)
+) {
     private val mask = capacity - 1
     private val _next = atomic<Core<E>?>(null)
     private val _state = atomic(0L)
@@ -72,6 +89,7 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
     val isEmpty: Boolean get() = _state.value.withState { head, tail -> head == tail }
+    val size: Int get() = _state.value.withState { head, tail -> (tail - head) and MAX_CAPACITY_MASK }
 
     fun close(): Boolean {
         _state.update { state ->
@@ -87,9 +105,24 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         _state.loop { state ->
             if (state and (FROZEN_MASK or CLOSED_MASK) != 0L) return state.addFailReason() // cannot add
             state.withState { head, tail ->
-                // there could be one REMOVE element beyond head that we cannot stump up,
+                val mask = this.mask // manually move instance field to local for performance
+                // If queue is Single-Consumer then there could be one element beyond head that we cannot overwrite,
                 // so we check for full queue with an extra margin of one element
                 if ((tail + 2) and mask == head and mask) return ADD_FROZEN // overfull, so do freeze & copy
+                // If queue is Multi-Consumer then the consumer could still have not cleared element
+                // despite the above check for one free slot.
+                if (!singleConsumer && array[tail and mask] != null) {
+                    // There are two options in this situation
+                    // 1. Spin-wait until consumer clears the slot
+                    // 2. Freeze & resize to avoid spinning
+                    // We use heuristic here to avoid memory-overallocation
+                    // Freeze & reallocate when queue is small or more than half of the queue is used
+                    if (capacity < MIN_ADD_SPIN_CAPACITY || (tail - head) and MAX_CAPACITY_MASK > capacity shr 1) {
+                        return ADD_FROZEN
+                    }
+                    // otherwise spin
+                    return@loop
+                }
                 val newTail = (tail + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateTail(newTail))) {
                     // successfully added
@@ -127,23 +160,38 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         return null
     }
 
-    // SINGLE CONSUMER
     // REMOVE_FROZEN | null (EMPTY) | E (SUCCESS)
-    fun removeFirstOrNull(): Any? {
+    fun removeFirstOrNull(): Any? = removeFirstOrNullIf { true }
+
+    // REMOVE_FROZEN | null (EMPTY) | E (SUCCESS)
+    inline fun removeFirstOrNullIf(predicate: (E) -> Boolean): Any? {
         _state.loop { state ->
             if (state and FROZEN_MASK != 0L) return REMOVE_FROZEN // frozen -- cannot modify
             state.withState { head, tail ->
                 if ((tail and mask) == (head and mask)) return null // empty
-                // because queue is Single Consumer, then element == null|Placeholder can only be when add has not finished yet
-                val element = array[head and mask] ?: return null
-                if (element is Placeholder) return null // same story -- consider it not added yet
+                val element = array[head and mask]
+                if (element == null) {
+                    // If queue is Single-Consumer, then element == null only when add has not finished yet
+                    if (singleConsumer) return null // consider it not added yet
+                    // retry (spin) until consumer adds it
+                    return@loop
+                }
+                // element == Placeholder can only be when add has not finished yet
+                if (element is Placeholder) return null // consider it not added yet
+                // now we tentative know element to remove -- check predicate
+                @Suppress("UNCHECKED_CAST")
+                if (!predicate(element as E)) return null
                 // we cannot put null into array here, because copying thread could replace it with Placeholder and that is a disaster
                 val newHead = (head + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {
+                    // Array could have been copied by another thread and it is perfectly fine, since only elements
+                    // between head and tail were copied and there are no extra steps we should take here
                     array[head and mask] = null // now can safely put null (state was updated)
                     return element // successfully removed in fast-path
                 }
-                // Slow-path for remove in case of interference
+                // Multi-Consumer queue must retry this loop on CAS failure (another consumer might have removed element)
+                if (!singleConsumer) return@loop
+                // Single-consumer queue goes to slow-path for remove in case of interference
                 var cur = this
                 while (true) {
                     @Suppress("UNUSED_VALUE")
@@ -169,7 +217,7 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         }
     }
 
-    fun next(): LockFreeMPSCQueueCore<E> = allocateOrGetNextCopy(markFrozen())
+    fun next(): LockFreeTaskQueueCore<E> = allocateOrGetNextCopy(markFrozen())
 
     private fun markFrozen(): Long =
         _state.updateAndGet { state ->
@@ -185,7 +233,7 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
     }
 
     private fun allocateNextCopy(state: Long): Core<E> {
-        val next = LockFreeMPSCQueueCore<E>(capacity * 2)
+        val next = LockFreeTaskQueueCore<E>(capacity * 2, singleConsumer)
         state.withState { head, tail ->
             var index = head
             while (index and mask != tail and mask) {
@@ -198,44 +246,64 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         return next
     }
 
+    // Used for validation in tests only
+    fun <R> map(transform: (E) -> R): List<R> {
+        val res = ArrayList<R>(array.length())
+        _state.value.withState { head, tail ->
+            var index = head
+            while (index and mask != tail and mask) {
+                // replace nulls with placeholders on copy
+                val element = array[index and mask]
+                @Suppress("UNCHECKED_CAST")
+                if (element != null && element !is Placeholder) res.add(transform(element as E))
+                index++
+            }
+        }
+        return res
+    }
+
+
     // Instance of this class is placed into array when we have to copy array, but addLast is in progress --
     // it had already reserved a slot in the array (with null) and have not yet put its value there.
     // Placeholder keeps the actual index (not masked) to distinguish placeholders on different wraparounds of array
-    private class Placeholder(@JvmField val index: Int)
+    // Internal because of inlining
+    internal class Placeholder(@JvmField val index: Int)
 
-    @Suppress("PrivatePropertyName")
+    @Suppress("PrivatePropertyName", "MemberVisibilityCanBePrivate")
     internal companion object {
-        internal const val INITIAL_CAPACITY = 8
+        const val INITIAL_CAPACITY = 8
 
-        private const val CAPACITY_BITS = 30
-        private const val MAX_CAPACITY_MASK = (1 shl CAPACITY_BITS) - 1
-        private const val HEAD_SHIFT = 0
-        private const val HEAD_MASK = MAX_CAPACITY_MASK.toLong() shl HEAD_SHIFT
-        private const val TAIL_SHIFT = HEAD_SHIFT + CAPACITY_BITS
-        private const val TAIL_MASK = MAX_CAPACITY_MASK.toLong() shl TAIL_SHIFT
+        const val CAPACITY_BITS = 30
+        const val MAX_CAPACITY_MASK = (1 shl CAPACITY_BITS) - 1
+        const val HEAD_SHIFT = 0
+        const val HEAD_MASK = MAX_CAPACITY_MASK.toLong() shl HEAD_SHIFT
+        const val TAIL_SHIFT = HEAD_SHIFT + CAPACITY_BITS
+        const val TAIL_MASK = MAX_CAPACITY_MASK.toLong() shl TAIL_SHIFT
 
-        private const val FROZEN_SHIFT = TAIL_SHIFT + CAPACITY_BITS
-        private const val FROZEN_MASK = 1L shl FROZEN_SHIFT
-        private const val CLOSED_SHIFT = FROZEN_SHIFT + 1
-        private const val CLOSED_MASK = 1L shl CLOSED_SHIFT
+        const val FROZEN_SHIFT = TAIL_SHIFT + CAPACITY_BITS
+        const val FROZEN_MASK = 1L shl FROZEN_SHIFT
+        const val CLOSED_SHIFT = FROZEN_SHIFT + 1
+        const val CLOSED_MASK = 1L shl CLOSED_SHIFT
 
-        @JvmField internal val REMOVE_FROZEN = Symbol("REMOVE_FROZEN")
+        const val MIN_ADD_SPIN_CAPACITY = 1024
 
-        internal const val ADD_SUCCESS = 0
-        internal const val ADD_FROZEN = 1
-        internal const val ADD_CLOSED = 2
+        @JvmField val REMOVE_FROZEN = Symbol("REMOVE_FROZEN")
 
-        private infix fun Long.wo(other: Long) = this and other.inv()
-        private fun Long.updateHead(newHead: Int) = (this wo HEAD_MASK) or (newHead.toLong() shl HEAD_SHIFT)
-        private fun Long.updateTail(newTail: Int) = (this wo TAIL_MASK) or (newTail.toLong() shl TAIL_SHIFT)
+        const val ADD_SUCCESS = 0
+        const val ADD_FROZEN = 1
+        const val ADD_CLOSED = 2
 
-        private inline fun <T> Long.withState(block: (head: Int, tail: Int) -> T): T {
+        infix fun Long.wo(other: Long) = this and other.inv()
+        fun Long.updateHead(newHead: Int) = (this wo HEAD_MASK) or (newHead.toLong() shl HEAD_SHIFT)
+        fun Long.updateTail(newTail: Int) = (this wo TAIL_MASK) or (newTail.toLong() shl TAIL_SHIFT)
+
+        inline fun <T> Long.withState(block: (head: Int, tail: Int) -> T): T {
             val head = ((this and HEAD_MASK) shr HEAD_SHIFT).toInt()
             val tail = ((this and TAIL_MASK) shr TAIL_SHIFT).toInt()
             return block(head, tail)
         }
 
         // FROZEN | CLOSED
-        private fun Long.addFailReason(): Int = if (this and CLOSED_MASK != 0L) ADD_CLOSED else ADD_FROZEN
+        fun Long.addFailReason(): Int = if (this and CLOSED_MASK != 0L) ADD_CLOSED else ADD_FROZEN
     }
 }

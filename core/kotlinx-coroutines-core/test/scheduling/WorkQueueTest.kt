@@ -48,7 +48,7 @@ class WorkQueueTest : TestBase() {
         val queue = WorkQueue()
         val globalQueue = GlobalQueue()
         repeat(128) { require(queue.add(task(0), globalQueue)) }
-        require(globalQueue.isEmpty())
+        require(globalQueue.isEmpty)
         require(!queue.add(task(0), globalQueue))
         require(globalQueue.size == 63)
     }
@@ -73,7 +73,7 @@ class WorkQueueTest : TestBase() {
         timeSource.step(3)
         require(stealer.trySteal(victim, globalQueue))
         assertEquals(arrayListOf(5L, 3L, 4L), stealer.drain())
-        require(globalQueue.isEmpty())
+        require(globalQueue.isEmpty)
         assertEquals((6L..96L).toSet(), victim.drain().toSet())
     }
 
@@ -130,7 +130,7 @@ internal fun GlobalQueue.asTimeList(): List<Long> {
     return result
 }
 
-internal fun task(n: Long) = Task(Runnable {}, n, NonBlockingContext)
+internal fun task(n: Long) = TaskImpl(Runnable {}, n, NonBlockingContext)
 
 internal fun WorkQueue.drain(): List<Long> {
     var task: Task? = poll()

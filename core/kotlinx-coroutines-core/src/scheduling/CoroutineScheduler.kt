@@ -316,10 +316,10 @@ internal class CoroutineScheduler(
             }
         }
         // Make sure no more work is added to GlobalQueue from anywhere
-        check(globalQueue.add(CLOSED_TASK)) { "GlobalQueue could not be closed yet" }
+        globalQueue.close()
         // Finish processing tasks from globalQueue and/or from this worker's local queue
         while (true) {
-            val task = currentWorker?.findTask() ?: globalQueue.removeFirstIfNotClosed() ?: break
+            val task = currentWorker?.findTask() ?: globalQueue.removeFirstOrNull() ?: break
             runSafely(task)
         }
         // Shutdown current thread
@@ -340,14 +340,13 @@ internal class CoroutineScheduler(
      */
     fun dispatch(block: Runnable, taskContext: TaskContext = NonBlockingContext, fair: Boolean = false) {
         timeSource.trackTask() // this is needed for virtual time support
-        // TODO at some point make DispatchTask extend Task and make its field settable to save an allocation
         val task = createTask(block, taskContext)
         // try to submit the task to the local queue and act depending on the result
         when (submitToLocalQueue(task, fair)) {
             ADDED -> return
             NOT_ADDED -> {
                 // try to offload task to global queue
-                if (!globalQueue.add(task)) {
+                if (!globalQueue.addLast(task)) {
                     // Global queue is closed in the last step of close/shutdown -- no more tasks should be accepted
                     throw RejectedExecutionException("$schedulerName was terminated")
                 }
@@ -357,7 +356,15 @@ internal class CoroutineScheduler(
         }
     }
 
-    internal fun createTask(block: Runnable, taskContext: TaskContext) = Task(block, schedulerTimeSource.nanoTime(), taskContext)
+    internal fun createTask(block: Runnable, taskContext: TaskContext): Task {
+        val nanoTime = schedulerTimeSource.nanoTime()
+        if (block is Task) {
+            block.submissionTime = nanoTime
+            block.taskContext = taskContext
+            return block
+        }
+        return TaskImpl(block, nanoTime, taskContext)
+    }
 
     /**
      * Unparks or creates a new [Worker] for executing non-blocking tasks if there are idle cores
@@ -725,20 +732,22 @@ internal class CoroutineScheduler(
                     }
                     wasIdle = true
                 } else {
+                    // Note: read task.mode before running the task, because Task object will be reused after run
+                    val taskMode = task.mode
                     if (wasIdle) {
-                        idleReset(task.mode)
+                        idleReset(taskMode)
                         wasIdle = false
                     }
-                    beforeTask(task)
+                    beforeTask(taskMode, task.submissionTime)
                     runSafely(task)
-                    afterTask(task)
+                    afterTask(taskMode)
                 }
             }
             tryReleaseCpu(WorkerState.TERMINATED)
         }
 
-        private fun beforeTask(task: Task) {
-            if (task.mode != TaskMode.NON_BLOCKING) {
+        private fun beforeTask(taskMode: TaskMode, taskSubmissionTime: Long) {
+            if (taskMode != TaskMode.NON_BLOCKING) {
                 /*
                  * We should release CPU *before* checking for CPU starvation,
                  * otherwise requestCpuWorker() will not count current thread as blocking
@@ -757,7 +766,7 @@ internal class CoroutineScheduler(
                 return
             }
             val now = schedulerTimeSource.nanoTime()
-            if (now - task.submissionTime >= WORK_STEALING_TIME_RESOLUTION_NS &&
+            if (now - taskSubmissionTime >= WORK_STEALING_TIME_RESOLUTION_NS &&
                 now - lastExhaustionTime >= WORK_STEALING_TIME_RESOLUTION_NS * 5
             ) {
                 lastExhaustionTime = now
@@ -765,8 +774,8 @@ internal class CoroutineScheduler(
             }
         }
 
-        private fun afterTask(task: Task) {
-            if (task.mode != TaskMode.NON_BLOCKING) {
+        private fun afterTask(taskMode: TaskMode) {
+            if (taskMode != TaskMode.NON_BLOCKING) {
                 decrementBlockingWorkers()
                 val currentState = state
                 // Shutdown sequence of blocking dispatcher
@@ -947,9 +956,9 @@ internal class CoroutineScheduler(
              * once per two core pool size iterations
              */
             val globalFirst = nextInt(2 * corePoolSize) == 0
-            if (globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
+            if (globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             localQueue.poll()?.let { return it }
-            if (!globalFirst) globalQueue.removeFirstIfNotClosed()?.let { return it }
+            if (!globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             return trySteal()
         }
 

@@ -150,7 +150,7 @@ internal class WorkQueue {
          * been already shutdown (with the only exception of the last worker thread that might be performing
          * shutdown procedure itself). As a consistency check we do a [cheap!] check that it is not closed here yet.
          */
-        check(globalQueue.add(task)) { "GlobalQueue could not be closed yet" }
+        check(globalQueue.addLast(task)) { "GlobalQueue could not be closed yet" }
     }
 
     internal fun offloadAllWork(globalQueue: GlobalQueue) {

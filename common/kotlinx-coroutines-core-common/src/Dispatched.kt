@@ -81,11 +81,10 @@ internal object UndispatchedEventLoop {
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : Continuation<T> by continuation, DispatchedTask<T> {
+) : DispatchedTask<T>(MODE_ATOMIC_DEFAULT), Continuation<T> by continuation {
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
-    public override var resumeMode: Int = 0
     @JvmField // pre-cached value to avoid ctx.fold on every resumption
     internal val countOrElement = threadContextElements(context)
 
@@ -204,20 +203,22 @@ internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable)
     else -> resumeWithException(exception)
 }
 
-internal interface DispatchedTask<in T> : Runnable {
-    public val delegate: Continuation<T>
-    public val resumeMode: Int get() = MODE_CANCELLABLE
+internal abstract class DispatchedTask<in T>(
+    @JvmField var resumeMode: Int
+) : SchedulerTask() {
+    public abstract val delegate: Continuation<T>
 
-    public fun takeState(): Any?
+    public abstract fun takeState(): Any?
 
     @Suppress("UNCHECKED_CAST")
-    public fun <T> getSuccessfulResult(state: Any?): T =
+    public open fun <T> getSuccessfulResult(state: Any?): T =
         state as T
 
     public fun getExceptionalResult(state: Any?): Throwable? =
         (state as? CompletedExceptionally)?.cause
 
-    public override fun run() {
+    public final override fun run() {
+        val taskContext = this.taskContext
         try {
             val delegate = delegate as DispatchedContinuation<T>
             val continuation = delegate.continuation
@@ -237,6 +238,8 @@ internal interface DispatchedTask<in T> : Runnable {
             }
         } catch (e: Throwable) {
             throw DispatchException("Unexpected exception running $this", e)
+        } finally {
+            taskContext.afterTask()
         }
     }
 }
