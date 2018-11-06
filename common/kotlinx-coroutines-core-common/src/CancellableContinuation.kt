@@ -30,7 +30,7 @@ import kotlin.jvm.*
  * A [cancelled][isCancelled] continuation implies that it is [completed][isCompleted].
  *
  * Invocation of [resume] or [resumeWithException] in _resumed_ state produces [IllegalStateException].
- * Invocation of [resume] in _cancelled_ state is ignore (it is a trivial race between resume from the continuation owner and
+ * Invocation of [resume] in _cancelled_ state is ignored (it is a trivial race between resume from the continuation owner and
  * outer job cancellation and cancellation wins).
  * Invocation of [resumeWithException] in _cancelled_ state triggers exception handling of passed exception.
  *
