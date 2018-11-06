@@ -17,12 +17,23 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // The check for ReactNative is based on https://github.com/facebook/react-native/commit/3c65e62183ce05893be0822da217cb803b121c61
     jsTypeOf(navigator) != UNDEFINED && navigator != null && navigator.product == "ReactNative" ->
         NodeDispatcher()
+    // Check if we are running under jsdom. WindowDispatcher doesn't work under jsdom because it accesses MessageEvent#source.
+    // It is not implemented in jsdom, see https://github.com/jsdom/jsdom/blob/master/Changelog.md
+    // "It's missing a few semantics, especially around origins, as well as MessageEvent source."
+    isJsdom() -> NodeDispatcher()
     // Check if we are in the browser and must use window.postMessage to avoid setTimeout throttling
     jsTypeOf(window) != UNDEFINED && window.asDynamic() != null && jsTypeOf(window.asDynamic().addEventListener) != UNDEFINED ->
         window.asCoroutineDispatcher()
     // Fallback to NodeDispatcher when browser environment is not detected
     else -> NodeDispatcher()
 }
+
+private fun isJsdom() = jsTypeOf(navigator) != UNDEFINED &&
+    navigator != null &&
+    navigator.userAgent != null &&
+    jsTypeOf(navigator.userAgent) != UNDEFINED &&
+    jsTypeOf(navigator.userAgent.match) != UNDEFINED &&
+    navigator.userAgent.match("\\bjsdom\\b")
 
 internal actual val DefaultDelay: Delay
     get() = Dispatchers.Default as Delay
