@@ -118,7 +118,11 @@ public actual open class TestBase actual constructor() {
         initPoolsBeforeTest()
         threadsBefore = currentThreads()
         originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler({ t, e -> uncaughtExceptions.add(e) })
+        Thread.setDefaultUncaughtExceptionHandler({ t, e ->
+            println("Uncaught exception in thread $t: $e")
+            e.printStackTrace()
+            uncaughtExceptions.add(e)
+        })
     }
 
     @After
