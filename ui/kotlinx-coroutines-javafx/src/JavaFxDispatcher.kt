@@ -10,6 +10,8 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
+import java.lang.IllegalStateException
+import java.lang.reflect.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 
@@ -114,9 +116,30 @@ private class PulseTimer : AnimationTimer() {
 }
 
 internal fun initPlatform() {
-    // Ad-hoc workaround for #443. Will be fixed with multi-release jar.
-    // If this code throws an exception (Java 9 + prohibited reflective access), initialize JavaFX directly
-    Class.forName("com.sun.javafx.application.PlatformImpl")
-        .getMethod("startup", java.lang.Runnable::class.java)
-        .invoke(null, java.lang.Runnable { })
+    /*
+     * Try to instantiate JavaFx platform in a way which works
+     * both on Java 8 and Java 11 and does not produce "illegal reflective access":
+     *
+     * 1) Try to invoke javafx.application.Platform.startup if this class is
+     *    present in a classpath (since Java 9 it is a separate dependency)
+     * 2) If it is not present, invoke plain old PlatformImpl.startup
+     *
+     * Additionally, ignore ISE("Toolkit already initialized") because since Java 9
+     * consecutive calls to 'startup' throw it
+     */
+    val platformClass = runCatching {
+        Class.forName("javafx.application.Platform") // Java 9+
+    }.getOrElse {
+        Class.forName("com.sun.javafx.application.PlatformImpl") // Fallback
+    }
+
+    try {
+        platformClass.getMethod("startup", java.lang.Runnable::class.java)
+            .invoke(null, java.lang.Runnable { })
+    } catch (e: InvocationTargetException) {
+        val cause = e.cause
+        if (cause !is IllegalStateException || "Toolkit already initialized" != cause.message) {
+            throw e
+        }
+    }
 }

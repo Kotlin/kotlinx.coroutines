@@ -11,7 +11,7 @@ import org.junit.*
 class JavaFxTest : TestBase() {
     @Before
     fun setup() {
-        ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-")
+        ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")
     }
 
     @Test
