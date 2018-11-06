@@ -127,14 +127,10 @@ internal fun initPlatform() {
      * Additionally, ignore ISE("Toolkit already initialized") because since Java 9
      * consecutive calls to 'startup' throw it
      */
-    val platformJava9 = runCatching {
-        Class.forName("javafx.application.Platform")
-    }
-
-    val platformClass = if (platformJava9.isSuccess) {
-        platformJava9.getOrNull()!!
-    } else {
-        Class.forName("com.sun.javafx.application.PlatformImpl")
+    val platformClass = runCatching {
+        Class.forName("javafx.application.Platform") // Java 9+
+    }.getOrElse {
+        Class.forName("com.sun.javafx.application.PlatformImpl") // Fallback
     }
 
     try {
