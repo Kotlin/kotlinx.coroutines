@@ -48,7 +48,25 @@ class LockFreeListLinearizabilityTest : TestBase() {
         val options = StressOptions()
             .iterations(100)
             .invocationsPerIteration(1000 * stressTestMultiplier)
-            .threads(4)
+            .threads(3)
         LinChecker.check(LockFreeListLinearizabilityTest::class.java, options)
+    }
+
+    private var _curElements: ArrayList<Int>? = null
+    private val curElements: ArrayList<Int> get() {
+        if (_curElements == null) {
+            _curElements = ArrayList()
+            q.forEach<Node> { _curElements!!.add(it.value) }
+        }
+        return _curElements!!
+    }
+
+    override fun equals(other: Any?): Boolean {
+        other as LockFreeListLinearizabilityTest
+        return curElements == other.curElements
+    }
+
+    override fun hashCode(): Int {
+        return curElements.hashCode()
     }
 }
