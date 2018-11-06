@@ -80,19 +80,20 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: () -> Any
  */
 internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
-    return undispatchedResult({ true }) { block.startCoroutineUninterceptedOrReturn(receiver, this) }
+    return undispatchedResult({ true }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
 }
 
 /**
  * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
  */
 internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
-    receiver: R, block: suspend R.() -> T,
-    timeoutCoroutine: Job
-): Any? {
+    receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
-    return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === timeoutCoroutine) })
-    { block.startCoroutineUninterceptedOrReturn(receiver, this) }
+    return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
 }
 
 private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
@@ -124,10 +125,10 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
         makeCompletingOnce(result, MODE_IGNORE) -> {
             val state = state
             if (state is CompletedExceptionally) {
-                if (shouldThrow(state.cause)) {
-                    throw state.cause
-                } else {
-                    result
+                when {
+                    shouldThrow(state.cause) -> throw state.cause
+                    result is CompletedExceptionally -> throw result.cause
+                    else -> result
                 }
             } else {
                 state

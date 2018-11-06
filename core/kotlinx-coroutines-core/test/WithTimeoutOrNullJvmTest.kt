@@ -24,7 +24,7 @@ class WithTimeoutOrNullJvmTest : TestBase() {
 
     @Test
     fun testIgnoredTimeout() = runTest {
-        val value =withTimeout(1) {
+        val value = withTimeout(1) {
             Thread.sleep(10)
             42
         }
@@ -40,5 +40,28 @@ class WithTimeoutOrNullJvmTest : TestBase() {
         }
 
         assertEquals(42, value)
+    }
+
+    @Test
+    fun testIgnoredTimeoutOnNullThrowsCancellation() = runTest {
+        try {
+            withTimeoutOrNull(1) {
+                expect(1)
+                Thread.sleep(10)
+                throw CancellationException()
+            }
+            expectUnreached()
+        } catch (e: CancellationException) {
+            finish(2)
+        }
+    }
+
+    @Test
+    fun testIgnoredTimeoutOnNullThrowsOnYield() = runTest {
+        val value = withTimeoutOrNull(1) {
+            Thread.sleep(10)
+            yield()
+        }
+        assertNull(value)
     }
 }

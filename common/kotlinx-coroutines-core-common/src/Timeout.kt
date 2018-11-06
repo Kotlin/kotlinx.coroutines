@@ -74,7 +74,7 @@ private fun <U, T: U> setupTimeout(
     coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine))
     // restart block using new coroutine with new job,
     // however start it as undispatched coroutine, because we are already in the proper context
-    return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block, coroutine)
+    return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)
 }
 
 private open class TimeoutCoroutine<U, in T: U>(
