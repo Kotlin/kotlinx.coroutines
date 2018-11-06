@@ -70,28 +70,69 @@ private inline fun <T> startDirect(completion: Continuation<T>, block: () -> Any
 }
 
 /**
- * Starts this coroutine with the given code [block] in the same context and returns result when it
+ * Starts this coroutine with the given code [block] in the same context and returns coroutine result when it
  * completes without suspension.
  * This function shall be invoked at most once on this coroutine.
+ * This function checks cancellation of the outer [Job] on fast-path.
  *
  * First, this function initializes parent job from the `parentContext` of this coroutine that was passed to it
  * during construction. Second, it starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
 internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturn(receiver: R, block: suspend R.() -> T): Any? {
     initParentJob()
-    return undispatchedResult { block.startCoroutineUninterceptedOrReturn(receiver, this) }
+    return undispatchedResult({ true }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
 }
 
-private inline fun <T> AbstractCoroutine<T>.undispatchedResult(startBlock: () -> Any?): Any? {
+/**
+ * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
+ */
+internal fun <T, R> AbstractCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
+    receiver: R, block: suspend R.() -> T): Any? {
+    initParentJob()
+    return undispatchedResult({ e -> !(e is TimeoutCancellationException && e.coroutine === this) }) {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    }
+}
+
+private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
+    shouldThrow: (Throwable) -> Boolean,
+    startBlock: () -> Any?
+): Any? {
     val result = try {
         startBlock()
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
+
+    /*
+     * We're trying to complete our undispatched block here and have three code-paths:
+     * 1) Suspended.
+     *
+     * Or we are completing our block (and its job).
+     * 2) If we can't complete it, we suspend, probably waiting for children (2)
+     * 3) If we have successfully completed the whole coroutine here in an undispatched manner,
+     *    we should decide which result to return. We have two options: either return proposed update or actual final state.
+     *    But if fact returning proposed value is not an option, otherwise we will ignore possible cancellation or child failure.
+     *
+     * shouldThrow parameter is a special code path for timeout coroutine:
+     * If timeout is exceeded, but withTimeout() block was not suspended, we would like to return block value,
+     * not a timeout exception.
+     */
     return when {
         result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
         makeCompletingOnce(result, MODE_IGNORE) -> {
-            if (result is CompletedExceptionally) throw result.cause else result
+            val state = state
+            if (state is CompletedExceptionally) {
+                when {
+                    shouldThrow(state.cause) -> throw state.cause
+                    result is CompletedExceptionally -> throw result.cause
+                    else -> result
+                }
+            } else {
+                state
+            }
         }
         else -> COROUTINE_SUSPENDED
     }
