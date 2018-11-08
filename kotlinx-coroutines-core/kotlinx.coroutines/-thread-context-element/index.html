@@ -94,7 +94,9 @@ this coroutine suspends.</p>
 This function is invoked after the coroutine in the specified <a href="restore-thread-context.html#kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/context">context</a> is suspended in the current thread
 if <a href="update-thread-context.html">updateThreadContext</a> was previously invoked on resume of this coroutine.
 The value of <a href="restore-thread-context.html#kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/oldState">oldState</a> is the result of the previous invocation of <a href="update-thread-context.html">updateThreadContext</a> and it should
-be restored in the thread-local state by this function.</p>
+be restored in the thread-local state by this function.
+This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
+context is updated in an undefined state.</p>
 
       </td>
 </tr>
@@ -110,7 +112,9 @@ be restored in the thread-local state by this function.</p>
         <p>Updates context of the current thread.
 This function is invoked before the coroutine in the specified <a href="update-thread-context.html#kotlinx.coroutines.ThreadContextElement$updateThreadContext(kotlin.coroutines.CoroutineContext)/context">context</a> is resumed in the current thread
 when the context of the coroutine this element.
-The result of this function is the old value of the thread-local state that will be passed to <a href="restore-thread-context.html">restoreThreadContext</a>.</p>
+The result of this function is the old value of the thread-local state that will be passed to <a href="restore-thread-context.html">restoreThreadContext</a>.
+This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
+context is updated in an undefined state.</p>
 
       </td>
 </tr>

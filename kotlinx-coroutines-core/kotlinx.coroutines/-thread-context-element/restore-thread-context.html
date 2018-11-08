@@ -33,7 +33,7 @@
 
 <h1 id="restorethreadcontext">restoreThreadContext</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">restoreThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/oldState">oldState</span><span class="symbol">:</span>&nbsp;<a href="index.html#S"><span class="identifier">S</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadContextElement.kt#L73">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">restoreThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><span class="symbol">, </span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/oldState">oldState</span><span class="symbol">:</span>&nbsp;<a href="index.html#S"><span class="identifier">S</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadContextElement.kt#L77">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
@@ -41,7 +41,9 @@
 This function is invoked after the coroutine in the specified <a href="restore-thread-context.html#kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/context">context</a> is suspended in the current thread
 if <a href="update-thread-context.html">updateThreadContext</a> was previously invoked on resume of this coroutine.
 The value of <a href="restore-thread-context.html#kotlinx.coroutines.ThreadContextElement$restoreThreadContext(kotlin.coroutines.CoroutineContext, kotlinx.coroutines.ThreadContextElement.S)/oldState">oldState</a> is the result of the previous invocation of <a href="update-thread-context.html">updateThreadContext</a> and it should
-be restored in the thread-local state by this function.</p>
+be restored in the thread-local state by this function.
+This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
+context is updated in an undefined state.</p>
 
 <h3 id="parameters">Parameters</h3>
 

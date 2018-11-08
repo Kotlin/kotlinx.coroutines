@@ -33,14 +33,16 @@
 
 <h1 id="updatethreadcontext">updateThreadContext</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">updateThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$updateThreadContext(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#S"><span class="identifier">S</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadContextElement.kt#L61">(source)</a></div>
+<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">updateThreadContext</span><span class="symbol">(</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="parameterName" id="kotlinx.coroutines.ThreadContextElement$updateThreadContext(kotlin.coroutines.CoroutineContext)/context">context</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-coroutine-context/index.html"><span class="identifier">CoroutineContext</span></a><br /><span class="symbol">)</span><span class="symbol">: </span><a href="index.html#S"><span class="identifier">S</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/core/kotlinx-coroutines-core/src/ThreadContextElement.kt#L63">(source)</a></div>
 
 <p><strong>Platform and version requirements:</strong> JVM</p>
 
 <p>Updates context of the current thread.
 This function is invoked before the coroutine in the specified <a href="update-thread-context.html#kotlinx.coroutines.ThreadContextElement$updateThreadContext(kotlin.coroutines.CoroutineContext)/context">context</a> is resumed in the current thread
 when the context of the coroutine this element.
-The result of this function is the old value of the thread-local state that will be passed to <a href="restore-thread-context.html">restoreThreadContext</a>.</p>
+The result of this function is the old value of the thread-local state that will be passed to <a href="restore-thread-context.html">restoreThreadContext</a>.
+This method should handle its own exceptions and do not rethrow it. Thrown exceptions will leave coroutine which
+context is updated in an undefined state.</p>
 
 <h3 id="parameters">Parameters</h3>
 

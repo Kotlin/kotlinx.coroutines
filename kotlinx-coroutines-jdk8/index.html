@@ -100,7 +100,7 @@ The resulting function returns <code>CompletableFuture&lt;Image&gt;</code> for e
 <p>Note, that this module should be used only for integration with existing Java APIs based on <code>CompletableFuture</code>. 
 Writing pure-Kotlin code that uses <code>CompletableFuture</code> is highly not recommended, since the resulting APIs based
 on the futures are quite error-prone. See the discussion on 
-<a href="https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md#asynchronous-programming-styles">Asynchronous Programming Styles</a>
+<a href="https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md#asynchronous-programming-styles">Asynchronous Programming Styles</a>
 for details on general problems pertaining to any future-based API and keep in mind that <code>CompletableFuture</code> exposes
 a <em>blocking</em> method 
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#get--">get</a> 
