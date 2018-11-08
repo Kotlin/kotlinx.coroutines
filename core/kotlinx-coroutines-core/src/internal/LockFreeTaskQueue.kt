@@ -67,6 +67,9 @@ internal open class LockFreeTaskQueue<E : Any>(
 
     // Used for validation in tests only
     fun <R> map(transform: (E) -> R): List<R> = _cur.value.map(transform)
+
+    // Used for validation in tests only
+    fun isClosed(): Boolean = _cur.value.isClosed()
 }
 
 /**
@@ -261,6 +264,9 @@ internal class LockFreeTaskQueueCore<E : Any>(
         }
         return res
     }
+
+    // Used for validation in tests only
+    fun isClosed(): Boolean = _state.value and CLOSED_MASK != 0L
 
 
     // Instance of this class is placed into array when we have to copy array, but addLast is in progress --

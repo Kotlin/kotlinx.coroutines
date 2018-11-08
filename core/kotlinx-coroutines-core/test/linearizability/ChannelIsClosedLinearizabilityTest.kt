@@ -44,11 +44,28 @@ class ChannelIsClosedLinearizabilityTest : TestBase() {
     @Test
     fun testLinearizability() {
         val options = StressOptions()
-            .iterations(100)
-            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .iterations(100 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
 
         LinChecker.check(ChannelIsClosedLinearizabilityTest::class.java, options)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ChannelIsClosedLinearizabilityTest
+
+        if (channel != other.channel) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return channel.hashCode()
+    }
+
+
 }

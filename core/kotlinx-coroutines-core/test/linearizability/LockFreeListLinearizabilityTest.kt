@@ -46,8 +46,8 @@ class LockFreeListLinearizabilityTest : TestBase() {
     @Test
     fun testAddRemoveLinearizability() {
         val options = StressOptions()
-            .iterations(100)
-            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .iterations(100 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .threads(3)
         LinChecker.check(LockFreeListLinearizabilityTest::class.java, options)
     }

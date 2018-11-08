@@ -71,8 +71,8 @@ class ChannelLinearizabilityTest : TestBase() {
     private fun runTest(capacity: Int) {
         ChannelLinearizabilityTest.capacity = capacity
         val options = StressOptions()
-            .iterations(100)
-            .invocationsPerIteration(1000 * stressTestMultiplier)
+            .iterations(100 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
         LinChecker.check(ChannelLinearizabilityTest::class.java, options)
