@@ -25,7 +25,6 @@ class ChannelLinearizabilityTest : TestBase() {
     private val lt = LinTesting()
     private var channel: Channel<Int> = Channel(capacity)
 
-
     @Operation(runOnce = true)
     fun send1(@Param(name = "value") value: Int) = lt.run("send1") { channel.send(value) }
 

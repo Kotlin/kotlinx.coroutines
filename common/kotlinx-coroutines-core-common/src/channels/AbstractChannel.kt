@@ -119,12 +119,18 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         return null
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
     protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
-        val prev = node.prevNode
-        (prev as? SendBuffered<*>)?.remove()
+        /*
+         * Conflate all previous SendBuffered,
+         * helping other sends to coflate
+         */
+        var prev = node.prevNode
+        while (prev is SendBuffered<*>) {
+            if (!prev.remove()) {
+                prev.helpRemove()
+            }
+            prev = prev.prevNode
+        }
     }
 
     /**
@@ -249,15 +255,15 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
          */
         val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
         if (!closeAdded) {
-            helpClose(queue.prevNode as Closed<*>)
+            val actualClosed = queue.prevNode as Closed<*>
+            helpClose(actualClosed)
+            onClosedIdempotent(actualClosed)
             return false
         }
 
         helpClose(closed)
         invokeOnCloseHandler(cause)
-        // TODO We can get rid of afterClose
-        onClosed(closed)
-        afterClose(cause)
+        onClosedIdempotent(closed)
         return true
     }
 
@@ -322,15 +328,10 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
     }
 
     /**
-     * Invoked when [Closed] element was just added.
-     * @suppress **This is unstable API and it is subject to change.**
+     * Invoked when channel is closed as the last action of [close] invocation.
+     * This method should be idempotent and can be called multiple times.
      */
-    protected open fun onClosed(closed: Closed<E>) {}
-
-    /**
-     * Invoked after successful [close].
-     */
-    protected open fun afterClose(cause: Throwable?) {}
+    protected open fun onClosedIdempotent(closed: LockFreeLinkedListNode) {}
 
     /**
      * Retrieves first receiving waiter from the queue or returns closed token.

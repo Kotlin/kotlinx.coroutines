@@ -5,7 +5,7 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.selects.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Channel that buffers at most one element and conflates all subsequent `send` and `offer` invocations,
@@ -24,11 +24,7 @@ internal open class ConflatedChannel<E> : AbstractChannel<E>() {
     protected final override val isBufferAlwaysFull: Boolean get() = false
     protected final override val isBufferFull: Boolean get() = false
 
-    /**
-     * This implementation conflates last sent item when channel is closed.
-     * @suppress **This is unstable API and it is subject to change.**
-     */
-    override fun onClosed(closed: Closed<E>) {
+    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
         conflatePreviousSendBuffered(closed)
     }
 
