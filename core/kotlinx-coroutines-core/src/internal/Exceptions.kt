@@ -90,17 +90,24 @@ private fun <E : Throwable> recoveryDisabled(exception: E) =
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayList<StackTraceElement> {
     val stack = ArrayList<StackTraceElement>()
-    continuation.getStackTraceElement()?.let { stack.add(it) }
+    continuation.getStackTraceElement()?.let { stack.add(sanitize(it)) }
 
     var last = continuation
     while (true) {
         last = (last as? CoroutineStackFrame)?.callerFrame ?: break
-        last.getStackTraceElement()?.let { stack.add(it) }
+        last.getStackTraceElement()?.let { stack.add(sanitize(it)) }
     }
     return stack
 }
 
+internal fun sanitize(element: StackTraceElement): StackTraceElement {
+    if (!element.className.contains('/')) {
+        return element
+    }
 
+    // STE generated with debug metadata contains '/' as separators in FQN, while Java contains dots
+    return StackTraceElement(element.className.replace('/', '.'), element.methodName, element.fileName, element.lineNumber)
+}
 internal fun artificialFrame(message: String) = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
 internal fun StackTraceElement.isArtificial() = className.startsWith("\b\b\b")
 

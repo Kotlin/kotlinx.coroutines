@@ -32,10 +32,10 @@ class StackTraceRecoveryTest : TestBase() {
         val traces = listOf(
             "java.util.concurrent.ExecutionException\n" +
                     "\t(Current coroutine stacktrace)\n" +
-                    "\tat kotlinx/coroutines/DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:49)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:44)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$testAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:17)\n",
+                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:49)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:44)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:17)\n",
             "Caused by: java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testAsync\$1\$1\$1.invokeSuspend(StackTraceRecoveryTest.kt:21)\n" +
                     "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n"
@@ -54,10 +54,10 @@ class StackTraceRecoveryTest : TestBase() {
         val stacktrace = listOf(
             "java.util.concurrent.ExecutionException\n" +
                     "\t(Current coroutine stacktrace)\n" +
-                    "\tat kotlinx/coroutines/DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:81)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:75)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$testCompletedAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:71)",
+                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:81)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:75)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCompletedAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:71)",
             "Caused by: java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCompletedAsync\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:44)\n" +
                     "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)"
@@ -92,8 +92,8 @@ class StackTraceRecoveryTest : TestBase() {
             channel, listOf(
                 "java.lang.IllegalArgumentException\n" +
                         "\t(Current coroutine stacktrace)\n" +
-                        "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.channelNestedMethod(StackTraceRecoveryTest.kt:110)\n" +
-                        "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$testReceiveFromChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:89)",
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.channelNestedMethod(StackTraceRecoveryTest.kt:110)\n" +
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1.invokeSuspend(StackTraceRecoveryTest.kt:89)",
                 "Caused by: java.lang.IllegalArgumentException\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testReceiveFromChannel\$1\$job\$1.invokeSuspend(StackTraceRecoveryTest.kt:93)\n" +
                         "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
@@ -142,11 +142,11 @@ class StackTraceRecoveryTest : TestBase() {
         outerMethod(deferred, listOf(
             "kotlinx.coroutines.RecoverableTestException\n" +
                 "\t(Current coroutine stacktrace)\n" +
-                "\tat kotlinx/coroutines/DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
-                "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
-                "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$outerMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
-                "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.outerMethod(StackTraceRecoveryTest.kt:150)\n" +
-                "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$testWithContext\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
+                "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.outerMethod(StackTraceRecoveryTest.kt:150)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testWithContext\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
             "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testWithContext\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
                 "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n"))
@@ -178,10 +178,10 @@ class StackTraceRecoveryTest : TestBase() {
         outerScopedMethod(deferred, listOf(
             "kotlinx.coroutines.RecoverableTestException\n" +
                     "\t(Current coroutine stacktrace)\n" +
-                    "\tat kotlinx/coroutines/DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$outerScopedMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
-                    "\tat kotlinx/coroutines/exceptions/StackTraceRecoveryTest\$testCoroutineScope\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
+                    "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
             "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
                     "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n"))
