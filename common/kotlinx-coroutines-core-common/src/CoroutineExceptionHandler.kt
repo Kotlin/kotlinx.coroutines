@@ -26,6 +26,7 @@ public fun handleCoroutineException(context: CoroutineContext, exception: Throwa
     if (exception is CancellationException) return // nothing to do
     // Try propagate exception to parent
     val job = context[Job]
+    @Suppress("DEPRECATION")
     if (job !== null && job !== caller && job.cancel(exception)) return // handle by parent
     // otherwise -- use exception handlers
     handleExceptionViaHandler(context, exception)

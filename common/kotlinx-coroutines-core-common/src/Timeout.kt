@@ -83,7 +83,7 @@ private open class TimeoutCoroutine<U, in T: U>(
 ) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T> {
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
-    @Suppress("LeakingThis")
+    @Suppress("LeakingThis", "Deprecation")
     override fun run() {
         cancel(TimeoutCancellationException(time, this))
     }

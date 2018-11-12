@@ -7,6 +7,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
+@Suppress("DEPRECATION")
 internal open class ChannelCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: Channel<E>,
@@ -16,7 +17,7 @@ internal open class ChannelCoroutine<E>(
 
     val channel: Channel<E> get() = this
 
-    override fun cancel(): Unit {
+    override fun cancel() {
         cancel(null)
     }
 

@@ -69,6 +69,7 @@ internal class ArrayBroadcastChannel<E>(
 
     public override fun cancel(cause: Throwable?): Boolean =
         close(cause).also {
+            @Suppress("DEPRECATION")
             for (sub in subscribers) sub.cancel(cause)
         }
 

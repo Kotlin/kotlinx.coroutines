@@ -157,7 +157,7 @@ public interface Job : CoroutineContext.Element {
     /**
      * @suppress
      */
-    @Suppress("INAPPLICABLE_JVM_NAME")
+    @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
     @JvmName("cancel")
     public fun cancel0(): Boolean = cancel(null)
@@ -473,6 +473,7 @@ public suspend fun Job.cancelAndJoin() {
 @ObsoleteCoroutinesApi
 @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
 public fun Job.cancelChildren(cause: Throwable? = null) {
+    @Suppress("DEPRECATION")
     children.forEach { it.cancel(cause) }
 }
 
@@ -509,6 +510,7 @@ public val CoroutineContext.isActive: Boolean
 /**
  * @suppress
  */
+@Suppress("unused")
 @JvmName("cancel")
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun CoroutineContext.cancel0(): Boolean {
@@ -529,6 +531,7 @@ public fun CoroutineContext.cancel(): Unit {
 @ObsoleteCoroutinesApi
 @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel() without cause", replaceWith = ReplaceWith("cancel()"))
 public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
+    @Suppress("DEPRECATION")
     this[Job]?.cancel(cause) ?: false
 
 /**
@@ -542,6 +545,7 @@ public fun CoroutineContext.cancelChildren() {
 @ObsoleteCoroutinesApi
 @Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
 public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
+    @Suppress("DEPRECATION")
     this[Job]?.children?.forEach { it.cancel(cause) }
 }
 

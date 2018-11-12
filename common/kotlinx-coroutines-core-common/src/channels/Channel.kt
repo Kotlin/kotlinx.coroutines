@@ -255,7 +255,7 @@ public interface ReceiveChannel<out E> {
     /**
      * @suppress
      */
-    @Suppress("INAPPLICABLE_JVM_NAME")
+    @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
     @JvmName("cancel")
     public fun cancel0(): Boolean = cancel(null)
