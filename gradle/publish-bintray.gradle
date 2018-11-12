@@ -7,6 +7,7 @@
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.jfrog.artifactory'
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
@@ -16,6 +17,8 @@ def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 // ------------- tasks
 
 def isNative = project.name.endsWith("native")
+def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+def bKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
@@ -46,9 +49,43 @@ publishing {
     }
 }
 
+artifactory {
+    contextUrl = 'https://oss.jfrog.org/artifactory'
+    publish {
+        repository {
+            repoKey = 'oss-snapshot-local'
+            username = bUser
+            password = bKey
+        }
+
+        publications {
+            maven(MavenPublication) {
+                if (!isNative) {
+                    from components.java
+                    artifact javadocJar
+                    artifact sourcesJar
+                }
+                pom.withXml(configureMavenCentralMetadata)
+            }
+        }
+
+        defaults {
+            publications('maven')
+        }
+    }
+}
+
+task publishDevelopSnapshot() {
+    def branch = System.getenv('currentBranch')
+    println "Current branch: $branch"
+    if (branch == "develop") {
+        dependsOn(":artifactoryPublish")
+    }
+}
+
 bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    user = bUser
+    key = bKey
     override = true // for multi-platform Kotlin/Native publishing
     publications = ['maven']
     pkg {

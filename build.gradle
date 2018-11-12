@@ -31,6 +31,7 @@ buildscript {
         }
     }
     dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:$artifactory_plugin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-native-gradle-plugin:$kotlin_native_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
