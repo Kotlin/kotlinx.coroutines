@@ -5,6 +5,7 @@
 package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
@@ -276,6 +277,7 @@ internal abstract class AbstractContinuation<in T>(
 internal interface NotCompleted
 
 private class Active : NotCompleted
+@SharedImmutable
 private val ACTIVE: Active = Active()
 
 internal abstract class CancelHandler : CancelHandlerBase(), NotCompleted

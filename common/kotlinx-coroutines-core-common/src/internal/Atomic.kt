@@ -20,6 +20,7 @@ public abstract class OpDescriptor {
     abstract fun perform(affected: Any?): Any?
 }
 
+@SharedImmutable
 private val NO_DECISION: Any = Symbol("NO_DECISION")
 
 /**

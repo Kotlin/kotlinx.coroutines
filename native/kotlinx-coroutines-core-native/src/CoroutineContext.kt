@@ -5,7 +5,9 @@
 package kotlinx.coroutines
 
 import kotlin.coroutines.*
+import kotlinx.coroutines.internal.*
 
+@ThreadLocal
 internal val currentEventLoop = ArrayList<BlockingEventLoop>()
 
 private fun takeEventLoop(): BlockingEventLoop =
