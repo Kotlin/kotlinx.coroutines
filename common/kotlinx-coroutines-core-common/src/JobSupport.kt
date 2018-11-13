@@ -1151,9 +1151,11 @@ private const val RETRY = -1
 private const val FALSE = 0
 private const val TRUE = 1
 
+@SharedImmutable
 private val SEALED = Symbol("SEALED")
-
+@SharedImmutable
 private val EMPTY_NEW = Empty(false)
+@SharedImmutable
 private val EMPTY_ACTIVE = Empty(true)
 
 private class Empty(override val isActive: Boolean) : Incomplete {

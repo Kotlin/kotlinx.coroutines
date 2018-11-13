@@ -113,14 +113,22 @@ public suspend inline fun <T> Mutex.withLock(owner: Any? = null, action: () -> T
     }
 }
 
+@SharedImmutable
 private val LOCK_FAIL = Symbol("LOCK_FAIL")
+@SharedImmutable
 private val ENQUEUE_FAIL = Symbol("ENQUEUE_FAIL")
+@SharedImmutable
 private val UNLOCK_FAIL = Symbol("UNLOCK_FAIL")
+@SharedImmutable
 private val SELECT_SUCCESS = Symbol("SELECT_SUCCESS")
+@SharedImmutable
 private val LOCKED = Symbol("LOCKED")
+@SharedImmutable
 private val UNLOCKED = Symbol("UNLOCKED")
 
+@SharedImmutable
 private val EmptyLocked = Empty(LOCKED)
+@SharedImmutable
 private val EmptyUnlocked = Empty(UNLOCKED)
 
 private class Empty(

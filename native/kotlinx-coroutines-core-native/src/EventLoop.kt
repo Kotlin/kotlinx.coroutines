@@ -53,6 +53,7 @@ private fun delayToNanos(timeMillis: Long): Long = when {
 }
 
 @Suppress("PrivatePropertyName")
+@SharedImmutable
 private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeMPSCQueueCore<T>
