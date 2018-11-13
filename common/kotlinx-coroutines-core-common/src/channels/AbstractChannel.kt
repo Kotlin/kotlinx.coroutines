@@ -1031,11 +1031,11 @@ internal val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
 
 @JvmField
 @SharedImmutable
-internal val SEND_RESUMED = Symbol("SEND_RESUMED")
+internal val SEND_RESUMED: Any = Symbol("SEND_RESUMED")
 
 @JvmField
 @SharedImmutable
-internal val HANDLER_INVOKED = Symbol("ON_CLOSE_HANDLER_INVOKED")
+internal val HANDLER_INVOKED: Any = Symbol("ON_CLOSE_HANDLER_INVOKED")
 
 internal typealias Handler = (Throwable?) -> Unit
 

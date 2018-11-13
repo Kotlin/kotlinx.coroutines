@@ -127,9 +127,9 @@ private val LOCKED = Symbol("LOCKED")
 private val UNLOCKED = Symbol("UNLOCKED")
 
 @SharedImmutable
-private val EmptyLocked = Empty(LOCKED)
+private val EMPTY_LOCKED = Empty(LOCKED)
 @SharedImmutable
-private val EmptyUnlocked = Empty(UNLOCKED)
+private val EMPTY_UNLOCKED = Empty(UNLOCKED)
 
 private class Empty(
     @JvmField val locked: Any
@@ -140,7 +140,7 @@ private class Empty(
 internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
     // State is: Empty | LockedQueue | OpDescriptor
     // shared objects while we have no waiters
-    private val _state = atomic<Any?>(if (locked) EmptyLocked else EmptyUnlocked)
+    private val _state = atomic<Any?>(if (locked) EMPTY_LOCKED else EMPTY_UNLOCKED)
 
     public override val isLocked: Boolean get() {
         _state.loop { state ->
@@ -164,7 +164,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
             when (state) {
                 is Empty -> {
                     if (state.locked !== UNLOCKED) return false
-                    val update = if (owner == null) EmptyLocked else Empty(
+                    val update = if (owner == null) EMPTY_LOCKED else Empty(
                         owner
                     )
                     if (_state.compareAndSet(state, update)) return true
@@ -195,7 +195,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                         _state.compareAndSet(state, LockedQueue(state.locked))
                     } else {
                         // try lock
-                        val update = if (owner == null) EmptyLocked else Empty(owner)
+                        val update = if (owner == null) EMPTY_LOCKED else Empty(owner)
                         if (_state.compareAndSet(state, update)) { // locked
                             cont.resume(Unit)
                             return@sc
@@ -272,7 +272,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
         private inner class PrepareOp(private val op: AtomicOp<*>) : OpDescriptor() {
             override fun perform(affected: Any?): Any? {
-                val update: Any = if (op.isDecided) EmptyUnlocked else op // restore if was already decided
+                val update: Any = if (op.isDecided) EMPTY_UNLOCKED else op // restore if was already decided
                 (affected as MutexImpl)._state.compareAndSet(this, update)
                 return null // ok
             }
@@ -280,13 +280,13 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
 
         override fun prepare(op: AtomicOp<*>): Any? {
             val prepare = PrepareOp(op)
-            if (!mutex._state.compareAndSet(EmptyUnlocked, prepare)) return LOCK_FAIL
+            if (!mutex._state.compareAndSet(EMPTY_UNLOCKED, prepare)) return LOCK_FAIL
             return prepare.perform(mutex)
         }
 
         override fun complete(op: AtomicOp<*>, failure: Any?) {
-            val update = if (failure != null) EmptyUnlocked else {
-                if (owner == null) EmptyLocked else Empty(owner)
+            val update = if (failure != null) EMPTY_UNLOCKED else {
+                if (owner == null) EMPTY_LOCKED else Empty(owner)
             }
             mutex._state.compareAndSet(op, update)
         }
@@ -322,7 +322,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                         check(state.locked !== UNLOCKED) { "Mutex is not locked" }
                     else
                         check(state.locked === owner) { "Mutex is locked by ${state.locked} but expected $owner" }
-                    if (_state.compareAndSet(state, EmptyUnlocked)) return
+                    if (_state.compareAndSet(state, EMPTY_UNLOCKED)) return
                 }
                 is OpDescriptor -> state.perform(this)
                 is LockedQueue -> {
@@ -406,7 +406,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                will fail anyway.
              */
             val success = queue.isEmpty
-            val update: Any = if (success) EmptyUnlocked else queue
+            val update: Any = if (success) EMPTY_UNLOCKED else queue
             (affected as MutexImpl)._state.compareAndSet(this@UnlockOp, update)
             /*
                 `perform` invocation from the original `unlock` invocation may be coming too late, when
