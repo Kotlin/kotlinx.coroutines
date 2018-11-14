@@ -45,7 +45,7 @@ import kotlin.coroutines.intrinsics.*
  *      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
  *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
- *     fun loadDataFromUI() = launch { // <- extension on current activity, launched in the main thread
+ *     fun showSomeData() = launch { // <- extension on current activity, launched in the main thread
  *        val ioData = async(Dispatchers.IO) { // <- extension on launch scope, launched in IO dispatcher
  *            // blocking I/O operation
  *        }
@@ -177,13 +177,13 @@ object GlobalScope : CoroutineScope {
  * Example of the scope usages looks like this:
  *
  * ```
- * suspend fun loadDataForUI() = coroutineScope {
+ * suspend fun showSomeData() = coroutineScope {
  *
  *   val data = async { // <- extension on current scope
  *      ... load some UI data ...
  *   }
  *
- *   withContext(UI) {
+ *   withContext(Dispatchers.Main) {
  *     doSomeWork()
  *     val result = data.await()
  *     display(result)
@@ -192,9 +192,9 @@ object GlobalScope : CoroutineScope {
  * ```
  *
  * Semantics of the scope in this example:
- * 1) `loadDataForUI` returns as soon as data is loaded and UI is updated.
- * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `loadDataForUI` rethrows that exception.
- * 3) If outer scope of `loadDataForUI` is cancelled, both started `async` and `withContext` are cancelled.
+ * 1) `showSomeData` returns as soon as data is loaded and displayed in UI.
+ * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `showSomeData` rethrows that exception.
+ * 3) If outer scope of `showSomeData` is cancelled, both started `async` and `withContext` are cancelled.
  *
  * Method may throw [CancellationException] if the current job was cancelled externally
  * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
@@ -226,7 +226,6 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
  * Example of use:
  * ```
  * class MyAndroidActivity: CoroutineScope by MainScope(CoroutineName("MyActivity"))) {
- *
  *   override fun onDestroy() {
  *     super.onDestroy()
  *     cancel() // CoroutineScope.cancel

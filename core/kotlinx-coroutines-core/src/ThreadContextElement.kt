@@ -40,11 +40,11 @@ import kotlin.coroutines.*
  * }
  *
  * // Usage
- * launch(UI + CoroutineName("Progress bar coroutine")) { ... }
+ * launch(Dispatchers.Main + CoroutineName("Progress bar coroutine")) { ... }
  * ```
  *
- * Every time this coroutine is resumed on a thread, UI thread name is updated to
- * "UI thread original name # Progress bar coroutine" and the thread name is restored to the original one when
+ * Every time this coroutine is resumed on a thread, Main thread name is updated to
+ * "Main thread original name # Progress bar coroutine" and the thread name is restored to the original one when
  * this coroutine suspends.
  *
  * To use [ThreadLocal] variable within the coroutine use [ThreadLocal.asContextElement][asContextElement] function.
