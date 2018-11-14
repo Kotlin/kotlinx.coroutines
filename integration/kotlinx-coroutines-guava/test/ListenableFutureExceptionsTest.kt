@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.guava
 
+import com.google.common.base.*
 import com.google.common.util.concurrent.*
 import kotlinx.coroutines.*
 import org.junit.Test
@@ -55,7 +56,11 @@ class ListenableFutureExceptionsTest : TestBase() {
         // Fast path
         runTest {
             val future = SettableFuture.create<Int>()
-            val chained = if (transformer == null) future else Futures.transform(future, transformer)
+            val chained = if (transformer == null) {
+                future
+            } else {
+                Futures.transform(future, Function(transformer), MoreExecutors.directExecutor())
+            }
             future.setException(exception)
             try {
                 chained.await()
@@ -67,7 +72,11 @@ class ListenableFutureExceptionsTest : TestBase() {
         // Slow path
         runTest {
             val future = SettableFuture.create<Int>()
-            val chained = if (transformer == null) future else Futures.transform(future, transformer)
+            val chained = if (transformer == null) {
+                future
+            } else {
+                Futures.transform(future, Function(transformer), MoreExecutors.directExecutor())
+            }
             launch {
                 future.setException(exception)
             }
