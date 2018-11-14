@@ -30,7 +30,7 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
     private val rnd = Random()
 
     private lateinit var closeableDispatcher: ExperimentalCoroutineDispatcher
-    private lateinit var dispatcher: ExecutorCoroutineDispatcher
+    private lateinit var coroutineDispatcher: ExecutorCoroutineDispatcher
     private var closeIndex = -1
 
     private val started = atomic(0)
@@ -55,14 +55,14 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
 
     private fun launchCoroutines() = runBlocking {
         closeableDispatcher = ExperimentalCoroutineDispatcher(N_THREADS)
-        dispatcher = when (mode) {
+        coroutineDispatcher = when (mode) {
             Mode.CPU -> closeableDispatcher
             Mode.CPU_LIMITED -> closeableDispatcher.limited(N_THREADS) as ExecutorCoroutineDispatcher
             Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS) as ExecutorCoroutineDispatcher
         }
         started.value = 0
         finished.value = 0
-        withContext(dispatcher) {
+        withContext(coroutineDispatcher) {
             launchChild(0, 0)
         }
         assertEquals(N_COROS, started.value)

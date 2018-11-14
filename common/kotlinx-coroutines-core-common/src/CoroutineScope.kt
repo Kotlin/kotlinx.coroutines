@@ -6,8 +6,8 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
-import kotlin.coroutines.intrinsics.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * Defines a scope for new coroutines. Every coroutine builder
@@ -74,6 +74,51 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
     ContextScope(coroutineContext + context)
 
 /**
+ * Returns the [Job] object related to current coroutine scope or throws [IllegalStateException] if the scope does not have one.
+ * Resulting [Job] is bound with the lifecycle of the given scope: [CoroutineScope.cancel] matches [Job.cancel],
+ * [CoroutineScope.join] matches [Job.join] etc.
+ * Any coroutine launched by this scope will become a child of the resulting job.
+ */
+public val CoroutineScope.job: Job get() = coroutineContext[Job] ?: error("Scope $this does not have job in it")
+
+/**
+ * Returns the [Job] object related to current coroutine scope or `null` if the scope does not have one.
+ * See [CoroutineScope.job] for a more detailed explanation of the scope job.
+ * This method is not recommended to be used in a general application code, application scope should always have a job associated with it.
+ */
+public val CoroutineScope.jobOrNull: Job? get() = coroutineContext[Job]
+
+/**
+ * Returns the [CoroutineDispatcher] object related to current coroutine scope or throws [IllegalStateException] if the scope does not have one.
+ * Resulting [CoroutineDispatcher] is the dispatcher where all scope children are executed if they do not override dispatcher.
+ * E.g.
+ * ```
+ * scope.launch { ... } // Will be executed in scope.dispatcher (or Dispatchers.Default if scope does not have a dispatcher)
+ * scope.launch(Dispatchers.IO) { ... } // Will be executed in IO dispatcher, but still belongs to the scope
+ * ```
+ */
+public val CoroutineScope.dispatcher: CoroutineDispatcher get() = coroutineContext[ContinuationInterceptor] as? CoroutineDispatcher ?: error("Scope $this does not have dispatcher in it")
+
+/**
+ * Returns the [CoroutineDispatcher] object related to current coroutine scope or `null` if scope does not have one.
+ * See [CoroutineScope.dispatcher] for a more detailed explanation of scope dispatcher.
+ */
+public val CoroutineScope.dispatcherOrNull: CoroutineDispatcher? get() = coroutineContext[ContinuationInterceptor] as? CoroutineDispatcher
+
+/**
+ * Cancels this scope, including its [job] and all its children.
+ */
+public fun CoroutineScope.cancel(): Unit = coroutineContext.cancel()
+
+/**
+ * Suspends coroutine until this scope is complete, including all its children.
+ * For cancellation semantics see [Job.join].
+ */
+public suspend fun CoroutineScope.join() {
+    jobOrNull?.join()
+}
+
+/**
  * Returns `true` when current [Job] is still active (has not completed and was not cancelled yet).
  *
  * Check this property in long-running computation loops to support cancellation:
@@ -88,7 +133,6 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * See [coroutineContext][kotlin.coroutines.coroutineContext],
  * [isActive][kotlinx.coroutines.isActive] and [Job.isActive].
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public val CoroutineScope.isActive: Boolean
     get() = coroutineContext[Job]?.isActive ?: true
 

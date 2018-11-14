@@ -14,6 +14,11 @@ class CoroutineScopeTest : TestBase() {
     @Test
     fun testScope() = runTest {
         suspend fun callJobScoped() = coroutineScope {
+            assertNotNull(jobOrNull)
+            assertNotNull(dispatcher)
+            assertSame(coroutineContext[ContinuationInterceptor], dispatcher)
+            assertSame(coroutineContext[Job], job)
+
             expect(2)
             launch {
                 expect(4)
@@ -246,6 +251,28 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
+    fun testCancelAndJoin() = runTest {
+        val scope = CoroutineScope(coroutineContext + Job())
+        expect(1)
+        scope.launch {
+            expect(3)
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(6)
+            }
+        }
+
+        expect(2)
+        yield()
+        expect(4)
+        scope.cancel()
+        expect(5)
+        scope.join()
+        finish(7)
+    }
+
+    @Test
     fun testScopePlusContext() {
         assertSame(EmptyCoroutineContext, scopePlusContext(EmptyCoroutineContext, EmptyCoroutineContext))
         assertSame(Dispatchers.Default, scopePlusContext(EmptyCoroutineContext, Dispatchers.Default))
@@ -254,6 +281,16 @@ class CoroutineScopeTest : TestBase() {
         assertSame(Dispatchers.Default, scopePlusContext(Dispatchers.Unconfined, Dispatchers.Default))
         assertSame(Dispatchers.Unconfined, scopePlusContext(Dispatchers.Default, Dispatchers.Unconfined))
         assertSame(Dispatchers.Unconfined, scopePlusContext(Dispatchers.Unconfined, Dispatchers.Unconfined))
+    }
+
+    @Test
+    fun testScopeProperties() {
+        assertFailsWith<IllegalStateException> { CoroutineScope(EmptyCoroutineContext).dispatcher }
+        assertFailsWith<IllegalStateException> { ContextScope(EmptyCoroutineContext).job }
+        assertNull(CoroutineScope(EmptyCoroutineContext).dispatcherOrNull)
+        assertNotNull(CoroutineScope(EmptyCoroutineContext).job)
+        assertSame(Dispatchers.Unconfined, CoroutineScope(Unconfined).dispatcher)
+        assertSame(Dispatchers.Unconfined, CoroutineScope(Unconfined).dispatcherOrNull)
     }
 
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
