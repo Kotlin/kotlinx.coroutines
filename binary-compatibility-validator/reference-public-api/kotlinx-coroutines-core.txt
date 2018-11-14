@@ -168,8 +168,16 @@ public abstract interface class kotlinx/coroutines/CoroutineScope {
 
 public final class kotlinx/coroutines/CoroutineScopeKt {
 	public static final fun CoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun MainScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static synthetic fun MainScope$default (Lkotlin/coroutines/CoroutineContext;ILjava/lang/Object;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun cancel (Lkotlinx/coroutines/CoroutineScope;)V
 	public static final fun coroutineScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getDispatcher (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/CoroutineDispatcher;
+	public static final fun getDispatcherOrNull (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/CoroutineDispatcher;
+	public static final fun getJob (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/Job;
+	public static final fun getJobOrNull (Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/Job;
 	public static final fun isActive (Lkotlinx/coroutines/CoroutineScope;)Z
+	public static final fun join (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun plus (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
 }
 

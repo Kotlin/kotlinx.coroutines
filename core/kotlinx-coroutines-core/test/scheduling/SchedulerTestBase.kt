@@ -67,7 +67,7 @@ abstract class SchedulerTestBase : TestBase() {
     protected var idleWorkerKeepAliveNs = IDLE_WORKER_KEEP_ALIVE_NS
 
     private var _dispatcher: ExperimentalCoroutineDispatcher? = null
-    protected val dispatcher: CoroutineContext
+    protected val coroutineDispatcher: CoroutineContext
         get() {
             if (_dispatcher == null) {
                 _dispatcher = ExperimentalCoroutineDispatcher(
@@ -85,12 +85,12 @@ abstract class SchedulerTestBase : TestBase() {
     }
 
     protected fun blockingDispatcher(parallelism: Int): CoroutineContext {
-        val intitialize = dispatcher
+        val intitialize = coroutineDispatcher
         return _dispatcher!!.blocking(parallelism) + handler
     }
 
     protected fun view(parallelism: Int): CoroutineContext {
-        val intitialize = dispatcher
+        val intitialize = coroutineDispatcher
         return _dispatcher!!.limited(parallelism) + handler
     }
 

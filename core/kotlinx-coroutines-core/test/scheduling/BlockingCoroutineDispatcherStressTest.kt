@@ -111,7 +111,7 @@ class BlockingCoroutineDispatcherStressTest : SchedulerTestBase() {
 
         repeat(iterations) {
             // Overwhelm global queue with external CPU tasks
-            val cpuTasks = (1..CORES_COUNT).map { async(dispatcher) { while (true) delay(1) } }
+            val cpuTasks = (1..CORES_COUNT).map { async(coroutineDispatcher) { while (true) delay(1) } }
 
             val barrier = CyclicBarrier(blockingLimit + 1)
             // Should eat all limit * 3 cpu without any starvation

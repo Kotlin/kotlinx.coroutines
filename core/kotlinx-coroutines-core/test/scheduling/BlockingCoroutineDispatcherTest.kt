@@ -18,7 +18,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
             barrier.await()
         }
 
-        val nonBlockingJob = launch(dispatcher) {
+        val nonBlockingJob = launch(coroutineDispatcher) {
             barrier.await()
         }
 
@@ -33,7 +33,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
         val blocking = launch(blockingDispatcher.value) {
             // This task will be stolen
-            launch(dispatcher) {
+            launch(coroutineDispatcher) {
                 barrier.await()
             }
 
@@ -65,7 +65,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         val barrier = CyclicBarrier(tasksNum + 1)
         val tasks = (1..tasksNum).map { launch(blockingDispatcher.value) { barrier.await() } }
 
-        val cpuTask = launch(dispatcher) {
+        val cpuTask = launch(coroutineDispatcher) {
             // Do nothing, just complete
         }
 
@@ -88,7 +88,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         }
 
         val cpuTasks = (1..100).map {
-            launch(dispatcher) {
+            launch(coroutineDispatcher) {
                 // Do nothing, just complete
             }
         }.toList()
@@ -110,7 +110,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         val blockingTasks = (1..tasksNum).map { launch(blockingDispatcher.value) { barrier.await() } }
 
         val nonBlockingTasks = (1..tasksNum).map {
-            launch(dispatcher) {
+            launch(coroutineDispatcher) {
                 yield()
             }
         }
@@ -128,10 +128,10 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         maxPoolSize = 1
 
         val blocking = blockingDispatcher(1)
-        val task = async(dispatcher) {
+        val task = async(coroutineDispatcher) {
             expect(1)
 
-            val nonBlocking = async(dispatcher) {
+            val nonBlocking = async(coroutineDispatcher) {
                 expect(3)
             }
 
@@ -157,10 +157,10 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         maxPoolSize = 1
 
         val blocking = blockingDispatcher(2)
-        val task = async(dispatcher) {
+        val task = async(coroutineDispatcher) {
             expect(1)
 
-            val nonBlocking = async(dispatcher) {
+            val nonBlocking = async(coroutineDispatcher) {
                 expect(3)
             }
 
@@ -168,7 +168,7 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
                 expect(4)
             }
 
-            val secondNonBlocking = async(dispatcher) {
+            val secondNonBlocking = async(coroutineDispatcher) {
                 expect(5)
             }
 

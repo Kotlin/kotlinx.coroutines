@@ -27,7 +27,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
     @Test(timeout = 10_000)
     fun testShrinkOnlyBlockingTasks() = runBlocking {
         // Init dispatcher
-        async(dispatcher) { }.await()
+        async(coroutineDispatcher) { }.await()
         // Pool is initialized with core size in the beginning
         checkPoolThreadsExist(1..2)
 
@@ -48,7 +48,7 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         // Block cores count CPU threads
         val nonBlockingBarrier = CyclicBarrier(CORES_COUNT + 1)
         val nonBlockingTasks = (1..CORES_COUNT).map {
-            async(dispatcher) {
+            async(coroutineDispatcher) {
                 nonBlockingBarrier.await()
             }
         }
@@ -78,14 +78,14 @@ class CoroutineSchedulerShrinkTest : SchedulerTestBase() {
         val blockingTasks = launchBlocking()
 
         val nonBlockingTasks = (1..CORES_COUNT).map {
-            async(dispatcher) {
+            async(coroutineDispatcher) {
                 nonBlockingBarrier.await()
             }
         }
 
         // Tasks that burn CPU. Delay is important so tasks will be scheduled from external thread
         val busySpinTasks = (1..2).map {
-            async(dispatcher) {
+            async(coroutineDispatcher) {
                 while (true) {
                     yield()
                 }

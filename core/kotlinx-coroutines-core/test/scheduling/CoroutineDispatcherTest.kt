@@ -20,7 +20,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     @Test
     fun testSingleThread() = runBlocking {
         expect(1)
-        withContext(dispatcher) {
+        withContext(coroutineDispatcher) {
             require(Thread.currentThread() is CoroutineScheduler.Worker)
             expect(2)
             val job = async {
@@ -42,10 +42,10 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
         corePoolSize = 1
         expect(1)
 
-        val outerJob = launch(dispatcher) {
-            val d1 = launch(dispatcher) { expect(3) }
-            val d2 = launch(dispatcher) { expect(4) }
-            val d3 = launch(dispatcher) { expect(2) }
+        val outerJob = launch(coroutineDispatcher) {
+            val d1 = launch(coroutineDispatcher) { expect(3) }
+            val d2 = launch(coroutineDispatcher) { expect(4) }
+            val d3 = launch(coroutineDispatcher) { expect(2) }
             listOf(d1, d2, d3).joinAll()
         }
 
@@ -57,7 +57,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testStealing() = runBlocking {
         corePoolSize = 2
         val flag = AtomicBoolean(false)
-        val job = async(context = dispatcher) {
+        val job = async(context = coroutineDispatcher) {
             expect(1)
             val innerJob = async {
                 expect(2)
@@ -81,11 +81,11 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testNoStealing() = runBlocking {
         corePoolSize = CORES_COUNT
         schedulerTimeSource = TestTimeSource(0L)
-        withContext(dispatcher) {
+        withContext(coroutineDispatcher) {
             val thread = Thread.currentThread()
-            val job = async(dispatcher) {
+            val job = async(coroutineDispatcher) {
                 assertEquals(thread, Thread.currentThread())
-                val innerJob = async(dispatcher) {
+                val innerJob = async(coroutineDispatcher) {
                     assertEquals(thread, Thread.currentThread())
                 }
                 innerJob.await()
@@ -101,7 +101,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     @Test
     fun testDelay() = runBlocking {
         corePoolSize = 2
-        withContext(dispatcher) {
+        withContext(coroutineDispatcher) {
             expect(1)
             delay(10)
             expect(2)
@@ -114,7 +114,7 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     @Test
     fun testWithTimeout() = runBlocking {
         corePoolSize = CORES_COUNT
-        withContext(dispatcher) {
+        withContext(coroutineDispatcher) {
             expect(1)
             val result = withTimeoutOrNull(1000) {
                 expect(2)
@@ -149,9 +149,9 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testYield() = runBlocking {
         corePoolSize = 1
         maxPoolSize = 1
-        val outerJob = launch(dispatcher) {
+        val outerJob = launch(coroutineDispatcher) {
             expect(1)
-            val innerJob = launch(dispatcher) {
+            val innerJob = launch(coroutineDispatcher) {
                 // Do nothing
                 expect(3)
             }

@@ -47,7 +47,7 @@ class BlockingCoroutineDispatcherRaceStressTest : SchedulerTestBase() {
         // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
         for (i in 1..iterations) {
             val tasks = (1..2).map {
-                async(dispatcher) {
+                async(coroutineDispatcher) {
                     // Useless work
                     concurrentWorkers.incrementAndGet()
                     concurrentWorkers.decrementAndGet()
