@@ -40,7 +40,7 @@ public fun <T> CoroutineScope.future(
     val newContext = newCoroutineContext(context)
     val future = SettableFuture.create<T>()
     val coroutine = ListenableFutureCoroutine(newContext, future)
-    future.addCallback(coroutine, MoreExecutors.directExecutor())
+    Futures.addCallback(future, coroutine, MoreExecutors.directExecutor())
     coroutine.start(start, coroutine, block)
     return future
 }
