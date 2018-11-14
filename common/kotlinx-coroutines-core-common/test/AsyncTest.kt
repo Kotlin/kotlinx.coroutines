@@ -239,4 +239,16 @@ class AsyncTest : TestBase() {
             finish(3)
         }
     }
+
+    @Test
+    fun testIncompleteAsyncState() = runTest {
+        val job = async {
+            coroutineContext[Job]!!.invokeOnCompletion {  }
+        }
+
+        job.await().dispose()
+        assertTrue(job.isCompleted)
+        assertFalse(job.isActive)
+        assertFalse(job.isCancelled)
+    }
 }

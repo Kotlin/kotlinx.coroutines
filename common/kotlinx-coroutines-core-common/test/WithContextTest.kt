@@ -52,8 +52,8 @@ class WithContextTest : TestBase() {
         expect(2)
         val result = withContext(coroutineContext) { // same context!
             expect(3) // still here
-            "OK"
-        }
+            "OK".wrap()
+        }.unwrap()
         assertEquals("OK", result)
         expect(4)
         // will wait for the first coroutine
@@ -70,8 +70,8 @@ class WithContextTest : TestBase() {
             expect(3) // still here
             yield() // now yields to launch!
             expect(5)
-            "OK"
-        }
+            "OK".wrap()
+        }.unwrap()
         assertEquals("OK", result)
         finish(6)
     }
@@ -95,7 +95,7 @@ class WithContextTest : TestBase() {
                 } catch (e: CancellationException) {
                     expect(4)
                 }
-                "OK"
+                "OK".wrap()
             }
 
             expectUnreached()
@@ -126,7 +126,7 @@ class WithContextTest : TestBase() {
             } catch (e: CancellationException) {
                 finish(6)
             }
-            "OK"
+            "OK".wrap()
         }
         // still fails, because parent job was cancelled
         expectUnreached()
@@ -240,7 +240,9 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel itself
                     require(job!!.cancel(AssertionError()))
                     require(!isActive)
+                    "OK".wrap()
                 }
+                expectUnreached()
             } catch (e: Throwable) {
                 expect(7)
                 // make sure JCE is thrown
@@ -269,7 +271,9 @@ class WithContextTest : TestBase() {
                     throw TestException()
                 }
                 expect(3)
+                "OK".wrap()
             }
+            expectUnreached()
         } catch (e: TestException) {
             // ensure that we can catch exception outside of the scope
             expect(5)
@@ -287,7 +291,8 @@ class WithContextTest : TestBase() {
                 expect(4) // waits before return
             }
             expect(3)
-        }
+            "OK".wrap()
+        }.unwrap()
         finish(5)
     }
 
@@ -301,7 +306,32 @@ class WithContextTest : TestBase() {
                 expect(4) // waits before return
             }
             expect(3)
-        }
+            "OK".wrap()
+        }.unwrap()
         finish(5)
     }
+
+    @Test
+    fun testIncompleteWithContextState() = runTest {
+        lateinit var ctxJob: Job
+        withContext(wrapperDispatcher(coroutineContext)) {
+            ctxJob = coroutineContext[Job]!!
+            ctxJob.invokeOnCompletion { }
+        }
+
+        ctxJob.join()
+        assertTrue(ctxJob.isCompleted)
+        assertFalse(ctxJob.isActive)
+        assertFalse(ctxJob.isCancelled)
+    }
+
+    private class Wrapper(val value: String) : Incomplete {
+        override val isActive: Boolean
+            get() =  error("")
+        override val list: NodeList?
+            get() = error("")
+    }
+
+    private fun String.wrap() = Wrapper(this)
+    private fun Wrapper.unwrap() = value
 }

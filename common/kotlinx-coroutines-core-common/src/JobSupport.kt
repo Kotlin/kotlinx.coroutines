@@ -154,10 +154,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     // ------------ state query ------------
-
     /**
      * Returns current state of this job.
-     * @suppress **This is unstable API and it is subject to change.**
+     * If final state of the job is [Incomplete], then it is boxed into [IncompleteStateBox]
+     * and should be [unboxed][unboxState] before returning to user code.
      */
     internal val state: Any? get() {
         _state.loop { state -> // helper loop on state (complete in-progress atomic operations)
@@ -192,7 +192,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     // Finalizes Finishing -> Completed (terminal state) transition.
     // ## IMPORTANT INVARIANT: Only one thread can be concurrently invoking this method.
     private fun tryFinalizeFinishingState(state: Finishing, proposedUpdate: Any?, mode: Int): Boolean {
-        require(proposedUpdate !is Incomplete) // only incomplete -> completed transition is allowed
+        /*
+         * Note: proposed state can be Incompleted, e.g.
+         * async {
+         *   smth.invokeOnCompletion {} // <- returns handle which implements Incomplete under the hood
+         * }
+         */
         require(this.state === state) // consistency check -- it cannot change
         require(!state.isSealed) // consistency check -- cannot be sealed yet
         require(state.isCompleting) // consistency check -- must be marked as completing
@@ -220,7 +225,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             handleJobException(finalException)
         }
         // Then CAS to completed state -> it must succeed
-        require(_state.compareAndSet(state, finalState)) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
+        require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
         // And process all post-completion actions
         completeStateFinalization(state, finalState, mode, suppressed)
         return true
@@ -254,7 +259,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     private fun tryFinalizeSimpleState(state: Incomplete, update: Any?, mode: Int): Boolean {
         check(state is Empty || state is JobNode<*>) // only simple state without lists where children can concurrently add
         check(update !is CompletedExceptionally) // only for normal completion
-        if (!_state.compareAndSet(state, update)) return false
+        if (!_state.compareAndSet(state, update.boxIncomplete())) return false
         completeStateFinalization(state, update, mode, false)
         return true
     }
@@ -1029,7 +1034,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         private val job: JobSupport
     ) : CancellableContinuationImpl<T>(delegate, MODE_CANCELLABLE) {
         override fun getContinuationCancellationCause(parent: Job): Throwable {
-            val state = job.state
+            val state = job.state.unboxState()
             /*
              * When the job we are waiting for had already completely completed exceptionally or
              * is failing, we shall use its root/completion cause for await's result.
@@ -1054,7 +1059,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
 
     public fun getCompletionExceptionOrNull(): Throwable? {
-        val state = this.state
+        val state = this.state.unboxState()
         check(state !is Incomplete) { "This job has not completed yet" }
         return state.exceptionOrNull
     }
@@ -1063,7 +1068,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal fun getCompletedInternal(): Any? {
-        val state = this.state
+        val state = this.state.unboxState()
         check(state !is Incomplete) { "This job has not completed yet" }
         if (state is CompletedExceptionally) throw state.cause
         return state
@@ -1075,7 +1080,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     internal suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
         while (true) { // lock-free loop on state
-            val state = this.state
+            val state = this.state.unboxState()
             if (state !is Incomplete) {
                 // already complete -- just return result
                 if (state is CompletedExceptionally) throw state.cause
@@ -1131,7 +1136,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     @Suppress("UNCHECKED_CAST")
     internal fun <T, R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R) {
-        val state = this.state
+        val state = this.state.unboxState()
         // Note: await is non-atomic (can be cancelled while dispatched)
         if (state is CompletedExceptionally)
             select.resumeSelectCancellableWithException(state.cause)
@@ -1139,6 +1144,13 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             block.startCoroutineCancellable(state as T, select.completion)
     }
 }
+
+/*
+ * Class to represent object as the final state of the Job
+ */
+private class IncompleteStateBox(@JvmField val state: Incomplete)
+private fun Any?.boxIncomplete(): Any? = if (this is Incomplete) IncompleteStateBox(this) else this
+internal fun Any?.unboxState(): Any? = (this as? IncompleteStateBox)?.state ?: this
 
 // --------------- helper classes & constants for job implementation
 
@@ -1232,8 +1244,7 @@ private class ResumeAwaitOnCompletion<T>(
     private val continuation: AbstractContinuation<T>
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
-        val state = job.state
-        check(state !is Incomplete)
+        val state = job.state.unboxState()
         if (state is CompletedExceptionally) {
             // Resume with exception in atomic way to preserve exception
             continuation.resumeWithExceptionMode(state.cause, MODE_ATOMIC_DEFAULT)
