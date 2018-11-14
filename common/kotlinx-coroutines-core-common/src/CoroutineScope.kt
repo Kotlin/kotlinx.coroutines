@@ -216,3 +216,25 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
 @Suppress("FunctionName")
 public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
     ContextScope(if (context[Job] != null) context else context + Job())
+
+/**
+ * Creates [CoroutineScope] for a UI components.
+ * Resulting scope has [SupervisorJob] and [Dispatchers.Main] and inherits parent
+ * and the rest of context elements from optionally provided [context].
+ * If [context] already had a dispatcher, it will be overwritten by [Dispatchers.Main].
+ *
+ * Example of use:
+ * ```
+ * class MyAndroidActivity: CoroutineScope by MainScope(CoroutineName("MyActivity"))) {
+ *
+ *   override fun onDestroy() {
+ *     super.onDestroy()
+ *     cancel() // CoroutineScope.cancel
+ *   }
+ * }
+ *
+ * ```
+ */
+@Suppress("FunctionName")
+public fun MainScope(context: CoroutineContext = EmptyCoroutineContext): CoroutineScope =
+    ContextScope(context + SupervisorJob(context[Job]) + Dispatchers.Main)
