@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("DEPRECATION")
+
 package kotlinx.coroutines
 
 import kotlin.test.*
@@ -204,5 +206,31 @@ class JobTest : TestBase() {
         job.cancel(TestException())
         assertTrue(job.isCancelled)
         assertTrue(parent.isCancelled)
+    }
+
+    @Test
+    fun testIncompleteJobState() = runTest {
+        val job = launch {
+            coroutineContext[Job]!!.invokeOnCompletion {  }
+        }
+
+        job.join()
+        assertTrue(job.isCompleted)
+        assertFalse(job.isActive)
+        assertFalse(job.isCancelled)
+    }
+
+    @Test
+    fun testChildrenWithIncompleteState() = runTest {
+        val job = async { Wrapper() }
+        job.join()
+        assertTrue(job.children.toList().isEmpty())
+    }
+
+    private class Wrapper : Incomplete {
+        override val isActive: Boolean
+            get() =  error("")
+        override val list: NodeList?
+            get() = error("")
     }
 }

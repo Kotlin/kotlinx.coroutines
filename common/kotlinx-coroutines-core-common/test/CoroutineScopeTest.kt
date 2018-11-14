@@ -256,6 +256,20 @@ class CoroutineScopeTest : TestBase() {
         assertSame(Dispatchers.Unconfined, scopePlusContext(Dispatchers.Unconfined, Dispatchers.Unconfined))
     }
 
+    @Test
+    fun testIncompleteScopeState() = runTest {
+        lateinit var scopeJob: Job
+        coroutineScope {
+            scopeJob = coroutineContext[Job]!!
+            scopeJob.invokeOnCompletion { }
+        }
+
+        scopeJob.join()
+        assertTrue(scopeJob.isCompleted)
+        assertFalse(scopeJob.isActive)
+        assertFalse(scopeJob.isCancelled)
+    }
+
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
         (ContextScope(c1) + c2).coroutineContext
 }

@@ -123,7 +123,7 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
     return when {
         result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
         makeCompletingOnce(result, MODE_IGNORE) -> {
-            val state = state
+            val state = state.unboxState()
             if (state is CompletedExceptionally) {
                 when {
                     shouldThrow(state.cause) -> throw state.cause
