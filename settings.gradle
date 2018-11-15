@@ -43,4 +43,4 @@ module('js/kotlinx-coroutines-core-js')
 module('js/js-stub')
 module('js/example-frontend-js')
 
-module('native/kotlinx-coroutines-core-native')
+//module('native/kotlinx-coroutines-core-native')
