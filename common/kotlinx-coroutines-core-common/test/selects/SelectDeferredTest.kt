@@ -136,4 +136,38 @@ class SelectDeferredTest : TestBase() {
         expectUnreached()
     }
 
+    @Test
+    fun testSelectIncomplete() = runTest {
+        val deferred = async { Wrapper("OK") }
+        val result = select<Wrapper> {
+            assertFalse(deferred.isCompleted)
+            assertTrue(deferred.isActive)
+            deferred.onAwait {
+                it
+            }
+        }
+
+        assertEquals("OK", result.value)
+    }
+
+    @Test
+    fun testSelectIncompleteFastPath() = runTest {
+        val deferred = async(Dispatchers.Unconfined) { Wrapper("OK") }
+        val result = select<Wrapper> {
+            assertTrue(deferred.isCompleted)
+            assertFalse(deferred.isActive)
+            deferred.onAwait {
+                it
+            }
+        }
+
+        assertEquals("OK", result.value)
+    }
+
+    private class Wrapper(val value: String) : Incomplete {
+        override val isActive: Boolean
+            get() = error("")
+        override val list: NodeList?
+            get() = error("")
+    }
 }

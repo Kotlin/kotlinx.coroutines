@@ -1034,7 +1034,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         private val job: JobSupport
     ) : CancellableContinuationImpl<T>(delegate, MODE_CANCELLABLE) {
         override fun getContinuationCancellationCause(parent: Job): Throwable {
-            val state = job.state.unboxState()
+            val state = job.state
             /*
              * When the job we are waiting for had already completely completed exceptionally or
              * is failing, we shall use its root/completion cause for await's result.
@@ -1059,7 +1059,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public val isCompletedExceptionally: Boolean get() = state is CompletedExceptionally
 
     public fun getCompletionExceptionOrNull(): Throwable? {
-        val state = this.state.unboxState()
+        val state = this.state
         check(state !is Incomplete) { "This job has not completed yet" }
         return state.exceptionOrNull
     }
@@ -1068,10 +1068,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * @suppress **This is unstable API and it is subject to change.**
      */
     internal fun getCompletedInternal(): Any? {
-        val state = this.state.unboxState()
+        val state = this.state
         check(state !is Incomplete) { "This job has not completed yet" }
         if (state is CompletedExceptionally) throw state.cause
-        return state
+        return state.unboxState()
     }
 
     /**
@@ -1080,11 +1080,11 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     internal suspend fun awaitInternal(): Any? {
         // fast-path -- check state (avoid extra object creation)
         while (true) { // lock-free loop on state
-            val state = this.state.unboxState()
+            val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result
                 if (state is CompletedExceptionally) throw state.cause
-                return state
+                return state.unboxState()
 
             }
             if (startInternal(state) >= 0) break // break unless needs to retry
@@ -1116,10 +1116,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             if (state !is Incomplete) {
                 // already complete -- select result
                 if (select.trySelect(null)) {
-                    if (state is CompletedExceptionally)
+                    if (state is CompletedExceptionally) {
                         select.resumeSelectCancellableWithException(state.cause)
-                    else
-                        block.startCoroutineUnintercepted(state as T, select.completion)
+                    }
+                    else {
+                        block.startCoroutineUnintercepted(state.unboxState() as T, select.completion)
+                    }
                 }
                 return
             }
@@ -1136,12 +1138,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     @Suppress("UNCHECKED_CAST")
     internal fun <T, R> selectAwaitCompletion(select: SelectInstance<R>, block: suspend (T) -> R) {
-        val state = this.state.unboxState()
+        val state = this.state
         // Note: await is non-atomic (can be cancelled while dispatched)
         if (state is CompletedExceptionally)
             select.resumeSelectCancellableWithException(state.cause)
         else
-            block.startCoroutineCancellable(state as T, select.completion)
+            block.startCoroutineCancellable(state.unboxState() as T, select.completion)
     }
 }
 
@@ -1244,14 +1246,15 @@ private class ResumeAwaitOnCompletion<T>(
     private val continuation: AbstractContinuation<T>
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
-        val state = job.state.unboxState()
+        val state = job.state
+        check(state !is Incomplete)
         if (state is CompletedExceptionally) {
             // Resume with exception in atomic way to preserve exception
             continuation.resumeWithExceptionMode(state.cause, MODE_ATOMIC_DEFAULT)
         } else {
             // Resuming with value in a cancellable way (AwaitContinuation is configured for this mode).
             @Suppress("UNCHECKED_CAST")
-            continuation.resume(state as T)
+            continuation.resume(state.unboxState() as T)
         }
     }
     override fun toString() = "ResumeAwaitOnCompletion[$continuation]"
