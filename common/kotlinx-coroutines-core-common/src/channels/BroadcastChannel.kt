@@ -2,12 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("FunctionName")
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.internal.*
 
 /**
  * Broadcast channel is a non-blocking primitive for communication between the sender and multiple receivers
