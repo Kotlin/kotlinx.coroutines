@@ -257,13 +257,11 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         if (!closeAdded) {
             val actualClosed = queue.prevNode as Closed<*>
             helpClose(actualClosed)
-            onClosedIdempotent(actualClosed)
             return false
         }
 
         helpClose(closed)
         invokeOnCloseHandler(cause)
-        onClosedIdempotent(closed)
         return true
     }
 
@@ -325,6 +323,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             previous as Receive<E> // type assertion
             previous.resumeReceiveClosed(closed)
         }
+
+        onClosedIdempotent(closed)
     }
 
     /**
