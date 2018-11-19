@@ -32,16 +32,10 @@ class ChannelLinearizabilityTest : TestBase() {
     fun send2(@Param(name = "value") value: Int) = lt.run("send2") { channel.send(value) }
 
     @Operation(runOnce = true)
-    fun send3(@Param(name = "value") value: Int) = lt.run("send3") { channel.send(value) }
-
-    @Operation(runOnce = true)
     fun receive1() = lt.run("receive1") { channel.receive() }
 
     @Operation(runOnce = true)
     fun receive2() = lt.run("receive2") { channel.receive() }
-
-    @Operation(runOnce = true)
-    fun receive3() = lt.run("receive3") { channel.receive() }
 
     @Operation(runOnce = true)
     fun close1() = lt.run("close1") { channel.close(IOException("close1")) }
@@ -70,8 +64,8 @@ class ChannelLinearizabilityTest : TestBase() {
     private fun runTest(capacity: Int) {
         ChannelLinearizabilityTest.capacity = capacity
         val options = StressOptions()
-            .iterations(100 * stressTestMultiplierSqrt)
-            .invocationsPerIteration(1000 * stressTestMultiplierSqrt)
+            .iterations(50 * stressTestMultiplierSqrt)
+            .invocationsPerIteration(500 * stressTestMultiplierSqrt)
             .threads(3)
             .verifier(LinVerifier::class.java)
         LinChecker.check(ChannelLinearizabilityTest::class.java, options)
