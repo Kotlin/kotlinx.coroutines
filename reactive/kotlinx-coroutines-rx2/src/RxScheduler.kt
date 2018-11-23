@@ -12,8 +12,12 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Converts an instance of [Scheduler] to an implementation of [CoroutineDispatcher]
  * and provides native support of [delay] and [withTimeout].
+ * If scheduler is instance of [CoroutineDispatcherScheduler] it just extracts underlying [CoroutineDispatcher].
  */
-public fun Scheduler.asCoroutineDispatcher(): SchedulerCoroutineDispatcher = SchedulerCoroutineDispatcher(this)
+public fun Scheduler.asCoroutineDispatcher(): CoroutineDispatcher = when (this) {
+    is CoroutineDispatcherScheduler -> dispatcher
+    else -> SchedulerCoroutineDispatcher(this)
+}
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary [Scheduler].
