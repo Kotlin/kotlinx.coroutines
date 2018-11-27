@@ -10,7 +10,7 @@ import javafx.event.*
 import javafx.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.lang.IllegalStateException
+import kotlinx.coroutines.javafx.JavaFx.delay
 import java.lang.reflect.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
@@ -115,31 +115,36 @@ private class PulseTimer : AnimationTimer() {
     }
 }
 
-internal fun initPlatform() {
+internal fun initPlatform(): Boolean {
     /*
      * Try to instantiate JavaFx platform in a way which works
      * both on Java 8 and Java 11 and does not produce "illegal reflective access":
      *
      * 1) Try to invoke javafx.application.Platform.startup if this class is
-     *    present in a classpath (since Java 9 it is a separate dependency)
-     * 2) If it is not present, invoke plain old PlatformImpl.startup
+     *    present in a classpath.
+     * 2) If it is not successful and does not because it is already started,
+     *    fallback to PlatformImpl.
      *
-     * Additionally, ignore ISE("Toolkit already initialized") because since Java 9
-     * consecutive calls to 'startup' throw it
+     * Ignore exception anyway in case of unexpected changes in API, in that case
+     * user will have to instantiate it manually.
      */
-    val platformClass = runCatching {
-        Class.forName("javafx.application.Platform") // Java 9+
-    }.getOrElse {
-        Class.forName("com.sun.javafx.application.PlatformImpl") // Fallback
-    }
-
-    try {
-        platformClass.getMethod("startup", java.lang.Runnable::class.java)
-            .invoke(null, java.lang.Runnable { })
-    } catch (e: InvocationTargetException) {
-        val cause = e.cause
-        if (cause !is IllegalStateException || "Toolkit already initialized" != cause.message) {
-            throw e
+    val runnable = Runnable {}
+    return runCatching {
+        // Invoke public API if it is present
+        Class.forName("javafx.application.Platform")
+            .getMethod("startup", java.lang.Runnable::class.java)
+            .invoke(null, runnable)
+    }.recoverCatching { exception ->
+        // Recover -> check re-initialization
+        val cause = exception.cause
+        if (exception is InvocationTargetException && cause is IllegalStateException
+            && "Toolkit already initialized" == cause.message) {
+            // Toolkit is already initialized -> success, return
+            Unit
+        } else { // Fallback to Java 8 API
+            Class.forName("com.sun.javafx.application.PlatformImpl")
+                .getMethod("startup", java.lang.Runnable::class.java)
+                .invoke(null, runnable)
         }
-    }
+    }.isSuccess
 }
