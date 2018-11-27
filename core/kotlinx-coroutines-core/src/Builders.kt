@@ -65,6 +65,7 @@ private class BlockingCoroutine<T>(
     fun joinBlocking(): T {
         timeSource.registerTimeLoopThread()
         while (true) {
+            @Suppress("DEPRECATION")
             if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
             val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
             // note: process next even may loose unpark flag, so check if completed before parking

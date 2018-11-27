@@ -10,6 +10,7 @@ import org.junit.Test
 import java.io.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION") // cancel(cause)
 class JobExceptionHandlingTest : TestBase() {
 
     @Test

@@ -5,8 +5,6 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.exceptions.*
-import kotlinx.coroutines.selects.*
 import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -14,7 +12,8 @@ import kotlin.test.*
 /*
  * Set of counterparts to common tests which check suppressed exceptions
  */
-class SuppresionTests : TestBase() {
+@Suppress("DEPRECATION")
+class SuppressionTests : TestBase() {
 
     @Test
     fun testCancellationTransparency() = runTest {
@@ -45,7 +44,7 @@ class SuppresionTests : TestBase() {
 
             override fun onCancellation(cause: Throwable?) {
                 assertTrue(cause is ArithmeticException)
-                assertTrue(cause!!.suppressed.isEmpty())
+                assertTrue(cause.suppressed.isEmpty())
                 expect(5)
             }
 
@@ -62,13 +61,13 @@ class SuppresionTests : TestBase() {
 
         coroutine.invokeOnCompletion(onCancelling = true) {
             assertTrue(it is ArithmeticException)
-            assertTrue(it!!.suppressed.isEmpty())
+            assertTrue(it.suppressed.isEmpty())
             expect(6)
         }
 
         coroutine.invokeOnCompletion {
             assertTrue(it is ArithmeticException)
-            checkException<IOException>(it!!.suppressed[0])
+            checkException<IOException>(it.suppressed[0])
             expect(8)
         }
 

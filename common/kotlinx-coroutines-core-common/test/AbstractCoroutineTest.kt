@@ -7,6 +7,7 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION") // cancel(cause)
 class AbstractCoroutineTest : TestBase() {
     @Test
     fun testNotifications() = runTest {
