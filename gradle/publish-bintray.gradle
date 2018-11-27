@@ -77,7 +77,6 @@ artifactory {
 
 task publishDevelopSnapshot() {
     def branch = System.getenv('currentBranch')
-    println "Current branch: $branch"
     if (branch == "develop") {
         dependsOn(":artifactoryPublish")
     }

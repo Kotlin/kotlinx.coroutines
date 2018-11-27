@@ -65,7 +65,7 @@ internal fun handlerException(originalException: Throwable, thrownException: Thr
  */
 @Suppress("FunctionName")
 public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
-    object: AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+    object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
         override fun handleException(context: CoroutineContext, exception: Throwable) =
             handler.invoke(context, exception)
     }

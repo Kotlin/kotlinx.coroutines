@@ -195,8 +195,8 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
                                            "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
                                            "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
                                            "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
-
+                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
+                                           "-progressive"]
     }
 }
 
