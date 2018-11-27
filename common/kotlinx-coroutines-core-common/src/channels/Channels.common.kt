@@ -60,8 +60,10 @@ public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Uni
  *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
 @ObsoleteCoroutinesApi
-public fun ReceiveChannel<*>.consumes(): CompletionHandler =
-    { cause: Throwable? -> cancel(cause) }
+public fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwable? ->
+        @Suppress("DEPRECATION")
+        cancel(cause)
+    }
 
 /**
  * Returns a [CompletionHandler] that invokes [cancel][ReceiveChannel.cancel] on all the
@@ -77,6 +79,7 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
         var exception: Throwable? = null
         for (channel in channels)
             try {
+                @Suppress("DEPRECATION")
                 channel.cancel(cause)
             } catch (e: Throwable) {
                 if (exception == null) {
@@ -112,6 +115,7 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
         cause = e
         throw e
     } finally {
+        @Suppress("DEPRECATION")
         cancel(cause)
     }
 }
@@ -302,7 +306,7 @@ public suspend fun <E> ReceiveChannel<E>.firstOrNull(): E? =
  *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
 @ObsoleteCoroutinesApi
-public inline suspend fun <E> ReceiveChannel<E>.firstOrNull(predicate: (E) -> Boolean): E? {
+public suspend inline fun <E> ReceiveChannel<E>.firstOrNull(predicate: (E) -> Boolean): E? {
     consumeEach {
         if (predicate(it)) return it
     }

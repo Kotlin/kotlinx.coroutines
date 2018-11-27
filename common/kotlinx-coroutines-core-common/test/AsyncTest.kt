@@ -8,6 +8,7 @@ package kotlinx.coroutines
 
 import kotlin.test.*
 
+@Suppress("DEPRECATION") // cancel(cause)
 class AsyncTest : TestBase() {
 
     @Test

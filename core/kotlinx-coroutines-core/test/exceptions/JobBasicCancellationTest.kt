@@ -14,6 +14,8 @@ import kotlin.test.*
  * parent is not cancelled on child cancellation and launch {}, Job(), async {} and
  * CompletableDeferred behave properly
  */
+
+@Suppress("DEPRECATION") // cancel(cause)
 class JobBasicCancellationTest : TestBase() {
 
     @Test
