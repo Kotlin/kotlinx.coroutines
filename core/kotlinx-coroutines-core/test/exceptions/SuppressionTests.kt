@@ -10,7 +10,7 @@ import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class SuppresionTests : TestBase() {
+class SuppressionTests : TestBase() {
 
     @Test
     fun testCancellationTransparency() = runTest {
@@ -41,7 +41,7 @@ class SuppresionTests : TestBase() {
 
             override fun onCancellation(cause: Throwable?) {
                 assertTrue(cause is ArithmeticException)
-                assertTrue(cause!!.suppressed.isEmpty())
+                assertTrue(cause.suppressed.isEmpty())
                 expect(5)
             }
 

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.intrinsics
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
@@ -126,8 +127,8 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
             val state = state
             if (state is CompletedExceptionally) {
                 when {
-                    shouldThrow(state.cause) -> throw state.cause
-                    result is CompletedExceptionally -> throw result.cause
+                    shouldThrow(state.cause) -> throw tryRecover(state.cause)
+                    result is CompletedExceptionally -> throw tryRecover(result.cause)
                     else -> result
                 }
             } else {

@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import org.junit.Test
 import kotlin.test.*
 
-class StackTraceRecoveryInHierarchiesTest : TestBase() {
+class StackTraceRecoveryNestedTest : TestBase() {
 
     @Test
     fun testNestedAsync() = runTest {

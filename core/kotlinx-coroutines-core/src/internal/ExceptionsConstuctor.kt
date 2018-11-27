@@ -9,7 +9,8 @@ import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 
 private val cacheLock = ReentrantReadWriteLock()
-private val exceptionConstructors: WeakHashMap<Class<*>, (Throwable) -> Throwable?> = WeakHashMap()
+// Replace it with ClassValue when Java 6 support is over
+private val exceptionConstructors: WeakHashMap<Class<out Throwable>, (Throwable) -> Throwable?> = WeakHashMap()
 
 @Suppress("UNCHECKED_CAST")
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
@@ -24,7 +25,6 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
      * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
      */
     var ctor: ((Throwable) -> Throwable?)? = null
-
     val constructors = exception.javaClass.constructors.sortedByDescending { it.parameterTypes.size }
     for (constructor in constructors) {
         val parameters = constructor.parameterTypes

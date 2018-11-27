@@ -243,7 +243,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         var suppressed = false
         for (exception in exceptions) {
             val unwrapped = unwrap(exception)
-            if (unwrapped !== rootCause && unwrapped !is CancellationException && seenExceptions.add(exception)) {
+            if (unwrapped !== rootCause && unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
                 rootCause.addSuppressedThrowable(unwrapped)
                 suppressed = true
             }

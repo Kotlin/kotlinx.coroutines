@@ -29,7 +29,7 @@ public class TestException1(message: String? = null) : Throwable(message), NonRe
 public class TestException2(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestException3(message: String? = null) : Throwable(message), NonRecoverableThrowable
 public class TestRuntimeException(message: String? = null) : RuntimeException(message), NonRecoverableThrowable
-public class RecoverableTestException(message: String? = null) : Throwable(message)
+public class RecoverableTestException(message: String? = null) : RuntimeException(message)
 
 public fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
     val dispatcher = context[ContinuationInterceptor] as CoroutineDispatcher
