@@ -628,7 +628,6 @@ public final class kotlinx/coroutines/channels/ClosedSendChannelException : java
 }
 
 public final class kotlinx/coroutines/channels/ConflatedBroadcastChannel : kotlinx/coroutines/channels/BroadcastChannel {
-	public static final field Companion Lkotlinx/coroutines/channels/ConflatedBroadcastChannel$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Object;)V
 	public fun cancel (Ljava/lang/Throwable;)Z
