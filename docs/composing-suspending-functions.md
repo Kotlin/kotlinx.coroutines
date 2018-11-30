@@ -16,7 +16,7 @@ import org.junit.Test
 class ComposingGuideTest {
 --> 
 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 
