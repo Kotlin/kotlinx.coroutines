@@ -168,6 +168,8 @@ public abstract interface class kotlinx/coroutines/CoroutineScope {
 
 public final class kotlinx/coroutines/CoroutineScopeKt {
 	public static final fun CoroutineScope (Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
+	public static final fun MainScope ()Lkotlinx/coroutines/CoroutineScope;
+	public static final fun cancel (Lkotlinx/coroutines/CoroutineScope;)V
 	public static final fun coroutineScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun isActive (Lkotlinx/coroutines/CoroutineScope;)Z
 	public static final fun plus (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;

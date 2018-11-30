@@ -33,6 +33,7 @@ public actual object Dispatchers {
 
     /**
      * A coroutine dispatcher that is confined to the Main thread operating with UI objects.
+     * This dispatcher can be used either directly or via [MainScope] factory.
      * Usually such dispatcher is single-threaded.
      *
      * Access to this property may throw [IllegalStateException] if no main thread dispatchers are present in the classpath.

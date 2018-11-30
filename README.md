@@ -19,9 +19,10 @@ GlobalScope.launch {
 
 ## Modules
 
-* [common](common/README.md) &mdash; common coroutines across all backends:
+* [common](common/README.md) &mdash; common coroutines across all platforms:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
+  * `MainScope` for Android and UI applications.
   * `Dispatchers` object with `Main` dispatcher for Android/Swing/JavaFx, and `Default` dispatcher for background coroutines;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;
