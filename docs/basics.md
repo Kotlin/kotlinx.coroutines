@@ -16,7 +16,7 @@ import org.junit.Test
 class BasicsGuideTest {
 --> 
 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 

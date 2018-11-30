@@ -15,7 +15,7 @@ import org.junit.Test
 
 class ExceptionsGuideTest {
 --> 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 
