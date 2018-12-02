@@ -64,6 +64,11 @@ public interface CoroutineScope {
     public val coroutineContext: CoroutineContext
 }
 
+public interface RestartableCoroutineScope : CoroutineScope {
+    public val isRestarted: Boolean
+    public fun restart()
+}
+
 /**
  * Adds the specified coroutine context to this scope, overriding existing elements in the current
  * scope's context with the corresponding keys.
@@ -172,3 +177,12 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
 @Suppress("FunctionName")
 public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
     ContextScope(if (context[Job] != null) context else context + Job())
+
+@Suppress("FunctionName")
+public fun RestartableCoroutineScope(
+    context: CoroutineContext,
+    newJob: () -> Job = { SupervisorJob(context[Job]) }
+): RestartableCoroutineScope =
+    RestartableContextScope(if (context[Job] != null) context else context + newJob(), newJob)
+
+public val CoroutineScope.isRestartable: Boolean get() = this is RestartableCoroutineScope

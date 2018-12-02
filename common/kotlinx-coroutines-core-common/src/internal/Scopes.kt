@@ -29,3 +29,21 @@ internal open class ScopeCoroutine<in T>(
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {
     override val coroutineContext: CoroutineContext = context
 }
+
+internal class RestartableContextScope(
+    context: CoroutineContext,
+    private val newJob: () -> Job
+) : RestartableCoroutineScope {
+    private var _isRestarted = false
+    private var _coroutineContext: CoroutineContext = context
+
+    override val isRestarted: Boolean get() = _isRestarted
+
+    override val coroutineContext: CoroutineContext get() = _coroutineContext
+
+    override fun restart() {
+        _coroutineContext[Job]!!.cancel()
+        _coroutineContext += newJob()
+        _isRestarted = true
+    }
+}

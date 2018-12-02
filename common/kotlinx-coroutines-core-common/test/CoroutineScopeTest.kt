@@ -270,6 +270,60 @@ class CoroutineScopeTest : TestBase() {
         assertFalse(scopeJob.isCancelled)
     }
 
+    @Test
+    fun testRestartableScopePlusContext() {
+        assertSame(EmptyCoroutineContext, restartableScopePlusContext(EmptyCoroutineContext, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, restartableScopePlusContext(EmptyCoroutineContext, Dispatchers.Default))
+        assertSame(Dispatchers.Default, restartableScopePlusContext(Dispatchers.Default, EmptyCoroutineContext))
+        assertSame(Dispatchers.Default, restartableScopePlusContext(Dispatchers.Default, Dispatchers.Default))
+        assertSame(Dispatchers.Default, restartableScopePlusContext(Dispatchers.Unconfined, Dispatchers.Default))
+        assertSame(Dispatchers.Unconfined, restartableScopePlusContext(Dispatchers.Default, Dispatchers.Unconfined))
+        assertSame(Dispatchers.Unconfined, restartableScopePlusContext(Dispatchers.Unconfined, Dispatchers.Unconfined))
+    }
+
+    @Test
+    fun testRestart() {
+        fun CoroutineScope.job() = coroutineContext[Job]!!
+        val initialJob = Job()
+        val newJob = Job()
+        var factoryInvoked = false
+        val scope = RestartableCoroutineScope(initialJob) {
+            factoryInvoked = true
+            newJob
+        }
+        assertSame(initialJob, scope.job())
+        assertTrue(scope.isActive)
+        scope.job().cancel()
+        assertFalse(scope.isActive)
+        assertFalse(factoryInvoked)
+        scope.restart()
+        assertTrue(factoryInvoked)
+        assertTrue(scope.isActive)
+        assertNotSame(initialJob, scope.job())
+        assertSame(newJob, scope.job())
+    }
+
+    @Test
+    fun testIsRestartable() {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        assertFalse(scope.isRestartable)
+        val restartableScope = RestartableCoroutineScope(Dispatchers.Unconfined)
+        assertTrue(restartableScope.isRestartable)
+    }
+
+    @Test
+    fun testIsRestarted() {
+        val scope = RestartableCoroutineScope(Dispatchers.Unconfined)
+        assertFalse(scope.isRestarted)
+        scope.coroutineContext[Job]!!.cancel()
+        assertFalse(scope.isRestarted)
+        scope.restart()
+        assertTrue(scope.isRestarted)
+    }
+
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
         (ContextScope(c1) + c2).coroutineContext
+
+    private fun restartableScopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
+        (RestartableContextScope(c1) { Job() } + c2).coroutineContext
 }
