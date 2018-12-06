@@ -175,7 +175,7 @@ class WithTimeoutTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: CancellationException) {
+        } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out immediately", e.message)
             finish(2)
         }
