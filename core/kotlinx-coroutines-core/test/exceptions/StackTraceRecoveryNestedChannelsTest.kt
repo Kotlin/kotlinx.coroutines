@@ -34,6 +34,7 @@ class StackTraceRecoveryNestedChannelsTest : TestBase() {
         channel.close(RecoverableTestException())
 
         try {
+            yield() // Will be fixed in 1.3.20 after KT-27190
             sendWithContext(coroutineContext)
         } catch (e: Exception) {
             verifyStackTrace(e,
@@ -51,7 +52,7 @@ class StackTraceRecoveryNestedChannelsTest : TestBase() {
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest.sendWithContext(StackTraceRecoveryNestedChannelsTest.kt:18)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testOfferWithCurrentContext\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:37)\n" +
                 "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testOfferWithCurrentContext\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:33)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryNestedChannelsTest\$testOfferWithCurrentContext\$1.invokeSuspend(StackTraceRecoveryNestedChannelsTest.kt:34)\n" +
                     "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
         }
     }
