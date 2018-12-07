@@ -40,6 +40,6 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
         }
     }
 
-    cacheLock.write { exceptionConstructors[exception.javaClass] = ctor }
+    cacheLock.write { exceptionConstructors[exception.javaClass] = (ctor ?: { null }) }
     return ctor?.invoke(exception) as E?
 }
