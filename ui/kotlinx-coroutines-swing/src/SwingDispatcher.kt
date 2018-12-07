@@ -58,7 +58,7 @@ internal class SwingDispatcherFactory : MainDispatcherFactory {
     override val loadPriority: Int
         get() = 0
 
-    override fun createDispatcher(): MainCoroutineDispatcher = Swing
+    override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher = Swing
 }
 
 private object ImmediateSwingDispatcher : SwingDispatcher() {

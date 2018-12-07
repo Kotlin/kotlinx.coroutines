@@ -57,7 +57,7 @@ public sealed class JavaFxDispatcher : MainCoroutineDispatcher(), Delay {
 }
 
 internal class JavaFxDispatcherFactory : MainDispatcherFactory {
-    override fun createDispatcher(): MainCoroutineDispatcher = JavaFx
+    override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher = JavaFx
 
     override val loadPriority: Int
         get() = 1 // Swing has 0

@@ -1,22 +1,22 @@
-# Module kotlinx-coroutines-core-test
+# Module kotlinx-coroutines-test
 
-Test utilities for `kotlinx.coroutines`. Provides `MainDispatcherInjector.inject` to override `Main` dispatcher.
+Test utilities for `kotlinx.coroutines`. Provides `Dispatchers.setMain` to override `Main` dispatcher.
 
 ## Using in your project
 
-Add `kotlinx-coroutines-core-test` to your project test dependencies:
+Add `kotlinx-coroutines-test` to your project test dependencies:
 ```
 dependencies {
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core-test:1.0.0-RC1'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.1.0'
 }
 ```
 
 **Do not** depend on this project in your main sources, all utilities are intended and designed to be used only from tests. 
 
 Once you have it in runtime, [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html) mechanism will
-overwrite [Dispatchers.Main] will injectable implementation, which uses `Dispatchers.Unconfined` default.
+overwrite [Dispatchers.Main] will testable implementation.
 
-You can override this implementation using [inject][MainDispatcherInjector.inject] method with any [CoroutineDispatcher] implementation, e.g.:
+You can override this implementation using [setMain][Dispatchers.setMain] method with any [CoroutineDispatcher] implementation, e.g.:
 
 ```kotlin
 
@@ -26,12 +26,12 @@ class SomeTest {
 
     @Before
     fun setUp() {
-        MainDispatcherInjector.inject(mainThreadSurrogate)
+        Dispatchers.setMain(mainThreadSurrogate)
     }
 
     @After
     fun tearDown() {
-        MainDispatcherInjector.reset() // reset main dispatcher to Unconfined
+        Dispatchers.resetMain() // reset main dispatcher to original Main dispatcher
         mainThreadSurrogate.close()
     }
     

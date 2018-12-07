@@ -9,22 +9,23 @@ import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class MainDispatcherInjectorTest : TestBase() {
+class TestDispatchersTest : TestBase() {
 
     @Before
     fun setUp() {
-        MainDispatcherInjector.reset()
+        Dispatchers.resetMain()
     }
 
     @Test
-    fun testInjection() = runTest {
+    fun testSingleThreadExecutor() = runTest {
         val mainThread = Thread.currentThread()
-        newSingleThreadContext("testInjection").use { threadPool ->
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        newSingleThreadContext("testSingleThread").use { threadPool ->
             withContext(Dispatchers.Main) {
                 assertSame(mainThread, Thread.currentThread())
             }
 
-            MainDispatcherInjector.inject(threadPool)
+            Dispatchers.setMain(threadPool)
             withContext(Dispatchers.Main) {
                 assertNotSame(mainThread, Thread.currentThread())
             }
@@ -35,7 +36,7 @@ class MainDispatcherInjectorTest : TestBase() {
             }
             assertSame(mainThread, Thread.currentThread())
 
-            MainDispatcherInjector.inject(Dispatchers.Unconfined)
+            Dispatchers.setMain(Dispatchers.Unconfined)
             withContext(Dispatchers.Main.immediate) {
                 assertSame(mainThread, Thread.currentThread())
             }
@@ -45,13 +46,13 @@ class MainDispatcherInjectorTest : TestBase() {
 
     @Test
     fun testImmediateDispatcher() = runTest {
-        MainDispatcherInjector.inject(ImmediateDispatcher())
+        Dispatchers.setMain(ImmediateDispatcher())
         expect(1)
         withContext(Dispatchers.Main) {
             expect(3)
         }
 
-        MainDispatcherInjector.inject(RegularDispatcher())
+        Dispatchers.setMain(RegularDispatcher())
         withContext(Dispatchers.Main) {
             expect(6)
         }

@@ -11,5 +11,5 @@ import kotlinx.coroutines.*
 public interface MainDispatcherFactory {
     val loadPriority: Int // higher priority wins
 
-    fun createDispatcher(): MainCoroutineDispatcher
+    fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher
 }
