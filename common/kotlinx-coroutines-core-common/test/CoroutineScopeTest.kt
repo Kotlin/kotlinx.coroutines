@@ -321,6 +321,11 @@ class CoroutineScopeTest : TestBase() {
         assertTrue(scope.isRestarted)
     }
 
+    @Test
+    fun testRestartableMainScope() {
+        assertSame(RestartableMainScope().coroutineContext[ContinuationInterceptor], Dispatchers.Main)
+    }
+
     private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
         (ContextScope(c1) + c2).coroutineContext
 

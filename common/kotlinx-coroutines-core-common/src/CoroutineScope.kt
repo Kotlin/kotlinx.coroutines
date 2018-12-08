@@ -185,4 +185,8 @@ public fun RestartableCoroutineScope(
 ): RestartableCoroutineScope =
     RestartableContextScope(if (context[Job] != null) context else context + newJob(), newJob)
 
+@Suppress("FunctionName")
+public fun RestartableMainScope(): CoroutineScope =
+    RestartableContextScope(Dispatchers.Main) { SupervisorJob() }
+
 public val CoroutineScope.isRestartable: Boolean get() = this is RestartableCoroutineScope
