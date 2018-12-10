@@ -34,7 +34,8 @@ class SwingTest : TestBase() {
     }
 
     private class SwingComponent(coroutineContext: CoroutineContext = EmptyCoroutineContext) :
-        CoroutineScope by MainScope() + coroutineContext {
+        CoroutineScope by MainScope() + coroutineContext
+    {
         public var executed = false
         fun testLaunch(): Job = launch {
             check(SwingUtilities.isEventDispatchThread())
@@ -49,6 +50,7 @@ class SwingTest : TestBase() {
             delay(Long.MAX_VALUE)
         }
     }
+
     @Test
     fun testLaunchInMainScope() = runTest {
         val component = SwingComponent()
