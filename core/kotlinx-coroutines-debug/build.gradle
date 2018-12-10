@@ -1,0 +1,18 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+dependencies {
+    compile "net.bytebuddy:byte-buddy:$byte_buddy_version"
+    compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+}
+
+jar {
+    manifest {
+        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Can-Redefine-Classes": "true"
+        // For local runs
+        // attributes "Main-Class": "kotlinx.coroutines.debug.Playground"
+        // attributes "Class-Path": configurations.compile.collect { it.absolutePath }.join(" ")
+    }
+}

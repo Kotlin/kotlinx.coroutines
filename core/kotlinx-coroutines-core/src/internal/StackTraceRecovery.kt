@@ -165,7 +165,7 @@ internal actual fun <E : Throwable> unwrap(exception: E): E {
 }
 
 private fun <E : Throwable> recoveryDisabled(exception: E) =
-    !RECOVER_STACKTRACE || !DEBUG || exception is CancellationException || exception is NonRecoverableThrowable
+    !RECOVER_STACKTRACES || !DEBUG || exception is CancellationException || exception is NonRecoverableThrowable
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<StackTraceElement> {
     val stack = ArrayDeque<StackTraceElement>()
@@ -179,14 +179,17 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
     return stack
 }
 
-internal fun sanitize(element: StackTraceElement): StackTraceElement {
+@InternalCoroutinesApi
+public fun sanitize(element: StackTraceElement): StackTraceElement {
     if (!element.className.contains('/')) {
         return element
     }
     // KT-28237: STE generated with debug metadata contains '/' as separators in FQN, while Java contains dots
     return StackTraceElement(element.className.replace('/', '.'), element.methodName, element.fileName, element.lineNumber)
 }
-internal fun artificialFrame(message: String) = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
+
+@InternalCoroutinesApi
+public fun artificialFrame(message: String) = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
 internal fun StackTraceElement.isArtificial() = className.startsWith("\b\b\b")
 private fun Array<StackTraceElement>.frameIndex(methodName: String) = indexOfFirst { methodName == it.className }
 

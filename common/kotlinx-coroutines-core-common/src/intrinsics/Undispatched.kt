@@ -15,8 +15,8 @@ import kotlin.coroutines.intrinsics.*
  * It does not use [ContinuationInterceptor] and does not update context of the current thread.
  */
 internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
-    startDirect(completion) {
-        startCoroutineUninterceptedOrReturn(completion)
+    startDirect(completion) { actualCompletion ->
+        startCoroutineUninterceptedOrReturn(actualCompletion)
     }
 }
 
@@ -26,8 +26,8 @@ internal fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Conti
  * It does not use [ContinuationInterceptor] and does not update context of the current thread.
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, completion: Continuation<T>) {
-    startDirect(completion) {
-        startCoroutineUninterceptedOrReturn(receiver, completion)
+    startDirect(completion) {  actualCompletion ->
+        startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
     }
 }
 
@@ -37,9 +37,9 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineUnintercepted(receiver: R, 
  * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
  */
 internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Continuation<T>) {
-    startDirect(completion) {
+    startDirect(completion) { actualCompletion ->
         withCoroutineContext(completion.context, null) {
-            startCoroutineUninterceptedOrReturn(completion)
+            startCoroutineUninterceptedOrReturn(actualCompletion)
         }
     }
 }
@@ -50,23 +50,29 @@ internal fun <T> (suspend () -> T).startCoroutineUndispatched(completion: Contin
  * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
-    startDirect(completion) {
+    startDirect(completion) { actualCompletion ->
         withCoroutineContext(completion.context, null) {
-            startCoroutineUninterceptedOrReturn(receiver, completion)
+            startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
         }
     }
 }
 
-private inline fun <T> startDirect(completion: Continuation<T>, block: () -> Any?) {
+/**
+ * Starts given [block] immediately in the current stack-frame until first suspension point.
+ * This method supports debug probes and thus can intercept completion, thus completion is provide
+ * as the parameter of [block].
+ */
+private inline fun <T> startDirect(completion: Continuation<T>, block: (Continuation<T>) -> Any?) {
+    val actualCompletion = probeCoroutineCreated(completion)
     val value = try {
-        block()
+        block(actualCompletion)
     } catch (e: Throwable) {
-        completion.resumeWithException(e)
+        actualCompletion.resumeWithException(e)
         return
     }
     if (value !== COROUTINE_SUSPENDED) {
         @Suppress("UNCHECKED_CAST")
-        completion.resume(value as T)
+        actualCompletion.resume(value as T)
     }
 }
 

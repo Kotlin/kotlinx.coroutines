@@ -41,6 +41,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
  */
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
+@JvmField
 internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     when (value) {
         DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
@@ -50,7 +51,8 @@ internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
     }
 }
 
-internal val RECOVER_STACKTRACE = systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
+@JvmField
+internal val RECOVER_STACKTRACES = systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
 // internal debugging tools
 
