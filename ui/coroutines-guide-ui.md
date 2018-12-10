@@ -470,7 +470,7 @@ collection of the whole trees of UI objects that were already destroyed and will
 
 The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
 all the coroutines in the context of this job. But passing associated job object to every coroutine builder is error-prone, 
-it is easy to forget it. For this purpose, [CoroutineScope] interface should be implemented by UI owner, and then every
+it is easy to forget it. For this purpose, [CoroutineScope] interface could be implemented by UI owner, and then every
 coroutine builder defined as an extension on [CoroutineScope] inherits UI job without explicitly mentioning it.
 For the sake of simplicity, [MainScope()] factory can be used. It automatically provides `Dispatchers.Main` and parent 
 job.

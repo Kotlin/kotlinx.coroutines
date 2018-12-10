@@ -74,7 +74,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
     ContextScope(coroutineContext + context)
 
 /**
- * Creates [CoroutineScope] for a UI components.
+ * Creates the main [CoroutineScope] for UI components.
  *
  * Example of use:
  * ```
@@ -89,9 +89,9 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  *
  * ```
  *
- * Resulting scope has [SupervisorJob] and [Dispatchers.Main].
- * If you want to append additional elements to main scope, use [CoroutineScope.plus] operator:
- * `val scope = MainScope() + CoroutineName("MyActivity") `.
+ * The resulting scope has [SupervisorJob] and [Dispatchers.Main] context elements.
+ * If you want to append additional elements to the main scope, use [CoroutineScope.plus] operator:
+ * `val scope = MainScope() + CoroutineName("MyActivity")`.
  */
 @Suppress("FunctionName")
 public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
@@ -198,13 +198,13 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
 
 /**
  * Cancels this scope, including its job and all its children.
- * Throws [IllegalStateException] if scope does not have a job in it.
+ * Throws [IllegalStateException] if the scope does not have a job in it.
  *
- * This API is experimental in order to investigate possible clashes with other cancellation mechanism.
+ * This API is experimental in order to investigate possible clashes with other cancellation mechanisms.
  */
 @Suppress("NOTHING_TO_INLINE")
-@ExperimentalCoroutinesApi // Experimental and inline until 1.2
+@ExperimentalCoroutinesApi // Experimental and inline since 1.1.0, tentatively until 1.2.0
 public inline fun CoroutineScope.cancel() {
-    val job = coroutineContext[Job] ?: error("Current scope cannot be cancelled because it does not have a job: $this")
+    val job = coroutineContext[Job] ?: error("Scope cannot be cancelled because it does not have a job: $this")
     job.cancel()
 }
