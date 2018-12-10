@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.junit.*
 import org.junit.Test
-import java.lang.Exception
+import java.lang.IllegalStateException
 import kotlin.test.*
 
 open class FirstMockedMainTest : TestBase() {
@@ -30,10 +30,15 @@ open class FirstMockedMainTest : TestBase() {
         assertEquals(1, component.launchCompleted)
     }
 
-    @Test(expected = Exception::class)
+    @Test
     fun testFailureWhenReset() {
         Dispatchers.resetMain()
         val component = TestComponent()
-        component.doSomething()
+        try {
+            component.doSomething()
+            expectUnreached()
+        } catch (e: IllegalStateException) {
+            assertTrue(e.message!!.contains("Dispatchers.setMain from kotlinx-coroutines-test"))
+        }
     }
 }

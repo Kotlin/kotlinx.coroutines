@@ -14,7 +14,7 @@ dependencies {
 **Do not** depend on this project in your main sources, all utilities are intended and designed to be used only from tests. 
 
 Once you have it in runtime, [`ServiceLoader`](https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html) mechanism will
-overwrite [Dispatchers.Main] will testable implementation.
+overwrite [Dispatchers.Main] with testable implementation.
 
 You can override this implementation using [setMain][Dispatchers.setMain] method with any [CoroutineDispatcher] implementation, e.g.:
 
@@ -37,7 +37,7 @@ class SomeTest {
     
     @Test
     fun testSomeUI() = runBlocking {
-        launch(Dispatchers.Main) {  
+        launch(Dispatchers.Main) {  // Will be launched in mainThreadSurrogate dispatcher
             ...
         }
     }

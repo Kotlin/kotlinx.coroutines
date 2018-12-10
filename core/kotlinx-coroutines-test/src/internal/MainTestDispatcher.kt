@@ -66,6 +66,10 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
         return TestMainDispatcher(originalFactory)
     }
 
+    /**
+     * [Int.MAX_VALUE] -- test dispatcher always wins no matter what factories are present in classpath.
+     * By default all actions are delegated to the second-priority dispatcher, so it won't be the issue.
+     */
     override val loadPriority: Int
         get() = Int.MAX_VALUE
 }

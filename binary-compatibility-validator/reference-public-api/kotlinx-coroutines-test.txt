@@ -1,4 +1,4 @@
-public final class kotlinx/coroutines/test/TestDispatchersKt {
+public final class kotlinx/coroutines/test/TestDispatchers {
 	public static final fun resetMain (Lkotlinx/coroutines/Dispatchers;)V
 	public static final fun setMain (Lkotlinx/coroutines/Dispatchers;Lkotlinx/coroutines/CoroutineDispatcher;)V
 	public static synthetic fun setMain$default (Lkotlinx/coroutines/Dispatchers;Lkotlinx/coroutines/CoroutineDispatcher;ILjava/lang/Object;)V
