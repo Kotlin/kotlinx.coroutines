@@ -9,11 +9,19 @@ import kotlinx.coroutines.*
 public class TestComponent {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    public var launchCompleted: Int = 0
+    public var launchCompleted = false
+    public var delayedLaunchCompleted = false
 
-    fun doSomething() {
+    fun launchSomething() {
         scope.launch {
-            launchCompleted = 1
+            launchCompleted = true
+        }
+    }
+
+    fun launchDelayed() {
+        scope.launch {
+            delay(Long.MAX_VALUE)
+            delayedLaunchCompleted = true
         }
     }
 }

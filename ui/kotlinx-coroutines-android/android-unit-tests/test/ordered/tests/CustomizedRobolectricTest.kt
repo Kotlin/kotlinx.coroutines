@@ -46,9 +46,9 @@ class CustomizedRobolectricTest {
     private fun checkComponent(component: TestComponent) {
         val mainLooper = ShadowLooper.getShadowMainLooper()
         mainLooper.pause()
-        component.doSomething()
-        assertEquals(0, component.launchCompleted)
+        component.launchSomething()
+        assertFalse(component.launchCompleted)
         mainLooper.unPause()
-        assertEquals(1, component.launchCompleted)
+        assertTrue(component.launchCompleted)
     }
 }

@@ -26,8 +26,8 @@ open class FirstMockedMainTest : TestBase() {
     @Test
     fun testComponent() {
         val component = TestComponent()
-        component.doSomething()
-        assertEquals(1, component.launchCompleted)
+        component.launchSomething()
+        assertTrue(component.launchCompleted)
     }
 
     @Test
@@ -35,7 +35,7 @@ open class FirstMockedMainTest : TestBase() {
         Dispatchers.resetMain()
         val component = TestComponent()
         try {
-            component.doSomething()
+            component.launchSomething()
             expectUnreached()
         } catch (e: IllegalStateException) {
             assertTrue(e.message!!.contains("Dispatchers.setMain from kotlinx-coroutines-test"))

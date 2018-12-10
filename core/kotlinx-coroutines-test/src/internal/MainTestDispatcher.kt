@@ -12,9 +12,7 @@ import kotlin.coroutines.*
  * Testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] which delegates all actions to a settable delegate.
  */
-// TODO implement delay
-internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory) : MainCoroutineDispatcher() {
-
+internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory) : MainCoroutineDispatcher(), Delay {
     private var _delegate: CoroutineDispatcher? = null
     private val delegate: CoroutineDispatcher get() {
         if (_delegate != null) return _delegate!!
@@ -29,6 +27,9 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
         return mainFactory.tryCreateDispatcher(emptyList())
     }
 
+    @Suppress("INVISIBLE_MEMBER")
+    private val delay: Delay get() = delegate as? Delay ?: DefaultDelay
+
     @ExperimentalCoroutinesApi
     override val immediate: MainCoroutineDispatcher
         get() = (delegate as? MainCoroutineDispatcher)?.immediate ?: this
@@ -39,6 +40,18 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
 
     @ExperimentalCoroutinesApi
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        delay.scheduleResumeAfterDelay(timeMillis, continuation)
+    }
+
+    override suspend fun delay(time: Long) {
+        delay.delay(time)
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
+        return delay.invokeOnTimeout(timeMillis, block)
+    }
 
     public fun setDispatcher(dispatcher: CoroutineDispatcher) {
         _delegate = dispatcher
