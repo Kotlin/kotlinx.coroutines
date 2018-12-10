@@ -17,7 +17,8 @@ import kotlin.coroutines.*
 public data class CoroutineState internal constructor(
     public val continuation: Continuation<*>,
     public val creationStackTrace: List<StackTraceElement>,
-    internal val sequenceNumber: Long) {
+    @JvmField internal val sequenceNumber: Long
+) {
 
     /**
      * [Job] associated with a current coroutine or [IllegalStateException] otherwise.
@@ -37,7 +38,8 @@ public data class CoroutineState internal constructor(
     public val state: State get() = _state
 
     // Copy constructor
-    internal constructor(coroutine: Continuation<*>, state: CoroutineState) : this(coroutine,
+    internal constructor(coroutine: Continuation<*>, state: CoroutineState) : this(
+        coroutine,
         state.creationStackTrace,
         state.sequenceNumber) {
         _state = state.state
@@ -49,9 +51,7 @@ public data class CoroutineState internal constructor(
     private var lastObservedFrame: CoroutineStackFrame? = null
 
     internal fun updateState(state: State, frame: Continuation<*>) {
-        if (_state == state && lastObservedFrame != null) {
-            return
-        }
+        if (_state == state && lastObservedFrame != null) return
 
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame

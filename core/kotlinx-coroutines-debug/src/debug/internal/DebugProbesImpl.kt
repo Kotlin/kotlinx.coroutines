@@ -84,7 +84,10 @@ internal object DebugProbesImpl {
         @Suppress("DEPRECATION_ERROR")
         val str = if (this !is JobSupport) toString() else toDebugString()
         if (state == null) {
-            builder.append("Coroutine: $str\n")
+            @Suppress("INVISIBLE_REFERENCE")
+            if (this !is ScopeCoroutine<*>) { // Do not print scoped coroutines
+                builder.append("$str\n")
+            }
         } else {
             val element = state.lastObservedStackTrace().firstOrNull()
             val contState = state.state
@@ -169,18 +172,22 @@ internal object DebugProbesImpl {
         coroutineState.updateState(state, frame)
     }
 
-    private fun Continuation<*>.owner(): ArtificialStackFrame<*>? {
-        var frame = this as? CoroutineStackFrame ?: return null
-        while (true) {
-            if (frame is ArtificialStackFrame<*>) return frame
-            val completion = frame.callerFrame ?: return null
-            frame = completion
-        }
-    }
+    private fun Continuation<*>.owner(): ArtificialStackFrame<*>? = (this as? CoroutineStackFrame)?.owner()
+
+    private tailrec fun CoroutineStackFrame.owner(): ArtificialStackFrame<*>? = if (this is ArtificialStackFrame<*>) this else callerFrame?.owner()
 
     @Synchronized
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
         if (!isInstalled) {
+            return completion
+        }
+
+        /*
+         * If completion already has an owner, it means that we are in scoped coroutine (coroutineScope, withContext etc.),
+         * then piggyback on its already existing owner and do not replace completion
+         */
+        val owner = completion.owner()
+        if (owner != null) {
             return completion
         }
 
@@ -211,8 +218,9 @@ internal object DebugProbesImpl {
         capturedCoroutines.remove(coroutine)
     }
 
-    private class ArtificialStackFrame<T>(val delegate: Continuation<T>, frame: CoroutineStackFrame) :
-        Continuation<T> by delegate, CoroutineStackFrame by frame {
+    private class ArtificialStackFrame<T>(
+        @JvmField val delegate: Continuation<T>,
+        frame: CoroutineStackFrame) : Continuation<T> by delegate, CoroutineStackFrame by frame {
 
         override fun resumeWith(result: Result<T>) {
             probeCoroutineCompleted(this)

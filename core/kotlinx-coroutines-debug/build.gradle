@@ -11,8 +11,5 @@ jar {
     manifest {
         attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
         attributes "Can-Redefine-Classes": "true"
-        // For local runs
-        // attributes "Main-Class": "kotlinx.coroutines.debug.Playground"
-        // attributes "Class-Path": configurations.compile.collect { it.absolutePath }.join(" ")
     }
 }

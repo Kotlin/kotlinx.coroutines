@@ -179,6 +179,9 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
     return stack
 }
 
+/**
+ * @suppress
+ */
 @InternalCoroutinesApi
 public fun sanitize(element: StackTraceElement): StackTraceElement {
     if (!element.className.contains('/')) {
@@ -188,6 +191,9 @@ public fun sanitize(element: StackTraceElement): StackTraceElement {
     return StackTraceElement(element.className.replace('/', '.'), element.methodName, element.fileName, element.lineNumber)
 }
 
+/**
+ * @suppress
+ */
 @InternalCoroutinesApi
 public fun artificialFrame(message: String) = java.lang.StackTraceElement("\b\b\b($message", "\b", "\b", -1)
 internal fun StackTraceElement.isArtificial() = className.startsWith("\b\b\b")

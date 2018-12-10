@@ -19,7 +19,8 @@ internal object AgentPremain {
     }
 
     private fun installSignalHandler() {
-        val signal = Signal("TRAP") // kill -5
-        Signal.handle(signal, { DebugProbes.dumpCoroutines() })
+        Signal.handle(Signal("TRAP") ) { // kill -5
+            DebugProbes.dumpCoroutines()
+        }
     }
 }

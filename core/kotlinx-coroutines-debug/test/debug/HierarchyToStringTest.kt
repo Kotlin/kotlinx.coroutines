@@ -30,8 +30,45 @@ class HierarchyToStringTest : TestBase() {
     }
 
     @Test
-    fun testHierarchy() = runBlocking {
-        val root = launch {
+    fun testCompletingHierarchy() = runBlocking {
+        val tab = '\t'
+        val expectedString = """
+            "coroutine#2":StandaloneCoroutine{Completing}
+            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(HierarchyToStringTest.kt:30)
+            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(HierarchyToStringTest.kt:40)
+            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(HierarchyToStringTest.kt:37)
+            """.trimIndent()
+
+        checkHierarchy(isCompleting = true, expectedString = expectedString)
+    }
+
+    @Test
+    fun testActiveHierarchy() = runBlocking {
+        val tab = '\t'
+        val expectedString = """
+            "coroutine#2":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1.invokeSuspend(HierarchyToStringTest.kt:94)
+            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(HierarchyToStringTest.kt:30)
+            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(HierarchyToStringTest.kt:40)
+            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(HierarchyToStringTest.kt:37)
+            """.trimIndent()
+        checkHierarchy(isCompleting = false, expectedString = expectedString)
+    }
+
+    private suspend fun CoroutineScope.checkHierarchy(isCompleting: Boolean, expectedString: String) {
+        val root = launchHierarchy(isCompleting)
+        repeat(4) { yield() }
+        expect(6)
+        assertEquals(
+            expectedString.trimStackTrace().trimPackage(),
+            DebugProbes.hierarchyToString(root).trimEnd().trimStackTrace().trimPackage()
+        )
+        root.cancel()
+        root.join()
+        finish(7)
+    }
+
+    private fun CoroutineScope.launchHierarchy(isCompleting: Boolean): Job {
+        return launch {
             expect(1)
             async(CoroutineName("foo")) {
                 expect(2)
@@ -50,24 +87,11 @@ class HierarchyToStringTest : TestBase() {
                     job.join()
                 }
             }
+
+            if (!isCompleting) {
+                delay(Long.MAX_VALUE)
+            }
         }
-
-        repeat(4) { yield() }
-        expect(6)
-        val tab = '\t'
-        val expectedString = """
-            Coroutine: "coroutine#2":StandaloneCoroutine{Completing}
-            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.debug.HierarchyToStringTest${'$'}testHierarchy${'$'}1${'$'}root${'$'}1${'$'}1.invokeSuspend(HierarchyToStringTest.kt:30)
-            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.debug.HierarchyToStringTest${'$'}testHierarchy${'$'}1${'$'}root${'$'}1${'$'}2.invokeSuspend(HierarchyToStringTest.kt:40)
-            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.debug.HierarchyToStringTest${'$'}testHierarchy${'$'}1${'$'}root${'$'}1${'$'}2${'$'}job$1.invokeSuspend(HierarchyToStringTest.kt:37)
-            $tab$tab"coroutine#4":DispatchedCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.debug.HierarchyToStringTest${'$'}testHierarchy${'$'}1${'$'}root${'$'}1${'$'}2${'$'}1.invokeSuspend(HierarchyToStringTest.kt:42)
-            """.trimIndent()
-
-        // DebugProbes.printHierarchy(root) // <- use it for manual validation
-        assertEquals(expectedString.trimStackTrace(), DebugProbes.hierarchyToString(root).trimEnd().trimStackTrace())
-        root.cancel()
-        root.join()
-        finish(7)
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {

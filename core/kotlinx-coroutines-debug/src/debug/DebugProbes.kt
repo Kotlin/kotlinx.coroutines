@@ -27,8 +27,8 @@ import kotlin.coroutines.*
  * * `probeCoroutineCreated` is invoked on every coroutine creation using stdlib intrinsics.
  *
  * Overhead:
- *  * Every created continuation is stored in a weak hash map, thus adding additional GC pressure.
- *  * On every created continuation, stacktrace of the current thread is dumped.
+ *  * Every created coroutine is stored in a weak hash map, thus adding additional GC pressure.
+ *  * On every created coroutine, stacktrace of the current thread is dumped.
  *  * On every `resume` and `suspend`, [WeakHashMap] is updated under a global lock.
  *
  * **WARNING: DO NOT USE DEBUG PROBES IN PRODUCTION ENVIRONMENT.**

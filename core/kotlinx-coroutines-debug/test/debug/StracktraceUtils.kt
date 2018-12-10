@@ -8,7 +8,7 @@ import java.io.*
 import kotlin.test.*
 
 public fun String.trimStackTrace(): String {
-    return trimIndent().replace(Regex(":[0-9]+"), "").applyBackspace()
+    return trimIndent().replace(Regex(":[0-9]+"), "").replace(Regex("#[0-9]+"), "").applyBackspace()
 }
 
 public fun String.applyBackspace(): String {
@@ -62,7 +62,7 @@ public fun verifyDump(vararg traces: String) {
         assertTrue(trace[0].startsWith("Coroutines dump"))
         return
     }
-
+    // Drop "Coroutine dump" line
     trace.withIndex().drop(1).forEach { (index, value) ->
         val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
         val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
@@ -80,6 +80,8 @@ public fun verifyDump(vararg traces: String) {
     }
 }
 
+public fun String.trimPackage() = replace("kotlinx.coroutines.debug.", "")
+
 public fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
@@ -94,7 +96,7 @@ public fun verifyPartialDump(createdCoroutinesCount: Int, vararg frames: String)
 }
 
 private fun String.sanitizeAddresses(): String {
-    val index = indexOf("coroutine#")
+    val index = indexOf("coroutine\"")
     val next = indexOf(',', index)
     if (index == -1 || next == -1) return this
     return substring(0, index) + substring(next, length)
