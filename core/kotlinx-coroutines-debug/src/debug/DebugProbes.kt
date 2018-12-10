@@ -16,8 +16,8 @@ import kotlin.coroutines.*
 /**
  * Debug probes support.
  *
- * Debug probes is a dynamic attach mechanism, which installs multiple hooks into [Continuation] machinery.
- * It slows down all coroutine-related code, but in return provides a lot of debug information, including
+ * Debug probes is a dynamic attach mechanism which installs multiple hooks into coroutines machinery.
+ * It slows down all coroutine-related code, but in return provides a lot of diagnostic information, including
  * asynchronous stack-traces and coroutine dumps (similar to [ThreadMXBean.dumpAllThreads] and `jstack` via [DebugProbes.dumpCoroutines].
  *
  * Installed hooks:
@@ -30,8 +30,6 @@ import kotlin.coroutines.*
  *  * Every created coroutine is stored in a weak hash map, thus adding additional GC pressure.
  *  * On every created coroutine, stacktrace of the current thread is dumped.
  *  * On every `resume` and `suspend`, [WeakHashMap] is updated under a global lock.
- *
- * **WARNING: DO NOT USE DEBUG PROBES IN PRODUCTION ENVIRONMENT.**
  */
 @ExperimentalCoroutinesApi
 public object DebugProbes {
@@ -39,15 +37,13 @@ public object DebugProbes {
     /**
      * Whether coroutine creation stacktraces should be sanitized.
      * Sanitization removes all frames from `kotlinx.coroutines` package except
-     * the first one and the last one to simplify user's diagnostic.
+     * the first one and the last one to simplify diagnostic.
      */
     public var sanitizeStackTraces: Boolean = true
 
     /**
      * Installs a [DebugProbes] instead of no-op stdlib probes by redefining
      * debug probes class using the same class loader as one loaded [DebugProbes] class.
-     *
-     * **WARNING: DO NOT USE DEBUG PROBES IN PRODUCTION ENVIRONMENT**
      */
     public fun install() {
         DebugProbesImpl.install()
@@ -62,8 +58,6 @@ public object DebugProbes {
 
     /**
      * Invokes given block of code with installed debug probes and uninstall probes in the end.
-     *
-     * **WARNING: DO NOT USE DEBUG PROBES IN PRODUCTION ENVIRONMENT**
      */
     public inline fun withDebugProbes(block: () -> Unit) {
         install()
@@ -81,22 +75,21 @@ public object DebugProbes {
     public fun hierarchyToString(job: Job): String = DebugProbesImpl.hierarchyToString(job)
 
     /**
-     * Prints [job] hierarchy representation from [hierarchyToString] to given [out].
+     * Prints [job] hierarchy representation from [hierarchyToString] to the given [out].
      */
     public fun printHierarchy(job: Job, out: PrintStream = System.out) =
         out.println(DebugProbesImpl.hierarchyToString(job))
 
     /**
-     * Returns all alive coroutine states.
-     * Resulting collection represents a consistent snapshot of all alive coroutines at the moment of invocation.
+     * Returns all existing coroutine states.
+     * The resulting collection represents a consistent snapshot of all existing coroutines at the moment of invocation.
      */
     public fun dumpCoroutinesState(): List<CoroutineState> = DebugProbesImpl.dumpCoroutinesState()
 
     /**
-     * Dumps all active coroutines into given output stream.
-     * Resulting collection represents a consistent snapshot of all alive coroutines at the moment of invocation.
-     * Output of this method is similar to `jstack` or full thread dump, so this method can and should be used as replacement to
-     * "Dump threads" action
+     * Dumps all active coroutines into the given output stream, providing a consistent snapshot of all existing coroutines at the moment of invocation.
+     * The output of this method is similar to `jstack` or a full thread dump. It can be used as the replacement to
+     * "Dump threads" action.
      *
      * Example of the output:
      * ```

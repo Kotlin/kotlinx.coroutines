@@ -25,6 +25,7 @@ internal object DebugProbesImpl {
     private const val ARTIFICIAL_FRAME_MESSAGE = "Coroutine creation stacktrace"
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
     private val capturedCoroutines = WeakHashMap<ArtificialStackFrame<*>, CoroutineState>()
+    @Volatile
     private var installations = 0
     private val isInstalled: Boolean get() = installations > 0
     // To sort coroutines by creation order, used as unique id
@@ -111,37 +112,39 @@ internal object DebugProbesImpl {
             .toList()
     }
 
-    @Synchronized
     public fun dumpCoroutines(out: PrintStream) {
         if (!isInstalled) {
             error("Debug probes are not installed")
         }
 
         // Avoid inference with other out/err invocations
-        val resultingString = buildString {
-            append("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
+        val resultingString = dumpCoroutines()
+        out.println(resultingString)
+    }
 
+    @Synchronized
+    private fun dumpCoroutines(): String {
+        // Synchronization window can be reduce even more, but no need to do it here
+        return buildString {
+            append("Coroutines dump ${dateFormat.format(System.currentTimeMillis())}")
             capturedCoroutines
                 .asSequence()
                 .sortedBy { it.value.sequenceNumber }
                 .forEach { (key, value) ->
-                val state = if (value.state == State.RUNNING)
-                    "${value.state} (Last suspension stacktrace, not an actual stacktrace)"
-                else value.state.toString()
+                    val state = if (value.state == State.RUNNING)
+                        "${value.state} (Last suspension stacktrace, not an actual stacktrace)"
+                    else value.state.toString()
 
-                append("\n\nCoroutine $key, state: $state")
-                val observedStackTrace = value.lastObservedStackTrace()
-                if (observedStackTrace.isEmpty()) {
-                    append("\n\tat ${artificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
-                    printStackTrace(value.creationStackTrace)
-                } else {
-                    printStackTrace(value.lastObservedStackTrace())
+                    append("\n\nCoroutine $key, state: $state")
+                    val observedStackTrace = value.lastObservedStackTrace()
+                    if (observedStackTrace.isEmpty()) {
+                        append("\n\tat ${artificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
+                        printStackTrace(value.creationStackTrace)
+                    } else {
+                        printStackTrace(value.lastObservedStackTrace())
+                    }
                 }
-            }
         }
-
-        // Move it out of synchronization?
-        out.println(resultingString)
     }
 
     private fun StringBuilder.printStackTrace(frames: List<StackTraceElement>) {
@@ -150,10 +153,8 @@ internal object DebugProbesImpl {
         }
     }
 
-    @Synchronized
     internal fun probeCoroutineResumed(frame: Continuation<*>) = updateState(frame, State.RUNNING)
 
-    @Synchronized
     internal fun probeCoroutineSuspended(frame: Continuation<*>) = updateState(frame, State.SUSPENDED)
 
     private fun updateState(frame: Continuation<*>, state: State) {
@@ -163,6 +164,11 @@ internal object DebugProbesImpl {
 
         // Find ArtificialStackFrame of the coroutine
         val owner = frame.owner()
+        updateState(owner, frame, state)
+    }
+
+    @Synchronized
+    private fun updateState(owner: ArtificialStackFrame<*>?, frame: Continuation<*>, state: State) {
         val coroutineState = capturedCoroutines[owner]
         if (coroutineState == null) {
             warn(frame, state)
@@ -176,7 +182,6 @@ internal object DebugProbesImpl {
 
     private tailrec fun CoroutineStackFrame.owner(): ArtificialStackFrame<*>? = if (this is ArtificialStackFrame<*>) this else callerFrame?.owner()
 
-    @Synchronized
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {
         if (!isInstalled) {
             return completion
@@ -197,20 +202,22 @@ internal object DebugProbesImpl {
          * even more verbose (it will attach coroutine creation stacktrace to all exceptions),
          * and then using this artificial frame as an identifier of coroutineSuspended/resumed calls.
          */
-        val stacktrace = sanitizedStackTrace(Exception())
-        val frames = ArrayList<CoroutineStackFrame?>(stacktrace.size)
-        for ((index, frame) in stacktrace.reversed().withIndex()) {
-            frames += object : CoroutineStackFrame {
-                override val callerFrame: CoroutineStackFrame?
-                    get() = if (index == 0) null else frames[index - 1]
-
+        val stacktrace = sanitizeStackTrace(Exception())
+        val frame = stacktrace.foldRight<StackTraceElement, CoroutineStackFrame?>(null) { frame, acc ->
+            object : CoroutineStackFrame {
+                override val callerFrame: CoroutineStackFrame? = acc
                 override fun getStackTraceElement(): StackTraceElement = frame
             }
-        }
+        }!!
 
-        val result = ArtificialStackFrame(completion, frames.last()!!)
-        capturedCoroutines[result] = CoroutineState(completion, stacktrace.slice(1 until stacktrace.size), ++sequenceNumber)
+        val result = ArtificialStackFrame(completion, frame)
+        storeFrame(result, completion)
         return result
+    }
+
+    @Synchronized
+    private fun <T> storeFrame(frame: ArtificialStackFrame<T>, completion: Continuation<T>) {
+        capturedCoroutines[frame] = CoroutineState(completion, frame, ++sequenceNumber)
     }
 
     @Synchronized
@@ -230,7 +237,7 @@ internal object DebugProbesImpl {
         override fun toString(): String = delegate.toString()
     }
 
-    private fun <T : Throwable> sanitizedStackTrace(throwable: T): Array<StackTraceElement> {
+    private fun <T : Throwable> sanitizeStackTrace(throwable: T): List<StackTraceElement> {
         val stackTrace = throwable.stackTrace
         val size = stackTrace.size
 
@@ -243,7 +250,7 @@ internal object DebugProbesImpl {
         }
 
         if (!DebugProbes.sanitizeStackTraces) {
-            return Array(size - probeIndex) {
+            return List(size - probeIndex) {
                 if (it == 0) artificialFrame(ARTIFICIAL_FRAME_MESSAGE) else stackTrace[it + probeIndex]
             }
         }
@@ -255,7 +262,6 @@ internal object DebugProbesImpl {
          */
         val result = ArrayList<StackTraceElement>(size - probeIndex + 1)
         result += artificialFrame(ARTIFICIAL_FRAME_MESSAGE)
-        Thread.sleep(1)
         var includeInternalFrame = true
         for (i in (probeIndex + 1) until size - 1) {
             val element = stackTrace[i]
@@ -278,7 +284,7 @@ internal object DebugProbesImpl {
         }
 
         result += stackTrace[size - 1]
-        return result.toTypedArray()
+        return result
     }
 
     private val StackTraceElement.isInternalMethod: Boolean get() = className.startsWith("kotlinx.coroutines")

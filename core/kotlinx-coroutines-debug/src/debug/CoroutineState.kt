@@ -16,7 +16,7 @@ import kotlin.coroutines.*
 @ExperimentalCoroutinesApi
 public data class CoroutineState internal constructor(
     public val continuation: Continuation<*>,
-    public val creationStackTrace: List<StackTraceElement>,
+    private val creationStackBottom: CoroutineStackFrame,
     @JvmField internal val sequenceNumber: Long
 ) {
 
@@ -33,22 +33,41 @@ public data class CoroutineState internal constructor(
     public val jobOrNull: Job? get() = continuation.context[Job]
 
     /**
+     * Creation stacktrace of coroutine
+     */
+    public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
+
+    /**
      * Last observed [state][State] of the coroutine.
      */
     public val state: State get() = _state
 
+    private var _state: State = State.CREATED
+
+    private var lastObservedFrame: CoroutineStackFrame? = null
+
     // Copy constructor
     internal constructor(coroutine: Continuation<*>, state: CoroutineState) : this(
         coroutine,
-        state.creationStackTrace,
+        state.creationStackBottom,
         state.sequenceNumber) {
         _state = state.state
         this.lastObservedFrame = state.lastObservedFrame
     }
 
-    private var _state: State = State.CREATED
+    private fun creationStackTrace(): List<StackTraceElement> {
+        // Skip "Coroutine creation stacktrace" frame
+        return sequence<StackTraceElement> { yieldFrames(creationStackBottom.callerFrame) }.toList()
+    }
 
-    private var lastObservedFrame: CoroutineStackFrame? = null
+    private tailrec suspend fun SequenceScope<StackTraceElement>.yieldFrames(frame: CoroutineStackFrame?) {
+        if (frame == null) return
+        frame.getStackTraceElement()?.let { yield(it) }
+        val caller = frame.callerFrame
+        if (caller != null) {
+            yieldFrames(caller)
+        }
+    }
 
     internal fun updateState(state: State, frame: Continuation<*>) {
         if (_state == state && lastObservedFrame != null) return

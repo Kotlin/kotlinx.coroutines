@@ -1,8 +1,7 @@
 public final class kotlinx/coroutines/debug/CoroutineState {
 	public final fun component1 ()Lkotlin/coroutines/Continuation;
-	public final fun component2 ()Ljava/util/List;
-	public final fun copy (Lkotlin/coroutines/Continuation;Ljava/util/List;J)Lkotlinx/coroutines/debug/CoroutineState;
-	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineState;Lkotlin/coroutines/Continuation;Ljava/util/List;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineState;
+	public final fun copy (Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineState;
+	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineState;Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContinuation ()Lkotlin/coroutines/Continuation;
 	public final fun getCreationStackTrace ()Ljava/util/List;

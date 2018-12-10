@@ -51,8 +51,7 @@ class CoroutinesDumpTest : TestBase() {
 
         val found = DebugProbes.dumpCoroutinesState().single { it.jobOrNull === deferred }
         assertSame(deferred, found.job)
-        deferred.cancel()
-        runBlocking { deferred.join() }
+        runBlocking { deferred.cancelAndJoin() }
     }
 
     @Test
@@ -75,8 +74,7 @@ class CoroutinesDumpTest : TestBase() {
                     "\tat kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt)\n" +
                     "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
                     "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutine(CoroutinesDumpTest.kt:49)")
-        deferred.cancel()
-        runBlocking { deferred.join() }
+        runBlocking { deferred.cancelAndJoin() }
     }
 
     @Test
@@ -102,8 +100,34 @@ class CoroutinesDumpTest : TestBase() {
                 "\tat kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
                 "\tat kotlinx.coroutines.debug.CoroutinesDumpTest.testRunningCoroutineWithSuspensionPoint(CoroutinesDumpTest.kt:71)"
         )
-        deferred.cancel()
-        runBlocking { deferred.join() }
+        runBlocking { deferred.cancelAndJoin() }
+    }
+
+    @Test
+    fun testCreationStackTrace() = synchronized(monitor) {
+        val deferred = GlobalScope.async {
+            activeMethod(shouldSuspend = true)
+        }
+
+        awaitCoroutineStarted()
+        val coroutine = DebugProbes.dumpCoroutinesState().first()
+        val result = coroutine.creationStackTrace.fold(StringBuilder()) { acc, element ->
+            acc.append(element.toString())
+            acc.append('\n')
+        }.toString().trimStackTrace()
+
+        runBlocking { deferred.cancelAndJoin() }
+
+        val expected = ("kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
+                "kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
+                "kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)\n" +
+                "kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)\n" +
+                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)\n" +
+                "kotlinx.coroutines.BuildersKt.async(Unknown Source)\n" +
+                "kotlinx.coroutines.BuildersKt__Builders_commonKt.async\$default(Builders.common.kt:81)\n" +
+                "kotlinx.coroutines.BuildersKt.async\$default(Unknown Source)\n" +
+                "kotlinx.coroutines.debug.CoroutinesDumpTest.testCreationStackTrace(CoroutinesDumpTest.kt:109)").trimStackTrace()
+        assertTrue(result.startsWith(expected))
     }
 
     @Test
@@ -113,8 +137,7 @@ class CoroutinesDumpTest : TestBase() {
         }
 
         awaitCoroutineStarted()
-        deferred.cancel()
-        runBlocking { deferred.join() }
+        runBlocking { deferred.cancelAndJoin() }
         verifyDump()
     }
 
