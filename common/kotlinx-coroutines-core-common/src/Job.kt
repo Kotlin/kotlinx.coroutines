@@ -24,7 +24,7 @@ import kotlin.jvm.*
  * can [cancel] its own children (including all their children recursively) without cancelling itself.
  *
  * The most basic instances of [Job] are created with [launch][CoroutineScope.launch] coroutine builder or with a
- * `Job()` factory function. By default, a failure of a any of the job's children leads to an immediately failure
+ * `Job()` factory function. By default, a failure of any of the job's children leads to an immediately failure
  * of its parent and cancellation of the rest of its children. This behavior can be customized using [SupervisorJob].
  *
  * Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their
