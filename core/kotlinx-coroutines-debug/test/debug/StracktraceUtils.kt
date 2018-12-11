@@ -7,9 +7,11 @@ package kotlinx.coroutines.debug
 import java.io.*
 import kotlin.test.*
 
-public fun String.trimStackTrace(): String {
-    return trimIndent().replace(Regex(":[0-9]+"), "").replace(Regex("#[0-9]+"), "").applyBackspace()
-}
+public fun String.trimStackTrace(): String =
+    trimIndent()
+        .replace(Regex(":[0-9]+"), "")
+        .replace(Regex("#[0-9]+"), "")
+        .applyBackspace()
 
 public fun String.applyBackspace(): String {
     val array = toCharArray()
@@ -46,7 +48,7 @@ public fun verifyStackTrace(e: Throwable, traces: List<String>) {
 }
 
 public fun toStackTrace(t: Throwable): String {
-    val sw = StringWriter() as Writer
+    val sw = StringWriter()
     t.printStackTrace(PrintWriter(sw))
     return sw.toString()
 }

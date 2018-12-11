@@ -50,7 +50,8 @@ public data class CoroutineState internal constructor(
     internal constructor(coroutine: Continuation<*>, state: CoroutineState) : this(
         coroutine,
         state.creationStackBottom,
-        state.sequenceNumber) {
+        state.sequenceNumber
+    ) {
         _state = state.state
         this.lastObservedFrame = state.lastObservedFrame
     }
@@ -71,7 +72,6 @@ public data class CoroutineState internal constructor(
 
     internal fun updateState(state: State, frame: Continuation<*>) {
         if (_state == state && lastObservedFrame != null) return
-
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame
     }
