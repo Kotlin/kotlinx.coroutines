@@ -36,7 +36,7 @@ internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothin
  */
 internal expect fun <E: Throwable> unwrap(exception: E): E
 
-expect class StackTraceElement
+internal expect class StackTraceElement
 
 internal expect interface CoroutineStackFrame {
     public val callerFrame: CoroutineStackFrame?

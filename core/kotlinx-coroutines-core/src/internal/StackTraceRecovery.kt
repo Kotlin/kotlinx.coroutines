@@ -200,6 +200,7 @@ private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
 }
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
-actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.CoroutineStackFrame
+internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.CoroutineStackFrame
 
-actual typealias StackTraceElement = java.lang.StackTraceElement
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias StackTraceElement = java.lang.StackTraceElement

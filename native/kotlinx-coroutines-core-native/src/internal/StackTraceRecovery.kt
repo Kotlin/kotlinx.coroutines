@@ -11,10 +11,11 @@ internal actual fun <E: Throwable> recoverStackTrace(exception: E): E = exceptio
 internal actual fun <E : Throwable> unwrap(exception: E): E = exception
 internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothing = throw exception
 
-@Suppress("unused")
+@Suppress("UNUSED")
 internal actual interface CoroutineStackFrame {
     public actual val callerFrame: CoroutineStackFrame?
     public actual fun getStackTraceElement(): StackTraceElement?
 }
 
-actual typealias StackTraceElement = Any
+@Suppress("ACTUAL_WITHOUT_EXPECT")
+internal actual typealias StackTraceElement = Any
