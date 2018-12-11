@@ -193,10 +193,11 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
         kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
                                            "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                                           "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
                                            "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
                                            "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi"]
-
+                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
+                                           "-progressive"]
     }
 }
 

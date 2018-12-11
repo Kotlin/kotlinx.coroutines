@@ -10,6 +10,7 @@ import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class SuppressionTests : TestBase() {
 
     @Test

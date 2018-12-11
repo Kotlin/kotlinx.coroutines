@@ -228,7 +228,7 @@ private class DispatchedCoroutine<in T>(
     fun getResult(): Any? {
         if (trySuspend()) return COROUTINE_SUSPENDED
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
-        val state = this.state
+        val state = this.state.unboxState()
         if (state is CompletedExceptionally) throw state.cause
         @Suppress("UNCHECKED_CAST")
         return state as T

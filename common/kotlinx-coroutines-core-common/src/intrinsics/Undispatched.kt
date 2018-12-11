@@ -132,7 +132,7 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
                     else -> result
                 }
             } else {
-                state
+                state.unboxState()
             }
         }
         else -> COROUTINE_SUSPENDED

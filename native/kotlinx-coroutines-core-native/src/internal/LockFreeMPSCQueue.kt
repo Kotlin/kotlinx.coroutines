@@ -212,14 +212,15 @@ internal class LockFreeMPSCQueueCore<E : Any>(private val capacity: Int) {
         private const val FROZEN_MASK = 1L shl FROZEN_SHIFT
         private const val CLOSED_SHIFT = FROZEN_SHIFT + 1
         private const val CLOSED_MASK = 1L shl CLOSED_SHIFT
-
+        @SharedImmutable
         internal val REMOVE_FROZEN = Symbol("REMOVE_FROZEN")
 
         internal const val ADD_SUCCESS = 0
         internal const val ADD_FROZEN = 1
         internal const val ADD_CLOSED = 2
-
+        @SharedImmutable
         private val PLACEHOLDER = Symbol("PLACEHOLDER")
+        @SharedImmutable
         private val REMOVED = Symbol("PLACEHOLDER")
 
         private infix fun Long.wo(other: Long) = this and other.inv()

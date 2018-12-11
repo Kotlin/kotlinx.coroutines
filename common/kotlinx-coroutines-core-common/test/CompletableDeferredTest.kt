@@ -15,7 +15,28 @@ class CompletableDeferredTest : TestBase() {
         checkFresh(c)
     }
 
-    private fun checkFresh(c: CompletableDeferred<String>) {
+    @Test
+    fun testComplete() {
+        val c = CompletableDeferred<String>()
+        assertEquals(true, c.complete("OK"))
+        checkCompleteOk(c)
+        assertEquals("OK", c.getCompleted())
+        assertEquals(false, c.complete("OK"))
+        checkCompleteOk(c)
+        assertEquals("OK", c.getCompleted())
+    }
+
+    @Test
+    fun testCompleteWithIncompleteResult() {
+        val c = CompletableDeferred<DisposableHandle>()
+        assertEquals(true, c.complete(c.invokeOnCompletion {  }))
+        checkCompleteOk(c)
+        assertEquals(false,  c.complete(c.invokeOnCompletion {  }))
+        checkCompleteOk(c)
+        assertTrue(c.getCompleted() is Incomplete)
+    }
+
+    private fun checkFresh(c: CompletableDeferred<*>) {
         assertEquals(true, c.isActive)
         assertEquals(false, c.isCancelled)
         assertEquals(false, c.isCompleted)
@@ -24,21 +45,11 @@ class CompletableDeferredTest : TestBase() {
         assertThrows<IllegalStateException> { c.getCompletionExceptionOrNull() }
     }
 
-    @Test
-    fun testComplete() {
-        val c = CompletableDeferred<String>()
-        assertEquals(true, c.complete("OK"))
-        checkCompleteOk(c)
-        assertEquals(false, c.complete("OK"))
-        checkCompleteOk(c)
-    }
-
-    private fun checkCompleteOk(c: CompletableDeferred<String>) {
+    private fun checkCompleteOk(c: CompletableDeferred<*>) {
         assertEquals(false, c.isActive)
         assertEquals(false, c.isCancelled)
         assertEquals(true, c.isCompleted)
         assertTrue(c.getCancellationException() is JobCancellationException)
-        assertEquals("OK", c.getCompleted())
         assertEquals(null, c.getCompletionExceptionOrNull())
     }
 

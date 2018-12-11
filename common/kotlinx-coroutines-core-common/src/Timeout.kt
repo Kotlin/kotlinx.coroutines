@@ -26,7 +26,7 @@ import kotlin.jvm.*
  * @param timeMillis timeout time in milliseconds.
  */
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
-    if (timeMillis <= 0L) throw CancellationException("Timed out immediately")
+    if (timeMillis <= 0L) throw TimeoutCancellationException("Timed out immediately")
     return suspendCoroutineUninterceptedOrReturn { uCont ->
         setupTimeout(TimeoutCoroutine(timeMillis, uCont), block)
     }

@@ -23,6 +23,7 @@ class WithContextCancellationStressTest : TestBase() {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun testConcurrentCancellation() = runBlocking {
         var ioException = 0
         var arithmeticException = 0

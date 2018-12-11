@@ -175,7 +175,7 @@ class WithTimeoutTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: CancellationException) {
+        } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out immediately", e.message)
             finish(2)
         }
@@ -195,5 +195,19 @@ class WithTimeoutTest : TestBase() {
             finish(4)
         }
     }
-}
 
+    @Test
+    fun testIncompleteWithTimeoutState() = runTest {
+        lateinit var timeoutJob: Job
+        val handle = withTimeout(Long.MAX_VALUE) {
+            timeoutJob = coroutineContext[Job]!!
+            timeoutJob.invokeOnCompletion { }
+        }
+
+        handle.dispose()
+        timeoutJob.join()
+        assertTrue(timeoutJob.isCompleted)
+        assertFalse(timeoutJob.isActive)
+        assertFalse(timeoutJob.isCancelled)
+    }
+}

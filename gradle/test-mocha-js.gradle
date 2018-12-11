@@ -74,3 +74,25 @@ task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
 // todo: Commented out because mocha-headless-chrome does not work on TeamCity
 //test.dependsOn testMochaChrome
 
+// -- Testing with Mocha under jsdom
+
+task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
+    args = ['install',
+            "mocha@$mocha_version",
+            'jsdom',
+            'jsdom-global',
+            "source-map-support@$source_map_support_version",
+            '--no-save']
+    if (project.hasProperty("teamcity")) args += [
+            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
+}
+
+task testMochaJsdom(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDependenciesMochaJsdom]) {
+    script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
+    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
+    if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
+    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
+}
+
+test.dependsOn testMochaJsdom
+

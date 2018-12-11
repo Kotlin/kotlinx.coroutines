@@ -1003,32 +1003,43 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     )
 }
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
+@JvmField
+@SharedImmutable
+internal val OFFER_SUCCESS: Any = Symbol("OFFER_SUCCESS")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
+@JvmField
+@SharedImmutable
+internal val OFFER_FAILED: Any = Symbol("OFFER_FAILED")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val POLL_FAILED: Any = Symbol("POLL_FAILED")
+@JvmField
+@SharedImmutable
+internal val POLL_FAILED: Any = Symbol("POLL_FAILED")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
+@JvmField
+@SharedImmutable
+internal val ENQUEUE_FAILED: Any = Symbol("ENQUEUE_FAILED")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
+@JvmField
+@SharedImmutable
+internal val SELECT_STARTED: Any = Symbol("SELECT_STARTED")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
+@JvmField
+@SharedImmutable
+internal val NULL_VALUE: Any = Symbol("NULL_VALUE")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
+@JvmField
+@SharedImmutable
+internal val CLOSE_RESUMED: Any = Symbol("CLOSE_RESUMED")
 
-/** @suppress **This is unstable API and it is subject to change.** */
-@JvmField internal val SEND_RESUMED = Symbol("SEND_RESUMED")
+@JvmField
+@SharedImmutable
+internal val SEND_RESUMED: Any = Symbol("SEND_RESUMED")
+
+@JvmField
+@SharedImmutable
+internal val HANDLER_INVOKED: Any = Symbol("ON_CLOSE_HANDLER_INVOKED")
 
 internal typealias Handler = (Throwable?) -> Unit
-@JvmField internal val HANDLER_INVOKED = Any()
 
 /**
  * Represents sending waiter in the queue.

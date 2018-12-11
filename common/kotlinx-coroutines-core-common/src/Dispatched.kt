@@ -9,6 +9,7 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 @Suppress("PrivatePropertyName")
+@SharedImmutable
 private val UNDEFINED = Symbol("UNDEFINED")
 
 @NativeThreadLocal

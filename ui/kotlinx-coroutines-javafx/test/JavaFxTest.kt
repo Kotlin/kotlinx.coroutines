@@ -16,9 +16,7 @@ class JavaFxTest : TestBase() {
 
     @Test
     fun testDelay() {
-        try {
-            initPlatform()
-        } catch (e: Exception) {
+        if (!initPlatform()) {
             println("Skipping JavaFxTest in headless environment")
             return // ignore test in headless environments
         }

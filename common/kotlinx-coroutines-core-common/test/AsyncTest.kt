@@ -2,12 +2,13 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
-@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "UNREACHABLE_CODE") // KT-21913
+@file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED", "UNREACHABLE_CODE", "USELESS_IS_CHECK") // KT-21913
 
 package kotlinx.coroutines
 
 import kotlin.test.*
 
+@Suppress("DEPRECATION") // cancel(cause)
 class AsyncTest : TestBase() {
 
     @Test
@@ -238,4 +239,33 @@ class AsyncTest : TestBase() {
             finish(3)
         }
     }
+
+    @Test
+    fun testIncompleteAsyncState() = runTest {
+        val deferred = async {
+            coroutineContext[Job]!!.invokeOnCompletion {  }
+        }
+
+        deferred.await().dispose()
+        assertTrue(deferred.getCompleted() is DisposableHandle)
+        assertNull(deferred.getCompletionExceptionOrNull())
+        assertTrue(deferred.isCompleted)
+        assertFalse(deferred.isActive)
+        assertFalse(deferred.isCancelled)
+    }
+
+    @Test
+    fun testIncompleteAsyncFastPath() = runTest {
+        val deferred = async(Dispatchers.Unconfined) {
+            coroutineContext[Job]!!.invokeOnCompletion {  }
+        }
+
+        deferred.await().dispose()
+        assertTrue(deferred.getCompleted() is DisposableHandle)
+        assertNull(deferred.getCompletionExceptionOrNull())
+        assertTrue(deferred.isCompleted)
+        assertFalse(deferred.isActive)
+        assertFalse(deferred.isCancelled)
+    }
+
 }

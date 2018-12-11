@@ -152,4 +152,14 @@ class RunBlockingTest : TestBase() {
 
         assertEquals(1, value)
     }
+
+    @Test
+    fun testIncompleteState() {
+        val handle = runBlocking {
+            // See #835
+            coroutineContext[Job]!!.invokeOnCompletion {  }
+        }
+
+        handle.dispose()
+    }
 }

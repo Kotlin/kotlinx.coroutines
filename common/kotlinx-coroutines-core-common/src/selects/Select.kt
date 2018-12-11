@@ -186,8 +186,11 @@ public suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() ->
     }
 
 
+@SharedImmutable
 internal val ALREADY_SELECTED: Any = Symbol("ALREADY_SELECTED")
+@SharedImmutable
 private val UNDECIDED: Any = Symbol("UNDECIDED")
+@SharedImmutable
 private val RESUMED: Any = Symbol("RESUMED")
 
 @PublishedApi
