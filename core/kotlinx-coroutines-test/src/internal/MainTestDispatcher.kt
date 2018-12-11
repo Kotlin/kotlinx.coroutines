@@ -9,7 +9,7 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 /**
- * Testable main dispatcher used by kotlinx-coroutines-test.
+ * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] which delegates all actions to a settable delegate.
  */
 internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory) : MainCoroutineDispatcher(), Delay {
@@ -80,8 +80,8 @@ internal class TestMainDispatcherFactory : MainDispatcherFactory {
     }
 
     /**
-     * [Int.MAX_VALUE] -- test dispatcher always wins no matter what factories are present in classpath.
-     * By default all actions are delegated to the second-priority dispatcher, so it won't be the issue.
+     * [Int.MAX_VALUE] -- test dispatcher always wins no matter what factories are present in the classpath.
+     * By default all actions are delegated to the second-priority dispatcher, so that it won't be the issue.
      */
     override val loadPriority: Int
         get() = Int.MAX_VALUE

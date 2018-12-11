@@ -31,7 +31,7 @@ GlobalScope.launch {
 * [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `Dispatchers.IO` dispatcher for blocking coroutines;
   * `Executor.asCoroutineDispatcher()` extension, custom thread pools, and more.
-* [core-test](core/README.md) &mdash; test utilities for coroutines, currently with one feature:
+* [test](core/README.md) &mdash; test utilities for coroutines, currently with one feature:
   * `MainDispatcherInjector.inject()` to override `Dispatchers.Main` in tests.
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.

@@ -10,9 +10,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.test.internal.*
 
 /**
- * Sets given dispatcher as an underlying dispatcher of [Dispatchers.Main].
- * All consecutive usages of [Dispatchers.Main] will use given [dispatcher] under the hood, though it's not guaranteed
- * that [Dispatchers.Main] will be equal to given [dispatcher].
+ * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
+ * All consecutive usages of [Dispatchers.Main] will use given [dispatcher] under the hood.
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
@@ -24,9 +23,9 @@ public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher = Dispatchers.Unc
 }
 
 /**
- * Resets state of [Dispatchers.Main] to the original main dispatcher.
+ * Resets state of the [Dispatchers.Main] to the original main dispatcher.
  * For example, in Android Main thread dispatcher will be set as [Dispatchers.Main].
- * Used to cleanup all possible dependencies, should be used in tear down (`@After`) methods.
+ * Used to clean up all possible dependencies, should be used in tear down (`@After`) methods.
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
