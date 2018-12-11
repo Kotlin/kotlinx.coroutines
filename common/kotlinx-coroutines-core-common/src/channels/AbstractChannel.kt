@@ -859,7 +859,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         private fun hasNextResult(result: Any?): Boolean {
             if (result is Closed<*>) {
-                if (result.closeCause != null) recoverStackTrace(throw result.receiveException)
+                if (result.closeCause != null) throw recoverStackTrace(result.receiveException)
                 return false
             }
             return true
