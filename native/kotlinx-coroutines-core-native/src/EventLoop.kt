@@ -11,34 +11,6 @@ import platform.posix.*
 import kotlin.coroutines.*
 import kotlin.system.*
 
-/**
- * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
- * be asked to process next event from their event queue.
- *
- * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
- * continue processing events when invoked from the event dispatch thread.
- */
-internal interface EventLoop {
-    /**
-     * Processes next event in this event loop.
-     *
-     * The result of this function is to be interpreted like this:
-     * * `<= 0` -- there are potentially more events for immediate processing;
-     * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
-     * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
-     */
-    public fun processNextEvent(): Long
-}
-
-/**
- * Creates a new event loop.
- */
-@Suppress("FunctionName")
-internal fun EventLoop(parentJob: Job? = null): CoroutineDispatcher =
-    EventLoopImpl().apply {
-        if (parentJob != null) initParentJob(parentJob)
-    }
-
 private const val DELAYED = 0
 private const val REMOVED = 1
 private const val RESCHEDULED = 2
@@ -58,16 +30,16 @@ private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeMPSCQueueCore<T>
 
-internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
+internal class EventLoopImpl: EventLoop(), Delay {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
     // Allocated only once
     private val _delayed = atomic<ThreadSafeHeap<DelayedTask>?>(null)
 
-    protected abstract val isCompleted: Boolean
+    private var isCompleted = false
 
-    protected val isEmpty: Boolean
+    override val isEmpty: Boolean
         get() = isQueueEmpty && isDelayedEmpty
 
     private val isQueueEmpty: Boolean get() {
@@ -91,9 +63,6 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
             val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
             return (nextDelayedTask.nanoTime - nanoTime()).coerceAtLeast(0)
         }
-
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        execute(block)
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         schedule(DelayedResumeTask(timeMillis, continuation))
@@ -119,18 +88,20 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
             }
         }
         // then process one event from queue
-        dequeue()?.run()
+        dequeue()?.let { runBlock(it) }
         return nextTime
     }
 
-    @Suppress("MemberVisibilityCanBePrivate") // todo: remove suppress when KT-22030 is fixed
-    internal fun execute(task: Runnable) {
+    // returns true if it was successfully enqueued for execution in this event loop, false if got to default executor
+    override fun enqueue(task: Runnable): Boolean =
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
-        } else
-            DefaultExecutor.execute(task)
-    }
+            true
+        } else {
+            DefaultExecutor.enqueue(task)
+            false
+        }
 
     @Suppress("UNCHECKED_CAST")
     private fun enqueueImpl(task: Runnable): Boolean {
@@ -235,7 +206,12 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
     }
 
-    fun shutdown() {
+    override fun shutdown() {
+        // Clean up thread-local reference here -- this event loop is shutting down
+        ThreadLocalEventLoop.resetEventLoop()
+        // We should signal that ThreadEventLoop should not accept any more tasks
+        // and process queued events (that could have been added after last processNextEvent)
+        isCompleted = true
         closeQueue()
         // complete processing of all queued tasks
         while (processNextEvent() <= 0) { /* spin */ }
@@ -300,20 +276,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 }
 
-private class EventLoopImpl : EventLoopBase() {
-    private var parentJob: Job? = null
-
-    override val isCompleted: Boolean get() = parentJob?.isCompleted == true
-
-    fun initParentJob(parentJob: Job) {
-        require(this.parentJob == null)
-        this.parentJob = parentJob
-    }
-}
-
-internal class BlockingEventLoop : EventLoopBase() {
-    public override var isCompleted: Boolean = false
-}
+internal actual fun createEventLoop(): EventLoop = EventLoopImpl()
 
 private fun nanoTime(): Long {
     return getTimeNanos()

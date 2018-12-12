@@ -98,12 +98,14 @@ internal object CommonPool : ExecutorCoroutineDispatcher() {
     private fun getOrCreatePoolSync(): Executor =
         pool ?: createPool().also { pool = it }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        try { (pool ?: getOrCreatePoolSync()).execute(timeSource.wrapTask(block)) }
-        catch (e: RejectedExecutionException) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        try {
+            (pool ?: getOrCreatePoolSync()).execute(timeSource.wrapTask(block))
+        } catch (e: RejectedExecutionException) {
             timeSource.unTrackTask()
-            DefaultExecutor.execute(block)
+            DefaultExecutor.enqueue(block)
         }
+    }
 
     // used for tests
     @Synchronized
@@ -120,7 +122,7 @@ internal object CommonPool : ExecutorCoroutineDispatcher() {
             shutdown()
             if (timeout > 0)
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
-            shutdownNow().forEach { DefaultExecutor.execute(it) }
+            shutdownNow().forEach { DefaultExecutor.enqueue(it) }
         }
         pool = Executor { throw RejectedExecutionException("CommonPool was shutdown") }
     }

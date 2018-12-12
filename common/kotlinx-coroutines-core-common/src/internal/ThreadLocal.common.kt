@@ -8,6 +8,7 @@ package kotlinx.coroutines.internal
 @UseExperimental(ExperimentalMultiplatform::class)
 internal expect annotation class NativeThreadLocal()
 
-internal expect class CommonThreadLocal<T>(supplier: () -> T) {
+internal expect class CommonThreadLocal<T>() {
     fun get(): T
+    fun set(value: T)
 }

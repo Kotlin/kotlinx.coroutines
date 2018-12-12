@@ -181,7 +181,7 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
         uncaughtExceptions.clear()
     }
 
-    private fun post(block: Runnable) =
+    private fun enqueue(block: Runnable) =
         queue.addLast(TimedRunnable(block, counter++))
 
     private fun postDelayed(block: Runnable, delayTime: Long) =
@@ -210,8 +210,18 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
 
     public override fun toString(): String = name ?: "TestCoroutineContext@$hexAddress"
 
-    private inner class Dispatcher : CoroutineDispatcher(), Delay, EventLoop {
-        override fun dispatch(context: CoroutineContext, block: Runnable) = post(block)
+    private inner class Dispatcher : EventLoop(), Delay {
+        init {
+            incrementUseCount() // this event loop is never completed
+        }
+
+        override val isEmpty: Boolean
+            get() = queue.isEmpty
+
+        override fun enqueue(task: Runnable): Boolean {
+            this@TestCoroutineContext.enqueue(task)
+            return true
+        }
 
         override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
             postDelayed(Runnable {

@@ -101,13 +101,14 @@ open class ExperimentalCoroutineDispatcher(
         return LimitingDispatcher(this, parallelism, TaskMode.NON_BLOCKING)
     }
 
-    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean): Unit =
+    internal fun dispatchWithContext(block: Runnable, context: TaskContext, fair: Boolean) {
         try {
             coroutineScheduler.dispatch(block, context, fair)
         } catch (e: RejectedExecutionException) {
             // Context shouldn't be lost here to properly invoke before/after task
-            DefaultExecutor.execute(coroutineScheduler.createTask(block, context))
+            DefaultExecutor.enqueue(coroutineScheduler.createTask(block, context))
         }
+    }
 
     private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
 

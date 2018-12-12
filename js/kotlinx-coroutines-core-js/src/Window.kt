@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import org.w3c.dom.Window
 
 /**

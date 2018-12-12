@@ -7,11 +7,9 @@ package kotlinx.coroutines
 import kotlin.coroutines.*
 import kotlinx.coroutines.internal.*
 
-@ThreadLocal
-internal val currentEventLoop = ArrayList<BlockingEventLoop>()
-
-private fun takeEventLoop(): BlockingEventLoop =
-    currentEventLoop.firstOrNull() ?: error("There is no event loop. Use runBlocking { ... } to start one.")
+private fun takeEventLoop(): EventLoopImpl =
+    ThreadLocalEventLoop.currentOrNull() as EventLoopImpl ?:
+        error("There is no event loop. Use runBlocking { ... } to start one.")
 
 internal object DefaultExecutor : CoroutineDispatcher(), Delay {
     override fun dispatch(context: CoroutineContext, block: Runnable) =
@@ -21,15 +19,15 @@ internal object DefaultExecutor : CoroutineDispatcher(), Delay {
     override fun invokeOnTimeout(time: Long, block: Runnable): DisposableHandle =
         takeEventLoop().invokeOnTimeout(time, block)
 
-    fun execute(task: Runnable) {
+    fun enqueue(task: Runnable): Boolean {
         error("Cannot execute task because event loop was shut down")
     }
 
-    fun schedule(delayedTask: EventLoopBase.DelayedTask) {
+    fun schedule(delayedTask: EventLoopImpl.DelayedTask) {
         error("Cannot schedule task because event loop was shut down")
     }
 
-    fun removeDelayedImpl(delayedTask: EventLoopBase.DelayedTask) {
+    fun removeDelayedImpl(delayedTask: EventLoopImpl.DelayedTask) {
         error("Cannot happen")
     }
 }
