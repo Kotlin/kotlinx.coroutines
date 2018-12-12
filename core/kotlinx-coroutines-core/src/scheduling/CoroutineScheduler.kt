@@ -251,8 +251,8 @@ internal class CoroutineScheduler(
     private val isTerminated: Boolean get() = _isTerminated.value != 0
 
     companion object {
-        private const val MAX_SPINS = 1000
-        private const val MAX_YIELDS = MAX_SPINS + 500
+        private val MAX_SPINS = systemProp("kotlinx.coroutines.scheduler.spins", 1000, minValue = 1)
+        private val MAX_YIELDS = MAX_SPINS + systemProp("kotlinx.coroutines.scheduler.yields", 0, minValue = 0)
 
         @JvmStatic // Note, that is fits into Int (it is equal to 10^9)
         private val MAX_PARK_TIME_NS = TimeUnit.SECONDS.toNanos(1).toInt()
