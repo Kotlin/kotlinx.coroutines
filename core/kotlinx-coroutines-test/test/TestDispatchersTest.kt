@@ -6,6 +6,7 @@ package kotlinx.coroutines.test
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
+import java.lang.IllegalArgumentException
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -14,6 +15,11 @@ class TestDispatchersTest : TestBase() {
     @Before
     fun setUp() {
         Dispatchers.resetMain()
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testSelfSet() = runTest {
+        Dispatchers.setMain(Dispatchers.Main)
     }
 
     @Test

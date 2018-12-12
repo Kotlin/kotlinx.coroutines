@@ -15,16 +15,14 @@ import kotlin.coroutines.*
 internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory) : MainCoroutineDispatcher(), Delay {
     private var _delegate: CoroutineDispatcher? = null
     private val delegate: CoroutineDispatcher get() {
-        if (_delegate != null) return _delegate!!
-
-        val newInstance = createDispatcher()
-        if (newInstance != null) {
-            _delegate = newInstance
-            return newInstance
+        _delegate?.let { return it }
+        mainFactory.tryCreateDispatcher(emptyList()).let {
+            // If we've failed to create a dispatcher, do no set _delegate
+            if (!isMissing()) {
+                _delegate = it
+            }
+            return it
         }
-
-        // Return missing dispatcher, but do not set _delegate
-        return mainFactory.tryCreateDispatcher(emptyList())
     }
 
     @Suppress("INVISIBLE_MEMBER")
@@ -59,14 +57,6 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
 
     public fun resetDispatcher() {
         _delegate = null
-    }
-
-    private fun createDispatcher(): CoroutineDispatcher? {
-        return try {
-            mainFactory.createDispatcher(emptyList())
-        } catch (cause: Throwable) {
-            null
-        }
     }
 }
 

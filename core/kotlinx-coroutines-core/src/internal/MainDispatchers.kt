@@ -37,8 +37,15 @@ public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatc
         MissingMainCoroutineDispatcher(cause, hintOnError())
     }
 
-private class MissingMainCoroutineDispatcher(private val cause: Throwable?, private val errorHint: String? = null) :
-    MainCoroutineDispatcher(), Delay {
+/** @suppress */
+@InternalCoroutinesApi
+public fun MainCoroutineDispatcher.isMissing(): Boolean = this is MissingMainCoroutineDispatcher
+
+private class MissingMainCoroutineDispatcher(
+    private val cause: Throwable?,
+    private val errorHint: String? = null
+) : MainCoroutineDispatcher(), Delay {
+
     override val immediate: MainCoroutineDispatcher get() = this
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {

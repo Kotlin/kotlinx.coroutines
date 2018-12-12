@@ -15,7 +15,7 @@ open class FirstMockedMainTest : TestBase() {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain()
+        Dispatchers.setMain(Dispatchers.Unconfined)
     }
 
     @After
