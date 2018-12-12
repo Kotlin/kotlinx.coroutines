@@ -25,8 +25,9 @@ public actual object Dispatchers {
      * [launch][CoroutineScope.launch], [async][CoroutineScope.async], etc
      * if no dispatcher nor any other [ContinuationInterceptor] is specified in their context.
      *
-     * It is backed by a shared pool of threads on JVM. By default, the maximal number of threads used
-     * by this dispatcher is equal to the number CPU cores, but is at least two.
+     * It is backed by a shared pool of threads on JVM. By default, the maximal level of parallelism used
+     * by this dispatcher is equal to the number of CPU cores, but is at least two.
+     * Level of parallelism X guarantees that no more than X tasks can be executed in this dispatcher in parallel.
      */
     @JvmStatic
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
