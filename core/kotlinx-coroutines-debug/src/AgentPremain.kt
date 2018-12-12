@@ -19,8 +19,12 @@ internal object AgentPremain {
     }
 
     private fun installSignalHandler() {
-        Signal.handle(Signal("TRAP") ) { // kill -5
-            DebugProbes.dumpCoroutines()
+        try {
+            Signal.handle(Signal("TRAP")) { // kill -5
+                DebugProbes.dumpCoroutines()
+            }
+        } catch (t: Throwable) {
+            System.err.println("Failed to install signal handler: $t")
         }
     }
 }

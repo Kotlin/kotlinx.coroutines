@@ -66,6 +66,7 @@ class DebugProbesTest : TestBase() {
 
     @Test
     fun testAsyncWithSanitizedProbes() = DebugProbes.withDebugProbes {
+        DebugProbes.sanitizeStackTraces = true
         runTest {
             val deferred = createDeferred()
             val traces = listOf(

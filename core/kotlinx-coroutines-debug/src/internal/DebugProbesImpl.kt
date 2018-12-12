@@ -151,11 +151,7 @@ internal object DebugProbesImpl {
 
     @Synchronized
     private fun updateState(owner: ArtificialStackFrame<*>?, frame: Continuation<*>, state: State) {
-        val coroutineState = capturedCoroutines[owner]
-        if (coroutineState == null) {
-            warn(frame, state)
-            return
-        }
+        val coroutineState = capturedCoroutines[owner] ?: return
         coroutineState.updateState(state, frame)
     }
 
@@ -257,9 +253,4 @@ internal object DebugProbesImpl {
     }
 
     private val StackTraceElement.isInternalMethod: Boolean get() = className.startsWith("kotlinx.coroutines")
-
-    private fun warn(frame: Continuation<*>, state: State) {
-        // TODO make this warning configurable or not a warning at all
-        System.err.println("Failed to find an owner of the frame $frame while transferring it to the state $state")
-    }
 }

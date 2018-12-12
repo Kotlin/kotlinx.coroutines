@@ -4,19 +4,19 @@ Debugging facilities for `kotlinx.coroutines` on JVM.
 
 ### Overview
 
-This module provides a debug JVM agent which allows to track and trace alive coroutines.
-Main entry point to debug facilities is [DebugProbes].
+This module provides a debug JVM agent which allows to track and trace existing coroutines.
+The main entry point to debug facilities is [DebugProbes] API.
 Call to [DebugProbes.install] installs debug agent via ByteBuddy and starts to spy on coroutines when they are created, suspended or resumed.
 
-After that you can use [DebugProbes.dumpCoroutines] to print all active (suspended or running) coroutines, including their state, creation and
+After that, you can use [DebugProbes.dumpCoroutines] to print all active (suspended or running) coroutines, including their state, creation and
 suspension stacktraces.
-Additionally, it is possible to process list of such coroutines via [DebugProbes.dumpCoroutinesState] or dump isolated parts
-of coroutines hierarchies referenced by [Job] instance using [DebugProbes.printHierarchy].
+Additionally, it is possible to process the list of such coroutines via [DebugProbes.dumpCoroutinesState] or dump isolated parts
+of coroutines hierarchy referenced by a [Job] instance using [DebugProbes.printHierarchy].
 
 ### Using as JVM agent
 
-Additionally, it is possible to use this module as standalone JVM agent to enable debug probes on the application startup.
-You can run your application with additional argument: `-javaagent:kotlinx-coroutines-debug-1.1.0.jar`.
+It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.1.0.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 
 
