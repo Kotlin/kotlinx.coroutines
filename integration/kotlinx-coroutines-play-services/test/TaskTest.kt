@@ -6,10 +6,11 @@ package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.*
 import kotlinx.coroutines.*
-import org.hamcrest.core.*
 import org.junit.*
+import org.junit.Test
 import java.util.concurrent.locks.*
 import kotlin.concurrent.*
+import kotlin.test.*
 
 class TaskTest : TestBase() {
     @Before
@@ -26,7 +27,7 @@ class TaskTest : TestBase() {
         }
         expect(3)
         val task = deferred.asTask()
-        Assert.assertThat(task.await(), IsEqual("OK"))
+        assertEquals("OK", task.await())
         finish(4)
     }
 
@@ -39,7 +40,7 @@ class TaskTest : TestBase() {
         }
         expect(2)
         val task = deferred.asTask()
-        Assert.assertThat(task.await(), IsEqual("OK"))
+        assertEquals("OK", task.await())
         finish(4)
     }
 
@@ -53,23 +54,20 @@ class TaskTest : TestBase() {
         try {
             runTest { task.await() }
         } catch (e: Exception) {
-            Assert.assertTrue(e is CancellationException)
-            Assert.assertTrue(task.isCanceled)
+            assertTrue(e is CancellationException)
+            assertTrue(task.isCanceled)
         }
     }
 
     @Test
     fun testThrowingAsTask() {
         val deferred = GlobalScope.async {
-            throw OutOfMemoryError()
+            throw TestException("Fail")
         }
 
         val task = deferred.asTask()
-        try {
-            runTest { task.await() }
-        } catch (e: RuntimeExecutionException) {
-            Assert.assertFalse(task.isSuccessful)
-            Assert.assertTrue(e.cause?.cause is OutOfMemoryError)
+        runTest(expected = { it is TestException }) {
+            task.await()
         }
     }
 
@@ -81,29 +79,29 @@ class TaskTest : TestBase() {
             lock.withLock { 42 }
         }.asDeferred()
 
-        Assert.assertFalse(deferred.isCompleted)
+        assertFalse(deferred.isCompleted)
         lock.unlock()
 
-        Assert.assertEquals(42, deferred.await())
-        Assert.assertTrue(deferred.isCompleted)
+        assertEquals(42, deferred.await())
+        assertTrue(deferred.isCompleted)
     }
 
     @Test
     fun testTaskAsDeferred() = runTest {
         val deferred = Tasks.forResult(42).asDeferred()
-        Assert.assertEquals(42, deferred.await())
+        assertEquals(42, deferred.await())
     }
 
     @Test
     fun testCancelledTaskAsDeferred() = runTest {
         val deferred = Tasks.forCanceled<Int>().asDeferred()
 
-        Assert.assertTrue(deferred.isCancelled)
+        assertTrue(deferred.isCancelled)
         try {
             deferred.await()
-            Assert.fail("deferred.await() should be cancelled")
+            fail("deferred.await() should be cancelled")
         } catch (e: Exception) {
-            Assert.assertTrue(e is CancellationException)
+            assertTrue(e is CancellationException)
         }
     }
 
@@ -111,17 +109,17 @@ class TaskTest : TestBase() {
     fun testFailedTaskAsDeferred() = runTest {
         val deferred = Tasks.forException<Int>(TestException("something went wrong")).asDeferred()
 
-        Assert.assertTrue(deferred.isCancelled && deferred.isCompleted)
+        assertTrue(deferred.isCancelled && deferred.isCompleted)
         val completionException = deferred.getCompletionExceptionOrNull()!!
-        Assert.assertTrue(completionException is TestException)
-        Assert.assertEquals("something went wrong", completionException.message)
+        assertTrue(completionException is TestException)
+        assertEquals("something went wrong", completionException.message)
 
         try {
             deferred.await()
-            Assert.fail("deferred.await() should throw an exception")
+            fail("deferred.await() should throw an exception")
         } catch (e: Exception) {
-            Assert.assertTrue(e is TestException)
-            Assert.assertEquals("something went wrong", e.message)
+            assertTrue(e is TestException)
+            assertEquals("something went wrong", e.message)
         }
     }
 
@@ -133,16 +131,16 @@ class TaskTest : TestBase() {
             lock.withLock { throw TestException("something went wrong") }
         }.asDeferred()
 
-        Assert.assertFalse(deferred.isCompleted)
+        assertFalse(deferred.isCompleted)
         lock.unlock()
 
         try {
             deferred.await()
-            Assert.fail("deferred.await() should throw an exception")
+            fail("deferred.await() should throw an exception")
         } catch (e: Exception) {
-            Assert.assertTrue(e is TestException)
-            Assert.assertEquals("something went wrong", e.message)
-            Assert.assertSame(e, deferred.getCompletionExceptionOrNull())
+            assertTrue(e is TestException)
+            assertEquals("something went wrong", e.message)
+            assertSame(e, deferred.getCompletionExceptionOrNull())
         }
     }
 
