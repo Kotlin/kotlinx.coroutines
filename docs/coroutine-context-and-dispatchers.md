@@ -16,7 +16,7 @@ import org.junit.Test
 class DispatchersGuideTest {
 --> 
 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 

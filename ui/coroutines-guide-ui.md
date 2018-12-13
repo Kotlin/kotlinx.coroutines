@@ -165,7 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 

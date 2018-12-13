@@ -15,7 +15,7 @@ import org.junit.Test
 
 class CancellationTimeOutsGuideTest {
 --> 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 
@@ -138,7 +138,7 @@ main: Now I can quit.
 
 There are two approaches to making computation code cancellable. The first one is to periodically 
 invoke a suspending function that checks for cancellation. There is a [yield] function that is a good choice for that purpose.
-The other one is to explicitly check the cancellation status. Let us try the later approach. 
+The other one is to explicitly check the cancellation status. Let us try the latter approach. 
 
 Replace `while (i < 5)` in the previous example with `while (isActive)` and rerun it. 
 

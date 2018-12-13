@@ -151,9 +151,13 @@ coroutine dispatcher and also makes sure that in case of crashed coroutine with 
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
 threads are handled by Android runtime. 
 
-### R8 and ProGuard
+#### R8 and ProGuard
 
-If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
+For R8 no actions required, it will take obfuscation rules from the jar.
+
+For Proguard  you need to add options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) to your rules manually.
+ 
+R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.3.0-beta.
 
 ## Building 
 
