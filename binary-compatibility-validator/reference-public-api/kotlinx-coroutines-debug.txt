@@ -1,0 +1,38 @@
+public final class kotlinx/coroutines/debug/CoroutineState {
+	public final fun component1 ()Lkotlin/coroutines/Continuation;
+	public final fun copy (Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;J)Lkotlinx/coroutines/debug/CoroutineState;
+	public static synthetic fun copy$default (Lkotlinx/coroutines/debug/CoroutineState;Lkotlin/coroutines/Continuation;Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;JILjava/lang/Object;)Lkotlinx/coroutines/debug/CoroutineState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContinuation ()Lkotlin/coroutines/Continuation;
+	public final fun getCreationStackTrace ()Ljava/util/List;
+	public final fun getJob ()Lkotlinx/coroutines/Job;
+	public final fun getJobOrNull ()Lkotlinx/coroutines/Job;
+	public final fun getState ()Lkotlinx/coroutines/debug/State;
+	public fun hashCode ()I
+	public final fun lastObservedStackTrace ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class kotlinx/coroutines/debug/DebugProbes {
+	public static final field INSTANCE Lkotlinx/coroutines/debug/DebugProbes;
+	public final fun dumpCoroutines (Ljava/io/PrintStream;)V
+	public static synthetic fun dumpCoroutines$default (Lkotlinx/coroutines/debug/DebugProbes;Ljava/io/PrintStream;ILjava/lang/Object;)V
+	public final fun dumpCoroutinesState ()Ljava/util/List;
+	public final fun getSanitizeStackTraces ()Z
+	public final fun hierarchyToString (Lkotlinx/coroutines/Job;)Ljava/lang/String;
+	public final fun install ()V
+	public final fun printHierarchy (Lkotlinx/coroutines/Job;Ljava/io/PrintStream;)V
+	public static synthetic fun printHierarchy$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/Job;Ljava/io/PrintStream;ILjava/lang/Object;)V
+	public final fun setSanitizeStackTraces (Z)V
+	public final fun uninstall ()V
+	public final fun withDebugProbes (Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class kotlinx/coroutines/debug/State : java/lang/Enum {
+	public static final field CREATED Lkotlinx/coroutines/debug/State;
+	public static final field RUNNING Lkotlinx/coroutines/debug/State;
+	public static final field SUSPENDED Lkotlinx/coroutines/debug/State;
+	public static fun valueOf (Ljava/lang/String;)Lkotlinx/coroutines/debug/State;
+	public static fun values ()[Lkotlinx/coroutines/debug/State;
+}
+

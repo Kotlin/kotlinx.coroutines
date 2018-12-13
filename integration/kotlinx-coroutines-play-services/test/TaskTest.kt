@@ -4,22 +4,12 @@
 
 package kotlinx.coroutines.tasks
 
-import com.google.android.gms.tasks.RuntimeExecutionException
-import com.google.android.gms.tasks.Tasks
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.TestBase
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.ignoreLostThreads
-import org.hamcrest.core.IsEqual
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import com.google.android.gms.tasks.*
+import kotlinx.coroutines.*
+import org.hamcrest.core.*
+import org.junit.*
+import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 
 class TaskTest : TestBase() {
     @Before
@@ -79,7 +69,7 @@ class TaskTest : TestBase() {
             runTest { task.await() }
         } catch (e: RuntimeExecutionException) {
             Assert.assertFalse(task.isSuccessful)
-            Assert.assertTrue(e.cause is OutOfMemoryError)
+            Assert.assertTrue(e.cause?.cause is OutOfMemoryError)
         }
     }
 

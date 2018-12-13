@@ -218,9 +218,14 @@ private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHand
 internal open class CancellableContinuationImpl<in T>(
     delegate: Continuation<T>,
     resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable {
+) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable, CoroutineStackFrame {
 
     public override val context: CoroutineContext = delegate.context
+
+    override val callerFrame: CoroutineStackFrame?
+        get() = delegate as? CoroutineStackFrame
+
+    override fun getStackTraceElement(): StackTraceElement? = null
 
     override fun initCancellability() {
         initParentJobInternal(delegate.context[Job])

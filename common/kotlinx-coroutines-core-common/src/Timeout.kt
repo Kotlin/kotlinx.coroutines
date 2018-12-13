@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.selects.*
 import kotlin.coroutines.*
@@ -80,9 +81,10 @@ private fun <U, T: U> setupTimeout(
 private open class TimeoutCoroutine<U, in T: U>(
     @JvmField val time: Long,
     @JvmField val uCont: Continuation<U> // unintercepted continuation
-) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T> {
+) : AbstractCoroutine<T>(uCont.context, active = true), Runnable, Continuation<T>, CoroutineStackFrame {
     override val defaultResumeMode: Int get() = MODE_DIRECT
-
+    override val callerFrame: CoroutineStackFrame? get() = (uCont as? CoroutineStackFrame)?.callerFrame
+    override fun getStackTraceElement(): StackTraceElement? = (uCont as? CoroutineStackFrame)?.getStackTraceElement()
     @Suppress("LeakingThis", "Deprecation")
     override fun run() {
         cancel(TimeoutCancellationException(time, this))

@@ -5,5 +5,5 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 
 ## Modules
 
-* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) -- core coroutine builders and synchronization primitives. 
-
+* [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) &mdash; core coroutine builders and synchronization primitives. 
+* [kotlinx-coroutines-debug](kotlinx-coroutines-debug/README.md) &mdash; coroutines debug utilities.

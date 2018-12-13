@@ -247,8 +247,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         val seenExceptions = identitySet<Throwable>(exceptions.size)
         var suppressed = false
         for (exception in exceptions) {
-            if (exception !== rootCause && exception !is CancellationException && seenExceptions.add(exception)) {
-                rootCause.addSuppressedThrowable(exception)
+            val unwrapped = unwrap(exception)
+            if (unwrapped !== rootCause && unwrapped !is CancellationException && seenExceptions.add(unwrapped)) {
+                rootCause.addSuppressedThrowable(unwrapped)
                 suppressed = true
             }
         }
@@ -929,7 +930,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // for nicer debugging
     public override fun toString(): String =
-        "${nameString()}{${stateString(state)}}@$hexAddress"
+        "${toDebugString()}@$hexAddress"
+
+    @InternalCoroutinesApi
+    public fun toDebugString(): String = "${nameString()}{${stateString(state)}}"
 
     /**
      * @suppress **This is unstable API and it is subject to change.**
@@ -1083,7 +1087,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             val state = this.state
             if (state !is Incomplete) {
                 // already complete -- just return result
-                if (state is CompletedExceptionally) throw state.cause
+                if (state is CompletedExceptionally) { // Slow path to recover stacktrace
+                    recoverAndThrow(state.cause)
+                }
                 return state.unboxState()
 
             }
