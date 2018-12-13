@@ -930,7 +930,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     // for nicer debugging
     public override fun toString(): String =
-        "${nameString()}{${stateString(state)}}@$hexAddress"
+        "${toDebugString()}@$hexAddress"
+
+    @InternalCoroutinesApi
+    public fun toDebugString(): String = "${nameString()}{${stateString(state)}}"
 
     /**
      * @suppress **This is unstable API and it is subject to change.**

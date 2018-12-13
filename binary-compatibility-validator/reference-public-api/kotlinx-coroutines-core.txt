@@ -349,6 +349,7 @@ public class kotlinx/coroutines/JobSupport : kotlinx/coroutines/ChildJob, kotlin
 	public fun plus (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
 	public final fun registerSelectClause0 (Lkotlinx/coroutines/selects/SelectInstance;Lkotlin/jvm/functions/Function1;)V
 	public final fun start ()Z
+	public final fun toDebugString ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 

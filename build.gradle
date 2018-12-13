@@ -40,7 +40,7 @@ buildscript {
         classpath "com.moowork.gradle:gradle-node-plugin:$gradle_node_version"
 
         // JMH plugins
-        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.2"
+        classpath "com.github.jengelman.gradle.plugins:shadow:4.0.2"
         classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.7"
         classpath "net.ltgt.gradle:gradle-apt-plugin:0.10"
     }

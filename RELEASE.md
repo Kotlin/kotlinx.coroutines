@@ -12,7 +12,7 @@ To release new `<version>` of `kotlinx-coroutines`:
    `git merge origin/master`   
 
 4. Search & replace `<old-version>` with `<version>` across the project files. Should replace in:
-   * [`README.md`](README.md)
+   * [`README.md`](README.md) (native, core, test, debug, modules)
    * [`coroutines-guide.md`](docs/coroutines-guide.md)
    * [`gradle.properties`](gradle.properties)
    * [`ui/kotlinx-coroutines-android/example-app/gradle.properties`](ui/kotlinx-coroutines-android/example-app/gradle.properties)    
