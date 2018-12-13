@@ -6,7 +6,7 @@ package kotlinx.coroutines.debug.internal
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
-import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.artificialFrame
 import net.bytebuddy.*
 import net.bytebuddy.agent.*
 import net.bytebuddy.dynamic.loading.*
@@ -15,6 +15,7 @@ import java.text.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.coroutines.*
+import kotlin.coroutines.jvm.internal.*
 
 /**
  * Mirror of [DebugProbes] with actual implementation.
@@ -80,7 +81,7 @@ internal object DebugProbesImpl {
         val str = if (this !is JobSupport) toString() else toDebugString()
         if (state == null) {
             @Suppress("INVISIBLE_REFERENCE")
-            if (this !is ScopeCoroutine<*>) { // Do not print scoped coroutines
+            if (this !is kotlinx.coroutines.internal.ScopeCoroutine<*>) { // Do not print scoped coroutines
                 builder.append("$str\n")
             }
         } else {

@@ -7,8 +7,9 @@
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.internal.sanitize
 import kotlin.coroutines.*
+import kotlin.coroutines.jvm.internal.*
 
 /**
  * Class describing coroutine state.
