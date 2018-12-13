@@ -97,7 +97,16 @@ public data class CoroutineState internal constructor(
  * Current state of the coroutine.
  */
 public enum class State {
-    CREATED, // Not yet started
+    /**
+     * Created, but not yet started
+     */
+    CREATED,
+    /**
+     * Started and running
+     */
     RUNNING,
+    /**
+     * Suspended
+     */
     SUSPENDED
 }

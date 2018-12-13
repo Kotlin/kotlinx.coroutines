@@ -8,6 +8,7 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.jfrog.artifactory'
+apply plugin: "com.github.johnrengelman.shadow"
 
 apply from: project.rootProject.file('gradle/maven-central.gradle')
 
@@ -16,13 +17,13 @@ def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
 
 // ------------- tasks
 
-def isNative = project.name.endsWith("native")
+def isNative() { return project.name.endsWith("native") }
 def bUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
 def bKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
 
 task sourcesJar(type: Jar) {
     classifier = 'sources'
-    if (!isNative) {
+    if (!isNative()) {
         from sourceSets.main.allSource
     }
 
@@ -32,19 +33,15 @@ task sourcesJar(type: Jar) {
     }
 }
 
+
 publishing {
     repositories {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
     }
 
     publications {
-        maven(MavenPublication) {
-            if (!isNative) {
-                from components.java
-                artifact javadocJar
-                artifact sourcesJar
-            }
-            pom.withXml(configureMavenCentralMetadata)
+        maven(MavenPublication) { publication ->
+            preparePublication(publication)
         }
     }
 }
@@ -58,15 +55,8 @@ artifactory {
             password = bKey
         }
 
-        publications {
-            maven(MavenPublication) {
-                if (!isNative) {
-                    from components.java
-                    artifact javadocJar
-                    artifact sourcesJar
-                }
-                pom.withXml(configureMavenCentralMetadata)
-            }
+        maven(MavenPublication) { publication ->
+            preparePublication(publication)
         }
 
         defaults {
@@ -75,9 +65,21 @@ artifactory {
     }
 }
 
+def preparePublication(MavenPublication publication) {
+    if (!isNative()) {
+        if (project.name == "kotlinx-coroutines-debug") {
+            project.shadow.component(publication)
+        } else {
+            publication.from components.java
+        }
+        publication.artifact javadocJar
+        publication.artifact sourcesJar
+    }
+    publication.pom.withXml(configureMavenCentralMetadata)
+}
+
 task publishDevelopSnapshot() {
     def branch = System.getenv('currentBranch')
-    println "Current branch: $branch"
     if (branch == "develop") {
         dependsOn(":artifactoryPublish")
     }
@@ -112,7 +114,7 @@ bintrayUpload.doFirst {
 }
 
 // TODO :kludge this is required to disable publish of metadata for all but native
-if (!isNative) {
+if (!isNative()) {
     afterEvaluate {
         publishing.publications.each { pub ->
             pub.gradleModuleMetadataFile = null
