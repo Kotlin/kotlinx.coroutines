@@ -83,7 +83,7 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
     override fun shutdown() {
         // Clean up thread-local reference here -- this event loop is shutting down
         ThreadLocalEventLoop.resetEventLoop()
-        // We should signal that ThreadEventLoop should not accept any more tasks
+        // We should signal that this event loop should not accept any more tasks
         // and process queued events (that could have been added after last processNextEvent)
         isCompleted = true
         closeQueue()
@@ -311,8 +311,8 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
     }
 }
 
-internal class ThreadEventLoop(
+internal class BlockingEventLoop(
     override val thread: Thread
 ) : EventLoopImplBase()
 
-internal actual fun createEventLoop(): EventLoop = ThreadEventLoop(Thread.currentThread())
+internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
