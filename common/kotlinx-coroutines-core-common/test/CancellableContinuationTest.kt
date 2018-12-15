@@ -72,7 +72,7 @@ class CancellableContinuationTest : TestBase() {
      * should be ignored. Here suspended coroutine is cancelled but then resumed with exception.
      */
     @Test
-    fun testCancelAndResumeWithException() = runTest(unhandled = listOf({e -> e is TestException})) {
+    fun testCancelAndResumeWithException() = runTest {
         var continuation: Continuation<Unit>? = null
         val job = launch {
             try {

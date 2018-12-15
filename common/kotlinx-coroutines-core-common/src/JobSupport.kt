@@ -1049,7 +1049,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         }
 
         protected override fun nameString(): String =
-            "AwaitContinuation(${delegate.toDebugString()})"
+            "AwaitContinuation"
     }
 
     /*
@@ -1105,7 +1105,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          * thrown and not a JobCancellationException.
          */
         val cont = AwaitContinuation(uCont.intercepted(), this)
-        cont.initCancellability()
         cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(this, cont).asHandler))
         cont.getResult()
     }
@@ -1249,7 +1248,7 @@ private class ResumeOnCompletion(
 
 private class ResumeAwaitOnCompletion<T>(
     job: JobSupport,
-    private val continuation: AbstractContinuation<T>
+    private val continuation: CancellableContinuationImpl<T>
 ) : JobNode<JobSupport>(job) {
     override fun invoke(cause: Throwable?) {
         val state = job.state
@@ -1330,10 +1329,10 @@ internal class ChildHandleNode(
 // Same as ChildHandleNode, but for cancellable continuation
 internal class ChildContinuation(
     parent: Job,
-    @JvmField val child: AbstractContinuation<*>
+    @JvmField val child: CancellableContinuationImpl<*>
 ) : JobCancellingNode<Job>(parent) {
     override fun invoke(cause: Throwable?) {
-        child.cancelImpl(child.getContinuationCancellationCause(job))
+        child.cancel(child.getContinuationCancellationCause(job))
     }
     override fun toString(): String =
         "ChildContinuation[$child]"
