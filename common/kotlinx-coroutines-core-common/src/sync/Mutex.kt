@@ -186,7 +186,7 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
         return lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutine<Unit>(holdCancellability = true) sc@ { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendAtomicCancellableCoroutine<Unit> sc@ { cont ->
         val waiter = LockCont(owner, cont)
         _state.loop { state ->
             when (state) {
@@ -207,7 +207,6 @@ internal class MutexImpl(locked: Boolean) : Mutex, SelectClause2<Any?, Mutex> {
                     check(curOwner !== owner) { "Already locked by $owner" }
                     if (state.addLastIf(waiter, { _state.value === state })) {
                         // added to waiter list!
-                        cont.initCancellability() // make it properly cancellable
                         cont.removeOnCancellation(waiter)
                         return@sc
                     }

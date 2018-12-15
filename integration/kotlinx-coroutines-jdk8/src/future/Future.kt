@@ -133,9 +133,16 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         val consumer = ContinuationConsumer(cont)
         whenComplete(consumer)
-        cont.invokeOnCancellation {
-            // mayInterruptIfRunning is not used
-            (this as? CompletableFuture<T>)?.cancel(false)
+        cont.invokeOnCancellation { cause ->
+            (this as? CompletableFuture<T>)?.apply {
+                // retain original cancellation exception if there is one
+                if (cause != null) {
+                    completeExceptionally(cause)
+                } else {
+                    // Note: mayInterruptIfRunning is not used by CompletableFuture implementation anyway
+                    cancel(false)
+                }
+            }
             consumer.cont = null // shall clear reference to continuation to aid GC
         }
     }

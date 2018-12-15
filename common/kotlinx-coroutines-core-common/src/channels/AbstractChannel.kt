@@ -188,13 +188,12 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         }
     }
 
-    private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
+    private suspend fun sendSuspend(element: E): Unit = suspendAtomicCancellableCoroutine sc@ { cont ->
         val send = SendElement(element, cont)
         loop@ while (true) {
             val enqueueResult = enqueueSend(send)
             when (enqueueResult) {
                 null -> { // enqueued successfully
-                    cont.initCancellability() // make it properly cancellable
                     cont.removeOnCancellation(send)
                     return@sc
                 }
@@ -580,11 +579,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun receiveSuspend(): E = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
+    private suspend fun receiveSuspend(): E = suspendAtomicCancellableCoroutine sc@ { cont ->
         val receive = ReceiveElement(cont as CancellableContinuation<E?>, nullOnClose = false)
         while (true) {
             if (enqueueReceive(receive)) {
-                cont.initCancellability() // make it properly cancellable
                 removeReceiveOnCancel(cont, receive)
                 return@sc
             }
@@ -628,11 +626,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun receiveOrNullSuspend(): E? = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
+    private suspend fun receiveOrNullSuspend(): E? = suspendAtomicCancellableCoroutine sc@ { cont ->
         val receive = ReceiveElement(cont, nullOnClose = true)
         while (true) {
             if (enqueueReceive(receive)) {
-                cont.initCancellability() // make it properly cancellable
                 removeReceiveOnCancel(cont, receive)
                 return@sc
             }
@@ -866,11 +863,10 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
             return true
         }
 
-        private suspend fun hasNextSuspend(): Boolean = suspendAtomicCancellableCoroutine(holdCancellability = true) sc@ { cont ->
+        private suspend fun hasNextSuspend(): Boolean = suspendAtomicCancellableCoroutine sc@ { cont ->
             val receive = ReceiveHasNext(this, cont)
             while (true) {
                 if (channel.enqueueReceive(receive)) {
-                    cont.initCancellability() // make it properly cancellable
                     channel.removeReceiveOnCancel(cont, receive)
                     return@sc
                 }
