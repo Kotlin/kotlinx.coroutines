@@ -349,10 +349,10 @@ class FutureTest : TestBase() {
 
     private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): CompletableFuture<Int> {
         val latch = CountDownLatch(1)
-        val future = CompletableFuture.supplyAsync({
+        val future = CompletableFuture.supplyAsync {
             latch.await()
             239
-        })
+        }
 
         val deferred = async {
             expect(2)
@@ -422,6 +422,30 @@ class FutureTest : TestBase() {
 
         result.complete(Unit)
         finish(3)
+    }
+
+    /**
+     * See [https://github.com/Kotlin/kotlinx.coroutines/issues/892]
+     */
+    @Test
+    fun testTimeoutCancellationFailRace() {
+        repeat(10 * stressTestMultiplier) {
+            runBlocking {
+                withTimeoutOrNull(10) {
+                    while (true) {
+                        var caught = false
+                        try {
+                            CompletableFuture.supplyAsync {
+                                throw TestException()
+                            }.await()
+                        } catch (ignored: TestException) {
+                            caught = true
+                        }
+                        assertTrue(caught) // should have caught TestException or timed out
+                    }
+                }
+            }
+        }
     }
 
     private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {

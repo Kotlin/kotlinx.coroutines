@@ -34,7 +34,7 @@ public final class kotlinx/coroutines/BuildersKt {
 public abstract interface class kotlinx/coroutines/CancellableContinuation : kotlin/coroutines/Continuation {
 	public abstract fun cancel (Ljava/lang/Throwable;)Z
 	public abstract fun completeResume (Ljava/lang/Object;)V
-	public abstract fun initCancellability ()V
+	public abstract synthetic fun initCancellability ()V
 	public abstract fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun isActive ()Z
 	public abstract fun isCancelled ()Z
@@ -50,17 +50,28 @@ public final class kotlinx/coroutines/CancellableContinuation$DefaultImpls {
 	public static synthetic fun tryResume$default (Lkotlinx/coroutines/CancellableContinuation;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public class kotlinx/coroutines/CancellableContinuationImpl : java/lang/Runnable, kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation {
+public class kotlinx/coroutines/CancellableContinuationImpl : kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/CancellableContinuation {
 	public fun <init> (Lkotlin/coroutines/Continuation;I)V
+	public fun cancel (Ljava/lang/Throwable;)Z
 	public fun completeResume (Ljava/lang/Object;)V
 	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
+	public fun getContinuationCancellationCause (Lkotlinx/coroutines/Job;)Ljava/lang/Throwable;
+	public final fun getDelegate ()Lkotlin/coroutines/Continuation;
+	public final fun getResult ()Ljava/lang/Object;
 	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public fun getSuccessfulResult (Ljava/lang/Object;)Ljava/lang/Object;
-	public fun initCancellability ()V
+	public synthetic fun initCancellability ()V
+	public fun invokeOnCancellation (Lkotlin/jvm/functions/Function1;)V
+	public fun isActive ()Z
+	public fun isCancelled ()Z
+	public fun isCompleted ()Z
 	protected fun nameString ()Ljava/lang/String;
 	public fun resumeUndispatched (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Object;)V
 	public fun resumeUndispatchedWithException (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/Throwable;)V
+	public fun resumeWith (Ljava/lang/Object;)V
+	public fun takeState ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
 	public fun tryResume (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 	public fun tryResumeWithException (Ljava/lang/Throwable;)Ljava/lang/Object;
 }

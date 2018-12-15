@@ -7,7 +7,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.jvm.*
 
 // --------------- cancellable continuations ---------------
 
@@ -98,9 +97,17 @@ public interface CancellableContinuation<in T> : Continuation<T> {
     public fun completeResume(token: Any)
 
     /**
-     * Makes this continuation cancellable. Use it with `holdCancellability` optional parameter to
-     * [suspendCancellableCoroutine] function. It throws [IllegalStateException] if invoked more than once.
+     * Legacy function that turned on cancellation behavior in [suspendCancellableCoroutine] before kotlinx.coroutines 1.1.0.
+     * This function does nothing and is left only for binary compatibility with old compiled code.
+     *
+     * @suppress **Deprecated**: This function is no longer used.
+     *   It is left for binary compatibility with code compiled before kotlinx.coroutines 1.1.0.
      */
+    @Deprecated(
+        level = DeprecationLevel.HIDDEN,
+        message = "This function is no longer used. " +
+            "It is left for binary compatibility with code compiled before kotlinx.coroutines 1.1.0. "
+    )
     @InternalCoroutinesApi
     public fun initCancellability()
 
@@ -155,7 +162,9 @@ public suspend inline fun <T> suspendCancellableCoroutine(
 ): T =
     suspendCoroutineUninterceptedOrReturn { uCont ->
         val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_CANCELLABLE)
-        cancellable.initCancellability()
+        // NOTE: Before version 1.1.0 the following invocation was inlined here, so invocation of this
+        // method indicates that the code was compiled by kotlinx.coroutines < 1.1.0
+        // cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
     }
@@ -172,15 +181,27 @@ public suspend inline fun <T> suspendCancellableCoroutine(
  */
 @InternalCoroutinesApi
 public suspend inline fun <T> suspendAtomicCancellableCoroutine(
-    holdCancellability: Boolean = false,
     crossinline block: (CancellableContinuation<T>) -> Unit
 ): T =
     suspendCoroutineUninterceptedOrReturn { uCont ->
         val cancellable = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_ATOMIC_DEFAULT)
-        if (!holdCancellability) cancellable.initCancellability()
         block(cancellable)
         cancellable.getResult()
     }
+
+/**
+ * @suppress **Deprecated**
+ */
+@Deprecated(
+    message = "holdCancellability parameter is deprecated and is no longer used",
+    replaceWith = ReplaceWith("suspendAtomicCancellableCoroutine(block)")
+)
+@InternalCoroutinesApi
+public suspend inline fun <T> suspendAtomicCancellableCoroutine(
+    holdCancellability: Boolean = false,
+    crossinline block: (CancellableContinuation<T>) -> Unit
+): T =
+    suspendAtomicCancellableCoroutine(block)
 
 /**
  * Removes a given node on cancellation.
@@ -212,80 +233,4 @@ private class RemoveOnCancel(private val node: LockFreeLinkedListNode) : CancelH
 private class DisposeOnCancel(private val handle: DisposableHandle) : CancelHandler() {
     override fun invoke(cause: Throwable?) = handle.dispose()
     override fun toString(): String = "DisposeOnCancel[$handle]"
-}
-
-@PublishedApi
-internal open class CancellableContinuationImpl<in T>(
-    delegate: Continuation<T>,
-    resumeMode: Int
-) : AbstractContinuation<T>(delegate, resumeMode), CancellableContinuation<T>, Runnable, CoroutineStackFrame {
-
-    public override val context: CoroutineContext = delegate.context
-
-    override val callerFrame: CoroutineStackFrame?
-        get() = delegate as? CoroutineStackFrame
-
-    override fun getStackTraceElement(): StackTraceElement? = null
-
-    override fun initCancellability() {
-        initParentJobInternal(delegate.context[Job])
-    }
-
-    override fun tryResume(value: T, idempotent: Any?): Any? {
-        loopOnState { state ->
-            when (state) {
-                is NotCompleted -> {
-                    val update: Any? = if (idempotent == null) value else
-                        CompletedIdempotentResult(idempotent, value, state)
-                    if (tryUpdateStateToFinal(state, update)) return state
-                }
-                is CompletedIdempotentResult -> {
-                    if (state.idempotentResume === idempotent) {
-                        check(state.result === value) { "Non-idempotent resume" }
-                        return state.token
-                    } else
-                        return null
-                }
-                else -> return null // cannot resume -- not active anymore
-            }
-        }
-    }
-
-    override fun tryResumeWithException(exception: Throwable): Any? {
-        loopOnState { state ->
-            when (state) {
-                is NotCompleted -> {
-                    if (tryUpdateStateToFinal(state, CompletedExceptionally(exception))) return state
-                }
-                else -> return null // cannot resume -- not active anymore
-            }
-        }
-    }
-
-    override fun completeResume(token: Any) = completeStateUpdate(token as NotCompleted, state, resumeMode)
-
-    override fun CoroutineDispatcher.resumeUndispatched(value: T) {
-        val dc = delegate as? DispatchedContinuation
-        resumeImpl(value, if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
-    }
-
-    override fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable) {
-        val dc = delegate as? DispatchedContinuation
-        resumeImpl(CompletedExceptionally(exception), if (dc?.dispatcher === this) MODE_UNDISPATCHED else resumeMode)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> getSuccessfulResult(state: Any?): T =
-        if (state is CompletedIdempotentResult) state.result as T else state as T
-
-    protected override fun nameString(): String =
-        "CancellableContinuation(${delegate.toDebugString()})"
-}
-
-private class CompletedIdempotentResult(
-    @JvmField val idempotentResume: Any?,
-    @JvmField val result: Any?,
-    @JvmField val token: NotCompleted
-) {
-    override fun toString(): String = "CompletedIdempotentResult[$result]"
 }
