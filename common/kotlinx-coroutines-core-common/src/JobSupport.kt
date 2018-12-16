@@ -1106,7 +1106,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
          */
         val cont = AwaitContinuation(uCont.intercepted(), this)
         cont.initCancellability()
-        invokeOnCompletion(ResumeAwaitOnCompletion(this, cont).asHandler)
+        cont.disposeOnCancellation(invokeOnCompletion(ResumeAwaitOnCompletion(this, cont).asHandler))
         cont.getResult()
     }
 
