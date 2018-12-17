@@ -14,16 +14,25 @@ import kotlin.jvm.*
 internal open class ScopeCoroutine<in T>(
     context: CoroutineContext,
     @JvmField val uCont: Continuation<T> // unintercepted continuation
-) : AbstractCoroutine<T>(context, true) {
+) : AbstractCoroutine<T>(context, true), CoroutineStackFrame {
+    final override val callerFrame: CoroutineStackFrame? get() = uCont as CoroutineStackFrame?
+    final override fun getStackTraceElement(): StackTraceElement? = null
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
     @Suppress("UNCHECKED_CAST")
     internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
-        if (state is CompletedExceptionally)
-            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
-        else
+        if (state is CompletedExceptionally) {
+            val exception = if (mode == MODE_IGNORE) state.cause else recoverStackTrace(state.cause, uCont)
+            uCont.resumeUninterceptedWithExceptionMode(exception, mode)
+        } else {
             uCont.resumeUninterceptedMode(state as T, mode)
+        }
     }
+}
+
+internal fun AbstractCoroutine<*>.tryRecover(exception: Throwable): Throwable {
+    val cont = (this as? ScopeCoroutine<*>)?.uCont ?: return exception
+    return recoverStackTrace(exception, cont)
 }
 
 internal class ContextScope(context: CoroutineContext) : CoroutineScope {

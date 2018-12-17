@@ -24,6 +24,7 @@ module('common/kotlinx-coroutines-core-common')
 
 module('core/kotlinx-coroutines-core')
 module('core/kotlinx-coroutines-test')
+module('core/kotlinx-coroutines-debug')
 module('core/stdlib-stubs')
 
 module('integration/kotlinx-coroutines-guava')

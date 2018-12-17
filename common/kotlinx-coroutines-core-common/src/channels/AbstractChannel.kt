@@ -119,12 +119,18 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
         return null
     }
 
-    /**
-     * @suppress **This is unstable API and it is subject to change.**
-     */
     protected fun conflatePreviousSendBuffered(node: LockFreeLinkedListNode) {
-        val prev = node.prevNode
-        (prev as? SendBuffered<*>)?.remove()
+        /*
+         * Conflate all previous SendBuffered,
+         * helping other sends to coflate
+         */
+        var prev = node.prevNode
+        while (prev is SendBuffered<*>) {
+            if (!prev.remove()) {
+                prev.helpRemove()
+            }
+            prev = prev.prevNode
+        }
     }
 
     /**
@@ -176,8 +182,8 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             result === OFFER_SUCCESS -> true
             // We should check for closed token on offer as well, otherwise offer won't be linearizable
             // in the face of concurrent close()
-            result === OFFER_FAILED ->  throw closedForSend?.sendException ?: return false
-            result is Closed<*> -> throw result.sendException
+            result === OFFER_FAILED -> throw closedForSend?.sendException?.let { recoverStackTrace(it) } ?: return false
+            result is Closed<*> -> throw recoverStackTrace(result.sendException)
             else -> error("offerInternal returned $result")
         }
     }
@@ -249,15 +255,13 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
          */
         val closeAdded = queue.addLastIfPrev(closed, { it !is Closed<*> })
         if (!closeAdded) {
-            helpClose(queue.prevNode as Closed<*>)
+            val actualClosed = queue.prevNode as Closed<*>
+            helpClose(actualClosed)
             return false
         }
 
         helpClose(closed)
         invokeOnCloseHandler(cause)
-        // TODO We can get rid of afterClose
-        onClosed(closed)
-        afterClose(cause)
         return true
     }
 
@@ -319,18 +323,15 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
             previous as Receive<E> // type assertion
             previous.resumeReceiveClosed(closed)
         }
+
+        onClosedIdempotent(closed)
     }
 
     /**
-     * Invoked when [Closed] element was just added.
-     * @suppress **This is unstable API and it is subject to change.**
+     * Invoked when channel is closed as the last action of [close] invocation.
+     * This method should be idempotent and can be called multiple times.
      */
-    protected open fun onClosed(closed: Closed<E>) {}
-
-    /**
-     * Invoked after successful [close].
-     */
-    protected open fun afterClose(cause: Throwable?) {}
+    protected open fun onClosedIdempotent(closed: LockFreeLinkedListNode) {}
 
     /**
      * Retrieves first receiving waiter from the queue or returns closed token.
@@ -408,7 +409,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                 when {
                     enqueueResult === ALREADY_SELECTED -> return
                     enqueueResult === ENQUEUE_FAILED -> {} // retry
-                    enqueueResult is Closed<*> -> throw enqueueResult.sendException
+                    enqueueResult is Closed<*> -> throw recoverStackTrace(enqueueResult.sendException)
                     else -> error("performAtomicIfNotSelected(TryEnqueueSendDesc) returned $enqueueResult")
                 }
             } else {
@@ -420,7 +421,7 @@ internal abstract class AbstractSendChannel<E> : SendChannel<E> {
                         block.startCoroutineUnintercepted(receiver = this, completion = select.completion)
                         return
                     }
-                    offerResult is Closed<*> -> throw offerResult.sendException
+                    offerResult is Closed<*> -> throw recoverStackTrace(offerResult.sendException)
                     else -> error("offerSelectInternal returned $offerResult")
                 }
             }
@@ -574,7 +575,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
     @Suppress("UNCHECKED_CAST")
     private fun receiveResult(result: Any?): E {
-        if (result is Closed<*>) throw result.receiveException
+        if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
         return result as E
     }
 
@@ -620,7 +621,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
     @Suppress("UNCHECKED_CAST")
     private fun receiveOrNullResult(result: Any?): E? {
         if (result is Closed<*>) {
-            if (result.closeCause != null) throw result.closeCause
+            if (result.closeCause != null) throw recoverStackTrace(result.closeCause)
             return null
         }
         return result as E
@@ -759,7 +760,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                 when {
                     pollResult === ALREADY_SELECTED -> return
                     pollResult === POLL_FAILED -> {} // retry
-                    pollResult is Closed<*> -> throw pollResult.receiveException
+                    pollResult is Closed<*> -> throw recoverStackTrace(pollResult.receiveException)
                     else -> {
                         block.startCoroutineUnintercepted(pollResult as E, select.completion)
                         return
@@ -798,8 +799,9 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
                             if (select.trySelect(null))
                                 block.startCoroutineUnintercepted(null, select.completion)
                             return
-                        } else
-                            throw pollResult.closeCause
+                        } else {
+                            throw recoverStackTrace(pollResult.closeCause)
+                        }
                     }
                     else -> {
                         // selected successfully
@@ -858,7 +860,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
 
         private fun hasNextResult(result: Any?): Boolean {
             if (result is Closed<*>) {
-                if (result.closeCause != null) throw result.receiveException
+                if (result.closeCause != null) throw recoverStackTrace(result.receiveException)
                 return false
             }
             return true
@@ -892,7 +894,7 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         @Suppress("UNCHECKED_CAST")
         override suspend fun next(): E {
             val result = this.result
-            if (result is Closed<*>) throw result.receiveException
+            if (result is Closed<*>) throw recoverStackTrace(result.receiveException)
             if (result !== POLL_FAILED) {
                 this.result = POLL_FAILED
                 return result as E
@@ -944,10 +946,11 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         }
 
         override fun resumeReceiveClosed(closed: Closed<*>) {
-            val token = if (closed.closeCause == null)
+            val token = if (closed.closeCause == null) {
                 cont.tryResume(false)
-            else
-                cont.tryResumeWithException(closed.receiveException)
+            } else {
+                cont.tryResumeWithException(recoverStackTrace(closed.receiveException, cont))
+            }
             if (token != null) {
                 iterator.result = closed
                 cont.completeResume(token)

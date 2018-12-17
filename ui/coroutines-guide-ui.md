@@ -165,7 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
@@ -470,8 +470,10 @@ collection of the whole trees of UI objects that were already destroyed and will
 
 The natural solution to this problem is to associate a [Job] object with each UI object that has a lifecycle and create
 all the coroutines in the context of this job. But passing associated job object to every coroutine builder is error-prone, 
-it is easy to forget it. For this purpose, [CoroutineScope] interface should be implemented by UI owner, and then every
+it is easy to forget it. For this purpose, [CoroutineScope] interface could be implemented by UI owner, and then every
 coroutine builder defined as an extension on [CoroutineScope] inherits UI job without explicitly mentioning it.
+For the sake of simplicity, [MainScope()] factory can be used. It automatically provides `Dispatchers.Main` and parent 
+job.
 
 For example, in Android application an `Activity` is initially _created_ and is _destroyed_ when it is no longer 
 needed and when its memory must be released. A natural solution is to attach an 
@@ -479,19 +481,10 @@ instance of a `Job` to an instance of an `Activity`:
 <!--- CLEAR -->
 
 ```kotlin
-abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope {
-    protected lateinit var job: Job
-    override val coroutineContext: CoroutineContext 
-        get() = job + Dispatchers.Main
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        job = Job()
-    }
-        
+abstract class ScopedAppActivity: AppCompatActivity(), CoroutineScope by MainScope() {
     override fun onDestroy() {
         super.onDestroy()
-        job.cancel()
+        cancel() // CoroutineScope.cancel
     } 
 }
 ```
@@ -711,6 +704,7 @@ After delay
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
 [Job.cancel]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
+[MainScope()]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-main-scope.html
 [coroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html
 [withContext]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-context.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html

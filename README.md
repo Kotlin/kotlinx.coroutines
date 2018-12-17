@@ -19,9 +19,10 @@ GlobalScope.launch {
 
 ## Modules
 
-* [common](common/README.md) &mdash; common coroutines across all backends:
+* [common](common/README.md) &mdash; common coroutines across all platforms:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
+  * `MainScope` for Android and UI applications.
   * `Dispatchers` object with `Main` dispatcher for Android/Swing/JavaFx, and `Default` dispatcher for background coroutines;
   * `delay` and `yield` top-level suspending functions;
   * `Channel` and `Mutex` communication and synchronization primitives;
@@ -33,6 +34,8 @@ GlobalScope.launch {
   * `Executor.asCoroutineDispatcher()` extension, custom thread pools, and more.
 * [test](core/README.md) &mdash; test utilities for coroutines, currently with one feature:
   * `MainDispatcherInjector.inject()` to override `Dispatchers.Main` in tests.
+* [debug](core/README.md) &mdash; debug utilities for coroutines.
+  * `DebugProbes` API to probe, keep track of, print and dump active coroutines.
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
@@ -150,9 +153,13 @@ coroutine dispatcher and also makes sure that in case of crashed coroutine with 
 exception is logged before crashing Android application, similarly to the way uncaught exceptions in 
 threads are handled by Android runtime. 
 
-### R8 and ProGuard
+#### R8 and ProGuard
 
-If you are using R8 or ProGuard add the options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) file to your rules.
+For R8 no actions required, it will take obfuscation rules from the jar.
+
+For Proguard  you need to add options from [coroutines.pro](core/kotlinx-coroutines-core/resources/META-INF/proguard/coroutines.pro) to your rules manually.
+ 
+R8 is a replacement for ProGuard in Android ecosystem, it is enabled by default since Android gradle plugin 3.3.0-beta.
 
 ## Building 
 

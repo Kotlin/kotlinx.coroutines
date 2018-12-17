@@ -303,17 +303,14 @@ class FutureTest : TestBase() {
 
         assertFalse(deferred.isCompleted)
         lock.unlock()
-
         try {
             deferred.await()
             fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
+        } catch (e: CompletionException) {
             assertTrue(deferred.isCancelled)
-            assertTrue(e is CompletionException) // that's how supplyAsync wraps it
-            val cause = e.cause!!
+            val cause = e.cause?.cause!! // Stacktrace augmentation
             assertTrue(cause is TestException)
             assertEquals("something went wrong", cause.message)
-            assertSame(e, deferred.getCompletionExceptionOrNull()) // same exception is returns as thrown
         }
     }
 

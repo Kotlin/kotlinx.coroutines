@@ -82,10 +82,12 @@ internal object UndispatchedEventLoop {
 internal class DispatchedContinuation<in T>(
     @JvmField val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>
-) : DispatchedTask<T>(MODE_ATOMIC_DEFAULT), Continuation<T> by continuation {
+) : DispatchedTask<T>(MODE_ATOMIC_DEFAULT), CoroutineStackFrame, Continuation<T> by continuation {
     @JvmField
     @Suppress("PropertyName")
     internal var _state: Any? = UNDEFINED
+    override val callerFrame: CoroutineStackFrame? = continuation as? CoroutineStackFrame
+    override fun getStackTraceElement(): StackTraceElement? = null
     @JvmField // pre-cached value to avoid ctx.fold on every resumption
     internal val countOrElement = threadContextElements(context)
 
@@ -168,7 +170,7 @@ internal class DispatchedContinuation<in T>(
     @Suppress("NOTHING_TO_INLINE") // we need it inline to save us an entry on the stack
     inline fun resumeUndispatchedWithException(exception: Throwable) {
         withCoroutineContext(context, countOrElement) {
-            continuation.resumeWithException(exception)
+            continuation.resumeWithStackTrace(exception)
         }
     }
 
@@ -191,7 +193,7 @@ internal fun <T> Continuation<T>.resumeCancellable(value: T) = when (this) {
 
 internal fun <T> Continuation<T>.resumeCancellableWithException(exception: Throwable) = when (this) {
     is DispatchedContinuation -> resumeCancellableWithException(exception)
-    else -> resumeWithException(exception)
+    else -> resumeWithStackTrace(exception)
 }
 
 internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {
@@ -200,8 +202,8 @@ internal fun <T> Continuation<T>.resumeDirect(value: T) = when (this) {
 }
 
 internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable) = when (this) {
-    is DispatchedContinuation -> continuation.resumeWithException(exception)
-    else -> resumeWithException(exception)
+    is DispatchedContinuation -> continuation.resumeWithStackTrace(exception)
+    else -> resumeWithStackTrace(exception)
 }
 
 internal abstract class DispatchedTask<in T>(
@@ -232,7 +234,7 @@ internal abstract class DispatchedTask<in T>(
                 else {
                     val exception = getExceptionalResult(state)
                     if (exception != null)
-                        continuation.resumeWithException(exception)
+                        continuation.resumeWithStackTrace(exception)
                     else
                         continuation.resume(getSuccessfulResult(state))
                 }
@@ -275,4 +277,10 @@ internal fun <T> DispatchedTask<T>.resume(delegate: Continuation<T>, useMode: In
     } else {
         delegate.resumeMode(getSuccessfulResult(state), useMode)
     }
+}
+
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun Continuation<*>.resumeWithStackTrace(exception: Throwable) {
+    resumeWith(Result.failure(recoverStackTrace(exception, this)))
 }

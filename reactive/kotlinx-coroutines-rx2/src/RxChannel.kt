@@ -8,6 +8,7 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.*
 
 /**
  * Subscribes to this [MaybeSource] and returns a channel to receive elements emitted by it.
@@ -64,9 +65,8 @@ private class SubscriptionChannel<T> :
     @Volatile
     var subscription: Disposable? = null
 
-    // AbstractChannel overrides
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun afterClose(cause: Throwable?) {
+    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
         subscription?.dispose()
     }
 

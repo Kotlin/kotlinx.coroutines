@@ -7,6 +7,7 @@ package kotlinx.coroutines.reactive
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import org.reactivestreams.*
 
 /**
@@ -74,7 +75,7 @@ private class SubscriptionChannel<T>(
     }
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-    override fun afterClose(cause: Throwable?) {
+    override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
         subscription?.cancel()
     }
 

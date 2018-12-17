@@ -16,7 +16,7 @@ import org.junit.Test
 class BasicsGuideTest {
 --> 
 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 
@@ -89,7 +89,7 @@ coroutine and it can be only used from a coroutine.
 ### Bridging blocking and non-blocking worlds
 
 The first example mixes _non-blocking_ `delay(...)` and _blocking_ `Thread.sleep(...)` in the same code. 
-It is easy to get lost which one is blocking and which one is not. 
+It is easy to lose track of which one is blocking and which one is not. 
 Let's be explicit about blocking using [runBlocking] coroutine builder:
 
 <div class="sample" markdown="1" theme="idea" data-min-compiler-version="1.3">

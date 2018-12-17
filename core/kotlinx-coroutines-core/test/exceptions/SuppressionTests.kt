@@ -5,13 +5,11 @@
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-/*
- * Set of counterparts to common tests which check suppressed exceptions
- */
 @Suppress("DEPRECATION")
 class SuppressionTests : TestBase() {
 
@@ -23,11 +21,11 @@ class SuppressionTests : TestBase() {
         }
 
         expect(1)
-        deferred.cancel(IOException())
+        deferred.cancel(TestException("Message"))
 
         try {
             deferred.await()
-        } catch (e: IOException) {
+        } catch (e: TestException) {
             checkException<ArithmeticException>(e.suppressed[0])
             finish(3)
         }
@@ -78,5 +76,29 @@ class SuppressionTests : TestBase() {
         expect(7)
         coroutine.resumeWithException(IOException())
         finish(10)
+    }
+
+    @Test
+    fun testExceptionUnwrapping() = runTest {
+        val channel = Channel<Int>()
+
+        val deferred = async(NonCancellable) {
+            launch {
+                while (true) channel.send(1)
+            }
+
+            launch {
+                val exception = RecoverableTestException()
+                channel.cancel(exception)
+                throw exception
+            }
+        }
+
+        try {
+            deferred.await()
+        } catch (e: RecoverableTestException) {
+            assertTrue(e.suppressed.isEmpty())
+            assertTrue(e.cause!!.suppressed.isEmpty())
+        }
     }
 }

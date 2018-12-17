@@ -12,12 +12,29 @@ import kotlin.coroutines.intrinsics.*
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
-internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) =
+internal fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>) = runSafely(completion) {
     createCoroutineUnintercepted(completion).intercepted().resumeCancellable(Unit)
+}
 
 /**
  * Use this function to start coroutine in a cancellable way, so that it can be cancelled
  * while waiting to be dispatched.
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(receiver: R, completion: Continuation<T>) =
-    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellable(Unit)
+    runSafely(completion) {
+        createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellable(Unit)
+    }
+
+/**
+ * Runs given block and completes completion with its exception if it occurs.
+ * Rationale: [startCoroutineCancellable] is invoked when we are about to run coroutine asynchronously in its own dispatcher.
+ * Thus if dispatcher throws an exception during coroutine start, coroutine never completes, so we should treat dispatcher exception
+ * as its cause and resume completion.
+ */
+private inline fun runSafely(completion: Continuation<*>, block: () -> Unit) {
+    try {
+        block()
+    } catch (e: Throwable) {
+        completion.resumeWith(Result.failure(e))
+    }
+}

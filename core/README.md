@@ -6,5 +6,6 @@ Module name below corresponds to the artifact name in Maven/Gradle.
 ## Modules
 
 * [kotlinx-coroutines-core](kotlinx-coroutines-core/README.md) &mdash; core coroutine builders and synchronization primitives. 
-* [kotlinx-coroutines-test](kotlinx-coroutines-test/README.md) &mdash; coroutines test utilities such as Main dispatcher injection.
+* [kotlinx-coroutines-debug](kotlinx-coroutines-debug/README.md) &mdash; coroutines debug utilities.
+* [kotlinx-coroutines-test](kotlinx-coroutines-test/README.md) &mdash; coroutines test utilities such as settable Main dispatcher.
 

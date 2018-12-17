@@ -17,7 +17,7 @@ class SelectGuideTest {
 --> 
 
 
-## Table of contents
+**Table of contents**
 
 <!--- TOC -->
 

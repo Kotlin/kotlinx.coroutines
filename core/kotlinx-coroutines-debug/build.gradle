@@ -1,0 +1,27 @@
+/*
+ * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+apply plugin: "com.github.johnrengelman.shadow"
+
+dependencies {
+    compile "net.bytebuddy:byte-buddy:$byte_buddy_version"
+    compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
+}
+
+jar {
+    manifest {
+        attributes "Premain-Class": "kotlinx.coroutines.debug.AgentPremain"
+        attributes "Can-Redefine-Classes": "true"
+    }
+}
+
+shadowJar {
+    classifier null
+    // Shadow only byte buddy, do not package kotlin stdlib
+    dependencies {
+        include(dependency("net.bytebuddy:byte-buddy:$byte_buddy_version"))
+        include(dependency("net.bytebuddy:byte-buddy-agent:$byte_buddy_version"))
+    }
+    relocate 'net.bytebuddy', 'kotlinx.coroutines.repackaged.net.bytebuddy'
+}
