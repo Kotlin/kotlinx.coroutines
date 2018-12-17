@@ -16,7 +16,7 @@ of coroutines hierarchy referenced by a [Job] instance using [DebugProbes.printH
 ### Using as JVM agent
 
 It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.1.0.jar`.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.0.1.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 
 
