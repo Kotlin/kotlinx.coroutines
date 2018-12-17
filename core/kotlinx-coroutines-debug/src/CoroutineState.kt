@@ -23,13 +23,13 @@ public data class CoroutineState internal constructor(
 
     /**
      * [Job] associated with a current coroutine or [IllegalStateException] otherwise.
-     * May be later used in [DebugProbes.printHierarchy]
+     * May be later used in [DebugProbes.printJob]
      */
     public val job: Job get() = continuation.context[Job] ?: error("Continuation $continuation does not have a job")
 
     /**
      * [Job] associated with a current coroutine or null.
-     * May be later used in [DebugProbes.printHierarchy]
+     * May be later used in [DebugProbes.printJob]
      */
     public val jobOrNull: Job? get() = continuation.context[Job]
 

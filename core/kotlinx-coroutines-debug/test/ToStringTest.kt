@@ -11,7 +11,7 @@ import org.junit.Test
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class HierarchyToStringTest : TestBase() {
+class ToStringTest : TestBase() {
 
     @Before
     fun setUp() {
@@ -34,9 +34,9 @@ class HierarchyToStringTest : TestBase() {
         val tab = '\t'
         val expectedString = """
             "coroutine#2":StandaloneCoroutine{Completing}
-            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(HierarchyToStringTest.kt:30)
-            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(HierarchyToStringTest.kt:40)
-            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(HierarchyToStringTest.kt:37)
+            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(ToStringTest.kt:30)
+            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(ToStringTest.kt:40)
+            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(ToStringTest.kt:37)
             """.trimIndent()
 
         checkHierarchy(isCompleting = true, expectedString = expectedString)
@@ -46,10 +46,10 @@ class HierarchyToStringTest : TestBase() {
     fun testActiveHierarchy() = runBlocking {
         val tab = '\t'
         val expectedString = """
-            "coroutine#2":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1.invokeSuspend(HierarchyToStringTest.kt:94)
-            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(HierarchyToStringTest.kt:30)
-            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(HierarchyToStringTest.kt:40)
-            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line HierarchyToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(HierarchyToStringTest.kt:37)
+            "coroutine#2":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1.invokeSuspend(ToStringTest.kt:94)
+            $tab"foo#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}1.invokeSuspend(ToStringTest.kt:30)
+            $tab"coroutine#4":ActorCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}1.invokeSuspend(ToStringTest.kt:40)
+            $tab$tab"coroutine#5":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchHierarchy${'$'}1${'$'}2${'$'}job$1.invokeSuspend(ToStringTest.kt:37)
             """.trimIndent()
         checkHierarchy(isCompleting = false, expectedString = expectedString)
     }
@@ -57,11 +57,11 @@ class HierarchyToStringTest : TestBase() {
     private suspend fun CoroutineScope.checkHierarchy(isCompleting: Boolean, expectedString: String) {
         val root = launchHierarchy(isCompleting)
         repeat(4) { yield() }
+        val expected = expectedString.trimStackTrace().trimPackage()
         expect(6)
-        assertEquals(
-            expectedString.trimStackTrace().trimPackage(),
-            DebugProbes.hierarchyToString(root).trimEnd().trimStackTrace().trimPackage()
-        )
+        assertEquals(expected, DebugProbes.jobToString(root).trimEnd().trimStackTrace().trimPackage())
+        assertEquals(expected, DebugProbes.scopeToString(CoroutineScope(root)).trimEnd().trimStackTrace().trimPackage())
+
         root.cancel()
         root.join()
         finish(7)
