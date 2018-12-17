@@ -10,8 +10,8 @@ import android.os.*
 import android.support.annotation.*
 import android.view.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.MainDispatcherFactory
-import java.lang.reflect.Constructor
+import kotlinx.coroutines.internal.*
+import java.lang.reflect.*
 import kotlin.coroutines.*
 
 /**
@@ -33,15 +33,14 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
 
 @Keep
 internal class AndroidDispatcherFactory : MainDispatcherFactory {
-    companion object {
-        @JvmStatic // accessed reflectively from core
-        fun getDispatcher(): MainCoroutineDispatcher = Main
-    }
 
-    override fun createDispatcher(): MainCoroutineDispatcher = Main
+    override fun createDispatcher(allFactories: List<MainDispatcherFactory>) =
+        HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main")
+
+    override fun hintOnError(): String? = "For tests Dispatchers.setMain from kotlinx-coroutines-test module can be used"
 
     override val loadPriority: Int
-        get() = Int.MAX_VALUE
+        get() = Int.MAX_VALUE / 2
 }
 
 /**
@@ -54,8 +53,6 @@ public fun Handler.asCoroutineDispatcher(name: String? = null): HandlerDispatche
     HandlerContext(this, name)
 
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
-
-internal val mainHandler = Looper.getMainLooper().asHandler(async = true)
 
 @VisibleForTesting
 internal fun Looper.asHandler(async: Boolean): Handler {
@@ -81,10 +78,9 @@ internal fun Looper.asHandler(async: Boolean): Handler {
     return constructor.newInstance(this, null, true)
 }
 
-@JvmField // this is for a nice Java API, see issue #255
-internal val Main: HandlerDispatcher = HandlerContext(mainHandler, "Main")
-
-private val MainDispatcher: HandlerDispatcher = Main // Alias
+@JvmField
+@Deprecated("Use Dispatchers.Main instead", level = DeprecationLevel.HIDDEN)
+internal val Main: HandlerDispatcher? = runCatching { HandlerContext(Looper.getMainLooper().asHandler(async = true), "Main") }.getOrNull()
 
 /**
  * Implements [CoroutineDispatcher] on top of an arbitrary Android [Handler].
@@ -163,9 +159,9 @@ public suspend fun awaitFrame(): Long {
     }
     // post into looper thread thread to figure it out
     return suspendCancellableCoroutine { cont ->
-        mainHandler.post {
+        Dispatchers.Main.dispatch(EmptyCoroutineContext, Runnable {
             updateChoreographerAndPostFrameCallback(cont)
-        }
+        })
     }
 }
 
@@ -177,6 +173,6 @@ private fun updateChoreographerAndPostFrameCallback(cont: CancellableContinuatio
 
 private fun postFrameCallback(choreographer: Choreographer, cont: CancellableContinuation<Long>) {
     choreographer.postFrameCallback { nanos ->
-        with(cont) { Main.resumeUndispatched(nanos) }
+        with(cont) { Dispatchers.Main.resumeUndispatched(nanos) }
     }
 }

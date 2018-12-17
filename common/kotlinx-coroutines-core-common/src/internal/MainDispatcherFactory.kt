@@ -11,5 +11,14 @@ import kotlinx.coroutines.*
 public interface MainDispatcherFactory {
     val loadPriority: Int // higher priority wins
 
-    fun createDispatcher(): MainCoroutineDispatcher
+    /**
+     * Creates the main dispatcher. [allFactories] parameter contains all factories found by service loader.
+     * This method is not guaranteed to be idempotent.
+     */
+    fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher
+
+    /**
+     * Hint used along with error message when the factory failed to create a dispatcher.
+     */
+    fun hintOnError(): String? = null
 }
