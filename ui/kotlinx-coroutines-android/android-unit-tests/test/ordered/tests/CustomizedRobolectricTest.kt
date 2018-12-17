@@ -18,7 +18,8 @@ class InitMainDispatcherBeforeRobolectricTestRunner(testClass: Class<*>) : Robol
 
     init {
         kotlin.runCatching {
-            GlobalScope.launch(Dispatchers.Main) {  } // touch Main, watch it burning
+            // touch Main, watch it burn
+            GlobalScope.launch(Dispatchers.Main + CoroutineExceptionHandler { _, _ -> }) {  }
         }
     }
 }

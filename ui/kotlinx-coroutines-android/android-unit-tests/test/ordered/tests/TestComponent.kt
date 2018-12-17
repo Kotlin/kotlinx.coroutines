@@ -7,8 +7,9 @@ package ordered.tests
 import kotlinx.coroutines.*
 
 public class TestComponent {
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    internal lateinit var caughtException: Throwable
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineExceptionHandler { _, e -> caughtException = e})
     public var launchCompleted = false
     public var delayedLaunchCompleted = false
 
