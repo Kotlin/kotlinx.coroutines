@@ -4,19 +4,28 @@ Debugging facilities for `kotlinx.coroutines` on JVM.
 
 ### Overview
 
-This module provides a debug JVM agent which allows to track and trace existing coroutines.
+This module provides a debug JVM agent that allows to track and trace existing coroutines.
 The main entry point to debug facilities is [DebugProbes] API.
-Call to [DebugProbes.install] installs debug agent via ByteBuddy and starts to spy on coroutines when they are created, suspended or resumed.
+Call to [DebugProbes.install] installs debug agent via ByteBuddy and starts spying on coroutines when they are created, suspended and resumed.
 
 After that, you can use [DebugProbes.dumpCoroutines] to print all active (suspended or running) coroutines, including their state, creation and
 suspension stacktraces.
 Additionally, it is possible to process the list of such coroutines via [DebugProbes.dumpCoroutinesState] or dump isolated parts
-of coroutines hierarchy referenced by a [Job] instance using [DebugProbes.printScope] or [DebugProbes.printJob].
+of coroutines hierarchy referenced by a [Job] or [CoroutineScope] instances using  [DebugProbes.printJob] and [DebugProbes.printScope] respectively.
+
+### Using in your project
+
+Add `kotlinx-coroutines-debug` to your project test dependencies:
+```
+dependencies {
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.1.0-alpha'
+}
+```
 
 ### Using as JVM agent
 
 It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
-You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.0.1.jar`.
+You can run your application with an additional argument: `-javaagent:kotlinx-coroutines-debug-1.1.0-alpha.jar`.
 Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order to force your application to print all alive coroutines.
 
 
@@ -110,6 +119,7 @@ Do not use this module in production environment and do not rely on the format o
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 [Job]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html
+[CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 <!--- MODULE kotlinx-coroutines-debug -->
 <!--- INDEX kotlinx.coroutines.debug -->
 [DebugProbes]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/index.html

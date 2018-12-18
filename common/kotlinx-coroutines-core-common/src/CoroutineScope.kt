@@ -94,6 +94,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * `val scope = MainScope() + CoroutineName("MyActivity")`.
  */
 @Suppress("FunctionName")
+@ExperimentalCoroutinesApi // Experimental since 1.1.0, tentatively until 1.2.0
 public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
 
 /**
@@ -137,7 +138,7 @@ public val CoroutineScope.isActive: Boolean
  *
  * ```
  */
-object GlobalScope : CoroutineScope {
+public object GlobalScope : CoroutineScope {
     /**
      * Returns [EmptyCoroutineContext].
      */

@@ -28,6 +28,8 @@ internal object MainDispatcherLoader {
  * If anything goes wrong while trying to create main dispatcher (class not found,
  * initialization failed, etc), then replace the main dispatcher with a special
  * stub that throws an error message on any attempt to actually use it.
+ *
+ * @suppress internal API
  */
 @InternalCoroutinesApi
 public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatcherFactory>): MainCoroutineDispatcher =
