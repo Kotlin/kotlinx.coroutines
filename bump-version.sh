@@ -16,6 +16,8 @@ update_version() {
 }
 
 update_version "README.md"
+update_version "core/kotlinx-coroutines-debug/README.md"
+update_version "core/kotlinx-coroutines-test/README.md"
 update_version "ui/coroutines-guide-ui.md"
 update_version "ui/coroutines-guide-ui.md"
 update_version "native/README.md"
