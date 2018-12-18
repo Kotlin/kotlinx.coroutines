@@ -8,6 +8,9 @@ package kotlinx.coroutines
  * A runnable task for [CoroutineDispatcher.dispatch].
  */
 public actual interface Runnable {
+    /**
+     * @suppress
+     */
     public actual fun run()
 }
 

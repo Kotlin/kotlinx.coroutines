@@ -163,8 +163,8 @@ public interface SelectInstance<in R> {
  * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled or completed while this
  * function is suspended, this function immediately resumes with [CancellationException].
  *
- * Atomicity of cancellation depends on the clause: [onSend][SelectBuilder.onSend], [onReceive][SelectBuilder.onReceive],
- * [onReceiveOrNull][SelectBuilder.onReceiveOrNull], and [onLock][SelectBuilder.onLock] clauses are
+ * Atomicity of cancellation depends on the clause: [onSend][SendChannel.onSend], [onReceive][ReceiveChannel.onReceive],
+ * [onReceiveOrNull][ReceiveChannel.onReceiveOrNull], and [onLock][Mutex.onLock] clauses are
  * *atomically cancellable*. When select throws [CancellationException] it means that those clauses had not performed
  * their respective operations.
  * As a side-effect of atomic cancellation, a thread-bound coroutine (to some UI thread, for example) may

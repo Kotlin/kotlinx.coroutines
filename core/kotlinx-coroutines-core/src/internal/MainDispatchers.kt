@@ -81,6 +81,9 @@ private class MissingMainCoroutineDispatcher(
     override fun toString(): String = "Main[missing${if (cause != null) ", cause=$cause" else ""}]"
 }
 
+/**
+ * @suppress
+ */
 @InternalCoroutinesApi
 public object MissingMainCoroutineDispatcherFactory : MainDispatcherFactory {
     override val loadPriority: Int
