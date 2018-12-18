@@ -117,8 +117,6 @@ class WorkQueueStressTest : TestBase() {
 }
 
 internal class Queue : GlobalQueue() {
-    override fun removeFirstBlockingModeOrNull(): Task? = error("Should not be called")
-
     fun addAll(tasks: Collection<Task>) {
         tasks.forEach { addLast(it) }
     }

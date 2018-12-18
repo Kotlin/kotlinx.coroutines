@@ -831,7 +831,7 @@ internal class CoroutineScheduler(
             // set termination deadline the first time we are here (it is reset in idleReset)
             if (terminationDeadline == 0L) terminationDeadline = System.nanoTime() + idleWorkerKeepAliveNs
             // actually park
-            doPark(idleWorkerKeepAliveNs)
+            if (!doPark(idleWorkerKeepAliveNs)) return
             // try terminate when we are idle past termination deadline
             // note, that comparison is written like this to protect against potential nanoTime wraparound
             if (System.nanoTime() - terminationDeadline >= 0) {
@@ -840,9 +840,15 @@ internal class CoroutineScheduler(
             }
         }
 
-        private fun doPark(nanos: Long) {
+        private fun doPark(nanos: Long): Boolean {
+            /*
+             * Here we are trying to park, then check whether there are new blocking tasks
+             * (because submitting thread could have missed this thread in tryUnpark)
+             */
             parkedWorkersStackPush(this)
+            if (!blockingQuiescence()) return false
             LockSupport.parkNanos(nanos)
+            return true
         }
 
         /**
@@ -909,7 +915,7 @@ internal class CoroutineScheduler(
          * Returns `true` if there is no blocking tasks in the queue.
          */
         private fun blockingQuiescence(): Boolean {
-            globalQueue.removeFirstBlockingModeOrNull()?.let {
+            globalQueue.removeFirstWithModeOrNull(TaskMode.PROBABLY_BLOCKING)?.let {
                 localQueue.add(it, globalQueue)
                 return false
             }
@@ -944,7 +950,7 @@ internal class CoroutineScheduler(
              * 2) It helps with rare race when external submitter sends depending blocking tasks
              *    one by one and one of the requested workers may miss CPU token
              */
-            return localQueue.poll() ?: globalQueue.removeFirstBlockingModeOrNull()
+            return localQueue.poll() ?: globalQueue.removeFirstWithModeOrNull(TaskMode.PROBABLY_BLOCKING)
         }
 
         private fun findTaskWithCpuPermit(): Task? {
@@ -953,10 +959,13 @@ internal class CoroutineScheduler(
              * or local work is frequently offloaded, global queue polling will
              * starve tasks from local queue. But if we never poll global queue,
              * then local tasks may starve global queue, so poll global queue
-             * once per two core pool size iterations
+             * once per two core pool size iterations.
+             * Poll global queue only for non-blocking tasks as for blocking task a separate thread was woken up.
+             * If current thread is woken up, then its local queue is empty and it will poll global queue anyway,
+             * otherwise current thread may already have blocking task in its local queue.
              */
             val globalFirst = nextInt(2 * corePoolSize) == 0
-            if (globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
+            if (globalFirst) globalQueue.removeFirstWithModeOrNull(TaskMode.NON_BLOCKING)?.let { return it }
             localQueue.poll()?.let { return it }
             if (!globalFirst) globalQueue.removeFirstOrNull()?.let { return it }
             return trySteal()

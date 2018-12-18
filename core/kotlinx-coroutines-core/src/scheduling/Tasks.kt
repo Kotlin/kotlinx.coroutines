@@ -110,9 +110,8 @@ internal class TaskImpl(
 
 // Open for tests
 internal open class GlobalQueue : LockFreeTaskQueue<Task>(singleConsumer = false) {
-    // Open for tests
-    public open fun removeFirstBlockingModeOrNull(): Task? =
-        removeFirstOrNullIf { it.mode == TaskMode.PROBABLY_BLOCKING }
+    public fun removeFirstWithModeOrNull(mode: TaskMode): Task? =
+        removeFirstOrNullIf { it.mode == mode }
 }
 
 internal abstract class TimeSource {
