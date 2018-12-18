@@ -72,13 +72,27 @@ public object DebugProbes {
      * Returns string representation of the coroutines [job] hierarchy with additional debug information.
      * Hierarchy is printed from the [job] as a root transitively to all children.
      */
-    public fun hierarchyToString(job: Job): String = DebugProbesImpl.hierarchyToString(job)
+    public fun jobToString(job: Job): String = DebugProbesImpl.hierarchyToString(job)
 
     /**
-     * Prints [job] hierarchy representation from [hierarchyToString] to the given [out].
+     * Returns string representation of all coroutines launched within the given [scope].
+     * Throws [IllegalStateException] if the scope has no a job in it.
      */
-    public fun printHierarchy(job: Job, out: PrintStream = System.out) =
+    public fun scopeToString(scope: CoroutineScope): String =
+        jobToString(scope.coroutineContext[Job] ?: error("Job is not present in the scope"))
+
+    /**
+     * Prints [job] hierarchy representation from [jobToString] to the given [out].
+     */
+    public fun printJob(job: Job, out: PrintStream = System.out): Unit =
         out.println(DebugProbesImpl.hierarchyToString(job))
+
+    /**
+     * Prints all coroutines launched within the given [scope].
+     * Throws [IllegalStateException] if the scope has no a job in it.
+     */
+    public fun printScope(scope: CoroutineScope, out: PrintStream = System.out): Unit =
+       printJob(scope.coroutineContext[Job] ?: error("Job is not present in the scope"), out)
 
     /**
      * Returns all existing coroutine states.

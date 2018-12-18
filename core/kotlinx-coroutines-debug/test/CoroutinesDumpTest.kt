@@ -50,7 +50,7 @@ class CoroutinesDumpTest : TestBase() {
                 "\tat kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:99)\n")
 
         val found = DebugProbes.dumpCoroutinesState().single { it.jobOrNull === deferred }
-        assertSame(deferred, found.job)
+        assertSame(deferred, found.jobOrNull)
         runBlocking { deferred.cancelAndJoin() }
     }
 

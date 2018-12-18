@@ -22,19 +22,13 @@ public data class CoroutineState internal constructor(
 ) {
 
     /**
-     * [Job] associated with a current coroutine or [IllegalStateException] otherwise.
-     * May be later used in [DebugProbes.printHierarchy]
-     */
-    public val job: Job get() = continuation.context[Job] ?: error("Continuation $continuation does not have a job")
-
-    /**
      * [Job] associated with a current coroutine or null.
-     * May be later used in [DebugProbes.printHierarchy]
+     * May be later used in [DebugProbes.printJob].
      */
     public val jobOrNull: Job? get() = continuation.context[Job]
 
     /**
-     * Creation stacktrace of coroutine
+     * Creation stacktrace of the coroutine.
      */
     public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
 
@@ -80,7 +74,7 @@ public data class CoroutineState internal constructor(
     /**
      * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
      * It means that for [running][State.RUNNING] coroutines resulting stacktrace is inaccurate and
-     * reflects stacktrace of the resumption point, not the actual current stacktrace
+     * reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
     public fun lastObservedStackTrace(): List<StackTraceElement> {
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()
@@ -99,15 +93,15 @@ public data class CoroutineState internal constructor(
  */
 public enum class State {
     /**
-     * Created, but not yet started
+     * Created, but not yet started.
      */
     CREATED,
     /**
-     * Started and running
+     * Started and running.
      */
     RUNNING,
     /**
-     * Suspended
+     * Suspended.
      */
     SUSPENDED
 }

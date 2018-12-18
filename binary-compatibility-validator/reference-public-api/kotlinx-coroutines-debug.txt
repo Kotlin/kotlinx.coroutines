@@ -5,7 +5,6 @@ public final class kotlinx/coroutines/debug/CoroutineState {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContinuation ()Lkotlin/coroutines/Continuation;
 	public final fun getCreationStackTrace ()Ljava/util/List;
-	public final fun getJob ()Lkotlinx/coroutines/Job;
 	public final fun getJobOrNull ()Lkotlinx/coroutines/Job;
 	public final fun getState ()Lkotlinx/coroutines/debug/State;
 	public fun hashCode ()I
@@ -19,10 +18,13 @@ public final class kotlinx/coroutines/debug/DebugProbes {
 	public static synthetic fun dumpCoroutines$default (Lkotlinx/coroutines/debug/DebugProbes;Ljava/io/PrintStream;ILjava/lang/Object;)V
 	public final fun dumpCoroutinesState ()Ljava/util/List;
 	public final fun getSanitizeStackTraces ()Z
-	public final fun hierarchyToString (Lkotlinx/coroutines/Job;)Ljava/lang/String;
 	public final fun install ()V
-	public final fun printHierarchy (Lkotlinx/coroutines/Job;Ljava/io/PrintStream;)V
-	public static synthetic fun printHierarchy$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/Job;Ljava/io/PrintStream;ILjava/lang/Object;)V
+	public final fun jobToString (Lkotlinx/coroutines/Job;)Ljava/lang/String;
+	public final fun printJob (Lkotlinx/coroutines/Job;Ljava/io/PrintStream;)V
+	public static synthetic fun printJob$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/Job;Ljava/io/PrintStream;ILjava/lang/Object;)V
+	public final fun printScope (Lkotlinx/coroutines/CoroutineScope;Ljava/io/PrintStream;)V
+	public static synthetic fun printScope$default (Lkotlinx/coroutines/debug/DebugProbes;Lkotlinx/coroutines/CoroutineScope;Ljava/io/PrintStream;ILjava/lang/Object;)V
+	public final fun scopeToString (Lkotlinx/coroutines/CoroutineScope;)Ljava/lang/String;
 	public final fun setSanitizeStackTraces (Z)V
 	public final fun uninstall ()V
 	public final fun withDebugProbes (Lkotlin/jvm/functions/Function0;)V

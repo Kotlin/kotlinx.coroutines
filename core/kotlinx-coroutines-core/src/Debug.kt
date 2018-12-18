@@ -61,7 +61,8 @@ internal actual val Any.hexAddress: String
 
 internal actual fun Continuation<*>.toDebugString(): String = when (this) {
     is DispatchedContinuation -> toString()
-    else -> "$this@$hexAddress"
+    // Workaround for #858
+    else -> kotlin.runCatching { "$this@$hexAddress" }.getOrElse { "${this::class.java.name}@$hexAddress" }
 }
 
 internal actual val Any.classSimpleName: String get() = this::class.java.simpleName

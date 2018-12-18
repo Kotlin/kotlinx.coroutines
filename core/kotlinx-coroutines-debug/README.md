@@ -11,7 +11,7 @@ Call to [DebugProbes.install] installs debug agent via ByteBuddy and starts to s
 After that, you can use [DebugProbes.dumpCoroutines] to print all active (suspended or running) coroutines, including their state, creation and
 suspension stacktraces.
 Additionally, it is possible to process the list of such coroutines via [DebugProbes.dumpCoroutinesState] or dump isolated parts
-of coroutines hierarchy referenced by a [Job] instance using [DebugProbes.printHierarchy].
+of coroutines hierarchy referenced by a [Job] instance using [DebugProbes.printScope] or [DebugProbes.printJob].
 
 ### Using as JVM agent
 
@@ -59,7 +59,7 @@ fun main(args: Array<String>) = runBlocking {
     DebugProbes.dumpCoroutines()
 
     println("\nDumping only deferred")
-    DebugProbes.printHierarchy(deferred)
+    DebugProbes.printJob(deferred)
 }
 ```
 
@@ -116,5 +116,6 @@ Do not use this module in production environment and do not rely on the format o
 [DebugProbes.install]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/install.html
 [DebugProbes.dumpCoroutines]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines.html
 [DebugProbes.dumpCoroutinesState]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-state.html
-[DebugProbes.printHierarchy]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-hierarchy.html
+[DebugProbes.printScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html
+[DebugProbes.printJob]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html
 <!--- END -->
