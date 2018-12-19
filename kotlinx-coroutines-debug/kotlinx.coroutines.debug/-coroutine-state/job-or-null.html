@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Runnable.run - kotlinx-coroutines-core</title>
+  <title>CoroutineState.jobOrNull - kotlinx-coroutines-debug</title>
   <meta name="description" content="Library support for kotlin coroutines">
   <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
-  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-runnable/-runnable/run.html">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-coroutine-state/job-or-null.html">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="/kotlinx.coroutines/assets/js/api.js"></script>
   <script>
@@ -29,13 +29,14 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <div class="api-docs-breadcrumbs"><a href="../../../index.html">kotlinx-coroutines-core</a> / <a href="../../index.html">kotlinx.coroutines</a> / <a href="../index.html">Runnable</a> / <a href="./run.html">run</a></div>
+        <div class="api-docs-breadcrumbs"><a href="../../index.html">kotlinx-coroutines-debug</a> / <a href="../index.html">kotlinx.coroutines.debug</a> / <a href="index.html">CoroutineState</a> / <a href="./job-or-null.html">jobOrNull</a></div>
 
-<h1 id="run">run</h1>
+<h1 id="jobornull">jobOrNull</h1>
 
-<div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">run</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/js/kotlinx-coroutines-core-js/src/Runnable.kt#L11">(source)</a></div>
+<div class="signature"><code><span class="keyword">val </span><span class="identifier">jobOrNull</span><span class="symbol">: </span><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html"><span class="identifier">Job</span></a><span class="symbol">?</span></code></div>
 
-<p><strong>Platform and version requirements:</strong> JS, Native</p>
+<p><a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/index.html">Job</a> associated with a current coroutine or null.
+May be later used in <a href="../-debug-probes/print-job.html">DebugProbes.printJob</a>.</p>
 
 
       </div>

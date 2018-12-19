@@ -45,7 +45,7 @@ with corresponding <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.
 
 <p>By default, the coroutine is immediately scheduled for execution.
 Other options can be specified via <code>start</code> parameter. See <a href="-coroutine-start/index.html">CoroutineStart</a> for details.
-An optional <a href="async.html#kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</a> parameter can be set to <a href="-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a> to start coroutine <em>lazily</em>. In this case,,
+An optional <a href="async.html#kotlinx.coroutines$async(kotlinx.coroutines.CoroutineScope, kotlin.coroutines.CoroutineContext, kotlinx.coroutines.CoroutineStart, kotlin.SuspendFunction1((kotlinx.coroutines.CoroutineScope, kotlinx.coroutines.async.T)))/start">start</a> parameter can be set to <a href="-coroutine-start/-l-a-z-y.html">CoroutineStart.LAZY</a> to start coroutine <em>lazily</em>. In this case,
 the resulting <a href="-deferred/index.html">Deferred</a> is created in <em>new</em> state. It can be explicitly started with <a href="-job/start.html">start</a>
 function and will be started implicitly on the first invocation of <a href="-job/join.html">join</a>, <a href="-deferred/await.html">await</a> or <a href="await-all.html">awaitAll</a>.</p>
 

@@ -16,7 +16,6 @@ $dokka.location:kotlinx.coroutines$joinAll(kotlin.collections.Collection((kotlin
 $dokka.location:kotlinx.coroutines.CancellationExceptionkotlinx.coroutines/-cancellation-exception/index.html
 $dokka.location:kotlinx.coroutines.CancellationException$<init>(kotlin.String)kotlinx.coroutines/-cancellation-exception/-cancellation-exception/-init-.html
 $dokka.location:kotlinx.coroutines.Runnablekotlinx.coroutines/-runnable/index.html
-$dokka.location:kotlinx.coroutines.Runnable$run()kotlinx.coroutines/-runnable/-runnable/run.html
 kotlinx.coroutines
 kotlinx.coroutines.channels
 kotlinx.coroutines.selects

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kotlinx-coroutines-test</title>
+  <meta name="description" content="Library support for kotlin coroutines">
+  <link rel="stylesheet" href="/kotlinx.coroutines/assets/main.css">
+  <link rel="canonical" href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/kotlinx.coroutines/assets/js/api.js"></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47631155-3', 'auto');
+    ga('send', 'pageview');
+  </script>
+</head>
+
+  <body>
+    <header class="site-header" role="banner">
+  <div class="wrapper">
+    <a class="site-title" href="/kotlinx.coroutines/">kotlinx.coroutines</a>
+  </div>
+</header>
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <p>Test utilities for <code>kotlinx.coroutines</code>. Provides <code>Dispatchers.setMain</code> to override the <code>Main</code> dispatcher.</p>
+
+<h2 id="using-in-your-project">Using in your project</h2>
+
+<p>Add <code>kotlinx-coroutines-test</code> to your project test dependencies:</p>
+
+<pre>dependencies {
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.1.0-alpha'
+}
+</pre>
+
+<p><strong>Do not</strong> depend on this project in your main sources, all utilities are intended and designed to be used only from tests.</p>
+
+<p>Once you have this dependency in the runtime, <a href="https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html"><code>ServiceLoader</code></a> mechanism will
+overwrite <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html">Dispatchers.Main</a> with a testable implementation.</p>
+
+<p>You can override the <code>Main</code> implementation using <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html">setMain</a> method with any <a href="https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html">CoroutineDispatcher</a> implementation, e.g.:</p>
+
+<div class="language-kotlin highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">SomeTest</span> <span class="p">{</span>
+    
+    <span class="k">private</span> <span class="kd">val</span> <span class="py">mainThreadSurrogate</span> <span class="p">=</span> <span class="n">newSingleThreadContext</span><span class="p">(</span><span class="s">"UI thread"</span><span class="p">)</span>
+
+    <span class="n">@Before</span>
+    <span class="k">fun</span> <span class="nf">setUp</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Dispatchers</span><span class="p">.</span><span class="n">setMain</span><span class="p">(</span><span class="n">mainThreadSurrogate</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="n">@After</span>
+    <span class="k">fun</span> <span class="nf">tearDown</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Dispatchers</span><span class="p">.</span><span class="n">resetMain</span><span class="p">()</span> <span class="c1">// reset main dispatcher to the original Main dispatcher
+</span>        <span class="n">mainThreadSurrogate</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="p">}</span>
+    
+    <span class="n">@Test</span>
+    <span class="k">fun</span> <span class="nf">testSomeUI</span><span class="p">()</span> <span class="p">=</span> <span class="n">runBlocking</span> <span class="p">{</span>
+        <span class="n">launch</span><span class="p">(</span><span class="n">Dispatchers</span><span class="p">.</span><span class="n">Main</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// Will be launched in the mainThreadSurrogate dispatcher
+</span>            <span class="o">..</span><span class="p">.</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h3 id="packages">Packages</h3>
+
+<table class="api-docs-table">
+<tbody>
+<tr>
+<td>
+
+        <p><a href="kotlinx.coroutines.test/index.html">kotlinx.coroutines.test</a></p>
+
+      </td>
+<td>
+
+      </td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="index">Index</h3>
+
+<p><a href="alltypes/index.html">All Types</a></p>
+
+      </div>
+    </main>
+    <footer class="site-footer">
+  <!-- empty -->
+</footer>
+
+  </body>
+</html>
+

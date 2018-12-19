@@ -44,7 +44,7 @@ with an exception other than <a href="../-cancellation-exception/index.html">Can
 can <a href="cancel.html">cancel</a> its own children (including all their children recursively) without cancelling itself.</p>
 
 <p>The most basic instances of <a href="./index.md">Job</a> are created with <a href="../launch.html">launch</a> coroutine builder or with a
-<code>Job()</code> factory function. By default, a failure of a any of the job’s children leads to an immediately failure
+<code>Job()</code> factory function. By default, a failure of any of the job’s children leads to an immediately failure
 of its parent and cancellation of the rest of its children. This behavior can be customized using <a href="../-supervisor-job.html">SupervisorJob</a>.</p>
 
 <p>Conceptually, an execution of the job does not produce a result value. Jobs are launched solely for their

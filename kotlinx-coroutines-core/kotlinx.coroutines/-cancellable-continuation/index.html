@@ -33,7 +33,7 @@
 
 <h1 id="cancellablecontinuation">CancellableContinuation</h1>
 
-<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CancellableContinuation.kt#L50">(source)</a></div>
+<div class="signature"><code><span class="keyword">interface </span><span class="identifier">CancellableContinuation</span><span class="symbol">&lt;</span><span class="keyword">in</span>&nbsp;<span class="identifier">T</span><span class="symbol">&gt;</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.coroutines/-continuation/index.html"><span class="identifier">Continuation</span></a><span class="symbol">&lt;</span><a href="index.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span></code> <a href="http://github.com/kotlin/kotlinx.coroutines/tree/master/common/kotlinx-coroutines-core-common/src/CancellableContinuation.kt#L49">(source)</a></div>
 
 <p>Cancellable continuation. It is <em>completed</em> when it is resumed or cancelled.
 When <a href="cancel.html">cancel</a> function is explicitly invoked, this continuation immediately resumes with <a href="../-cancellation-exception/index.html">CancellationException</a> or
@@ -156,20 +156,6 @@ that was cancelled is also considered complete.</p>
 
         <p>Cancels this continuation with an optional cancellation <a href="cancel.html#kotlinx.coroutines.CancellableContinuation$cancel(kotlin.Throwable)/cause">cause</a>. The result is <code>true</code> if this continuation was
 cancelled as a result of this invocation and <code>false</code> otherwise.</p>
-
-      </td>
-</tr>
-<tr>
-<td>
-
-        <p><a href="init-cancellability.html">initCancellability</a></p>
-
-      </td>
-<td>
-        <div class="signature"><code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">initCancellability</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></div>
-
-        <p>Makes this continuation cancellable. Use it with <code>holdCancellability</code> optional parameter to
-<a href="../suspend-cancellable-coroutine.html">suspendCancellableCoroutine</a> function. It throws <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-state-exception/index.html">IllegalStateException</a> if invoked more than once.</p>
 
       </td>
 </tr>

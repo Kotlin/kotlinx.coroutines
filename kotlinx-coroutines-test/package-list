@@ -1,0 +1,5 @@
+$dokka.format:kotlin-website
+$dokka.linkExtension:html
+$dokka.location:kotlinx.coroutines.test$resetMain(kotlinx.coroutines.Dispatchers)kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/reset-main.html
+$dokka.location:kotlinx.coroutines.test$setMain(kotlinx.coroutines.Dispatchers, kotlinx.coroutines.CoroutineDispatcher)kotlinx.coroutines.test/kotlinx.coroutines.-dispatchers/set-main.html
+kotlinx.coroutines.test
