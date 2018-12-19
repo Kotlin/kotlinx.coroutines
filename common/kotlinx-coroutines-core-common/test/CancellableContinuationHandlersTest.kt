@@ -23,6 +23,7 @@ class CancellableContinuationHandlersTest : TestBase() {
             c.resume(Unit)
             // Nothing happened
             c.invokeOnCancellation { expectUnreached() }
+            // Cannot validate after completion
             c.invokeOnCancellation { expectUnreached() }
         }
     }
@@ -36,13 +37,10 @@ class CancellableContinuationHandlersTest : TestBase() {
                     assertTrue(it is CancellationException)
                     expect(1)
                 }
-                c.invokeOnCancellation {
-                    assertTrue(it is CancellationException)
-                    expect(2)
-                }
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
         } catch (e: CancellationException) {
-            finish(3)
+            finish(2)
         }
     }
 
@@ -55,13 +53,10 @@ class CancellableContinuationHandlersTest : TestBase() {
                     require(it is AssertionError)
                     expect(1)
                 }
-                c.invokeOnCancellation {
-                    require(it is AssertionError)
-                    expect(2)
-                }
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
         } catch (e: AssertionError) {
-            finish(3)
+            finish(2)
         }
     }
 
@@ -73,15 +68,11 @@ class CancellableContinuationHandlersTest : TestBase() {
                     require(it is IndexOutOfBoundsException)
                     expect(1)
                 }
-
                 c.cancel(IndexOutOfBoundsException())
-                c.invokeOnCancellation {
-                    require(it is IndexOutOfBoundsException)
-                    expect(2)
-                }
+                assertFailsWith<IllegalStateException> { c.invokeOnCancellation { expectUnreached() } }
             }
         } catch (e: IndexOutOfBoundsException) {
-            finish(3)
+            finish(2)
         }
     }
 

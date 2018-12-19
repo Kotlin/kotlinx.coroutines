@@ -106,7 +106,8 @@ internal open class CancellableContinuationImpl<in T>(
         _state.loop { state ->
             if (state !is NotCompleted) return false // false if already complete or cancelling
             // Active -- update to final state
-            if (!_state.compareAndSet(state, CancelledContinuation(this, cause))) return@loop // retry on cas failure
+            val update = CancelledContinuation(this, cause, handled = state is CancelHandler)
+            if (!_state.compareAndSet(state, update)) return@loop // retry on cas failure
             // Invoke cancel handler if it was present
             if (state is CancelHandler) invokeHandlerSafely { state.invoke(cause) }
             // Complete state update
@@ -177,26 +178,35 @@ internal open class CancellableContinuationImpl<in T>(
                     val node = handleCache ?: makeHandler(handler).also { handleCache = it }
                     if (_state.compareAndSet(state, node)) return // quit on cas success
                 }
-                is CancelHandler -> {
-                    error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
-                }
+                is CancelHandler -> multipleHandlersError(handler, state)
                 is CancelledContinuation -> {
                     /*
                      * Continuation was already cancelled, invoke directly.
-                     * NOTE: multiple invokeOnCancellation calls with different handlers are allowed on cancelled continuation.
-                     * It's inconsistent with running continuation, but currently, we have no mechanism to check
-                     * whether any handler was registered during continuation lifecycle without additional overhead.
-                     * This may be changed in the future.
-                     *
+                     * NOTE: multiple invokeOnCancellation calls with different handlers are not allowed,
+                     * so we check to make sure that handler was installed just once.
+                     */
+                    if (!state.makeHandled()) multipleHandlersError(handler, state)
+                    /*
                      * :KLUDGE: We have to invoke a handler in platform-specific way via `invokeIt` extension,
                      * because we play type tricks on Kotlin/JS and handler is not necessarily a function there
                      */
                     invokeHandlerSafely { handler.invokeIt((state as? CompletedExceptionally)?.cause) }
                     return
                 }
-                else -> return
+                else -> {
+                    /*
+                     * Continuation was already completed, do nothing.
+                     * NOTE: multiple invokeOnCancellation calls with different handlers are not allowed,
+                     * but we have no way to check that it was installed just once in this case.
+                     */
+                    return
+                }
             }
         }
+    }
+
+    private fun multipleHandlersError(handler: CompletionHandler, state: Any?) {
+        error("It's prohibited to register multiple handlers, tried to register $handler, already has $state")
     }
 
     private fun makeHandler(handler: CompletionHandler): CancelHandler =
@@ -219,18 +229,19 @@ internal open class CancellableContinuationImpl<in T>(
                 }
                 is CancelledContinuation -> {
                     /*
-                     * If continuation was cancelled, then all further resumes must be
-                     * ignored, because cancellation is asynchronous and may race with resume.
-                     * Racy exceptions will be lost, too. There does not see to be a safe way to
-                     * handle them without producing spurious crashes.
-                     *
-                     * :todo: we should somehow remember the attempt to invoke resume and fail on the second attempt.
+                     * If continuation was cancelled, then resume attempt must be ignored,
+                     * because cancellation is asynchronous and may race with resume.
+                     * Racy exceptions will be lost, too.
                      */
-                    return
+                    if (state.makeResumed()) return // ok -- resumed just once
                 }
-                else -> error("Already resumed, but proposed with update $proposedUpdate")
             }
+            alreadyResumedError(proposedUpdate) // otherwise -- an error (second resume attempt)
         }
+    }
+
+    private fun alreadyResumedError(proposedUpdate: Any?) {
+        error("Already resumed, but proposed with update $proposedUpdate")
     }
 
     // Unregister from parent job
