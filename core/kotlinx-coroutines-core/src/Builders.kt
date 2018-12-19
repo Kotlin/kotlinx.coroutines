@@ -43,8 +43,10 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
             newContext = GlobalScope.newCoroutineContext(context + it)
         }
     } else {
-        // find existing thread-local event loop if present to avoid blocking it (but don't create one)
-        eventLoop = ThreadLocalEventLoop.currentOrNull()
+        // See if context's interceptor is an event loop that we shall use (to support TestContext)
+        // or take an existing thread-local event loop if present to avoid blocking it (but don't create one)
+        eventLoop = (contextInterceptor as? EventLoop)?.takeIf { it.shouldBeProcessedFromContext() }
+            ?: ThreadLocalEventLoop.currentOrNull()
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop)

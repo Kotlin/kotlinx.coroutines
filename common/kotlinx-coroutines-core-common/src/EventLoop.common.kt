@@ -31,6 +31,14 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      */
     public abstract fun processNextEvent(): Long
 
+    /**
+     * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
+     * parameter should call [processNextEvent] for this event loop (otherwise, it will process thread-local one).
+     * By default, event loop implementation is thread-local and should not processed in the context
+     * (current thread's event loop should be processed instead).
+     */
+    public open fun shouldBeProcessedFromContext(): Boolean = false
+
     public abstract val isEmpty: Boolean
 
     /**

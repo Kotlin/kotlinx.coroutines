@@ -215,6 +215,9 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
             incrementUseCount() // this event loop is never completed
         }
 
+        // override runBlocking to process this event loop
+        override fun shouldBeProcessedFromContext(): Boolean = true
+
         override val isEmpty: Boolean
             get() = queue.isEmpty
 
