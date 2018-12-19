@@ -24,7 +24,10 @@ internal abstract class EventLoop : CoroutineDispatcher() {
      * The result of this function is to be interpreted like this:
      * * `<= 0` -- there are potentially more events for immediate processing;
      * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
-     * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
+     * * [Long.MAX_VALUE] -- no more events.
+     *
+     * **NOTE**: Must be invoked only from the event loop's thread
+     *          (no check for performance reasons, may be added in the future).
      */
     public abstract fun processNextEvent(): Long
 

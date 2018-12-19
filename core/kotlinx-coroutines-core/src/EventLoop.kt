@@ -97,7 +97,6 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
         schedule(DelayedResumeTask(timeMillis, continuation))
 
     override fun processNextEvent(): Long {
-        if (Thread.currentThread() !== thread) return Long.MAX_VALUE
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -323,7 +322,7 @@ internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.curr
  * The result of this function is to be interpreted like this:
  * * `<= 0` -- there are potentially more events for immediate processing;
  * * `> 0` -- a number of nanoseconds to wait for the next scheduled event;
- * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
+ * * [Long.MAX_VALUE] -- no more events or no thread-local event loop.
  *
  * Sample usage of this function:
  *
