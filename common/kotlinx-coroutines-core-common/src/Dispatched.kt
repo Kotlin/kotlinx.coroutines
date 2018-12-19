@@ -13,40 +13,40 @@ import kotlin.jvm.*
 private val UNDEFINED = Symbol("UNDEFINED")
 
 /**
- * Executes given [block] as part of current event loop, updating related to block [continuation]
+ * Executes given [block] as part of current event loop, updating current continuation
  * mode and state if continuation is not resumed immediately.
  * [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty).
  * Returns `true` if execution of continuation was queued (trampolined) or `false` otherwise.
  */
-private inline fun executeUnconfined(
-    continuation: DispatchedContinuation<*>, contState: Any?, mode: Int,
-    doYield: Boolean = false, block: () -> Unit
+private inline fun DispatchedContinuation<*>.executeUnconfined(
+    contState: Any?, mode: Int, doYield: Boolean = false,
+    block: () -> Unit
 ) : Boolean {
     val eventLoop = ThreadLocalEventLoop.eventLoop
     // If we are yielding and unconfined queue is empty, we can bail out as part of fast path
     if (doYield && eventLoop.isEmptyUnconfinedQueue) return false
     return if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
-        continuation._state = contState
-        continuation.resumeMode = mode
-        eventLoop.dispatchUnconfined(continuation)
+        _state = contState
+        resumeMode = mode
+        eventLoop.dispatchUnconfined(this)
         true // queued into the active loop
     } else {
-        // Was not active -- run event loop until unconfined tasks are executed
+        // Was not active -- run event loop until all unconfined tasks are executed
         runUnconfinedEventLoop(eventLoop, block = block)
         false
     }
 }
 
-private fun resumeUnconfined(task: DispatchedTask<*>) {
+private fun DispatchedTask<*>.resumeUnconfined() {
     val eventLoop = ThreadLocalEventLoop.eventLoop
     if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
-        eventLoop.dispatchUnconfined(task)
+        eventLoop.dispatchUnconfined(this)
     } else {
-        // Was not active -- run event loop until unconfined tasks are executed
+        // Was not active -- run event loop until all unconfined tasks are executed
         runUnconfinedEventLoop(eventLoop) {
-            task.resume(task.delegate, MODE_UNDISPATCHED)
+            resume(delegate, MODE_UNDISPATCHED)
         }
     }
 }
@@ -103,7 +103,7 @@ internal class DispatchedContinuation<in T>(
             resumeMode = MODE_ATOMIC_DEFAULT
             dispatcher.dispatch(context, this)
         } else {
-            executeUnconfined(this, state, MODE_ATOMIC_DEFAULT) {
+            executeUnconfined(state, MODE_ATOMIC_DEFAULT) {
                 withCoroutineContext(this.context, countOrElement) {
                     continuation.resumeWith(result)
                 }
@@ -118,7 +118,7 @@ internal class DispatchedContinuation<in T>(
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
-            executeUnconfined(this, value, MODE_CANCELLABLE) {
+            executeUnconfined(value, MODE_CANCELLABLE) {
                 if (!resumeCancelled()) {
                     resumeUndispatched(value)
                 }
@@ -135,7 +135,7 @@ internal class DispatchedContinuation<in T>(
             resumeMode = MODE_CANCELLABLE
             dispatcher.dispatch(context, this)
         } else {
-            executeUnconfined(this, state, MODE_CANCELLABLE) {
+            executeUnconfined(state, MODE_CANCELLABLE) {
                 if (!resumeCancelled()) {
                     resumeUndispatchedWithException(exception)
                 }
@@ -259,7 +259,7 @@ internal abstract class DispatchedTask<in T>(
 }
 
 internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
-    executeUnconfined(this, Unit, MODE_CANCELLABLE, doYield = true) {
+    executeUnconfined(Unit, MODE_CANCELLABLE, doYield = true) {
         run()
     }
 
@@ -272,7 +272,7 @@ internal fun <T> DispatchedTask<T>.dispatch(mode: Int = MODE_CANCELLABLE) {
         if (dispatcher.isDispatchNeeded(context)) {
             dispatcher.dispatch(context, this)
         } else {
-            resumeUnconfined(this)
+            resumeUnconfined()
         }
     } else {
         resume(delegate, mode)

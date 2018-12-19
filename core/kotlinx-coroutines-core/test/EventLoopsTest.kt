@@ -4,9 +4,11 @@
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
 import org.junit.*
 import org.junit.Test
+import java.util.concurrent.locks.*
 import kotlin.test.*
 
 /**
@@ -67,5 +69,61 @@ class EventLoopsTest : TestBase() {
             }
         }
         finish(6)
+    }
+
+    /**
+     * Simple test for [processNextEventInCurrentThread] API use-case.
+     */
+    @Test
+    fun testProcessNextEventInCurrentThreadSimple() = runTest {
+        expect(1)
+        val event = CustomBlockingEvent()
+        // this coroutine fires event
+        launch {
+            expect(3)
+            event.fireEvent()
+        }
+        // main coroutine waits for event (same thread!)
+        expect(2)
+        event.blockingAwait()
+        finish(4)
+    }
+
+    /**
+     * Test for [processNextEventInCurrentThread] API use-case with delay.
+     */
+    @Test
+    fun testProcessNextEventInCurrentThreadDelay() = runTest {
+        expect(1)
+        val event = CustomBlockingEvent()
+        // this coroutine fires event
+        launch {
+            expect(3)
+            delay(100)
+            event.fireEvent()
+        }
+        // main coroutine waits for event (same thread!)
+        expect(2)
+        event.blockingAwait()
+        finish(4)
+    }
+
+    class CustomBlockingEvent {
+        private val waitingThread = atomic<Thread?>(null)
+        private val fired = atomic(false)
+
+        fun fireEvent() {
+            fired.value = true
+            waitingThread.value?.let { LockSupport.unpark(it) }
+        }
+
+        fun blockingAwait() {
+            check(waitingThread.getAndSet(Thread.currentThread()) == null)
+            while (!fired.getAndSet(false)) {
+                val time = processNextEventInCurrentThread()
+                LockSupport.parkNanos(time)
+            }
+            waitingThread.value = null
+        }
     }
 }

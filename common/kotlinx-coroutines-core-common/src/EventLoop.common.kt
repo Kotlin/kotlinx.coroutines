@@ -79,21 +79,21 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         get() = useCount > 0
 
     public val isUnconfinedLoopActive: Boolean
-        get() = useCount >= increment(unconfined = true)
+        get() = useCount >= delta(unconfined = true)
 
     public val isEmptyUnconfinedQueue: Boolean
         get() = queuedUnconfinedTasks == 0
 
-    private fun increment(unconfined: Boolean) =
+    private fun delta(unconfined: Boolean) =
         if (unconfined) (1L shl 32) else 1L
 
     fun incrementUseCount(unconfined: Boolean = false) {
-        useCount += increment(unconfined)
+        useCount += delta(unconfined)
         if (!unconfined) shared = true 
     }
 
     fun decrementUseCount(unconfined: Boolean = false) {
-        useCount -= increment(unconfined)
+        useCount -= delta(unconfined)
         if (useCount > 0) return
         check(useCount == 0L) { "Extra decrementUseCount" }
         if (shared) {
