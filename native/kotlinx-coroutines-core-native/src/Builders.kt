@@ -33,12 +33,13 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val eventLoop: EventLoop?
     var newContext: CoroutineContext = context // todo: kludge for data flow analysis error
     if (contextInterceptor == null) {
-        // create/use private event loop if no dispatcher is specified
+        // create or use private event loop if no dispatcher is specified
         eventLoop = ThreadLocalEventLoop.eventLoop.also {
             newContext = GlobalScope.newCoroutineContext(context + it)
         }
     } else {
-        eventLoop = contextInterceptor as? EventLoop
+        // find existing thread-local event loop if present to avoid blocking it (but don't create one)
+        eventLoop = ThreadLocalEventLoop.currentOrNull()
         newContext = GlobalScope.newCoroutineContext(context)
     }
     val coroutine = BlockingCoroutine<T>(newContext, eventLoop)

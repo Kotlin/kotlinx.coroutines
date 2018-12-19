@@ -6,9 +6,9 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
 import org.junit.Test
 import java.util.concurrent.locks.*
+import kotlin.concurrent.*
 import kotlin.test.*
 
 /**
@@ -77,7 +77,7 @@ class EventLoopsTest : TestBase() {
     @Test
     fun testProcessNextEventInCurrentThreadSimple() = runTest {
         expect(1)
-        val event = CustomBlockingEvent()
+        val event = EventSync()
         // this coroutine fires event
         launch {
             expect(3)
@@ -89,13 +89,34 @@ class EventLoopsTest : TestBase() {
         finish(4)
     }
 
+    @Test
+    fun testSecondThreadRunBlocking() = runTest {
+        val testThread = Thread.currentThread()
+        val testContext = coroutineContext
+        val event = EventSync() // will signal completion
+        var thread = thread {
+            runBlocking { // outer event loop
+                // Produce string "OK"
+                val ch = produce { send("OK") }
+                // try receive this string in a blocking way using test context (another thread)
+                assertEquals("OK", runBlocking(testContext) {
+                    assertEquals(testThread, Thread.currentThread())
+                    ch.receive() // it should not hang here
+                })
+            }
+            event.fireEvent() // done thread
+        }
+        event.blockingAwait() // wait for thread to complete
+        thread.join() // it is safe to join thread now
+    }
+
     /**
      * Test for [processNextEventInCurrentThread] API use-case with delay.
      */
     @Test
     fun testProcessNextEventInCurrentThreadDelay() = runTest {
         expect(1)
-        val event = CustomBlockingEvent()
+        val event = EventSync()
         // this coroutine fires event
         launch {
             expect(3)
@@ -108,7 +129,7 @@ class EventLoopsTest : TestBase() {
         finish(4)
     }
 
-    class CustomBlockingEvent {
+    class EventSync {
         private val waitingThread = atomic<Thread?>(null)
         private val fired = atomic(false)
 
