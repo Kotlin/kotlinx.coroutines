@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.atomicfu.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
@@ -31,5 +32,12 @@ internal open class CompletedExceptionally(
  */
 internal class CancelledContinuation(
     continuation: Continuation<*>,
-    cause: Throwable?
-) : CompletedExceptionally(cause ?: CancellationException("Continuation $continuation was cancelled normally"))
+    cause: Throwable?,
+    handled: Boolean
+) : CompletedExceptionally(cause ?: CancellationException("Continuation $continuation was cancelled normally")) {
+    private val resumed = atomic(false)
+    private val handled = atomic(handled)
+
+    fun makeResumed(): Boolean = resumed.compareAndSet(false, true)
+    fun makeHandled(): Boolean = handled.compareAndSet(false, true)
+}
