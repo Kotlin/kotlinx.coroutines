@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import org.w3c.dom.Window
 
 /**
@@ -34,12 +35,12 @@ private fun Window.asWindowAnimationQueue(): WindowAnimationQueue =
 private class WindowAnimationQueue(private val window: Window) {
     private val dispatcher = window.asCoroutineDispatcher()
     private var scheduled = false
-    private var current = Queue<CancellableContinuation<Double>>()
-    private var next = Queue<CancellableContinuation<Double>>()
+    private var current = ArrayQueue<CancellableContinuation<Double>>()
+    private var next = ArrayQueue<CancellableContinuation<Double>>()
     private var timestamp = 0.0
 
     fun enqueue(cont: CancellableContinuation<Double>) {
-        next.add(cont)
+        next.addLast(cont)
         if (!scheduled) {
             scheduled = true
             window.requestAnimationFrame { ts ->
@@ -55,7 +56,7 @@ private class WindowAnimationQueue(private val window: Window) {
 
     fun process() {
         while(true) {
-            val element = current.poll() ?: return
+            val element = current.removeFirstOrNull() ?: return
             with(element) { dispatcher.resumeUndispatched(timestamp) }
         }
     }

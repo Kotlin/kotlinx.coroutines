@@ -8,27 +8,6 @@ import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
-/**
- * Implemented by [CoroutineDispatcher] implementations that have event loop inside and can
- * be asked to process next event from their event queue.
- *
- * It may optionally implement [Delay] interface and support time-scheduled tasks. It is used by [runBlocking] to
- * continue processing events when invoked from the event dispatch thread.
- *
- * @suppress **This an internal API and should not be used from general code.**
- */
-internal interface EventLoop: ContinuationInterceptor {
-    /**
-     * Processes next event in this event loop.
-     *
-     * The result of this function is to be interpreted like this:
-     * * `<= 0` -- there are potentially more events for immediate processing;
-     * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
-     * * [Long.MAX_VALUE] -- no more events, or was invoked from the wrong thread.
-     */
-    public fun processNextEvent(): Long
-}
-
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
 // results for scheduleImpl
@@ -53,21 +32,22 @@ private val CLOSED_EMPTY = Symbol("CLOSED_EMPTY")
 
 private typealias Queue<T> = LockFreeTaskQueueCore<T>
 
-internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
+internal abstract class EventLoopImplBase: EventLoop(), Delay {
     // null | CLOSED_EMPTY | task | Queue<Runnable>
     private val _queue = atomic<Any?>(null)
 
     // Allocated only only once
     private val _delayed = atomic<ThreadSafeHeap<DelayedTask>?>(null)
 
-    protected abstract val isCompleted: Boolean
-    protected abstract fun unpark()
-    protected abstract fun isCorrectThread(): Boolean
+    protected abstract val thread: Thread
 
-    protected val isEmpty: Boolean
-        get() = isQueueEmpty && isDelayedEmpty
+    @Volatile
+    private var isCompleted = false
 
-    private val isQueueEmpty: Boolean get() {
+    override val isEmpty: Boolean get() {
+        if (!isUnconfinedQueueEmpty) return false
+        val delayed = _delayed.value
+        if (delayed != null && !delayed.isEmpty) return false
         val queue = _queue.value
         return when (queue) {
             null -> true
@@ -76,13 +56,9 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
     }
 
-    private val isDelayedEmpty: Boolean get() {
-        val delayed = _delayed.value
-        return delayed == null || delayed.isEmpty
-    }
-
-    private val nextTime: Long
+    protected override val nextTime: Long
         get() {
+            if (super.nextTime == 0L) return 0L 
             val queue = _queue.value
             when {
                 queue === null -> {} // empty queue -- proceed
@@ -95,14 +71,31 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
             return (nextDelayedTask.nanoTime - timeSource.nanoTime()).coerceAtLeast(0)
         }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        execute(block)
+    private fun unpark() {
+        val thread = thread
+        if (Thread.currentThread() !== thread)
+            timeSource.unpark(thread)
+    }
+
+    override fun shutdown() {
+        // Clean up thread-local reference here -- this event loop is shutting down
+        ThreadLocalEventLoop.resetEventLoop()
+        // We should signal that this event loop should not accept any more tasks
+        // and process queued events (that could have been added after last processNextEvent)
+        isCompleted = true
+        closeQueue()
+        // complete processing of all queued tasks
+        while (processNextEvent() <= 0) { /* spin */ }
+        // reschedule the rest of delayed tasks
+        rescheduleAllDelayed()
+    }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) =
         schedule(DelayedResumeTask(timeMillis, continuation))
 
     override fun processNextEvent(): Long {
-        if (!isCorrectThread()) return Long.MAX_VALUE
+        // unconfined events take priority
+        if (processUnconfinedEvent()) return nextTime
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -124,12 +117,14 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         return nextTime
     }
 
-    internal fun execute(task: Runnable) {
+    public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
+
+    public fun enqueue(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
         } else {
-            DefaultExecutor.execute(task)
+            DefaultExecutor.enqueue(task)
         }
     }
 
@@ -178,7 +173,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         }
     }
 
-    protected fun closeQueue() {
+    private fun closeQueue() {
         assert(isCompleted)
         _queue.loop { queue ->
             when (queue) {
@@ -221,10 +216,6 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         return delayedTask.schedule(delayed, this)
     }
 
-    internal fun removeDelayedImpl(delayedTask: DelayedTask) {
-        _delayed.value?.remove(delayedTask)
-    }
-
     // It performs "hard" shutdown for test cleanup purposes
     protected fun resetAll() {
         _queue.value = null
@@ -232,7 +223,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 
     // This is a "soft" (normal) shutdown
-    protected fun rescheduleAllDelayed() {
+    private fun rescheduleAllDelayed() {
         while (true) {
             /*
              * `removeFirstOrNull` below is the only operation on DelayedTask & ThreadSafeHeap that is not
@@ -274,7 +265,7 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
         @Synchronized
-        fun schedule(delayed: ThreadSafeHeap<DelayedTask>, eventLoop: EventLoopBase): Int {
+        fun schedule(delayed: ThreadSafeHeap<DelayedTask>, eventLoop: EventLoopImplBase): Int {
             if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
             return if (delayed.addLastIf(this) { !eventLoop.isCompleted }) SCHEDULE_OK else SCHEDULE_COMPLETED
         }
@@ -318,27 +309,31 @@ internal abstract class EventLoopBase: CoroutineDispatcher(), Delay, EventLoop {
     }
 }
 
-internal abstract class ThreadEventLoop(
-    private val thread: Thread
-) : EventLoopBase() {
-    override fun isCorrectThread(): Boolean = Thread.currentThread() === thread
+internal class BlockingEventLoop(
+    override val thread: Thread
+) : EventLoopImplBase()
 
-    override fun unpark() {
-        if (Thread.currentThread() !== thread)
-            timeSource.unpark(thread)
-    }
+internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
 
-    fun shutdown() {
-        closeQueue()
-        assert(isCorrectThread())
-        // complete processing of all queued tasks
-        while (processNextEvent() <= 0) { /* spin */ }
-        // reschedule the rest of delayed tasks
-        rescheduleAllDelayed()
-    }
-}
-
-internal class BlockingEventLoop(thread: Thread) : ThreadEventLoop(thread) {
-    @Volatile
-    public override var isCompleted: Boolean = false
-}
+/**
+ * Processes next event in the current thread's event loop.
+ *
+ * The result of this function is to be interpreted like this:
+ * * `<= 0` -- there are potentially more events for immediate processing;
+ * * `> 0` -- a number of nanoseconds to wait for the next scheduled event;
+ * * [Long.MAX_VALUE] -- no more events or no thread-local event loop.
+ *
+ * Sample usage of this function:
+ *
+ * ```
+ * while (waitingCondition) {
+ *     val time = processNextEventInCurrentThread()
+ *     LockSupport.parkNanos(time)
+ * }
+ * ```
+ *
+ * @suppress **This an internal API and should not be used from general code.**
+ */
+@InternalCoroutinesApi
+public fun processNextEventInCurrentThread(): Long =
+    ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE

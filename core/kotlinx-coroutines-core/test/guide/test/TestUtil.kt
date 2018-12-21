@@ -108,7 +108,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
             (thread.dispatcher.executor as ExecutorService).apply {
                 shutdown()
                 awaitTermination(timeout, TimeUnit.MILLISECONDS)
-                shutdownNow().forEach { DefaultExecutor.execute(it) }
+                shutdownNow().forEach { DefaultExecutor.enqueue(it) }
             }
     }
 }

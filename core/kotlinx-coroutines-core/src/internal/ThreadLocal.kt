@@ -6,8 +6,5 @@ package kotlinx.coroutines.internal
 
 import java.lang.ThreadLocal
 
-internal actual typealias CommonThreadLocal<T> = ThreadLocalWithInitialValue<T>
-
-internal class ThreadLocalWithInitialValue<T>(private val supplier: () -> T) : ThreadLocal<T>() {
-    override fun initialValue(): T = supplier()
-}
+@Suppress("ACTUAL_WITHOUT_EXPECT") // internal visibility
+internal actual typealias CommonThreadLocal<T> = ThreadLocal<T>

@@ -4,10 +4,11 @@
 
 package kotlinx.coroutines.internal
 
-internal class ArrayQueue<T : Any> {
+internal open class ArrayQueue<T : Any> {
     private var elements = arrayOfNulls<Any>(16)
     private var head = 0
     private var tail = 0
+
     val isEmpty: Boolean get() = head == tail
 
     public fun addLast(element: T) {

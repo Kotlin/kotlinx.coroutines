@@ -9,9 +9,12 @@ import java.util.concurrent.*
 internal actual val DefaultDelay: Delay = DefaultExecutor
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal object DefaultExecutor : EventLoopBase(), Runnable {
+internal object DefaultExecutor : EventLoopImplBase(), Runnable {
+    const val THREAD_NAME = "kotlinx.coroutines.DefaultExecutor"
 
-    override val isCompleted: Boolean get() = false
+    init {
+        incrementUseCount() // this event loop is never completed
+    }
 
     private const val DEFAULT_KEEP_ALIVE = 1000L // in milliseconds
 
@@ -25,6 +28,9 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
     @Suppress("ObjectPropertyName")
     @Volatile
     private var _thread: Thread? = null
+
+    override val thread: Thread
+        get() = _thread ?: createThreadSync()
 
     private const val FRESH = 0
     private const val ACTIVE = 1
@@ -52,6 +58,7 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
         DelayedRunnableTask(timeMillis, block).also { schedule(it) }
 
     override fun run() {
+        ThreadLocalEventLoop.setEventLoop(this)
         timeSource.registerTimeLoopThread()
         try {
             var shutdownNanos = Long.MAX_VALUE
@@ -81,26 +88,18 @@ internal object DefaultExecutor : EventLoopBase(), Runnable {
             acknowledgeShutdownIfNeeded()
             timeSource.unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
-            if (!isEmpty) thread() // recreate thread if it is needed
+            if (!isEmpty) thread // recreate thread if it is needed
         }
     }
 
-    // ensure that thread is there
-    private fun thread(): Thread = _thread ?: createThreadSync()
-
     @Synchronized
-    private fun createThreadSync() = _thread ?:
-        Thread(this, "kotlinx.coroutines.DefaultExecutor").apply {
+    private fun createThreadSync(): Thread {
+        return _thread ?: Thread(this, THREAD_NAME).apply {
             _thread = this
             isDaemon = true
             start()
         }
-
-    override fun unpark() {
-        timeSource.unpark(thread()) // as a side effect creates thread if it is not there
     }
-
-    override fun isCorrectThread(): Boolean = true
 
     // used for tests
     @Synchronized

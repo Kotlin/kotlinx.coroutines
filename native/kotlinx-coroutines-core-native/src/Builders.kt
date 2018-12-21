@@ -30,47 +30,40 @@ import kotlin.coroutines.*
  */
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val contextInterceptor = context[ContinuationInterceptor]
-    val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
-    val eventLoop = if (privateEventLoop) {
-        //check(currentEventLoop == null) { "Cannot use runBlocking inside runBlocking" }
-        val newEventLoop = BlockingEventLoop()
-        currentEventLoop.add(newEventLoop)
-        newEventLoop
-    } else
-        contextInterceptor as? EventLoop
-    val newContext = GlobalScope.newCoroutineContext(
-        if (privateEventLoop) context + (eventLoop as ContinuationInterceptor) else context
-    )
-    val coroutine = BlockingCoroutine<T>(newContext, eventLoop, privateEventLoop)
-    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
-    return coroutine.joinBlocking().also {
-        currentEventLoop.removeAt(currentEventLoop.size - 1)
+    val eventLoop: EventLoop?
+    var newContext: CoroutineContext = context // todo: kludge for data flow analysis error
+    if (contextInterceptor == null) {
+        // create or use private event loop if no dispatcher is specified
+        eventLoop = ThreadLocalEventLoop.eventLoop
+        newContext = GlobalScope.newCoroutineContext(context + eventLoop)
+    } else {
+        // See if context's interceptor is an event loop that we shall use (to support TestContext)
+        // or take an existing thread-local event loop if present to avoid blocking it (but don't create one)
+        eventLoop = (contextInterceptor as? EventLoop)?.takeIf { it.shouldBeProcessedFromContext() }
+            ?: ThreadLocalEventLoop.currentOrNull()
+        newContext = GlobalScope.newCoroutineContext(context)
     }
+    val coroutine = BlockingCoroutine<T>(newContext, eventLoop)
+    coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
+    return coroutine.joinBlocking()
 }
 
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
-    private val eventLoop: EventLoop?,
-    private val privateEventLoop: Boolean
+    private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true) {
-    init {
-        if (privateEventLoop) require(eventLoop is BlockingEventLoop)
-    }
-
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
-        while (true) {
-            val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
-            // note: process next even may loose unpark flag, so check if completed before parking
-            if (isCompleted) break
-            // todo: LockSupport.parkNanos(this, parkNanos)
-        }
-        // process queued events (that could have been added after last processNextEvent and before cancel
-        if (privateEventLoop) (eventLoop as BlockingEventLoop).apply {
-            // We exit the "while" loop above when this coroutine's state "isCompleted",
-            // Here we should signal that BlockingEventLoop should not accept any more tasks
-            isCompleted = true
-            shutdown()
+        try {
+            eventLoop?.incrementUseCount()
+            while (true) {
+                val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
+                // note: process next even may loose unpark flag, so check if completed before parking
+                if (isCompleted) break
+                // todo: LockSupport.parkNanos(this, parkNanos)
+            }
+        } finally { // paranoia
+            eventLoop?.decrementUseCount()
         }
         // now return result
         val state = this.state

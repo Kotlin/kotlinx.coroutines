@@ -31,6 +31,7 @@ private class ThreadStatus {
     var parkedTill = NOT_PARKED
     @Volatile @JvmField
     var permit = false
+    var registered = 0
     override fun toString(): String = "parkedTill = ${TimeUnit.NANOSECONDS.toMillis(parkedTill)} ms, permit = $permit"
 }
 
@@ -79,13 +80,18 @@ internal class VirtualTimeSource(
 
     @Synchronized
     override fun registerTimeLoopThread() {
-        assert(threads.putIfAbsent(Thread.currentThread(), ThreadStatus()) == null)
+        val status = threads.getOrPut(Thread.currentThread()) { ThreadStatus() }!!
+        status.registered++
     }
 
     @Synchronized
     override fun unregisterTimeLoopThread() {
-        assert(threads.remove(Thread.currentThread()) != null)
-        wakeupAll()
+        val currentThread = Thread.currentThread()
+        val status = threads[currentThread]!!
+        if (--status.registered == 0) {
+            threads.remove(currentThread)
+            wakeupAll()
+        }
     }
 
     override fun parkNanos(blocker: Any, nanos: Long) {

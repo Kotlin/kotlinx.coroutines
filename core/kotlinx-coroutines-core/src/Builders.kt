@@ -35,12 +35,20 @@ import kotlin.coroutines.*
 public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T): T {
     val currentThread = Thread.currentThread()
     val contextInterceptor = context[ContinuationInterceptor]
-    val privateEventLoop = contextInterceptor == null // create private event loop if no dispatcher is specified
-    val eventLoop = if (privateEventLoop) BlockingEventLoop(currentThread) else contextInterceptor as? EventLoop
-    val newContext = GlobalScope.newCoroutineContext(
-        if (privateEventLoop) context + (eventLoop as ContinuationInterceptor) else context
-    )
-    val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop, privateEventLoop)
+    val eventLoop: EventLoop?
+    val newContext: CoroutineContext
+    if (contextInterceptor == null) {
+        // create or use private event loop if no dispatcher is specified
+        eventLoop = ThreadLocalEventLoop.eventLoop
+        newContext = GlobalScope.newCoroutineContext(context + eventLoop)
+    } else {
+        // See if context's interceptor is an event loop that we shall use (to support TestContext)
+        // or take an existing thread-local event loop if present to avoid blocking it (but don't create one)
+        eventLoop = (contextInterceptor as? EventLoop)?.takeIf { it.shouldBeProcessedFromContext() }
+            ?: ThreadLocalEventLoop.currentOrNull()
+        newContext = GlobalScope.newCoroutineContext(context)
+    }
+    val coroutine = BlockingCoroutine<T>(newContext, currentThread, eventLoop)
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
 }
@@ -48,13 +56,8 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val blockedThread: Thread,
-    private val eventLoop: EventLoop?,
-    private val privateEventLoop: Boolean
+    private val eventLoop: EventLoop?
 ) : AbstractCoroutine<T>(parentContext, true) {
-    init {
-        if (privateEventLoop) require(eventLoop is BlockingEventLoop)
-    }
-
     override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         // wake up blocked thread
         if (Thread.currentThread() != blockedThread)
@@ -64,22 +67,23 @@ private class BlockingCoroutine<T>(
     @Suppress("UNCHECKED_CAST")
     fun joinBlocking(): T {
         timeSource.registerTimeLoopThread()
-        while (true) {
-            @Suppress("DEPRECATION")
-            if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
-            val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
-            // note: process next even may loose unpark flag, so check if completed before parking
-            if (isCompleted) break
-            timeSource.parkNanos(this, parkNanos)
+        try {
+            eventLoop?.incrementUseCount()
+            try {
+                while (true) {
+                    @Suppress("DEPRECATION")
+                    if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
+                    val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
+                    // note: process next even may loose unpark flag, so check if completed before parking
+                    if (isCompleted) break
+                    timeSource.parkNanos(this, parkNanos)
+                }
+            } finally { // paranoia
+                eventLoop?.decrementUseCount()
+            }
+        } finally { // paranoia
+            timeSource.unregisterTimeLoopThread()
         }
-        // process queued events (that could have been added after last processNextEvent and before cancel
-        if (privateEventLoop) (eventLoop as BlockingEventLoop).apply {
-            // We exit the "while" loop above when this coroutine's state "isCompleted",
-            // Here we should signal that BlockingEventLoop should not accept any more tasks
-            isCompleted = true
-            shutdown()
-        }
-        timeSource.unregisterTimeLoopThread()
         // now return result
         val state = this.state.unboxState()
         (state as? CompletedExceptionally)?.let { throw it.cause }

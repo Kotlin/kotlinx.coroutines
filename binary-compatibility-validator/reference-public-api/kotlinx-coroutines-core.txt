@@ -254,6 +254,10 @@ public abstract interface class kotlinx/coroutines/DisposableHandle {
 	public abstract fun dispose ()V
 }
 
+public final class kotlinx/coroutines/EventLoopKt {
+	public static final fun processNextEventInCurrentThread ()J
+}
+
 public abstract class kotlinx/coroutines/ExecutorCoroutineDispatcher : kotlinx/coroutines/CoroutineDispatcher, java/io/Closeable {
 	public fun <init> ()V
 	public abstract fun close ()V

@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import java.io.*
 import java.io.Closeable
 import java.util.concurrent.*
 import kotlin.coroutines.*
@@ -60,12 +59,14 @@ internal abstract class ExecutorCoroutineDispatcherBase : ExecutorCoroutineDispa
         removesFutureOnCancellation = removeFutureOnCancel(executor)
     }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) =
-        try { executor.execute(timeSource.wrapTask(block)) }
-        catch (e: RejectedExecutionException) {
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        try {
+            executor.execute(timeSource.wrapTask(block))
+        } catch (e: RejectedExecutionException) {
             timeSource.unTrackTask()
-            DefaultExecutor.execute(block)
+            DefaultExecutor.enqueue(block)
         }
+    }
 
     /*
      * removesFutureOnCancellation is required to avoid memory leak.
