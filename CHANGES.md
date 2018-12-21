@@ -1,5 +1,11 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.1.0
+
+* Kotlin version updated to 1.3.11.
+* Resumes to `CancellableContinuation` in the final state produce `IllegalStateException` (#901). This change does not affect #830, races between resume and cancellation do not lead to an exceptional situation.
+* `runBlocking` is integrated with `Dispatchers.Unconfined` by sharing an internal event loop. This change does not affect the semantics of the previously correct code but allows to mix multiple `runBlocking` and unconfined tasks (#860).
+
 ## Version 1.1.0-alpha
 
 ### Major improvements in coroutines testing and debugging
