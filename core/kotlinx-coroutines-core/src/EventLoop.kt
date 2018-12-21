@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 private val DISPOSED_TASK = Symbol("REMOVED_TASK")
 
@@ -43,9 +44,6 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
     @Volatile
     private var isCompleted = false
 
-    override val isEmpty: Boolean
-        get() = isQueueEmpty && isDelayedEmpty
-
     protected val isQueueEmpty: Boolean get() {
         val queue = _queue.value
         return when (queue) {
@@ -55,13 +53,9 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
         }
     }
 
-    private val isDelayedEmpty: Boolean get() {
-        val delayed = _delayed.value
-        return delayed == null || delayed.isEmpty
-    }
-
-    private val nextTime: Long
+    protected override val nextTime: Long
         get() {
+            if (super.nextTime == 0L) return 0L 
             val queue = _queue.value
             when {
                 queue === null -> {} // empty queue -- proceed
@@ -97,6 +91,8 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
         schedule(DelayedResumeTask(timeMillis, continuation))
 
     override fun processNextEvent(): Long {
+        // unconfined events take priority
+        if (processUnconfinedEvent()) return nextTime
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -114,20 +110,20 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
             }
         }
         // then process one event from queue
-        dequeue()?.let { runBlock(it) }
+        dequeue()?.run()
         return nextTime
     }
 
-    // returns true if it was successfully enqueued for execution in this event loop, false if got to default executor
-    override fun enqueue(task: Runnable): Boolean =
+    public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
+
+    public fun enqueue(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
-            true
         } else {
             DefaultExecutor.enqueue(task)
-            false
         }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun enqueueImpl(task: Runnable): Boolean {

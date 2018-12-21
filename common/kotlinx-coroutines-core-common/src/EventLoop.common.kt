@@ -5,7 +5,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
-import kotlin.coroutines.*
 
 /**
  * Extended by [CoroutineDispatcher] implementations that have event loop inside and can
@@ -19,57 +18,6 @@ import kotlin.coroutines.*
  */
 internal abstract class EventLoop : CoroutineDispatcher() {
     /**
-     * Processes next event in this event loop.
-     *
-     * The result of this function is to be interpreted like this:
-     * * `<= 0` -- there are potentially more events for immediate processing;
-     * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
-     * * [Long.MAX_VALUE] -- no more events.
-     *
-     * **NOTE**: Must be invoked only from the event loop's thread
-     *          (no check for performance reasons, may be added in the future).
-     */
-    public abstract fun processNextEvent(): Long
-
-    /**
-     * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
-     * parameter should call [processNextEvent] for this event loop (otherwise, it will process thread-local one).
-     * By default, event loop implementation is thread-local and should not processed in the context
-     * (current thread's event loop should be processed instead).
-     */
-    public open fun shouldBeProcessedFromContext(): Boolean = false
-
-    public abstract val isEmpty: Boolean
-
-    /**
-     * Dispatches task whose dispatcher returned `false` from [CoroutineDispatcher.isDispatchNeeded]
-     * into the current event loop.
-     */
-    public fun dispatchUnconfined(task: DispatchedTask<*>) {
-        task.isUnconfinedTask = true
-        check(enqueue(task)) { "Attempting to dispatchUnconfined into the EventLoop that was shut down"}
-        queuedUnconfinedTasks++
-    }
-
-    public override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (block is DispatchedTask<*>) block.isUnconfinedTask = false
-        enqueue(block)
-    }
-
-    // returns true if it was successfully enqueued for execution in this event loop, false if got to default executor
-    public abstract fun enqueue(task: Runnable): Boolean
-
-    protected fun runBlock(block: Runnable) {
-        try {
-            block.run()
-        } finally {
-            if (block is DispatchedTask<*> && block.isUnconfinedTask) {
-                check(--queuedUnconfinedTasks >= 0) { "queuedUnconfinedTasks underflow" }
-            }
-        }
-    }
-
-    /**
      * Counts the number of nested [runBlocking] and [Dispatchers.Unconfined] that use this event loop.
      */
     private var useCount = 0L
@@ -82,9 +30,56 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     private var shared = false
 
     /**
-     * Counts a number of currently enqueued (but not executed yet) unconfined tasks.
+     * Queue used by [Dispatchers.Unconfined] tasks.
+     * These tasks are thread-local for performance and take precedence over the rest of the queue.
      */
-    private var queuedUnconfinedTasks = 0
+    private var unconfinedQueue: ArrayQueue<DispatchedTask<*>>? = null
+
+    /**
+     * Processes next event in this event loop.
+     *
+     * The result of this function is to be interpreted like this:
+     * * `<= 0` -- there are potentially more events for immediate processing;
+     * * `> 0` -- a number of nanoseconds to wait for next scheduled event;
+     * * [Long.MAX_VALUE] -- no more events.
+     *
+     * **NOTE**: Must be invoked only from the event loop's thread
+     *          (no check for performance reasons, may be added in the future).
+     */
+    public open fun processNextEvent(): Long {
+        if (!processUnconfinedEvent()) return Long.MAX_VALUE
+        return nextTime
+    }
+
+    protected open val nextTime: Long
+        get() {
+            val queue = unconfinedQueue ?: return Long.MAX_VALUE
+            return if (queue.isEmpty) Long.MAX_VALUE else 0L
+        }
+
+    protected fun processUnconfinedEvent(): Boolean {
+        val queue = unconfinedQueue ?: return false
+        val task = queue.removeFirstOrNull() ?: return false
+        task.run()
+        return true
+    }
+    /**
+     * Returns `true` if the invoking `runBlocking(context) { ... }` that was passed this event loop in its context
+     * parameter should call [processNextEvent] for this event loop (otherwise, it will process thread-local one).
+     * By default, event loop implementation is thread-local and should not processed in the context
+     * (current thread's event loop should be processed instead).
+     */
+    public open fun shouldBeProcessedFromContext(): Boolean = false
+
+    /**
+     * Dispatches task whose dispatcher returned `false` from [CoroutineDispatcher.isDispatchNeeded]
+     * into the current event loop.
+     */
+    public fun dispatchUnconfined(task: DispatchedTask<*>) {
+        val queue = unconfinedQueue ?:
+            ArrayQueue<DispatchedTask<*>>().also { unconfinedQueue = it }
+        queue.addLast(task)
+    }
 
     public val isActive: Boolean
         get() = useCount > 0
@@ -92,8 +87,9 @@ internal abstract class EventLoop : CoroutineDispatcher() {
     public val isUnconfinedLoopActive: Boolean
         get() = useCount >= delta(unconfined = true)
 
-    public val isEmptyUnconfinedQueue: Boolean
-        get() = queuedUnconfinedTasks == 0
+    // May only be used from the event loop's thread
+    public val isUnconfinedQueueEmpty: Boolean
+        get() = unconfinedQueue?.isEmpty ?: false
 
     private fun delta(unconfined: Boolean) =
         if (unconfined) (1L shl 32) else 1L
@@ -110,9 +106,6 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         if (shared) {
             // shut it down and remove from ThreadLocalEventLoop
             shutdown()
-        } else {
-            // it was not shared, so it could not have accumulated any other tasks
-            check(isEmpty) { "EventLoop that was used only by unconfined tasks should be empty" }
         }
     }
 

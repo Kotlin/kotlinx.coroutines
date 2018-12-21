@@ -215,16 +215,12 @@ class TestCoroutineContext(private val name: String? = null) : CoroutineContext 
             incrementUseCount() // this event loop is never completed
         }
 
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            this@TestCoroutineContext.enqueue(block)
+        }
+
         // override runBlocking to process this event loop
         override fun shouldBeProcessedFromContext(): Boolean = true
-
-        override val isEmpty: Boolean
-            get() = queue.isEmpty
-
-        override fun enqueue(task: Runnable): Boolean {
-            this@TestCoroutineContext.enqueue(task)
-            return true
-        }
 
         override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
             postDelayed(Runnable {

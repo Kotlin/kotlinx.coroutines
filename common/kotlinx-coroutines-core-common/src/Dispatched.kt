@@ -24,7 +24,7 @@ private inline fun DispatchedContinuation<*>.executeUnconfined(
 ) : Boolean {
     val eventLoop = ThreadLocalEventLoop.eventLoop
     // If we are yielding and unconfined queue is empty, we can bail out as part of fast path
-    if (doYield && eventLoop.isEmptyUnconfinedQueue) return false
+    if (doYield && eventLoop.isUnconfinedQueueEmpty) return false
     return if (eventLoop.isUnconfinedLoopActive) {
         // When unconfined loop is active -- dispatch continuation for execution to avoid stack overflow
         _state = contState
@@ -60,7 +60,7 @@ private inline fun runUnconfinedEventLoop(
         block()
         while (eventLoop.processNextEvent() <= 0) {
             // break when all unconfined continuations where executed
-            if (eventLoop.isEmptyUnconfinedQueue) break
+            if (eventLoop.isUnconfinedQueueEmpty) break
         }
     } catch (e: Throwable) {
         /*
@@ -200,26 +200,9 @@ internal fun <T> Continuation<T>.resumeDirectWithException(exception: Throwable)
     else -> resumeWithStackTrace(exception)
 }
 
-private const val UNCONFINED_TASK_BIT = 1 shl 31
-
 internal abstract class DispatchedTask<in T>(
-    resumeMode: Int
+    @JvmField public var resumeMode: Int
 ) : SchedulerTask() {
-    private var _resumeMode: Int = resumeMode // can have UNCONFINED_TASK_BIT set
-
-    public var resumeMode: Int
-        get() = _resumeMode and UNCONFINED_TASK_BIT.inv()
-        set(value) { _resumeMode = value }
-
-    /**
-     * Set to `true` when this task comes from [Dispatchers.Unconfined] or from another dispatcher
-     * that returned `false` from [CoroutineDispatcher.isDispatchNeeded],
-     * but there was event loop running, so it was submitted into that event loop.
-     */
-    public var isUnconfinedTask: Boolean
-        get() = _resumeMode and UNCONFINED_TASK_BIT != 0
-        set(value) { _resumeMode = if (value) resumeMode or UNCONFINED_TASK_BIT else resumeMode }
-
     public abstract val delegate: Continuation<T>
 
     public abstract fun takeState(): Any?

@@ -72,7 +72,7 @@ internal class WindowDispatcher(private val window: Window) : CoroutineDispatche
     }
 }
 
-internal abstract class MessageQueue : Queue<Runnable>() {
+internal abstract class MessageQueue : ArrayQueue<Runnable>() {
     val yieldEvery = 16 // yield to JS event loop after this many processed messages
 
     private var scheduled = false
@@ -80,7 +80,7 @@ internal abstract class MessageQueue : Queue<Runnable>() {
     abstract fun schedule()
 
     fun enqueue(element: Runnable) {
-        add(element)
+        addLast(element)
         if (!scheduled) {
             scheduled = true
             schedule()
@@ -91,7 +91,7 @@ internal abstract class MessageQueue : Queue<Runnable>() {
         try {
             // limit number of processed messages
             repeat(yieldEvery) {
-                val element = poll() ?: return@process
+                val element = removeFirstOrNull() ?: return@process
                 element.run()
             }
         } finally {

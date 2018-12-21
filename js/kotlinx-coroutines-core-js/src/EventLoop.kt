@@ -4,23 +4,12 @@
 
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 internal actual fun createEventLoop(): EventLoop = UnconfinedEventLoop()
 
 internal class UnconfinedEventLoop : EventLoop() {
-    private val queue = Queue<Runnable>()
-
-    override val isEmpty: Boolean
-        get() = queue.isEmpty
-
-    override fun processNextEvent(): Long {
-        queue.poll()?.run()
-        return if (queue.isEmpty) Long.MAX_VALUE else 0L
-    }
-
-    override fun enqueue(task: Runnable): Boolean {
-        queue.add(task)
-        return true
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        throw UnsupportedOperationException("runBlocking event loop is not supported")
     }
 }
