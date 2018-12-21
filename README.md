@@ -5,7 +5,7 @@
 [![Download](https://api.bintray.com/packages/kotlin/kotlinx/kotlinx.coroutines/images/download.svg?version=1.1.0) ](https://bintray.com/kotlin/kotlinx/kotlinx.coroutines/1.1.0)
 
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
-This is a companion version for Kotlin `1.3.0` release.
+This is a companion version for Kotlin `1.3.11` release.
 
 **NOTE**: `0.30.2` was the last release with Kotlin 1.2 and experimental coroutines.
 See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
@@ -82,7 +82,7 @@ And make sure that you use the latest Kotlin version:
 
 ```xml
 <properties>
-    <kotlin.version>1.3.0</kotlin.version>
+    <kotlin.version>1.3.11</kotlin.version>
 </properties>
 ```
 
@@ -100,7 +100,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 buildscript {
-    ext.kotlin_version = '1.3.0'
+    ext.kotlin_version = '1.3.11'
 }
 ```
 
@@ -126,7 +126,7 @@ And make sure that you use the latest Kotlin version:
 
 ```groovy
 plugins {
-    kotlin("jvm") version "1.3.0"
+    kotlin("jvm") version "1.3.11"
 }
 ```
 
