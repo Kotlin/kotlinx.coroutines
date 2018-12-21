@@ -51,13 +51,15 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         return nextTime
     }
 
+    protected open val isEmpty: Boolean get() = isUnconfinedQueueEmpty
+
     protected open val nextTime: Long
         get() {
             val queue = unconfinedQueue ?: return Long.MAX_VALUE
             return if (queue.isEmpty) Long.MAX_VALUE else 0L
         }
 
-    protected fun processUnconfinedEvent(): Boolean {
+    public fun processUnconfinedEvent(): Boolean {
         val queue = unconfinedQueue ?: return false
         val task = queue.removeFirstOrNull() ?: return false
         task.run()
@@ -89,7 +91,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
 
     // May only be used from the event loop's thread
     public val isUnconfinedQueueEmpty: Boolean
-        get() = unconfinedQueue?.isEmpty ?: false
+        get() = unconfinedQueue?.isEmpty ?: true
 
     private fun delta(unconfined: Boolean) =
         if (unconfined) (1L shl 32) else 1L

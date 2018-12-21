@@ -58,9 +58,9 @@ private inline fun runUnconfinedEventLoop(
     eventLoop.incrementUseCount(unconfined = true)
     try {
         block()
-        while (eventLoop.processNextEvent() <= 0) {
+        while (true) {
             // break when all unconfined continuations where executed
-            if (eventLoop.isUnconfinedQueueEmpty) break
+            if (!eventLoop.processUnconfinedEvent()) break
         }
     } catch (e: Throwable) {
         /*

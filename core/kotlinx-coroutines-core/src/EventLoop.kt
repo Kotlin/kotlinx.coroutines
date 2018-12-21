@@ -44,7 +44,10 @@ internal abstract class EventLoopImplBase: EventLoop(), Delay {
     @Volatile
     private var isCompleted = false
 
-    protected val isQueueEmpty: Boolean get() {
+    override val isEmpty: Boolean get() {
+        if (!isUnconfinedQueueEmpty) return false
+        val delayed = _delayed.value
+        if (delayed != null && !delayed.isEmpty) return false
         val queue = _queue.value
         return when (queue) {
             null -> true

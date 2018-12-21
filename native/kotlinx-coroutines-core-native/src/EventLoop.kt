@@ -39,10 +39,10 @@ internal class EventLoopImpl: EventLoop(), Delay {
 
     private var isCompleted = false
 
-    override val isEmpty: Boolean
-        get() = isQueueEmpty && isDelayedEmpty
-
-    private val isQueueEmpty: Boolean get() {
+    override val isEmpty: Boolean get() {
+        if (!isUnconfinedQueueEmpty) return false
+        val delayed = _delayed.value
+        if (delayed != null && !delayed.isEmpty) return false
         val queue = _queue.value
         return when (queue) {
             null -> true
@@ -51,14 +51,16 @@ internal class EventLoopImpl: EventLoop(), Delay {
         }
     }
 
-    private val isDelayedEmpty: Boolean get() {
-        val delayed = _delayed.value
-        return delayed == null || delayed.isEmpty
-    }
-
-    private val nextTime: Long
+    protected override val nextTime: Long
         get() {
-            if (!isQueueEmpty) return 0
+            if (super.nextTime == 0L) return 0L
+            val queue = _queue.value
+            when {
+                queue === null -> {} // empty queue -- proceed
+                queue is Queue<*> -> if (!queue.isEmpty) return 0 // non-empty queue
+                queue === CLOSED_EMPTY -> return Long.MAX_VALUE // no more events -- closed
+                else -> return 0 // non-empty queue
+            }
             val delayed = _delayed.value ?: return Long.MAX_VALUE
             val nextDelayedTask = delayed.peek() ?: return Long.MAX_VALUE
             return (nextDelayedTask.nanoTime - nanoTime()).coerceAtLeast(0)
@@ -71,6 +73,8 @@ internal class EventLoopImpl: EventLoop(), Delay {
         DelayedRunnableTask(timeMillis, block).also { schedule(it) }
 
     override fun processNextEvent(): Long {
+        // unconfined events take priority
+        if (processUnconfinedEvent()) return nextTime
         // queue all delayed tasks that are due to be executed
         val delayed = _delayed.value
         if (delayed != null && !delayed.isEmpty) {
@@ -88,20 +92,20 @@ internal class EventLoopImpl: EventLoop(), Delay {
             }
         }
         // then process one event from queue
-        dequeue()?.let { runBlock(it) }
+        dequeue()?.run()
         return nextTime
     }
 
-    // returns true if it was successfully enqueued for execution in this event loop, false if got to default executor
-    override fun enqueue(task: Runnable): Boolean =
+    public final override fun dispatch(context: CoroutineContext, block: Runnable) = enqueue(block)
+
+    public fun enqueue(task: Runnable) {
         if (enqueueImpl(task)) {
             // todo: we should unpark only when this delayed task became first in the queue
             unpark()
-            true
         } else {
             DefaultExecutor.enqueue(task)
-            false
         }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun enqueueImpl(task: Runnable): Boolean {

@@ -39,9 +39,8 @@ public fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, bl
     val newContext: CoroutineContext
     if (contextInterceptor == null) {
         // create or use private event loop if no dispatcher is specified
-        eventLoop = ThreadLocalEventLoop.eventLoop.also {
-            newContext = GlobalScope.newCoroutineContext(context + it)
-        }
+        eventLoop = ThreadLocalEventLoop.eventLoop
+        newContext = GlobalScope.newCoroutineContext(context + eventLoop)
     } else {
         // See if context's interceptor is an event loop that we shall use (to support TestContext)
         // or take an existing thread-local event loop if present to avoid blocking it (but don't create one)

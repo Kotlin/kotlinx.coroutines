@@ -88,7 +88,7 @@ internal object DefaultExecutor : EventLoopImplBase(), Runnable {
             acknowledgeShutdownIfNeeded()
             timeSource.unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
-            if (!isQueueEmpty) thread // recreate thread if it is needed
+            if (!isEmpty) thread // recreate thread if it is needed
         }
     }
 
