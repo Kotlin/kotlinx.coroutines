@@ -78,7 +78,7 @@ class CoroutineSchedulerStressTest : TestBase() {
 
         finishLatch.await()
 
-        require(blockingThread!! !in observedThreads)
+        require(!observedThreads.containsKey(blockingThread!!))
         validateResults()
     }
 
