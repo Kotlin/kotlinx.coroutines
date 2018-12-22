@@ -31,85 +31,69 @@ Additionally, on Linux and Mac OS X you can use `kill -5 $pid` command in order 
 
 ### Example of usage
 
-Capabilities of this module can be demonstrated by the following example:
+Capabilities of this module can be demonstrated by the following example 
+(runnable code is [here](test/Example.kt)):
+
 ```kotlin
-class Computation {
-    public fun computeValue(): Deferred<String> = GlobalScope.async {
-        val firstPart = computeFirstPart()
-        val secondPart = computeSecondPart()
-
-        combineResults(firstPart, secondPart)
-    }
-
-    private suspend fun combineResults(firstPart: Deferred<String>, secondPart: Deferred<String>): String {
-        return firstPart.await() + secondPart.await()
-    }
-
-
-    private suspend fun CoroutineScope.computeFirstPart() = async {
-        delay(5000)
-        "4"
-    }
-
-    private suspend fun CoroutineScope.computeSecondPart() = async {
-        delay(5000)
-        "2"
-    }
+suspend fun computeValue(): String = coroutineScope {
+    val one = async { computeOne() }
+    val two = async { computeTwo() }
+    combineResults(one, two)
 }
 
-fun main(args: Array<String>) = runBlocking {
-    DebugProbes.install()
-    val computation = Computation()
-    val deferred = computation.computeValue()
+suspend fun combineResults(one: Deferred<String>, two: Deferred<String>): String =
+    one.await() + two.await()
 
+suspend fun computeOne(): String {
+    delay(5000)
+    return "4"
+}
+
+suspend fun computeTwo(): String {
+    delay(5000)
+    return "2"
+}
+
+fun main() = runBlocking {
+    DebugProbes.install()
+    val deferred = async { computeValue() }
     // Delay for some time
     delay(1000)
-
+    // Dump running coroutines
     DebugProbes.dumpCoroutines()
-
     println("\nDumping only deferred")
     DebugProbes.printJob(deferred)
 }
 ```
 
 Printed result will be:
+
 ```
 Coroutines dump 2018/11/12 21:44:02
 
-Coroutine "coroutine#2":DeferredCoroutine{Active}@1b26f7b2, state: SUSPENDED
+Coroutine "coroutine#2":DeferredCoroutine{Active}@289d1c02, state: SUSPENDED
 	at kotlinx.coroutines.DeferredCoroutine.await$suspendImpl(Builders.common.kt:99)
-	at Computation.combineResults(Example.kt:18)
-	at Computation$computeValue$1.invokeSuspend(Example.kt:14)
+	at ExampleKt.combineResults(Example.kt:11)
+	at ExampleKt$computeValue$2.invokeSuspend(Example.kt:7)
+	at ExampleKt$main$1$deferred$1.invokeSuspend(Example.kt:25)
 	(Coroutine creation stacktrace)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)
-	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)
-	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:109)
-	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:160)
-	at kotlinx.coroutines.BuildersKt__Builders_commonKt.async(Builders.common.kt:88)
-	at kotlinx.coroutines.BuildersKt.async(Unknown Source)
-	at kotlinx.coroutines.BuildersKt__Builders_commonKt.async$default(Builders.common.kt:81)
+	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)
 	at kotlinx.coroutines.BuildersKt.async$default(Unknown Source)
-	at Computation.computeValue(Example.kt:10)
-	at ExampleKt$main$1.invokeSuspend(Example.kt:36)
+	at ExampleKt$main$1.invokeSuspend(Example.kt:25)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)
-	at kotlinx.coroutines.DispatchedTask$DefaultImpls.run(Dispatched.kt:237)
-	at kotlinx.coroutines.DispatchedContinuation.run(Dispatched.kt:81)
-	at kotlinx.coroutines.EventLoopBase.processNextEvent(EventLoop.kt:123)
-	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:69)
-	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:45)
-	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
-	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:35)
+	at kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:233)
 	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
-	at ExampleKt.main(Example.kt:33)
+	at ExampleKt.main(Example.kt:23)
+	at ExampleKt.main(Example.kt)
 
 ... More coroutines here ...
 
 Dumping only deferred
 "coroutine#2":DeferredCoroutine{Active}, continuation is SUSPENDED at line kotlinx.coroutines.DeferredCoroutine.await$suspendImpl(Builders.common.kt:99)
-	"coroutine#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line Computation$computeFirstPart$2.invokeSuspend(Example.kt:23)
-	"coroutine#4":DeferredCoroutine{Active}, continuation is SUSPENDED at line Computation$computeSecondPart$2.invokeSuspend(Example.kt:28)
+			"coroutine#3":DeferredCoroutine{Active}, continuation is SUSPENDED at line ExampleKt.computeOne(Example.kt:14)
+		"coroutine#4":DeferredCoroutine{Active}, continuation is SUSPENDED at line ExampleKt.computeTwo(Example.kt:19)
 ```
-
 
 ### Status of the API
 
