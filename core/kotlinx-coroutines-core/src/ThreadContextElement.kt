@@ -40,7 +40,7 @@ import kotlin.coroutines.*
  * }
  *
  * // Usage
- * launch(UI + CoroutineName("Progress bar coroutine")) { ... }
+ * launch(Dispatchers.Main + CoroutineName("Progress bar coroutine")) { ... }
  * ```
  *
  * Every time this coroutine is resumed on a thread, UI thread name is updated to
@@ -90,7 +90,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  * println(myThreadLocal.get()) // Prints "null"
  * launch(Dispatchers.Default + myThreadLocal.asContextElement(value = "foo")) {
  *   println(myThreadLocal.get()) // Prints "foo"
- *   withContext(UI) {
+ *   withContext(Dispatchers.Main) {
  *     println(myThreadLocal.get()) // Prints "foo", but it's on UI thread
  *   }
  * }
@@ -101,7 +101,7 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
  *
  * ```
  * myThreadLocal.set("main")
- * withContext(UI) {
+ * withContext(Dispatchers.Main) {
  *   println(myThreadLocal.get()) // Prints "main"
  *   myThreadLocal.set("UI")
  * }

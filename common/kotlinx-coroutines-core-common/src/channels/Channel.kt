@@ -111,7 +111,7 @@ public interface SendChannel<in E> {
      *   events.offer(event)
      * }
      *
-     * val uiUpdater = launch(UI, parent = UILifecycle) {
+     * val uiUpdater = launch(Dispatchers.Main, parent = UILifecycle) {
      *    events.consume {}
      *    events.cancel()
      * }
