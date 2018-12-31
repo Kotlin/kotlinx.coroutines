@@ -163,7 +163,7 @@ public object GlobalScope : CoroutineScope {
  *      ... load some UI data ...
  *   }
  *
- *   withContext(UI) {
+ *   withContext(Dispatchers.Main) {
  *     doSomeWork()
  *     val result = data.await()
  *     display(result)
