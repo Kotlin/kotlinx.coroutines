@@ -6,10 +6,10 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
-import kotlin.jvm.*
 
 /**
  * Creates a new _supervisor_ job object in an active state.
@@ -56,18 +56,9 @@ private class SupervisorJobImpl(parent: Job?) : JobImpl(parent) {
     override fun childCancelled(cause: Throwable): Boolean = false
 }
 
-private class SupervisorCoroutine<R>(
-    parentContext: CoroutineContext,
-    @JvmField val uCont: Continuation<R>
-) : AbstractCoroutine<R>(parentContext, true) {
-    override val defaultResumeMode: Int get() = MODE_DIRECT
+private class SupervisorCoroutine<in T>(
+    context: CoroutineContext,
+    uCont: Continuation<T>
+) : ScopeCoroutine<T>(context, uCont) {
     override fun childCancelled(cause: Throwable): Boolean = false
-
-    @Suppress("UNCHECKED_CAST")
-    internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
-        if (state is CompletedExceptionally)
-            uCont.resumeUninterceptedWithExceptionMode(state.cause, mode)
-        else
-            uCont.resumeUninterceptedMode(state as R, mode)
-    }
 }
