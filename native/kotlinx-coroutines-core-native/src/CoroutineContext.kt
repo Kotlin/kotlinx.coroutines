@@ -8,7 +8,7 @@ import kotlin.coroutines.*
 import kotlinx.coroutines.internal.*
 
 private fun takeEventLoop(): EventLoopImpl =
-    ThreadLocalEventLoop.currentOrNull() as EventLoopImpl ?:
+    ThreadLocalEventLoop.currentOrNull() as? EventLoopImpl ?:
         error("There is no event loop. Use runBlocking { ... } to start one.")
 
 internal object DefaultExecutor : CoroutineDispatcher(), Delay {
