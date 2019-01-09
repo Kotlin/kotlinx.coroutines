@@ -42,15 +42,7 @@ public const val DEBUG_PROPERTY_VALUE_ON = "on"
 public const val DEBUG_PROPERTY_VALUE_OFF = "off"
 
 @JvmField
-internal val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
-    when (value) {
-        DEBUG_PROPERTY_VALUE_AUTO, null -> CoroutineId::class.java.desiredAssertionStatus()
-        DEBUG_PROPERTY_VALUE_ON, "" -> true
-        DEBUG_PROPERTY_VALUE_OFF -> false
-        else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
-    }
-}
-
+internal val DEBUG = true
 @JvmField
 internal val RECOVER_STACKTRACES = systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 

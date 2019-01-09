@@ -29,6 +29,50 @@ class ToStringTest : TestBase() {
         }
     }
 
+
+    private suspend fun CoroutineScope.launchNestedScopes(): Job {
+        return launch {
+            expect(1)
+            coroutineScope {
+                expect(2)
+                launchDelayed()
+
+                supervisorScope {
+                    expect(3)
+                    launchDelayed()
+                }
+            }
+        }
+    }
+
+    private fun CoroutineScope.launchDelayed(): Job {
+        return launch {
+            delay(Long.MAX_VALUE)
+        }
+    }
+
+    @Test
+    fun testPrintHierarchyWithScopes() = runBlocking {
+        val tab = '\t'
+        val expectedString = """
+          "coroutine":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchNestedScopes$2$1.invokeSuspend(ToStringTest.kt)
+          $tab"coroutine":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchDelayed$1.invokeSuspend(ToStringTest.kt)
+          $tab"coroutine":StandaloneCoroutine{Active}, continuation is SUSPENDED at line ToStringTest${'$'}launchDelayed$1.invokeSuspend(ToStringTest.kt)
+            """.trimIndent()
+
+        val job = launchNestedScopes()
+        try {
+            repeat(5) { yield() }
+            val expected = expectedString.trimStackTrace().trimPackage()
+            expect(4)
+            assertEquals(expected, DebugProbes.jobToString(job).trimEnd().trimStackTrace().trimPackage())
+            assertEquals(expected, DebugProbes.scopeToString(CoroutineScope(job)).trimEnd().trimStackTrace().trimPackage())
+        } finally {
+            finish(5)
+            job.cancelAndJoin()
+        }
+    }
+
     @Test
     fun testCompletingHierarchy() = runBlocking {
         val tab = '\t'
@@ -62,8 +106,7 @@ class ToStringTest : TestBase() {
         assertEquals(expected, DebugProbes.jobToString(root).trimEnd().trimStackTrace().trimPackage())
         assertEquals(expected, DebugProbes.scopeToString(CoroutineScope(root)).trimEnd().trimStackTrace().trimPackage())
 
-        root.cancel()
-        root.join()
+        root.cancelAndJoin()
         finish(7)
     }
 
