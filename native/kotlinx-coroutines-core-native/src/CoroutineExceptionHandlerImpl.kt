@@ -8,5 +8,5 @@ import kotlin.coroutines.*
 
 internal actual fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable) {
     // log exception
-    println(exception)
+    exception.printStackTrace()
 }
