@@ -30,18 +30,18 @@ dependencies {
         exclude group: 'com.android.support'
     }
 }
-
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL("https://developers.google.com/android/reference/")
-        // This is workaround for missing package list in Google API
-        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
-    }
-
-    afterEvaluate {
-        classpath += project.configurations.aar.files
-    }
-}
+//
+//tasks.withType(dokka.getClass()) {
+//    externalDocumentationLink {
+//        url = new URL("https://developers.google.com/android/reference/")
+//        // This is workaround for missing package list in Google API
+//        packageListUrl = projectDir.toPath().resolve("package.list").toUri().toURL()
+//    }
+//
+//    afterEvaluate {
+//        classpath += project.configurations.aar.files
+//    }
+//}
 
 class ExtractJars extends ArtifactTransform {
     @Override

@@ -28,8 +28,8 @@ test {
     reports.html.destination = file("$buildDir/reports/junit")
 }
 
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
-    }
-}
+//tasks.withType(dokka.getClass()) {
+//    externalDocumentationLink {
+//        url = new URL("http://www.reactive-streams.org/reactive-streams-$reactive_streams_version-javadoc/")
+//    }
+//}

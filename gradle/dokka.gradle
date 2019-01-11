@@ -46,7 +46,7 @@ if (platform == "jvm") {
     if (project.name == coroutines_core) {
         // Custom configuration for MPP modules
         dependencies {
-            dokkaStubs project(":js-stub") // so that JS library reference can resolve properly
+//            dokkaStubs project(":js-stub") // so that JS library reference can resolve properly
         }
         
         dokka {

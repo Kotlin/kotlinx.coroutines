@@ -7,8 +7,8 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxjava:2.1.9'
 }
 
-tasks.withType(dokka.getClass()) {
-    externalDocumentationLink {
-        url = new URL('http://reactivex.io/RxJava/javadoc/')
-    }
-}
+//tasks.withType(dokka.getClass()) {
+//    externalDocumentationLink {
+//        url = new URL('http://reactivex.io/RxJava/javadoc/')
+//    }
+//}
