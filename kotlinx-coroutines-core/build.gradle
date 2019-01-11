@@ -17,14 +17,10 @@ kotlin {
     configure(sourceSets) {
         def srcDir = name.endsWith('Main') ? 'src' : 'test'
         def platform = name[0..-5]
-
         kotlin.srcDir "$platform/$srcDir"
-
-//            if (!skipPublish.contains(project.name)) {
         languageSettings {
             progressiveMode = true
             experimentalAnnotations.each { useExperimentalAnnotation(it) }
-//                }
         }
     }
 

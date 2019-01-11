@@ -14,8 +14,8 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.0-alpha-3'
 }
 
-//tasks.withType(dokka.getClass()) {
-//    externalDocumentationLink {
-//        url = new URL("https://developer.android.com/reference/")
-//    }
-//}
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        url = new URL("https://developer.android.com/reference/")
+    }
+}

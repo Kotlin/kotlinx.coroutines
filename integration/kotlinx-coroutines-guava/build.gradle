@@ -8,8 +8,8 @@ dependencies {
     compile "com.google.guava:guava:$guava_version"
 }
 
-//tasks.withType(dokka.getClass()) {
-//    externalDocumentationLink {
-//        url = new URL("https://google.github.io/guava/releases/$guava_version/api/docs/")
-//    }
-//}
+tasks.withType(dokka.getClass()) {
+    externalDocumentationLink {
+        url = new URL("https://google.github.io/guava/releases/$guava_version/api/docs/")
+    }
+}

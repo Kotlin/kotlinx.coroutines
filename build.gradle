@@ -5,6 +5,23 @@ import org.jetbrains.kotlin.konan.target.HostManager
 
 apply from: "gradle/experimental.gradle"
 
+def coreModule = "kotlinx-coroutines-core"
+// Not applicable for Kotlin plugin
+def sourceless = ['kotlinx.coroutines', 'site']
+// Not published, without dokka etc.
+def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
+// Not published
+def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'android-unit-tests']
+
+static def platformOf(project) {
+    def name = project.name
+    if (name.endsWith("-js")) return "js"
+    if (name.endsWith("-common") || name.endsWith("-native")) {
+        throw IllegalStateException("$name platform is not supported")
+    }
+    return "jvm"
+}
+
 buildscript {
     ext.useKotlinSnapshot = rootProject.properties['kotlinSnapshot'] != null
     if (useKotlinSnapshot) {
@@ -37,17 +54,14 @@ buildscript {
     }
 }
 
-// Well, this is a strange way to extract a method
-def configureMultiplatform = { Project project ->
-    project.configure(project) {
-    }
-}
 allprojects {
     // the only place where HostManager could be instantiated
     project.ext.hostManager = new HostManager()
 }
 
 allprojects {
+    apply plugin: 'kotlinx-atomicfu'
+
     def deployVersion = properties['DeployVersion']
     if (deployVersion != null) version = deployVersion
     if (useKotlinSnapshot) {
@@ -69,124 +83,77 @@ allprojects {
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 
-    apply plugin: 'kotlinx-atomicfu'
+    if (projectName == "kotlinx.coroutines" || projectName == coreModule) return
 
-    if (it.name == "kotlinx.coroutines") return
+    // Add dependency to core source sets. Core is configured in kx-core/build.gradle
+    evaluationDependsOn(":$coreModule")
+    if (sourceless.contains(projectName)) return
 
-    def core = "kotlinx-coroutines-core"
-    if (it.name != core) {
-        evaluationDependsOn(":$core")
-        apply from: rootProject.file("gradle/compile-jvm-only.gradle")
-        dependencies {
-            compile project(":$core")
-            //the only way IDEA can resolve test classes
-            testCompile project(":$core").kotlin.targets.jvm.compilations.test.output.allOutputs
-        }
+    def platform = platformOf(it)
+    apply from: rootProject.file("gradle/compile-$platform-only.gradle")
+    
+    dependencies {
+        compile project(":$coreModule")
+        // the only way IDEA can resolve test classes
+        testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
+    }
 
-        sourceSets {
-            main.kotlin.srcDirs = ['src']
-            test.kotlin.srcDirs = ['test']
-            main.resources.srcDirs = ['resources']
-            test.resources.srcDirs = ['test-resources']
-        }
+    // Add experimental annotations to the project
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
+        kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
+                                           "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
+                                           "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
+                                           "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
+                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
+                                           "-progressive"]
+        // Binary compatibility support
+        kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
+    }
+}
 
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-            kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
-                                               "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
-                                               "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
-                                               "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                                               "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                                               "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
-                                               "-progressive"]
-            kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
-        }
+// Redefine source sets because we are not using 'kotlin/main/fqn' folder convention
+configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "benchmarks" && it.name != coreModule }) {
+    sourceSets {
+        main.kotlin.srcDirs = ['src']
+        test.kotlin.srcDirs = ['test']
+        main.resources.srcDirs = ['resources']
+        test.resources.srcDirs = ['test-resources']
 
     }
 }
 
+// TODO
+def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
+//def core_docs_url = "http://127.0.0.1:4000/kotlinx.coroutines/$coreModule/"
+def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
+
+configure(subprojects.findAll { !unpublished.contains(it.name) }) {
+    apply from: rootProject.file('gradle/dokka.gradle')
+    // TODO publication
+//    apply from: rootProject.file('gradle/publish-bintray.gradle')
+}
+
+configure(subprojects.findAll { !unpublished.contains(it.name) }) {
+    if (it.name != coreModule) {
+        dokka.dependsOn project(":$coreModule").dokka
+        tasks.withType(dokka.getClass()) {
+            externalDocumentationLink {
+                url = new URL(core_docs_url)
+                packageListUrl = new URL("file://$core_docs_file")
+            }
+        }
+    }
+
+    if (platformOf(it) == "jvm") {
+        dokkaJavadoc.dependsOn project(":$coreModule").dokka
+    }
+}
+
+
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
-// --------------- Configure sub-projects with Kotlin sources ---------------
-//
-//def sourceless = ['site']
-//
-//static def platformOf(project) {
-//    if (project.name.endsWith("-common")) return "common"
-//    if (project.name.endsWith("-js")) return "js"
-//    if (project.name.endsWith("-native")) return "native"
-//    return "jvm"
-//}
-//
-//static def platformLib(base, platform) {
-//    if (platform == "jvm") return base
-//    return "$base-$platform"
-//}
-
-//subprojects {
-//    if (useKotlinSnapshot) {
-//        repositories {
-//            maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-//        }
-//    }
-//    configurations.all {
-//        resolutionStrategy {
-//            eachDependency { DependencyResolveDetails details ->
-//                if (details.requested.group == 'org.jetbrains.kotlin') {
-//                    details.useVersion kotlin_version
-//                }
-//            }
-//        }
-//    }
-//}
-
-//configure(subprojects.findAll { !sourceless.contains(it.name)  }) {
-//    def platform = platformOf(it)
-//    apply from: rootProject.file("gradle/compile-${platform}.gradle")
-//}
-//
-//// --------------- Configure sub-projects that are part of the library ---------------
-//
-//def internal = sourceless + ['benchmarks', 'knit', 'stdlib-stubs', 'binary-compatibility-validator']
-//
-//// Reconfigure source sets to avoid long "src/main/kotlin/fqn"
-//configure(subprojects.findAll { !it.name.contains(sourceless) && it.name != "benchmarks" }) {
-//    def projectName = it.name
-//    sourceSets {
-//        main.kotlin.srcDirs = ['src']
-//        test.kotlin.srcDirs = ['test']
-//        // todo: do we still need this workaround?
-//        if (!projectName.endsWith("-native")) {
-//            main.resources.srcDirs = ['resources']
-//            test.resources.srcDirs = ['test-resources']
-//        }
-//    }
-//}
-//
-//// configure atomicfu
-//configure(subprojects.findAll { !internal.contains(it.name) }) {
-//    def platform = platformOf(it)
-//    apply from: rootProject.file("gradle/atomicfu-${platform}.gradle")
-//}
-//
-//// configure dependencies on core
-//configure(subprojects.findAll { !internal.contains(it.name) && it.name != 'kotlinx-coroutines-core-common'}) {
-//    def platform = platformOf(it)
-//    def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
-//
-//    if (it.name == coroutines_core) {
-//        dependencies {
-//            expectedBy project(':kotlinx-coroutines-core-common')
-//        }
-//    } else {
-//        dependencies {
-//            compile project(":$coroutines_core")
-//            //the only way IDEA can resolve test classes
-//            testCompile project(":$coroutines_core").sourceSets.test.output
-//        }
-//    }
-//}
-//
 //// --------------- Configure sub-projects that are published ---------------
 //
 //def unpublished = internal
@@ -199,39 +166,6 @@ println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompi
 //    apply from: rootProject.file('gradle/publish-bintray.gradle')
 //}
 //
-//configure(subprojects.findAll { !unpublished.contains(it.name) }) {
-//    def platform = platformOf(it)
-//    def coroutines_core = platformLib("kotlinx-coroutines-core", platform)
-//
-//    if (it.name != coroutines_core) {
-//        dokka.dependsOn project(":$coroutines_core").dokka
-//
-//        tasks.withType(dokka.getClass()) {
-//            externalDocumentationLink {
-//                url = new URL(core_docs_url)
-//                packageListUrl = new URL("file://$core_docs_file")
-//            }
-//        }
-//    }
-//
-//    if (platform == "jvm") {
-//        dokkaJavadoc.dependsOn project(":$coroutines_core").dokka
-//        // dump declarations from main JVM module for binary-compatibility-validator
-//        compileKotlin {
-//            kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
-//        }
-//    }
-//
-//
-//    tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-//        kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
-//                                           "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
-//                                           "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
-//                                           "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-//                                           "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-//                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
-//                                           "-progressive"]
-//    }
 //}
 //
 //// main deployment task

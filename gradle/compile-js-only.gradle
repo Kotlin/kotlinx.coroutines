@@ -1,0 +1,28 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+// Platform-specific configuration to compile JS modules
+
+apply plugin: 'kotlin2js'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+}
+
+tasks.withType(compileKotlin2Js.getClass()) {
+    kotlinOptions {
+        moduleKind = "umd"
+        sourceMap = true
+        metaInfo = true
+    }
+}
+
+compileKotlin2Js {
+    kotlinOptions {
+        // drop -js suffix from outputFile
+        def baseName = project.name - "-js"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
