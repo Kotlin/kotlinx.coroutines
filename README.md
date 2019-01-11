@@ -19,7 +19,7 @@ GlobalScope.launch {
 
 ## Modules
 
-* [common](common/README.md) &mdash; common coroutines across all platforms:
+* [common](kotlinx-coroutines-core/README.md) &mdash; common coroutines across all platforms:
   * `launch` and `async` coroutine builders;
   * `Job` and `Deferred` light-weight future with cancellation support;
   * `MainScope` for Android and UI applications.
@@ -29,12 +29,12 @@ GlobalScope.launch {
   * `coroutineScope` and `supervisorScope` scope builders;
   * `SupervisorJob` and `CoroutineExceptionHandler` for supervision of coroutines hierarchies;
   * `select` expression support and more.
-* [core](core/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
+* [core](kotlinx-coroutines-core/jvm/README.md) &mdash; Kotlin/JVM implementation of common coroutines with additional features:
   * `Dispatchers.IO` dispatcher for blocking coroutines;
   * `Executor.asCoroutineDispatcher()` extension, custom thread pools, and more.
-* [test](core/README.md) &mdash; test utilities for coroutines
+* [test](kotlinx-coroutines-test/README.md) &mdash; test utilities for coroutines
   * `Dispatchers.setMain` to override `Dispatchers.Main` in tests.
-* [debug](core/README.md) &mdash; debug utilities for coroutines.
+* [debug](kotlinx-coroutines-debug/README.md) &mdash; debug utilities for coroutines.
   * `DebugProbes` API to probe, keep track of, print and dump active coroutines.
 * [js](js/README.md) &mdash; Kotlin/JS implementation of common coroutines with `Promise` support.
 * [native](native/README.md) &mdash; Kotlin/Native implementation of common coroutines with `runBlocking` single-threaded event loop.
