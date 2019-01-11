@@ -19,7 +19,8 @@ kotlin {
         }
 
         nativeMain { dependsOn commonMain }
-        nativeTest { dependsOn nativeMain }
+        // Empty source set is required in order to have native tests task 
+        nativeTest {}
 
         if (!project.ext.ideaActive) {
             configure([linuxX64Main, macosX64Main, windowsX64Main, iosArm32Main, iosArm64Main, iosX64Main]) {

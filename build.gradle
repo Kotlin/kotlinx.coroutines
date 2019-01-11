@@ -154,21 +154,7 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 // Report Kotlin compiler version when building project
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
-//// --------------- Configure sub-projects that are published ---------------
-//
-//def unpublished = internal
-//
-//def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/"
-//def core_docs_file = "$projectDir/core/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
-//
-//configure(subprojects.findAll { !unpublished.contains(it.name) }) {
-//    apply from: rootProject.file('gradle/dokka.gradle')
-//    apply from: rootProject.file('gradle/publish-bintray.gradle')
-//}
-//
-//}
-//
-//// main deployment task
+// --------------- Configure sub-projects that are published ---------------
 //task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
 //
 //apply plugin: 'base'

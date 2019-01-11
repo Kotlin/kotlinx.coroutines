@@ -29,6 +29,7 @@ kotlin {
         }
     }
 }
+
 jvmTest {
     testLogging {
         showStandardStreams = true
