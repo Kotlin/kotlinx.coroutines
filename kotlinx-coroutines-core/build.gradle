@@ -71,7 +71,7 @@ jvmTest {
     systemProperty 'kotlinx.coroutines.scheduler.keep.alive.sec', '100000' // any unpark problem hangs test
 }
 
-task lockFreedomTest(type: Test, dependsOn: jvmTestClasses) {
+task lockFreedomTest(type: Test, dependsOn: compileTestKotlinJvm) {
     // TODO
 //    classpath = files(configurations.jvm.testRuntime,
 //            compileKotlinJvm.destinationDir, //clear, untransformed classes
@@ -80,20 +80,20 @@ task lockFreedomTest(type: Test, dependsOn: jvmTestClasses) {
     include '**/*LFTest.*'
 }
 
-//task jdk16Test(type: Test, dependsOn: [jvmTestClasses, checkJdk16]) {
+task jdk16Test(type: Test, dependsOn: [compileTestKotlinJvm, checkJdk16]) {
 //    executable = "$System.env.JDK_16/bin/java"
 //    exclude '**/*LinearizabilityTest.*'
 //    exclude '**/*LFTest.*'
 //    exclude '**/exceptions/**'
 //    exclude '**/ExceptionsGuideTest.*'
-//}
+}
 
 // Run these tests only during nightly stress test
-//jdk16Test.onlyIf { project.properties['stressTest'] != null }
+jdk16Test.onlyIf { project.properties['stressTest'] != null }
 
 // Always run those tests
-//task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
-//build.dependsOn moreTest
+task moreTest(dependsOn: [lockFreedomTest, jdk16Test])
+build.dependsOn moreTest
 
 task testsJar(type: Jar, dependsOn: jvmTestClasses) {
     classifier = 'tests'
