@@ -14,7 +14,7 @@ def distTag(version) {
     return "latest"
 }
 
-def npmTemplateDir = file("$projectDir/npm")
+def npmTemplateDir = file("$projectDir/js/npm")
 def npmDeployDir = file("$buildDir/npm")
 def npmDeployTag = distTag(version)
 
@@ -26,7 +26,7 @@ task preparePublishNpm(type: Copy) {
     from(npmTemplateDir) {
         expand (project.properties + [kotlinDependency: "\"kotlin\": \"$kotlin_version\""])
     }
-    from(sourceSets.main.output)
+    from(compileKotlinJs.destinationDir)
     into npmDeployDir
 }
 

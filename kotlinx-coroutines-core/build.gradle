@@ -8,6 +8,7 @@ apply from: rootProject.file("gradle/compile-jvm.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
 apply from: rootProject.file("gradle/compile-js.gradle")
 apply from: rootProject.file("gradle/compile-native.gradle")
+apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
 /*
  * All platform plugins and configuration magic happens here instead of build.gradle

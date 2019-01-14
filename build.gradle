@@ -155,8 +155,8 @@ configure(subprojects.findAll { !unpublished.contains(it.name) }) {
 println("Using Kotlin compiler version: $org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION")
 
 // --------------- Configure sub-projects that are published ---------------
-//task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
-//
-//apply plugin: 'base'
-//
-//clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }
+task deploy(dependsOn: getTasksByName("bintrayUpload", true) + getTasksByName("publishNpm", true))
+
+apply plugin: 'base'
+
+clean.dependsOn gradle.includedBuilds.collect { it.task(':clean') }

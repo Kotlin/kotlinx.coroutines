@@ -21,6 +21,9 @@ kotlin {
     }
 }
 
+// When source sets are configured
+apply from: rootProject.file('gradle/test-mocha-js.gradle')
+
 compileKotlinJs {
     kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
@@ -56,6 +59,3 @@ task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
 }
 
 npmInstall.dependsOn populateNodeModules
-
-apply from: rootProject.file('gradle/test-mocha-js.gradle')
-
