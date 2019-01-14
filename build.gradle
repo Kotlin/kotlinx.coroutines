@@ -8,7 +8,6 @@ apply from: "gradle/experimental.gradle"
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
 def sourceless = ['kotlinx.coroutines', 'site']
-// Not published, without dokka etc.
 def internal = sourceless + ['benchmarks', 'knit', 'js-stub', 'stdlib-stubs', 'binary-compatibility-validator']
 // Not published
 def unpublished = internal + ['kotlinx-coroutines-rx-example', 'example-frontend-js', 'android-unit-tests']
@@ -130,8 +129,7 @@ def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-co
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
     apply from: rootProject.file('gradle/dokka.gradle')
-    // TODO publication
-//    apply from: rootProject.file('gradle/publish-bintray.gradle')
+    apply from: rootProject.file('gradle/publish-bintray.gradle')
 }
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {
