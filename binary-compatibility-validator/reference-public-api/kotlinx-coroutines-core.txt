@@ -748,12 +748,14 @@ public final class kotlinx/coroutines/selects/SelectBuilder$DefaultImpls {
 	public static fun invoke (Lkotlinx/coroutines/selects/SelectBuilder;Lkotlinx/coroutines/selects/SelectClause2;Lkotlin/jvm/functions/Function2;)V
 }
 
-public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/coroutines/internal/LockFreeLinkedListHead, kotlin/coroutines/Continuation, kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
+public final class kotlinx/coroutines/selects/SelectBuilderImpl : kotlinx/coroutines/internal/LockFreeLinkedListHead, kotlin/coroutines/Continuation, kotlin/coroutines/jvm/internal/CoroutineStackFrame, kotlinx/coroutines/selects/SelectBuilder, kotlinx/coroutines/selects/SelectInstance {
 	public fun <init> (Lkotlin/coroutines/Continuation;)V
 	public fun disposeOnSelect (Lkotlinx/coroutines/DisposableHandle;)V
+	public fun getCallerFrame ()Lkotlin/coroutines/jvm/internal/CoroutineStackFrame;
 	public fun getCompletion ()Lkotlin/coroutines/Continuation;
 	public fun getContext ()Lkotlin/coroutines/CoroutineContext;
 	public final fun getResult ()Ljava/lang/Object;
+	public fun getStackTraceElement ()Ljava/lang/StackTraceElement;
 	public final fun handleBuilderException (Ljava/lang/Throwable;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause0;Lkotlin/jvm/functions/Function1;)V
 	public fun invoke (Lkotlinx/coroutines/selects/SelectClause1;Lkotlin/jvm/functions/Function2;)V

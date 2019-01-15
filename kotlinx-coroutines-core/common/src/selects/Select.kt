@@ -252,7 +252,11 @@ internal class SelectBuilderImpl<in R>(
     // Resumes in MODE_DIRECT
     override fun resumeWith(result: Result<R>) {
         doResume({ result.toState() }) {
-            uCont.resumeWith(result)
+            if (result.isFailure) {
+                uCont.resumeWithStackTrace(result.exceptionOrNull()!!)
+            } else {
+                uCont.resumeWith(result)
+            }
         }
     }
 
