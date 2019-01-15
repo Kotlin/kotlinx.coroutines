@@ -188,6 +188,34 @@ class StackTraceRecoveryTest : TestBase() {
         deferred.join()
     }
 
+    public class TrickyException() : Throwable() {
+        // To be sure ctor is never invoked
+        @Suppress("UNUSED", "UNUSED_PARAMETER")
+        private constructor(message: String, cause: Throwable): this() {
+            error("Should never be called")
+        }
+
+        override fun initCause(cause: Throwable?): Throwable {
+            error("Can't call initCause")
+        }
+    }
+
+    @Test
+    fun testThrowingInitCause() = runTest {
+        val deferred = async(NonCancellable) {
+            expect(2)
+            throw TrickyException()
+        }
+
+        try {
+            expect(1)
+            deferred.await()
+        } catch (e: TrickyException) {
+            assertNull(e.cause)
+            finish(3)
+        }
+    }
+
     private suspend fun outerScopedMethod(deferred: Deferred<Nothing>, vararg traces: String) = coroutineScope {
         innerMethod(deferred, *traces)
         assertTrue(true)
