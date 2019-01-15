@@ -7,6 +7,7 @@ package definitely.not.kotlinx.coroutines
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
+import kotlinx.coroutines.selects.*
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*
@@ -81,6 +82,48 @@ class SanitizedProbesTest : TestBase() {
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.testCoroutinesDump(SanitizedProbesTest.kt:56)"
         )
         deferred.cancelAndJoin()
+    }
+
+    @Test
+    fun testSelectBuilder() = runTest {
+        val selector = launchSelector()
+        expect(1)
+        yield()
+        expect(3)
+        verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@35fc6dc4, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
+                "\t(Coroutine creation stacktrace)\n" +
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
+
+            "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@1b68b9a4, state: SUSPENDED\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt:105)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1.invokeSuspend(SanitizedProbesTest.kt:143)\n" +
+                "\t(Coroutine creation stacktrace)\n" +
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
+                "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)\n" +
+                "\tat kotlinx.coroutines.BuildersKt.launch\$default(Unknown Source)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.launchSelector(SanitizedProbesTest.kt:100)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.access\$launchSelector(SanitizedProbesTest.kt:16)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testSelectBuilder\$1.invokeSuspend(SanitizedProbesTest.kt:89)\n" +
+                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n" +
+                "\tat kotlinx.coroutines.DispatchedTask.run(Dispatched.kt:233)\n" +
+                "\tat kotlinx.coroutines.TestBase.runTest\$default(TestBase.kt:154)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest.testSelectBuilder(SanitizedProbesTest.kt:88)")
+        finish(4)
+        selector.cancelAndJoin()
+    }
+
+    private fun CoroutineScope.launchSelector(): Job {
+        val job = CompletableDeferred(Unit)
+        return launch {
+            select<Int> {
+                job.onJoin {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                    1
+                }
+
+            }
+        }
     }
 
     private fun CoroutineScope.createActiveDeferred(): Deferred<*> = async {

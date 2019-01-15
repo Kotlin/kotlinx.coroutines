@@ -197,7 +197,12 @@ private val RESUMED: Any = Symbol("RESUMED")
 internal class SelectBuilderImpl<in R>(
     private val uCont: Continuation<R> // unintercepted delegate continuation
 ) : LockFreeLinkedListHead(), SelectBuilder<R>,
-    SelectInstance<R>, Continuation<R> {
+    SelectInstance<R>, Continuation<R>, CoroutineStackFrame {
+    override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    override fun getStackTraceElement(): StackTraceElement? = null
+
     // selection state is "this" (list of nodes) initially and is replaced by idempotent marker (or null) when selected
     private val _state = atomic<Any?>(this)
 
