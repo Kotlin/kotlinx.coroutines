@@ -35,7 +35,7 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
             ctor = { e -> runCatching { constructor.newInstance(e) as E }.getOrNull() }
             break
         } else if (parameters.isEmpty()) {
-            ctor = { e -> runCatching { constructor.newInstance() as E }.getOrNull()?.also { it.initCause(e) } }
+            ctor = { e -> runCatching { (constructor.newInstance() as E).also { it.initCause(e) } }.getOrNull() }
             break
         }
     }
