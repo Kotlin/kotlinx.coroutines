@@ -343,7 +343,7 @@ public interface ChannelIterator<out E> {
  *
  * * When `capacity` is positive, but less than [UNLIMITED] -- it creates array-based channel with given capacity.
  *   This channel has an array buffer of a fixed `capacity`.
- *   Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
+ *   Sender suspends only when buffer is full and receiver suspends only when buffer is empty.
  */
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
