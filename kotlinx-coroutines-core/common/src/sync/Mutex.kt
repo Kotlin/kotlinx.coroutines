@@ -100,7 +100,8 @@ public fun Mutex(locked: Boolean = false): Mutex =
 /**
  * Executes the given [action] under this mutex's lock.
  *
- * @param owner Optional owner token for debugging.
+ * @param owner Optional owner token for debugging. When `owner` is specified (non-null value) and this mutex
+ *        is already locked with the same token (same identity), this function throws [IllegalStateException].
  *
  * @return the return value of the action.
  */
