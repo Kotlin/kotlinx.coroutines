@@ -61,4 +61,22 @@ class ActorLazyTest : TestBase() {
         assertThat(actor.isClosedForSend, IsEqual(true))
         finish(6)
     }
+
+    @Test
+    fun testCloseFreshActor() = runTest {
+        val job = launch {
+            expect(2)
+            val actor = actor<Int>(start = CoroutineStart.LAZY) {
+                expect(3)
+                for (i in channel) { }
+                expect(4)
+            }
+
+            actor.close()
+        }
+
+        expect(1)
+        job.join()
+        finish(5)
+    }
 }
