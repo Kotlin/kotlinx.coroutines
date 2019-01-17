@@ -156,6 +156,11 @@ private class LazyActorCoroutine<E>(
         return super.offer(element)
     }
 
+    override fun close(cause: Throwable?): Boolean {
+        start()
+        return super.close(cause)
+    }
+
     override val onSend: SelectClause2<E, SendChannel<E>>
         get() = this
 

@@ -169,4 +169,16 @@ class ActorTest(private val capacity: Int) : TestBase() {
         parent.join()
         finish(2)
     }
+
+    @Test
+    fun testCloseFreshActor() = runTest {
+        for (start in CoroutineStart.values()) {
+            val job = launch {
+                val actor = actor<Int>(start = start) { for (i in channel) {} }
+                actor.close()
+            }
+
+            job.join()
+        }
+    }
 }
