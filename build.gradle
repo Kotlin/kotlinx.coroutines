@@ -3,7 +3,7 @@
  */
 import org.jetbrains.kotlin.konan.target.HostManager
 
-apply from: "gradle/experimental.gradle"
+apply from: rootProject.file("gradle/experimental.gradle")
 
 def coreModule = "kotlinx-coroutines-core"
 // Not applicable for Kotlin plugin
@@ -89,7 +89,7 @@ allprojects {
     if (sourceless.contains(projectName)) return
 
     def platform = platformOf(it)
-    apply from: rootProject.file("gradle/compile-$platform-only.gradle")
+    apply from: rootProject.file("gradle/compile-${platform}.gradle")
     
     dependencies {
         compile project(":$coreModule")
@@ -97,7 +97,6 @@ allprojects {
         testCompile project(":$coreModule").kotlin.targets.jvm.compilations.test.output.allOutputs
     }
 
-    // Add experimental annotations to the project
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
         kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
                                            "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",

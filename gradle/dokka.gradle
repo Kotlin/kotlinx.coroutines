@@ -77,7 +77,9 @@ if (project.name == "kotlinx-coroutines-core") {
             platforms = ['Native']
         }
         doFirst {
-            classpath = project.configurations.dokkaStubs.files + project.configurations.jvmCompileClasspath.files + project.kotlin.targets.jvm.compilations.main.output.allOutputs
+            classpath = project.configurations.dokkaStubs.files +
+                    project.configurations.jvmCompileClasspath.files +
+                    project.kotlin.targets.jvm.compilations.main.output.allOutputs
         }
     }
 }

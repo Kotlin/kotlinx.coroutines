@@ -4,10 +4,10 @@
 
 apply plugin: 'kotlin-multiplatform'
 apply from: rootProject.file("gradle/targets.gradle")
-apply from: rootProject.file("gradle/compile-jvm.gradle")
+apply from: rootProject.file("gradle/compile-jvm-multiplatform.gradle")
 apply from: rootProject.file("gradle/compile-common.gradle")
-apply from: rootProject.file("gradle/compile-js.gradle")
-apply from: rootProject.file("gradle/compile-native.gradle")
+apply from: rootProject.file("gradle/compile-js-multiplatform.gradle")
+apply from: rootProject.file("gradle/compile-native-multiplatform.gradle")
 apply from: rootProject.file('gradle/publish-npm-js.gradle')
 
 /*
@@ -29,7 +29,6 @@ kotlin {
         def targetName = it.name
         compilations.all { compilation ->
             def compileTask = tasks.getByName(compilation.compileKotlinTaskName)
-            compileTask.kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=" + experimentalAnnotations.join(",")]
             // binary compatibility support
             if (targetName.contains("jvm") && compilation.compilationName == "main") {
                 compileTask.kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]

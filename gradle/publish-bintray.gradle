@@ -47,7 +47,6 @@ def configureTransitiveDependencies = { Project project, Publication publication
                     def artifactId = node.text()
                     if (!artifactId.endsWith("native")) return
 
-                    // remove [-native]
                     switch (project.name) {
                         case 'metadata':
                             node.setValue("${artifactId[0..-8]}-common")
