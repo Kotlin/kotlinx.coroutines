@@ -48,16 +48,22 @@ if (project.name == "kotlinx-coroutines-core") {
     // Custom configuration for MPP modules
     dependencies {
         dokkaStubs project(":js-stub") // so that JS library reference can resolve properly
+        dokkaStubs project(":kotlinx-coroutines-core")
     }
 
     dokka {
         kotlinTasks { [] }
         suppressedModifiers = ['actual']
-        // map for JS, Native, and Common sources
         makeLinkMapping(it, projectDir)
-        makeLinkMapping(it, rootProject.file("$project.name"))
+        makeLinkMapping(it, project.file("js"))
+        makeLinkMapping(it, project.file("jvm"))
+        makeLinkMapping(it, project.file("native"))
+        makeLinkMapping(it, project.file("common"))
         // source roots
         impliedPlatforms = ['JVM', 'JS', 'Native']
+        sourceRoot {
+            path = rootProject.file("$project.name/common/src")
+        }
         sourceRoot {
             path = rootProject.file("$project.name/jvm/src")
             platforms = ['JVM']
@@ -70,8 +76,8 @@ if (project.name == "kotlinx-coroutines-core") {
             path = rootProject.file("$project.name/native/src")
             platforms = ['Native']
         }
-        sourceRoot {
-            path = rootProject.file("$project.name/common/src")
+        doFirst {
+            classpath = project.configurations.dokkaStubs.files + project.configurations.jvmCompileClasspath.files + project.kotlin.targets.jvm.compilations.main.output.allOutputs
         }
     }
 }

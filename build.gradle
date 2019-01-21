@@ -122,7 +122,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "ben
     }
 }
 
-// TODO
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
 //def core_docs_url = "http://127.0.0.1:4000/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
