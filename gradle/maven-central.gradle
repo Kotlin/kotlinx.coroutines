@@ -34,12 +34,4 @@ project.ext.configureMavenCentralMetadata = {
     root.appendNode('description', 'Coroutines support libraries for Kotlin')
     root.appendNode('url', 'https://github.com/Kotlin/kotlinx.coroutines')
     root.children().last() + pomConfig
-
-    def dependenciesNode = asNode().getAt("dependencies")[0]
-    if (dependenciesNode != null) {
-        def dependencyNode = dependenciesNode.appendNode('dependency')
-        dependencyNode.appendNode('groupId', "$group")
-        dependencyNode.appendNode('artifactId', "$project.name")
-        dependencyNode.appendNode('version', "$project.version")
-    }
 }

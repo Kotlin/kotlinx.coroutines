@@ -18,4 +18,4 @@ internal actual fun <E> subscriberList(): MutableList<E> = CopyOnWriteList<E>()
 internal actual fun <E> identitySet(expectedSize: Int): MutableSet<E> = HashSet()
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias SharedImmutable = kotlin.native.SharedImmutable
+internal actual typealias SharedImmutable = kotlin.native.concurrent.SharedImmutable

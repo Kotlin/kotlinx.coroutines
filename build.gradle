@@ -98,13 +98,8 @@ allprojects {
     }
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile).all {
-        kotlinOptions.freeCompilerArgs += ["-Xuse-experimental=kotlin.Experimental",
-                                           "-Xuse-experimental=kotlin.experimental.ExperimentalTypeInference",
-                                           "-Xuse-experimental=kotlin.ExperimentalMultiplatform",
-                                           "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                                           "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi",
-                                           "-Xuse-experimental=kotlinx.coroutines.InternalCoroutinesApi",
-                                           "-progressive"]
+        kotlinOptions.freeCompilerArgs += experimentalAnnotations.collect { "-Xuse-experimental=" + it }
+        kotlinOptions.freeCompilerArgs += "-progressive"
         // Binary compatibility support
         kotlinOptions.freeCompilerArgs += ["-Xdump-declarations-to=${buildDir}/visibilities.json"]
     }
@@ -122,7 +117,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "ben
 }
 
 def core_docs_url = "https://kotlin.github.io/kotlinx.coroutines/$coreModule/"
-//def core_docs_url = "http://127.0.0.1:4000/kotlinx.coroutines/$coreModule/"
 def core_docs_file = "$projectDir/kotlinx-coroutines-core/build/dokka/kotlinx-coroutines-core/package-list"
 
 configure(subprojects.findAll { !unpublished.contains(it.name) }) {

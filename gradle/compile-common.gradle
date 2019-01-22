@@ -4,7 +4,7 @@
 
 kotlin.sourceSets {
     commonMain.dependencies {
-        api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-common', version: kotlin_version
+        api "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
         api "org.jetbrains.kotlinx:atomicfu-common:$atomicFU_version"
     }
 
