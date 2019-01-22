@@ -16,7 +16,7 @@ class CancellableContinuationJvmTest : TestBase() {
     private suspend fun checkToString() {
         suspendCancellableCoroutine<Unit> {
             it.resume(Unit)
-            assertTrue(it.toString().contains("kotlinx/coroutines/CancellableContinuationJvmTest.checkToString(CancellableContinuationJvmTest.kt"))
+            assertTrue(it.toString().contains("kotlinx.coroutines.CancellableContinuationJvmTest.checkToString(CancellableContinuationJvmTest.kt"))
         }
     }
 }
