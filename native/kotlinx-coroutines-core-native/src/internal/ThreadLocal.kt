@@ -6,7 +6,7 @@ package kotlinx.coroutines.internal
 import kotlin.native.concurrent.*
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
-internal actual typealias NativeThreadLocal = kotlin.native.ThreadLocal
+internal actual typealias NativeThreadLocal = kotlin.native.concurrent.ThreadLocal
 
 internal actual class CommonThreadLocal<T> actual constructor() {
     private var value: T? = null

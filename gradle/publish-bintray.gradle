@@ -117,10 +117,7 @@ bintrayUpload.doFirst {
 if (!isNative()) {
     afterEvaluate {
         publishing.publications.each { pub ->
-            pub.gradleModuleMetadataFile = null
-            tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
-                onlyIf { false }
-            }
+            pub.moduleDescriptorGenerator = null
         }
     }
 }
