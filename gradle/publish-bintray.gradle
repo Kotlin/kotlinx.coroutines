@@ -119,7 +119,7 @@ publishing {
 
 private void disableMetadataPublicationKotlinJvm() {
     publishing.publications.each { pub ->
-        pub.gradleModuleMetadataFile = null
+        pub.moduleDescriptorGenerator = null
         tasks.matching { it.name == "generateMetadataFileFor${pub.name.capitalize()}Publication" }.all {
             onlyIf { false }
         }
@@ -133,7 +133,7 @@ private void disableMetadataPublication() {
         if (publication != null) {
             publication.artifact stubJavadoc
             if (target.platformType.name != 'native') {
-                publication.gradleModuleMetadataFile = null
+                publication.moduleDescriptorGenerator = null
                 tasks.matching { it.name == "generateMetadataFileFor${name.capitalize()}Publication" }.all {
                     onlyIf { false }
                 }
