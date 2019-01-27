@@ -32,6 +32,7 @@ buildscript {
     }
     repositories {
         jcenter()
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
         maven { url "https://kotlin.bintray.com/kotlinx" }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
@@ -78,6 +79,7 @@ allprojects {
             google()
         }
         jcenter()
+        maven { url "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/id:1907319/artifacts/content/maven" }
         maven { url "https://kotlin.bintray.com/kotlin-dev" }
         maven { url "https://kotlin.bintray.com/kotlin-eap" }
         maven { url "https://kotlin.bintray.com/kotlinx" }

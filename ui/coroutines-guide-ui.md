@@ -165,7 +165,7 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 `app/build.gradle` file:
 
 ```groovy
-implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.0"
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1"
 ```
 
 You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
@@ -659,7 +659,7 @@ As you can see, execution immediately continues after [launch], while the corout
 for execution later. All UI dispatchers in `kotlinx.coroutines` are implemented this way. Why so? 
 
 Basically, the choice here is between "JS-style" asynchronous approach (async actions
-are always postponed to be executed later in the even dispatch thread) and "C#-style" approach
+are always postponed to be executed later in the event dispatch thread) and "C#-style" approach
 (async actions are executed in the invoker thread until the first suspension point).
 While, C# approach seems to be more efficient, it ends up with recommendations like
 "use `yield` if you need to ....". This is error-prone. JS-style approach is more consistent

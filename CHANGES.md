@@ -1,5 +1,12 @@
 # Change log for kotlinx.coroutines
 
+## Version 1.1.1
+
+* Maintenance release, no changes in the codebase
+* Kotlin is updated to 1.3.20
+* Gradle is updated to 4.10
+* Native module is published with Gradle metadata v0.4 
+
 ## Version 1.1.0
 
 * Kotlin version updated to 1.3.11.
