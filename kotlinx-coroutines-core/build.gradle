@@ -46,6 +46,8 @@ kotlin.sourceSets {
     jvmTest.dependencies {
         api "com.devexperts.lincheck:lincheck:$lincheck_version"
         api "com.esotericsoftware:kryo:4.0.0"
+
+        implementation project (":android-unit-tests")
     }
 }
 

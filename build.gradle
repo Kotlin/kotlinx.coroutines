@@ -133,7 +133,6 @@ configure(subprojects.findAll { !sourceless.contains(it.name) && it.name != "ben
         test.kotlin.srcDirs = ['test']
         main.resources.srcDirs = ['resources']
         test.resources.srcDirs = ['test-resources']
-
     }
 }
 
