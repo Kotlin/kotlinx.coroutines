@@ -9,19 +9,17 @@ task installDependenciesMochaNode(type: NpmTask, dependsOn: [npmInstall]) {
             "mocha@$mocha_version",
             "source-map-support@$source_map_support_version",
             '--no-save']
-    if (project.hasProperty("teamcity")) args += [
-            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
+    if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
 // todo: use atomicfu-transformed test files here (not critical)
-task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDependenciesMochaNode]) {
+task testMochaNode(type: NodeTask, dependsOn: [compileTestKotlinJs, installDependenciesMochaNode]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register']
+    args = [compileTestKotlinJs.outputFile, '--require', 'source-map-support/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
-    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
-test.dependsOn testMochaNode
+jsTest.dependsOn testMochaNode
 
 // -- Testing with Mocha under headless Chrome
 
@@ -38,7 +36,7 @@ task installDependenciesMochaChrome(type: NpmTask, dependsOn: [npmInstall]) {
 
 def mochaChromeTestPage = file("$buildDir/test-page.html")
 
-task prepareMochaChrome(dependsOn: [compileTestKotlin2Js, installDependenciesMochaChrome]) {
+task prepareMochaChrome(dependsOn: [compileTestKotlinJs, installDependenciesMochaChrome]) {
     outputs.file(mochaChromeTestPage)
 }
 
@@ -56,8 +54,8 @@ prepareMochaChrome.doLast {
         <script>mocha.setup('bdd');</script>
         <script src="$node.nodeModulesDir/node_modules/kotlin/kotlin.js"></script>
         <script src="$node.nodeModulesDir/node_modules/kotlin-test/kotlin-test.js"></script>
-        <script src="$compileKotlin2Js.outputFile"></script>
-        <script src="$compileTestKotlin2Js.outputFile"></script>
+        <script src="$compileKotlinJs.outputFile"></script>
+        <script src="$compileTestKotlinJs.outputFile"></script>
         <script>mocha.run();</script>
         </body>
         </html>
@@ -66,13 +64,12 @@ prepareMochaChrome.doLast {
 
 task testMochaChrome(type: NodeTask, dependsOn: prepareMochaChrome) {
     script = file("$node.nodeModulesDir/node_modules/mocha-headless-chrome/bin/start")
-    args = [compileTestKotlin2Js.outputFile, '--file', mochaChromeTestPage]
+    args = [compileTestKotlinJs.outputFile, '--file', mochaChromeTestPage]
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
-    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
 // todo: Commented out because mocha-headless-chrome does not work on TeamCity
-//test.dependsOn testMochaChrome
+//jsTest.dependsOn testMochaChrome
 
 // -- Testing with Mocha under jsdom
 
@@ -83,16 +80,14 @@ task installDependenciesMochaJsdom(type: NpmTask, dependsOn: [npmInstall]) {
             'jsdom-global',
             "source-map-support@$source_map_support_version",
             '--no-save']
-    if (project.hasProperty("teamcity")) args += [
-            "mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
+    if (project.hasProperty("teamcity")) args += ["mocha-teamcity-reporter@$mocha_teamcity_reporter_version"]
 }
 
-task testMochaJsdom(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDependenciesMochaJsdom]) {
+task testMochaJsdom(type: NodeTask, dependsOn: [compileTestKotlinJs, installDependenciesMochaJsdom]) {
     script = file("$node.nodeModulesDir/node_modules/mocha/bin/mocha")
-    args = [compileTestKotlin2Js.outputFile, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
+    args = [compileTestKotlinJs.outputFile, '--require', 'source-map-support/register', '--require', 'jsdom-global/register']
     if (project.hasProperty("teamcity")) args += ['--reporter', 'mocha-teamcity-reporter']
-    if (project.hasProperty("mochaTests")) args += ['--grep', "$mochaTests"]
 }
 
-test.dependsOn testMochaJsdom
+jsTest.dependsOn testMochaJsdom
 

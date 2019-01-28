@@ -1,6 +1,6 @@
-# Module kotlinx-coroutines-core-js
+# Module kotlinx-coroutines-core
 
-Core primitives to work with coroutines on Kotlin/JS.
+Core primitives to work with coroutines, available on all platforms.
 
 Coroutine builder functions:
 
@@ -9,12 +9,13 @@ Coroutine builder functions:
 | [launch]      | [Job]         | [CoroutineScope] | Launches coroutine that does not have any result 
 | [async]       | [Deferred]    | [CoroutineScope] | Returns a single value with the future result
 | [produce][kotlinx.coroutines.channels.produce]     | [ReceiveChannel][kotlinx.coroutines.channels.ReceiveChannel] | [ProducerScope][kotlinx.coroutines.channels.ProducerScope]  | Produces a stream of elements
+| [runBlocking] | `T`           | [CoroutineScope] | Blocks the thread while the coroutine runs
 
 Coroutine dispatchers implementing [CoroutineDispatcher]:
  
 | **Name**                    | **Description**
 | --------------------------- | ---------------
-| [Dispatchers.Default]       | Posts execution to JS event loop
+| [Dispatchers.Default]       | Confines coroutine execution to a shared pool of background threads
 | [Dispatchers.Unconfined]    | Does not confine coroutine execution in any way
 
 More context elements:
@@ -59,6 +60,34 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 | [Mutex][kotlinx.coroutines.sync.Mutex]          | [lock][kotlinx.coroutines.sync.Mutex.lock]                            | [onLock][kotlinx.coroutines.sync.Mutex.onLock]                   | [tryLock][kotlinx.coroutines.sync.Mutex.tryLock]
 | none            | [delay]                                        | [onTimeout][kotlinx.coroutines.selects.SelectBuilder.onTimeout]                   | none
 
+# Package kotlinx.coroutines
+
+General-purpose coroutine builders, contexts, and helper functions.
+
+# Package kotlinx.coroutines.sync
+
+Synchronization primitives (mutex).
+
+# Package kotlinx.coroutines.channels
+
+Channels -- non-blocking primitives for communicating a stream of elements between coroutines.
+
+# Package kotlinx.coroutines.selects
+
+Select expression to perform multiple suspending operations simultaneously until one of them succeeds.
+
+# Package kotlinx.coroutines.intrinsics
+
+Low-level primitives for finer-grained control of coroutines.
+
+# Package kotlinx.coroutines.timeunit
+
+Optional time unit support for multiplatform projects.
+
+# Package kotlinx.coroutines.test
+
+Components to ease writing unit-tests for code that contains coroutines with delays and timeouts.
+
 <!--- MODULE kotlinx-coroutines-core -->
 <!--- INDEX kotlinx.coroutines -->
 [launch]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html
@@ -66,6 +95,7 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 [CoroutineScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-scope/index.html
 [async]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html
 [Deferred]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/index.html
+[runBlocking]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/run-blocking.html
 [CoroutineDispatcher]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-dispatcher/index.html
 [Dispatchers.Default]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 [Dispatchers.Unconfined]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-unconfined.html
@@ -106,4 +136,5 @@ helper function. [NonCancellable] job object is provided to suppress cancellatio
 <!--- INDEX kotlinx.coroutines.selects -->
 [kotlinx.coroutines.selects.select]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/select.html
 [kotlinx.coroutines.selects.SelectBuilder.onTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.selects/-select-builder/on-timeout.html
+<!--- INDEX kotlinx.coroutines.test -->
 <!--- END -->

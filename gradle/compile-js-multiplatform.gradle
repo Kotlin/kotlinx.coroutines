@@ -1,0 +1,61 @@
+/*
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ */
+
+apply from: rootProject.file('gradle/node-js.gradle')
+
+kotlin {
+    targets {
+        fromPreset(presets.js, 'js')
+    }
+
+    sourceSets {
+        jsMain.dependencies {
+            api group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-js', version: kotlin_version
+            api "org.jetbrains.kotlinx:atomicfu-js:$atomicFU_version"
+        }
+
+        jsTest.dependencies {
+            api "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+        }
+    }
+}
+
+// When source sets are configured
+apply from: rootProject.file('gradle/test-mocha-js.gradle')
+
+compileKotlinJs {
+    kotlinOptions.metaInfo = true
+    kotlinOptions.sourceMap = true
+    kotlinOptions.moduleKind = 'umd'
+
+    kotlinOptions {
+        // drop -js suffix from outputFile
+        def baseName = project.name - "-js"
+        outputFile = new File(outputFile.parent, baseName + ".js")
+    }
+}
+
+compileTestKotlinJs {
+    kotlinOptions.metaInfo = true
+    kotlinOptions.sourceMap = true
+    kotlinOptions.moduleKind = 'umd'
+}
+
+task populateNodeModules(type: Copy, dependsOn: compileTestKotlinJs) {
+    from compileKotlinJs.destinationDir
+    into "$node.nodeModulesDir/node_modules"
+
+    def configuration = configurations.jsTestRuntimeClasspath
+    from(files {
+        configuration.collect { File file ->
+            file.name.endsWith(".jar") ?
+                    zipTree(file.absolutePath).matching {
+                        include '*.js'
+                        include '*.js.map'
+                    } : files()
+        }
+    }.builtBy(configuration))
+}
+
+npmInstall.dependsOn populateNodeModules

@@ -3,7 +3,6 @@
  */
 
 package kotlinx.coroutines.internal
-import kotlin.native.concurrent.*
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")
 internal actual typealias NativeThreadLocal = kotlin.native.concurrent.ThreadLocal
