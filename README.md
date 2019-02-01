@@ -57,6 +57,7 @@ GlobalScope.launch {
   * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
+  * [Debugging capabilities in kotlinx.coroutines](docs/debugging.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
