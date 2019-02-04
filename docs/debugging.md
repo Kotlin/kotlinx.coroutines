@@ -7,6 +7,7 @@
 * [Stacktrace recovery](#stacktrace-recovery)
   * [Stacktrace recovery machinery](#stacktrace-recovery-machinery)
 * [Debug agent](#debug-agent)
+  * [Debug agent and Android](#debug-agent-and-android)
 
 <!--- END_TOC -->
 
@@ -32,7 +33,7 @@ Stacktrace recovery is another useful feature of debug mode. It is enabled by de
 but can be separately disabled by setting `kotlinx.coroutines.stacktrace.recovery` system property to `false`.
 
 Stacktrace recovery tries to knit asynchronous exception stacktrace with a stacktrace of the receiver by copying it, providing
-not only information where an exception was thrown, but also where it was asynchronously rethrown or caught .
+not only information where an exception was thrown, but also where it was asynchronously rethrown or caught.
 
 It is easy to demonstrate with actual stacktraces of the same program that awaits asynchronous operation in `main` function:
 
