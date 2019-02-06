@@ -15,8 +15,9 @@ public interface CompletableJob : Job {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      *
-     * Note, that if this job has children, then it transitions into _completing_ state and becomes _complete_
-     * once all its children are _complete_. See [Job] for details.
+     * This function transitions this job into _completed- state if it was not completed or cancelled yet.
+     * However, that if this job has children, then it transitions into _completing_ state and becomes _complete_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun complete(): Boolean
 
@@ -25,6 +26,10 @@ public interface CompletableJob : Job {
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
+     *
+     * This function transitions this job into _cancelled_ state if it was not completed or cancelled yet.
+     * However, that if this job has children, then it transitions into _cancelling_ state and becomes _cancelled_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }

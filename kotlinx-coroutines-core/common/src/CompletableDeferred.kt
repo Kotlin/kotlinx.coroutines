@@ -26,8 +26,9 @@ public interface CompletableDeferred<T> : Deferred<T> {
      *
      * Repeated invocations of this function have no effect and always produce `false`.
      *
-     * Note, that if this deferred has children, then it transitions into _completing_ state and becomes _complete_
-     * once all its children are _complete_. See [Job] for details.
+     * This function transitions this deferred into _completed_ state if it was not completed or cancelled yet.
+     * However, if this deferred has children, then it transitions into _completing_ state and becomes _complete_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun complete(value: T): Boolean
 
@@ -36,6 +37,10 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
+     *
+     * This function transitions this deferred into _cancelled_ state if it was not completed or cancelled yet.
+     * However, that if this deferred has children, then it transitions into _cancelling_ state and becomes _cancelled_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }
