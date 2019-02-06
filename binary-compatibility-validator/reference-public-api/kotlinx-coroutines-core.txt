@@ -117,6 +117,20 @@ public final class kotlinx/coroutines/CompletableDeferredKt {
 	public static synthetic fun CompletableDeferred$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableDeferred;
 }
 
+public abstract interface class kotlinx/coroutines/CompletableJob : kotlinx/coroutines/Job {
+	public abstract fun complete ()Z
+	public abstract fun completeExceptionally (Ljava/lang/Throwable;)Z
+}
+
+public final class kotlinx/coroutines/CompletableJob$DefaultImpls {
+	public static synthetic fun cancel (Lkotlinx/coroutines/CompletableJob;)Z
+	public static fun fold (Lkotlinx/coroutines/CompletableJob;Ljava/lang/Object;Lkotlin/jvm/functions/Function2;)Ljava/lang/Object;
+	public static fun get (Lkotlinx/coroutines/CompletableJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext$Element;
+	public static fun minusKey (Lkotlinx/coroutines/CompletableJob;Lkotlin/coroutines/CoroutineContext$Key;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/CompletableJob;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
+	public static fun plus (Lkotlinx/coroutines/CompletableJob;Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+}
+
 public final class kotlinx/coroutines/CompletionHandlerException : java/lang/RuntimeException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
@@ -315,7 +329,9 @@ public final class kotlinx/coroutines/Job$Key : kotlin/coroutines/CoroutineConte
 
 public final class kotlinx/coroutines/JobKt {
 	public static final fun DisposableHandle (Lkotlin/jvm/functions/Function0;)Lkotlinx/coroutines/DisposableHandle;
-	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public static final fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
+	public static final synthetic fun Job (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public static synthetic fun Job$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableJob;
 	public static synthetic fun Job$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun cancel (Lkotlin/coroutines/CoroutineContext;)V
 	public static final synthetic fun cancel (Lkotlin/coroutines/CoroutineContext;)Z
@@ -422,7 +438,9 @@ public final class kotlinx/coroutines/RunnableKt {
 }
 
 public final class kotlinx/coroutines/SupervisorKt {
-	public static final fun SupervisorJob (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public static final fun SupervisorJob (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/CompletableJob;
+	public static final synthetic fun SupervisorJob (Lkotlinx/coroutines/Job;)Lkotlinx/coroutines/Job;
+	public static synthetic fun SupervisorJob$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/CompletableJob;
 	public static synthetic fun SupervisorJob$default (Lkotlinx/coroutines/Job;ILjava/lang/Object;)Lkotlinx/coroutines/Job;
 	public static final fun supervisorScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
