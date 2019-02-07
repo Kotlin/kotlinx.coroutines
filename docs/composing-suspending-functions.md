@@ -332,7 +332,7 @@ scope and that is what [coroutineScope] function provides:
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
-     one.await() + two.await()
+    one.await() + two.await()
 }
 ```
 
@@ -350,18 +350,18 @@ import kotlinx.coroutines.*
 import kotlin.system.*
 
 fun main() = runBlocking<Unit> {
-//sampleStart
+    //sampleStart
     val time = measureTimeMillis {
         println("The answer is ${concurrentSum()}")
     }
     println("Completed in $time ms")
-//sampleEnd    
+    //sampleEnd    
 }
 
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
-     one.await() + two.await()
+    one.await() + two.await()
 }
 
 suspend fun doSomethingUsefulOne(): Int {
@@ -418,7 +418,7 @@ suspend fun failedConcurrentSum(): Int = coroutineScope {
         println("Second child throws an exception")
         throw ArithmeticException()
     }
-        one.await() + two.await()
+    one.await() + two.await()
 }
 ```
 
