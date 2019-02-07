@@ -10,7 +10,7 @@ import kotlin.jvm.*
 
 /**
  * Channel with array buffer of a fixed [capacity].
- * Sender suspends only when buffer is fully and receiver suspends only when buffer is empty.
+ * Sender suspends only when buffer is full and receiver suspends only when buffer is empty.
  *
  * This channel is created by `Channel(capacity)` factory function invocation.
  *
