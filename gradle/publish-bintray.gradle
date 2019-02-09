@@ -29,7 +29,7 @@ task sourcesJar(type: Jar) {
 
     if (project.name == coroutines_core && platform != "common") {
         // add common source, too
-        from rootProject.file("common/$project.name-common/src/main/kotlin")
+        from rootProject.file("common/$project.name-common/src")
     }
 }
 
