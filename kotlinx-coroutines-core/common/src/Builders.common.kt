@@ -163,6 +163,16 @@ public suspend fun <T> withContext(
     coroutine.getResult()
 }
 
+/**
+ * Calls the specified suspending block with the given [CoroutineDispatcher], suspends until it
+ * completes, and returns the result.
+ *
+ * This inline function calls [withContext].
+ */
+public suspend inline fun <T> CoroutineDispatcher.invoke(
+    noinline block: suspend CoroutineScope.() -> T
+): T = withContext(this, block)
+
 // --------------- implementation ---------------
 
 private open class StandaloneCoroutine(
