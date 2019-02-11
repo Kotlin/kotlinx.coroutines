@@ -169,6 +169,7 @@ public suspend fun <T> withContext(
  *
  * This inline function calls [withContext].
  */
+@ExperimentalCoroutinesApi
 public suspend inline fun <T> CoroutineDispatcher.invoke(
     noinline block: suspend CoroutineScope.() -> T
 ): T = withContext(this, block)
