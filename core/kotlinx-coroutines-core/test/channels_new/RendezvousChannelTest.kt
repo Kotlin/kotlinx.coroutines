@@ -13,17 +13,26 @@ abstract class AbstractRendezvousChannelTest : TestBase() {
         expect(1)
         val sender = launch {
             expect(4)
+            println("SENDING 1...")
             q.send(1) // suspend -- the first to come to rendezvous
+            println("SENT 1")
             expect(7)
+            println("SENDING 2...")
             q.send(2) // does not suspend -- receiver is there
+            println("SENT 2")
+            println("SENT 2")
             expect(8)
         }
         expect(2)
         val receiver = launch {
             expect(5)
+            println("RECEIVING...")
             check(q.receive() == 1) // does not suspend -- sender was there
+            println("RECEIVED 1")
             expect(6)
+            println("RECEIVING...")
             check(q.receive() == 2) // suspends
+            println("RECEIVED 2")
             expect(9)
         }
         expect(3)
@@ -32,7 +41,7 @@ abstract class AbstractRendezvousChannelTest : TestBase() {
         finish(10)
     }
 
-    @Ignore
+//    @Ignore
     @Test
     fun `test offer() and poll()`() = runTest {
         val q = newChannel()

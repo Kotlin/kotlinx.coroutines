@@ -1,8 +1,12 @@
+@file:Suppress("Duplicates")
+
 package channels_new
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.suspendAtomicCancellableCoroutine
+import kotlin.coroutines.intrinsics.intercepted
+import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlin.coroutines.resume
 
 class RendezvousChannel<E> : Channel<E> {
@@ -159,15 +163,15 @@ class RendezvousChannel<E> : Channel<E> {
     override suspend fun send(element: E) {
         // Try to send without suspending at first,
         // invoke suspend implementation if it is not succeed.
-        if (offer(element)) return
-        sendOrReceiveSuspend<Unit>(element!!)
+//        if (offer(element)) return
+        sendOrReceiveSuspendFast<Unit>(element!!)
     }
     override suspend fun receive(): E {
         // Try to send without suspending at first,
         // invoke suspend implementation if it is not succeed.
-        val res = poll()
-        if (res != null) return res
-        return sendOrReceiveSuspend(RECEIVER_ELEMENT)
+//        val res = poll()
+//        if (res != null) return res
+        return sendOrReceiveSuspendFast(RECEIVER_ELEMENT)
     }
     override fun offer(element: E): Boolean {
         return sendOrReceiveNonSuspend<Unit>(element!!) != null
@@ -175,6 +179,89 @@ class RendezvousChannel<E> : Channel<E> {
     override fun poll(): E? {
         return sendOrReceiveNonSuspend(RECEIVER_ELEMENT)
     }
+
+    private suspend fun <T> sendOrReceiveSuspendFast(element: Any): T = suspendCoroutineUninterceptedOrReturn {uCont ->
+        var cont: CancellableContinuationImpl<T>? = null
+        var res: Any? = null
+        try_again@ while (true) { // CAS loop
+            var enqIdx = _enqIdx.value
+            var deqIdx = _deqIdx.value
+            // Retry if enqIdx is too outdated.
+            if (enqIdx < deqIdx) continue@try_again
+            // Check if the waiting queue is empty.
+            if (deqIdx == enqIdx) {
+                if (cont == null) cont = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_ATOMIC_DEFAULT)
+                if (addToWaitingQueue(enqIdx, element, cont) != null) {
+                    cont.initCancellability()
+                    break@try_again
+                } else continue@try_again
+            } else { // Queue is not empty.
+                val head = _head.value
+                val headNodeId = head.id
+                // Move `_deqIdx` forward if a node is missed because of cleaning procedure.
+                if (deqIdx < segmentSize * headNodeId) {
+                    _deqIdx.compareAndSet(deqIdx, segmentSize * headNodeId)
+                    continue@try_again
+                }
+                // Check if `deqIdx` is not outdated.
+                val deqIdxNodeId = nodeId(deqIdx, segmentSize)
+                if (deqIdxNodeId < headNodeId) continue@try_again
+                // Check if the head pointer should be moved forward.
+                if (deqIdxNodeId > headNodeId) {
+                    // `head.next()` cannot be null because we have already checked that
+                    // `enqIdx` is not equals (=> greater) than `deqIdx`, what means that
+                    // there is at least one more element after this node.
+                    val headNext = head.next()!!
+                    headNext.putPrev(null)
+                    _head.compareAndSet(head, headNext)
+                    continue@try_again
+                }
+                // Read the first element.
+                val deqIdxInNode = indexInNode(deqIdx, segmentSize)
+                val firstElement = readElement(head, deqIdxInNode)
+                // Check that the element is not taken.
+                if (firstElement === TAKEN_ELEMENT) {
+                    _deqIdx.compareAndSet(deqIdx, deqIdx + 1)
+                    continue@try_again
+                }
+                // Decide should we make a rendezvous or not. The `firstElement` is either sender or receiver.
+                // Check if a rendezvous is possible and try to remove the first element in this case,
+                // try to add the current continuation to the waiting queue otherwise.
+                val makeRendezvous = if (element === RECEIVER_ELEMENT) firstElement !== RECEIVER_ELEMENT else firstElement === RECEIVER_ELEMENT
+                if (makeRendezvous) {
+                    if (tryResumeContinuation(deqIdx, head, deqIdxInNode, element)) {
+                        // The rendezvous is happened, congratulations! Resume the current continuation.
+                        res = (if (element === RECEIVER_ELEMENT) firstElement else Unit) as T
+                        cont = null
+                        break@try_again
+                    } else continue@try_again
+                } else {
+                    // Store `_deqIdx` value which has been seen
+                    // at the point of deciding not to make a  rendezvous.
+                    val deqIdxLimit = enqIdx
+                    while (true) {
+                        if (cont == null) cont = CancellableContinuationImpl(uCont.intercepted(), resumeMode = MODE_ATOMIC_DEFAULT)
+                        if (addToWaitingQueue(enqIdx, element, cont) != null) {
+                            cont.initCancellability()
+                            break@try_again
+                        }
+                        // Re-read `_enqIdx` and `_deqIdx` and try to add the current continuation
+                        // to the waiting queue if `deqIdx` is less than `_enqIdx` at the point of deciding not to make a
+                        // rendezvous.
+                        enqIdx = _enqIdx.value
+                        deqIdx = _deqIdx.value
+                        if (deqIdx >= deqIdxLimit) continue@try_again
+                    }
+                }
+            }
+        }
+        if (cont == null) {
+            res
+        } else {
+            cont.getResult()
+        }
+    }
+
     private suspend fun <T> sendOrReceiveSuspend(element: Any) = suspendAtomicCancellableCoroutine<T>(holdCancellability = true) sc@ { curCont ->
         try_again@ while (true) { // CAS loop
             var enqIdx = _enqIdx.value
@@ -314,7 +401,7 @@ class RendezvousChannel<E> : Channel<E> {
             node.getElementVolatile(index)!!
         }
     }
-    private fun addToWaitingQueue(enqIdx: Long, element: Any, cont: Any): RegResult? {
+    private fun addToWaitingQueue(enqIdx: Long, element: Any, cont: Any): Node? {
         // Count enqIdx parts
         val enqIdxNodeId = nodeId(enqIdx, segmentSize)
         val enqIdxInNode = indexInNode(enqIdx, segmentSize)
@@ -331,9 +418,9 @@ class RendezvousChannel<E> : Channel<E> {
         // Check if a new node should be added, store the continuation to the current tail node otherwise.
         if (tailNodeId == enqIdxNodeId - 1 && enqIdxInNode == 0) {
             val addedNode = addNewNode(enqIdx, tail, cont, element)
-            return if (addedNode != null) RegResult(addedNode, 0) else null
+            return if (addedNode != null) addedNode else null
         } else {
-            return if (storeContinuation(enqIdx, tail, enqIdxInNode, cont, element)) RegResult(tail, enqIdxInNode)
+            return if (storeContinuation(enqIdx, tail, enqIdxInNode, cont, element)) tail
             else null
         }
     }
@@ -411,9 +498,9 @@ class RendezvousChannel<E> : Channel<E> {
         get() = Param0RegInfo<E>(this, RendezvousChannel<*>::regSelectReceive, Companion::actOnSendAndOnReceive)
     private fun regSelectSend(selectInstance: SelectInstance<*>, element: Any?) = regSelect(selectInstance, element!!)
     private fun regSelectReceive(selectInstance: SelectInstance<*>, element: Any?) = regSelect(selectInstance, RECEIVER_ELEMENT)
-    private fun regSelect(selectInstance: SelectInstance<*>, element: Any): RegResult? {
+    private fun regSelect(selectInstance: SelectInstance<*>, element: Any) {
         try_again@ while (true) { // CAS loop
-            if (selectInstance.isSelected()) return null
+            if (selectInstance.isSelected()) return
             var enqIdx = _enqIdx.value
             var deqIdx = _deqIdx.value
             // Retry if enqIdx is too outdated.
@@ -421,7 +508,11 @@ class RendezvousChannel<E> : Channel<E> {
             // Check if the waiting queue is empty.
             if (deqIdx == enqIdx) {
                 val regRes = addToWaitingQueue(enqIdx, element, selectInstance)
-                if (regRes != null) return regRes else continue@try_again
+                if (regRes != null) {
+                    selectInstance.cleanable = regRes
+                    selectInstance.index = (enqIdx % segmentSize).toInt()
+                    return
+                } else continue@try_again
             } else { // Queue is not empty.
                 val head = _head.value
                 val headNodeId = head.id
@@ -459,10 +550,14 @@ class RendezvousChannel<E> : Channel<E> {
                     if (tryResumeContinuationForSelect(deqIdx, head, deqIdxInNode, element, selectInstance)) {
                         // The rendezvous is happened, congratulations! Resume the current continuation.
                         val result = (if (element === RECEIVER_ELEMENT) firstElement else Unit)
+                        selectInstance.cleanable = null
+                        selectInstance.index = 0
                         selectInstance.cont.resume(result)
-                        return null
+                        return
                     } else if (selectInstance.isSelected()) {
-                        return null
+                        selectInstance.cleanable = null
+                        selectInstance.index = 0
+                        return
                     } else continue@try_again
                 } else {
                     // Store `_deqIdx` value which has been seen
@@ -470,7 +565,11 @@ class RendezvousChannel<E> : Channel<E> {
                     val deqIdxLimit = enqIdx
                     while (true) {
                         val regRes = addToWaitingQueue(enqIdx, element, selectInstance)
-                        if (regRes != null) return regRes
+                        if (regRes != null) {
+                            selectInstance.cleanable = regRes
+                            selectInstance.index = (enqIdx % segmentSize).toInt()
+                            return
+                        }
                         // Re-read `_enqIdx` and `_deqIdx` and try to add the current continuation
                         // to the waiting queue if `deqIdx` is less than `_enqIdx` at the point of deciding not to make a
                         // rendezvous.

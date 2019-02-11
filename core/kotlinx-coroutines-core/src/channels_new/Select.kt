@@ -2,22 +2,24 @@ package channels_new
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.suspendAtomicCancellableCoroutine
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
 
+@UseExperimental(InternalCoroutinesApi::class)
 suspend inline fun <R> select(crossinline builder: SelectBuilder<R>.() -> Unit): R {
     val select = SelectInstance<R>()
-    builder(select)
-    return select.select()
+    val result = suspendAtomicCancellableCoroutine<Any> { curCont ->
+        select.cont = curCont
+        builder(select)
+    }
+    return select.completeSelect(result)
 }
 
+@InternalCoroutinesApi
 suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<R>.() -> Unit): R {
-    val select = SelectInstance<R>()
-    builder(select)
-    select.shuffleAlternatives()
-    return select.select()
+    return select(builder)
 }
 
 interface SelectBuilder<RESULT> {
@@ -28,84 +30,73 @@ interface SelectBuilder<RESULT> {
 }
 
 // channel, selectInstance, element -> is selected by this alternative
-typealias RegFunc = Function3<RendezvousChannel<*>, SelectInstance<*>, Any?, RegResult?>
-class Param0RegInfo<FUNC_RESULT>(
+@UseExperimental(InternalCoroutinesApi::class)
+typealias RegFunc = Function3<RendezvousChannel<*>, SelectInstance<*>, Any?, Unit>
+class Param0RegInfo<FUNC_RESULT>(channel: Any, regFunc: RegFunc, actFunc: ActFunc<FUNC_RESULT>)
+    : RegInfo<FUNC_RESULT>(channel, regFunc, actFunc)
+class Param1RegInfo<FUNC_RESULT>(channel: Any, regFunc: RegFunc, actFunc: ActFunc<FUNC_RESULT>)
+    : RegInfo<FUNC_RESULT>(channel, regFunc, actFunc)
+
+abstract class RegInfo<FUNC_RESULT>(
         @JvmField val channel: Any,
         @JvmField val regFunc: RegFunc,
         @JvmField val actFunc: ActFunc<FUNC_RESULT>
 )
-class Param1RegInfo<FUNC_RESULT>(
-        @JvmField val channel: Any,
-        @JvmField val regFunc: RegFunc,
-        @JvmField val actFunc: ActFunc<FUNC_RESULT>
-)
-class RegResult(@JvmField val cleanable: Cleanable, @JvmField val index: Int)
 // continuation, result (usually a received element), block
 typealias ActFunc<FUNC_RESULT> = Function2<Any?, Function1<FUNC_RESULT, Any?>, Any?>
-class SelectInstance<RESULT> : SelectBuilder<RESULT> {
-    @JvmField val id = selectInstanceIdGenerator.incrementAndGet()
-    private val alternatives = ArrayList<Any?>()
-    lateinit var cont: Continuation<in Any>
+@InternalCoroutinesApi
+class SelectInstance<RESULT>() : SelectBuilder<RESULT> {
+    val id = selectInstanceIdGenerator.incrementAndGet()
+    private val alternatives = ArrayList<Any?>(ALTERNATIVE_SIZE * 2)
+
     private val _state = atomic<Any?>(null)
+
+    lateinit var cont: Continuation<in Any>
+
+    @JvmField var cleanable: Cleanable? = null
+    @JvmField var index: Int = 0
+
+    fun setState(state: Any) { _state.value = state }
+
     override fun <FUNC_RESULT> Param0RegInfo<FUNC_RESULT>.invoke(block: (FUNC_RESULT) -> RESULT) {
-        addAlternative(channel, null, regFunc, actFunc, block)
+        addAlternative(this, null, block)
     }
     override fun <PARAM, FUNC_RESULT> Param1RegInfo<FUNC_RESULT>.invoke(param: PARAM, block: (FUNC_RESULT) -> RESULT) {
-        addAlternative(channel, param, regFunc, actFunc, block)
+        addAlternative(this, param, block)
     }
-    private fun <FUNC_RESULT> addAlternative(channel: Any, param: Any?, regFunc: Any, actFunc: ActFunc<FUNC_RESULT>, block: (FUNC_RESULT) -> RESULT) {
-        alternatives.add(channel)
-        alternatives.add(param)
-        alternatives.add(regFunc)
-        alternatives.add(actFunc)
-        alternatives.add(block)
-        alternatives.add(null)
-        alternatives.add(null)
+    private fun <FUNC_RESULT> addAlternative(regInfo: RegInfo<*>, param: Any?, block: (FUNC_RESULT) -> RESULT) {
+        if (isSelected()) return
+        val regFunc = regInfo.regFunc
+        val channel = regInfo.channel as RendezvousChannel<*> // todo FIX TYPES
+        regFunc(channel, this, param)
+        if (cleanable == null) {
+            alternatives.add(regInfo)
+            alternatives.add(block)
+            alternatives.add(null)
+            alternatives.add(null)
+        } else {
+            alternatives.add(regInfo)
+            alternatives.add(block)
+            alternatives.add(index)
+            alternatives.add(cleanable)
+        }
     }
     /**
      * Shuffles alternatives for [selectUnbiased].
      */
     fun shuffleAlternatives() {
-        // This code is based on `Collections#shuffle`,
-        // just adapted to our purposes only.
-//        val size = alternatives.size / ALTERNATIVE_SIZE
-//        for (i in size - 1 downTo 1) {
-//            val j = ThreadLocalRandom.current().nextInt(i + 1)
-//            for (offset in 0 until ALTERNATIVE_SIZE) {
-//                Collections.swap(alternatives, i * ALTERNATIVE_SIZE + offset, j * ALTERNATIVE_SIZE + offset)
-//            }
-//        }
     }
     /**
      * Performs `select` in 3-phase way. At first it selects an alternative atomically
      * (suspending if needed), then it unregisters from unselected channels,
      * and invokes the specified for the selected alternative action at last.
      */
-    suspend fun select(): RESULT {
-        val result = selectAlternative()
+    suspend fun completeSelect(result: Any?): RESULT {
         cleanNonSelectedAlternatives()
         return invokeSelectedAlternativeAction(result)
     }
-    /**
-     * After this function is invoked it is guaranteed that an alternative is selected
-     * and the corresponding channel is stored into `_state` field.
-     */
-    private suspend fun selectAlternative(): Any? = suspendCoroutine sc@ { curCont ->
-        this.cont = curCont
-        for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
-            val channel = alternatives[i]!!
-            val param = alternatives[i + 1]
-            val regFunc = alternatives[i + 2]
-            regFunc as RegFunc
-            channel as RendezvousChannel<*> // todo FIX TYPES
-            val regResult = regFunc(channel, this, param)
-            if (regResult != null) {
-                alternatives[i + 6] = regResult.index
-                alternatives[i + 5] = regResult.cleanable
-            }
-            if (isSelected()) return@sc
-        }
-    }
+
+
     fun isSelected(): Boolean = readState(null) != null
     private fun readState(allowedUnprocessedDesc: Any?): Any? {
         while (true) { // CAS loop
@@ -130,14 +121,16 @@ class SelectInstance<RESULT> : SelectBuilder<RESULT> {
     fun resetState(desc: Any) {
         _state.compareAndSet(desc, null)
     }
+
+
     /**
      * This function removes this `SelectInstance` from the
      * waiting queues of other alternatives.
      */
-    private fun cleanNonSelectedAlternatives() {
+    fun cleanNonSelectedAlternatives() {
         for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
-            val cleanable = alternatives[i + 5]
-            val index = alternatives[i + 6]
+            val cleanable = alternatives[i + 3]
+            val index = alternatives[i + 2]
             // `cleanable` can be null in case this alternative has not been processed.
             // This means that the next alternatives has not been processed as well.
             if (cleanable === null) break
@@ -149,31 +142,35 @@ class SelectInstance<RESULT> : SelectBuilder<RESULT> {
      * Gets the act function and the block for the selected alternative and invoke it
      * with the specified result.
      */
-    private fun invokeSelectedAlternativeAction(result: Any?): RESULT {
+    fun invokeSelectedAlternativeAction(result: Any?): RESULT {
         val i = selectedAlternativeIndex()
-        val actFunc = alternatives[i + 3] as ActFunc<in Any>
-        val block = alternatives[i + 4] as (Any?) -> RESULT
+        val actFunc = (alternatives[i] as RegInfo<*>).actFunc as ActFunc<in Any>
+        val block = alternatives[i + 1] as (Any?) -> RESULT
         return actFunc(result, block) as RESULT
     }
     /**
      * Return an index of the selected alternative in `alternatives` array.
      */
     private fun selectedAlternativeIndex(): Int {
-        val state = _state.value!!
-        val channel = if (state is SelectDesc) state.channel else state
+        val channel = _state.value!!
         for (i in 0 until alternatives.size step ALTERNATIVE_SIZE) {
-            if (alternatives[i] === channel) return i
+            val ch = if (channel is SelectDesc) channel.channel else channel
+            if ((alternatives[i] as RegInfo<*>).channel === ch) return i
         }
         error("Channel $channel is not found")
     }
+
     companion object {
-        @JvmStatic private val selectInstanceIdGenerator = AtomicLong()
+        private val selectInstanceIdGenerator = java.util.concurrent.atomic.AtomicLong(0L)
         // Number of items to be stored for each alternative in `alternatives` array.
-        const val ALTERNATIVE_SIZE = 7
+        const val ALTERNATIVE_SIZE = 4
     }
 }
-class SelectDesc(@JvmField val channel: Any, @JvmField val selectInstance: SelectInstance<*>, @JvmField val anotherCont: Any) {
+
+
+class SelectDesc @InternalCoroutinesApi constructor(@JvmField val channel: Any, @JvmField val selectInstance: SelectInstance<*>, @JvmField val anotherCont: Any) {
     @JvmField @Volatile var _status: Byte = STATUS_UNDECIDED
+    @InternalCoroutinesApi
     fun invoke(): Boolean {
         // Optimization: check this descriptor's status.
         val status = _status
