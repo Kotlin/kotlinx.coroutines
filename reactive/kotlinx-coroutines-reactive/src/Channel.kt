@@ -31,9 +31,7 @@ public fun <T> Publisher<T>.openSubscription(request: Int = 0): ReceiveChannel<T
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  */
 public suspend inline fun <T> Publisher<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
+    openSubscription().consumeEach(action)
 }
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
