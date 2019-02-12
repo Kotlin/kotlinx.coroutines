@@ -16,7 +16,7 @@ interface ExceptionCaptor {
      *
      * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
      */
-    val exceptions: MutableList<Throwable>
+    val exceptions: List<Throwable>
 
     /**
      * Call after the test completes.
@@ -30,16 +30,25 @@ interface ExceptionCaptor {
  * An exception handler that can be used to capture uncaught exceptions in tests.
  */
 class TestCoroutineExceptionHandler: ExceptionCaptor, CoroutineExceptionHandler {
+    val lock = Object()
+
     override fun handleException(context: CoroutineContext, exception: Throwable) {
-        exceptions += exception
+        synchronized(lock) {
+            _exceptions += exception
+        }
     }
 
     override val key = CoroutineExceptionHandler
 
-    override val exceptions = LinkedList<Throwable>()
+    private val _exceptions = mutableListOf<Throwable>()
+
+    override val exceptions
+        get() = _exceptions.toList()
 
     override fun cleanupTestCoroutines() {
-        val exception = exceptions.firstOrNull() ?: return
-        throw exception
+        synchronized(lock) {
+            val exception = _exceptions.firstOrNull() ?: return
+            throw exception
+        }
     }
 }
