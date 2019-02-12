@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -25,6 +25,10 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
+     *
+     * This function transitions this deferred into _completed_ state if it was not completed or cancelled yet.
+     * However, if this deferred has children, then it transitions into _completing_ state and becomes _complete_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun complete(value: T): Boolean
 
@@ -33,6 +37,10 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * completed as a result of this invocation and `false` otherwise (if it was already completed).
      *
      * Repeated invocations of this function have no effect and always produce `false`.
+     *
+     * This function transitions this deferred into _cancelled_ state if it was not completed or cancelled yet.
+     * However, that if this deferred has children, then it transitions into _cancelling_ state and becomes _cancelled_
+     * once all its children are [complete][isCompleted]. See [Job] for details.
      */
     public fun completeExceptionally(exception: Throwable): Boolean
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:Suppress("DEPRECATION_ERROR")
@@ -28,7 +28,13 @@ import kotlin.jvm.*
  * @param parent an optional parent job.
  */
 @Suppress("FunctionName")
-public fun SupervisorJob(parent: Job? = null) : Job = SupervisorJobImpl(parent)
+public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobImpl(parent)
+
+/** @suppress Binary compatibility only */
+@Suppress("FunctionName")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+@JvmName("SupervisorJob")
+public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
 
 /**
  * Creates new [CoroutineScope] with [SupervisorJob] and calls the specified suspend block with this scope.
@@ -46,11 +52,7 @@ public suspend fun <R>  supervisorScope(block: suspend CoroutineScope.() -> R): 
         coroutine.startUndispatchedOrReturn(coroutine, block)
     }
 
-private class SupervisorJobImpl(parent: Job?) : JobSupport(true) {
-    init { initParentJobInternal(parent) }
-    override val cancelsParent: Boolean get() = true
-    override val onCancelComplete get() = true
-    override val handlesException: Boolean get() = false
+private class SupervisorJobImpl(parent: Job?) : JobImpl(parent) {
     override fun childCancelled(cause: Throwable): Boolean = false
 }
 

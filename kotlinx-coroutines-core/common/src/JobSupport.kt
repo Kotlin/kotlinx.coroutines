@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 @file:Suppress("DEPRECATION_ERROR")
 
@@ -1182,11 +1182,14 @@ private class Empty(override val isActive: Boolean) : Incomplete {
     override fun toString(): String = "Empty{${if (isActive) "Active" else "New" }}"
 }
 
-internal class JobImpl(parent: Job? = null) : JobSupport(true) {
+internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
     init { initParentJobInternal(parent) }
     override val cancelsParent: Boolean get() = true
     override val onCancelComplete get() = true
     override val handlesException: Boolean get() = false
+    override fun complete() = makeCompleting(Unit)
+    override fun completeExceptionally(exception: Throwable): Boolean =
+        makeCompleting(CompletedExceptionally(exception))
 }
 
 // -------- invokeOnCompletion nodes

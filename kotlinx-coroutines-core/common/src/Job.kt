@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2016-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
 @file:JvmMultifileClass
@@ -348,10 +348,21 @@ public interface Job : CoroutineContext.Element {
  * is cancelled when its parent fails or is cancelled. All this job's children are cancelled in this case, too.
  * The invocation of [cancel][Job.cancel] with exception (other than [CancellationException]) on this job also cancels parent.
  *
+ * Conceptually, the resulting job works in the same way as the job created by the `launch { body }` invocation
+ * (see [launch]), but without any code in the body. It is active until cancelled or completed. Invocation of
+ * [CompletableJob.complete] or [CompletableJob.completeExceptionally] corresponds to the successful or
+ * failed completion of the body of the coroutine.
+ *
  * @param parent an optional parent job.
  */
 @Suppress("FunctionName")
-public fun Job(parent: Job? = null): Job = JobImpl(parent)
+public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
+
+/** @suppress Binary compatibility only */
+@Suppress("FunctionName")
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+@JvmName("Job")
+public fun Job0(parent: Job? = null): Job = Job(parent)
 
 /**
  * A handle to an allocated object that can be disposed to make it eligible for garbage collection.
