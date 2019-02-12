@@ -30,7 +30,9 @@ import kotlin.coroutines.*
  *
  * @param name A user-readable name for debugging purposes.
  */
-@ObsoleteCoroutinesApi
+@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+        ReplaceWith("TestCoroutineScope", "kotlin.coroutines.test"),
+        level = DeprecationLevel.WARNING)
 class TestCoroutineContext(private val name: String? = null) : CoroutineContext {
     private val uncaughtExceptions = mutableListOf<Throwable>()
 
@@ -281,7 +283,9 @@ private class TimedRunnable(
  * provided instead.
  * @param testBody The code of the unit-test.
  */
-@ObsoleteCoroutinesApi
+@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+        ReplaceWith("testContext.runBlockingTest(testBody)", "kotlin.coroutines.test"),
+        level = DeprecationLevel.WARNING)
 public fun withTestContext(testContext: TestCoroutineContext = TestCoroutineContext(), testBody: TestCoroutineContext.() -> Unit) {
     with (testContext) {
         testBody()

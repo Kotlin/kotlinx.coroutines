@@ -82,6 +82,17 @@ fun asyncTest(context: CoroutineContext? = null, testBody: TestCoroutineScope.()
 fun TestCoroutineScope.asyncTest(testBody: TestCoroutineScope.() -> Unit) =
         asyncTest(coroutineContext, testBody)
 
+/**
+ * This method is deprecated.
+ *
+ * @see [cleanupTestCoroutines]
+ */
+@Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+        ReplaceWith("scope.runBlockingTest(testBody)", "kotlinx.coroutines.test"),
+        level = DeprecationLevel.ERROR)
+fun withTestContext(scope: TestCoroutineScope, testBody: suspend TestCoroutineScope.() -> Unit) {
+    scope.runBlockingTest(testBody)
+}
 
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
@@ -150,7 +161,7 @@ fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCor
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
-fun TestCoroutineScope.runBlockingTest(block: suspend CoroutineScope.() -> Unit) {
+fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(coroutineContext, block)
 }
 
@@ -158,7 +169,7 @@ fun TestCoroutineScope.runBlockingTest(block: suspend CoroutineScope.() -> Unit)
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
  *
  */
-fun TestCoroutineDispatcher.runBlockingTest(block: suspend CoroutineScope.() -> Unit) {
+fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(this, block)
 }
 

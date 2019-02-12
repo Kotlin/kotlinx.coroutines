@@ -96,6 +96,24 @@ interface DelayController {
      * Setting it to false will resume lazy execution.
      */
     var dispatchImmediately: Boolean
+
+    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+            ReplaceWith("if (targetTime > currentTime(unit)) { advanceTimeBy(targetTime - currentTime(unit), unit) }",
+                    "kotlinx.coroutines.test"),
+            level = DeprecationLevel.WARNING)
+    fun advanceTimeTo(targetTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
+        advanceTimeBy(targetTime - currentTime(unit), unit)
+    }
+
+    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+            ReplaceWith("currentTime(unit)", "kotlinx.coroutines.test"),
+            level = DeprecationLevel.WARNING)
+    fun now(unit: TimeUnit = TimeUnit.MILLISECONDS) = currentTime(unit)
+
+    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+            ReplaceWith("runCurrent()", "kotlinx.coroutines.test"),
+            level = DeprecationLevel.WARNING)
+    fun triggerActions() = runCurrent()
 }
 
 /**
@@ -197,7 +215,7 @@ class TestCoroutineDispatcher:
 
     override fun advanceTimeBy(delayTime: Long, unit: TimeUnit): Long {
         val oldTime = time
-        advanceTimeTo(oldTime + unit.toNanos(delayTime), TimeUnit.NANOSECONDS)
+        advanceUntilTime(oldTime + unit.toNanos(delayTime), TimeUnit.NANOSECONDS)
         return unit.convert(time - oldTime, TimeUnit.NANOSECONDS)
     }
 
@@ -207,7 +225,7 @@ class TestCoroutineDispatcher:
      * @param targetTime The point in time to which to move the CoroutineContext's clock.
      * @param unit The [TimeUnit] in which [targetTime] is expressed.
      */
-    private fun advanceTimeTo(targetTime: Long, unit: TimeUnit) {
+    private fun advanceUntilTime(targetTime: Long, unit: TimeUnit) {
         val nanoTime = unit.toNanos(targetTime)
         triggerActions(nanoTime)
         if (nanoTime > time) time = nanoTime
@@ -217,7 +235,7 @@ class TestCoroutineDispatcher:
         val oldTime = time
         runCurrent()
         val next = queue.peek() ?: return 0
-        advanceTimeTo(next.time, TimeUnit.NANOSECONDS)
+        advanceUntilTime(next.time, TimeUnit.NANOSECONDS)
         return time - oldTime
     }
 

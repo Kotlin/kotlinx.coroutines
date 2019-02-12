@@ -25,6 +25,16 @@ class TestCoroutineScope(
     }
 
     override val coroutineContext = context
+
+    /**
+     * This method is deprecated.
+     *
+     * @see [cleanupTestCoroutines]
+     */
+    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
+            ReplaceWith("cleanupTestCoroutines()"),
+            level = DeprecationLevel.WARNING)
+    fun cancelAllActions() = cleanupTestCoroutines()
 }
 
 fun TestCoroutineScope(dispatcher: TestCoroutineDispatcher) =
