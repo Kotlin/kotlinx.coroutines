@@ -101,6 +101,17 @@ class TestRunBlockingTest {
         }
     }
 
+    @Test
+    fun testDelayInAsync_withAwait() = runBlockingTest {
+        assertRunsFast {
+            val deferred = async {
+                delay(SLOW)
+                3
+            }
+            assertEquals(3, deferred.await())
+        }
+    }
+
     @Test(expected = TimeoutCancellationException::class)
     fun whenUsingTimeout_inAsync_triggersWhenDelayed() = runBlockingTest {
         val deferred = async {
@@ -280,5 +291,80 @@ class TestRunBlockingTest {
         runBlockingTest(CoroutineExceptionHandler { _, _ -> Unit} ) {
 
         }
+    }
+
+    @Test
+    fun pauseDispatcher_disablesAutoAdvance_forCurrent() = runBlockingTest {
+        var mutable = 0
+        pauseDispatcher {
+            launch {
+                mutable++
+            }
+            assertEquals(0, mutable)
+            runCurrent()
+            assertEquals(1, mutable)
+        }
+    }
+
+    @Test
+    fun pauseDispatcher_disablesAutoAdvance_forDelay() = runBlockingTest {
+        var mutable = 0
+        pauseDispatcher {
+            launch {
+                mutable++
+                delay(SLOW)
+                mutable++
+            }
+            assertEquals(0, mutable)
+            runCurrent()
+            assertEquals(1, mutable)
+            advanceTimeBy(SLOW)
+            assertEquals(2, mutable)
+        }
+    }
+
+    @Test
+    fun pauseDispatcher_withDelay_resumesAfterPause() = runBlockingTest {
+        var mutable = 0
+        assertRunsFast {
+            pauseDispatcher {
+                delay(1_000)
+                mutable++
+            }
+        }
+        assertEquals(1, mutable)
+    }
+
+
+    @Test(expected = IllegalAccessError::class)
+    fun testWithTestContextThrowingAnAssertionError() = runBlockingTest {
+        val expectedError = IllegalAccessError("hello")
+
+        val job = launch {
+            throw expectedError
+        }
+
+        // don't rethrow or handle the exception
+    }
+
+    @Test(expected = IllegalAccessError::class)
+    fun testExceptionHandlingWithLaunch() = runBlockingTest {
+        val expectedError = IllegalAccessError("hello")
+
+        launch {
+            throw expectedError
+        }
+    }
+
+    @Test(expected = IllegalAccessError::class)
+    fun testExceptions_notThrownImmediately() = runBlockingTest {
+        val expectedException = IllegalAccessError("hello")
+        val result = runCatching {
+            launch {
+                throw expectedException
+            }
+        }
+        runCurrent()
+        assertEquals(true, result.isSuccess)
     }
 }

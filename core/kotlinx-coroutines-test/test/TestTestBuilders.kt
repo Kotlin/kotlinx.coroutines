@@ -81,16 +81,17 @@ class TestTestBuilders {
     fun whenInAsync_runBlocking_nestsProperly() {
         // this is not a supported use case, but it is possible so ensure it works
 
-        val scope = TestCoroutineScope()
+        val dispatcher = TestCoroutineDispatcher()
+        val scope = TestCoroutineScope(dispatcher)
         val deferred = scope.async {
             delay(1_000)
+            var retval = 2
             runBlockingTest {
                 delay(1_000)
+                retval++
             }
-            3
+            retval
         }
-
-        assertFalse(scope.dispatchImmediately)
 
         scope.advanceTimeToNextDelayed()
         scope.launch {
@@ -103,7 +104,7 @@ class TestTestBuilders {
     }
 
     @Test
-    fun whenInrunBlocking_asyncTest_nestsProperly() {
+    fun whenInrunBlocking_runBlockingTest_nestsProperly() {
         // this is not a supported use case, but it is possible so ensure it works
 
         val scope = TestCoroutineScope()
@@ -112,7 +113,7 @@ class TestTestBuilders {
         scope.runBlockingTest {
             delay(1_000)
             calls++
-            asyncTest {
+            runBlockingTest {
                 val job = launch {
                     delay(1_000)
                     calls++

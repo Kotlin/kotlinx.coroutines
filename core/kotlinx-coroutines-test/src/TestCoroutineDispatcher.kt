@@ -57,45 +57,38 @@ interface DelayController {
      * Call after a test case completes.
      *
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
-     * coroutines that called await.
+     * coroutines.
      */
     @Throws(UncompletedCoroutinesError::class)
     fun cleanupTestCoroutines()
 
     /**
-     * When true, this dispatcher will perform as an immediate executor.
+     * Run a block of code in a paused dispatcher.
      *
-     * It will immediately run any tasks, which means it will auto-advance the virtual clock-time to the last pending
-     * delay.
+     * By pausing the dispatcher any new coroutines will not execute immediately. After block executes, the dispatcher
+     * will resume auto-advancing.
      *
-     * Test code will rarely call this method directly., Instead use a test builder like [asyncTest], [runBlockingTest] or
-     * the convenience methods [TestCoroutineDispatcher.runBlocking] and [TestCoroutineScope.runBlocking].
-     *
-     * ```
-     * @Test
-     * fun aTest() {
-     *     val scope = TestCoroutineScope() // dispatchImmediately is false
-     *     scope.async {
-     *         // delay will be pending execution (lazy mode)
-     *         delay(1_000)
-     *     }
-     *
-     *     scope.runBlocking {
-     *         // the pending delay will immediately execute
-     *         // dispatchImmediately is true
-     *     }
-     *
-     *     // scope is returned to lazy mode
-     *     // dispatchImmediately is false
-     * }
-     * ```
-     *
-     * Setting this to true will immediately execute any pending tasks and advance the virtual clock-time to the last
-     * pending delay. While true, dispatch will continue to execute immediately, auto-advancing the virtual clock-time.
-     *
-     * Setting it to false will resume lazy execution.
+     * This is useful when testing functions that that start a coroutine. By pausing the dispatcher assertions or
+     * setup may be done between the time the coroutine is created and started.
      */
-    var dispatchImmediately: Boolean
+    suspend fun pauseDispatcher(block: suspend () -> Unit)
+
+    /**
+     * Pause the dispatcher.
+     *
+     * When paused the dispatcher will not execute any coroutines automatically, and you must call [runCurrent], or one
+     * of [advanceTimeBy], [advanceTimeToNextDelayed], or [advanceUntilIdle] to execute coroutines.
+     */
+    fun pauseDispatcher()
+
+    /**
+     * Resume the dispatcher from a paused state.
+     *
+     * Resumed dispatchers will automatically progress through all coroutines scheduled at the current time. To advance
+     * time and execute coroutines scheduled in the future use one of [advanceTimeBy], [advanceTimeToNextDelayed],
+     * or [advanceUntilIdle].
+     */
+    fun resumeDispatcher()
 
     @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
             ReplaceWith("if (targetTime > currentTime(unit)) { advanceTimeBy(targetTime - currentTime(unit), unit) }",
@@ -122,14 +115,15 @@ interface DelayController {
 class UncompletedCoroutinesError(message: String, cause: Throwable? = null): AssertionError(message, cause)
 
 /**
- * [CoroutineDispatcher] that can be used in tests for both immediate  and lazy execution of coroutines.
+ * [CoroutineDispatcher] that can be used in tests for both immediate and lazy execution of coroutines.
  *
- * By default, [TestCoroutineDispatcher] will be lazy. That means any coroutines started via [launch] or [async] will
+ * By default, [TestCoroutineDispatcher] will be immediate. That means any tasks scheduled to be run immediately will
+ * be immediately executed. If they were scheduled with a delay, the virtual clock-time must be advanced via one of the
+ * methods on [DelayController]
+ *
+ * When swiched to lazy execution any coroutines started via [launch] or [async] will
  * not execute until a call to [DelayController.runCurrent] or the virtual clock-time has been advanced via one of the
  * methods on [DelayController].
- *
- * When switched to immediate mode, any tasks will be immediately executed. If they were scheduled with a delay,
- * the virtual clock-time will auto-advance to the last submitted delay.
  *
  * @see DelayController
  */
@@ -138,7 +132,7 @@ class TestCoroutineDispatcher:
         Delay,
         DelayController {
 
-    override var dispatchImmediately = false
+    private var dispatchImmediately = true
         set(value) {
             field = value
             if (value) {
@@ -166,9 +160,6 @@ class TestCoroutineDispatcher:
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         postDelayed(CancellableContinuationRunnable(continuation) { resumeUndispatched(Unit) }, timeMillis)
-        if (dispatchImmediately) {
-//            advanceTimeBy(timeMillis, TimeUnit.MILLISECONDS)
-        }
     }
 
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable): DisposableHandle {
@@ -179,15 +170,6 @@ class TestCoroutineDispatcher:
             }
         }
     }
-
-//    override fun processNextEvent(): Long {
-//        val current = queue.peek()
-//        if (current != null) {
-//            // Automatically advance time for EventLoop callbacks
-//            triggerActions(current.time)
-//        }
-//        return if (queue.isEmpty) Long.MAX_VALUE else 0L
-//    }
 
     override fun toString(): String = "TestCoroutineDispatcher[time=$time ns]"
 
@@ -247,6 +229,26 @@ class TestCoroutineDispatcher:
         return time - oldTime
     }
 
+    override fun runCurrent() = triggerActions(time)
+
+    override suspend fun pauseDispatcher(block: suspend () -> Unit) {
+        val previous = dispatchImmediately
+        dispatchImmediately = false
+        try {
+            block()
+        } finally {
+            dispatchImmediately = previous
+        }
+    }
+
+    override fun pauseDispatcher() {
+        dispatchImmediately = false
+    }
+
+    override fun resumeDispatcher() {
+        dispatchImmediately = true
+    }
+
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
         triggerActions(time)
@@ -266,8 +268,6 @@ class TestCoroutineDispatcher:
                     " completed or cancelled by your test.")
         }
     }
-
-    override fun runCurrent() = triggerActions(time)
 }
 
 
