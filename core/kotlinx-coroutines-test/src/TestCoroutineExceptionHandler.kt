@@ -14,6 +14,8 @@ interface ExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
      *
+     * The returned list will be a copy of the currently caught exceptions.
+     *
      * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
      */
     val exceptions: List<Throwable>
