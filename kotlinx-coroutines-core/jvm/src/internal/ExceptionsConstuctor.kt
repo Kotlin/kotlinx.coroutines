@@ -12,51 +12,64 @@ import kotlin.concurrent.*
 
 private val throwableFields = Throwable::class.java.fieldsCountOrDefault(-1)
 private val cacheLock = ReentrantReadWriteLock()
+private typealias Ctor = (Throwable) -> Throwable?
 // Replace it with ClassValue when Java 6 support is over
-private val exceptionConstructors: WeakHashMap<Class<out Throwable>, (Throwable) -> Throwable?> = WeakHashMap()
+private val exceptionCtors: WeakHashMap<Class<out Throwable>, Ctor> = WeakHashMap()
 
 @Suppress("UNCHECKED_CAST")
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
+    // Fast path for CopyableThrowable
     if (exception is CopyableThrowable<*>) {
         return runCatching { exception.createCopy() as E }.getOrNull()
     }
-
-    val cachedCtor = cacheLock.read {
-        exceptionConstructors[exception.javaClass]
+    // Use cached ctor if found
+    cacheLock.read { exceptionCtors[exception.javaClass] }?.let { cachedCtor ->
+        return cachedCtor(exception) as E?
     }
-
-    if (cachedCtor != null) return cachedCtor(exception) as E?
     /*
      * Skip reflective copy if an exception has additional fields (that are usually populated in user-defined constructors)
      */
     if (throwableFields != exception.javaClass.fieldsCountOrDefault(0)) {
-        cacheLock.write { exceptionConstructors[exception.javaClass] = { null } }
+        cacheLock.write { exceptionCtors[exception.javaClass] = { null } }
         return null
     }
-
     /*
-     * Try to reflectively find constructor(), constructor(message, cause) or constructor(cause).
+     * Try to reflectively find constructor(), constructor(message, cause), constructor(cause) or constructor(message).
      * Exceptions are shared among coroutines, so we should copy exception before recovering current stacktrace.
      */
-    var ctor: ((Throwable) -> Throwable?)? = null
+    var ctor: Ctor? = null
     val constructors = exception.javaClass.constructors.sortedByDescending { it.parameterTypes.size }
     for (constructor in constructors) {
-        val parameters = constructor.parameterTypes
-        if (parameters.size == 2 && parameters[0] == String::class.java && parameters[1] == Throwable::class.java) {
-            ctor = { e -> runCatching { constructor.newInstance(e.message, e) as E }.getOrNull() }
-            break
-        } else if (parameters.size == 1 && parameters[0] == Throwable::class.java) {
-            ctor = { e -> runCatching { constructor.newInstance(e) as E }.getOrNull() }
-            break
-        } else if (parameters.isEmpty()) {
-            ctor = { e -> runCatching { (constructor.newInstance() as E).also { it.initCause(e) } }.getOrNull() }
-            break
-        }
+        ctor = createConstructor(constructor)
+        if (ctor != null) break
     }
-
-    cacheLock.write { exceptionConstructors[exception.javaClass] = (ctor ?: { null }) }
+    // Store the resulting ctor to cache
+    cacheLock.write { exceptionCtors[exception.javaClass] = ctor ?: { null } }
     return ctor?.invoke(exception) as E?
 }
+
+private fun createConstructor(constructor: Constructor<*>): Ctor? {
+    val p = constructor.parameterTypes
+    return when (p.size) {
+        2 -> when {
+            p[0] == String::class.java && p[1] == Throwable::class.java ->
+                safeCtor { e -> constructor.newInstance(e.message, e) as Throwable }
+            else -> null
+        }
+        1 -> when (p[0]) {
+            Throwable::class.java ->
+                safeCtor { e -> constructor.newInstance(e) as Throwable }
+            String::class.java ->
+                safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } }
+            else -> null
+        }
+        0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } }
+        else -> null
+    }
+}
+
+private inline fun safeCtor(crossinline block: (Throwable) -> Throwable): Ctor =
+    { e -> runCatching { block(e) }.getOrNull() }
 
 private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) = kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
 

@@ -54,4 +54,21 @@ class StackTraceRecoveryCustomExceptionsTest : TestBase() {
             assertEquals(239, cause.customData)
         }
     }
+
+    internal class WithDefault(message: String = "default") : Exception(message)
+
+    @Test
+    fun testStackTraceRecoveredWithCustomMessage() = runTest {
+        try {
+            withContext(wrapperDispatcher(coroutineContext)) {
+                throw WithDefault("custom")
+            }
+            expectUnreached()
+        } catch (e: WithDefault) {
+            assertEquals("custom", e.message)
+            val cause = e.cause
+            assertTrue(cause is WithDefault)
+            assertEquals("custom", cause.message)
+        }
+    }
 }
