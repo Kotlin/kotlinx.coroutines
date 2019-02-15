@@ -140,7 +140,7 @@ class TaskTest : TestBase() {
         } catch (e: Exception) {
             assertTrue(e is TestException)
             assertEquals("something went wrong", e.message)
-            assertSame(e, deferred.getCompletionExceptionOrNull())
+            assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
         }
     }
 
