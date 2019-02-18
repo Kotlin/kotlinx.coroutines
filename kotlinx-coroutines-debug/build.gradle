@@ -5,6 +5,7 @@
 apply plugin: "com.github.johnrengelman.shadow"
 
 dependencies {
+    compileOnly "junit:junit:$junit_version"
     compile "net.bytebuddy:byte-buddy:$byte_buddy_version"
     compile "net.bytebuddy:byte-buddy-agent:$byte_buddy_version"
 }
