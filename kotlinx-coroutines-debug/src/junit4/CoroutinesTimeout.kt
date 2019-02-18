@@ -22,7 +22,7 @@ import java.util.concurrent.*
  * ```
  * class HangingTest {
  *
- *      @Rule
+ *   @Rule
  *   @JvmField
  *   val timeout = CoroutinesTimeout.seconds(5)
  *
