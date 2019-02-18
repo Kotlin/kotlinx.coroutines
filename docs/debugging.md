@@ -13,8 +13,8 @@
 
 
 ## Debugging coroutines
-Asynchronous programming is hard and debugging asynchronous programs is even harder.
-To improve user experience, `kotlinx.coroutines` comes with additional features for debugging: debug mode, stacktrace recovery 
+Debugging asynchronous programs is challenging, because multiple concurrent coroutines are typically working at the same time.
+To help with that, `kotlinx.coroutines` comes with additional features for debugging: debug mode, stacktrace recovery 
 and debug agent.
 
 ## Debug mode
@@ -23,8 +23,9 @@ The first debugging feature of `kotlinx.coroutines` is debug mode.
 It can be enabled either by setting system property [DEBUG_PROPERTY_NAME] or by running Java with enabled assertions (`-ea` flag).
 The latter is helpful to have debug mode enabled by default in unit tests.
 
-Debug mode attaches a unique [name][CoroutineName] to every launched coroutine, which then can be seen in a regular Java debugger, 
-a string representation of coroutine and thread name executing named coroutine. 
+Debug mode attaches a unique [name][CoroutineName] to every launched coroutine.
+Coroutine name can be seen in a regular Java debugger, 
+in a string representation of the coroutine or in the thread name executing named coroutine. 
 Overhead of this feature is negligible and it can be safely turned on by default to simplify logging and diagnostic.
 
 ## Stacktrace recovery
@@ -32,10 +33,11 @@ Overhead of this feature is negligible and it can be safely turned on by default
 Stacktrace recovery is another useful feature of debug mode. It is enabled by default in the debug mode, 
 but can be separately disabled by setting `kotlinx.coroutines.stacktrace.recovery` system property to `false`.
 
-Stacktrace recovery tries to knit asynchronous exception stacktrace with a stacktrace of the receiver by copying it, providing
+Stacktrace recovery tries to stitch asynchronous exception stacktrace with a stacktrace of the receiver by copying it, providing
 not only information where an exception was thrown, but also where it was asynchronously rethrown or caught.
 
-It is easy to demonstrate with actual stacktraces of the same program that awaits asynchronous operation in `main` function:
+It is easy to demonstrate with actual stacktraces of the same program that awaits asynchronous operation in `main` function 
+(runnable code is [here](../kotlinx-coroutines-debug/test/RecoveryExample.kt)):
 
 | Without recovery | With recovery |
 | - | - |
@@ -50,21 +52,21 @@ This section explains the inner mechanism of stacktrace recovery and can be skip
 When an exception is rethrown between coroutines (e.g. through `withContext` or `Deferred.await` boundary), stacktrace recovery
 machinery tries to create a copy of the original exception (with the original exception as the cause), then rewrite stacktrace
 of the copy with coroutine-related stack frames (using [Throwable.setStackTrace](https://docs.oracle.com/javase/9/docs/api/java/lang/Throwable.html#setStackTrace-java.lang.StackTraceElement:A-)) 
-and then throws resulting exception instead of the original one.
+and then throws the resulting exception instead of the original one.
 
 Exception copy logic is straightforward:
-  1) If exception class implements [CopyableThrowable], [CopyableThrowable.createCopy] is used.
-  2) If exception class has class-specific fields not inherited from Throwable, the exception is not copied.
-  3) Otherwise, one of the public exception's constructor is invoked reflectively with optional an `initCause` call.  
+  1) If the exception class implements [CopyableThrowable], [CopyableThrowable.createCopy] is used.
+  2) If the exception class has class-specific fields not inherited from Throwable, the exception is not copied.
+  3) Otherwise, one of the public exception's constructor is invoked reflectively with an optional `initCause` call.  
 
 ## Debug agent
 
 [kotlinx-coroutines-debug](../kotlinx-coroutines-debug) module provides one of the most powerful debug capabilities in `kotlinx.coroutines`.
 
-This is a separate module with a JVM agent that keeps track of all alive coroutines, introspect and dump them similar to thread dump command,
+This is a separate module with a JVM agent that keeps track of all alive coroutines, introspects and dumps them similar to thread dump command,
 additionally enhancing stacktraces with information where coroutine was created.
 
-The full tutorial of how to use debug agent can be found in a corresponding [readme](../kotlinx-coroutines-debug/README.md).
+The full tutorial of how to use debug agent can be found in the corresponding [readme](../kotlinx-coroutines-debug/README.md).
 
 ### Debug agent and Android
 
