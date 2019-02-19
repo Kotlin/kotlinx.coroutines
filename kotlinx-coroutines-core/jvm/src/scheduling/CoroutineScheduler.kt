@@ -531,10 +531,7 @@ internal class CoroutineScheduler(
         return ADDED_REQUIRES_HELP
     }
 
-    private fun currentWorker(): Worker? {
-        val worker = Thread.currentThread() as? Worker ?: return null
-        return if (worker.scheduler == this) worker else null
-    }
+    private fun currentWorker(): Worker? = (Thread.currentThread() as? Worker)?.takeIf { it.scheduler == this }
 
     /**
      * Returns a string identifying the state of this scheduler for nicer debugging.
