@@ -5,11 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class NestedLaunchesTest {
-    private object Dispatcher : CoroutineDispatcher() {
-        override fun isDispatchNeeded(context: CoroutineContext): Boolean = true
-        override fun dispatch(context: CoroutineContext, block: Runnable) { block.run() }
-    }
-    
     private var reached: Boolean = false
 
     private fun CoroutineScope.launchInContext(context: CoroutineContext) {
@@ -17,7 +12,7 @@ class NestedLaunchesTest {
             reached = true
         }
     }
-    private val dispatcher = Dispatcher + CoroutineExceptionHandler { _, e -> e.printStackTrace() }
+    private val dispatcher = Dispatchers.Main + CoroutineExceptionHandler { _, e -> e.printStackTrace() }
 
     @Test
     fun testShouldNotThrowTce() {
