@@ -144,12 +144,11 @@ internal object DebugProbesImpl {
         state: CoroutineState,
         coroutineTrace: List<StackTraceElement>
     ): List<StackTraceElement> {
-        val coroutineStackTrace = coroutineTrace as ArrayList<StackTraceElement>
         val thread = state.lastObservedThread
-        if (state.state != State.RUNNING || thread == null) return coroutineStackTrace
+        if (state.state != State.RUNNING || thread == null) return coroutineTrace
         // Avoid security manager issues
-        val actualTrace = kotlin.runCatching { thread.stackTrace }.getOrNull()
-            ?: return coroutineStackTrace
+        val actualTrace = runCatching { thread.stackTrace }.getOrNull()
+            ?: return coroutineTrace
 
         /*
          * Here goes heuristic that tries to merge two stacktraces: real one
@@ -176,28 +175,26 @@ internal object DebugProbesImpl {
 
         // We haven't found "BaseContinuationImpl.resumeWith" resume call in stacktrace
         // This is some inconsistency in machinery, do not fail, fallback
-        if (indexOfResumeWith < 1) {
-            return coroutineStackTrace
-        }
+        val continuationFrame = actualTrace.getOrNull(indexOfResumeWith - 1)
+            ?: return coroutineTrace
 
-        val continuationFrame = actualTrace[indexOfResumeWith - 1]
-        val continuationStartFrame = coroutineStackTrace.indexOfFirst {
+        val continuationStartFrame = coroutineTrace.indexOfFirst {
             it.fileName == continuationFrame.fileName &&
                     it.className == continuationFrame.className &&
                     it.methodName == continuationFrame.methodName
         } + 1
 
-        if (continuationStartFrame == 0) return coroutineStackTrace
+        if (continuationStartFrame == 0) return coroutineTrace
 
-        val expectedSize = indexOfResumeWith + coroutineStackTrace.size - continuationStartFrame
+        val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame
         val result = ArrayList<StackTraceElement>(expectedSize)
 
         for (index in 0 until indexOfResumeWith) {
             result += actualTrace[index]
         }
 
-        for (index in continuationStartFrame until coroutineStackTrace.size) {
-            result += coroutineStackTrace[index]
+        for (index in continuationStartFrame until coroutineTrace.size) {
+            result += coroutineTrace[index]
         }
 
         return result

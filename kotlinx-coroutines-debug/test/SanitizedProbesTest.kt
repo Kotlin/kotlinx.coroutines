@@ -122,7 +122,6 @@ class SanitizedProbesTest : TestBase() {
                     delay(Long.MAX_VALUE)
                     1
                 }
-
             }
         }
     }

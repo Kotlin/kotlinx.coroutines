@@ -69,7 +69,8 @@ public data class CoroutineState internal constructor(
     }
 
     internal fun updateState(state: State, frame: Continuation<*>) {
-        if (_state == state && lastObservedFrame != null) return
+        // Propagate only duplicating transitions to running for KT-29997
+        if (_state == state && state == State.SUSPENDED && lastObservedFrame != null) return
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame
         if (state == State.RUNNING) {
