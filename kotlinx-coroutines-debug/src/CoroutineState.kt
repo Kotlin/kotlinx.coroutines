@@ -39,6 +39,9 @@ public data class CoroutineState internal constructor(
 
     private var _state: State = State.CREATED
 
+    @JvmField
+    internal var lastObservedThread: Thread? = null
+
     private var lastObservedFrame: CoroutineStackFrame? = null
 
     // Copy constructor
@@ -69,6 +72,11 @@ public data class CoroutineState internal constructor(
         if (_state == state && lastObservedFrame != null) return
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame
+        if (state == State.RUNNING) {
+            lastObservedThread = Thread.currentThread()
+        } else {
+            lastObservedThread = null
+        }
     }
 
     /**
@@ -83,7 +91,6 @@ public data class CoroutineState internal constructor(
             frame.getStackTraceElement()?.let { result.add(sanitize(it)) }
             frame = frame.callerFrame
         }
-
         return result
     }
 }
