@@ -117,7 +117,7 @@ private suspend fun <T> Publisher<T>.awaitOne(
                     if (mode == Mode.SINGLE && seenValue) {
                         subscription.cancel()
                         if (cont.isActive)
-                            cont.resumeWithException(IllegalArgumentException("More that one onNext value for $mode"))
+                            cont.resumeWithException(IllegalArgumentException("More than one onNext value for $mode"))
                     } else {
                         value = t
                         seenValue = true
