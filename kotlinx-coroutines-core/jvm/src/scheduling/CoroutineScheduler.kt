@@ -299,7 +299,7 @@ internal class CoroutineScheduler(
         // atomically set termination flag which is checked when workers are added or removed
         if (!_isTerminated.compareAndSet(0, 1)) return
         // make sure we are not waiting for the current thread
-        val currentWorker = Thread.currentThread() as? Worker
+        val currentWorker = currentWorker()
         // Capture # of created workers that cannot change anymore (mind the synchronized block!)
         val created = synchronized(workers) { createdWorkers }
         // Shutdown all workers with the only exception of the current thread
@@ -481,9 +481,7 @@ internal class CoroutineScheduler(
      * Returns [ADDED], or [NOT_ADDED], or [ADDED_REQUIRES_HELP].
      */
     private fun submitToLocalQueue(task: Task, fair: Boolean): Int {
-        val worker = Thread.currentThread() as? Worker
-            ?: return NOT_ADDED
-        if (worker.scheduler !== this) return NOT_ADDED // different scheduler's worker (!!!)
+        val worker = currentWorker() ?: return NOT_ADDED
 
         /*
          * This worker could have been already terminated from this thread by close/shutdown and it should not
@@ -532,6 +530,8 @@ internal class CoroutineScheduler(
         }
         return ADDED_REQUIRES_HELP
     }
+
+    private fun currentWorker(): Worker? = (Thread.currentThread() as? Worker)?.takeIf { it.scheduler == this }
 
     /**
      * Returns a string identifying the state of this scheduler for nicer debugging.
