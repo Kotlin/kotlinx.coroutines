@@ -20,7 +20,7 @@ fun main() = runBlocking<Unit> {
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }
     val two = async { doSomethingUsefulTwo() }
-     one.await() + two.await()
+    one.await() + two.await()
 }
 
 suspend fun doSomethingUsefulOne(): Int {
