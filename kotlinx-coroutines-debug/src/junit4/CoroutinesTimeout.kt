@@ -50,7 +50,6 @@ public class CoroutinesTimeout(
          */
         public fun seconds(seconds: Int, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
             CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds.toLong()), cancelOnTimeout)
-
     }
 
     /**
