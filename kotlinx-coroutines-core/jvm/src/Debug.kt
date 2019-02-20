@@ -4,8 +4,8 @@
 
 package kotlinx.coroutines
 
-import kotlin.coroutines.Continuation
 import kotlinx.coroutines.internal.*
+import kotlin.coroutines.*
 
 /**
  * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].
@@ -25,6 +25,32 @@ public const val DEBUG_PROPERTY_NAME = "kotlinx.coroutines.debug"
  * and [withContext] builders.
  */
 internal const val STACKTRACE_RECOVERY_PROPERTY_NAME = "kotlinx.coroutines.stacktrace.recovery"
+
+/**
+ * Throwable which can be cloned during stacktrace recovery in a class-specific way.
+ * For additional information about stacktrace recovery see [STACKTRACE_RECOVERY_PROPERTY_NAME]
+ *
+ * Example of usage:
+ * ```
+ * class BadResponseCodeException(val responseCode: Int) : Exception(), CopyableThrowable<BadResponseCodeException> {
+ *
+ *  override fun createCopy(): BadResponseCodeException {
+ *    val result = BadResponseCodeException(responseCode)
+ *    result.initCause(this)
+ *    return result
+ *  }
+ * ```
+ */
+@ExperimentalCoroutinesApi
+public interface CopyableThrowable<T> where T : Throwable, T : CopyableThrowable<T> {
+
+    /**
+     * Creates a copy of the current instance.
+     * For better debuggability, it is recommended to use original exception as [cause][Throwable.cause] of the resulting one.
+     * Stacktrace of copied exception will be overwritten by stacktrace recovery machinery by [Throwable.setStackTrace] call.
+     */
+    public fun createCopy(): T
+}
 
 /**
  * Automatic debug configuration value for [DEBUG_PROPERTY_NAME]. See [newCoroutineContext][CoroutineScope.newCoroutineContext].

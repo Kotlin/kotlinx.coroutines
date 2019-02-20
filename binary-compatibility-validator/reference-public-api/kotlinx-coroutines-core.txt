@@ -135,6 +135,10 @@ public final class kotlinx/coroutines/CompletionHandlerException : java/lang/Run
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public abstract interface class kotlinx/coroutines/CopyableThrowable {
+	public abstract fun createCopy ()Ljava/lang/Throwable;
+}
+
 public final class kotlinx/coroutines/CoroutineContextKt {
 	public static final fun newCoroutineContext (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlin/coroutines/CoroutineContext;
 }

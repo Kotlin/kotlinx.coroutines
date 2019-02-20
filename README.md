@@ -7,9 +7,6 @@
 Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
 This is a companion version for Kotlin `1.3.20` release.
 
-**NOTE**: `0.30.2` was the last release with Kotlin 1.2 and experimental coroutines.
-See [COMPATIBILITY.md](COMPATIBILITY.md) for details of migration onto the stable Kotlin 1.3 coroutines.
-
 ```kotlin
 GlobalScope.launch {
     delay(1000)
@@ -57,6 +54,8 @@ GlobalScope.launch {
   * [Guide to kotlinx.coroutines by example](docs/coroutines-guide.md) (**read it first**)
   * [Guide to UI programming with coroutines](ui/coroutines-guide-ui.md)
   * [Guide to reactive streams with coroutines](reactive/coroutines-guide-reactive.md)
+  * [Debugging capabilities in kotlinx.coroutines](docs/debugging.md)
+* [Compatibility policy and experimental annotations](docs/compatibility.md)
 * [Change log for kotlinx.coroutines](CHANGES.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md)
 * [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)

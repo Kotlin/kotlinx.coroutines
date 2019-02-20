@@ -30,8 +30,6 @@ public annotation class ObsoleteCoroutinesApi
  * Marks declarations that are **internal** in coroutines API, which means that should not be used outside of
  * `kotlinx.coroutines`, because their signatures and semantics will be changing between release without any
  * warnings and without providing any migration aids.
- *
- * @suppress **This an internal API and should not be used from general code.**
  */
 @Retention(value = AnnotationRetention.BINARY)
 @Experimental(level = Experimental.Level.ERROR)
