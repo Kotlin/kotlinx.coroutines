@@ -48,16 +48,14 @@ public class CoroutinesTimeout(
         /**
          * Creates [CoroutinesTimeout] rule with the given timeout in seconds.
          */
-        @JvmStatic
-        public fun seconds(seconds: Int, cancelOnTimeout: Boolean = false): CoroutinesTimeout {
-            return CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds.toLong()), cancelOnTimeout)
-        }
+        public fun seconds(seconds: Int, cancelOnTimeout: Boolean = false): CoroutinesTimeout =
+            CoroutinesTimeout(TimeUnit.SECONDS.toMillis(seconds.toLong()), cancelOnTimeout)
+
     }
 
     /**
      * @suppress suppress from Dokka
      */
-    override fun apply(base: Statement, description: Description): Statement {
-        return CoroutinesTimeoutStatement(base, description, testTimeoutMs, cancelOnTimeout)
-    }
+    override fun apply(base: Statement, description: Description): Statement =
+        CoroutinesTimeoutStatement(base, description, testTimeoutMs, cancelOnTimeout)
 }

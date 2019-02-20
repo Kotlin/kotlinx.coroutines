@@ -43,7 +43,6 @@ public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout : org/junit
 	public fun <init> (JZ)V
 	public synthetic fun <init> (JZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun apply (Lorg/junit/runners/model/Statement;Lorg/junit/runner/Description;)Lorg/junit/runners/model/Statement;
-	public static final fun seconds (IZ)Lkotlinx/coroutines/debug/junit4/CoroutinesTimeout;
 }
 
 public final class kotlinx/coroutines/debug/junit4/CoroutinesTimeout$Companion {

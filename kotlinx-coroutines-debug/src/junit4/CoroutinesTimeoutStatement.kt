@@ -4,40 +4,38 @@
 
 package kotlinx.coroutines.debug.junit4
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import org.junit.runner.*
 import org.junit.runners.model.*
 import java.util.concurrent.*
 
 internal class CoroutinesTimeoutStatement(
-    private val testStatement: Statement, private val testDescription: Description,
+    testStatement: Statement,
+    private val testDescription: Description,
     private val testTimeoutMs: Long,
     private val cancelOnTimeout: Boolean = false
 ) : Statement() {
 
-    private val testExecutor = Executors.newSingleThreadExecutor {
-        Thread(it).apply {
-            name = "Timeout test executor"
-            isDaemon = true
-        }
+    private val testStartedLatch = CountDownLatch(1)
+
+    private val testResult = FutureTask<Unit> {
+        testStartedLatch.countDown()
+        testStatement.evaluate()
     }
 
-    // Thread to dump stack from, captured by testExecutor
-    private lateinit var testThread: Thread
+    /*
+     * We are using hand-rolled thread instead of single thread executor
+     * in order to be able to safely interrupt thread in the end of a test
+     */
+    private val testThread =  Thread(testResult, "Timeout test thread").apply { isDaemon = true }
 
     override fun evaluate() {
-        DebugProbes.install() // Fail-fast if probes are unavailable
-        val latch = CountDownLatch(1)
-        val testFuture = CompletableFuture.runAsync(Runnable {
-            testThread = Thread.currentThread()
-            latch.countDown()
-            testStatement.evaluate()
-        }, testExecutor)
-
-        latch.await() // Await until test is started
+        DebugProbes.install()
+        testThread.start()
+        // Await until test is started to take only test execution time into account
+        testStartedLatch.await()
         try {
-            testFuture.get(testTimeoutMs, TimeUnit.MILLISECONDS)
+            testResult.get(testTimeoutMs, TimeUnit.MILLISECONDS)
             return
         } catch (e: TimeoutException) {
             handleTimeout(testDescription)
@@ -45,13 +43,12 @@ internal class CoroutinesTimeoutStatement(
             throw e.cause ?: e
         } finally {
             DebugProbes.uninstall()
-            testExecutor.shutdown()
         }
     }
 
     private fun handleTimeout(description: Description) {
         val units =
-            if (testTimeoutMs % 1000L == 0L)
+            if (testTimeoutMs % 1000 == 0L)
                 "${testTimeoutMs / 1000} seconds"
             else "$testTimeoutMs milliseconds"
 

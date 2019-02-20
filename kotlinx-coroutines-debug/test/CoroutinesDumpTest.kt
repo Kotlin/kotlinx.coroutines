@@ -81,6 +81,7 @@ class CoroutinesDumpTest : TestBase() {
     fun testRunningCoroutineWithSuspensionPoint() = synchronized(monitor) {
         val deferred = GlobalScope.async {
             activeMethod(shouldSuspend = true)
+            yield() // tail-call
         }
 
         awaitCoroutineStarted()
@@ -143,11 +144,11 @@ class CoroutinesDumpTest : TestBase() {
 
     private suspend fun activeMethod(shouldSuspend: Boolean) {
         nestedActiveMethod(shouldSuspend)
-        delay(1)
+        assertTrue(true) // tail-call
     }
 
     private suspend fun nestedActiveMethod(shouldSuspend: Boolean) {
-        if (shouldSuspend) delay(1)
+        if (shouldSuspend) yield()
         notifyTest()
         while (coroutineContext[Job]!!.isActive) {
             Thread.sleep(100)
@@ -156,11 +157,11 @@ class CoroutinesDumpTest : TestBase() {
 
     private suspend fun sleepingOuterMethod() {
         sleepingNestedMethod()
-        delay(1)
+        yield()
     }
 
     private suspend fun sleepingNestedMethod() {
-        delay(1)
+        yield()
         notifyTest()
         delay(Long.MAX_VALUE)
     }

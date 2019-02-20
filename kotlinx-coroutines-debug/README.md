@@ -25,9 +25,9 @@ dependencies {
 ### Using in unit tests
 
 For JUnit4 debug module provides special test rule, [CoroutinesTimeout], for installing debug probes
-and dump coroutines on timeout to simplify tests debugging.
+and to dump coroutines on timeout to simplify tests debugging.
 
-Its usage is better to demonstrate by the example (runnable code is [here](test/TestRuleExample.kt)):
+Its usage is better demonstrated by the example (runnable code is [here](test/TestRuleExample.kt)):
  
 ```kotlin
 class TestRuleExample {
@@ -37,11 +37,8 @@ class TestRuleExample {
 
     private suspend fun someFunctionDeepInTheStack() {
         withContext(Dispatchers.IO) {
-            delay(Long.MAX_VALUE)
-            println("This line is never executed")
-        }
-
-        println("This line is never executed as well")
+            delay(Long.MAX_VALUE) // Hang method
+        }  
     }
 
     @Test
@@ -49,9 +46,7 @@ class TestRuleExample {
         val job = launch {
             someFunctionDeepInTheStack()
         }
-
-        println("Doing some work...")
-        job.join()
+        job.join() // Join will hang
     }
 }
 ```
