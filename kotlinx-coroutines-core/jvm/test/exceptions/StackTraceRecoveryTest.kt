@@ -180,6 +180,7 @@ class StackTraceRecoveryTest : TestBase() {
                     "\t(Coroutine boundary)\n" +
                     "\tat kotlinx.coroutines.DeferredCoroutine.await\$suspendImpl(Builders.common.kt:99)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
+                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2\$1.invokeSuspend(StackTraceRecoveryTest.kt:193)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
             "Caused by: kotlinx.coroutines.RecoverableTestException\n" +
@@ -217,7 +218,10 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     private suspend fun outerScopedMethod(deferred: Deferred<Nothing>, vararg traces: String) = coroutineScope {
-        innerMethod(deferred, *traces)
+        supervisorScope {
+            innerMethod(deferred, *traces)
+            assertTrue(true)
+        }
         assertTrue(true)
     }
 

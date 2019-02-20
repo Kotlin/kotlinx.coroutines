@@ -37,7 +37,6 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * Context of the parent coroutine.
      */
-
     @JvmField
     protected val parentContext: CoroutineContext,
     active: Boolean = true
@@ -53,7 +52,7 @@ public abstract class AbstractCoroutine<in T>(
      */
     public override val coroutineContext: CoroutineContext get() = context
 
-    override val isActive: Boolean get() = super<JobSupport>.isActive
+    override val isActive: Boolean get() = super.isActive
 
     /**
      * Initializes parent job from the `parentContext` of this coroutine that was passed to it during construction.
