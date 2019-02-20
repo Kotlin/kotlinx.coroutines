@@ -10,6 +10,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.jvm.*
 
 /**
  * Creates a new _supervisor_ job object in an active state.

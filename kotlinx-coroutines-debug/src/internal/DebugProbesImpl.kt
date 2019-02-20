@@ -74,16 +74,14 @@ internal object DebugProbesImpl {
         }
     }
 
-    @Suppress("DEPRECATION_ERROR") // JobSupport
     private fun Job.build(map: Map<Job, CoroutineState>, builder: StringBuilder, indent: String) {
         val state = map[this]
-        val str = if (this !is JobSupport) toString() else toDebugString()
         val newIndent: String
         if (state == null) { // Append coroutine without stacktrace
             // Do not print scoped coroutines and do not increase indentation level
             @Suppress("INVISIBLE_REFERENCE")
             if (this !is kotlinx.coroutines.internal.ScopeCoroutine<*>) {
-                builder.append("$indent$str\n")
+                builder.append("$indent$debugString\n")
                 newIndent = indent + "\t"
             } else {
                 newIndent = indent
@@ -92,7 +90,7 @@ internal object DebugProbesImpl {
             // Append coroutine with its last stacktrace element
             val element = state.lastObservedStackTrace().firstOrNull()
             val contState = state.state
-            builder.append("$indent$str, continuation is $contState at line $element\n")
+            builder.append("$indent$debugString, continuation is $contState at line $element\n")
             newIndent = indent + "\t"
         }
         // Append children with new indent
@@ -100,6 +98,9 @@ internal object DebugProbesImpl {
             child.build(map, builder, newIndent)
         }
     }
+
+    @Suppress("DEPRECATION_ERROR") // JobSupport
+    private val Job.debugString: String get() = if (this is JobSupport) toDebugString() else toString()
 
     @Synchronized
     public fun dumpCoroutinesState(): List<CoroutineState> {
