@@ -36,6 +36,7 @@ GlobalScope.launch {
   * `Dispatchers.setMain` to override `Dispatchers.Main` in tests.
 * [debug](kotlinx-coroutines-debug/README.md) &mdash; debug utilities for coroutines.
   * `DebugProbes` API to probe, keep track of, print and dump active coroutines.
+  * `CoroutinesTimeout` test rule to automatically dump coroutines on test timeout.
 * [reactive](reactive/README.md) &mdash; modules that provide builders and iteration support for various reactive streams libraries:
   * Reactive Streams, RxJava 2.x, and Project Reactor. 
 * [ui](ui/README.md) &mdash; modules that provide coroutine dispatchers for various single-threaded UI libraries:

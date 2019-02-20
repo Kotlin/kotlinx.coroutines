@@ -22,6 +22,38 @@ dependencies {
 }
 ```
 
+### Using in unit tests
+
+For JUnit4 debug module provides special test rule, [CoroutinesTimeout], for installing debug probes
+and to dump coroutines on timeout to simplify tests debugging.
+
+Its usage is better demonstrated by the example (runnable code is [here](test/TestRuleExample.kt)):
+ 
+```kotlin
+class TestRuleExample {
+    @Rule
+    @JvmField
+    public val timeout = CoroutinesTimeout.seconds(1)
+
+    private suspend fun someFunctionDeepInTheStack() {
+        withContext(Dispatchers.IO) {
+            delay(Long.MAX_VALUE) // Hang method
+        }  
+    }
+
+    @Test
+    fun hangingTest() = runBlocking {
+        val job = launch {
+            someFunctionDeepInTheStack()
+        }
+        job.join() // Join will hang
+    }
+}
+```
+
+After 1 second, test will fail with `TestTimeoutException` and all coroutines (`runBlocking` and `launch`) and their
+stacktraces will be dumped to the console.
+
 ### Using as JVM agent
 
 It is possible to use this module as a standalone JVM agent to enable debug probes on the application startup.
@@ -130,4 +162,6 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/lang/management/Mana
 [DebugProbes.dumpCoroutinesState]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-state.html
 [DebugProbes.printJob]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html
 [DebugProbes.printScope]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html
+<!--- INDEX kotlinx.coroutines.debug.junit4 -->
+[CoroutinesTimeout]: https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/index.html
 <!--- END -->
