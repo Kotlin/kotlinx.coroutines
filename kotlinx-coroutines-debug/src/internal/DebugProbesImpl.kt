@@ -117,20 +117,87 @@ internal object DebugProbesImpl {
             .asSequence()
             .sortedBy { it.value.sequenceNumber }
             .forEach { (key, value) ->
-                val state = if (value.state == State.RUNNING)
+                val observedStackTrace = value.lastObservedStackTrace()
+                val enhancedStackTrace = enhanceStackTraceWithThreadDump(value, observedStackTrace)
+                val state = if (value.state == State.RUNNING && enhancedStackTrace === observedStackTrace)
                     "${value.state} (Last suspension stacktrace, not an actual stacktrace)"
                 else
                     value.state.toString()
 
                 append("\n\nCoroutine $key, state: $state")
-                val observedStackTrace = value.lastObservedStackTrace()
                 if (observedStackTrace.isEmpty()) {
                     append("\n\tat ${artificialFrame(ARTIFICIAL_FRAME_MESSAGE)}")
                     printStackTrace(value.creationStackTrace)
                 } else {
-                    printStackTrace(value.lastObservedStackTrace())
+                    printStackTrace(enhancedStackTrace)
                 }
             }
+    }
+
+    /**
+     * Tries to enhance [coroutineTrace] (obtained by call to [CoroutineState.lastObservedStackTrace]) with
+     * thread dump of [CoroutineState.lastObservedThread].
+     *
+     * Returns [coroutineTrace] if enhancement was unsuccessful or the enhancement result.
+     */
+    private fun enhanceStackTraceWithThreadDump(
+        state: CoroutineState,
+        coroutineTrace: List<StackTraceElement>
+    ): List<StackTraceElement> {
+        val thread = state.lastObservedThread
+        if (state.state != State.RUNNING || thread == null) return coroutineTrace
+        // Avoid security manager issues
+        val actualTrace = runCatching { thread.stackTrace }.getOrNull()
+            ?: return coroutineTrace
+
+        /*
+         * Here goes heuristic that tries to merge two stacktraces: real one
+         * (that has at least one but usually not so many suspend function frames)
+         * and coroutine one that has only suspend function frames.
+         *
+         * Heuristic:
+         * 1) Dump lastObservedThread
+         * 2) Find the next frame after BaseContinuationImpl.resumeWith (continuation machinery).
+         *   Invariant: this method is called under the lock, so such method **should** be present
+         *   in continuation stacktrace.
+         *
+         * 3) Find target method in continuation stacktrace (metadata-based)
+         * 4) Prepend dumped stacktrace (trimmed by target frame) to continuation stacktrace
+         *
+         * Heuristic may fail on recursion and overloads, but it will be automatically improved
+         * with KT-29997
+         */
+        val indexOfResumeWith = actualTrace.indexOfFirst {
+            it.className == "kotlin.coroutines.jvm.internal.BaseContinuationImpl" &&
+                    it.methodName == "resumeWith" &&
+                    it.fileName == "ContinuationImpl.kt"
+        }
+
+        // We haven't found "BaseContinuationImpl.resumeWith" resume call in stacktrace
+        // This is some inconsistency in machinery, do not fail, fallback
+        val continuationFrame = actualTrace.getOrNull(indexOfResumeWith - 1)
+            ?: return coroutineTrace
+
+        val continuationStartFrame = coroutineTrace.indexOfFirst {
+            it.fileName == continuationFrame.fileName &&
+                    it.className == continuationFrame.className &&
+                    it.methodName == continuationFrame.methodName
+        } + 1
+
+        if (continuationStartFrame == 0) return coroutineTrace
+
+        val expectedSize = indexOfResumeWith + coroutineTrace.size - continuationStartFrame
+        val result = ArrayList<StackTraceElement>(expectedSize)
+
+        for (index in 0 until indexOfResumeWith) {
+            result += actualTrace[index]
+        }
+
+        for (index in continuationStartFrame until coroutineTrace.size) {
+            result += coroutineTrace[index]
+        }
+
+        return result
     }
 
     private fun StringBuilder.printStackTrace(frames: List<StackTraceElement>) {

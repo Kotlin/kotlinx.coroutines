@@ -31,10 +31,9 @@ class ScopedBuildersTest : TestBase() {
         yield()
         yield()
         verifyDump(
-            "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@16612a51, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
-                 "\tat kotlinx.coroutines.debug.ScopedBuildersTest\$testNestedScopes\$1.invokeSuspend(ScopedBuildersTest.kt:32)\n" +
+            "Coroutine \"coroutine#1\":BlockingCoroutine{Active}@16612a51, state: RUNNING\n" +
              "\t(Coroutine creation stacktrace)\n" +
-                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n",
+                "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n",
 
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@6b53e23f, state: SUSPENDED\n" +
                 "\tat kotlinx.coroutines.debug.ScopedBuildersTest\$doWithContext\$2.invokeSuspend(ScopedBuildersTest.kt:49)\n" +

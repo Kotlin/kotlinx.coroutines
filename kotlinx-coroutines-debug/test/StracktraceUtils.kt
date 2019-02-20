@@ -55,7 +55,7 @@ public fun toStackTrace(t: Throwable): String {
 
 public fun String.count(substring: String): Int = split(substring).size - 1
 
-public fun verifyDump(vararg traces: String) {
+public fun verifyDump(vararg traces: String, ignoredCoroutine: String? = null) {
     val baos = ByteArrayOutputStream()
     DebugProbes.dumpCoroutines(PrintStream(baos))
     val trace = baos.toString().split("\n\n")
@@ -66,6 +66,10 @@ public fun verifyDump(vararg traces: String) {
     }
     // Drop "Coroutine dump" line
     trace.withIndex().drop(1).forEach { (index, value) ->
+        if (ignoredCoroutine != null && value.contains(ignoredCoroutine)) {
+            return@forEach
+        }
+
         val expected = traces[index - 1].applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
         val actual = value.applyBackspace().split("\n\t(Coroutine creation stacktrace)\n", limit = 2)
         assertEquals(expected.size, actual.size)

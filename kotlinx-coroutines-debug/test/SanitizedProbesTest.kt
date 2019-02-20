@@ -59,8 +59,8 @@ class SanitizedProbesTest : TestBase() {
         val deferred = createActiveDeferred()
         yield()
         verifyDump(
-            "Coroutine \"coroutine#3\":BlockingCoroutine{Active}@7d68ef40, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$testCoroutinesDump\$1.invokeSuspend(SanitizedProbesTest.kt:58)\n" +
+            "Coroutine \"coroutine#3\":BlockingCoroutine{Active}@7d68ef40, state: RUNNING\n" +
+                "\tat java.lang.Thread.getStackTrace(Thread.java)\n" +
                 "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:23)\n" +
@@ -90,7 +90,8 @@ class SanitizedProbesTest : TestBase() {
         expect(1)
         yield()
         expect(3)
-        verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@35fc6dc4, state: RUNNING (Last suspension stacktrace, not an actual stacktrace)\n" +
+        verifyDump("Coroutine \"coroutine#1\":BlockingCoroutine{Active}@35fc6dc4, state: RUNNING\n" +
+                "\tat java.lang.Thread.getStackTrace(Thread.java:1552)\n" + // Skip the rest
                 "\t(Coroutine creation stacktrace)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
 
@@ -121,7 +122,6 @@ class SanitizedProbesTest : TestBase() {
                     delay(Long.MAX_VALUE)
                     1
                 }
-
             }
         }
     }
