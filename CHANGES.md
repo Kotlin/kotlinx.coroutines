@@ -184,7 +184,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Introduced IO dispatcher to offload blocking I/O-intensive tasks (see #79).
 * Introduced `ExecutorCoroutineDispatcher` instead of `CloseableCoroutineDispatcher` (see #385). 
 * Built with Kotlin 1.2.61 and Kotlin/Native 0.8.2.
-* JAR files for `kotlinx-coroutines` are now [JEP 238](http://openjdk.java.net/jeps/238) multi-release JAR files.
+* JAR files for `kotlinx-coroutines` are now [JEP 238](https://openjdk.java.net/jeps/238) multi-release JAR files.
   * On JDK9+ `VarHandle` is used for atomic operations instead of `Atomic*FieldUpdater` for better performance.
   * See [AtomicFu](https://github.com/Kotlin/kotlinx.atomicfu/blob/master/README.md) project for details.
 * Reversed addition of `BlockingChecker` extension point to control where `runBlocking` can be used (see #227).
@@ -221,7 +221,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Includes multiple fixes to documentation contributed by @paolop, @SahilLone, @rocketraman, @bdavisx, @mtopolnik, @Groostav.   
 * Experimental coroutines scheduler preview (JVM only):
   * Written from scratch and optimized for communicating coroutines.
-  * Performs significantly better than ForkJoinPool on coroutine benchmarks and for connected applications with [ktor](http://ktor.io).
+  * Performs significantly better than ForkJoinPool on coroutine benchmarks and for connected applications with [ktor](https://ktor.io).
   * Supports automatic creating of new threads for blocking operations running on the same thread pool (with an eye on solving #79), but there is no stable public API for it just yet.
   * For preview, run JVM with `-Dkotlinx.coroutines.scheduler` option. In this case `DefaultDispatcher` is set to new experimental scheduler instead of FJP-based `CommonPool`.
   * Submit your feedback to issue #261.
@@ -514,7 +514,7 @@ Visible consequences of include more robust exception handling for large corouti
 * Fixed bug in internal class LockFreeLinkedList that resulted in ISE under stress in extremely rare circumstances.
 * Integrations:
   * [quasar](integration/kotlinx-coroutines-quasar): Introduced integration with suspendable JVM functions
-    that are instrumented with [Parallel Universe Quasar](http://docs.paralleluniverse.co/quasar/) 
+    that are instrumented with [Parallel Universe Quasar](https://docs.paralleluniverse.co/quasar/) 
     (thanks to the help of @pron). 
   * [reactor](reactive/kotlinx-coroutines-reactor): Replaced deprecated `setCancellation` with `onDipose` and 
     updated to Aluminium-SR3 release (courtesy of @yxf07, see #96) 

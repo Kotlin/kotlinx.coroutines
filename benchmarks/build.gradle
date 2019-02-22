@@ -7,7 +7,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: "me.champeau.gradle.jmh"
 
 repositories {
-    maven { url "http://repo.typesafe.com/typesafe/releases/" }
+    maven { url "https://repo.typesafe.com/typesafe/releases/" }
 }
 
 jmh.jmhVersion = '1.21'

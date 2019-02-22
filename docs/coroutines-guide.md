@@ -29,4 +29,4 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 * [Guide to UI programming with coroutines](../ui/coroutines-guide-ui.md)
 * [Guide to reactive streams with coroutines](../reactive/coroutines-guide-reactive.md)
 * [Coroutines design document (KEEP)](https://github.com/Kotlin/kotlin-coroutines/blob/master/kotlin-coroutines-informal.md)
-* [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
+* [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)

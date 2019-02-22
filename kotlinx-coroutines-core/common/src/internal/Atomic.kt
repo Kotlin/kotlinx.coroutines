@@ -26,7 +26,7 @@ private val NO_DECISION: Any = Symbol("NO_DECISION")
 /**
  * Descriptor for multi-word atomic operation.
  * Based on paper
- * ["A Practical Multi-Word Compare-and-Swap Operation"](http://www.cl.cam.ac.uk/research/srgnetos/papers/2002-casn.pdf)
+ * ["A Practical Multi-Word Compare-and-Swap Operation"](https://www.cl.cam.ac.uk/research/srg/netos/papers/2002-casn.pdf)
  * by Timothy L. Harris, Keir Fraser and Ian A. Pratt.
  *
  * Note: parts of atomic operation must be globally ordered. Otherwise, this implementation will produce

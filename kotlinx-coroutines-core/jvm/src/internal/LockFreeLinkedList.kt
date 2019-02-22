@@ -41,7 +41,7 @@ public actual typealias AbstractAtomicDesc = LockFreeLinkedListNode.AbstractAtom
 /**
  * Doubly-linked concurrent list node with remove support.
  * Based on paper
- * ["Lock-Free and Practical Doubly Linked List-Based Deques Using Single-Word Compare-and-Swap"](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.140.4693&rep=rep1&type=pdf)
+ * ["Lock-Free and Practical Doubly Linked List-Based Deques Using Single-Word Compare-and-Swap"](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.140.4693&rep=rep1&type=pdf)
  * by Sundell and Tsigas.
  *
  * Important notes:

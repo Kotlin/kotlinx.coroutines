@@ -13,4 +13,4 @@ launch {
 ## Documentation 
 
 * [Guide to kotlinx.coroutines by example on JVM](https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md) (**read it first**)
-* [Full kotlinx.coroutines API reference](http://kotlin.github.io/kotlinx.coroutines)
+* [Full kotlinx.coroutines API reference](https://kotlin.github.io/kotlinx.coroutines)
