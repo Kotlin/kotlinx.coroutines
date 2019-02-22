@@ -121,9 +121,17 @@ private class LazyDeferredCoroutine<T>(
  * Calls the specified suspending block with a given coroutine context, suspends until it completes, and returns
  * the result.
  *
- * This function immediately applies dispatcher from the new context, shifting execution of the block into the
- * different thread inside the block, and back when it completes.
- * The specified [context] is added onto the current coroutine context for the execution of the block.
+ * The resulting context for the [block] is derived by merging the current [coroutineContext] with the
+ * specified [context] using `coroutineContext + context` (see [CoroutineContext.plus]).
+ * This suspending function is cancellable. It immediately checks for cancellation of
+ * the resulting context and throws [CancellationException] if it is not [active][CoroutineContext.isActive].
+ *
+ * This function uses dispatcher from the new context, shifting execution of the [block] into the
+ * different thread if a new dispatcher is specified, and back to the original dispatcher
+ * when it completes. Note, that the result of `withContext` invocation is
+ * dispatched into the original context in a cancellable way, which means that if the original [coroutineContext],
+ * in which `withContext` was invoked, is cancelled by the time its dispatcher starts to execute the code,
+ * it discards the result of `withContext` and throws [CancellationException].
  */
 public suspend fun <T> withContext(
     context: CoroutineContext,
@@ -132,6 +140,8 @@ public suspend fun <T> withContext(
     // compute new context
     val oldContext = uCont.context
     val newContext = oldContext + context
+    // always check for cancellation of new context
+    newContext.checkCompletion()
     // FAST PATH #1 -- new context is the same as the old one
     if (newContext === oldContext) {
         val coroutine = ScopeCoroutine(newContext, uCont) // MODE_DIRECT

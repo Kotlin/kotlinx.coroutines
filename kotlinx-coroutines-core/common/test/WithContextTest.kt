@@ -325,6 +325,32 @@ class WithContextTest : TestBase() {
         assertFalse(ctxJob.isCancelled)
     }
 
+    @Test
+    fun testWithContextCancelledJob() = runTest {
+        expect(1)
+        val job = Job()
+        job.cancel()
+        try {
+            withContext(job) {
+                expectUnreached()
+            }
+        } catch (e: CancellationException) {
+            expect(2)
+        }
+        finish(3)
+    }
+
+    @Test
+    fun testWithContextCancelledThisJob() = runTest(
+        expected = { it is CancellationException }
+    ) {
+        coroutineContext.cancel()
+        withContext(wrapperDispatcher(coroutineContext)) {
+            expectUnreached()
+        }
+        expectUnreached()
+    }
+
     private class Wrapper(val value: String) : Incomplete {
         override val isActive: Boolean
             get() =  error("")
