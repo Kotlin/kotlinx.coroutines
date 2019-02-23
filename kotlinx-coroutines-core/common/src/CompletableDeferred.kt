@@ -74,7 +74,7 @@ private class CompletableDeferredImpl<T>(
         registerSelectClause1Internal(select, block)
 
     override fun complete(value: T): Boolean =
-        makeCompleting(value)
+        makeCompleting(value, MODE_ATOMIC_DEFAULT) != COMPLETING_ALREADY_COMPLETING
     override fun completeExceptionally(exception: Throwable): Boolean =
-        makeCompleting(CompletedExceptionally(exception))
+        makeCompleting(CompletedExceptionally(exception), MODE_ATOMIC_DEFAULT) != COMPLETING_ALREADY_COMPLETING
 }

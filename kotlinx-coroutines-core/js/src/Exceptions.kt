@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlin.reflect.*
+
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
  *
@@ -66,3 +68,7 @@ internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) { 
 
 // For use in tests
 internal actual val RECOVER_STACK_TRACES: Boolean = false
+
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun KClass<out Throwable>.isExceptionSuperclassOf(other: KClass<out Throwable>): Boolean =
+    false

@@ -6,6 +6,8 @@
 
 package kotlinx.coroutines
 
+import kotlin.reflect.*
+
 /**
  * This exception gets thrown if an exception is caught while processing [CompletionHandler] invocation for [Job].
  *
@@ -86,3 +88,7 @@ internal actual class CoroutinesInternalError actual constructor(message: String
 @Suppress("NOTHING_TO_INLINE")
 internal actual inline fun Throwable.addSuppressedThrowable(other: Throwable) =
     addSuppressed(other)
+
+@Suppress("NOTHING_TO_INLINE")
+internal actual inline fun KClass<out Throwable>.isExceptionSuperclassOf(other: KClass<out Throwable>) =
+    java.isAssignableFrom(other.java)

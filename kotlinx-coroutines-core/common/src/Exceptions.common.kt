@@ -4,6 +4,8 @@
 
 package kotlinx.coroutines
 
+import kotlin.reflect.*
+
 /**
  * @suppress **This an internal API and should not be used from general code.**
  */
@@ -28,3 +30,5 @@ internal expect class CoroutinesInternalError(message: String, cause: Throwable)
 internal expect fun Throwable.addSuppressedThrowable(other: Throwable)
 // For use in tests
 internal expect val RECOVER_STACK_TRACES: Boolean
+
+internal expect inline fun KClass<out Throwable>.isExceptionSuperclassOf(other: KClass<out Throwable>): Boolean

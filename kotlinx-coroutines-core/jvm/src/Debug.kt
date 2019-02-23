@@ -6,6 +6,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.reflect.*
 
 /**
  * Name of the property that controls coroutine debugging. See [newCoroutineContext][CoroutineScope.newCoroutineContext].

@@ -129,7 +129,8 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
      */
     return when {
         result === COROUTINE_SUSPENDED -> COROUTINE_SUSPENDED
-        makeCompletingOnce(result, MODE_IGNORE) -> {
+        makeCompleting(result, MODE_IGNORE) == COMPLETING_WAITING_CHILDREN -> COROUTINE_SUSPENDED
+        else -> {
             val state = state
             if (state is CompletedExceptionally) {
                 when {
@@ -141,6 +142,5 @@ private inline fun <T> AbstractCoroutine<T>.undispatchedResult(
                 state.unboxState()
             }
         }
-        else -> COROUTINE_SUSPENDED
     }
 }

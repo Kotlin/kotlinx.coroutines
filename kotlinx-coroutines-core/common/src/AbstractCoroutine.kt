@@ -77,18 +77,6 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /**
-     * This function is invoked once when this coroutine is cancelled
-     * similarly to [invokeOnCompletion] with `onCancelling` set to `true`.
-     *
-     * The meaning of [cause] parameter:
-     * * Cause is `null` when job has completed normally.
-     * * Cause is an instance of [CancellationException] when job was cancelled _normally_.
-     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
-     * * Otherwise, the job had been cancelled or failed with exception.
-     */
-    protected override fun onCancellation(cause: Throwable?) {}
-
-    /**
      * This function is invoked once when job was completed normally with the specified [value].
      */
     protected open fun onCompleted(value: T) {}
@@ -114,7 +102,18 @@ public abstract class AbstractCoroutine<in T>(
      * Completes execution of this with coroutine with the specified result.
      */
     public final override fun resumeWith(result: Result<T>) {
-        makeCompletingOnce(result.toState(), defaultResumeMode)
+        val proposedUpdate = result.toState()
+        if (makeCompleting(proposedUpdate, defaultResumeMode) == COMPLETING_ALREADY_COMPLETING) {
+            /**
+             * This happens when coroutine has handlers installed via [CoroutineBuilder].
+             * It was already completing and now its final state was determined.
+             * It must be still at incomplete state by now, otherwise we are witnessing a
+             * repeated invocation of [resumeWith].
+             */
+            val state = this.state as? Incomplete
+                ?: error("resumeWith in a complete state $state. Repeated invocation?")
+            updateToFinalState(state, proposedUpdate, defaultResumeMode)
+        }
     }
 
     internal final override fun handleOnCompletionException(exception: Throwable) {

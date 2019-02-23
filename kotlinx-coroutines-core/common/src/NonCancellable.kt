@@ -18,6 +18,12 @@ import kotlin.coroutines.*
  *     // this code will not be cancelled
  * }
  * ```
+ *
+ * You can also use to [launch] new coroutines as in `launch(NonCancellable) { ... }`.
+ * However, when a coroutine specifies [NonCancellable] in its context, it explicitly opt-out of the
+ * regular parent-child relation between coroutines. A [Job] in the [CoroutineScope] that was used
+ * to launch a non-cancellable coroutine is not its parent in this case and it will not wait for the
+ * newly started coroutine before its completion.
  */
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /**
