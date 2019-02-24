@@ -19,6 +19,9 @@ internal open class ScopeCoroutine<in T>(
     final override fun getStackTraceElement(): StackTraceElement? = null
     override val defaultResumeMode: Int get() = MODE_DIRECT
 
+    override val cancelsParent: Boolean
+        get() = false // it throws exception to parent instead of cancelling it
+
     @Suppress("UNCHECKED_CAST")
     internal override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {
         if (state is CompletedExceptionally) {

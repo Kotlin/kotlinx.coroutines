@@ -40,7 +40,6 @@ private class RxSingleCoroutine<T: Any>(
     parentContext: CoroutineContext,
     private val subscriber: SingleEmitter<T>
 ) : AbstractCoroutine<T>(parentContext, true) {
-    override val cancelsParent: Boolean get() = true
     override fun onCompleted(value: T) {
         if (!subscriber.isDisposed) subscriber.onSuccess(value)
     }

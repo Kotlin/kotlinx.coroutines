@@ -220,9 +220,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             // cancelled job final state
             else -> CompletedExceptionally(finalException)
         }
-        // Now handle exception if parent can't handle it
-        if (finalException != null && !cancelParent(finalException)) {
-            handleJobException(finalException)
+        // Now handle the final exception
+        if (finalException != null) {
+            val handledByParent = cancelParent(finalException)
+            handleJobException(finalException, handledByParent)
         }
         // Then CAS to completed state -> it must succeed
         require(_state.compareAndSet(state, finalState.boxIncomplete())) { "Unexpected state: ${_state.value}, expected: $state, update: $finalState" }
@@ -891,24 +892,29 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open val cancelsParent: Boolean get() = false
+    protected open val cancelsParent: Boolean get() = true
 
     /**
      * Returns `true` for jobs that handle their exceptions via [handleJobException] or integrate them
      * into the job's result via [onCompletionInternal]. The only instance of the [Job] that does not
-     * handle its exceptions is [JobImpl].
+     * handle its exceptions is [JobImpl] and its subclass [SupervisorJobImpl].
      *
      * @suppress **This is unstable API and it is subject to change.*
      */
     protected open val handlesException: Boolean get() = true
 
     /**
+     * Handles the final job [exception] after it was reported to the by the parent,
+     * where [handled] is `true` when parent had already handled exception and `false` otherwise.
+     *
      * This method is invoked **exactly once** when the final exception of the job is determined
      * and before it becomes complete. At the moment of invocation the job and all its children are complete.
      *
+     * Note, [handled] is always `true` when [exception] is [CancellationException].
+     *
      * @suppress **This is unstable API and it is subject to change.*
      */
-    protected open fun handleJobException(exception: Throwable) {}
+    protected open fun handleJobException(exception: Throwable, handled: Boolean) {}
 
     private fun cancelParent(cause: Throwable): Boolean {
         // CancellationException is considered "normal" and parent is not cancelled when child produces it.
@@ -1184,7 +1190,6 @@ private class Empty(override val isActive: Boolean) : Incomplete {
 
 internal open class JobImpl(parent: Job?) : JobSupport(true), CompletableJob {
     init { initParentJobInternal(parent) }
-    override val cancelsParent: Boolean get() = true
     override val onCancelComplete get() = true
     override val handlesException: Boolean get() = false
     override fun complete() = makeCompleting(Unit)

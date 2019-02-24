@@ -46,20 +46,20 @@ public fun <T> CoroutineScope.future(
 
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
-    private val completion: CompletableFuture<T>
+    private val future: CompletableFuture<T>
 ) : AbstractCoroutine<T>(context), BiConsumer<T?, Throwable?> {
-
     override fun accept(value: T?, exception: Throwable?) {
         cancel()
     }
 
     override fun onCompleted(value: T) {
-        completion.complete(value)
+        future.complete(value)
     }
 
-    override fun onCompletedExceptionally(exception: Throwable) {
-        if (!completion.completeExceptionally(exception)) {
-            handleCoroutineException(parentContext, exception, this)
+    override fun handleJobException(exception: Throwable, handled: Boolean) {
+        if (!future.completeExceptionally(exception) && !handled) {
+            // prevents loss of exception that was not handled by parent & could not be set to CompletableFuture
+            handleCoroutineException(context, exception)
         }
     }
 }

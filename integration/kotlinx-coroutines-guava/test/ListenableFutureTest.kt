@@ -258,13 +258,24 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testChildException() = runTest {
+    fun testStructuredException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
+        val result = future<Int>(Dispatchers.Unconfined) {
+            throw TestException("FAIL")
+        }
+        result.checkFutureException<TestException>()
+    }
+
+    @Test
+    fun testChildException() = runTest(
+        expected = { it is TestException } // exception propagates to parent with structured concurrency
+    ) {
         val result = future(Dispatchers.Unconfined) {
             // child crashes
             launch { throw TestException("FAIL") }
             42
         }
-
         result.checkFutureException<TestException>()
     }
 
@@ -295,7 +306,26 @@ class ListenableFutureTest : TestBase() {
                 throw TestException()
             }
         }
+        result.cancel(true)
+        finish(3)
+    }
 
+    @Test
+    fun testUnhandledExceptionOnExternalCancellation() = runTest(
+        unhandled = listOf(
+            { it -> it is TestException } // exception is unhandled because there is no parent
+        )
+    ) {
+        expect(1)
+        // No parent here (NonCancellable), so nowhere to propagate exception
+        val result = future(NonCancellable + Dispatchers.Unconfined) {
+            try {
+                delay(Long.MAX_VALUE)
+            } finally {
+                expect(2)
+                throw TestException() // this exception cannot be handled
+            }
+        }
         result.cancel(true)
         finish(3)
     }

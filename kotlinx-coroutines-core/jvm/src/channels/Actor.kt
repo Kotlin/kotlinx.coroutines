@@ -133,7 +133,10 @@ private open class ActorCoroutine<E>(
     }
 
     override val cancelsParent: Boolean get() = true
-    override fun handleJobException(exception: Throwable) = handleExceptionViaHandler(parentContext, exception)
+
+    override fun handleJobException(exception: Throwable, handled: Boolean) {
+        if (!handled) handleCoroutineException(context, exception)
+    }
 }
 
 private class LazyActorCoroutine<E>(
