@@ -11,6 +11,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * Testing libraries may expose this interface to tests instead of [TestCoroutineDispatcher].
  */
+@ExperimentalCoroutinesApi
 interface DelayController {
     /**
      * Returns the current virtual clock-time as it is known to this Dispatcher.
@@ -18,6 +19,7 @@ interface DelayController {
      * @param unit The [TimeUnit] in which the clock-time must be returned.
      * @return The virtual clock-time
      */
+    @ExperimentalCoroutinesApi
     fun currentTime(unit: TimeUnit = TimeUnit.MILLISECONDS): Long
 
     /**
@@ -30,6 +32,7 @@ interface DelayController {
      * @param unit The [TimeUnit] in which [delayTime] and the return value is expressed.
      * @return The amount of delay-time that this Dispatcher's clock has been forwarded.
      */
+    @ExperimentalCoroutinesApi
     fun advanceTimeBy(delayTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Long
 
     /**
@@ -37,6 +40,7 @@ interface DelayController {
      *
      * @return the amount of delay-time that this Dispatcher's clock has been forwarded.
      */
+    @ExperimentalCoroutinesApi
     fun advanceTimeToNextDelayed(): Long
 
     /**
@@ -44,6 +48,7 @@ interface DelayController {
      *
      * @return the amount of delay-time that this Dispatcher's clock has been forwarded.
      */
+    @ExperimentalCoroutinesApi
     fun advanceUntilIdle(): Long
 
     /**
@@ -51,6 +56,7 @@ interface DelayController {
      *
      * Calling this function will never advance the clock.
      */
+    @ExperimentalCoroutinesApi
     fun runCurrent()
 
     /**
@@ -59,6 +65,7 @@ interface DelayController {
      * @throws UncompletedCoroutinesError if any pending tasks are active, however it will not throw for suspended
      * coroutines.
      */
+    @ExperimentalCoroutinesApi
     @Throws(UncompletedCoroutinesError::class)
     fun cleanupTestCoroutines()
 
@@ -71,6 +78,7 @@ interface DelayController {
      * This is useful when testing functions that that start a coroutine. By pausing the dispatcher assertions or
      * setup may be done between the time the coroutine is created and started.
      */
+    @ExperimentalCoroutinesApi
     suspend fun pauseDispatcher(block: suspend () -> Unit)
 
     /**
@@ -79,6 +87,7 @@ interface DelayController {
      * When paused the dispatcher will not execute any coroutines automatically, and you must call [runCurrent], or one
      * of [advanceTimeBy], [advanceTimeToNextDelayed], or [advanceUntilIdle] to execute coroutines.
      */
+    @ExperimentalCoroutinesApi
     fun pauseDispatcher()
 
     /**
@@ -88,6 +97,7 @@ interface DelayController {
      * time and execute coroutines scheduled in the future use one of [advanceTimeBy], [advanceTimeToNextDelayed],
      * or [advanceUntilIdle].
      */
+    @ExperimentalCoroutinesApi
     fun resumeDispatcher()
 
     @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
@@ -112,12 +122,13 @@ interface DelayController {
 /**
  * Thrown when a test has completed by there are tasks that are not completed or cancelled.
  */
+@ExperimentalCoroutinesApi
 class UncompletedCoroutinesError(message: String, cause: Throwable? = null): AssertionError(message, cause)
 
 /**
  * [CoroutineDispatcher] that can be used in tests for both immediate and lazy execution of coroutines.
  *
- * By default, [TestCoroutineDispatcher] will be immediate. That means any tasks scheduled to be run immediately will
+ * By default, [TestCoroutineDispatcher] will be immediate. That means any tasks scheduled to be run without delay will
  * be immediately executed. If they were scheduled with a delay, the virtual clock-time must be advanced via one of the
  * methods on [DelayController]
  *
@@ -127,6 +138,7 @@ class UncompletedCoroutinesError(message: String, cause: Throwable? = null): Ass
  *
  * @see DelayController
  */
+@ExperimentalCoroutinesApi
 class TestCoroutineDispatcher:
         CoroutineDispatcher(),
         Delay,
@@ -171,7 +183,7 @@ class TestCoroutineDispatcher:
         }
     }
 
-    override fun toString(): String = "TestCoroutineDispatcher[time=$time ns]"
+    override fun toString(): String = "TestCoroutineDispatcher[time=${time}ns]"
 
     private fun post(block: Runnable) =
             queue.addLast(TimedRunnable(block, counter++))

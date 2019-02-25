@@ -8,7 +8,7 @@ import org.junit.*
 import org.junit.Assert.*
 import kotlin.coroutines.ContinuationInterceptor
 
-class TestTestBuilders {
+class TestBuildersTest {
 
     @Test
     fun scopeRunBlocking_passesDispatcher() {

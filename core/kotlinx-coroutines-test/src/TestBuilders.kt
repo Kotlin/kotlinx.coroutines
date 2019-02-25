@@ -1,9 +1,10 @@
+@file:JvmName("TestBuilders")
+
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-
 
 /**
  * Executes a [testBody] inside an immediate execution dispatcher.
@@ -35,9 +36,10 @@ import kotlin.coroutines.CoroutineContext
  * @throws UncompletedCoroutinesError If the [testBody] does not complete (or cancel) all coroutines that it launches
  * (including coroutines suspended on join/await).
  *
- * @param context An optional context that MAY contain a [DelayController] and/or [TestCoroutineExceptionHandler]
+ * @param context An optional context that MUST contain a [DelayController] and/or [TestCoroutineCoroutineExceptionHandler]
  * @param testBody The code of the unit-test.
  */
+@ExperimentalCoroutinesApi
 fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCoroutineScope.() -> Unit) {
     val (safeContext, dispatcher) = context.checkArguments()
     // smart cast dispatcher to expose interface
@@ -60,26 +62,28 @@ fun runBlockingTest(context: CoroutineContext? = null, testBody: suspend TestCor
     }
 }
 
-private fun CoroutineContext.activeJobs() =
-        checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
+private fun CoroutineContext.activeJobs(): Set<Job> {
+    return checkNotNull(this[Job]).children.filter { it.isActive }.toSet()
+}
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineScope].
  */
+@ExperimentalCoroutinesApi
 fun TestCoroutineScope.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(coroutineContext, block)
 }
 
 /**
  * Convenience method for calling [runBlockingTest] on an existing [TestCoroutineDispatcher].
- *
  */
+@ExperimentalCoroutinesApi
 fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.() -> Unit) {
     runBlockingTest(this, block)
 }
 
 private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, ContinuationInterceptor> {
-    var safeContext= this ?: TestCoroutineExceptionHandler() + TestCoroutineDispatcher()
+    var safeContext= this ?: TestCoroutineCoroutineExceptionHandler() + TestCoroutineDispatcher()
 
     val dispatcher = safeContext[ContinuationInterceptor].run {
         this?.let {
@@ -90,9 +94,9 @@ private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, Continuat
 
     val exceptionHandler = safeContext[CoroutineExceptionHandler].run {
         this?.let {
-            require(this is ExceptionCaptor) { "coroutineExceptionHandler must implement ExceptionCaptor" }
+            require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor" }
         }
-        this ?: TestCoroutineExceptionHandler()
+        this ?: TestCoroutineCoroutineExceptionHandler()
     }
 
     val job = safeContext[Job] ?: SupervisorJob()

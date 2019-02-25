@@ -1,16 +1,14 @@
 package kotlinx.coroutines.test
 
 import kotlinx.coroutines.CoroutineExceptionHandler
-import java.util.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Access uncaught coroutines exceptions captured during test execution.
- *
- * Note, tests executed via [runBlockingTest] or [TestCoroutineScope.runBlocking] will not trigger uncaught exception
- * handling and should use [Deferred.await] or [Job.getCancellationException] to test exceptions.
+ * Access uncaught coroutine exceptions captured during test execution.
  */
-interface ExceptionCaptor {
+@ExperimentalCoroutinesApi
+interface UncaughtExceptionCaptor {
     /**
      * List of uncaught coroutine exceptions.
      *
@@ -18,7 +16,7 @@ interface ExceptionCaptor {
      *
      * During [cleanupTestCoroutines] the first element of this list will be rethrown if it is not empty.
      */
-    val exceptions: List<Throwable>
+    val uncaughtExceptions: List<Throwable>
 
     /**
      * Call after the test completes.
@@ -31,11 +29,11 @@ interface ExceptionCaptor {
 /**
  * An exception handler that can be used to capture uncaught exceptions in tests.
  */
-class TestCoroutineExceptionHandler: ExceptionCaptor, CoroutineExceptionHandler {
-    val lock = Object()
+@ExperimentalCoroutinesApi
+class TestCoroutineCoroutineExceptionHandler: UncaughtExceptionCaptor, CoroutineExceptionHandler {
 
     override fun handleException(context: CoroutineContext, exception: Throwable) {
-        synchronized(lock) {
+        synchronized(_exceptions) {
             _exceptions += exception
         }
     }
@@ -44,11 +42,11 @@ class TestCoroutineExceptionHandler: ExceptionCaptor, CoroutineExceptionHandler 
 
     private val _exceptions = mutableListOf<Throwable>()
 
-    override val exceptions
-        get() = _exceptions.toList()
+    override val uncaughtExceptions
+        get() = synchronized(_exceptions) { _exceptions.toList() }
 
     override fun cleanupTestCoroutines() {
-        synchronized(lock) {
+        synchronized(_exceptions) {
             val exception = _exceptions.firstOrNull() ?: return
             throw exception
         }

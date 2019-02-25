@@ -8,24 +8,12 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
+
 /**
  * A scope which provides detailed control over the execution of coroutines for tests.
- *
- * @param context an optional context that must provide delegates [ExceptionCaptor] and [DelayController]
  */
-class TestCoroutineScope(
-        context: CoroutineContext = TestCoroutineDispatcher() + TestCoroutineExceptionHandler()):
-        CoroutineScope,
-        ExceptionCaptor by context.exceptionDelegate,
-        DelayController by context.delayDelegate
-{
-    override fun cleanupTestCoroutines() {
-        coroutineContext.exceptionDelegate.cleanupTestCoroutines()
-        coroutineContext.delayDelegate.cleanupTestCoroutines()
-    }
-
-    override val coroutineContext = context
-
+@ExperimentalCoroutinesApi
+interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, DelayController {
     /**
      * This method is deprecated.
      *
@@ -37,21 +25,54 @@ class TestCoroutineScope(
     fun cancelAllActions() = cleanupTestCoroutines()
 }
 
-fun TestCoroutineScope(dispatcher: TestCoroutineDispatcher) =
-        TestCoroutineScope(dispatcher + TestCoroutineExceptionHandler())
+private class TestCoroutineScopeImpl (
+        context: CoroutineContext = TestCoroutineDispatcher() + TestCoroutineCoroutineExceptionHandler()):
+        TestCoroutineScope,
+        UncaughtExceptionCaptor by context.uncaughtExceptionDelegate,
+        DelayController by context.delayDelegate
+{
 
-private inline val CoroutineContext.exceptionDelegate: ExceptionCaptor
+    override fun cleanupTestCoroutines() {
+        coroutineContext.uncaughtExceptionDelegate.cleanupTestCoroutines()
+        coroutineContext.delayDelegate.cleanupTestCoroutines()
+    }
+
+    override val coroutineContext = context
+}
+
+/**
+ * A scope which provides detailed control over the execution of coroutines for tests.
+ *
+ * If the provided context does not provide a [ContinuationInterceptor] (Dispatcher) or [CoroutineExceptionHandler], the
+ * scope will add [TestCoroutineDispatcher] and [TestCoroutineExceptionHandler] automatically.
+ *
+ * @param context an optional context that MAY provide [UncaughtExceptionCaptor] and/or [DelayController]
+ */
+@ExperimentalCoroutinesApi
+fun TestCoroutineScope(context: CoroutineContext? = null): TestCoroutineScope {
+    var safeContext = context ?: return TestCoroutineScopeImpl()
+    if (context[ContinuationInterceptor] == null) {
+        safeContext += TestCoroutineDispatcher()
+    }
+    if (context[CoroutineExceptionHandler] == null) {
+        safeContext += TestCoroutineCoroutineExceptionHandler()
+    }
+
+    return TestCoroutineScopeImpl(safeContext)
+}
+
+private inline val CoroutineContext.uncaughtExceptionDelegate: UncaughtExceptionCaptor
     get() {
         val handler = this[CoroutineExceptionHandler]
-        return handler as? ExceptionCaptor ?: throw
-            IllegalArgumentException("TestCoroutineScope requires a ExceptionCaptor as the " +
-                    "CoroutineExceptionHandler")
+        return handler as? UncaughtExceptionCaptor ?: throw
+            IllegalArgumentException("TestCoroutineScope requires a UncaughtExceptionCaptor such as " +
+                    "TestCoroutineCoroutineExceptionHandler as the CoroutineExceptionHandler")
     }
 
 private inline val CoroutineContext.delayDelegate: DelayController
     get() {
         val handler = this[ContinuationInterceptor]
         return handler as? DelayController ?: throw
-            IllegalArgumentException("TestCoroutineScope requires a DelayController as the " +
-                    "ContinuationInterceptor (Dispatcher)")
+            IllegalArgumentException("TestCoroutineScope requires a DelayController such as TestCoroutineDispatcher as " +
+                    "the ContinuationInterceptor (Dispatcher)")
     }
