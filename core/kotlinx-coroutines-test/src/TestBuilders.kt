@@ -36,7 +36,7 @@ import kotlin.coroutines.CoroutineContext
  * @throws UncompletedCoroutinesError If the [testBody] does not complete (or cancel) all coroutines that it launches
  * (including coroutines suspended on join/await).
  *
- * @param context An optional context that MUST contain a [DelayController] and/or [TestCoroutineCoroutineExceptionHandler]
+ * @param context An optional context that MUST contain a [DelayController] and/or [TestCoroutineExceptionHandler]
  * @param testBody The code of the unit-test.
  */
 @ExperimentalCoroutinesApi
@@ -83,7 +83,7 @@ fun TestCoroutineDispatcher.runBlockingTest(block: suspend TestCoroutineScope.()
 }
 
 private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, ContinuationInterceptor> {
-    var safeContext= this ?: TestCoroutineCoroutineExceptionHandler() + TestCoroutineDispatcher()
+    var safeContext= this ?: TestCoroutineExceptionHandler() + TestCoroutineDispatcher()
 
     val dispatcher = safeContext[ContinuationInterceptor].run {
         this?.let {
@@ -96,7 +96,7 @@ private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, Continuat
         this?.let {
             require(this is UncaughtExceptionCaptor) { "coroutineExceptionHandler must implement UncaughtExceptionCaptor" }
         }
-        this ?: TestCoroutineCoroutineExceptionHandler()
+        this ?: TestCoroutineExceptionHandler()
     }
 
     val job = safeContext[Job] ?: SupervisorJob()
@@ -108,7 +108,7 @@ private fun CoroutineContext?.checkArguments(): Pair<CoroutineContext, Continuat
 /**
  * This method is deprecated.
  *
- * @see [cleanupTestCoroutines]
+ * @see [runBlocking]
  */
 @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
         ReplaceWith("scope.runBlockingTest(testBody)", "kotlinx.coroutines.test"),

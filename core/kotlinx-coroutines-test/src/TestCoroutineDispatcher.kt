@@ -99,24 +99,6 @@ interface DelayController {
      */
     @ExperimentalCoroutinesApi
     fun resumeDispatcher()
-
-    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
-            ReplaceWith("if (targetTime > currentTime(unit)) { advanceTimeBy(targetTime - currentTime(unit), unit) }",
-                    "kotlinx.coroutines.test"),
-            level = DeprecationLevel.WARNING)
-    fun advanceTimeTo(targetTime: Long, unit: TimeUnit = TimeUnit.MILLISECONDS) {
-        advanceTimeBy(targetTime - currentTime(unit), unit)
-    }
-
-    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
-            ReplaceWith("currentTime(unit)", "kotlinx.coroutines.test"),
-            level = DeprecationLevel.WARNING)
-    fun now(unit: TimeUnit = TimeUnit.MILLISECONDS) = currentTime(unit)
-
-    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
-            ReplaceWith("runCurrent()", "kotlinx.coroutines.test"),
-            level = DeprecationLevel.WARNING)
-    fun triggerActions() = runCurrent()
 }
 
 /**
@@ -195,7 +177,7 @@ class TestCoroutineDispatcher:
                     }
 
 
-    private fun triggerActions(targetTime: Long) {
+    private fun doActionsUntil(targetTime: Long) {
         while (true) {
             val current = queue.removeFirstIf { it.time <= targetTime } ?: break
             // If the scheduled time is 0 (immediate) use current virtual time
@@ -221,7 +203,7 @@ class TestCoroutineDispatcher:
      */
     private fun advanceUntilTime(targetTime: Long, unit: TimeUnit) {
         val nanoTime = unit.toNanos(targetTime)
-        triggerActions(nanoTime)
+        doActionsUntil(nanoTime)
         if (nanoTime > time) time = nanoTime
     }
 
@@ -241,7 +223,7 @@ class TestCoroutineDispatcher:
         return time - oldTime
     }
 
-    override fun runCurrent() = triggerActions(time)
+    override fun runCurrent() = doActionsUntil(time)
 
     override suspend fun pauseDispatcher(block: suspend () -> Unit) {
         val previous = dispatchImmediately
@@ -263,7 +245,7 @@ class TestCoroutineDispatcher:
 
     override fun cleanupTestCoroutines() {
         // process any pending cancellations or completions, but don't advance time
-        triggerActions(time)
+        doActionsUntil(time)
 
         // run through all pending tasks, ignore any submitted coroutines that are not active
         val pendingTasks = mutableListOf<TimedRunnable>()

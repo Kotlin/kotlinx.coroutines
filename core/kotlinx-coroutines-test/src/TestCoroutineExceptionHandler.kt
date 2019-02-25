@@ -30,7 +30,7 @@ interface UncaughtExceptionCaptor {
  * An exception handler that can be used to capture uncaught exceptions in tests.
  */
 @ExperimentalCoroutinesApi
-class TestCoroutineCoroutineExceptionHandler: UncaughtExceptionCaptor, CoroutineExceptionHandler {
+class TestCoroutineExceptionHandler: UncaughtExceptionCaptor, CoroutineExceptionHandler {
 
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         synchronized(_exceptions) {

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
@@ -13,20 +14,10 @@ import kotlin.coroutines.CoroutineContext
  * A scope which provides detailed control over the execution of coroutines for tests.
  */
 @ExperimentalCoroutinesApi
-interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, DelayController {
-    /**
-     * This method is deprecated.
-     *
-     * @see [cleanupTestCoroutines]
-     */
-    @Deprecated("This API has been deprecated to integrate with Structured Concurrency.",
-            ReplaceWith("cleanupTestCoroutines()"),
-            level = DeprecationLevel.WARNING)
-    fun cancelAllActions() = cleanupTestCoroutines()
-}
+interface TestCoroutineScope: CoroutineScope, UncaughtExceptionCaptor, DelayController
 
 private class TestCoroutineScopeImpl (
-        context: CoroutineContext = TestCoroutineDispatcher() + TestCoroutineCoroutineExceptionHandler()):
+        context: CoroutineContext = TestCoroutineDispatcher() + TestCoroutineExceptionHandler()):
         TestCoroutineScope,
         UncaughtExceptionCaptor by context.uncaughtExceptionDelegate,
         DelayController by context.delayDelegate
@@ -55,7 +46,7 @@ fun TestCoroutineScope(context: CoroutineContext? = null): TestCoroutineScope {
         safeContext += TestCoroutineDispatcher()
     }
     if (context[CoroutineExceptionHandler] == null) {
-        safeContext += TestCoroutineCoroutineExceptionHandler()
+        safeContext += TestCoroutineExceptionHandler()
     }
 
     return TestCoroutineScopeImpl(safeContext)
@@ -66,7 +57,7 @@ private inline val CoroutineContext.uncaughtExceptionDelegate: UncaughtException
         val handler = this[CoroutineExceptionHandler]
         return handler as? UncaughtExceptionCaptor ?: throw
             IllegalArgumentException("TestCoroutineScope requires a UncaughtExceptionCaptor such as " +
-                    "TestCoroutineCoroutineExceptionHandler as the CoroutineExceptionHandler")
+                    "TestCoroutineExceptionHandler as the CoroutineExceptionHandler")
     }
 
 private inline val CoroutineContext.delayDelegate: DelayController
