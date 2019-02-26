@@ -12,6 +12,7 @@ import org.hamcrest.core.*
 import org.junit.*
 import org.junit.Assert.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 
 class MaybeTest : TestBase() {
     @Before
@@ -210,5 +211,31 @@ class MaybeTest : TestBase() {
             { expectUnreached() },
             { assert(it is RuntimeException) }
         )
+    }
+
+    @Test
+    fun testCancelledConsumer() = runTest {
+        expect(1)
+        val maybe = rxMaybe<Int> {
+            expect(4)
+            try {
+                delay(Long.MAX_VALUE)
+            } catch (e: CancellationException) {
+                expect(6)
+            }
+            42
+        }
+        expect(2)
+        val timeout = withTimeoutOrNull(100) {
+            expect(3)
+            maybe.consumeEach {
+                expectUnreached()
+            }
+            expectUnreached()
+        }
+        assertNull(timeout)
+        expect(5)
+        yield() // must cancel code inside maybe!!!
+        finish(7)
     }
 }

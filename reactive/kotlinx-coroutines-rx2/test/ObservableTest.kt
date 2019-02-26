@@ -7,6 +7,8 @@ package kotlinx.coroutines.rx2
 import kotlinx.coroutines.*
 import org.hamcrest.core.*
 import org.junit.*
+import org.junit.Test
+import kotlin.test.*
 
 class ObservableTest : TestBase() {
     @Test
@@ -79,5 +81,65 @@ class ObservableTest : TestBase() {
             { expectUnreached() },
             { assert(it is RuntimeException) }
         )
+    }
+
+    @Test
+    fun testNotifyOnceOnCancellation() = runTest {
+        expect(1)
+        val observable =
+            rxObservable {
+                expect(5)
+                send("OK")
+                try {
+                    delay(Long.MAX_VALUE)
+                } catch (e: CancellationException) {
+                    expect(11)
+                }
+            }
+            .doOnNext {
+                expect(6)
+                assertEquals("OK", it)
+            }
+            .doOnDispose {
+                expect(10) // notified once!
+            }
+        expect(2)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(3)
+            observable.consumeEach{
+                expect(8)
+                assertEquals("OK", it)
+            }
+        }
+        expect(4)
+        yield() // to observable code
+        expect(7)
+        yield() // to consuming coroutines
+        expect(9)
+        job.cancel()
+        job.join()
+        finish(12)
+    }
+
+    @Test
+    fun testFailingConsumer() = runTest {
+        expect(1)
+        val pub = rxObservable {
+            expect(2)
+            send("OK")
+            try {
+                delay(Long.MAX_VALUE)
+            } catch (e: CancellationException) {
+                finish(5)
+            }
+        }
+        try {
+            pub.consumeEach {
+                expect(3)
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            expect(4)
+        }
     }
 }

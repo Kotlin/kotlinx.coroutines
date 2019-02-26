@@ -43,20 +43,14 @@ public fun <T> ObservableSource<T>.openSubscription(): ReceiveChannel<T> {
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
  */
-public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
-}
+public suspend inline fun <T> MaybeSource<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
 
 /**
  * Subscribes to this [ObservableSource] and performs the specified action for each received element.
  */
-public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit) {
-    val channel = openSubscription()
-    for (x in channel) action(x)
-    channel.cancel()
-}
+public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Unit) =
+    openSubscription().consumeEach(action)
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 private class SubscriptionChannel<T> :
@@ -68,6 +62,7 @@ private class SubscriptionChannel<T> :
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
         subscription?.dispose()
+        subscription = null // optimization -- no need to dispose it again
     }
 
     // Observer overrider

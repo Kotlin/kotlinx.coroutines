@@ -75,24 +75,6 @@ class IntegrationTest(
     }
 
     @Test
-    fun testFailingConsumer() = runTest {
-        val pub = publish {
-            repeat(3) {
-                expect(it + 1) // expect(1), expect(2) *should* be invoked
-                send(it)
-            }
-        }
-
-        try {
-            pub.consumeEach {
-                throw TestException()
-            }
-        } catch (e: TestException) {
-            finish(3)
-        }
-    }
-
-    @Test
     fun testNumbers() = runBlocking<Unit> {
         val n = 100 * stressTestMultiplier
         val pub = CoroutineScope(ctx(coroutineContext)).publish {
