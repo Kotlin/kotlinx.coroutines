@@ -5,8 +5,11 @@
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.reactive.*
 import org.hamcrest.core.*
 import org.junit.*
+import org.junit.Test
+import kotlin.test.*
 
 class FluxTest : TestBase() {
     @Test
@@ -79,5 +82,60 @@ class FluxTest : TestBase() {
             { expectUnreached() },
             { assert(it is RuntimeException) }
         )
+    }
+
+    @Test
+    fun testNotifyOnceOnCancellation() = runTest {
+        expect(1)
+        val observable =
+            flux {
+                expect(5)
+                send("OK")
+                try {
+                    delay(Long.MAX_VALUE)
+                } catch (e: CancellationException) {
+                    expect(11)
+                }
+            }
+            .doOnNext {
+                expect(6)
+                assertEquals("OK", it)
+            }
+            .doOnCancel {
+                expect(10) // notified once!
+            }
+        expect(2)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(3)
+            observable.consumeEach {
+                expect(8)
+                assertEquals("OK", it)
+            }
+        }
+        expect(4)
+        yield() // to observable code
+        expect(7)
+        yield() // to consuming coroutines
+        expect(9)
+        job.cancel()
+        job.join()
+        finish(12)
+    }
+
+    @Test
+    fun testFailingConsumer() = runTest {
+        val pub = flux {
+            repeat(3) {
+                expect(it + 1) // expect(1), expect(2) *should* be invoked
+                send(it)
+            }
+        }
+        try {
+            pub.consumeEach {
+                throw TestException()
+            }
+        } catch (e: TestException) {
+            finish(3)
+        }
     }
 }
