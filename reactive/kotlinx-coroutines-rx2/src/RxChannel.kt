@@ -6,8 +6,9 @@ package kotlinx.coroutines.rx2
 
 import io.reactivex.*
 import io.reactivex.disposables.*
-import kotlinx.coroutines.channels.*
+import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
 
 /**
@@ -56,18 +57,16 @@ public suspend inline fun <T> ObservableSource<T>.consumeEach(action: (T) -> Uni
 private class SubscriptionChannel<T> :
     LinkedListChannel<T>(), Observer<T>, MaybeObserver<T>
 {
-    @Volatile
-    var subscription: Disposable? = null
+    private val _subscription = atomic<Disposable?>(null)
 
     @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent(closed: LockFreeLinkedListNode) {
-        subscription?.dispose()
-        subscription = null // optimization -- no need to dispose it again
+        _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }
 
     // Observer overrider
     override fun onSubscribe(sub: Disposable) {
-        subscription = sub
+        _subscription.value = sub
     }
 
     override fun onSuccess(t: T) {
