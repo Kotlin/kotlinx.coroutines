@@ -40,7 +40,6 @@ public sealed class HandlerDispatcher : MainCoroutineDispatcher(), Delay {
      *   }
      *   // Do context-independent logic such as logging
      * }
-     *
      * ```
      */
     public abstract override val immediate: HandlerDispatcher
