@@ -56,22 +56,38 @@ public actual object Dispatchers {
 
     /**
      * A coroutine dispatcher that is not confined to any specific thread.
-     * It executes initial continuation of the coroutine _immediately_ in the current call-frame
+     * It executes initial continuation of the coroutine in the current call-frame
      * and lets the coroutine resume in whatever thread that is used by the corresponding suspending function, without
-     * mandating any specific threading policy.
-     * **Note: use with extreme caution, not for general code**.
+     * mandating any specific threading policy. Nested coroutines launched in this dispatcher form an event-loop to avoid
+     * stack overflows.
+     *
+     * ### Event loop
+     * Event loop semantics is a purely internal concept and have no guarantees on the order of execution
+     * except that all queued coroutines will be executed on the current thread in the lexical scope of the outermost
+     * unconfined coroutine.
+     *
+     * For example, the following code:
+     * ```
+     * withContext(Dispatcher.Unconfined) {
+     *    println(1)
+     *    withContext(Dispatcher.Unconfined) { // Nested unconfined
+     *        println(2)
+     *    }
+     *    println(3)
+     * }
+     * println("Done")
+     * ```
+     * Can print both "1 2 3" and "1 3 2", this is an implementation detail that can be changed.
+     * But it is guaranteed that "Done" will be printed only when both `withContext` are completed.
+     *
      *
      * Note, that if you need your coroutine to be confined to a particular thread or a thread-pool after resumption,
      * but still want to execute it in the current call-frame until its first suspension, then you can use
      * an optional [CoroutineStart] parameter in coroutine builders like
      * [launch][CoroutineScope.launch] and [async][CoroutineScope.async] setting it to the
      * the value of [CoroutineStart.UNDISPATCHED].
-     *
-     * **Note: This is an experimental api.**
-     * Semantics, order of execution, and particular implementation details of this dispatcher may change in the future.
      */
     @JvmStatic
-    @ExperimentalCoroutinesApi
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 
     /**
