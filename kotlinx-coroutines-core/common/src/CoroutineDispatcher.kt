@@ -33,11 +33,14 @@ public abstract class CoroutineDispatcher :
      * Returns `true` if execution shall be dispatched onto another thread.
      * The default behaviour for most dispatchers is to return `true`.
      *
+     * This method should never be used from general code, it is used only by `kotlinx.coroutines`
+     * internals and its contract with the rest of API is an implementation detail.
+     *
      * UI dispatchers _should not_ override `isDispatchNeeded`, but leave a default implementation that
      * returns `true`. To understand the rationale beyond this recommendation, consider the following code:
      *
      * ```kotlin
-     * fun asyncUpdateUI() = async(MainThread) {
+     * fun asyncUpdateUI() = async(Dispatchers.Main) {
      *     // do something here that updates something in UI
      * }
      * ```
@@ -60,6 +63,9 @@ public abstract class CoroutineDispatcher :
      * parameter that allows one to optionally choose C#-style [CoroutineStart.UNDISPATCHED] behaviour
      * whenever it is needed for efficiency.
      *
+     * This method should be generally exception-safe, an exception thrown from this method
+     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
+     *
      * **Note: This is an experimental api.** Execution semantics of coroutines may change in the future when this function returns `false`.
      */
     @ExperimentalCoroutinesApi
@@ -67,6 +73,9 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Dispatches execution of a runnable [block] onto another thread in the given [context].
+     *
+     * This method should be generally exception-safe, an exception thrown from this method
+     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      */
     public abstract fun dispatch(context: CoroutineContext, block: Runnable)
 
@@ -85,6 +94,9 @@ public abstract class CoroutineDispatcher :
 
     /**
      * Returns continuation that wraps the original [continuation], thus intercepting all resumptions.
+     *
+     * This method should be generally exception-safe, an exception thrown from this method
+     * may leave the coroutines that use this dispatcher in the inconsistent and hard to debug state.
      */
     public final override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
         DispatchedContinuation(this, continuation)
