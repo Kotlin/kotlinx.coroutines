@@ -45,16 +45,14 @@ import kotlin.coroutines.*
  *      * Note how coroutine builders are scoped: if activity is destroyed or any of the launched coroutines
  *      * in this method throws an exception, then all nested coroutines are cancelled.
  *      */
- *     fun loadDataFromUI() = launch { // <- extension on current activity, launched in the main thread
- *        val ioData = async(Dispatchers.IO) { // <- extension on launch scope, launched in IO dispatcher
+ *     fun showSomeData() = launch { // <- extension on current activity, launched in the main thread
+ *        val data = withContext(Dispatchers.IO) {
+ *            // Provides withContext scope that is child of he outer launch scope
  *            // blocking I/O operation
  *        }
- *        // do something else concurrently with I/O
- *        val data = ioData.await() // wait for result of I/O
- *        draw(data) // can draw in the main thread
+ *        draw(data) // draw in the main thread
  *     }
  * }
- *
  * ```
  */
 public interface CoroutineScope {
@@ -157,10 +155,10 @@ public object GlobalScope : CoroutineScope {
  * Example of the scope usages looks like this:
  *
  * ```
- * suspend fun loadDataForUI() = coroutineScope {
+ * suspend fun showSomeData() = coroutineScope {
  *
- *   val data = async { // <- extension on current scope
- *      ... load some UI data ...
+ *   val data = async(Dispatchers.IO) { // <- extension on current scope
+ *      ... load some UI data for the Main thread ...
  *   }
  *
  *   withContext(Dispatchers.Main) {
@@ -172,9 +170,10 @@ public object GlobalScope : CoroutineScope {
  * ```
  *
  * Semantics of the scope in this example:
- * 1) `loadDataForUI` returns as soon as data is loaded and UI is updated.
- * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `loadDataForUI` rethrows that exception.
- * 3) If outer scope of `loadDataForUI` is cancelled, both started `async` and `withContext` are cancelled.
+ * 1) `showSomeData` returns as soon as data is loaded and displayed in the UI.
+ * 2) If `doSomeWork` throws an exception, then `async` task is cancelled and `showSomeData` rethrows that exception.
+ * 3) If outer scope of `showSomeData` is cancelled, both started `async` and `withContext` blocks are cancelled.
+ * 4) If `async` block fails, `withContext` will be cancelled.
  *
  * Method may throw [CancellationException] if the current job was cancelled externally
  * or may throw the corresponding unhandled [Throwable] if there is any unhandled exception in this scope
