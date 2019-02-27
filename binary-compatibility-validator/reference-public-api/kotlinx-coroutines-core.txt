@@ -202,6 +202,7 @@ public final class kotlinx/coroutines/CoroutineScopeKt {
 	public static final fun MainScope ()Lkotlinx/coroutines/CoroutineScope;
 	public static final fun cancel (Lkotlinx/coroutines/CoroutineScope;)V
 	public static final fun coroutineScope (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun ensureActive (Lkotlinx/coroutines/CoroutineScope;)V
 	public static final fun isActive (Lkotlinx/coroutines/CoroutineScope;)Z
 	public static final fun plus (Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/CoroutineScope;
 }
@@ -350,6 +351,8 @@ public final class kotlinx/coroutines/JobKt {
 	public static synthetic fun cancelChildren$default (Lkotlinx/coroutines/Job;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public static final fun cancelFutureOnCancellation (Lkotlinx/coroutines/CancellableContinuation;Ljava/util/concurrent/Future;)V
 	public static final fun cancelFutureOnCompletion (Lkotlinx/coroutines/Job;Ljava/util/concurrent/Future;)Lkotlinx/coroutines/DisposableHandle;
+	public static final fun ensureActive (Lkotlin/coroutines/CoroutineContext;)V
+	public static final fun ensureActive (Lkotlinx/coroutines/Job;)V
 	public static final fun isActive (Lkotlin/coroutines/CoroutineContext;)Z
 }
 
