@@ -31,7 +31,6 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      *   }
      *   // Do context-independent logic such as logging
      * }
-     *
      * ```
      *
      * Method may throw [UnsupportedOperationException] if immediate dispatching is not supported by current dispatcher,

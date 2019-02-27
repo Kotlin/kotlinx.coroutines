@@ -28,7 +28,6 @@ internal class TestMainDispatcher(private val mainFactory: MainDispatcherFactory
     @Suppress("INVISIBLE_MEMBER")
     private val delay: Delay get() = delegate as? Delay ?: DefaultDelay
 
-    @ExperimentalCoroutinesApi
     override val immediate: MainCoroutineDispatcher
         get() = (delegate as? MainCoroutineDispatcher)?.immediate ?: this
 
