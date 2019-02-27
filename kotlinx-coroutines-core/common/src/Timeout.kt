@@ -91,7 +91,7 @@ private open class TimeoutCoroutine<U, in T: U>(
 
     @Suppress("LeakingThis", "Deprecation")
     override fun run() {
-        cancel(TimeoutCancellationException(time, this))
+        cancelCoroutine(TimeoutCancellationException(time, this))
     }
 
     @Suppress("UNCHECKED_CAST")

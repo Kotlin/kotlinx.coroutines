@@ -72,7 +72,7 @@ private class PublisherCoroutine<in T>(
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("PublisherCoroutine doesn't support invokeOnClose")
 
@@ -134,7 +134,7 @@ private class PublisherCoroutine<in T>(
             // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
             // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
             // this failure is essentially equivalent to a failure of a child coroutine.
-            childCancelled(e)
+            cancelCoroutine(e)
             unlockAndCheckCompleted()
             throw e
         }
@@ -201,7 +201,7 @@ private class PublisherCoroutine<in T>(
     override fun request(n: Long) {
         if (n <= 0) {
             // Specification requires IAE for n <= 0
-            cancel(IllegalArgumentException("non-positive subscription request $n"))
+            cancelCoroutine(IllegalArgumentException("non-positive subscription request $n"))
             return
         }
         while (true) { // lock-free loop for nRequested

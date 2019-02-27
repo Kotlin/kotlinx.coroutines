@@ -75,7 +75,7 @@ private class BlockingCoroutine<T>(
             try {
                 while (true) {
                     @Suppress("DEPRECATION")
-                    if (Thread.interrupted()) throw InterruptedException().also { cancel(it) }
+                    if (Thread.interrupted()) throw InterruptedException().also { cancelCoroutine(it) }
                     val parkNanos = eventLoop?.processNextEvent() ?: Long.MAX_VALUE
                     // note: process next even may loose unpark flag, so check if completed before parking
                     if (isCompleted) break

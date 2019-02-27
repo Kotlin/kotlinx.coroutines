@@ -65,7 +65,7 @@ private class RxObservableCoroutine<T: Any>(
 
     override val isClosedForSend: Boolean get() = isCompleted
     override val isFull: Boolean = mutex.isLocked
-    override fun close(cause: Throwable?): Boolean = cancel(cause)
+    override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
     override fun invokeOnClose(handler: (Throwable?) -> Unit) =
         throw UnsupportedOperationException("RxObservableCoroutine doesn't support invokeOnClose")
 
@@ -113,7 +113,7 @@ private class RxObservableCoroutine<T: Any>(
             // If onNext fails with exception, then we cancel coroutine (with this exception) and then rethrow it
             // to abort the corresponding send/offer invocation. From the standpoint of coroutines machinery,
             // this failure is essentially equivalent to a failure of a child coroutine.
-            childCancelled(e)
+            cancelCoroutine(e)
             doLockedSignalCompleted()
             throw e
         }

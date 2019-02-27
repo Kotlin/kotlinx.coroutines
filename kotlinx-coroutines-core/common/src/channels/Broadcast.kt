@@ -98,7 +98,7 @@ private open class BroadcastCoroutine<E>(
     override fun cancel(cause: Throwable?): Boolean {
         val wasCancelled = _channel.cancel(cause)
         @Suppress("DEPRECATION")
-        if (wasCancelled) super.cancel(cause) // cancel the job
+        if (wasCancelled) cancelCoroutine(cause) // cancel the job
         return wasCancelled
     }
 

@@ -584,6 +584,10 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public open fun childCancelled(cause: Throwable): Boolean =
         cancelImpl(cause) && handlesException
 
+    // For AbstractCoroutine implementations
+    protected fun cancelCoroutine(cause: Throwable?) =
+        cancelImpl(cause)
+
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
     private fun cancelImpl(cause: Any?): Boolean {
