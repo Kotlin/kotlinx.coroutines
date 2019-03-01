@@ -30,7 +30,7 @@ class DispatchersGuideTest {
   * [Parental responsibilities](#parental-responsibilities)
   * [Naming coroutines for debugging](#naming-coroutines-for-debugging)
   * [Combining context elements](#combining-context-elements)
-  * [Getting it together](#getting-it-together)
+  * [Coroutine scope](#coroutine-scope)
   * [Thread-local data](#thread-local-data)
 
 <!--- END_TOC -->
@@ -487,7 +487,7 @@ I'm working in thread DefaultDispatcher-worker-1 @test#2
 
 <!--- TEST FLEXIBLE_THREAD -->
 
-### Getting it together
+### Coroutine scope
 
 Let us put our knowledge about contexts, children and jobs together. Assume that our application has
 an object with a lifecycle, but that object is not a coroutine. For example, we are writing an Android application
@@ -516,14 +516,15 @@ class Activity {
 
 </div>
 
-We can implement [CoroutineScope] interface in this `Actvity` class. The best way to do it is
+Alternatively, we can implement [CoroutineScope] interface in this `Actvity` class. The best way to do it is
 to use delegation with default factory functions.
 We also can combine the desired dispatcher (we used [Dispatchers.Default] in this example) with the scope:
 
 <div class="sample" markdown="1" theme="idea" data-highlight-only>
 
 ```kotlin
-    class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default)
+    class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
+    // to be continued ...
 ```
 
 </div>
