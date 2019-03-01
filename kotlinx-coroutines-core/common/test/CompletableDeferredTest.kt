@@ -64,9 +64,9 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testCancelWithException() {
         val c = CompletableDeferred<String>()
-        assertEquals(true, c.cancel(TestException()))
+        assertEquals(true, c.completeExceptionally(TestException()))
         checkCancelWithException(c)
-        assertEquals(false, c.cancel(TestException()))
+        assertEquals(false, c.completeExceptionally(TestException()))
         checkCancelWithException(c)
     }
 
@@ -111,7 +111,7 @@ class CompletableDeferredTest : TestBase() {
         val c = CompletableDeferred<String>(parent)
         checkFresh(c)
         assertEquals(true, parent.isActive)
-        assertEquals(true, c.cancel(TestException()))
+        assertEquals(true, c.completeExceptionally(TestException()))
         checkCancelWithException(c)
         assertEquals(false, parent.isActive)
         assertEquals(true, parent.isCancelled)

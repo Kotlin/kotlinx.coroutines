@@ -8,7 +8,6 @@ import kotlinx.coroutines.*
 import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
-import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -41,30 +40,29 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testCancellationWithException() = runTest {
         /*
-         * context cancelled with TE
+         * context cancelled with TCE
          * block itself throws TE2
-         * Result: TE with suppressed TE2
+         * Result: TE (CancellationException is always ignored)
          */
-        val cancellationCause = TestException()
+        val cancellationCause = TestCancellationException()
         runCancellation(cancellationCause, TestException2()) { e ->
-            assertTrue(e is TestException)
+            assertTrue(e is TestException2)
             assertNull(e.cause)
             val suppressed = e.suppressed
-            assertEquals(suppressed.size, 1)
-            assertTrue(suppressed[0] is TestException2)
+            assertTrue(suppressed.isEmpty())
         }
     }
 
     @Test
     fun testSameException() = runTest {
         /*
-         * context cancelled with TE
-         * block itself throws the same TE
-         * Result: TE
+         * context cancelled with TCE
+         * block itself throws the same TCE
+         * Result: TCE
          */
-        val cancellationCause = TestException()
+        val cancellationCause = TestCancellationException()
         runCancellation(cancellationCause, cancellationCause) { e ->
-            assertTrue(e is TestException)
+            assertTrue(e is TestCancellationException)
             assertNull(e.cause)
             val suppressed = e.suppressed
             assertTrue(suppressed.isEmpty())
@@ -74,11 +72,11 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testSameCancellation() = runTest {
         /*
-         * context cancelled with CancellationException
-         * block itself throws the same CE
-         * Result: CE
+         * context cancelled with TestCancellationException
+         * block itself throws the same TCE
+         * Result: TCE
          */
-        val cancellationCause = CancellationException()
+        val cancellationCause = TestCancellationException()
         runCancellation(cancellationCause, cancellationCause) { e ->
             assertSame(e, cancellationCause)
             assertNull(e.cause)
@@ -107,11 +105,11 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testConflictingCancellation() = runTest {
         /*
-         * context cancelled with TE
+         * context cancelled with TCE
          * block itself throws CE(TE)
          * Result: TE (because cancellation exception is always ignored and not handled)
          */
-        val cancellationCause = TestException()
+        val cancellationCause = TestCancellationException()
         val thrown = CancellationException()
         thrown.initCause(TestException())
         runCancellation(cancellationCause, thrown) { e ->
@@ -127,7 +125,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
          * block itself throws CE
          * Result: TE
          */
-        val cancellationCause = TestException()
+        val cancellationCause = TestCancellationException()
         val thrown = CancellationException()
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
@@ -139,12 +137,12 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testConflictingCancellation3() = runTest {
         /*
-         * context cancelled with CE
-         * block itself throws CE
-         * Result: CE
+         * context cancelled with TCE
+         * block itself throws TCE
+         * Result: TCE
          */
-        val cancellationCause = CancellationException()
-        val thrown = CancellationException()
+        val cancellationCause = TestCancellationException()
+        val thrown = TestCancellationException()
         runCancellation(cancellationCause, thrown) { e ->
             assertSame(cancellationCause, e)
             assertNull(e.cause)
@@ -154,7 +152,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     @Test
     fun testThrowingCancellation() = runTest {
-        val thrown = CancellationException()
+        val thrown = TestCancellationException()
         runThrowing(thrown) { e ->
             assertSame(thrown, e)
         }
@@ -163,7 +161,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     @Test
     fun testThrowingCancellationWithCause() = runTest {
         // Exception are never unwrapped, so if CE(TE) is thrown then it is the cancellation cause
-        val thrown = CancellationException()
+        val thrown = TestCancellationException()
         thrown.initCause(TestException())
         runThrowing(thrown) { e ->
            assertSame(thrown, e)
@@ -180,7 +178,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest {
-        val cause = TestException()
+        val cause = TestCancellationException()
         runOnlyCancellation(cause) { e ->
             assertSame(cause, e)
             assertTrue(e.suppressed.isEmpty())
@@ -189,7 +187,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     @Test
     fun testCancelWithCancellationException() = runTest {
-        val cause = CancellationException()
+        val cause = TestCancellationException()
         runThrowing(cause) { e ->
             assertSame(cause, e)
             assertNull(e.cause)
@@ -207,7 +205,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     }
 
     private suspend fun runCancellation(
-        cancellationCause: Throwable?,
+        cancellationCause: CancellationException?,
         thrownException: Throwable,
         exceptionChecker: (Throwable) -> Unit
     ) {
@@ -260,7 +258,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     }
 
     private suspend fun runOnlyCancellation(
-        cancellationCause: Throwable?,
+        cancellationCause: CancellationException?,
         exceptionChecker: (Throwable) -> Unit
     ) {
         expect(1)

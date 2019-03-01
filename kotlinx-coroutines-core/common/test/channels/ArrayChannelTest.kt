@@ -139,9 +139,9 @@ class ArrayChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestException }) {
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(5)
-        channel.cancel(TestException())
+        channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }
 }

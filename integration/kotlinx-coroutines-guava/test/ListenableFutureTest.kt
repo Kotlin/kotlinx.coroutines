@@ -46,7 +46,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testAwaitWithContextCancellation() = runTest(expected = {it is IOException}) {
+    fun testAwaitWithCancellation() = runTest(expected = {it is TestCancellationException}) {
         val future = SettableFuture.create<Int>()
         val deferred = async {
             withContext(Dispatchers.Default) {
@@ -54,8 +54,9 @@ class ListenableFutureTest : TestBase() {
             }
         }
 
-        deferred.cancel(IOException())
-        deferred.await()
+        deferred.cancel(TestCancellationException())
+        deferred.await() // throws TCE
+        expectUnreached()
     }
 
     @Test

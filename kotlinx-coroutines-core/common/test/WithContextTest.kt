@@ -198,7 +198,7 @@ class WithContextTest : TestBase() {
     }
 
     @Test
-    fun testRunSelfCancellationWithException() = runTest(unhandled = listOf({e -> e is AssertionError})) {
+    fun testRunSelfCancellationWithException() = runTest {
         expect(1)
         var job: Job? = null
         job = launch(Job()) {
@@ -208,13 +208,12 @@ class WithContextTest : TestBase() {
                     require(isActive)
                     expect(5)
                     job!!.cancel()
-                    require(job!!.cancel(AssertionError())) // cancel again, no success here
                     require(!isActive)
-                    throw TestException() // but throw a different exception
+                    throw TestException() // but throw an exception
                 }
             } catch (e: Throwable) {
                 expect(7)
-                // make sure TestException, not CancellationException or AssertionError is thrown
+                // make sure TestException, not CancellationException is thrown
                 assertTrue(e is TestException, "Caught $e")
             }
         }
@@ -228,7 +227,7 @@ class WithContextTest : TestBase() {
     }
 
     @Test
-    fun testRunSelfCancellation() = runTest(unhandled = listOf({e -> e is AssertionError})) {
+    fun testRunSelfCancellation() = runTest {
         expect(1)
         var job: Job? = null
         job = launch(Job()) {
@@ -238,14 +237,13 @@ class WithContextTest : TestBase() {
                     require(isActive)
                     expect(5)
                     job!!.cancel() // cancel itself
-                    require(job!!.cancel(AssertionError()))
                     require(!isActive)
                     "OK".wrap()
                 }
                 expectUnreached()
             } catch (e: Throwable) {
                 expect(7)
-                // make sure JCE is thrown
+                // make sure CancellationException is thrown
                 assertTrue(e is CancellationException, "Caught $e")
             }
         }

@@ -2,6 +2,8 @@
  * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
  */
 
+@file:Suppress("FunctionName")
+
 package kotlinx.coroutines
 
 /**
@@ -22,6 +24,13 @@ public actual class CompletionHandlerException actual constructor(
  * See [CoroutineExceptionHandler]
 */
 public actual typealias CancellationException = java.util.concurrent.CancellationException
+
+/**
+ * Creates a cancellation exception with a specified message and [cause].
+ */
+@Suppress("FunctionName")
+public actual fun CancellationException(message: String?, cause: Throwable?) : CancellationException =
+    CancellationException(message).apply { initCause(cause) }
 
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed

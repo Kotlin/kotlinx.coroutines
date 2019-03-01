@@ -370,16 +370,17 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     public final override fun getCancellationException(): CancellationException {
         val state = this.state
         return when (state) {
-            is Finishing -> state.rootCause?.toCancellationException("Job is cancelling")
+            is Finishing -> state.rootCause?.toCancellationException("$classSimpleName is cancelling")
                 ?: error("Job is still new or active: $this")
             is Incomplete -> error("Job is still new or active: $this")
-            is CompletedExceptionally -> state.cause.toCancellationException("Job was cancelled")
-            else -> JobCancellationException("Job has completed normally", null, this)
+            is CompletedExceptionally -> state.cause.toCancellationException()
+            else -> JobCancellationException("$classSimpleName has completed normally", null, this)
         }
     }
 
-    private fun Throwable.toCancellationException(message: String): CancellationException =
-        this as? CancellationException ?: JobCancellationException(message, this, this@JobSupport)
+    protected fun Throwable.toCancellationException(message: String? = null): CancellationException =
+        this as? CancellationException ?:
+            JobCancellationException(message ?: "$classSimpleName was cancelled", this, this@JobSupport)
 
     /**
      * Returns the cause that signals the completion of this job -- it returns the original
@@ -565,14 +566,20 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      */
     internal open val onCancelComplete: Boolean get() = false
 
-    // external cancel without cause, never invoked implicitly from internal machinery
-    public override fun cancel() {
-        @Suppress("DEPRECATION")
-        cancel(null) // must delegate here, because some classes override cancel(x)
+    // external cancel with cause, never invoked implicitly from internal machinery
+    public override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause) // must delegate here, because some classes override cancelInternal(x)
     }
 
+    // HIDDEN in Job interface. Invoked only by legacy compiled code.
     // external cancel with (optional) cause, never invoked implicitly from internal machinery
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
     public override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    // It is overridden in channel-linked implementation
+    // Note: Boolean result is used only in DEPRECATED functions
+    public open fun cancelInternal(cause: Throwable?): Boolean =
         cancelImpl(cause) && handlesException
 
     // Parent is cancelling child
@@ -581,11 +588,15 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     }
 
     // Child was cancelled with cause
+    // It is overridden in supervisor implementations to ignore child cancellation
     public open fun childCancelled(cause: Throwable): Boolean =
         cancelImpl(cause) && handlesException
 
-    // For AbstractCoroutine implementations
-    protected fun cancelCoroutine(cause: Throwable?) =
+    /**
+     * Makes this [Job] cancelled with a specified [cause].
+     * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
+     */
+    public fun cancelCoroutine(cause: Throwable?) =
         cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked

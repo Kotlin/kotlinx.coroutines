@@ -95,11 +95,18 @@ private open class BroadcastCoroutine<E>(
     override val channel: SendChannel<E>
         get() = this
 
-    override fun cancel(cause: Throwable?): Boolean {
-        val wasCancelled = _channel.cancel(cause)
-        @Suppress("DEPRECATION")
-        if (wasCancelled) cancelCoroutine(cause) // cancel the job
-        return wasCancelled
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    final override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause)
+    }
+
+    override fun cancelInternal(cause: Throwable?): Boolean {
+        _channel.cancel(cause?.toCancellationException()) // cancel the channel
+        cancelCoroutine(cause) // cancel the job
+        return true // does not matter - result is used in DEPRECATED functions only
     }
 
     override fun onCompletionInternal(state: Any?, mode: Int, suppressed: Boolean) {

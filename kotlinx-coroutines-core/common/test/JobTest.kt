@@ -203,7 +203,7 @@ class JobTest : TestBase() {
     fun testJobWithParentCancelException() {
         val parent = Job()
         val job = Job(parent)
-        job.cancel(TestException())
+        job.completeExceptionally(TestException())
         assertTrue(job.isCancelled)
         assertTrue(parent.isCancelled)
     }

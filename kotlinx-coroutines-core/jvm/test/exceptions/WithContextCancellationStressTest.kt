@@ -7,7 +7,6 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.io.*
 import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
@@ -24,59 +23,61 @@ class WithContextCancellationStressTest : TestBase() {
 
     @Test
     @Suppress("DEPRECATION")
-    fun testConcurrentCancellation() = runBlocking {
-        var ioException = 0
-        var arithmeticException = 0
-        var aioobException = 0
+    fun testConcurrentFailure() = runBlocking {
+        var eCnt = 0
+        var e1Cnt = 0
+        var e2Cnt = 0
 
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
             val ctx = pool + NonCancellable
+            var e1 = false
+            var e2 = false
             val jobWithContext = async(ctx) {
                 withContext(wrapperDispatcher(coroutineContext)) {
+                    launch {
+                        barrier.await()
+                        e1 = true
+                        throw TestException1()
+                    }
+
+                    launch {
+                        barrier.await()
+                        e2 = true
+                        throw TestException2()
+                    }
+
                     barrier.await()
-                    throw IOException()
+                    throw TestException()
                 }
             }
 
-            val cancellerJob = async(ctx) {
-                barrier.await()
-                jobWithContext.cancel(ArithmeticException())
-            }
-
-            val cancellerJob2 = async(ctx) {
-                barrier.await()
-                jobWithContext.cancel(ArrayIndexOutOfBoundsException())
-            }
-
             barrier.await()
-            val aeCancelled = cancellerJob.await()
-            val aioobCancelled = cancellerJob2.await()
 
             try {
                 jobWithContext.await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 when (e) {
-                    is IOException -> {
-                        ++ioException
-                        e.checkSuppressed(aeException = aeCancelled, aioobException =  aioobCancelled)
+                    is TestException -> {
+                        eCnt++
+                        e.checkSuppressed(e1 = e1, e2 =  e2)
                     }
-                    is ArithmeticException -> {
-                        ++arithmeticException
-                        e.checkSuppressed(ioException = true, aioobException =  aioobCancelled)
+                    is TestException1 -> {
+                        e1Cnt++
+                        e.checkSuppressed(ex = true, e2 = e2)
                     }
-                    is ArrayIndexOutOfBoundsException -> {
-                        ++aioobException
-                        e.checkSuppressed(ioException = true, aeException =  aeCancelled)
+                    is TestException2 -> {
+                        e2Cnt++
+                        e.checkSuppressed(ex = true, e1 = e1)
                     }
                     else -> error("Unexpected exception $e")
                 }
             }
         }
 
-        require(ioException > 0) { "At least one IOException expected" }
-        require(arithmeticException > 0) { "At least one ArithmeticException expected" }
-        require(aioobException > 0) { "At least one ArrayIndexOutOfBoundsException expected" }
+        require(eCnt > 0) { "At least one TestException expected" }
+        require(e1Cnt > 0) { "At least one TestException1 expected" }
+        require(e2Cnt > 0) { "At least one TestException2 expected" }
     }
 
     private fun wrapperDispatcher(context: CoroutineContext): CoroutineContext {
@@ -89,29 +90,19 @@ class WithContextCancellationStressTest : TestBase() {
     }
 
     private fun Throwable.checkSuppressed(
-        ioException: Boolean = false,
-        aeException: Boolean = false,
-        aioobException: Boolean = false
+        ex: Boolean = false,
+        e1: Boolean = false,
+        e2: Boolean = false
     ) {
         val suppressed: Array<Throwable> = suppressed
-
-        try {
-            if (ioException) {
-                assertTrue(suppressed.any { it is IOException }, "IOException should be present: $this")
-            }
-
-            if (aeException) {
-                assertTrue(suppressed.any { it is ArithmeticException }, "ArithmeticException should be present: $this")
-            }
-
-            if (aioobException) {
-                assertTrue(
-                    suppressed.any { it is ArrayIndexOutOfBoundsException },
-                    "ArrayIndexOutOfBoundsException should be present: $this"
-                )
-            }
-        } catch (e: Throwable) {
-            val a =2
+        if (ex) {
+            assertTrue(suppressed.any { it is TestException }, "TestException should be present: $this")
+        }
+        if (e1) {
+            assertTrue(suppressed.any { it is TestException1 }, "TestException1 should be present: $this")
+        }
+        if (e2) {
+            assertTrue(suppressed.any { it is TestException2 }, "TestException2 should be present: $this")
         }
     }
 }

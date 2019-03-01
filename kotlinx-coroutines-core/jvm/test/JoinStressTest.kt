@@ -6,7 +6,6 @@ package kotlinx.coroutines
 
 import org.junit.*
 import org.junit.Test
-import java.io.*
 import java.util.concurrent.*
 import kotlin.test.*
 
@@ -71,14 +70,15 @@ class JoinStressTest : TestBase() {
                     exceptionalJob.await()
                 } catch (e: TestException) {
                     0
-                } catch (e: IOException) {
+                } catch (e: TestException1) {
                     1
                 }
             }
 
             val canceller = async(pool + NonCancellable) {
                 barrier.await()
-                exceptionalJob.cancel(IOException())
+                // cast for test purposes only
+                (exceptionalJob as AbstractCoroutine<*>).cancelInternal(TestException1())
             }
 
             barrier.await()

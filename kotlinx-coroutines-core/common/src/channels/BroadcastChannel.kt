@@ -30,14 +30,19 @@ public interface BroadcastChannel<E> : SendChannel<E> {
     public fun openSubscription(): ReceiveChannel<E>
 
     /**
-     * Cancels reception of remaining elements from this channel. This function closes the channel with
+     * Cancels reception of remaining elements from this channel with an optional cause.
+     * This function closes the channel with
      * the specified cause (unless it was already closed), removes all buffered sent elements from it,
      * and [cancels][ReceiveChannel.cancel] all open subscriptions.
-     * This function returns `true` if the channel was not closed previously, or `false` otherwise.
-     *
-     * A channel that was cancelled with non-null [cause] is called a _failed_ channel. Attempts to send or
-     * receive on a failed channel throw the specified [cause] exception.
+     * A cause can be used to specify an error message or to provide other details on
+     * a cancellation reason for debugging purposes.
      */
+    public fun cancel(cause: CancellationException? = null)
+
+    /**
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
+     */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
     public fun cancel(cause: Throwable? = null): Boolean
 }
 

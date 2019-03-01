@@ -277,9 +277,9 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestException }) {
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(Channel.RENDEZVOUS)
-        channel.cancel(TestException())
+        channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }
 }

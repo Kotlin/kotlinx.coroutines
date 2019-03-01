@@ -260,6 +260,6 @@ private class PublisherCoroutine<in T>(
         // Specification requires that after cancellation publisher stops signalling
         // This flag distinguishes subscription cancellation request from the job crash
         cancelled = true
-        super.cancel()
+        super.cancel(null)
     }
 }

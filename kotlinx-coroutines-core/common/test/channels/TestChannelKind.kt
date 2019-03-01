@@ -4,6 +4,7 @@
 
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
 
 enum class TestChannelKind {
@@ -59,8 +60,13 @@ private class ChannelViaBroadcast<E>(
     override suspend fun receiveOrNull(): E? = sub.receiveOrNull()
     override fun poll(): E? = sub.poll()
     override fun iterator(): ChannelIterator<E> = sub.iterator()
-    override fun cancel(): Unit = sub.cancel()
-    override fun cancel(cause: Throwable?): Boolean = sub.cancel(cause)
+    
+    override fun cancel(cause: CancellationException?) = sub.cancel(cause)
+
+    // implementing hidden method anyway, so can cast to an internal class
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    override fun cancel(cause: Throwable?): Boolean = (sub as AbstractChannel).cancelInternal(cause)
+
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive
     override val onReceiveOrNull: SelectClause1<E?>

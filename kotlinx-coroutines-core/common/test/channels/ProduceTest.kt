@@ -65,7 +65,7 @@ class ProduceTest : TestBase() {
                 expectUnreached()
             } catch (e: Throwable) {
                 expect(6)
-                check(e is TestException)
+                check(e is TestCancellationException)
                 throw e
             }
             expectUnreached()
@@ -73,11 +73,11 @@ class ProduceTest : TestBase() {
         expect(1)
         check(c.receive() == 1)
         expect(4)
-        c.cancel(TestException())
+        c.cancel(TestCancellationException())
         try {
             assertNull(c.receiveOrNull())
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (e: TestCancellationException) {
             expect(5)
         }
         yield() // to produce

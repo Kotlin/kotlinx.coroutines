@@ -655,12 +655,16 @@ internal abstract class AbstractChannel<E> : AbstractSendChannel<E>(), Channel<E
         return if (result === POLL_FAILED) null else receiveOrNullResult(result)
     }
 
-    override fun cancel() {
-        @Suppress("DEPRECATION")
-        cancel(null)
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    final override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    final override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause)
     }
 
-    override fun cancel(cause: Throwable?): Boolean =
+    // It needs to be internal to support deprecated cancel(Throwable?) API
+    internal open fun cancelInternal(cause: Throwable?): Boolean =
         close(cause).also {
             cleanupSendQueueOnCancel()
         }

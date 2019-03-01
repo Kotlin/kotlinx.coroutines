@@ -24,6 +24,13 @@ public actual class CompletionHandlerException public actual constructor(
 public actual open class CancellationException actual constructor(message: String?) : IllegalStateException(message)
 
 /**
+ * Creates a cancellation exception with a specified message and [cause].
+ */
+@Suppress("FunctionName")
+public actual fun CancellationException(message: String?, cause: Throwable?) : CancellationException =
+    CancellationException(message.withCause(cause))
+
+/**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
@@ -47,7 +54,7 @@ internal actual class DispatchException actual constructor(message: String, caus
 internal fun IllegalStateException(message: String, cause: Throwable?) =
     IllegalStateException(message.withCause(cause))
 
-private fun String.withCause(cause: Throwable?) =
+private fun String?.withCause(cause: Throwable?) =
     if (cause == null) this else "$this; caused by $cause"
 
 @Suppress("NOTHING_TO_INLINE")

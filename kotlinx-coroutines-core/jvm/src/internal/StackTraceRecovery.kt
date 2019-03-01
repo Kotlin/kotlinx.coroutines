@@ -165,7 +165,7 @@ internal actual fun <E : Throwable> unwrap(exception: E): E {
 }
 
 private fun <E : Throwable> recoveryDisabled(exception: E) =
-    !RECOVER_STACKTRACES || !DEBUG || exception is CancellationException || exception is NonRecoverableThrowable
+    !RECOVER_STACKTRACES || !DEBUG || exception is NonRecoverableThrowable
 
 private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<StackTraceElement> {
     val stack = ArrayDeque<StackTraceElement>()

@@ -5,6 +5,7 @@
 package kotlinx.coroutines.future
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import java.util.concurrent.*
 import java.util.function.*
 import kotlin.coroutines.*
@@ -70,7 +71,11 @@ private class CompletableFutureCoroutine<T>(
  */
 public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    future.whenComplete { _, exception -> cancel(exception) }
+    future.whenComplete { _, exception ->
+        cancel(exception?.let {
+            it as? CancellationException ?: CancellationException("Future failed", it)
+        })
+    }
     invokeOnCompletion {
         try {
             future.complete(getCompleted())

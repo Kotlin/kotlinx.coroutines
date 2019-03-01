@@ -61,9 +61,15 @@ public suspend inline fun <E> BroadcastChannel<E>.consumeEach(action: (E) -> Uni
  */
 @ObsoleteCoroutinesApi
 public fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwable? ->
-        @Suppress("DEPRECATION")
-        cancel(cause)
-    }
+    cancelConsumed(cause)
+}
+
+@PublishedApi
+internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
+    cancel(cause?.let {
+        it as? CancellationException ?: CancellationException("Consumed", it)
+    })
+}
 
 /**
  * Returns a [CompletionHandler] that invokes [cancel][ReceiveChannel.cancel] on all the
@@ -79,8 +85,7 @@ public fun consumesAll(vararg channels: ReceiveChannel<*>): CompletionHandler =
         var exception: Throwable? = null
         for (channel in channels)
             try {
-                @Suppress("DEPRECATION")
-                channel.cancel(cause)
+                channel.cancelConsumed(cause)
             } catch (e: Throwable) {
                 if (exception == null) {
                     exception = e
@@ -115,8 +120,7 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
         cause = e
         throw e
     } finally {
-        @Suppress("DEPRECATION")
-        cancel(cause)
+        cancelConsumed(cause)
     }
 }
 
@@ -363,7 +367,7 @@ public suspend inline fun <E> ReceiveChannel<E>.indexOfFirst(predicate: (E) -> B
  *           See [issue #254](https://github.com/Kotlin/kotlinx.coroutines/issues/254).
  */
 @ObsoleteCoroutinesApi
-public inline suspend fun <E> ReceiveChannel<E>.indexOfLast(predicate: (E) -> Boolean): Int {
+public suspend inline fun <E> ReceiveChannel<E>.indexOfLast(predicate: (E) -> Boolean): Int {
     var lastIndex = -1
     var index = 0
     consumeEach {

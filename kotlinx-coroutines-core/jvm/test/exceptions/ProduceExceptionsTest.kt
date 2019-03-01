@@ -99,11 +99,11 @@ class ProduceExceptionsTest : TestBase() {
         var channel: ReceiveChannel<Int>? = null
         channel = produce(NonCancellable) {
             expect(2)
-            channel!!.cancel(TestException())
+            channel!!.cancel(TestCancellationException())
             try {
                 send(1)
                 // Not a ClosedForSendException
-            } catch (e: TestException) {
+            } catch (e: TestCancellationException) {
                 expect(3)
                 throw e
             }
@@ -113,7 +113,7 @@ class ProduceExceptionsTest : TestBase() {
         yield()
         try {
             channel.receive()
-        } catch (e: TestException) {
+        } catch (e: TestCancellationException) {
             assertTrue(e.suppressed.isEmpty())
             finish(4)
         }
@@ -148,7 +148,7 @@ class ProduceExceptionsTest : TestBase() {
         val job = Job()
         val channel = produce(job) {
             expect(2)
-            job.cancel(TestException2())
+            job.completeExceptionally(TestException2())
             try {
                 send(1)
             } catch (e: CancellationException) { // Not a TestException2

@@ -51,13 +51,14 @@ class NonCancellableTest : TestBase() {
         }
 
         yield()
-        deferred.cancel(TestException())
+        deferred.cancel(TestCancellationException("TEST"))
         expect(3)
         assertTrue(deferred.isCancelled)
         try {
             deferred.await()
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (e: TestCancellationException) {
+            assertEquals("TEST", e.message)
             finish(6)
         }
     }

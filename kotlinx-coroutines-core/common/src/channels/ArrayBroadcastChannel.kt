@@ -67,10 +67,17 @@ internal class ArrayBroadcastChannel<E>(
         return true
     }
 
-    public override fun cancel(cause: Throwable?): Boolean =
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    override fun cancel(cause: Throwable?): Boolean =
+        cancelInternal(cause)
+
+    override fun cancel(cause: CancellationException?) {
+        cancelInternal(cause)
+    }
+
+    private fun cancelInternal(cause: Throwable?): Boolean =
         close(cause).also {
-            @Suppress("DEPRECATION")
-            for (sub in subscribers) sub.cancel(cause)
+            for (sub in subscribers) sub.cancelInternal(cause)
         }
 
     // result is `OFFER_SUCCESS | OFFER_FAILED | Closed`
@@ -201,7 +208,7 @@ internal class ArrayBroadcastChannel<E>(
         override val isBufferAlwaysFull: Boolean get() = error("Should not be used")
         override val isBufferFull: Boolean get() = error("Should not be used")
 
-        override fun cancel(cause: Throwable?): Boolean =
+        override fun cancelInternal(cause: Throwable?): Boolean =
             close(cause).also { closed ->
                 if (closed) broadcastChannel.updateHead(removeSub = this)
                 clearBuffer()

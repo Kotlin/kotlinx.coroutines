@@ -35,9 +35,9 @@ class LinkedListChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestException }) {
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
         val channel = Channel<Int>(Channel.UNLIMITED)
-        channel.cancel(TestException())
+        channel.cancel(TestCancellationException())
         channel.receiveOrNull()
     }
 }

@@ -154,27 +154,25 @@ public interface Job : CoroutineContext.Element {
      */
     public fun start(): Boolean
 
-    /**
-     * @suppress
-     */
-    @Suppress("INAPPLICABLE_JVM_NAME", "DEPRECATION")
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Left here for binary compatibility")
-    @JvmName("cancel")
-    public fun cancel0(): Boolean = cancel(null)
 
     /**
-     * Cancels this job.
+     * Cancels this job with an optional cancellation [cause].
+     * A cause can be used to specify an error message or to provide other details on
+     * a cancellation reason for debugging purposes.
      * See [Job] documentation for full explanation of cancellation machinery.
      */
-    public fun cancel(): Unit
+    public fun cancel(cause: CancellationException? = null)
 
     /**
-     * @suppress
+     * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
-    @ObsoleteCoroutinesApi
-    @Deprecated(level = DeprecationLevel.WARNING, message = "Use CompletableDeferred.completeExceptionally(cause) or Job.cancel() instead",
-        replaceWith = ReplaceWith("cancel()")
-    )
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
+    public fun cancel() = cancel(null)
+
+    /**
+     * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
+     */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
     public fun cancel(cause: Throwable? = null): Boolean
 
     // ------------ parent-child ------------
@@ -479,21 +477,26 @@ public suspend fun Job.cancelAndJoin() {
 }
 
 /**
- * @suppress
+ * Cancels all [children][Job.children] jobs of this coroutine using [Job.cancel] for all of them
+ * with an optional cancellation [cause].
+ * Unlike [Job.cancel] on this job as a whole, the state of this job itself is not affected.
  */
-@ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
-public fun Job.cancelChildren(cause: Throwable? = null) {
-    @Suppress("DEPRECATION")
+public fun Job.cancelChildren(cause: CancellationException? = null) {
     children.forEach { it.cancel(cause) }
 }
 
 /**
- * Cancels all [children][Job.children] jobs of this coroutine using [Job.cancel] for all of them.
- * Unlike [Job.cancel] on this job as a whole, the state of this job itself is not affected.
+ * @suppress This method implements old version of JVM ABI. Use [cancel].
  */
-public fun Job.cancelChildren() {
-    children.forEach { it.cancel() }
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+public fun Job.cancelChildren() = cancelChildren(null)
+
+/**
+ * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [Job.cancelChildren].
+ */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+public fun Job.cancelChildren(cause: Throwable? = null) {
+    children.forEach { (it as? JobSupport)?.cancelInternal(cause) }
 }
 
 // -------------------- CoroutineContext extensions --------------------
@@ -517,47 +520,49 @@ public fun Job.cancelChildren() {
 public val CoroutineContext.isActive: Boolean
     get() = this[Job]?.isActive == true
 
-
 /**
- * @suppress
+ * Cancels [Job] of this context with an optional cancellation cause.
+ * See [Job.cancel] for details.
  */
-@Suppress("unused")
-@JvmName("cancel")
-@Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun CoroutineContext.cancel0(): Boolean {
-    this[Job]?.cancel()
-    return true
+public fun CoroutineContext.cancel(cause: CancellationException? = null) {
+    this[Job]?.cancel(cause)
 }
 
 /**
- * Cancels [Job] of this context. See [Job.cancel] for details.
+ * @suppress This method implements old version of JVM ABI. Use [CoroutineContext.cancel].
  */
-public fun CoroutineContext.cancel(): Unit {
-    this[Job]?.cancel()
-}
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+public fun CoroutineContext.cancel() = cancel(null)
 
 /**
- * @suppress
+ * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancel].
  */
-@ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancel() without cause", replaceWith = ReplaceWith("cancel()"))
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
 public fun CoroutineContext.cancel(cause: Throwable? = null): Boolean =
     @Suppress("DEPRECATION")
-    this[Job]?.cancel(cause) ?: false
+    (this[Job] as? JobSupport)?.cancelInternal(cause) ?: false
 
 /**
- * Cancels all children of the [Job] in this context, without touching the the state of this job itself.
+ * Cancels all children of the [Job] in this context, without touching the the state of this job itself
+ * with an optional cancellation cause. See [Job.cancel].
  * It does not do anything if there is no job in the context or it has no children.
  */
-public fun CoroutineContext.cancelChildren() {
-    this[Job]?.children?.forEach { it.cancel() }
+public fun CoroutineContext.cancelChildren(cause: CancellationException? = null) {
+    this[Job]?.children?.forEach { it.cancel(cause) }
 }
 
-@ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.WARNING, message = "Use cancelChildren() without cause", replaceWith = ReplaceWith("cancelChildren()"))
+/**
+ * @suppress This method implements old version of JVM ABI. Use [CoroutineContext.cancelChildren].
+ */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
+public fun CoroutineContext.cancelChildren() = cancelChildren(null)
+
+/**
+ * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren].
+ */
+@Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility")
 public fun CoroutineContext.cancelChildren(cause: Throwable? = null) {
-    @Suppress("DEPRECATION")
-    this[Job]?.children?.forEach { it.cancel(cause) }
+    this[Job]?.children?.forEach { (it as? JobSupport)?.cancelInternal(cause) }
 }
 
 /**

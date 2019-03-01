@@ -196,10 +196,12 @@ public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
     ContextScope(if (context[Job] != null) context else context + Job())
 
 /**
- * Cancels this scope, including its job and all its children.
+ * Cancels this scope, including its job and all its children with an optional cancellation [cause].
+ * A cause can be used to specify an error message or to provide other details on
+ * a cancellation reason for debugging purposes.
  * Throws [IllegalStateException] if the scope does not have a job in it.
- **/
-public fun CoroutineScope.cancel() {
+ */
+public fun CoroutineScope.cancel(cause: CancellationException? = null) {
     val job = coroutineContext[Job] ?: error("Scope cannot be cancelled because it does not have a job: $this")
-    job.cancel()
+    job.cancel(cause)
 }

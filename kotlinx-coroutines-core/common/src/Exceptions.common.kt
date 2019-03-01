@@ -12,6 +12,9 @@ public expect class CompletionHandlerException(message: String, cause: Throwable
 
 public expect open class CancellationException(message: String?) : IllegalStateException
 
+@Suppress("FunctionName")
+public expect fun CancellationException(message: String?, cause: Throwable?) : CancellationException
+
 internal expect class JobCancellationException(
     message: String,
     cause: Throwable?,
